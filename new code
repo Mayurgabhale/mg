@@ -1,28 +1,27 @@
 return (
   <Box
     sx={{
-      background: 'linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%)',
       minHeight: '100vh',
-      color: '#FFF',
-      py: 4,
+      background: 'linear-gradient(180deg, #000000 0%, #1a1a1a 100%)',
+      color: '#fff',
+      pb: 6,
     }}
   >
-    {/* Header Section */}
+    {/* Header */}
     <Box
       sx={{
-        background: 'linear-gradient(90deg, #FFCC00, #f4d03f)',
-        py: 3,
-        borderBottom: '6px solid #FFCC00',
-        boxShadow: '0 4px 15px rgba(255, 204, 0, 0.4)',
+        background: 'linear-gradient(90deg, #FFCC00 0%, #FFD633 100%)',
+        py: 4,
         textAlign: 'center',
+        boxShadow: '0px 4px 20px rgba(255, 204, 0, 0.5)',
       }}
     >
       <Typography
         variant="h3"
         sx={{
-          fontWeight: 'bold',
+          fontWeight: '900',
           color: '#000',
-          textShadow: '1px 1px 2px rgba(255,255,255,0.4)',
+          letterSpacing: 1,
         }}
       >
         Global Security Operation Center Reports
@@ -35,45 +34,47 @@ return (
         value={tab}
         onChange={handleTabChange}
         centered
-        TabIndicatorProps={{ style: { backgroundColor: '#FFCC00', height: 4, borderRadius: 2 } }}
+        TabIndicatorProps={{
+          style: { backgroundColor: '#FFCC00', height: 4, borderRadius: 4 },
+        }}
         sx={{
           '& .MuiTab-root': {
             color: '#ccc',
             fontWeight: 'bold',
-            borderRadius: '20px',
+            borderRadius: '25px',
             px: 3,
-            mx: 0.5,
+            mx: 1,
             textTransform: 'none',
             transition: 'all 0.3s ease',
             '&:hover': { backgroundColor: 'rgba(255, 204, 0, 0.1)' },
           },
           '& .Mui-selected': {
-            backgroundColor: 'rgba(255, 204, 0, 0.2)',
+            backgroundColor: 'rgba(255, 204, 0, 0.15)',
             color: '#FFCC00 !important',
           },
         }}
       >
-        <Tab label="Daily Access" />
-        <Tab label="Raw" />
-        <Tab label="Rejection" />
-        <Tab label="Time Duration" />
-        <Tab label="HeadCount" />
+        <Tab icon={<i className="fas fa-calendar-day" />} label="Daily Access" />
+        <Tab icon={<i className="fas fa-database" />} label="Raw" />
+        <Tab icon={<i className="fas fa-ban" />} label="Rejection" />
+        <Tab icon={<i className="fas fa-clock" />} label="Time Duration" />
+        <Tab icon={<i className="fas fa-users" />} label="HeadCount" />
       </Tabs>
     </Box>
 
-    {/* Filter Section */}
+    {/* Filters */}
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box
+      <Paper
+        elevation={6}
         sx={{
           mt: 5,
-          px: 3,
-          py: 4,
+          p: 4,
           maxWidth: '1200px',
           mx: 'auto',
-          background: 'rgba(255, 255, 255, 0.05)',
+          background: 'rgba(255, 255, 255, 0.04)',
+          backdropFilter: 'blur(10px)',
           borderRadius: '20px',
-          backdropFilter: 'blur(8px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          border: '1px solid rgba(255, 204, 0, 0.3)',
         }}
       >
         <Grid container spacing={3}>
@@ -83,17 +84,26 @@ return (
               <InputLabel sx={{ color: '#FFCC00' }}>Region</InputLabel>
               <Select
                 value={region}
-                onChange={e => { setRegion(e.target.value); setLocation(''); }}
+                onChange={(e) => {
+                  setRegion(e.target.value);
+                  setLocation('');
+                }}
                 input={<OutlinedInput label="Region" />}
                 sx={{
-                  color: '#FFF',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#FFCC00' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+                  color: '#fff',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFCC00',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFD700',
+                  },
                 }}
               >
-                {REGION_OPTIONS.map(r =>
-                  <MenuItem key={r} value={r}>{r.toUpperCase()}</MenuItem>
-                )}
+                {REGION_OPTIONS.map((r) => (
+                  <MenuItem key={r} value={r}>
+                    {r.toUpperCase()}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -104,20 +114,24 @@ return (
               <InputLabel sx={{ color: '#FFCC00' }}>Location</InputLabel>
               <Select
                 value={location}
-                onChange={e => setLocation(e.target.value)}
+                onChange={(e) => setLocation(e.target.value)}
                 input={<OutlinedInput label="Location" />}
                 sx={{
-                  color: '#FFF',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#FFCC00' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+                  color: '#fff',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFCC00',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFD700',
+                  },
                 }}
                 disabled={!region}
               >
-                {(LOCATION_MAP[region] || []).map(loc =>
+                {(LOCATION_MAP[region] || []).map((loc) => (
                   <MenuItem key={loc} value={loc}>
                     {loc.split('.').pop()}
                   </MenuItem>
-                )}
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -133,9 +147,13 @@ return (
                   onClick={() => setShowFromCal(true)}
                   fullWidth
                   sx={{
-                    input: { color: '#FFF' },
-                    '& .MuiOutlinedInput-root fieldset': { borderColor: '#FFCC00' },
-                    '&:hover .MuiOutlinedInput-root fieldset': { borderColor: '#FFD700' },
+                    input: { color: '#fff' },
+                    '& .MuiOutlinedInput-root fieldset': {
+                      borderColor: '#FFCC00',
+                    },
+                    '&:hover .MuiOutlinedInput-root fieldset': {
+                      borderColor: '#FFD700',
+                    },
                   }}
                 />
                 {showFromCal && (
@@ -158,9 +176,13 @@ return (
                   onClick={() => setShowToCal(true)}
                   fullWidth
                   sx={{
-                    input: { color: '#FFF' },
-                    '& .MuiOutlinedInput-root fieldset': { borderColor: '#FFCC00' },
-                    '&:hover .MuiOutlinedInput-root fieldset': { borderColor: '#FFD700' },
+                    input: { color: '#fff' },
+                    '& .MuiOutlinedInput-root fieldset': {
+                      borderColor: '#FFCC00',
+                    },
+                    '&:hover .MuiOutlinedInput-root fieldset': {
+                      borderColor: '#FFD700',
+                    },
                   }}
                 />
                 {showToCal && (
@@ -185,16 +207,20 @@ return (
                 <Select
                   multiple
                   value={selectedEmps}
-                  onChange={e => setSelectedEmps(e.target.value)}
+                  onChange={(e) => setSelectedEmps(e.target.value)}
                   input={<OutlinedInput label="Employees" />}
                   sx={{
-                    color: '#FFF',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#FFCC00' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFD700' },
+                    color: '#fff',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FFCC00',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#FFD700',
+                    },
                   }}
-                  renderValue={vals => vals.join(', ')}
+                  renderValue={(vals) => vals.join(', ')}
                 >
-                  {EMPLOYEE_OPTIONS.map(n => (
+                  {EMPLOYEE_OPTIONS.map((n) => (
                     <MenuItem key={n} value={n}>
                       <Checkbox checked={selectedEmps.includes(n)} />
                       <ListItemText primary={n} />
@@ -205,7 +231,7 @@ return (
             </Grid>
           )}
         </Grid>
-      </Box>
+      </Paper>
     </LocalizationProvider>
 
     {/* Action Button */}
@@ -217,21 +243,29 @@ return (
         disabled={tab === 4 ? (!region || loading) : disabled}
         startIcon={loading ? <CircularProgress size={20} /> : null}
         sx={{
-          background: 'linear-gradient(90deg, #FFCC00, #FFD700)',
+          background: 'linear-gradient(90deg, #FFCC00, #FFD633)',
           color: '#000',
           fontWeight: 'bold',
           px: 5,
           py: 1.5,
           borderRadius: '50px',
-          boxShadow: '0 4px 15px rgba(255, 204, 0, 0.4)',
-          '&:hover': { background: 'linear-gradient(90deg, #FFD700, #FFB300)' },
+          boxShadow: '0px 4px 15px rgba(255, 204, 0, 0.5)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            background: 'linear-gradient(90deg, #FFD633, #FFB300)',
+            transform: 'scale(1.05)',
+          },
         }}
       >
         {loading
-          ? (tab === 4 ? 'Loading…' : 'Generating…')
-          : (tab === 4
-            ? (location ? `Navigate to ${location.split('.').pop()}` : `Navigate to ${region.toUpperCase()}`)
-            : 'Export to Excel')}
+          ? tab === 4
+            ? 'Loading…'
+            : 'Generating…'
+          : tab === 4
+          ? location
+            ? `Navigate to ${location.split('.').pop()}`
+            : `Navigate to ${region.toUpperCase()}`
+          : 'Export to Excel'}
       </Button>
     </Box>
   </Box>
