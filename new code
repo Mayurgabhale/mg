@@ -1,18 +1,10 @@
-Unexpected Application Error!
-MUI X: Can not find the date and time pickers localization context. It looks like you forgot to wrap your component in LocalizationProvider. This can also happen if you are bundling multiple versions of the `@mui/x-date-pickers` package
-Error: MUI X: Can not find the date and time pickers localization context.
-It looks like you forgot to wrap your component in LocalizationProvider.
-This can also happen if you are bundling multiple versions of the `@mui/x-date-pickers` package
-    at useLocalizationContext (http://localhost:5173/node_modules/.vite/deps/chunk-IMXWAGXM.js?v=604f0652:2319:11)
-    at usePickerAdapter (http://localhost:5173/node_modules/.vite/deps/chunk-IMXWAGXM.js?v=604f0652:2329:30)
-    at useApplyDefaultValuesToDateValidationProps (http://localhost:5173/node_modules/.vite/deps/chunk-IMXWAGXM.js?v=604f0652:3669:19)
-    at useDatePickerDefaultizedProps (http://localhost:5173/node_modules/.vite/deps/chunk-IMXWAGXM.js?v=604f0652:3685:27)
-    at StaticDatePicker2 (http://localhost:5173/node_modules/.vite/deps/@mui_x-date-pickers_StaticDatePicker.js?v=604f0652:114:28)
-    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-PPVFY42G.js?v=604f0652:11568:26)
-    at updateForwardRef (http://localhost:5173/node_modules/.vite/deps/chunk-PPVFY42G.js?v=604f0652:14345:28)
-    at beginWork (http://localhost:5173/node_modules/.vite/deps/chunk-PPVFY42G.js?v=604f0652:15966:22)
-    at beginWork$1 (http://localhost:5173/node_modules/.vite/deps/chunk-PPVFY42G.js?v=604f0652:19781:22)
-    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/chunk-PPVFY42G.js?v=604f0652:19226:20)
-💿 Hey developer 👋
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-You can provide a way better UX than this when your app throws errors by providing your own ErrorBoundary or errorElement prop on your route.
+export default function MyDashboardComponent() {
+  return (
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      {/* Your entire dashboard JSX here */}
+    </LocalizationProvider>
+  );
+}
