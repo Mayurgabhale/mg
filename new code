@@ -1,226 +1,219 @@
+
+// Add to your existing imports at top of file
+import { Grid, Paper, Drawer, IconButton, Divider, List, ListItem, ListItemIcon, ListItemText, Avatar, Collapse } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PlaceIcon from '@mui/icons-material/Place';
+import PeopleIcon from '@mui/icons-material/People';
+import DownloadIcon from '@mui/icons-material/CloudDownload';
+import FilterListIcon from '@mui/icons-material/FilterList';
+
+
+
+
+
+.....
+
+
 return (
-  <Box
-    sx={{
-      minHeight: '100vh',
-      background: 'linear-gradient(180deg, #000000 0%, #1a1a1a 100%)',
-      color: '#fff',
-      pb: 6,
-    }}
-  >
-    {/* Header */}
+  <Box sx={{ minHeight: '100vh', background: 'linear-gradient(180deg,#070707 0%, #111 100%)', color: '#fff' }}>
+    {/* Topbar / Header */}
     <Box
       sx={{
-        background: 'linear-gradient(90deg, #FFCC00 0%, #FFD633 100%)',
-        py: 4,
-        textAlign: 'center',
-        boxShadow: '0px 4px 20px rgba(255, 204, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        px: 3,
+        py: 2,
+        borderBottom: '1px solid rgba(255,204,0,0.08)',
+        background: 'linear-gradient(90deg, rgba(20,20,20,0.7), rgba(0,0,0,0.4))'
       }}
     >
-      <Typography
-        variant="h3"
-        sx={{
-          fontWeight: '900',
-          color: '#000',
-          letterSpacing: 1,
-        }}
-      >
-        Global Security Operation Center Reports
-      </Typography>
-    </Box>
+      <Avatar sx={{ bgcolor: '#000', border: '3px solid #FFCC00', width: 56, height: 56 }}>
+        <Typography sx={{ color: '#FFCC00', fontWeight: 900 }}>WU</Typography>
+      </Avatar>
 
-    {/* Tabs */}
-    <Box sx={{ mt: 4 }}>
-      <Tabs
-        value={tab}
-        onChange={handleTabChange}
-        centered
-        TabIndicatorProps={{
-          style: { backgroundColor: '#FFCC00', height: 4, borderRadius: 4 },
-        }}
-        sx={{
-          '& .MuiTab-root': {
-            color: '#ccc',
-            fontWeight: 'bold',
-            borderRadius: '25px',
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 0.6 }}>
+          Global Security Operation Center
+        </Typography>
+        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          Reports & Exports — Secure access, fast insights
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Button
+          startIcon={<DownloadIcon />}
+          onClick={handleGenerate}
+          disabled={tab === 4 ? (!region || loading) : disabled}
+          sx={{
+            bgcolor: '#FFCC00',
+            color: '#000',
+            fontWeight: 800,
             px: 3,
-            mx: 1,
-            textTransform: 'none',
-            transition: 'all 0.3s ease',
-            '&:hover': { backgroundColor: 'rgba(255, 204, 0, 0.1)' },
-          },
-          '& .Mui-selected': {
-            backgroundColor: 'rgba(255, 204, 0, 0.15)',
-            color: '#FFCC00 !important',
-          },
-        }}
-      >
-        <Tab icon={<i className="fas fa-calendar-day" />} label="Daily Access" />
-        <Tab icon={<i className="fas fa-database" />} label="Raw" />
-        <Tab icon={<i className="fas fa-ban" />} label="Rejection" />
-        <Tab icon={<i className="fas fa-clock" />} label="Time Duration" />
-        <Tab icon={<i className="fas fa-users" />} label="HeadCount" />
-      </Tabs>
+            py: 1,
+            borderRadius: 3,
+            boxShadow: '0 6px 22px rgba(255,204,0,0.18)',
+            transformOrigin: 'center',
+            '&:hover': { bgcolor: '#ffd84d', transform: 'translateY(-2px)' }
+          }}
+        >
+          {loading ? (tab === 4 ? 'Loading…' : 'Generating…') : (tab === 4 ? (location ? `Navigate ${location.split('.').pop()}` : `Navigate ${region.toUpperCase()}`) : 'Export to Excel')}
+        </Button>
+      </Box>
     </Box>
 
-    {/* Filters */}
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Paper
-        elevation={6}
-        sx={{
-          mt: 5,
-          p: 4,
-          maxWidth: '1200px',
-          mx: 'auto',
-          background: 'rgba(255, 255, 255, 0.04)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '20px',
-          border: '1px solid rgba(255, 204, 0, 0.3)',
-        }}
-      >
-        <Grid container spacing={3}>
+    {/* Main content: Sidebar + Content */}
+    <Grid container sx={{ px: 3, py: 4 }} spacing={3}>
+      {/* Sidebar */}
+      <Grid item xs={12} md={3}>
+        <Paper
+          elevation={8}
+          sx={{
+            p: 2.5,
+            borderRadius: 3,
+            height: { xs: 'auto', md: 'calc(100vh - 150px)' },
+            overflow: 'auto',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.015))',
+            border: '1px solid rgba(255,204,0,0.06)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#FFCC00' }}>Filters</Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                Narrow down by region, date and employees
+              </Typography>
+            </Box>
+            <IconButton size="small" sx={{ color: '#FFCC00' }}>
+              <FilterListIcon />
+            </IconButton>
+          </Box>
+
+          <Divider sx={{ my: 1, borderColor: 'rgba(255,204,0,0.06)' }} />
+
           {/* Region */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Box sx={{ mt: 1 }}>
             <FormControl fullWidth>
               <InputLabel sx={{ color: '#FFCC00' }}>Region</InputLabel>
               <Select
                 value={region}
-                onChange={(e) => {
-                  setRegion(e.target.value);
-                  setLocation('');
-                }}
+                onChange={e => { setRegion(e.target.value); setLocation(''); }}
                 input={<OutlinedInput label="Region" />}
                 sx={{
                   color: '#fff',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FFCC00',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FFD700',
-                  },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.24)' }
                 }}
               >
-                {REGION_OPTIONS.map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r.toUpperCase()}
-                  </MenuItem>
-                ))}
+                {REGION_OPTIONS.map(r => <MenuItem key={r} value={r}>{r.toUpperCase()}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
 
           {/* Location */}
-          <Grid item xs={12} sm={6} md={4}>
+          <Box sx={{ mt: 2 }}>
             <FormControl fullWidth>
               <InputLabel sx={{ color: '#FFCC00' }}>Location</InputLabel>
               <Select
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={e => setLocation(e.target.value)}
                 input={<OutlinedInput label="Location" />}
+                disabled={!region}
                 sx={{
                   color: '#fff',
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FFCC00',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FFD700',
-                  },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.12)' }
                 }}
-                disabled={!region}
               >
-                {(LOCATION_MAP[region] || []).map((loc) => (
-                  <MenuItem key={loc} value={loc}>
-                    {loc.split('.').pop()}
-                  </MenuItem>
-                ))}
+                {(LOCATION_MAP[region] || []).map(loc => <MenuItem key={loc} value={loc}>{loc.split('.').pop()}</MenuItem>)}
               </Select>
             </FormControl>
-          </Grid>
+          </Box>
+
+          <Divider sx={{ my: 2, borderColor: 'rgba(255,204,0,0.04)' }} />
 
           {/* Dates */}
           {tab !== 4 && (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
+            <Box>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 1, fontWeight: 700 }}>
+                Date Range
+              </Typography>
+              <Box sx={{ display: 'grid', gap: 1.25 }}>
                 <TextField
                   label={tab === 0 ? 'From Date' : 'Start Date'}
                   value={from ? from.toLocaleDateString() : ''}
                   readOnly
                   onClick={() => setShowFromCal(true)}
-                  fullWidth
                   sx={{
-                    input: { color: '#fff' },
-                    '& .MuiOutlinedInput-root fieldset': {
-                      borderColor: '#FFCC00',
-                    },
-                    '&:hover .MuiOutlinedInput-root fieldset': {
-                      borderColor: '#FFD700',
-                    },
+                    '& .MuiInputBase-input': { color: '#fff' },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.08)' }
                   }}
                 />
-                {showFromCal && (
-                  <StaticDatePicker
-                    displayStaticWrapperAs="desktop"
-                    value={from}
-                    onChange={setFrom}
-                    onClose={() => setShowFromCal(false)}
-                    renderInput={(params) => <TextField {...params} />}
-                    views={['year', 'month', 'day']}
-                  />
-                )}
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={4}>
                 <TextField
                   label={tab === 0 ? 'To Date' : 'End Date'}
                   value={to ? to.toLocaleDateString() : ''}
                   readOnly
                   onClick={() => setShowToCal(true)}
-                  fullWidth
                   sx={{
-                    input: { color: '#fff' },
-                    '& .MuiOutlinedInput-root fieldset': {
-                      borderColor: '#FFCC00',
-                    },
-                    '&:hover .MuiOutlinedInput-root fieldset': {
-                      borderColor: '#FFD700',
-                    },
+                    '& .MuiInputBase-input': { color: '#fff' },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.08)' }
                   }}
                 />
-                {showToCal && (
+              </Box>
+
+              {/* Static pickers (keeps your existing state handlers) */}
+              {showFromCal && (
+                <Box sx={{ mt: 1 }}>
+                  <StaticDatePicker
+                    displayStaticWrapperAs="desktop"
+                    value={from}
+                    onChange={(newValue) => setFrom(newValue)}
+                    onAccept={() => setShowFromCal(false)}
+                    onClose={() => setShowFromCal(false)}
+                    renderInput={(params) => <TextField {...params} />}
+                    views={['year', 'month', 'day']}
+                  />
+                </Box>
+              )}
+              {showToCal && (
+                <Box sx={{ mt: 1 }}>
                   <StaticDatePicker
                     displayStaticWrapperAs="desktop"
                     value={to}
-                    onChange={setTo}
+                    onChange={(newValue) => setTo(newValue)}
+                    onAccept={() => setShowToCal(false)}
                     onClose={() => setShowToCal(false)}
                     renderInput={(params) => <TextField {...params} />}
                     views={['year', 'month', 'day']}
                   />
-                )}
-              </Grid>
-            </>
+                </Box>
+              )}
+            </Box>
           )}
 
-          {/* Employees */}
+          <Divider sx={{ my: 2, borderColor: 'rgba(255,204,0,0.04)' }} />
+
+          {/* Employees (only Daily) */}
           {tab === 0 && (
-            <Grid item xs={12} md={6}>
+            <Box>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 1, fontWeight: 700 }}>
+                Employees
+              </Typography>
               <FormControl fullWidth>
                 <InputLabel sx={{ color: '#FFCC00' }}>Employees</InputLabel>
                 <Select
                   multiple
                   value={selectedEmps}
-                  onChange={(e) => setSelectedEmps(e.target.value)}
+                  onChange={e => setSelectedEmps(e.target.value)}
                   input={<OutlinedInput label="Employees" />}
+                  renderValue={vals => vals.join(', ')}
                   sx={{
                     color: '#fff',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#FFCC00',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#FFD700',
-                    },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.06)' }
                   }}
-                  renderValue={(vals) => vals.join(', ')}
                 >
-                  {EMPLOYEE_OPTIONS.map((n) => (
+                  {EMPLOYEE_OPTIONS.map(n => (
                     <MenuItem key={n} value={n}>
                       <Checkbox checked={selectedEmps.includes(n)} />
                       <ListItemText primary={n} />
@@ -228,45 +221,111 @@ return (
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
           )}
-        </Grid>
-      </Paper>
-    </LocalizationProvider>
 
-    {/* Action Button */}
-    <Box textAlign="center" mt={5}>
-      <Button
-        variant="contained"
-        size="large"
-        onClick={handleGenerate}
-        disabled={tab === 4 ? (!region || loading) : disabled}
-        startIcon={loading ? <CircularProgress size={20} /> : null}
-        sx={{
-          background: 'linear-gradient(90deg, #FFCC00, #FFD633)',
-          color: '#000',
-          fontWeight: 'bold',
-          px: 5,
-          py: 1.5,
-          borderRadius: '50px',
-          boxShadow: '0px 4px 15px rgba(255, 204, 0, 0.5)',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            background: 'linear-gradient(90deg, #FFD633, #FFB300)',
-            transform: 'scale(1.05)',
-          },
-        }}
-      >
-        {loading
-          ? tab === 4
-            ? 'Loading…'
-            : 'Generating…'
-          : tab === 4
-          ? location
-            ? `Navigate to ${location.split('.').pop()}`
-            : `Navigate to ${region.toUpperCase()}`
-          : 'Export to Excel'}
-      </Button>
-    </Box>
+          {/* Helpful hint */}
+          <Box sx={{ mt: 3, p: 2, borderRadius: 2, background: 'rgba(255,255,255,0.02)' }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              Tip: For daily exports pick employees & a single day range. For Time Duration choose the required partition via Location.
+            </Typography>
+          </Box>
+        </Paper>
+      </Grid>
+
+      {/* Main panel */}
+      <Grid item xs={12} md={9}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Tabs (visual only) */}
+          <Paper
+            elevation={3}
+            sx={{
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              border: '1px solid rgba(255,204,0,0.04)'
+            }}
+          >
+            <Tabs
+              value={tab}
+              onChange={handleTabChange}
+              sx={{
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  minWidth: 120,
+                  fontWeight: 700,
+                  color: 'rgba(255,255,255,0.8)'
+                },
+                '& .Mui-selected': { color: '#FFCC00' }
+              }}
+            >
+              <Tab icon={<CalendarTodayIcon />} label="Daily Access" />
+              <Tab icon={<PeopleIcon />} label="Raw" />
+              <Tab icon={<PlaceIcon />} label="Rejection" />
+              <Tab icon={<CalendarTodayIcon />} label="Time Duration" />
+              <Tab icon={<PeopleIcon />} label="HeadCount" />
+            </Tabs>
+
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Button
+                variant="text"
+                startIcon={<FilterListIcon />}
+                sx={{ color: 'rgba(255,255,255,0.65)', textTransform: 'none' }}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
+                Reset View
+              </Button>
+            </Box>
+          </Paper>
+
+          {/* Action summary + CTA */}
+          <Paper elevation={6} sx={{ p: 3, borderRadius: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 900 }}>Export Center</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Selected Region: <strong style={{ color: '#FFCC00' }}>{region.toUpperCase()}</strong> {location ? `• ${location.split('.').pop()}` : ''}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                Choose tab, select filters and export reports in Excel.
+              </Typography>
+            </Box>
+
+            <Box>
+              <Button
+                startIcon={loading ? <CircularProgress size={20} /> : <DownloadIcon />}
+                disabled={tab === 4 ? (!region || loading) : disabled}
+                onClick={handleGenerate}
+                sx={{
+                  bgcolor: '#FFCC00',
+                  color: '#000',
+                  fontWeight: 900,
+                  px: 4,
+                  py: 1,
+                  borderRadius: 3,
+                  boxShadow: '0 8px 30px rgba(255,204,0,0.22)',
+                  '&:hover': { bgcolor: '#ffd84d', transform: 'translateY(-3px)' }
+                }}
+              >
+                {loading ? (tab === 4 ? 'Loading…' : 'Generating…') : (tab === 4 ? (location ? `Navigate ${location.split('.').pop()}` : `Navigate ${region.toUpperCase()}`) : 'Export to Excel')}
+              </Button>
+            </Box>
+          </Paper>
+
+          {/* Content placeholder */}
+          <Box>
+            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, minHeight: 280, border: '1px solid rgba(255,204,0,0.03)' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1 }}>Preview</Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                Results will be fetched and exported when you click the export button. This area can be extended to show a preview table, charts or status summaries without changing the existing export logic.
+              </Typography>
+            </Paper>
+          </Box>
+        </Box>
+      </Grid>
+    </Grid>
   </Box>
 );
