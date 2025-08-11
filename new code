@@ -1,8 +1,10 @@
+
+// src/pages/ReportsPage.jsx
 import React, { useState } from 'react';
 import {
   Box, FormControl, InputLabel, Select, OutlinedInput,
   Checkbox, ListItemText, MenuItem, Button,
-  CircularProgress, Typography, TextField, Tabs, Tab, Paper
+  CircularProgress, Typography, TextField, Tabs, Tab
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -12,183 +14,871 @@ import axios from 'axios';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 
-// Keep all your EMPLOYEE_OPTIONS, REGION_OPTIONS, LOCATION_MAP, formatDisplayDate, and functions unchanged above...
+// Static lists
+const EMPLOYEE_OPTIONS = [
+  'Vainilaitis, Valdas',
+  'Tomasevic, Kazimez',
+  'Sesickis, Janas',
+  'Valiunas, Sigitas'
+];
+const REGION_OPTIONS = ['apac', 'emea', 'laca', 'namer'];
+const LOCATION_MAP = {
+  apac: ['APAC.Default', 'CN.Beijing', 'JP.Tokyo', 'PH.Manila', 'MY.Kuala Lumpur', 'IN.Pune'],
+  emea: ['AUT.Vienna', 'DU.Abu Dhabi', 'IE.Dublin', 'IT.Rome', 'LT.Vilnius', 'MA.Casablanca', 'RU.Moscow', 'UK.London', 'ES.Madrid'],
+  laca: ['AR.Cordoba', 'CR.Costa Rica Partition', 'MX.Mexico City', 'PE.Lima', 'BR.Sao Paulo', 'PA.Panama City'],
+  namer: ['US.NYC', 'US.Denver', 'US.Austin', 'US.Miami']
+};
+
+function formatDisplayDate(date) {
+  const d = new Date(date);
+  const day = d.getDate();
+  const suf = day % 10 === 1 && day !== 11 ? 'st'
+    : day % 10 === 2 && day !== 12 ? 'nd'
+      : day % 10 === 3 && day !== 13 ? 'rd' : 'th';
+  const mon = d.toLocaleString('default', { month: 'long' });
+  return `${day}${suf} ${mon} ${d.getFullYear()}`;
+}
+
+
 
 export default function ReportsPage() {
-  // --- your states, handlers, and logic remain here unchanged ---
+  // --- state ---
+  const [tab, setTab] = useState(0);
+
+  const [region, setRegion] = useState('emea');
+  const [location, setLocation] = useState('');
+  const [from, setFrom] = useState(null);
+  const [to, setTo] = useState(null);
+  const [showFromCal, setShowFromCal] = useState(false);
+  const [showToCal, setShowToCal] = useState(false);
+  const [selectedEmps, setSelectedEmps] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Handle tab switch (Daily / Raw / Rejection)
+  const handleTabChange = (_, v) => {
+    setTab(v);
+    // reset all filters
+    setRegion('emea');
+    setLocation('');
+    setFrom(null);
+    setTo(null);
+    setSelectedEmps([]);
+  };
+
+
+
+
+  /** Time Duration Excel generator */
+  const generateTimeDurationExcel = async data => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Time Duration');
+
+    // Title row
+    ws.mergeCells('A1:M1');
+    ws.getCell('A1').value =
+      `${region.toUpperCase()} Time Duration Report - ${formatDisplayDate(from)}`;
+    ws.getCell('A1').font = { bold: true, size: 14 };
+    ws.getCell('A1').alignment = { horizontal: 'center' };
+    // Header row
+    const headers = [
+      'Sr. No.', 'Employee Name', 'Employee ID', 'Personnel Type',
+      'Partition', 'Text5', 'Year', 'Week', 'Date',
+      'First Swipe', 'Last Swipe', 'Duration', 'Category',
+      'Days Present', 'Violation Days', 'Clean Days', 'Defaulter'
+    ];
+    const headerRow = ws.addRow(headers);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.eachCell(c => {
+      c.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
+    });
+
+    // Columns widths
+    ws.columns = [
+      { key: 'sr', width: 8 },
+      { key: 'name', width: 25 },
+      { key: 'id', width: 15 },
+      { key: 'ptype', width: 18 },
+      { key: 'part', width: 15 },
+      { key: 'txt5', width: 20 },
+      { key: 'year', width: 8 },
+      { key: 'week', width: 6 },
+      { key: 'date', width: 12 },
+      { key: 'first', width: 16 },
+      { key: 'last', width: 16 },
+      { key: 'dur', width: 10 },
+      { key: 'cat', width: 12 },
+      { key: 'dpw', width: 12 },
+      { key: 'vdw', width: 14 },
+      { key: 'cdw', width: 12 },
+      { key: 'def', width: 10 }
+    ];
+
+    data.forEach((r, idx) => {
+      const first = new Date(r.FirstSwipeTime);
+      const last = new Date(r.LastSwipeTime);
+      const date = new Date(r.ShiftedDate);
+      const row = ws.addRow([
+        idx + 1,
+        r.ObjectName1,
+        r.EmployeeID,
+        r.PersonnelType,
+        r.PartitionName2,
+        r.text5,
+        r.YearNumber,
+        r.WeekNumber,
+        date,
+        first,
+        last,
+        r.DurationHHMM,
+        r.TimeDiffCategory,
+        r.DaysPresentInWeek,
+        r.ViolationDaysInWeek,
+        r.CleanDaysInWeek,
+        r.Defaulter
+      ]);
+
+      // Date & time formatting
+      row.getCell(9).numFmt = 'dd-mmm-yy';
+      row.getCell(10).numFmt = 'h:mm:ss AM/PM';
+      row.getCell(11).numFmt = 'h:mm:ss AM/PM';
+
+      row.eachCell(c => {
+        c.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+        c.alignment = { vertical: 'middle', horizontal: 'left' };
+      });
+    });
+
+    ws.autoFilter = 'A2:Q2';
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const filename =
+      `TimeDuration_${region.toUpperCase()}_${formatDisplayDate(from)}.xlsx`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
+
+
+  // --- Excel for Daily Access (unchanged) ---
+  const generateDailyAccessExcel = async allRows => {
+    const wb = new ExcelJS.Workbook();
+    
+    for (const emp of selectedEmps) {
+      const ws = wb.addWorksheet(emp.substring(0, 31));
+      ws.addRow([
+        'Date', 'Time', 'Name', 'Contractor ID', 'Card No',
+        'Door Name', 'Message Type', 'Partition', 'Swipe'
+      ]);
+      const hdr = ws.getRow(1);
+      hdr.font = { bold: true };
+      hdr.alignment = { vertical: 'middle', horizontal: 'center' };
+      hdr.eachCell(c => {
+        c.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+      });
+      ws.columns = [
+        { key: 'date', width: 12 },
+        { key: 'time', width: 12 },
+        { key: 'name', width: 25 },
+        { key: 'id', width: 15 },
+        { key: 'card', width: 15 },
+        { key: 'door', width: 40 },
+        { key: 'msg', width: 15 },
+        { key: 'part', width: 15 },
+        { key: 'swipe', width: 10 }
+      ];
+      const rows = allRows.filter(r => r.ObjectName1 === emp);
+      if (!rows.length) {
+        ws.mergeCells('A2', 'I2');
+        ws.getCell('A2').value = 'There is no swipe records found in Ccure';
+        ws.getCell('A2').alignment = { horizontal: 'center' };
+      } else {
+
+
+        rows.forEach(r => {
+          const dt = new Date(r.LocaleMessageTime);
+          const row = ws.addRow([
+            dt, dt,
+            r.ObjectName1,
+            r.EmployeeID,
+            r.CardNumber,
+            r.Door || r.ObjectName2 || '',
+            r.AdmitCode || r.Messagetype || '',
+            r.location,
+            r.Swipe || r.Direction || ''
+          ]);
+          row.getCell(1).numFmt = 'dd-mmm-yy';
+          row.getCell(2).numFmt = 'h:mm:ss AM/PM';
+
+
+// rows.forEach(r => {
+//   // Format the LocaleMessageTime to string
+//   const dateTime = new Date(r.LocaleMessageTime);
+  
+//   // Manually format to 'YYYY-MM-DD HH:mm:ss.SSS'
+//   const formattedDateTime = dateTime.toISOString().replace('T', ' ').replace('Z', '');
+
+//   const [datePart, timePart] = formattedDateTime.split(' ');
+
+//   const row = ws.addRow([
+//     datePart,        // e.g., '2025-08-04'
+//     timePart,        // e.g., '16:36:24.000'
+//     r.ObjectName1,
+//     r.EmployeeID,
+//     r.CardNumber,
+//     r.Door || r.ObjectName2 || '',
+//     r.AdmitCode || r.Messagetype || '',
+//     r.location,
+//     r.Swipe || r.Direction || ''
+//   ]);
+
+//   // Force Excel to treat these as plain text
+//   row.getCell(1).numFmt = '@';
+//   row.getCell(2).numFmt = '@';
+
+
+
+
+          row.eachCell(c => {
+            c.border = {
+              top: { style: 'thin' }, left: { style: 'thin' },
+              bottom: { style: 'thin' }, right: { style: 'thin' }
+            };
+            c.alignment = { vertical: 'middle', horizontal: 'left' };
+          });
+        });
+      }
+      ws.autoFilter = 'A1:I1';
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const filename = `Daily Access Report(${formatDisplayDate(from)} to ${formatDisplayDate(to)}).xlsx`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
+
+
+
+
+
+  // --- Excel for Rejection (unchanged) ---
+  const generateRejectionExcel = async data => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Rejection');
+
+    // Title
+    const title = `${region.toUpperCase()} Rejection Report - ${formatDisplayDate(from)}`;
+    ws.mergeCells('A1:J1');
+    ws.getCell('A1').value = title;
+    ws.getCell('A1').font = { bold: true, size: 14 };
+    ws.getCell('A1').alignment = { horizontal: 'center' };
+
+    // Header
+    const headers = [
+      'Sr. No.', 'Date', 'Time', 'Employee Name', 'Employee ID',
+      'Access Card No.', 'Rejection Type', 'Door Name', 'Location', 'Swipe'
+    ];
+    const headerRow = ws.addRow(headers);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.eachCell(c => {
+      c.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
+    });
+
+    // Columns
+    ws.columns = [
+      { key: 'sr', width: 8 },
+      { key: 'date', width: 12 },
+      { key: 'time', width: 12 },
+      { key: 'name', width: 25 },
+      { key: 'id', width: 15 },
+      { key: 'card', width: 15 },
+      { key: 'type', width: 15 },
+      { key: 'door', width: 40 },
+      { key: 'loc', width: 15 },
+      { key: 'swipe', width: 10 }
+    ];
+
+    // Data
+    data.forEach((r, idx) => {
+      const d = r.DateOnly ? new Date(r.DateOnly) : new Date(r.LocaleMessageTime);
+      const t = r.Swipe_Time ? new Date(r.Swipe_Time) : new Date(r.LocaleMessageTime);
+      const row = ws.addRow([
+        idx + 1, d, t,
+        r.ObjectName1 || '0',
+        r.EmployeeID || '0',
+        r.CardNumber || '0',
+        r.Rejection_Type || '',
+        r.Door || '',
+        r.location || '',
+        r.Direction || r.Swipe || ''
+      ]);
+      row.getCell(2).numFmt = 'dd-mmm-yy';
+      row.getCell(3).numFmt = 'h:mm:ss AM/PM';
+      row.eachCell(c => {
+        c.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+        c.alignment = { vertical: 'middle', horizontal: 'left' };
+      });
+    });
+
+    // Summary
+    const counts = data.reduce((a, r) => {
+      const k = r.Rejection_Type || 'Unknown';
+      a[k] = (a[k] || 0) + 1; return a;
+    }, {});
+    let rowIdx = 3;
+    ws.getCell(rowIdx, 11).value = 'Rejection';
+    ws.getCell(rowIdx, 12).value = 'Count';
+    [11, 12].forEach(c => {
+      const cell = ws.getCell(rowIdx, c);
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: 'center' };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
+    });
+    rowIdx++;
+    Object.entries(counts).forEach(([type, cnt]) => {
+      ws.getCell(rowIdx, 11).value = type;
+      ws.getCell(rowIdx, 12).value = cnt;
+      [11, 12].forEach(c => {
+        const cell = ws.getCell(rowIdx, c);
+        cell.alignment = { horizontal: 'left' };
+        cell.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+      });
+      rowIdx++;
+    });
+    // Total
+    ws.getCell(rowIdx, 11).value = 'Total';
+    ws.getCell(rowIdx, 12).value = data.length;
+    [11, 12].forEach(c => {
+      const cell = ws.getCell(rowIdx, c);
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: 'left' };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
+    });
+
+    // Download
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const filename = `${region.toUpperCase()} Rejection Report - ${formatDisplayDate(from)}.xlsx`;
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
+
+
+
+
+
+  // --- Export driver ---
+
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      const baseParams = {
+        region,
+        location: location || undefined
+      };
+
+      // Helper function to format dates in local time without timezone conversion
+      const formatLocalDate = (date, endOfDay = false) => {
+        const d = new Date(date);
+        if (endOfDay) {
+          d.setHours(23, 59, 59, 999);
+        } else {
+          d.setHours(0, 0, 0, 0);
+        }
+        // Format as YYYY-MM-DDTHH:mm:ss without timezone
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+          `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      };
+
+     
+
+      // this work some correctly not all
+
+      if (tab === 0) {
+        const params = {
+          ...baseParams,
+   
+        from: formatLocalDate(from),
+     to:   formatLocalDate(to, true),
+          employees: selectedEmps.join(',')
+        };
+
+
+
+ const resp = await axios.get('/api/reports/daily-access', { params })
+// Normalize from/to to full-day bounds
+
+
+// const startDate = new Date(from);
+// startDate.setHours(0, 0, 0, 0);
+// const endDate = new Date(to);
+// endDate.setHours(23, 59, 59, 999);
+
+// const filtered = resp.data.data.filter(r => {
+//   const dt = new Date(r.LocaleMessageTime);
+//   return dt >= startDate && dt <= endDate;
+// });
+
+
+// instead of 00:00 → 23:59:59
+const startDate = new Date(from);
+startDate.setHours(8, 0, 0, 0);
+const endDate = new Date(to);
+endDate.setHours(8, 0, 0, 0);
+
+const filtered = resp.data.data.filter(r => {
+  const dt = new Date(r.LocaleMessageTime);
+  return dt >= startDate && dt < endDate;
+});
+
+
+
+
+await generateDailyAccessExcel(filtered);
+
+      }
+
+      else if (tab === 1) {
+        // Raw
+        const params = {
+          ...baseParams,
+          startDate: formatLocalDate(from),
+          endDate: formatLocalDate(to, true)
+        };
+
+        const resp = await axios.get('/api/reports/raw', { params });
+
+
+
+        // Create local date objects for comparison
+       // Normalize from/to to full-day bounds
+const startDate = new Date(from);
+startDate.setHours(0, 0, 0, 0);
+const endDate = new Date(to);
+endDate.setHours(23, 59, 59, 999);
+
+const rows = resp.data.data.filter(r => {
+  // If DateOnly exists it's already at midnight; else fall back to the full datetime
+  const date = new Date(r.DateOnly || r.LocaleMessageTime);
+  return date >= startDate && date <= endDate;
+});
+
+
+
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Raw');
+        XLSX.writeFile(wb, `RawReport_${region}_${startDate.toISOString().slice(0, 10)}_to_${endDate.toISOString().slice(0, 10)}.xlsx`);
+      }
+      else if (tab === 2) {
+        // Rejection
+        const params = {
+          ...baseParams,
+
+          startDate: formatLocalDate(from),
+          endDate: formatLocalDate(to, true)
+
+        };
+
+
+        const resp = await axios.get('/api/reports/rejection', { params });
+
+
+//Normalize from/to to full-day bounds
+const startDate = new Date(from);
+startDate.setHours(0, 0, 0, 0);
+const endDate = new Date(to);
+endDate.setHours(23, 59, 59, 999);
+
+
+const rows = resp.data.data.filter(r => {
+  const date = new Date(r.DateOnly || r.LocaleMessageTime);
+  return date >= startDate && date <= endDate;
+});
+await generateRejectionExcel(rows);
+      }
+
+
+
+      else if (tab === 3) {
+        // Time Duration
+        const params = {
+          ...baseParams,
+          startDate: formatLocalDate(from),
+          endDate: formatLocalDate(to, true),
+          partition: location.split('.').pop()
+        };
+        const resp = await axios.get('/api/reports/time-duration', { params });
+        await generateTimeDurationExcel(resp.data.data);
+      }
+      else if (tab === 4) {
+        let url = '';
+
+        if (region === 'laca') {
+          if (!location) {
+            url = 'http://10.199.22.57:3003/history';
+          } else {
+            const LACA_URLS = {
+              'CR.Costa Rica Partition': 'http://10.199.22.57:3003/partition/CR.Costa%20Rica%20Partition/history',
+              'MX.Mexico City': 'http://10.199.22.57:3003/partition/MX.Mexico%20City/history',
+              'AR.Cordoba': 'http://10.199.22.57:3003/partition/AR.Cordoba/history',
+              'PA.Panama City': 'http://10.199.22.57:3003/partition/PA.Panama%20City/history',
+              'PE.Lima': 'http://10.199.22.57:3003/partition/PE.Lima/history',
+              'BR.Sao Paulo': 'http://10.199.22.57:3003/partition/BR.Sao%20Paulo/history',
+            };
+            url = LACA_URLS[location] || 'http://10.199.22.57:3003/history';
+          }
+        }
+
+        else if (region === 'namer') {
+          if (!location) {
+            url = 'http://10.199.22.57:3002/history';
+          } else {
+            const NAMER_URLS = {
+              'US.Denver': 'http://10.199.22.57:3002/partition/US.CO.OBS/history',
+              'US.Miami': 'http://10.199.22.57:3002/partition/US.FL.Miami/history',
+              'US.NYC': 'http://10.199.22.57:3002/partition/US.NYC/history',
+              'US.Austin': 'http://10.199.22.57:3002/partition/USA%2FCanada%20Default/history',
+            };
+            url = NAMER_URLS[location] || 'http://10.199.22.57:3002/history';
+          }
+        }
+
+        else if (region === 'apac') {
+          if (!location) {
+            url = 'http://10.199.22.57:3000/history';
+          } else {
+            const APAC_URLS = {
+              'IN.Pune': 'http://10.199.22.57:3002/partition/Pune/history',
+              'MY.Kuala Lumpur': 'http://10.199.22.57:3002/partition/MY.Kuala Lumpur/history',
+              'PH.Manila': 'http://10.199.22.57:3002/partition/PH.Manila/history',
+              'JP.Tokyo': 'http://10.199.22.57:3000/history',
+              'CN.Beijing': 'http://10.199.22.57:3000/history',
+              'APAC.Default': 'http://10.199.22.57:3000/history',
+
+            };
+            url = APAC_URLS[location] || 'http://10.199.22.57:3000/history';
+          }
+        }
+
+        else if (region === 'emea') {
+          if (!location) {
+            url = 'http://10.199.22.57:3001/history';
+          } else {
+            const EMEA_URLS = {
+              'AUT.Vienna': 'http://10.199.22.57:3001/history',
+              'DU.Abu Dhabi': 'http://10.199.22.57:3001/history',
+              'IE.Dublin': 'http://10.199.22.57:3001/history',
+              'IT.Rome': 'http://10.199.22.57:3001/history',
+              'LT.Vilnius': 'http://10.199.22.57:3001/history',
+              'MA.Casablanca': 'http://10.199.22.57:3001/history',
+              'RU.Moscow': 'http://10.199.22.57:3001/history',
+              'UK.London': 'http://10.199.22.57:3001/history',
+              'ES.Madrid': 'http://10.199.22.57:3001/history',
+
+
+            };
+            url = EMEA_URLS[location] || 'http://10.199.22.57:3001/history';
+          }
+        }
+
+        if (url) {
+          window.location.href = url;
+        } else {
+          alert('Invalid region or location selected.');
+        }
+      }
+
+
+
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
+  const disabled = loading
+    || !region
+    || (tab === 0 && (!from || !to || selectedEmps.length === 0))
+    || ((tab === 1 || tab === 3) && (!from || !to))  // Changed to require both dates for Raw and Time Duration
+    || (tab === 2 && !from);
 
   return (
-    <Box sx={{ backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
-      {/* Header */}
+    <Box py={4} sx={{ backgroundColor: '#121212', minHeight: '100vh' }}>
+      {/* Header Section */}
       <Box
         sx={{
-          background: 'linear-gradient(90deg, #1a1a1a, #333)',
+          backgroundColor: '#000',
           color: '#FFCC00',
           textAlign: 'center',
-          py: 4,
-          boxShadow: 3,
-          mb: 4
+
+          mb: 4,
+          borderBottom: '4px solid #FFCC00',
         }}
       >
-        <Typography variant="h3" fontWeight="bold">
+        <Typography variant="h4" py={1}>
           Global Security Operation Center Reports
-        </Typography>
-        <Typography variant="subtitle1" sx={{ color: '#fff', opacity: 0.85 }}>
-          Generate, export, and manage detailed security reports
         </Typography>
       </Box>
 
-      {/* Content Container */}
-      <Box maxWidth="lg" mx="auto" px={2} pb={6}>
-        {/* Tabs */}
-        <Paper
-          elevation={3}
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            mb: 3
-          }}
-        >
-          <Tabs
-            value={tab}
-            onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons
-            allowScrollButtonsMobile
-            sx={{
-              backgroundColor: '#fff',
-              '& .MuiTab-root': {
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: 5,
-                m: 0.5,
-                minHeight: 48
-              },
-              '& .Mui-selected': {
-                backgroundColor: '#FFCC00',
-                color: '#000 !important'
-              },
-              '& .MuiTabs-indicator': {
-                display: 'none'
-              }
-            }}
-          >
-            <Tab label="Daily Access" />
-            <Tab label="Raw" />
-            <Tab label="Rejection" />
-            <Tab label="Time Duration" />
-            <Tab label="HeadCount" />
-          </Tabs>
-        </Paper>
+      {/* Tabs */}
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        centered
+        // textColor='#FFF'
+        indicatorColor="secondary"
+        sx={{
+          mb: 3,
+          '.Mui-selected': { color: '#FFF' },
+          '.MuiTabs-indicator': { backgroundColor: '#FFCC00' },
+          borderColor: ' #FFCC00',
 
-        {/* Filters */}
-        <Paper elevation={3} sx={{ p: 3, borderRadius: 3, mb: 4 }}>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Box
-              display="grid"
-              gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))"
-              gap={2}
+        }}
+      >
+        <Tab label="Daily Access" />
+        <Tab label="Raw" />
+        <Tab label="Rejection" />
+        <Tab label="Time Duration" />
+        <Tab label="HeadCount" />
+      </Tabs>
+
+      {/* Filter Section */}
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <Box display="flex" flexWrap="wrap" gap={2} mb={4} >
+          {/* Region */}
+
+          <FormControl sx={{ minWidth: 250 }}>
+            <InputLabel>Region</InputLabel>
+            <Select
+              value={region}
+              onChange={e => { setRegion(e.target.value); setLocation(''); }}
+              input={<OutlinedInput label="Region" sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border on hover
+                }
+              }} />}
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border on hover
+                }
+              }}
             >
-              {/* Region */}
-              <FormControl fullWidth>
-                <InputLabel>Region</InputLabel>
-                <Select
-                  value={region}
-                  onChange={e => { setRegion(e.target.value); setLocation(''); }}
-                  input={<OutlinedInput label="Region" />}
-                >
-                  {REGION_OPTIONS.map(r =>
-                    <MenuItem key={r} value={r}>{r.toUpperCase()}</MenuItem>
-                  )}
-                </Select>
-              </FormControl>
-
-              {/* Location */}
-              <FormControl fullWidth disabled={!region}>
-                <InputLabel>Location</InputLabel>
-                <Select
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                  input={<OutlinedInput label="Location" />}
-                >
-                  {(LOCATION_MAP[region] || []).map(loc =>
-                    <MenuItem key={loc} value={loc}>
-                      {loc.split('.').pop()}
-                    </MenuItem>
-                  )}
-                </Select>
-              </FormControl>
-
-              {/* From Date */}
-              {tab !== 4 && (
-                <Box>
-                  <TextField
-                    label={tab === 0 ? 'From Date' : 'Start Date'}
-                    value={from ? from.toLocaleDateString() : ''}
-                    readOnly
-                    fullWidth
-                    onClick={() => setShowFromCal(true)}
-                  />
-                  {showFromCal && (
-                    <StaticDatePicker
-                      displayStaticWrapperAs="desktop"
-                      value={from}
-                      onChange={(newValue) => setFrom(newValue)}
-                      onClose={() => setShowFromCal(false)}
-                      renderInput={(params) => <TextField {...params} />}
-                    />
-                  )}
-                </Box>
+              {REGION_OPTIONS.map(r =>
+                <MenuItem key={r} value={r}>{r.toUpperCase()}</MenuItem>
               )}
+            </Select>
+          </FormControl>
 
-              {/* To Date */}
-              {tab !== 4 && (
-                <Box>
-                  <TextField
-                    label={tab === 0 ? 'To Date' : 'End Date'}
-                    value={to ? to.toLocaleDateString() : ''}
-                    readOnly
-                    fullWidth
-                    onClick={() => setShowToCal(true)}
-                  />
-                  {showToCal && (
-                    <StaticDatePicker
-                      displayStaticWrapperAs="desktop"
-                      value={to}
-                      onChange={(newValue) => setTo(newValue)}
-                      onClose={() => setShowToCal(false)}
-                      renderInput={(params) => <TextField {...params} />}
-                    />
-                  )}
-                </Box>
+          {/* Location */}
+          <FormControl sx={{ minWidth: 250 }}>
+            <InputLabel>Location</InputLabel>
+            <Select
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              input={<OutlinedInput label="Location" sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border on hover
+                }
+              }} />}
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#FFF' // White border on hover
+                }
+              }}
+              disabled={!region}
+            >
+              {(LOCATION_MAP[region] || []).map(loc =>
+                <MenuItem key={loc} value={loc}>
+                  {loc.split('.').pop()}
+                </MenuItem>
               )}
+            </Select>
+          </FormControl>
 
-              {/* Employees */}
-              {tab === 0 && (
-                <FormControl fullWidth>
-                  <InputLabel>Employees</InputLabel>
-                  <Select
-                    multiple
-                    value={selectedEmps}
-                    onChange={e => setSelectedEmps(e.target.value)}
-                    input={<OutlinedInput label="Employees" />}
-                    renderValue={vals => vals.join(', ')}
-                  >
-                    {EMPLOYEE_OPTIONS.map(n => (
-                      <MenuItem key={n} value={n}>
-                        <Checkbox checked={selectedEmps.includes(n)} />
-                        <ListItemText primary={n} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+          {/* From Date */}
+          {tab !== 4 && (
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                label={tab === 0 ? 'From Date' : 'Start Date'}
+                value={from ? from.toLocaleDateString() : ''}
+                readOnly
+                onClick={() => setShowFromCal(true)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: '#FFF' },
+                    '&:hover fieldset': { borderColor: '#FFF' }
+                  }
+                }}
+              />
+              {showFromCal && (
+                <StaticDatePicker
+                  displayStaticWrapperAs="desktop"
+                  value={from}
+                  onChange={(newValue) => setFrom(newValue)}
+                  onAccept={() => setShowFromCal(false)}
+                  onClose={() => setShowFromCal(false)}
+                  renderInput={(params) => <TextField {...params} />}
+                  views={['year', 'month', 'day']}
+                />
               )}
             </Box>
-          </LocalizationProvider>
-        </Paper>
+          )}
 
-        {/* Action Button */}
-        <Box textAlign="center" mt={4}>
+          {/* To Date */}
+          {tab !== 4 && (
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                label={tab === 0 ? 'To Date' : 'End Date'}
+                value={to ? to.toLocaleDateString() : ''}
+                readOnly
+                onClick={() => setShowToCal(true)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: '#FFF' },
+                    '&:hover fieldset': { borderColor: '#FFF' }
+                  }
+                }}
+              />
+              {showToCal && (
+                <StaticDatePicker
+                  displayStaticWrapperAs="desktop"
+                  value={to}
+                  onChange={(newValue) => setTo(newValue)}
+                  onAccept={() => setShowToCal(false)}
+                  onClose={() => setShowToCal(false)}
+                  renderInput={(params) => <TextField {...params} />}
+                  views={['year', 'month', 'day']}
+                />
+              )}
+            </Box>
+          )}
+
+
+
+          {/* Employees (only Daily) */}
+          {tab === 0 && (
+            <FormControl sx={{ minWidth: 250 }}>
+              <InputLabel>Employees</InputLabel>
+              <Select
+                multiple
+                value={selectedEmps}
+                onChange={e => setSelectedEmps(e.target.value)}
+                input={<OutlinedInput label="Employees" sx={{
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFF' // White border
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFF' // White border on hover
+                  }
+                }} />}
+                sx={{
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFF' // White border
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#FFF' // White border on hover
+                  }
+                }}
+                renderValue={vals => vals.join(', ')}
+              >
+                {EMPLOYEE_OPTIONS.map(n => (
+                  <MenuItem key={n} value={n}>
+                    <Checkbox checked={selectedEmps.includes(n)} />
+                    <ListItemText primary={n} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+
+        </Box>
+      </LocalizationProvider>
+
+      {/* Action Button */}
+  
+
+
+      <Box textAlign="center">
+        {tab === 4 ? (
+          // HeadCount tab: show "Navigate To" button
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleGenerate}
+            disabled={!region || loading}
+            startIcon={loading ? <CircularProgress size={20} /> : null}
+            sx={{
+              backgroundColor: '#FFCC00',
+              color: 'black',
+              fontWeight: 'bold',
+              px: 4,
+              '&:hover': {
+                backgroundColor: '#f4d03f',
+              },
+            }}
+          >
+            {loading
+              ? 'Loading…'
+              : location
+                ? `Navigate to ${location.split('.').pop()}`
+                : `Navigate to ${region.toUpperCase()}`}
+          </Button>
+        ) : (
+          // Other tabs: show "Export to Excel" button
           <Button
             variant="contained"
             size="large"
@@ -199,24 +889,19 @@ export default function ReportsPage() {
               backgroundColor: '#FFCC00',
               color: 'black',
               fontWeight: 'bold',
-              px: 5,
-              py: 1.5,
-              fontSize: '1rem',
-              borderRadius: 5,
-              boxShadow: 3,
+              px: 4,
               '&:hover': {
-                backgroundColor: '#f4d03f'
-              }
+                backgroundColor: '#f4d03f',
+              },
             }}
           >
-            {loading
-              ? 'Generating…'
-              : tab === 4
-              ? `Navigate to ${location ? location.split('.').pop() : region.toUpperCase()}`
-              : 'Export to Excel'}
+            {loading ? 'Generating…' : 'Export to Excel'}
           </Button>
-        </Box>
+        )}
       </Box>
+
     </Box>
   );
+
 }
+
