@@ -1,184 +1,130 @@
-import React from 'react';
-import { IdCard, User, Users, Hash, CheckCircle, CreditCard, Activity } from 'lucide-react';
-import CurrentLocation from './CurrentLocation';
+// EmployeeCard.jsx
+import React from "react";
+import { FaIdBadge, FaUserTie, FaUserCheck, FaCreditCard, FaMapMarkerAlt, FaCalendarAlt, FaClock, FaDoorOpen, FaExchangeAlt } from "react-icons/fa";
+import CurrentLocation from "./CurrentLocation";
 
 export default function EmployeeCard({ emp }) {
   if (!emp) return null;
 
-  const rawStatus = emp.Employee_Status || 'Deactive';
+  const rawStatus = emp.Employee_Status || "Deactive";
   const normalizedStatus = rawStatus.trim().toLowerCase();
-  const isTerminated = normalizedStatus === 'terminated';
-
-  const labelStyle = { opacity: 0.7, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 };
-
-  const infoRow = (icon, label, value) => (
-    <>
-      <label style={labelStyle}>
-        {icon}
-        {label}
-      </label>
-      <span>{value}</span>
-    </>
-  );
+  const isTerminated = normalizedStatus === "terminated";
 
   return (
     <div
-      className={`employee-card ${isTerminated ? 'terminated' : ''}`}
-      data-status={normalizedStatus}
+      className={`employee-card ${isTerminated ? "terminated" : ""}`}
       style={{
-        display: 'flex',
-        background: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
-        overflow: 'hidden',
-        border: '1px solid #eaeaea'
+        display: "flex",
+        gap: "1.5rem",
+        background: "#fff",
+        padding: "1.5rem",
+        borderRadius: "16px",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+        alignItems: "flex-start",
+        maxWidth: 700
       }}
     >
-      {/* Profile Image */}
-      <div style={{ minWidth: 180, background: '#f7f9fc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
-        <div style={{ position: 'relative' }}>
-          <img
-            src={`http://localhost:5001${emp.imageUrl}`}
-            alt={emp.EmpName}
-            style={{
-              width: 140,
-              height: 160,
-              objectFit: 'cover',
-              borderRadius: 8,
-              border: '2px solid #ddd'
-            }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/images/no-photo.jpg';
-            }}
-          />
-          <span
-            style={{
-              position: 'absolute',
-              bottom: -8,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: normalizedStatus === 'active' ? '#28a745' : '#999',
-              color: '#fff',
-              padding: '3px 10px',
-              borderRadius: 12,
-              fontSize: 12,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            {rawStatus}
-          </span>
-        </div>
+      {/* Profile Image Section (UNCHANGED) */}
+      <div className="card-photo-section" style={{ minWidth: 140, position: "relative" }}>
+        <img
+          src={`http://localhost:5001${emp.imageUrl}`}
+          alt={emp.EmpName}
+          style={{
+            width: 120,
+            height: 120,
+            objectFit: "cover",
+            borderRadius: 8,
+            border: "2px solid #f0f0f0"
+          }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/images/no-photo.jpg";
+          }}
+        />
+        <span
+          className={`status-badge ${normalizedStatus === "active" ? "active" : "deactive"}`}
+          style={{
+            position: "absolute",
+            bottom: 6,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: normalizedStatus === "active" ? "#0b9" : "#999",
+            color: "#fff",
+            padding: "4px 8px",
+            borderRadius: 6,
+            fontSize: 12
+          }}
+        >
+          {rawStatus}
+        </span>
       </div>
 
-      {/* Employee Details */}
-      <div style={{ flex: 1, padding: '1rem' }}>
-        <h2 style={{ margin: 0, marginBottom: '0.8rem', fontSize: '1.4rem', fontWeight: 600, color: '#333' }}>
+      {/* Combined Data Table */}
+      <div style={{ flex: 1 }}>
+        <h2 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: "600", color: "#333" }}>
           {emp.EmpName}
         </h2>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '160px 1fr',
-          gap: '8px 16px',
-          fontSize: 14,
-          color: '#555',
-          borderTop: '1px solid #eee',
-          paddingTop: '0.8rem'
-        }}>
-          {infoRow(<IdCard size={16} />, 'Employee ID', emp.EmployeeID || '—')}
-          {infoRow(<User size={16} />, 'Personnel Type', emp.PersonnelType || '—')}
-          {infoRow(<Users size={16} />, 'Manager', emp.Manager_Name || '—')}
-          {infoRow(<Hash size={16} />, 'Manager WU ID', emp.Manager_WU_ID || '—')}
-          {infoRow(<CheckCircle size={16} />, 'Status', rawStatus)}
-          {infoRow(<CreditCard size={16} />, 'Total Cards', emp.Total_Cards ?? 0)}
-          {infoRow(<Activity size={16} />, 'Active Cards', emp.Active_Cards ?? 0)}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr",
+            gap: "8px 12px",
+            alignItems: "center",
+            fontSize: 14
+          }}
+        >
+          {/* Employee Info */}
+          <span><FaIdBadge style={{ color: "#555" }} /> Employee ID</span>
+          <span>{emp.EmployeeID || "—"}</span>
+
+          <span><FaUserTie style={{ color: "#555" }} /> Personnel Type</span>
+          <span>{emp.PersonnelType || "—"}</span>
+
+          <span><FaUserCheck style={{ color: "#555" }} /> Manager</span>
+          <span>{emp.Manager_Name || "—"}</span>
+
+          <span><FaIdBadge style={{ color: "#555" }} /> Manager WU ID</span>
+          <span>{emp.Manager_WU_ID || "—"}</span>
+
+          <span><FaUserCheck style={{ color: "#555" }} /> Status</span>
+          <span>{rawStatus}</span>
+
+          <span><FaCreditCard style={{ color: "#555" }} /> Total Cards</span>
+          <span>{emp.Total_Cards ?? 0}</span>
+
+          <span><FaCreditCard style={{ color: "#555" }} /> Active Cards</span>
+          <span>{emp.Active_Cards ?? 0}</span>
+
+          {/* Location Info */}
+          {emp.location && emp.location.found && (
+            <>
+              <span><FaMapMarkerAlt style={{ color: "#555" }} /> Location</span>
+              <span>{emp.location.partition || "—"} {emp.location.floor ? `· ${emp.location.floor}` : ""}</span>
+
+              <span><FaMapMarkerAlt style={{ color: "#555" }} /> Zone</span>
+              <span>{emp.location.Zone || "—"}</span>
+
+              <span><FaCalendarAlt style={{ color: "#555" }} /> Date</span>
+              <span>{emp.location.date || "—"}</span>
+
+              <span><FaClock style={{ color: "#555" }} /> Time</span>
+              <span>{emp.location.time || "—"}</span>
+
+              <span><FaDoorOpen style={{ color: "#555" }} /> Door</span>
+              <span>{emp.location.door || "—"}</span>
+
+              <span><FaExchangeAlt style={{ color: "#555" }} /> Direction</span>
+              <span>{emp.location.direction || "—"}</span>
+            </>
+          )}
         </div>
 
-        {/* Swipe Details */}
-        <div style={{ marginTop: '1rem' }}>
+        {/* Live Location Component */}
+        <div style={{ marginTop: 8 }}>
           <CurrentLocation empId={emp.id} />
         </div>
       </div>
-    </div>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { MapPin, Calendar, Clock, DoorOpen, ArrowRight } from 'lucide-react';
-
-export default function CurrentLocation({ empId }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!empId) return;
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    axios.get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
-      .then(res => { if (!cancelled) setLoc(res.data); })
-      .catch(() => { if (!cancelled) setError('Failed to load location'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [empId]);
-
-  if (!empId) return null;
-
-  const row = (icon, label, value) => (
-    <>
-      <label style={{ opacity: 0.7, display: 'flex', alignItems: 'center', gap: 6 }}>{icon}{label}</label>
-      <span>{value}</span>
-    </>
-  );
-
-  return (
-    <div style={{
-      background: '#f9fafb',
-      padding: '0.8rem',
-      borderRadius: 8,
-      fontSize: 13,
-      color: '#333',
-      border: '1px solid #eee'
-    }}>
-      <h4 style={{ margin: '0 0 0.6rem 0', fontSize: 14, fontWeight: 600 }}>Swipe Details</h4>
-
-      {loading && <div>Loading location…</div>}
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      {!loading && loc && !loc.found && <div style={{ color: '#28a745' }}>No recent swipe</div>}
-
-      {!loading && loc && loc.found && (() => {
-        const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-        const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
-        return (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '140px 1fr',
-            gap: '6px 12px'
-          }}>
-            {row(<MapPin size={14} />, 'Location', `${loc.partition || '—'}${loc.floor ? ` · ${loc.floor}` : ''}`)}
-            {row(<MapPin size={14} />, 'Zone', loc.Zone || '—')}
-            {row(<Calendar size={14} />, 'Date', istDate)}
-            {row(<Clock size={14} />, 'Time', istTime)}
-            {row(<DoorOpen size={14} />, 'Door', loc.door || '—')}
-            {row(<ArrowRight size={14} />, 'Direction', loc.direction || '—')}
-          </div>
-        );
-      })()}
     </div>
   );
 }
