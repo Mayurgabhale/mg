@@ -1,34 +1,31 @@
-{!loading && loc && loc.found && (() => {
-  const istDate = loc.timestampUTC
-    ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-      })
-    : '';
+<div className="card-details" style={{ flex: 1 }}>
+        <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>{emp.EmpName}</h2>
 
-  const istTime = loc.timestampUTC
-    ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-      })
-    : '';
+        <div className="card-info" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '6px 12px', alignItems: 'center' }}>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Employee ID</label>
+          <span>{emp.EmployeeID || '—'}</span>
 
-  return (
-    <div
-      style={{
-        fontSize: 14,
-        color: '#fff',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      }}
-    >
-      {(loc.partition || '—') +
-        (loc.floor ? ` · ${loc.floor}` : '') +
-        (loc.Zone ? ` · ${loc.Zone}` : '')} ·
-      {loc.Zone && ` Zone: ${loc.Zone} ·`}
-      {istDate && ` Date: ${istDate} ·`}
-      {istTime && ` Time: ${istTime} ·`}
-      {loc.door && ` Door: ${loc.door} ·`}
-      {loc.direction && ` Direction: ${loc.direction}`}
-    </div>
-  );
-})()}
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Personnel Type</label>
+          <span>{emp.PersonnelType || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager</label>
+          <span>{emp.Manager_Name || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager WU ID</label>
+          <span>{emp.Manager_WU_ID || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Status</label>
+          <span>{rawStatus}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Total Cards</label>
+          <span>{emp.Total_Cards ?? 0}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Active Cards</label>
+          <span>{emp.Active_Cards ?? 0}</span>
+        </div>
+
+        {/* Current Location component (live) */}
+        <div style={{ marginTop: 1 , color:'#2ced0e'}}>
+          <CurrentLocation empId={emp.id} style={{  color:'#fff'}} />
+        </div>
+      </div>
