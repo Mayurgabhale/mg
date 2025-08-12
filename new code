@@ -1,4 +1,53 @@
  {/* Profile Image */}
+<div
+  className="card-photo-section"
+  style={{
+    minWidth: 140,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+>
+  <div className="photo-wrapper" style={{ position: 'relative' }}>
+    <img
+      src={`http://localhost:5001${emp.imageUrl}`}
+      alt={emp.EmpName}
+      style={{
+        width: 120,
+        height: 120,
+        objectFit: 'cover',
+        borderRadius: 8,
+        border: '2px solid #f0f0f0'
+      }}
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/images/no-photo.jpg';
+      }}
+    />
+    <span
+      className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+      style={{
+        position: 'absolute',
+        bottom: 6,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: normalizedStatus === 'active' ? '#0b9' : '#999',
+        color: '#fff',
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 12
+      }}
+    >
+      {rawStatus}
+    </span>
+  </div>
+</div>
+
+
+
+
+......
+{/* Profile Image */}
       <div className="card-photo-section" style={{ minWidth: 140 }}>
         <div className="photo-wrapper" style={{ position: 'relative' }}>
           <img
