@@ -1,72 +1,34 @@
-Pune ·          Podium Floor
-Zone:           Yellow Zone
-Date:           12/8/2025
-Time:           10:13:13 pm
-Door:           APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door
-Direction:      InDirection
+{!loading && loc && loc.found && (() => {
+  const istDate = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
 
-
-
+  const istTime = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
 
   return (
-    <div className="current-location-card" style={{ marginTop: 2 }}>
-      <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
-
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-      {!loading && loc && !loc.found && (
-        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-      )}
-      {!loading && loc && loc.found && (
-        <div style={{ fontSize: 14, color: '#fff' }}>
-          {/* Location */}
-          <div style={{ fontWeight: 600 }}>
-            {loc.partition || '—'}
-            {loc.floor ? ` · ${loc.floor}` : ''}
-            {loc.zone ? ` · ${loc.Zone}` : ''} {/* Added Zone */}
-          </div>
-
-          {/* Swipe Details */}
-          {loc.timestampUTC && (() => {
-            const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-              timeZone: 'Asia/Kolkata',
-            });
-            const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-              timeZone: 'Asia/Kolkata',
-            });
-            return (
-
-              <>
-                {loc.Zone && (
-                  <div>Zone: {loc.Zone}</div>
-                )}
-                <div style={{ marginTop: 6 }}>Date: {istDate}</div>
-                <div>Time: {istTime}</div>
-              </>
-            );
-          })()}
-
-          {loc.door && (
-            <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
-          )}
-
-
-          {loc.direction && (
-            <div>Direction: {loc.direction}</div>
-          )}
-
-
-
-        </div>
-      )}
-
-
-
-
+    <div
+      style={{
+        fontSize: 14,
+        color: '#fff',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {(loc.partition || '—') +
+        (loc.floor ? ` · ${loc.floor}` : '') +
+        (loc.Zone ? ` · ${loc.Zone}` : '')} ·
+      {loc.Zone && ` Zone: ${loc.Zone} ·`}
+      {istDate && ` Date: ${istDate} ·`}
+      {istTime && ` Time: ${istTime} ·`}
+      {loc.door && ` Door: ${loc.door} ·`}
+      {loc.direction && ` Direction: ${loc.direction}`}
     </div>
-  )
-
-}
-
+  );
+})()}
