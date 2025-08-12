@@ -1,4 +1,16 @@
+const isAway =
+  !m.present || (m.outLocation && m.outLocation.trim().toLowerCase() === "out of office");
 
+<Badge
+  bg={!isAway ? "success" : "danger"}
+  pill
+  style={{ marginBottom: "0.8rem" }}
+>
+  {!isAway ? "Available" : "Away"}
+</Badge>
+
+
+....
 
 <Badge
   bg={m.present ? "success" : "secondary"}
