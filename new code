@@ -171,5 +171,178 @@ export default function LacaERTOverview() {
   );
 }
 
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\utils\floorLookup.js
+
+// src/utils/floorLookup.js
+import doorMap from './doorMap'; // relative to this file
+
+/**
+ * Given a partition, door and direction, return the mapped floor string.
+ * Falls back to 'Unmapped' only if there's no matching entry.
+ */
+export function lookupFloor(partition, door, direction) {
+  const entry = doorMap.find(d =>
+    d.partition === partition && d.door === door
+  );
+  if (!entry) return 'Unmapped';
+
+
+  // return direction === 'InDirection'
+  //   ? entry.inDirectionFloor
+  //   : entry.outDirectionFloor;
+
+  // trim off any accidental leading/trailing spaces
+  const raw = direction === 'InDirection'
+    ? entry.inDirectionFloor
+    : entry.outDirectionFloor;
+  return raw.trim() || 'Unmapped';
+
+}
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\utils\doorMap.js
+//C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\utils\doorMap.js
+module.exports = [
+  { partition: 'AR.Cordoba', door: 'LACA ARG 1st Floor Main Entrance', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 1st Floor Emergency Stairs', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'AR_MonteVideo_DR_1stFlrCSC IN/OUT DELETE', inDirectionFloor: '1st Floor', outDirectionFloor: '1st Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor Main Entrance', inDirectionFloor: '2nd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor Emergency Stairs', inDirectionFloor: '2nd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor HR 2nd Entrance', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor IT Room', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor 1ST Entrance HR', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 3rd Floor Main Entrance', inDirectionFloor: '3rd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 3rd Floor Emergency Stairs', inDirectionFloor: '3rd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 4th Floor Emergency Stairs', inDirectionFloor: '4th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 6th Floor Main Entrance', inDirectionFloor: '6th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 6th Floor Emergency Stairs', inDirectionFloor: '6th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 4th Floor Main Entrance', inDirectionFloor: '4th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor Risk & Credit  Finance', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 2nd Floor HR File', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 5th Floor Main Entrance', inDirectionFloor: '5th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 5th Floor Emergency Stairs', inDirectionFloor: '5th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 5th FloorTreasury', inDirectionFloor: '5th Floor', outDirectionFloor: '5th Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 5th Floor IT Room', inDirectionFloor: '5th Floor', outDirectionFloor: '5th Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 7th Floor Main Entrance', inDirectionFloor: '7th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 7th Floor Emergency Stairs', inDirectionFloor: '7th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 7th Floor IT Room', inDirectionFloor: '7th Floor', outDirectionFloor: '7th Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 12TH Floor Terrace', inDirectionFloor: '12th Floor', outDirectionFloor: '12th Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 8th Floor Left Entrance Lunch Room', inDirectionFloor: '8th Floor', outDirectionFloor: '8th Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 8th Floor Right Entrance Audience', inDirectionFloor: '8th Floor', outDirectionFloor: '8th Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 8th Floor Emergency Stairs', inDirectionFloor: '8th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 9th FLOOR Main Entrance', inDirectionFloor: '9th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 9th Floor Emergency Stairs', inDirectionFloor: '9th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 10th Floor Main Entrance', inDirectionFloor: '10th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 10TH Floor Emergency Stairs', inDirectionFloor: '10th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 12th Floor Main Entrance', inDirectionFloor: '12th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 12th Floor Rear entrance', inDirectionFloor: '12th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'AR.Cordoba', door: 'AR.MonteVideo.2 Floor. HHRR Archive.DR', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG 12th Floor Emergency Stairs', inDirectionFloor: '12th Floor', outDirectionFloor: 'Out of office ' },
+
+
+
+ { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 1 IN', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 2 IN', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 3 IN', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 4 IN', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG PORTON', inDirectionFloor: 'PORTON', outDirectionFloor: 'PORTON' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG BUZON', inDirectionFloor: ' BUZON', outDirectionFloor: ' BUZON' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 1 OUT', inDirectionFloor: 'Out of office', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 2 OUT', inDirectionFloor: 'Out of office', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 3 OUT', inDirectionFloor: 'Out of office', outDirectionFloor: 'Out of office' },
+  { partition: 'AR.Cordoba', door: 'LACA ARG MOLINETE 4 OUT', inDirectionFloor: 'Out of office', outDirectionFloor: 'Out of office' },
+
+
+
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A1 Main Lobby Door', inDirectionFloor: 'Building A1', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A1 IT Room Door', inDirectionFloor: 'Building A1', outDirectionFloor: 'Building A1' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B1 Main Lobby Door', inDirectionFloor: ' Building B1', outDirectionFloor: 'Out of office ' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B1 Crystal Emergency #1 CAFETERIA', inDirectionFloor: ' Building B1', outDirectionFloor: ' Building B1' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B1 Crystal Emergency #4 SOUTH', inDirectionFloor: ' Building B1', outDirectionFloor: 'Out of office ' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B1 CRYSTAL EMERGENCY #3 SOUTH EAST', inDirectionFloor: ' Building B1', outDirectionFloor: 'Out of office ' },
+
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A1 Emergency Crystal Door', inDirectionFloor: 'Building A1', outDirectionFloor: 'Out of office ' },
+
+
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR Shower Men Door', inDirectionFloor: 'Men Shower', outDirectionFloor: 'Out of office' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR Shower Women Door', inDirectionFloor: ' Women Shower', outDirectionFloor: 'Out of office' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B1 FITNESS Door', inDirectionFloor: 'Building B1', outDirectionFloor: 'Building B1' },
+
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A2 Floor Crystal Emergency Door', inDirectionFloor: 'Building A2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A2 Emergency Elevators Door', inDirectionFloor: 'Building A2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A2 IT Room Door', inDirectionFloor: 'Building A2', outDirectionFloor: 'Building A2' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A2 Main Lobby Door', inDirectionFloor: 'Building A2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A2 Lactation Room', inDirectionFloor: 'Building A2', outDirectionFloor: 'Building A2' },
+  { partition: 'CR.Costa Rica Partition', door: 'Prueba', inDirectionFloor: 'Building A2', outDirectionFloor: 'Building A2' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A2 PCI DOOR', inDirectionFloor: 'Building A2', outDirectionFloor: 'Building A2' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A3 Floor Crystal Emergency Door', inDirectionFloor: 'Building A3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A3 Emergency Elevator Door', inDirectionFloor: 'Building A3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A3 IT Room Door borrar', inDirectionFloor: 'Building A3', outDirectionFloor: 'Building A3' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A3 Main Lobby Door', inDirectionFloor: 'Building A3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR A3 Contract File Door', inDirectionFloor: 'Building A3', outDirectionFloor: 'Building A3' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B3 IT Room Door', inDirectionFloor: 'Building B3', outDirectionFloor: 'Building B3' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B3 Main Lobby Door', inDirectionFloor: 'Building B3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B3 3RD Floor Emergency Door', inDirectionFloor: 'Building B3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B3 3rd Floor Elevator Emergency Door', inDirectionFloor: 'Building B3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B2 Emergency Door', inDirectionFloor: 'Building B2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B2 Emergency Elevators Door', inDirectionFloor: 'Building B2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B2 Security Door', inDirectionFloor: 'Building B2', outDirectionFloor: 'Building B2' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR B2  Main Lobby Door', inDirectionFloor: 'Building B2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E2 Main Lobby Door OLD', inDirectionFloor: 'Building E2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E2 Emergency Elevators Door', inDirectionFloor: 'Building E2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E3 Main Lobby OLD', inDirectionFloor: 'Building E3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E3 Emergency Elevators Door', inDirectionFloor: 'Building E3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E3 IT Room', inDirectionFloor: 'Building E3', outDirectionFloor: 'Building E3' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E2 Emergency Crystal Door', inDirectionFloor: 'Building E2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E4  Emergency Exit Elevators', inDirectionFloor: 'Building E4', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E4 Emergency Crystal #21 Door', inDirectionFloor: 'Building E4', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E3 Emergency Crystal', inDirectionFloor: 'Building E3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E4 Main Lobby Door', inDirectionFloor: 'Building E4', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E4  GPS STORAGE', inDirectionFloor: 'Building E4', outDirectionFloor: 'Building E4' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E3 Main Lobby', inDirectionFloor: 'Building E3', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR E2 Main Lobby', inDirectionFloor: 'Building E2', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR F4 IT Room', inDirectionFloor: 'Building F4', outDirectionFloor: 'Building F4' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR F4 IT Lab Door', inDirectionFloor: 'Building F4', outDirectionFloor: 'Building F4' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR F4 Main Lobby Door', inDirectionFloor: 'Building F4', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR F4 Emergency Elevators', inDirectionFloor: 'Building F4', outDirectionFloor: 'Out of office ' },
+  { partition: 'CR.Costa Rica Partition', door: 'LACA CR F4 Emergency Exit Crystal', inDirectionFloor: 'Building F4', outDirectionFloor: 'Out of office ' },
+
+
+  { partition: 'MX.Mexico City', door: 'LACA_MX DOOR-01 EMERGENCY EXIT', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Out of office ' },
+  { partition: 'MX.Mexico City', door: 'LACA_MX DOOR-02 MAIN ENTRANCE DOOR', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Out of office ' },
+  { partition: 'MX.Mexico City', door: 'LACA_MX DOOR-03 FRONT DESK TO OFFICE', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Out of office ' },
+  { partition: 'MX.Mexico City', door: 'LACA_MX DOOR-04 ELECTRIC ROOM DOOR', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Floor 01' },
+  { partition: 'MX.Mexico City', door: 'LACA_MX DOOR-05 SITE(IDF)IT ROOM Restricted Door', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Floor 01' },
+  { partition: 'PA.Panama City', door: 'LACA PA Elevator', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Out of office ' },
+  { partition: 'PA.Panama City', door: 'LACA PA Reception', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Out of office ' },
+  { partition: 'PA.Panama City', door: 'LACA PA. Parking door', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Out of office ' },
+  { partition: 'PA.Panama City', door: 'LACA PA. IT Room', inDirectionFloor: 'Floor 01', outDirectionFloor: 'Floor 01' },
+  { partition: 'PE.Lima', door: 'LACA PE 2nd Floor Main Entrance', inDirectionFloor: '2nd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA PE IT Room', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'PE.Lima', door: 'LACA PE 3rd Floor Main Entrance', inDirectionFloor: ' 3rd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA PE Security', inDirectionFloor: ' 3rd Floor', outDirectionFloor: ' 3rd Floor' },
+  { partition: 'PE.Lima', door: 'LACA PE 3rd Floor Terrace', inDirectionFloor: ' 3rd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA PE 1st Floor Emergency', inDirectionFloor: '1st Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA  PE Generator Basement', inDirectionFloor: 'Basement', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA PE 3rd  Floor Emergency', inDirectionFloor: '3rd  Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA PE 2nd West Floor Emergency', inDirectionFloor: '2nd Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'PE.Lima', door: 'LACA PE 2nd Floor Storage Room', inDirectionFloor: '2nd Floor', outDirectionFloor: '2nd Floor' },
+  { partition: 'BR.Sao Paulo', door: 'LACA BR 6TH IDF DOOR', inDirectionFloor: '6th Floor', outDirectionFloor: '6th Floor' },
+  { partition: 'BR.Sao Paulo', door: 'LACA BR 6TH FLOOR MAIN ENTRANCE DOOR', inDirectionFloor: '6th Floor', outDirectionFloor: 'Out of office ' },
+  { partition: 'BR.Sao Paulo', door: 'LACA BR 6TH FLOOR STORAGE DOOR', inDirectionFloor: '6th Floor', outDirectionFloor: '6th Floor' },
+];
+
+
+
 
 
