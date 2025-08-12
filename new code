@@ -31,3 +31,74 @@ const [rawAdmitFilter, setRawAdmitFilter] = useState('all'); // 'all' | 'admit' 
   </Typography>
 </FormControl>
 
+
+
+
+
+
+
+
+
+
+
+
+else if (tab === 1) {
+  // Raw
+  const params = {
+    ...baseParams,
+    startDate: formatLocalDate(from),
+    endDate: formatLocalDate(to, true)
+  };
+
+  // Fetch raw rows (we pass params in case backend supports server-side filtering)
+  const resp = await axios.get('/api/reports/raw', { params });
+
+  // Normalize from/to to full-day bounds for client-side filtering
+  const startDate = new Date(from);
+  startDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(to);
+  endDate.setHours(23, 59, 59, 999);
+
+  // Filter to date-range first
+  let rows = (resp.data && resp.data.data) ? resp.data.data.filter(r => {
+    const date = new Date(r.DateOnly || r.LocaleMessageTime);
+    return date >= startDate && date <= endDate;
+  }) : [];
+
+  // If user provided a search term, filter rows by EmployeeID or ObjectName1 (case-insensitive)
+  if (rawSearch && rawSearch.trim() !== '') {
+    const s = rawSearch.trim().toLowerCase();
+    rows = rows.filter(r => {
+      const id = r.EmployeeID ? String(r.EmployeeID).toLowerCase() : '';
+      const name = r.ObjectName1 ? String(r.ObjectName1).toLowerCase() : '';
+      return id.includes(s) || name.includes(s);
+    });
+  }
+
+  // Apply Admit / Reject filter (client-side)
+  if (rawAdmitFilter && rawAdmitFilter !== 'all') {
+    if (rawAdmitFilter === 'admit') {
+      rows = rows.filter(r => {
+        return r.AdmitCode && String(r.AdmitCode).toLowerCase() === 'admit';
+      });
+    } else if (rawAdmitFilter === 'reject') {
+      rows = rows.filter(r => {
+        // treat as reject if Rejection_Type exists or AdmitCode is present but not 'Admit'
+        const rejTypePresent = r.Rejection_Type && String(r.Rejection_Type).trim() !== '';
+        const admitNotAdmit = r.AdmitCode && String(r.AdmitCode).toLowerCase() !== 'admit';
+        return rejTypePresent || admitNotAdmit;
+      });
+    }
+  }
+
+  // Convert filtered rows to sheet and download (same as before)
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Raw');
+
+  const fileStart = startDate.toISOString().slice(0, 10);
+  const fileEnd = endDate.toISOString().slice(0, 10);
+  const filename = `RawReport_${region}_${fileStart}_to_${fileEnd}.xlsx`;
+
+  XLSX.writeFile(wb, filename);
+}
