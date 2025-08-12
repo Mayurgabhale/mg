@@ -1,4 +1,33 @@
 
+{(m.inLocation || m.outLocation) && (
+  <div className="mb-2">
+    <div className="d-flex align-items-center">
+      <FaMapMarkerAlt
+        className="me-2"
+        style={{ color: "#E74C3C", minWidth: "16px" }}
+      />
+      <span style={{ color: "#E74C3C" }}>
+        {m.inLocation || "Unknown"}
+      </span>
+    </div>
+    {m.outLocation && m.outLocation !== m.inLocation && (
+      <div
+        style={{
+          marginLeft: "1.5rem",
+          fontSize: "0.8rem",
+          color: "#aaa",
+        }}
+      >
+        Exit To: {m.outLocation}
+      </div>
+    )}
+  </div>
+)}
+
+
+
+
+......
 // src/components/ERTOverview.jsx
 import React, { useState, useEffect } from "react";
 import { Card, Badge, Row, Col } from "react-bootstrap";
