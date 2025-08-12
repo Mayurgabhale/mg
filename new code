@@ -1,276 +1,93 @@
-{members.map((m, i) => {
-  const isAway =
-    !m.present ||
-    (m.outLocation && m.outLocation.trim().toLowerCase() === "out of office");
+
+
+// EmployeeCard.jsx
+import React from 'react';
+import CurrentLocation from './CurrentLocation';
+
+export default function EmployeeCard({ emp }) {
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+  const isTerminated = normalizedStatus === 'terminated';
 
   return (
-    <Col key={i}>
-      <div
-        style={{
-          backgroundColor: "#2C2C2C",
-          borderRadius: "10px",
-          padding: "1rem",
-          border: "1px solid #444",
-          height: "100%",
-        }}
-      >
-        {/* Name + Status */}
-        <div className="d-flex justify-content-between align-items-center">
-          <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-            {m.name}{" "}
-            <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
-              ({m.emp_id})
-            </span>
-          </h5>
-
-          <Badge
-            bg={!isAway ? "success" : "danger"}
-            pill
-            style={{ marginBottom: "0.8rem" }}
+    <div
+      className={`employee-card ${isTerminated ? 'terminated' : ''}`}
+      data-status={normalizedStatus}
+      style={{
+        display: 'flex',
+        gap: '1rem',
+        background: '#fff',
+        padding: '1rem',
+        borderRadius: '8px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+      }}
+    >
+      {/* Profile Image */}
+      <div className="card-photo-section" style={{ minWidth: 140 }}>
+        <div className="photo-wrapper" style={{ position: 'relative' }}>
+          <img
+            src={`http://localhost:5001${emp.imageUrl}`}
+            alt={emp.EmpName}
+            style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}
+          />
+          <span
+            className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+            style={{
+              position: 'absolute',
+              bottom: 6,
+              left: 6,
+              background: normalizedStatus === 'active' ? '#0b9' : '#999',
+              color: '#fff',
+              padding: '4px 8px',
+              borderRadius: 6,
+              fontSize: 12
+            }}
           >
-            {!isAway ? "Available" : "Away"}
-          </Badge>
-        </div>
-
-        {/* Email */}
-        <div style={{ fontSize: "0.85rem" }}>
-          <div className="d-flex align-items-center mb-2">
-            <FaEnvelopeOpenText
-              className="me-2"
-              style={{ color: "#3498DB", minWidth: "16px" }}
-            />
-            <a
-              href={`mailto:${m.email}`}
-              style={{ color: "#5DADE2", textDecoration: "none" }}
-            >
-              {m.email}
-            </a>
-          </div>
-
-          {/* Location Info */}
-          {m.present && (m.inLocation || m.outLocation) && (
-            <div className="mb-2">
-              <div className="d-flex align-items-center">
-                <FaMapMarkerAlt
-                  className="me-2"
-                  style={{ color: "#E74C3C", minWidth: "16px" }}
-                />
-                <span style={{ color: "#E74C3C" }}>
-                  {m.inLocation || "Unknown"}
-                </span>
-              </div>
-              {m.outLocation && m.outLocation !== m.inLocation && (
-                <div
-                  style={{
-                    marginLeft: "1.5rem",
-                    fontSize: "0.8rem",
-                    color: "#aaa",
-                  }}
-                >
-                  Exit To: {m.outLocation}
-                </div>
-              )}
-            </div>
-          )}
+            {rawStatus}
+          </span>
         </div>
       </div>
-    </Col>
-  );
-})}
 
+      {/* Employee Info */}
+      <div className="card-details" style={{ flex: 1 }}>
+        <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>{emp.EmpName}</h2>
 
-......
-Uncaught runtime errors:
-×
-ERROR
-isAway is not defined
-ReferenceError: isAway is not defined
-    at http://localhost:3000/src_components_ERTOverview_jsx.1b7b9518ed7b9fe9c269.hot-update.js:491:24
-    at Array.map (<anonymous>)
-    at LacaERTOverview (http://localhost:3000/src_components_ERTOverview_jsx.1b7b9518ed7b9fe9c269.hot-update.js:459:29)
-    at react-stack-bottom-frame (http://localhost:3000/static/js/bundle.js:27547:18)
-    at renderWithHooks (http://localhost:3000/static/js/bundle.js:17757:20)
-    at updateFunctionComponent (http://localhost:3000/static/js/bundle.js:19450:17)
-    at beginWork (http://localhost:3000/static/js/bundle.js:20036:16)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15528:68)
-    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22109:93)
-    at workLoopSync (http://localhost:3000/static/js/bundle.js:22002:38)
+        <div className="card-info" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '6px 12px', alignItems: 'center' }}>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Employee ID</label>
+          <span>{emp.EmployeeID || '—'}</span>
 
-// src/components/ERTOverview.jsx
-import React, { useState, useEffect } from "react";
-import { Card, Badge, Row, Col } from "react-bootstrap";
-import { FaEnvelopeOpenText, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
-import membersData from "../data/lacaErtMembers.json";
-import Header from "../components/Header";
-import { lookupFloor } from "../utils/floorLookup";
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Personnel Type</label>
+          <span>{emp.PersonnelType || '—'}</span>
 
-export default function LacaERTOverview() {
-  const [members, setMembers] = useState([]);
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager</label>
+          <span>{emp.Manager_Name || '—'}</span>
 
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager WU ID</label>
+          <span>{emp.Manager_WU_ID || '—'}</span>
 
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Status</label>
+          <span>{rawStatus}</span>
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch(
-          "http://localhost:3001/api/occupancy/live-summary"
-        );
-        const liveData = await res.json();
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Total Cards</label>
+          <span>{emp.Total_Cards ?? 0}</span>
 
-        const liveDetails = Array.isArray(liveData.details)
-          ? liveData.details
-          : [];
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Active Cards</label>
+          <span>{emp.Active_Cards ?? 0}</span>
+        </div>
 
-        const merged = membersData["Team Members"].map((m) => {
-          const live = liveDetails.find(
-            (d) => d.EmployeeID === m.emp_id
-          ) || {};
-
-          const inLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-              : "";
-          const outLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-              : "";
-
-          return {
-            ...m,
-            present: !!live.EmployeeID,
-            inLocation,
-            outLocation,
-            door: live.Door || "",
-          };
-        });
-
-        // ✅ Sort so available members are first
-        const sorted = merged.sort((a, b) => (a.present === b.present ? 0 : a.present ? -1 : 1));
-
-        setMembers(sorted);
-      } catch (err) {
-        console.error("Error fetching live data:", err);
-      }
-    }
-
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <>
-      <Header />
-
-      <Card
-        style={{
-          backgroundColor: "#1C1C1C",
-          color: "#F0F0F0",
-          border: "1px solid #333",
-          borderRadius: "12px",
-        }}
-      >
-        <Card.Header
-          style={{
-            borderBottom: "1px solid #333",
-            fontWeight: "600",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            backgroundColor: "#111",
-            color: "#fff",
-            fontSize: "1.2rem",
-          }}
-        >
-          <FaUsers style={{ color: "#1ABC9C" }} />
-          Costa Rica ERT Team Members
-        </Card.Header>
-
-        <Card.Body style={{ padding: "1.5rem" }}>
-          <Row xs={1} md={3} className="g-4">
-            {members.map((m, i) => (
-              <Col key={i}>
-                <div
-                  style={{
-                    backgroundColor: "#2C2C2C",
-                    borderRadius: "10px",
-                    padding: "1rem",
-                    border: "1px solid #444",
-                    height: "100%",
-                  }}
-                >
-                  {/* Name + Status */}
-                  <div className="d-flex justify-content-between align-items-center">
-                    <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                      {m.name}{" "}
-                      <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
-                        ({m.emp_id})
-                      </span>
-                    </h5>
-
-
-                    <Badge
-                      bg={!isAway ? "success" : "danger"}
-                      pill
-                      style={{ marginBottom: "0.8rem" }}
-                    >
-                      {!isAway ? "Available" : "Away"}
-                    </Badge>
-                  </div>
-
-                  {/* Email */}
-                  <div style={{ fontSize: "0.85rem" }}>
-                    <div className="d-flex align-items-center mb-2">
-                      <FaEnvelopeOpenText
-                        className="me-2"
-                        style={{ color: "#3498DB", minWidth: "16px" }}
-                      />
-                      <a
-                        href={`mailto:${m.email}`}
-                        style={{ color: "#5DADE2", textDecoration: "none" }}
-                      >
-                        {m.email}
-                      </a>
-                    </div>
-
-                    {/* Location Info */}
-                    {m.present && (m.inLocation || m.outLocation) && (
-                      <div className="mb-2">
-                        <div className="d-flex align-items-center">
-                          <FaMapMarkerAlt
-                            className="me-2"
-                            style={{ color: "#E74C3C", minWidth: "16px" }}
-                          />
-                          <span style={{ color: "#E74C3C" }}>
-                            {m.inLocation || "Unknown"}
-                          </span>
-                        </div>
-                        {m.outLocation &&
-                          m.outLocation !== m.inLocation && (
-                            <div
-                              style={{
-                                marginLeft: "1.5rem",
-                                fontSize: "0.8rem",
-                                color: "#aaa",
-                              }}
-                            >
-                              Exit To: {m.outLocation}
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Card.Body>
-
-      </Card>
-    </>
+        {/* Current Location component (live) */}
+        <div style={{ marginTop: 12 }}>
+          <CurrentLocation empId={emp.id} />
+        </div>
+      </div>
+    </div>
   );
 }
-
-
 
 
