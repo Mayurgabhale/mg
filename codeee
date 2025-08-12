@@ -1,170 +1,351 @@
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 26658
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-✅ Query executed, rows: 17670
+i want to disply this data in table so that card looking more atractive, 
+create card morea atractive, with icons, and profesal desing, 
 
 
-we got this error many time so fix this issue permantly
+Diwate, Swapnil
+Employee ID
+W0024618
+Personnel Type
+Contractor
+Manager
+—
+Manager WU ID
+0
+Status
+Active
+Total Cards
+2
+Active Cards
+1
+Swipe Details
+Location
+Pune · Podium Floor
+Zone :
+Reception Area
+Date :
+12/8/2025
+Time :
+11:02:20 pm
+Door :
+APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR
+Direction :
+OutDirection
+
+// EmployeeCard.jsx
+import React from 'react';
+import CurrentLocation from './CurrentLocation';
+
+export default function EmployeeCard({ emp }) {
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+  const isTerminated = normalizedStatus === 'terminated';
+
+  return (
+    // <div
+    //   className={`employee-card ${isTerminated ? 'terminated' : ''}`}
+    //   data-status={normalizedStatus}
+    //   style={{
+    //     display: 'flex',
+    //     gap: '1rem',
+    //     background: '#000',
+    //     padding: '1rem',
+    //     borderRadius: '8px',
+    //     boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+    //   }}
+    // >
 
 
-// controllers/employeeLocationController.js
-const axios = require('axios');
-const sql = require('mssql');
-const { getPool } = require('../config/db');
 
-const OCCUPANCY_URLS = [
-  'http://10.199.22.57:3006/api/occupancy/live-summary',
 
-  'http://10.199.22.57:3007/api/occupancy/live-summary',  // EMEA
- 
+    
+<div
+  className={`employee-card ${isTerminated ? 'terminated' : ''}`}
+  data-status={normalizedStatus}
+  style={{
+    display: 'flex',
+    gap: '1rem',
+    background:
+      normalizedStatus === 'active'
+        ? 'linear-gradient(to right, rgba(40, 167, 69, 1) 0%, rgba(40, 167, 69, 0.1) 100%)'
+        : '#000',
+    padding: '1rem',
+    borderRadius: '8px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    color:'#000'
+  }}
+>
 
-'http://10.199.22.57:3008/api/occupancy/live-summary',  //Pune
-  
+      {/* Profile Image */}
+      {/* <div className="card-photo-section" style={{ minWidth: 140 }}>
+        <div className="photo-wrapper" style={{ position: 'relative' }}>
+          <img
+            src={`http://localhost:5001${emp.imageUrl}`}
+            alt={emp.EmpName}
+            style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}  
+          />
+          <span
+            className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+            style={{
+              position: 'absolute',
+              bottom: 6,
+              left: 6,
+              background: normalizedStatus === 'active' ? '#0b9' : '#999',
+              color: '#fff',
+              padding: '4px 8px',
+              borderRadius: 6,
+              fontSize: 12
+            }}
+          >
+            {rawStatus}
+          </span>
+        </div>
+      </div> */}
 
-  'http://10.199.22.57:4000/api/occupancy/live-summary'   //laca
 
-];
+      {/* Profile Image */}
+<div
+  className="card-photo-section"
+  style={{
+    minWidth: 140,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+>
+  <div className="photo-wrapper" style={{ position: 'relative' }}>
+    <img
+      src={`http://localhost:5001${emp.imageUrl}`}
+      alt={emp.EmpName}
+      style={{
+        width: 325,
+        height: 350,
+        // objectFit: 'cover',
+       
+        border: '2px solid #f0f0f0'
+      }}
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/images/no-photo.jpg';
+      }}
+    />
+    <span
+      className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+      style={{
+        position: 'absolute',
+        bottom: 6,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: normalizedStatus === 'active' ? '#0b9' : '#999',
+        color: '#fff',
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 12
+      }}
+    >
+      {rawStatus}
+    </span>
+  </div>
+</div>
 
-// Simple in-memory cache: { [employeeObjId]: { ts: Number, data: Object } }
-const cache = {};
-const CACHE_TTL_MS = 50000; // 5 seconds — tune as needed
 
-function normalizeString(s) {
-  if (!s && s !== 0) return '';
-  return String(s).trim().toLowerCase();
+      
+
+
+
+      {/* Employee Info */}
+      <div className="card-details" style={{ flex: 1 }}>
+        <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>{emp.EmpName}</h2>
+
+        <div className="card-info" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '6px 12px', alignItems: 'center' }}>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Employee ID</label>
+          <span>{emp.EmployeeID || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Personnel Type</label>
+          <span>{emp.PersonnelType || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager</label>
+          <span>{emp.Manager_Name || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager WU ID</label>
+          <span>{emp.Manager_WU_ID || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Status</label>
+          <span>{rawStatus}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Total Cards</label>
+          <span>{emp.Total_Cards ?? 0}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Active Cards</label>
+          <span>{emp.Active_Cards ?? 0}</span>
+        </div>
+
+        {/* Current Location component (live) */}
+        <div style={{ marginTop: 1 , color:'#2ced0e'}}>
+          <CurrentLocation empId={emp.id} style={{  color:'#fff'}} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function parseRecordTime(rec) {
-  // Priority: LocaleMessageTime -> snapshotTime -> Dateonly + Swipe_Time
-  if (rec.LocaleMessageTime) return new Date(rec.LocaleMessageTime);
-  if (rec.snapshotTime) return new Date(rec.snapshotTime);
-  if (rec.Dateonly && rec.Swipe_Time) {
-    // e.g. "2025-08-11" + "00:02:41"
-    return new Date(`${rec.Dateonly}T${rec.Swipe_Time}Z`);
-  }
-  return null;
-}
 
-async function getEmployeeLiveLocation(req, res) {
-  const employeeObjId = req.params.id;
-  if (!employeeObjId) return res.status(400).json({ error: 'Missing id' });
 
-  // Serve cache if fresh
-  const cached = cache[employeeObjId];
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-    return res.json({ cached: true, ...cached.data });
-  }
 
-  try {
-    // 1) Fetch EmployeeID and Name from DB (same logic as getEmployees)
-    const pool = await getPool();
-    const empResult = await pool.request()
-      .input('objid', sql.BigInt, employeeObjId)
-      .query(`
-        SELECT AP.ObjectID,
-               AP.Name AS EmpName,
-               AP.Int1,
-               AP.Text12
-        FROM ACVSCore.Access.Personnel AP
-        WHERE AP.ObjectID = @objid
-      `);
+///////////////////////////
 
-    if (!empResult.recordset.length) {
-      return res.status(404).json({ error: 'Employee not found' });
+
+
+
+// CurrentLocation.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+export default function CurrentLocation({ empId }) {
+  const [loading, setLoading] = useState(false);
+  const [loc, setLoc] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!empId) {
+      setLoc(null);
+      setError('');
+      return;
     }
 
-    const empRow = empResult.recordset[0];
-    // EmployeeID logic mirroring existing query:
-    const EmployeeID = (empRow.Int1 === 0 || empRow.Int1 === '0' || empRow.Int1 === null)
-      ? (empRow.Text12 ? String(empRow.Text12) : '')
-      : String(empRow.Int1);
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    setLoc(null);
 
-    const empName = empRow.EmpName || '';
+    axios.get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
+      .then(res => {
+        if (cancelled) return;
+        setLoc(res.data);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.error('Location load error', err && err.message ? err.message : err);
+        setError('Failed to load location');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-    // 2) Query occupancy endpoints concurrently
-    const requests = OCCUPANCY_URLS.map(u => axios.get(u, { timeout: 5000 }).catch(e => ({ error: e, url: u })));
-    const responses = await Promise.all(requests);
-
-    // 3) Collect and flatten details
-    let allDetails = [];
-    for (const r of responses) {
-      if (!r || r.error) {
-        // Log but continue
-        console.warn('Occupancy fetch failed for', r && r.url, r && r.error && r.error.message);
-        continue;
-      }
-      if (r.data && Array.isArray(r.data.details)) {
-        // Keep source url for debugging
-        const src = r.config && r.config.url ? r.config.url : null;
-        const annotated = r.data.details.map(d => ({ ...d, __source: src }));
-        allDetails.push(...annotated);
-      }
-    }
-
-    // 4) Find matches by EmployeeID (preferred), fallback to name (ObjectName1), then PersonGUID
-    const normEmployeeID = normalizeString(EmployeeID);
-    const normEmpName = normalizeString(empName);
-
-    const matches = allDetails.filter(rec => {
-      const recEmpId = normalizeString(rec.EmployeeID);
-      if (recEmpId && normEmployeeID && recEmpId === normEmployeeID) return true;
-
-      const recName = normalizeString(rec.ObjectName1);
-      if (recName && normEmpName && recName === normEmpName) return true;
-
-      if (rec.PersonGUID) {
-        // optionally, you can compare GUIDs if you have them
-      }
-      return false;
-    });
-
-    if (!matches.length) {
-      const result = { found: false, message: 'No recent swipe found' };
-      cache[employeeObjId] = { ts: Date.now(), data: result };
-      return res.json(result);
-    }
-
-    // 5) Select most recent
-    let best = null;
-    for (const m of matches) {
-      const t = parseRecordTime(m);
-      if (!t) continue;
-      if (!best) best = { rec: m, time: t };
-      else if (t > best.time) best = { rec: m, time: t };
-    }
-
-    if (!best) {
-      const result = { found: false, message: 'No timestamped swipe found' };
-      cache[employeeObjId] = { ts: Date.now(), data: result };
-      return res.json(result);
-    }
-
-    const r = best.rec;
-    const payload = {
-      found: true,
-      source: r.__source || null,
-      partition: r.PartitionName2 || r.Partition || null,
-      floor: r.Floor || r.Zone || r.floor || null,
-      Zone:r.Zone,
-      door: r.Door || null,
-      direction: r.Direction || null,
-      timestampUTC: (best.time && best.time.toISOString()) || null,
-      personnelType: r.PersonnelType || null,
-      cardNumber: r.CardNumber || null,
-      raw: r // include raw record for debugging if needed
+    return () => {
+      cancelled = true;
     };
+  }, [empId]);
 
-    cache[employeeObjId] = { ts: Date.now(), data: payload };
+  if (!empId) return null;
 
-    return res.json(payload);
+  // return (
+  //   <div className="current-location-card" style={{ marginTop: 8 }}>
+  //     <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
 
-  } catch (err) {
-    console.error('getEmployeeLiveLocation error', err && err.stack || err);
-    return res.status(500).json({ error: 'Failed to fetch live location', message: err.message });
-  }
+  //     {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+
+  //     {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+  //     {!loading && loc && !loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
+
+  //     {!loading && loc && loc.found && (
+  //       <div style={{ fontSize: 14, color: '#fff' }}>
+  //         <div style={{ fontWeight: 600 }}>
+  //           {loc.partition || '—'}{loc.floor ? ` · ${loc.floor}` : ''}
+  //         </div>
+
+  //         <div style={{ marginTop: 6, color: '#fff' }}>
+  //           {loc.door && <div>{loc.door}</div>}
+  //           {loc.direction && <div>Direction: {loc.direction}</div>}
+  //           {loc.timestampUTC && (
+  //             <div style={{ marginTop: 6, fontSize: 13, color: '#fff' }}>
+  //               Last seen: {new Date(loc.timestampUTC).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
+  //             </div>
+  //           )}
+  //         </div>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
+
+
+
+
+  return (
+    <div className="current-location-card" style={{ marginTop: 2 }}>
+      <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
+
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+      {!loading && loc && !loc.found && (
+        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
+      )}
+
+
+     {!loading && loc && loc.found && (() => {
+  const istDate = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
+
+  const istTime = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
+
+  return (
+    <div
+      className="location-info"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '140px 1fr',
+        gap: '6px 12px',
+        alignItems: 'center',
+        fontSize: 13,
+        color: '#000',
+      }}
+    >
+      <label style={{ opacity: 0.8 }}>Location</label>
+      <span>
+        {loc.partition || '—'}
+        {loc.floor ? ` · ${loc.floor}` : ''}
+       
+      </span>
+
+      <label style={{ opacity: 0.8 }}>Zone :</label>
+      <span>{loc.Zone || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Date :</label>
+      <span>{istDate || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Time :</label>
+      <span>{istTime || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Door :</label>
+      <span>{loc.door || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Direction :</label>
+      <span>{loc.direction || '—'}</span>
+    </div>
+  );
+})()}
+
+
+
+    </div>
+  )
+
 }
 
-module.exports = { getEmployeeLiveLocation };
 
 
