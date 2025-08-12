@@ -1,3 +1,10 @@
+Compiled with problems:
+×
+ERROR in ./src/components/CurrentLocation.jsx 129:0-66
+Module not found: Error: Can't resolve 'lucide-react' in 'C:\Users\W0024618\Desktop\employee-verification\frontend\src\components'
+ERROR in ./src/components/EmployeeCard.jsx 301:0-74
+Module not found: Error: Can't resolve 'lucide-react' in 'C:\Users\W0024618\Desktop\employee-verification\frontend\src\components'
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { MapPin, Clock, DoorClosed, Compass } from 'lucide-react'; // icons
