@@ -6,3 +6,28 @@ const [rawAdmitFilter, setRawAdmitFilter] = useState('all'); // 'all' | 'admit' 
 
 
 
+
+
+
+
+{/* Admit / Reject select (only for Raw tab) */}
+<FormControl fullWidth sx={{ mt: 2 }}>
+  <InputLabel sx={{ color: '#FFCC00' }}>Admit / Reject</InputLabel>
+  <Select
+    value={rawAdmitFilter}
+    onChange={(e) => setRawAdmitFilter(e.target.value)}
+    input={<OutlinedInput label="Admit / Reject" />}
+    sx={{
+      color: '#fff',
+      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.08)' }
+    }}
+  >
+    <MenuItem value="all">All</MenuItem>
+    <MenuItem value="admit">Admit</MenuItem>
+    <MenuItem value="reject">Reject</MenuItem>
+  </Select>
+  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', mt: 1, display: 'block' }}>
+    Select to export only admitted or rejected raw rows (leave All to export everything).
+  </Typography>
+</FormControl>
+
