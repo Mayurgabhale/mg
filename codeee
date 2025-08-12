@@ -1,3 +1,43 @@
+{!loading && loc && loc.found && (
+  <div style={{ fontSize: 14, color: '#fff' }}>
+    {/* Location */}
+    <div style={{ fontWeight: 600 }}>
+      {loc.partition || '—'}
+      {loc.floor ? ` · ${loc.floor}` : ''}
+      {loc.zone ? ` · ${loc.zone}` : ''} {/* Added Zone */}
+    </div>
+
+    {/* Swipe Details */}
+    {loc.timestampUTC && (() => {
+      const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      });
+      const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      });
+      return (
+        <>
+          <div style={{ marginTop: 6 }}>Date: {istDate}</div>
+          <div>Time: {istTime}</div>
+        </>
+      );
+    })()}
+
+    {loc.door && (
+      <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
+    )}
+
+    {loc.direction && (
+      <div>Direction: {loc.direction}</div>
+    )}
+  </div>
+)}
+
+
+
+
+ .....
+
 http://10.199.22.57:3008/api/occupancy/live-summary
 
 
