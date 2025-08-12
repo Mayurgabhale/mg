@@ -1,78 +1,53 @@
- {/* Profile Image */}
-<div
-  className="card-photo-section"
-  style={{
-    minWidth: 140,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }}
->
-  <div className="photo-wrapper" style={{ position: 'relative' }}>
-    <img
-      src={`http://localhost:5001${emp.imageUrl}`}
-      alt={emp.EmpName}
-      style={{
-        width: 120,
-        height: 120,
-        objectFit: 'cover',
-        borderRadius: 8,
-        border: '2px solid #f0f0f0'
-      }}
-      onError={(e) => {
-        e.target.onerror = null;
-        e.target.src = '/images/no-photo.jpg';
-      }}
-    />
-    <span
-      className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
-      style={{
-        position: 'absolute',
-        bottom: 6,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        background: normalizedStatus === 'active' ? '#0b9' : '#999',
-        color: '#fff',
-        padding: '4px 8px',
-        borderRadius: 6,
-        fontSize: 12
-      }}
-    >
-      {rawStatus}
-    </span>
-  </div>
-</div>
+curranlty we are getting below  respnose like
+
+Swipe Details
+Pune
+APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR
+Direction: InDirection
+Last seen: 12/8/2025, 4:19:23 pm (IST)
 
 
 
 
-......
-{/* Profile Image */}
-      <div className="card-photo-section" style={{ minWidth: 140 }}>
-        <div className="photo-wrapper" style={{ position: 'relative' }}>
-          <img
-            src={`http://localhost:5001${emp.imageUrl}`}
-            alt={emp.EmpName}
-            style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/images/no-photo.jpg';
-            }}  
-          />
-          <span
-            className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
-            style={{
-              position: 'absolute',
-              bottom: 6,
-              left: 6,
-              background: normalizedStatus === 'active' ? '#0b9' : '#999',
-              color: '#fff',
-              padding: '4px 8px',
-              borderRadius: 6,
-              fontSize: 12
-            }}
-          >
-            {rawStatus}
-          </span>
+Display this details like 
+
+Swipe Details 
+Pune 
+Date : 12/8/2025,
+Time : 4:19:23 pm 
+Door :APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR
+Direction: InDirection
+
+Like ..
+
+As per Requirnment update below code carefully.
+
+return (
+    <div className="current-location-card" style={{ marginTop: 8 }}>
+      <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
+
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+      {!loading && loc && !loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
+
+      {!loading && loc && loc.found && (
+        <div style={{ fontSize: 14, color: '#fff' }}>
+          <div style={{ fontWeight: 600 }}>
+            {loc.partition || '—'}{loc.floor ? ` · ${loc.floor}` : ''}
+          </div>
+
+          <div style={{ marginTop: 6, color: '#fff' }}>
+            {loc.door && <div>{loc.door}</div>}
+            {loc.direction && <div>Direction: {loc.direction}</div>}
+            {loc.timestampUTC && (
+              <div style={{ marginTop: 6, fontSize: 13, color: '#fff' }}>
+                Last seen: {new Date(loc.timestampUTC).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+    </div>
+  );
