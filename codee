@@ -1,5 +1,39 @@
 
+/* Table container */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #333;
+}
 
+/* Table rows & cells */
+.table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* First column styling */
+.table td:first-child {
+  font-weight: 500;
+  opacity: 0.8;
+  width: 140px;
+}
+
+/* Alternate row color */
+.table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+.table tr:hover {
+  background-color: #f1f1f1;
+}
+
+
+
+
+.....
 // CurrentLocation.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
