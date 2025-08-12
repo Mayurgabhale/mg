@@ -1,198 +1,72 @@
-{!loading && loc && loc.found && (
-  <div style={{ fontSize: 14, color: '#fff' }}>
-    {/* Location */}
-    <div style={{ fontWeight: 600 }}>
-      {loc.partition || '—'}
-      {loc.floor ? ` · ${loc.floor}` : ''}
-      {loc.zone ? ` · ${loc.zone}` : ''} {/* Added Zone */}
-    </div>
-
-    {/* Swipe Details */}
-    {loc.timestampUTC && (() => {
-      const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-      });
-      const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-        timeZone: 'Asia/Kolkata',
-      });
-      return (
-        <>
-          <div style={{ marginTop: 6 }}>Date: {istDate}</div>
-          <div>Time: {istTime}</div>
-        </>
-      );
-    })()}
-
-    {loc.door && (
-      <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
-    )}
-
-    {loc.direction && (
-      <div>Direction: {loc.direction}</div>
-    )}
-  </div>
-)}
-
-
-
-
- .....
-
-http://10.199.22.57:3008/api/occupancy/live-summary
-
-
- "unmapped": [],
-  "details": [
-    {
-      "ObjectName1": "Unavane, Aditya",
-      "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
-      "PersonnelType": "Employee",
-      "EmployeeID": "328923",
-      "CardNumber": "620146",
-      "PartitionName2": "Pune",
-      "LocaleMessageTime": "2025-08-12T14:14:41.000Z",
-      "Direction": "InDirection",
-      "PersonGUID": "F4980CD9-374E-4408-BD7B-001F7D12F8AD",
-      "Zone": "2nd Floor, Pune",
-      "Floor": "2nd Floor"
-    },
-    {
-      "ObjectName1": "Sarkaniya, Harish",
-      "Door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
-      "PersonnelType": "Contractor",
-      "EmployeeID": "W0024571",
-      "CardNumber": "615794",
-      "PartitionName2": "Pune",
-      "LocaleMessageTime": "2025-08-12T14:03:52.000Z",
-      "Direction": "InDirection",
-      "PersonGUID": "51A95852-C14E-4BB4-8F31-0057A87F67C7",
-      "Zone": "Red Zone",
-      "Floor": "Podium Floor"
-    },
-    {
-
-// CurrentLocation.jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-export default function CurrentLocation({ empId }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
-
-    axios.get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
-      .then(res => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch(err => {
-        if (cancelled) return;
-        console.error('Location load error', err && err.message ? err.message : err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
-
-  if (!empId) return null;
-
-  // return (
-  //   <div className="current-location-card" style={{ marginTop: 8 }}>
-  //     <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
-
-  //     {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-
-  //     {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-  //     {!loading && loc && !loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
-
-  //     {!loading && loc && loc.found && (
-  //       <div style={{ fontSize: 14, color: '#fff' }}>
-  //         <div style={{ fontWeight: 600 }}>
-  //           {loc.partition || '—'}{loc.floor ? ` · ${loc.floor}` : ''}
-  //         </div>
-
-  //         <div style={{ marginTop: 6, color: '#fff' }}>
-  //           {loc.door && <div>{loc.door}</div>}
-  //           {loc.direction && <div>Direction: {loc.direction}</div>}
-  //           {loc.timestampUTC && (
-  //             <div style={{ marginTop: 6, fontSize: 13, color: '#fff' }}>
-  //               Last seen: {new Date(loc.timestampUTC).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
-  //             </div>
-  //           )}
-  //         </div>
-  //       </div>
-  //     )}
-  //   </div>
-  // );
+Pune ·          Podium Floor
+Zone:           Yellow Zone
+Date:           12/8/2025
+Time:           10:13:13 pm
+Door:           APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door
+Direction:      InDirection
 
 
 
 
   return (
-  <div className="current-location-card" style={{ marginTop: 2 }}>
-    <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
+    <div className="current-location-card" style={{ marginTop: 2 }}>
+      <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
 
-    {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
 
-    {error && <div style={{ color: '#fff' }}>{error}</div>}
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
 
-    {!loading && loc && !loc.found && (
-      <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-    )}
+      {!loading && loc && !loc.found && (
+        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
+      )}
+      {!loading && loc && loc.found && (
+        <div style={{ fontSize: 14, color: '#fff' }}>
+          {/* Location */}
+          <div style={{ fontWeight: 600 }}>
+            {loc.partition || '—'}
+            {loc.floor ? ` · ${loc.floor}` : ''}
+            {loc.zone ? ` · ${loc.Zone}` : ''} {/* Added Zone */}
+          </div>
 
-    {!loading && loc && loc.found && (
-      <div style={{ fontSize: 14, color: '#fff' }}>
-        {/* Location */}
-        <div style={{ fontWeight: 600 }}>
-          {loc.partition || '—'}
-          {loc.floor ? ` · ${loc.floor}` : ''}
+          {/* Swipe Details */}
+          {loc.timestampUTC && (() => {
+            const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            });
+            const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            });
+            return (
+
+              <>
+                {loc.Zone && (
+                  <div>Zone: {loc.Zone}</div>
+                )}
+                <div style={{ marginTop: 6 }}>Date: {istDate}</div>
+                <div>Time: {istTime}</div>
+              </>
+            );
+          })()}
+
+          {loc.door && (
+            <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
+          )}
+
+
+          {loc.direction && (
+            <div>Direction: {loc.direction}</div>
+          )}
+
+
+
         </div>
+      )}
 
-        {/* Swipe Details */}
-        {loc.timestampUTC && (() => {
-          const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-          });
-          const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-          });
-          return (
-            <>
-              <div style={{ marginTop: 6 }}>Date: {istDate}</div>
-              <div>Time: {istTime}</div>
-            </>
-          );
-        })()}
 
-        {loc.door && (
-          <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
-        )}
 
-        {loc.direction && (
-          <div>Direction: {loc.direction}</div>
-        )}
-      </div>
-    )}
-  </div>
-)
+
+    </div>
+  )
 
 }
 
