@@ -1,88 +1,147 @@
-import React from "react";
-import CurrentLocation from "./CurrentLocation";
-import {
-  User,
-  IdCard,
-  Briefcase,
-  UserCheck,
-  Layers,
-} from "lucide-react";
+
+
+Read all code carefuuly
+my background is white ok 
+i want to create card desing more atracitve, 
+this is werstion union page, create look like atractive card desing
+alos include employe active and deactive, bg, i want clean
+and responsive for each devices
+
+// EmployeeCard.jsx
+import React from 'react';
+import CurrentLocation from './CurrentLocation';
 
 export default function EmployeeCard({ emp }) {
   if (!emp) return null;
 
-  const rawStatus = emp.Employee_Status || "Deactive";
+  const rawStatus = emp.Employee_Status || 'Deactive';
   const normalizedStatus = rawStatus.trim().toLowerCase();
-  const isActive = normalizedStatus === "active";
+  const isTerminated = normalizedStatus === 'terminated';
 
   return (
     <div
-      className={`rounded-2xl shadow-lg p-6 flex flex-wrap gap-6 max-w-full transition-all duration-300 ${
-        isActive
-          ? "bg-gradient-to-r from-green-600 to-emerald-500 text-white"
-          : "bg-gradient-to-r from-gray-700 to-gray-900 text-gray-200"
-      }`}
+      className={`employee-card ${isTerminated ? 'terminated' : ''}`}
+      data-status={normalizedStatus}
+      style={{
+        display: 'flex',
+        gap: '1rem',
+        background: '#000',   
+        padding: '1rem',
+        borderRadius: '8px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+      }}
     >
       {/* Profile Image */}
-      <div className="flex-shrink-0 w-full sm:w-72 text-center relative">
-        <img
-          src={`http://localhost:5001${emp.imageUrl}`}
-          alt={emp.EmpName}
-          className="rounded-xl border-4 border-white/20 object-cover w-full h-auto"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/images/no-photo.jpg";
-          }}
-        />
-        <span
-          className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-semibold rounded-full ${
-            isActive ? "bg-green-500 text-white" : "bg-gray-500 text-white"
-          }`}
-        >
-          {rawStatus}
-        </span>
-      </div>
+      {/* <div className="card-photo-section" style={{ minWidth: 140 }}>
+        <div className="photo-wrapper" style={{ position: 'relative' }}>
+          <img
+            src={`http://localhost:5001${emp.imageUrl}`}
+            alt={emp.EmpName}
+            style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}  
+          />
+          <span
+            className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+            style={{
+              position: 'absolute',
+              bottom: 6,
+              left: 6,
+              background: normalizedStatus === 'active' ? '#0b9' : '#999',
+              color: '#fff',
+              padding: '4px 8px',
+              borderRadius: 6,
+              fontSize: 12
+            }}
+          >
+            {rawStatus}
+          </span>
+        </div>
+      </div> */}
+
+
+      {/* Profile Image */}
+<div
+  className="card-photo-section"
+  style={{
+    minWidth: 140,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+>
+  <div className="photo-wrapper" style={{ position: 'relative' }}>
+    <img
+      src={`http://localhost:5001${emp.imageUrl}`}
+      alt={emp.EmpName}
+      style={{
+        width: 325,
+        height: 350,
+        // objectFit: 'cover',
+       
+        border: '2px solid #f0f0f0'
+      }}
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/images/no-photo.jpg';
+      }}
+    />
+    <span
+      className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+      style={{
+        position: 'absolute',
+        bottom: 6,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: normalizedStatus === 'active' ? '#0b9' : '#999',
+        color: '#fff',
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 12
+      }}
+    >
+      {rawStatus}
+    </span>
+  </div>
+</div>
+
+
+      
+
+
 
       {/* Employee Info */}
-      <div className="flex-1 min-w-[250px]">
-        <h2 className="flex items-center gap-2 text-2xl font-bold">
-          <User size={22} /> {emp.EmpName}
-        </h2>
+      <div className="card-details" style={{ flex: 1 }}>
+        <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>{emp.EmpName}</h2>
 
-        <div className="mt-4 grid grid-cols-[150px_1fr] gap-x-4 gap-y-2 text-sm">
-          <label className="flex items-center gap-1">
-            <IdCard size={14} /> Employee ID
-          </label>
-          <span>{emp.EmployeeID || "—"}</span>
+        <div className="card-info" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '6px 12px', alignItems: 'center' }}>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Employee ID</label>
+          <span>{emp.EmployeeID || '—'}</span>
 
-          <label className="flex items-center gap-1">
-            <Briefcase size={14} /> Personnel Type
-          </label>
-          <span>{emp.PersonnelType || "—"}</span>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Personnel Type</label>
+          <span>{emp.PersonnelType || '—'}</span>
 
-          <label className="flex items-center gap-1">
-            <UserCheck size={14} /> Manager
-          </label>
-          <span>{emp.Manager_Name || "—"}</span>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager</label>
+          <span>{emp.Manager_Name || '—'}</span>
 
-          <label>Manager WU ID</label>
-          <span>{emp.Manager_WU_ID || "—"}</span>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager WU ID</label>
+          <span>{emp.Manager_WU_ID || '—'}</span>
 
-          <label>Status</label>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Status</label>
           <span>{rawStatus}</span>
 
-          <label className="flex items-center gap-1">
-            <Layers size={14} /> Total Cards
-          </label>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Total Cards</label>
           <span>{emp.Total_Cards ?? 0}</span>
 
-          <label>Active Cards</label>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Active Cards</label>
           <span>{emp.Active_Cards ?? 0}</span>
         </div>
 
-        {/* Current Location */}
-        <div className="mt-6">
-          <CurrentLocation empId={emp.id} />
+        {/* Current Location component (live) */}
+        <div style={{ marginTop: 1 , color:'#2ced0e'}}>
+          <CurrentLocation empId={emp.id} style={{  color:'#fff'}} />
         </div>
       </div>
     </div>
@@ -96,42 +155,36 @@ export default function EmployeeCard({ emp }) {
 
 
 
-
-
-
-
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { MapPin, Clock, DoorClosed, Compass } from "lucide-react";
+// CurrentLocation.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function CurrentLocation({ empId }) {
   const [loading, setLoading] = useState(false);
   const [loc, setLoc] = useState(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!empId) {
       setLoc(null);
-      setError("");
+      setError('');
       return;
     }
 
     let cancelled = false;
     setLoading(true);
-    setError("");
+    setError('');
     setLoc(null);
 
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`, {
-        timeout: 5000,
-      })
-      .then((res) => {
+    axios.get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
+      .then(res => {
         if (cancelled) return;
         setLoc(res.data);
       })
-      .catch(() => {
+      .catch(err => {
         if (cancelled) return;
-        setError("Failed to load location");
+        console.error('Location load error', err && err.message ? err.message : err);
+        setError('Failed to load location');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -144,57 +197,85 @@ export default function CurrentLocation({ empId }) {
 
   if (!empId) return null;
 
+  // return (
+  //   <div className="current-location-card" style={{ marginTop: 8 }}>
+  //     <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
+
+  //     {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+
+  //     {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+  //     {!loading && loc && !loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
+
+  //     {!loading && loc && loc.found && (
+  //       <div style={{ fontSize: 14, color: '#fff' }}>
+  //         <div style={{ fontWeight: 600 }}>
+  //           {loc.partition || '—'}{loc.floor ? ` · ${loc.floor}` : ''}
+  //         </div>
+
+  //         <div style={{ marginTop: 6, color: '#fff' }}>
+  //           {loc.door && <div>{loc.door}</div>}
+  //           {loc.direction && <div>Direction: {loc.direction}</div>}
+  //           {loc.timestampUTC && (
+  //             <div style={{ marginTop: 6, fontSize: 13, color: '#fff' }}>
+  //               Last seen: {new Date(loc.timestampUTC).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
+  //             </div>
+  //           )}
+  //         </div>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
+
+
+
+
   return (
-    <div className="bg-white/10 rounded-xl p-4 shadow-md text-sm backdrop-blur-sm">
-      <h4 className="flex items-center gap-2 font-semibold mb-3">
-        <MapPin size={16} /> Swipe Details
-      </h4>
+  <div className="current-location-card" style={{ marginTop: 2 }}>
+    <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
 
-      {loading && <div>Loading location…</div>}
-      {error && <div className="text-red-400">{error}</div>}
-      {!loading && loc && !loc.found && (
-        <div className="text-green-400">No recent swipe</div>
-      )}
+    {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
 
-      {!loading && loc?.found && (
-        <div className="grid gap-2">
-          <div className="font-semibold">
-            {loc.partition || "—"} {loc.floor ? `· ${loc.floor}` : ""}
-          </div>
+    {error && <div style={{ color: '#fff' }}>{error}</div>}
 
-          {loc.timestampUTC && (() => {
-            const istDate = new Date(loc.timestampUTC).toLocaleDateString(
-              "en-IN",
-              { timeZone: "Asia/Kolkata" }
-            );
-            const istTime = new Date(loc.timestampUTC).toLocaleTimeString(
-              "en-IN",
-              { timeZone: "Asia/Kolkata" }
-            );
-            return (
-              <>
-                <div className="flex items-center gap-2">
-                  <Clock size={14} /> Date: {istDate}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={14} /> Time: {istTime}
-                </div>
-              </>
-            );
-          })()}
+    {!loading && loc && !loc.found && (
+      <div style={{ color: '#2ced0e' }}>No recent swipe</div>
+    )}
 
-          {loc.door && (
-            <div className="flex items-center gap-2">
-              <DoorClosed size={14} /> Door: {loc.door}
-            </div>
-          )}
-          {loc.direction && (
-            <div className="flex items-center gap-2">
-              <Compass size={14} /> Direction: {loc.direction}
-            </div>
-          )}
+    {!loading && loc && loc.found && (
+      <div style={{ fontSize: 14, color: '#fff' }}>
+        {/* Location */}
+        <div style={{ fontWeight: 600 }}>
+          {loc.partition || '—'}
+          {loc.floor ? ` · ${loc.floor}` : ''}
         </div>
-      )}
-    </div>
-  );
+
+        {/* Swipe Details */}
+        {loc.timestampUTC && (() => {
+          const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+          });
+          const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+          });
+          return (
+            <>
+              <div style={{ marginTop: 6 }}>Date: {istDate}</div>
+              <div>Time: {istTime}</div>
+            </>
+          );
+        })()}
+
+        {loc.door && (
+          <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
+        )}
+
+        {loc.direction && (
+          <div>Direction: {loc.direction}</div>
+        )}
+      </div>
+    )}
+  </div>
+)
+
 }
