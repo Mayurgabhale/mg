@@ -1,5 +1,3 @@
-
-
 // EmployeeCard.jsx
 import React from 'react';
 import CurrentLocation from './CurrentLocation';
@@ -74,187 +72,55 @@ export default function EmployeeCard({ emp }) {
         </div>
       </div>
 
-      {/* Employee info as a table */}
+      {/* Combined employee and location info as a single table */}
       <div className="card-details" style={{ flex: 1 }}>
         <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>
           {emp.EmpName}
         </h2>
 
-        <table className='table'>
+        <table className='table' style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
+            {/* Employee Info Section */}
             <tr>
-              <td style={{ opacity: 0.8, width: 140 }}>Employee ID</td>
-              <td>{emp.EmployeeID || '—'}</td>
+              <td style={{ opacity: 0.8, width: '30%', padding: '8px 0', borderBottom: '1px solid #eee' }}>Employee ID</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.EmployeeID || '—'}</td>
             </tr>
 
             <tr>
-              <td style={{ opacity: 0.8 }}>Personnel Type</td>
-              <td>{emp.PersonnelType || '—'}</td>
+              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Personnel Type</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.PersonnelType || '—'}</td>
             </tr>
 
             <tr>
-              <td style={{ opacity: 0.8 }}>Manager</td>
-              <td>{emp.Manager_Name || '—'}</td>
+              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Manager</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Manager_Name || '—'}</td>
             </tr>
 
             <tr>
-              <td style={{ opacity: 0.8 }}>Manager WU ID</td>
-              <td>{emp.Manager_WU_ID || '—'}</td>
+              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Manager WU ID</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Manager_WU_ID || '—'}</td>
             </tr>
 
             <tr>
-              <td style={{ opacity: 0.8 }}>Status</td>
-              <td>{rawStatus}</td>
+              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Status</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{rawStatus}</td>
             </tr>
 
             <tr>
-              <td style={{ opacity: 0.8 }}>Total Cards</td>
-              <td>{emp.Total_Cards ?? 0}</td>
+              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Total Cards</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Total_Cards ?? 0}</td>
             </tr>
 
             <tr>
-              <td style={{ opacity: 0.8 }}>Active Cards</td>
-              <td>{emp.Active_Cards ?? 0}</td>
+              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Active Cards</td>
+              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Active_Cards ?? 0}</td>
             </tr>
+
+            {/* Location Info Section */}
+            <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
           </tbody>
         </table>
-
-        {/* Current Location component (live) */}
-        <div style={{ marginTop: 8 }}>
-          <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
-        </div>
       </div>
     </div>
   );
 }
-
-
-
-
-///////////////////////////
-
-
-
-
-
-// CurrentLocation.jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-export default function CurrentLocation({ empId }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
-
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
-      .then((res) => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Location load error', err && err.message ? err.message : err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
-
-  if (!empId) return null;
-
-  return (
-    <div className="current-location-card" style={{ marginTop: 8 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
-
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-      {!loading && loc && !loc.found && (
-        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-      )}
-
-      {!loading &&
-        loc &&
-        loc.found &&
-        (() => {
-          const istDate = loc.timestampUTC
-            ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-                timeZone: 'Asia/Kolkata',
-              })
-            : '';
-
-          const istTime = loc.timestampUTC
-            ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-                timeZone: 'Asia/Kolkata',
-              })
-            : '';
-
-          return (
-            <table
-              
-              className='table'
-            >
-              <tbody>
-                <tr>
-                  <td style={{ opacity: 0.8, width: 140 }}>Location</td>
-                  <td>
-                    {loc.partition || '—'}
-                    {loc.floor ? ` · ${loc.floor}` : ''}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Zone</td>
-                  <td>{loc.Zone || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Date</td>
-                  <td>{istDate || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Time</td>
-                  <td>{istTime || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Door</td>
-                  <td>{loc.door || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Direction</td>
-                  <td>{loc.direction || '—'}</td>
-                </tr>
-              </tbody>
-            </table>
-          );
-        })()}
-    </div>
-  );
-}
-
-
-
-
-
