@@ -1,3 +1,55 @@
+{!loading && loc && loc.found && (() => {
+  const istDate = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
+
+  const istTime = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
+
+  return (
+    <div
+      className="location-info"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '140px 1fr',
+        gap: '6px 12px',
+        alignItems: 'center',
+        fontSize: 13,
+        color: '#fff',
+      }}
+    >
+      <label style={{ opacity: 0.8 }}>Location</label>
+      <span>
+        {loc.partition || '—'}
+        {loc.floor ? ` · ${loc.floor}` : ''}
+        {loc.Zone ? ` · ${loc.Zone}` : ''}
+      </span>
+
+      <label style={{ opacity: 0.8 }}>Zone</label>
+      <span>{loc.Zone || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Date</label>
+      <span>{istDate || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Time</label>
+      <span>{istTime || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Door</label>
+      <span>{loc.door || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Direction</label>
+      <span>{loc.direction || '—'}</span>
+    </div>
+  );
+})()}
+
+...
+
 <div className="card-details" style={{ flex: 1 }}>
         <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>{emp.EmpName}</h2>
 
