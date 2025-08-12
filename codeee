@@ -1,4 +1,22 @@
+Uncaught runtime errors:
+×
+ERROR
+Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: object. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
 
+Check the render method of `App`.
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: object. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `App`.
+    at createFiberFromTypeAndProps (http://localhost:3000/static/js/bundle.js:10152:24)
+    at createFiberFromElement (http://localhost:3000/static/js/bundle.js:10163:12)
+    at createChild (http://localhost:3000/static/js/bundle.js:12066:28)
+    at reconcileChildrenArray (http://localhost:3000/static/js/bundle.js:12179:66)
+    at reconcileChildFibersImpl (http://localhost:3000/static/js/bundle.js:12286:109)
+    at http://localhost:3000/static/js/bundle.js:12313:31
+    at reconcileChildren (http://localhost:3000/static/js/bundle.js:12575:115)
+    at beginWork (http://localhost:3000/static/js/bundle.js:13330:1565)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:8756:68)
+    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:15337:93)
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
