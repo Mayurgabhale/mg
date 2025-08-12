@@ -1,4 +1,15 @@
 
+
+<Badge
+  bg={m.present ? "success" : "secondary"}
+  pill
+  style={{ marginBottom: "0.8rem" }}
+>
+  {m.present ? "Available" : `Away (${m.outLocation || "Unknown"})`}
+</Badge>
+
+
+....
 {(m.inLocation || m.outLocation) && (
   <div className="mb-2">
     <div className="d-flex align-items-center">
