@@ -1,230 +1,177 @@
-✅ Query executed, rows: 17670
-PS C:\Users\W0024618\Desktop\employee-verification> npm start
-
-> employee-verification@1.0.0 start
-> node server.js
-
-🚀 Server running on http://localhost:5001
-🎯 [GET] /api/employees/2097201235/image called
-✅ MSSQL pool connected
-✅ DB pool acquired for image
-✅ Image query rows: 2
-✅ Serving image, type: image/jpeg size: 4017
+✅ Serving image, type: image/jpeg size: 450912
 Occupancy fetch failed for http://10.199.22.57:3008/api/occupancy/live-summary timeout of 3000ms exceeded
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 3000ms exceeded
-Occupancy fetch failed for http://10.199.22.57:3008/api/occupancy/live-summary timeout of 3000ms exceeded
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 3000ms exceeded
-🎯 [GET] /api/employees/2097201236/image called
-✅ DB pool acquired for image
-✅ Image query rows: 2
-✅ Serving image, type: image/jpeg size: 4017
-Occupancy fetch failed for http://10.199.22.57:3008/api/occupancy/live-summary timeout of 3000ms exceeded
-🎯 [GET] /api/employees/2097207990/image called
+🎯 [GET] /api/employees/2097210273/image called
 ✅ DB pool acquired for image
 ✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 13803
+✅ Serving image, type: image/jpeg size: 48911
 Occupancy fetch failed for http://10.199.22.57:3008/api/occupancy/live-summary timeout of 3000ms exceeded
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 3000ms exceeded
+🎯 [GET] /api/employees/2097187256/image called
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 26658
+Occupancy fetch failed for http://10.199.22.57:3008/api/occupancy/live-summary timeout of 3000ms exceeded
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 3000ms exceeded
 
 
-WHERE IS THE COME THIS ERROR BACKEND OR FRONTEND 
+  why this error is happen
+/ controllers/employeeLocationController.js
+const axios = require('axios');
+const sql = require('mssql');
+const { getPool } = require('../config/db');
 
-const sql    = require('mssql');
-const dotenv = require('dotenv');
-dotenv.config();
+const OCCUPANCY_URLS = [
+  'http://10.199.22.57:3006/api/occupancy/live-summary',
 
-const config = {
-  server:   process.env.DB_SERVER,
-  user:     process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  connectionTimeout: 30000,    // 30 s to establish
-  requestTimeout:    0,        // no timeout on individual queries
-  pool: {
-    max:                  100,
-    min:                   0,
+  'http://10.199.22.57:3007/api/occupancy/live-summary',  // EMEA
+ 
 
-    // Use maximum 32-bit signed‐int (~24.8 days) so Node/tarn doesn't overflow
-    idleTimeoutMillis:    2147483647,
-    acquireTimeoutMillis: 2147483647
-  },
-  options: {
-    encrypt:               true,
-    trustServerCertificate: true
-  }
-};
+'http://10.199.22.57:3008/api/occupancy/live-summary',  //Pune
+  
 
-let poolPromise = null;
+  'http://10.199.22.57:4000/api/occupancy/live-summary'   //laca
 
-async function getPool(attempts = 100) {
-  if (poolPromise) return poolPromise;
+];
 
-  poolPromise = (async () => {
-    try {
-      const pool = await sql.connect(config);
-      console.log('✅ MSSQL pool connected');
-      return pool;
-    } catch (err) {
-      console.error('❌ MSSQL pool connection failed:', err);
-      poolPromise = null;
-      if (attempts > 0) {
-        console.log(`⏳ Retrying MSSQL connect (${attempts} left)…`);
-        await new Promise(res => setTimeout(res, 3000));
-        return getPool(attempts - 1);
-      }
-      throw err;
-    }
-  })();
+// Simple in-memory cache: { [employeeObjId]: { ts: Number, data: Object } }
+const cache = {};
+const CACHE_TTL_MS = 50000; // 5 seconds — tune as needed
 
-  sql.on('error', err => {
-    console.error('❌ MSSQL global error:', err);
-    // Don’t force‐reset poolPromise here unless it’s a fatal error you want to recover from.
-  });
-
-  return poolPromise;
+function normalizeString(s) {
+  if (!s && s !== 0) return '';
+  return String(s).trim().toLowerCase();
 }
 
-// Keep‐alive ping every 5 minutes
-setInterval(async () => {
+function parseRecordTime(rec) {
+  // Priority: LocaleMessageTime -> snapshotTime -> Dateonly + Swipe_Time
+  if (rec.LocaleMessageTime) return new Date(rec.LocaleMessageTime);
+  if (rec.snapshotTime) return new Date(rec.snapshotTime);
+  if (rec.Dateonly && rec.Swipe_Time) {
+    // e.g. "2025-08-11" + "00:02:41"
+    return new Date(`${rec.Dateonly}T${rec.Swipe_Time}Z`);
+  }
+  return null;
+}
+
+async function getEmployeeLiveLocation(req, res) {
+  const employeeObjId = req.params.id;
+  if (!employeeObjId) return res.status(400).json({ error: 'Missing id' });
+
+  // Serve cache if fresh
+  const cached = cache[employeeObjId];
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return res.json({ cached: true, ...cached.data });
+  }
+
   try {
+    // 1) Fetch EmployeeID and Name from DB (same logic as getEmployees)
     const pool = await getPool();
-    await pool.request().query('SELECT 1');
-    // console.log('🔄 MSSQL keep‐alive succeeded');
-  } catch (err) {
-    console.error('⚠️ MSSQL keep‐alive ping failed:', err);
-    // poolPromise stays intact so we keep using the same pool
-  }
-}, 5 * 60 * 1000);
+    const empResult = await pool.request()
+      .input('objid', sql.BigInt, employeeObjId)
+      .query(`
+        SELECT AP.ObjectID,
+               AP.Name AS EmpName,
+               AP.Int1,
+               AP.Text12
+        FROM ACVSCore.Access.Personnel AP
+        WHERE AP.ObjectID = @objid
+      `);
 
-module.exports = { sql, getPool };
-
-
-
-// CurrentLocation.jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
-export default function CurrentLocation({ empId }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
+    if (!empResult.recordset.length) {
+      return res.status(404).json({ error: 'Employee not found' });
     }
 
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
+    const empRow = empResult.recordset[0];
+    // EmployeeID logic mirroring existing query:
+    const EmployeeID = (empRow.Int1 === 0 || empRow.Int1 === '0' || empRow.Int1 === null)
+      ? (empRow.Text12 ? String(empRow.Text12) : '')
+      : String(empRow.Int1);
 
-    axios.get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
-      .then(res => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch(err => {
-        if (cancelled) return;
-        console.error('Location load error', err && err.message ? err.message : err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    const empName = empRow.EmpName || '';
 
-    return () => {
-      cancelled = true;
+    // 2) Query occupancy endpoints concurrently
+    const requests = OCCUPANCY_URLS.map(u => axios.get(u, { timeout: 3000 }).catch(e => ({ error: e, url: u })));
+    const responses = await Promise.all(requests);
+
+    // 3) Collect and flatten details
+    let allDetails = [];
+    for (const r of responses) {
+      if (!r || r.error) {
+        // Log but continue
+        console.warn('Occupancy fetch failed for', r && r.url, r && r.error && r.error.message);
+        continue;
+      }
+      if (r.data && Array.isArray(r.data.details)) {
+        // Keep source url for debugging
+        const src = r.config && r.config.url ? r.config.url : null;
+        const annotated = r.data.details.map(d => ({ ...d, __source: src }));
+        allDetails.push(...annotated);
+      }
+    }
+
+    // 4) Find matches by EmployeeID (preferred), fallback to name (ObjectName1), then PersonGUID
+    const normEmployeeID = normalizeString(EmployeeID);
+    const normEmpName = normalizeString(empName);
+
+    const matches = allDetails.filter(rec => {
+      const recEmpId = normalizeString(rec.EmployeeID);
+      if (recEmpId && normEmployeeID && recEmpId === normEmployeeID) return true;
+
+      const recName = normalizeString(rec.ObjectName1);
+      if (recName && normEmpName && recName === normEmpName) return true;
+
+      if (rec.PersonGUID) {
+        // optionally, you can compare GUIDs if you have them
+      }
+      return false;
+    });
+
+    if (!matches.length) {
+      const result = { found: false, message: 'No recent swipe found' };
+      cache[employeeObjId] = { ts: Date.now(), data: result };
+      return res.json(result);
+    }
+
+    // 5) Select most recent
+    let best = null;
+    for (const m of matches) {
+      const t = parseRecordTime(m);
+      if (!t) continue;
+      if (!best) best = { rec: m, time: t };
+      else if (t > best.time) best = { rec: m, time: t };
+    }
+
+    if (!best) {
+      const result = { found: false, message: 'No timestamped swipe found' };
+      cache[employeeObjId] = { ts: Date.now(), data: result };
+      return res.json(result);
+    }
+
+    const r = best.rec;
+    const payload = {
+      found: true,
+      source: r.__source || null,
+      partition: r.PartitionName2 || r.Partition || null,
+      floor: r.Floor || r.Zone || r.floor || null,
+      Zone:r.Zone,
+      door: r.Door || null,
+      direction: r.Direction || null,
+      timestampUTC: (best.time && best.time.toISOString()) || null,
+      personnelType: r.PersonnelType || null,
+      cardNumber: r.CardNumber || null,
+      raw: r // include raw record for debugging if needed
     };
-  }, [empId]);
 
-  if (!empId) return null;
+    cache[employeeObjId] = { ts: Date.now(), data: payload };
 
-  // return (
-  //   <div className="current-location-card" style={{ marginTop: 8 }}>
-  //     <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
+    return res.json(payload);
 
-  //     {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-
-  //     {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-  //     {!loading && loc && !loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
-
-  //     {!loading && loc && loc.found && (
-  //       <div style={{ fontSize: 14, color: '#fff' }}>
-  //         <div style={{ fontWeight: 600 }}>
-  //           {loc.partition || '—'}{loc.floor ? ` · ${loc.floor}` : ''}
-  //         </div>
-
-  //         <div style={{ marginTop: 6, color: '#fff' }}>
-  //           {loc.door && <div>{loc.door}</div>}
-  //           {loc.direction && <div>Direction: {loc.direction}</div>}
-  //           {loc.timestampUTC && (
-  //             <div style={{ marginTop: 6, fontSize: 13, color: '#fff' }}>
-  //               Last seen: {new Date(loc.timestampUTC).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
-  //             </div>
-  //           )}
-  //         </div>
-  //       </div>
-  //     )}
-  //   </div>
-  // );
-
-
-
-
-  return (
-  <div className="current-location-card" style={{ marginTop: 2 }}>
-    <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
-
-    {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-
-    {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-    {!loading && loc && !loc.found && (
-      <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-    )}
-
-    {!loading && loc && loc.found && (
-      <div style={{ fontSize: 14, color: '#fff' }}>
-        {/* Location */}
-        <div style={{ fontWeight: 600 }}>
-          {loc.partition || '—'}
-          {loc.floor ? ` · ${loc.floor}` : ''}
-        </div>
-
-        {/* Swipe Details */}
-        {loc.timestampUTC && (() => {
-          const istDate = new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-          });
-          const istTime = new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-          });
-          return (
-            <>
-              <div style={{ marginTop: 6 }}>Date: {istDate}</div>
-              <div>Time: {istTime}</div>
-            </>
-          );
-        })()}
-
-        {loc.door && (
-          <div style={{ marginTop: 4 }}>Door: {loc.door}</div>
-        )}
-
-        {loc.direction && (
-          <div>Direction: {loc.direction}</div>
-        )}
-      </div>
-    )}
-
-
-
-    
-  </div>
-)
-
+  } catch (err) {
+    console.error('getEmployeeLiveLocation error', err && err.stack || err);
+    return res.status(500).json({ error: 'Failed to fetch live location', message: err.message });
+  }
 }
+
+module.exports = { getEmployeeLiveLocation };
+
 
