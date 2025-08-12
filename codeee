@@ -1,10 +1,102 @@
-// EmployeeCard.jsx
-import React from "react";
-import { FaIdBadge, FaUserTie, FaUserCheck, FaCreditCard, FaMapMarkerAlt, FaCalendarAlt, FaClock, FaDoorOpen, FaExchangeAlt } from "react-icons/fa";
+// CurrentLocation.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+export default function CurrentLocation({ empId, onLocationUpdate }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!empId) {
+      if (onLocationUpdate) onLocationUpdate(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+
+    axios
+      .get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
+      .then((res) => {
+        if (cancelled) return;
+        const loc = res.data;
+
+        if (loc && loc.found) {
+          const istDate = loc.timestampUTC
+            ? new Date(loc.timestampUTC).toLocaleDateString("en-IN", {
+                timeZone: "Asia/Kolkata"
+              })
+            : "";
+
+          const istTime = loc.timestampUTC
+            ? new Date(loc.timestampUTC).toLocaleTimeString("en-IN", {
+                timeZone: "Asia/Kolkata"
+              })
+            : "";
+
+          const formattedLoc = {
+            found: true,
+            partition: loc.partition || "—",
+            floor: loc.floor || "",
+            Zone: loc.Zone || "—",
+            date: istDate || "—",
+            time: istTime || "—",
+            door: loc.door || "—",
+            direction: loc.direction || "—"
+          };
+
+          if (onLocationUpdate) onLocationUpdate(formattedLoc);
+        } else {
+          if (onLocationUpdate) onLocationUpdate({ found: false });
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Location load error", err?.message || err);
+        setError("Failed to load location");
+        if (onLocationUpdate) onLocationUpdate(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [empId, onLocationUpdate]);
+
+  // This component doesn't render anything itself
+  return null;
+}
+
+
+
+
+
+
+
+
+
+// Inside EmployeeCard.jsx
+import React, { useState } from "react";
 import CurrentLocation from "./CurrentLocation";
+import {
+  FaIdBadge,
+  FaUserTie,
+  FaUserCheck,
+  FaCreditCard,
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+  FaClock,
+  FaDoorOpen,
+  FaExchangeAlt
+} from "react-icons/fa";
 
 export default function EmployeeCard({ emp }) {
   if (!emp) return null;
+
+  const [locationData, setLocationData] = useState(null);
 
   const rawStatus = emp.Employee_Status || "Deactive";
   const normalizedStatus = rawStatus.trim().toLowerCase();
@@ -12,7 +104,6 @@ export default function EmployeeCard({ emp }) {
 
   return (
     <div
-      className={`employee-card ${isTerminated ? "terminated" : ""}`}
       style={{
         display: "flex",
         gap: "1.5rem",
@@ -20,12 +111,11 @@ export default function EmployeeCard({ emp }) {
         padding: "1.5rem",
         borderRadius: "16px",
         boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-        alignItems: "flex-start",
         maxWidth: 700
       }}
     >
-      {/* Profile Image Section (UNCHANGED) */}
-      <div className="card-photo-section" style={{ minWidth: 140, position: "relative" }}>
+      {/* Photo Section (unchanged) */}
+      <div style={{ minWidth: 140, position: "relative" }}>
         <img
           src={`http://localhost:5001${emp.imageUrl}`}
           alt={emp.EmpName}
@@ -42,7 +132,6 @@ export default function EmployeeCard({ emp }) {
           }}
         />
         <span
-          className={`status-badge ${normalizedStatus === "active" ? "active" : "deactive"}`}
           style={{
             position: "absolute",
             bottom: 6,
@@ -59,71 +148,66 @@ export default function EmployeeCard({ emp }) {
         </span>
       </div>
 
-      {/* Combined Data Table */}
+      {/* Details Table */}
       <div style={{ flex: 1 }}>
-        <h2 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: "600", color: "#333" }}>
+        <h2 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: 600 }}>
           {emp.EmpName}
         </h2>
-
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "auto 1fr",
             gap: "8px 12px",
-            alignItems: "center",
             fontSize: 14
           }}
         >
-          {/* Employee Info */}
-          <span><FaIdBadge style={{ color: "#555" }} /> Employee ID</span>
+          <span><FaIdBadge /> Employee ID</span>
           <span>{emp.EmployeeID || "—"}</span>
 
-          <span><FaUserTie style={{ color: "#555" }} /> Personnel Type</span>
+          <span><FaUserTie /> Personnel Type</span>
           <span>{emp.PersonnelType || "—"}</span>
 
-          <span><FaUserCheck style={{ color: "#555" }} /> Manager</span>
+          <span><FaUserCheck /> Manager</span>
           <span>{emp.Manager_Name || "—"}</span>
 
-          <span><FaIdBadge style={{ color: "#555" }} /> Manager WU ID</span>
+          <span><FaIdBadge /> Manager WU ID</span>
           <span>{emp.Manager_WU_ID || "—"}</span>
 
-          <span><FaUserCheck style={{ color: "#555" }} /> Status</span>
+          <span><FaUserCheck /> Status</span>
           <span>{rawStatus}</span>
 
-          <span><FaCreditCard style={{ color: "#555" }} /> Total Cards</span>
+          <span><FaCreditCard /> Total Cards</span>
           <span>{emp.Total_Cards ?? 0}</span>
 
-          <span><FaCreditCard style={{ color: "#555" }} /> Active Cards</span>
+          <span><FaCreditCard /> Active Cards</span>
           <span>{emp.Active_Cards ?? 0}</span>
 
           {/* Location Info */}
-          {emp.location && emp.location.found && (
+          {locationData?.found && (
             <>
-              <span><FaMapMarkerAlt style={{ color: "#555" }} /> Location</span>
-              <span>{emp.location.partition || "—"} {emp.location.floor ? `· ${emp.location.floor}` : ""}</span>
+              <span><FaMapMarkerAlt /> Location</span>
+              <span>{locationData.partition} {locationData.floor ? `· ${locationData.floor}` : ""}</span>
 
-              <span><FaMapMarkerAlt style={{ color: "#555" }} /> Zone</span>
-              <span>{emp.location.Zone || "—"}</span>
+              <span><FaMapMarkerAlt /> Zone</span>
+              <span>{locationData.Zone}</span>
 
-              <span><FaCalendarAlt style={{ color: "#555" }} /> Date</span>
-              <span>{emp.location.date || "—"}</span>
+              <span><FaCalendarAlt /> Date</span>
+              <span>{locationData.date}</span>
 
-              <span><FaClock style={{ color: "#555" }} /> Time</span>
-              <span>{emp.location.time || "—"}</span>
+              <span><FaClock /> Time</span>
+              <span>{locationData.time}</span>
 
-              <span><FaDoorOpen style={{ color: "#555" }} /> Door</span>
-              <span>{emp.location.door || "—"}</span>
+              <span><FaDoorOpen /> Door</span>
+              <span>{locationData.door}</span>
 
-              <span><FaExchangeAlt style={{ color: "#555" }} /> Direction</span>
-              <span>{emp.location.direction || "—"}</span>
+              <span><FaExchangeAlt /> Direction</span>
+              <span>{locationData.direction}</span>
             </>
           )}
         </div>
 
-        {/* Live Location Component */}
-        <div style={{ marginTop: 8 }}>
-          <CurrentLocation empId={emp.id} />
-        </div>
+        {/* Live Location Fetch */}
+        <CurrentLocation empId={emp.id} onLocationUpdate={setLocationData} />
       </div>
     </div>
   );
