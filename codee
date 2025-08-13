@@ -1,10 +1,6 @@
-C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\EmployeeCard.jsx
-
-
-
-// EmployeeCard.jsx
 import React from 'react';
 import CurrentLocation from './CurrentLocation';
+import './EmployeeCard.css'; // Import CSS
 
 export default function EmployeeCard({ emp }) {
   if (!emp) return null;
@@ -14,239 +10,178 @@ export default function EmployeeCard({ emp }) {
   const isTerminated = normalizedStatus === 'terminated';
 
   return (
-    <div
-      className={`employee-card ${isTerminated ? 'terminated' : ''}`}
-      data-status={normalizedStatus}
-      style={{
-        display: 'flex',
-        gap: '1rem',
-        background:
-          normalizedStatus === 'active'
-            ? 'linear-gradient(to right, rgba(40, 167, 69, 1) 0%, rgba(40, 167, 69, 0.1) 100%)'
-            : '#000',
-        padding: '1rem',
-        borderRadius: 8,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-        color: '#000',
-      }}
-    >
-      {/* Photo section - left unchanged as requested */}
-      <div
-        className="card-photo-section"
-        style={{
-          minWidth: 140,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div className="photo-wrapper" style={{ position: 'relative' }}>
-          <img
-            src={`http://localhost:5001${emp.imageUrl}`}
-            alt={emp.EmpName}
-            style={{
-              width: 325,
-              height: 350,
-              border: '2px solid #f0f0f0',
-            }}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/images/no-photo.jpg';
-            }}
-          />
-
-          <span
-            className={`status-badge ${
-              normalizedStatus === 'active' ? 'active' : 'deactive'
-            }`}
-            style={{
-              position: 'absolute',
-              bottom: 6,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: normalizedStatus === 'active' ? '#0b9' : '#999',
-              color: '#fff',
-              padding: '4px 8px',
-              borderRadius: 6,
-              fontSize: 12,
-            }}
-          >
-            {rawStatus}
-          </span>
-        </div>
+    <div className="employee-card-container">
+      {/* Left photo section */}
+      <div className="employee-photo-section">
+        <img
+          src={`http://localhost:5001${emp.imageUrl}`}
+          alt={emp.EmpName}
+          className="employee-photo"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = '/images/no-photo.jpg';
+          }}
+        />
+        <span className={`status-badge ${normalizedStatus}`}>
+          {rawStatus}
+        </span>
       </div>
 
-      {/* Combined employee and location info as a single table */}
-      <div className="card-details" style={{ flex: 1 }}>
-        <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>
-          {emp.EmpName}
-        </h2>
+      {/* Right details section */}
+      <div className="employee-details">
+        <h2 className="employee-name">{emp.EmpName}</h2>
+        <p className="employee-role">{emp.PersonnelType || 'Employee'}</p>
 
-        <table className='table' style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table className="details-table">
           <tbody>
-            {/* Employee Info Section */}
             <tr>
-              <td style={{ opacity: 0.8, width: '30%', padding: '8px 0', borderBottom: '1px solid #eee' }}>Employee ID</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.EmployeeID || '—'}</td>
+              <td>ID:</td>
+              <td>{emp.EmployeeID || '—'}</td>
             </tr>
-
             <tr>
-              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Personnel Type</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.PersonnelType || '—'}</td>
+              <td>Manager:</td>
+              <td>{emp.Manager_Name || '—'}</td>
             </tr>
-
             <tr>
-              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Manager</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Manager_Name || '—'}</td>
+              <td>Status:</td>
+              <td>{rawStatus}</td>
             </tr>
-
             <tr>
-              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Manager WU ID</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Manager_WU_ID || '—'}</td>
+              <td>Active Cards:</td>
+              <td>{emp.Active_Cards ?? 0}</td>
             </tr>
-
             <tr>
-              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Status</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{rawStatus}</td>
+              <td>Total Cards:</td>
+              <td>{emp.Total_Cards ?? 0}</td>
             </tr>
-
-            <tr>
-              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Total Cards</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Total_Cards ?? 0}</td>
-            </tr>
-
-            <tr>
-              <td style={{ opacity: 0.8, padding: '8px 0', borderBottom: '1px solid #eee' }}>Active Cards</td>
-              <td style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>{emp.Active_Cards ?? 0}</td>
-            </tr>
-
-            {/* Location Info Section */}
-            <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
           </tbody>
         </table>
+
+        {/* Current location */}
+        <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
+
+        {/* Social icons and footer */}
+        <div className="employee-footer">
+          <div className="social-icons">
+            <a href="#"><i className="fab fa-facebook-f"></i></a>
+            <a href="#"><i className="fab fa-twitter"></i></a>
+            <a href="#"><i className="fab fa-linkedin-in"></i></a>
+            <a href="#"><i className="fab fa-github"></i></a>
+          </div>
+          <div className="footer-text">
+            Made with <span className="heart">❤️</span> by Learning Robo
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\CurrentLocation.jsx
 
 
 
+.employee-card-container {
+  display: flex;
+  background: #1f1f2e;
+  border-radius: 12px;
+  padding: 20px;
+  gap: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  color: #fff;
+  max-width: 900px;
+  margin: 20px auto;
+  font-family: 'Segoe UI', sans-serif;
+}
 
-// CurrentLocation.jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+.employee-photo-section {
+  position: relative;
+  min-width: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-export default function CurrentLocation({ empId }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
+.employee-photo {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  object-fit: cover;
+}
 
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
+.status-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+}
 
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
+.status-badge.active { background: #0b9; }
+.status-badge.deactive { background: #999; }
+.status-badge.terminated { background: #e74c3c; }
 
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
-      .then((res) => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Location load error', err && err.message ? err.message : err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+.employee-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
+.employee-name {
+  margin: 0;
+  font-size: 24px;
+  color: #00bfff;
+}
 
-  if (!empId) return null;
+.employee-role {
+  margin: 4px 0 16px 0;
+  color: #aaa;
+  font-size: 14px;
+}
 
-  return (
-    <div className="current-location-card" style={{ marginTop: 8 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
+.details-table {
+  width: 100%;
+  margin-bottom: 16px;
+  border-collapse: collapse;
+}
 
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+.details-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #333;
+}
 
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
+.details-table td:first-child {
+  opacity: 0.7;
+  width: 140px;
+}
 
-      {!loading && loc && !loc.found && (
-        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-      )}
+.employee-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
 
-      {!loading &&
-        loc &&
-        loc.found &&
-        (() => {
-          const istDate = loc.timestampUTC
-            ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-                timeZone: 'Asia/Kolkata',
-              })
-            : '';
+.social-icons a {
+  color: #00bfff;
+  margin-right: 10px;
+  font-size: 16px;
+  text-decoration: none;
+}
 
-          const istTime = loc.timestampUTC
-            ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-                timeZone: 'Asia/Kolkata',
-              })
-            : '';
+.social-icons a:hover {
+  color: #fff;
+}
 
-          return (
-            <table
-              
-              className='table'
-            >
-              <tbody>
-                <tr>
-                  <td style={{ opacity: 0.8, width: 140 }}>Location</td>
-                  <td>
-                    {loc.partition || '—'}
-                    {loc.floor ? ` · ${loc.floor}` : ''}
-                  </td>
-                </tr>
+.footer-text {
+  font-size: 12px;
+  color: #aaa;
+}
 
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Zone</td>
-                  <td>{loc.Zone || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Date</td>
-                  <td>{istDate || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Time</td>
-                  <td>{istTime || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Door</td>
-                  <td>{loc.door || '—'}</td>
-                </tr>
-
-                <tr>
-                  <td style={{ opacity: 0.8 }}>Direction</td>
-                  <td>{loc.direction || '—'}</td>
-                </tr>
-              </tbody>
-            </table>
-          );
-        })()}
-    </div>
-  );
+.footer-text .heart {
+  color: red;
 }
