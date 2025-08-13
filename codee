@@ -1,43 +1,100 @@
-useEffect(() => {
-  function handleClickOutside(event) {
-    if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-      onSelectSuggestion(null);
+react-dom-client.development.js:7563 Encountered two children with the same key, `2097201235`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+(anonymous)	@	react-dom-client.development.js:7563
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+warnOnInvalidKey	@	react-dom-client.development.js:7562
+reconcileChildrenArray	@	react-dom-client.development.js:7628
+reconcileChildFibersImpl	@	react-dom-client.development.js:7949
+(anonymous)	@	react-dom-client.development.js:8057
+reconcileChildren	@	react-dom-client.development.js:8619
+beginWork	@	react-dom-client.development.js:10732
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+performUnitOfWork	@	react-dom-client.development.js:15130
+workLoopSync	@	react-dom-client.development.js:14956
+renderRootSync	@	react-dom-client.development.js:14936
+performWorkOnRoot	@	react-dom-client.development.js:14417
+performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
+performWorkUntilDeadline	@	scheduler.development.js:45
+<li>		
+exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
+(anonymous)	@	SearchBar.jsx:38
+SearchBar	@	SearchBar.jsx:38
+react-stack-bottom-frame	@	react-dom-client.development.js:23863
+renderWithHooksAgain	@	react-dom-client.development.js:5629
+renderWithHooks	@	react-dom-client.development.js:5541
+updateFunctionComponent	@	react-dom-client.development.js:8897
+beginWork	@	react-dom-client.development.js:10522
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+performUnitOfWork	@	react-dom-client.development.js:15130
+workLoopSync	@	react-dom-client.development.js:14956
+renderRootSync	@	react-dom-client.development.js:14936
+performWorkOnRoot	@	react-dom-client.development.js:14417
+performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
+performWorkUntilDeadline	@	scheduler.development.js:45
+
+
+
+
+
+import React, { useRef, useEffect } from 'react';
+
+export default function SearchBar({ value, onChange, onSearch, suggestions, onSelectSuggestion }) {
+  const wrapperRef = useRef();
+
+  // Close suggestions dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        onSelectSuggestion(null); // Clear suggestions
+      }
     }
-  }
-  document.addEventListener("click", handleClickOutside);
-  return () => document.removeEventListener("click", handleClickOutside);
-}, [onSelectSuggestion]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onSelectSuggestion]);
 
+  return (
+    <div className="search-bar-container" ref={wrapperRef}>
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
 
- ......
-
-
-in search bar this work correctly  {suggestions?.length > 0 && (
+      {suggestions?.length > 0 && (
         <ul className="suggestions-dropdown">
           {suggestions.map(emp => (
             <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
               {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
             </li>
-          ))} this work correctly
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
-but in  <div className="history-list">
-              <h3>Related Results</h3>
-              <ul>
-                {suggestions.map(emp => (
-                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
 
-this not wokr correclty, 
 
-if is search lloyds then i pickup n related results  not not select work 
-when in uggestions-dropdown select wokr correclty but this not work <h3>Related Results</h3>
-read all codd cruuly not slove the issue 
 
-and search disply first in top 
+
+
+
+
+
+
+
+
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -216,59 +273,4 @@ function App() {
 }
 
 export default App;
-
-
-import React, { useRef, useEffect } from 'react';
-
-export default function SearchBar({ value, onChange, onSearch, suggestions, onSelectSuggestion }) {
-  const wrapperRef = useRef();
-
-  // Close suggestions dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        onSelectSuggestion(null); // Clear suggestions
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onSelectSuggestion]);
-
-  return (
-    <div className="search-bar-container" ref={wrapperRef}>
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          onSearch();
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search by Name or EmpID"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          autoComplete="off"
-        />
-        <button type="submit">Search</button>
-      </form>
-
-      {suggestions?.length > 0 && (
-        <ul className="suggestions-dropdown">
-          {suggestions.map(emp => (
-            <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
-              {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-
-
-
-
 
