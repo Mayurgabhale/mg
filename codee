@@ -1,3 +1,10 @@
+<Typography variant="subtitle1" sx={{ color: titleColor, fontWeight: 600 }}>
+  {title}
+</Typography>
+
+
+
+
 react-dom-client.development.js:2600 In HTML, <h6> cannot be a child of <h6>.
 This will cause a hydration error.
 
