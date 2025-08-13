@@ -1,13 +1,29 @@
-(emp.EmployeeID || '').toLowerCase() === term ||
-(emp.EmpName || '').toLowerCase().includes(term)
+in search bar this work correctly  {suggestions?.length > 0 && (
+        <ul className="suggestions-dropdown">
+          {suggestions.map(emp => (
+            <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
+              {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
+            </li>
+          ))} this work correctly
 
+but in  <div className="history-list">
+              <h3>Related Results</h3>
+              <ul>
+                {suggestions.map(emp => (
+                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
+this not wokr correclty, 
 
+if is search lloyds then i pickup n related results  not not select work 
+when in uggestions-dropdown select wokr correclty but this not work <h3>Related Results</h3>
+read all codd cruuly not slove the issue 
 
-
-
-this pickSuggestion not work correct 
-if i search lloyds pickup   <h3>Related Results</h3>  not select nor not show emplloye card 
+and search disply first in top 
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -52,8 +68,6 @@ function App() {
     );
     setSuggestions(matches.slice(0, 40));
   }, [searchTerm, allEmployees]);
-
-
 
   const handleSearch = () => {
     setError('');
@@ -128,7 +142,6 @@ function App() {
 
         <div className="right-panel">
           <div className="lists-container">
-            
             <div className="history-list">
               <h3>Related Results</h3>
               <ul>
@@ -189,4 +202,59 @@ function App() {
 }
 
 export default App;
+
+
+import React, { useRef, useEffect } from 'react';
+
+export default function SearchBar({ value, onChange, onSearch, suggestions, onSelectSuggestion }) {
+  const wrapperRef = useRef();
+
+  // Close suggestions dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        onSelectSuggestion(null); // Clear suggestions
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onSelectSuggestion]);
+
+  return (
+    <div className="search-bar-container" ref={wrapperRef}>
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
+
+      {suggestions?.length > 0 && (
+        <ul className="suggestions-dropdown">
+          {suggestions.map(emp => (
+            <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
+              {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+
+
+
+
 
