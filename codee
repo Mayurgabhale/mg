@@ -1,3 +1,17 @@
+useEffect(() => {
+  function handleClickOutside(event) {
+    if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      onSelectSuggestion(null);
+    }
+  }
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, [onSelectSuggestion]);
+
+
+ ......
+
+
 in search bar this work correctly  {suggestions?.length > 0 && (
         <ul className="suggestions-dropdown">
           {suggestions.map(emp => (
