@@ -1,4 +1,31 @@
+useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    setSuggestions([]);
+    return;
+  }
+  
+  // First try to find exact matches (name or ID)
+  const exactMatches = allEmployees.filter(emp => 
+    (emp.EmpName || '').toLowerCase() === term ||
+    (emp.EmployeeID || '').toLowerCase() === term
+  );
+  
+  // Then find partial matches excluding exact matches
+  const partialMatches = allEmployees.filter(emp => 
+    !exactMatches.includes(emp) && (
+      (emp.EmployeeID || '').toLowerCase().includes(term) ||
+      (emp.EmpName || '').toLowerCase().includes(term)
+    )
+  );
+  
+  // Combine results with exact matches first
+  setSuggestions([...exactMatches, ...partialMatches].slice(0, 40));
+}, [searchTerm, allEmployees]);
 
+
+
+.....
 
 // src/App.js
 import React, { useState, useEffect } from 'react';
