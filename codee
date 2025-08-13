@@ -99,3 +99,30 @@ export default function EmployeeCard({ emp }) {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+.show-more-btn {
+  background: linear-gradient(90deg, #38c6ff, #4e9dff);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  transition: background 0.3s ease;
+}
+
+.show-more-btn:hover {
+  background: linear-gradient(90deg, #4ed9ff, #6aa9ff);
+}
