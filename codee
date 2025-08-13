@@ -1,3 +1,171 @@
+/* Employee Card Container */
+.employee-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.emp-name {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-badge.deactive {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Main Content Area */
+.card-content {
+  display: flex;
+  gap: 25px;
+}
+
+.photo-section {
+  flex: 0 0 180px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  height: 200px;
+}
+
+.photo-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Details Table */
+.details-table {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+}
+
+.table-label {
+  font-weight: 600;
+  color: #34495e;
+  font-size: 0.9rem;
+  padding: 6px 0;
+}
+
+.table-value {
+  font-size: 0.95rem;
+  color: #2c3e50;
+  padding: 6px 0;
+  font-weight: 500;
+}
+
+/* Location Section */
+.location-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.location-header {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.location-table {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+/* Status Indicators */
+.loading-indicator, 
+.error-message, 
+.no-swipe {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.loading-indicator {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-left: 4px solid #1976d2;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #d32f2f;
+  border-left: 4px solid #d32f2f;
+}
+
+.no-swipe {
+  background-color: #e8f5e9;
+  color: #388e3c;
+  border-left: 4px solid #388e3c;
+}
+
+/* Terminated state */
+.employee-card.terminated {
+  background: linear-gradient(to right, #f8f9fa, #e9ecef);
+}
+
+.employee-card.terminated .emp-name,
+.employee-card.terminated .table-value {
+  color: #6c757d;
+}
+
+.employee-card.terminated .status-badge {
+  background-color: #6c757d;
+}
+
+/* Zebra striping for table rows */
+.table-row:nth-child(even) {
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+
+
+
+.....
+
 import React from 'react';
 import CurrentLocation from './CurrentLocation';
 
