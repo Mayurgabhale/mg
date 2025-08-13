@@ -169,6 +169,8 @@
 
  read comment code carefully add terminated  in below code 
 if deacitve then bg red 
+
+
 import React from 'react';
 import CurrentLocation from './CurrentLocation';
 import './EmployeeCard.css';
@@ -178,7 +180,6 @@ export default function EmployeeCard({ emp }) {
 
   const rawStatus = emp.Employee_Status || 'Deactive';
   const normalizedStatus = rawStatus.trim().toLowerCase();
-  const isTerminated = normalizedStatus === 'terminated';
 
   return (
     <div className="employee-card-container" data-status={normalizedStatus}>
@@ -226,15 +227,18 @@ export default function EmployeeCard({ emp }) {
               <td className="label">Manager</td>
               <td className="value">{emp.Manager_Name || '—'}</td>
             </tr>
-            
-            {/* <tr>
+            <tr>
+              <td className="label">Status</td>
+              <td className="value">{rawStatus}</td>
+            </tr>
+            <tr>
               <td className="label">Active Cards</td>
               <td className="value">{emp.Active_Cards ?? 0}</td>
             </tr>
             <tr>
               <td className="label">Total Cards</td>
               <td className="value">{emp.Total_Cards ?? 0}</td>
-            </tr> */}
+            </tr>
 
             {/* Current location component will render its own table rows */}
             <tr>
