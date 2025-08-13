@@ -1,76 +1,107 @@
 import React from 'react';
 import CurrentLocation from './CurrentLocation';
-import './EmployeeCard.css'; // Import CSS
+import './EmployeeCard.css';
 
 export default function EmployeeCard({ emp }) {
   if (!emp) return null;
 
   const rawStatus = emp.Employee_Status || 'Deactive';
   const normalizedStatus = rawStatus.trim().toLowerCase();
-  const isTerminated = normalizedStatus === 'terminated';
 
   return (
-    <div className="employee-card-container">
-      {/* Left photo section */}
-      <div className="employee-photo-section">
-        <img
-          src={`http://localhost:5001${emp.imageUrl}`}
-          alt={emp.EmpName}
-          className="employee-photo"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/images/no-photo.jpg';
-          }}
-        />
-        <span className={`status-badge ${normalizedStatus}`}>
-          {rawStatus}
-        </span>
+    <div className="employee-card-container" data-status={normalizedStatus}>
+      {/* Left column: big photo, name, role, status */}
+      <div className="left-col">
+        <div className="photo-ring">
+          <img
+            className="photo"
+            src={emp.imageUrl ? `http://localhost:5001${emp.imageUrl}` : '/images/no-photo.jpg'}
+            alt={emp.EmpName || 'Employee photo'}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}
+          />
+        </div>
+
+        <div className="photo-meta">
+          <div className="emp-name">{emp.EmpName || '—'}</div>
+          <div className="emp-role">{emp.PersonnelType || 'Employee'}</div>
+          <div className={`status-pill ${normalizedStatus}`}>{rawStatus}</div>
+        </div>
       </div>
 
-      {/* Right details section */}
-      <div className="employee-details">
-        <h2 className="employee-name">{emp.EmpName}</h2>
-        <p className="employee-role">{emp.PersonnelType || 'Employee'}</p>
+      {/* Separator line on wide screens */}
+      <div className="separator" aria-hidden />
 
-        <table className="details-table">
+      {/* Right column: profile details and socials */}
+      <div className="right-col">
+        <h3 className="profile-title">Profile Details</h3>
+
+        <table className="details-table" aria-label="employee details">
           <tbody>
             <tr>
-              <td>ID:</td>
-              <td>{emp.EmployeeID || '—'}</td>
+              <td className="label">Name :</td>
+              <td className="value">{emp.EmpName || '—'}</td>
             </tr>
             <tr>
-              <td>Manager:</td>
-              <td>{emp.Manager_Name || '—'}</td>
+              <td className="label">Age :</td>
+              <td className="value">{emp.Age ?? '—'}</td>
             </tr>
             <tr>
-              <td>Status:</td>
-              <td>{rawStatus}</td>
+              <td className="label">Mobile :</td>
+              <td className="value">{emp.Mobile || '—'}</td>
             </tr>
             <tr>
-              <td>Active Cards:</td>
-              <td>{emp.Active_Cards ?? 0}</td>
+              <td className="label">Email :</td>
+              <td className="value">{emp.Email || '—'}</td>
             </tr>
             <tr>
-              <td>Total Cards:</td>
-              <td>{emp.Total_Cards ?? 0}</td>
+              <td className="label">Address :</td>
+              <td className="value">{emp.Address || '—'}</td>
+            </tr>
+
+            {/* other rows you previously had */}
+            <tr>
+              <td className="label">Employee ID</td>
+              <td className="value">{emp.EmployeeID || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label">Manager</td>
+              <td className="value">{emp.Manager_Name || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label">Status</td>
+              <td className="value">{rawStatus}</td>
+            </tr>
+            <tr>
+              <td className="label">Active Cards</td>
+              <td className="value">{emp.Active_Cards ?? 0}</td>
+            </tr>
+            <tr>
+              <td className="label">Total Cards</td>
+              <td className="value">{emp.Total_Cards ?? 0}</td>
+            </tr>
+
+            {/* Current location component will render its own table rows */}
+            <tr>
+              <td colSpan="2" style={{ paddingTop: 8 }}>
+                <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
+              </td>
             </tr>
           </tbody>
         </table>
 
-        {/* Current location */}
-        <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
-
-        {/* Social icons and footer */}
-        <div className="employee-footer">
+        <div className="social-row">
           <div className="social-icons">
-            <a href="#"><i className="fab fa-facebook-f"></i></a>
-            <a href="#"><i className="fab fa-twitter"></i></a>
-            <a href="#"><i className="fab fa-linkedin-in"></i></a>
-            <a href="#"><i className="fab fa-github"></i></a>
+            {/* Replace the <i> tags with your icon library or images. */}
+            <a href="#" aria-label="facebook" title="facebook"><i className="fab fa-facebook-f" /></a>
+            <a href="#" aria-label="twitter" title="twitter"><i className="fab fa-twitter" /></a>
+            <a href="#" aria-label="linkedin" title="linkedin"><i className="fab fa-linkedin-in" /></a>
+            <a href="#" aria-label="github" title="github"><i className="fab fa-github" /></a>
           </div>
-          <div className="footer-text">
-            Made with <span className="heart">❤️</span> by Learning Robo
-          </div>
+
+          <div className="made-by">Made with <span className="heart">❤</span> by <strong>Learning Robo</strong></div>
         </div>
       </div>
     </div>
@@ -80,108 +111,215 @@ export default function EmployeeCard({ emp }) {
 
 
 
+
+
+
+
+
+
+
+/* Container */
 .employee-card-container {
   display: flex;
-  background: #1f1f2e;
-  border-radius: 12px;
-  padding: 20px;
-  gap: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  color: #fff;
-  max-width: 900px;
-  margin: 20px auto;
-  font-family: 'Segoe UI', sans-serif;
+  gap: 28px;
+  align-items: stretch;
+  background: linear-gradient(180deg, #131318 0%, #1d1d26 100%);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  color: #e6eef6;
+  max-width: 1100px;
+  margin: 24px auto;
+  font-family: "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
 }
 
-.employee-photo-section {
-  position: relative;
-  min-width: 200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.employee-photo {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  border: 4px solid #fff;
-  object-fit: cover;
-}
-
-.status-badge {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  color: #fff;
-  font-weight: 600;
-}
-
-.status-badge.active { background: #0b9; }
-.status-badge.deactive { background: #999; }
-.status-badge.terminated { background: #e74c3c; }
-
-.employee-details {
-  flex: 1;
+/* Left column */
+.left-col {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  min-width: 280px; /* keeps big photo on wide screens */
 }
 
-.employee-name {
-  margin: 0;
-  font-size: 24px;
-  color: #00bfff;
+/* gradient ring around photo (instagram-like) */
+.photo-ring {
+  display: inline-block;
+  border-radius: 50%;
+  padding: 6px; /* thickness of the ring */
+  background: conic-gradient(
+    from 180deg,
+    #ff2d95 0deg,
+    #ffcf2d 80deg,
+    #2de6b7 160deg,
+    #7a64ff 240deg,
+    #ff2d95 360deg
+  );
+  /* subtle inner shadow to match look */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-.employee-role {
-  margin: 4px 0 16px 0;
-  color: #aaa;
-  font-size: 14px;
+/* photo size - responsive using clamp */
+.photo {
+  width: clamp(160px, 28vw, 260px); /* adapts from small to large screens */
+  height: clamp(160px, 28vw, 260px);
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.04); /* thin inner border */
+  background: #222;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.5);
 }
 
+/* Photo meta (name, role, status) */
+.photo-meta {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.emp-name {
+  font-size: clamp(18px, 2.6vw, 26px); /* big name under photo */
+  font-weight: 700;
+  color: #38c6ff; /* cyan-ish like reference */
+  margin-bottom: 6px;
+}
+
+.emp-role {
+  font-size: 13px;
+  color: rgba(230,238,246,0.7);
+  margin-bottom: 8px;
+}
+
+/* Status pill under name */
+.status-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: #6c757d;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+}
+
+/* status color variants */
+.status-pill.active { background: #12c38a; }
+.status-pill.deactive { background: #7a7a7a; }
+.status-pill.terminated { background: #e74c3c; }
+
+/* separator line (vertical) */
+.separator {
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border-radius: 1px;
+  align-self: stretch;
+}
+
+/* Right column */
+.right-col {
+  flex: 1;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 18px;
+}
+
+/* Profile title */
+.profile-title {
+  margin: 0 0 6px 0;
+  color: #49c2ff;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+
+/* details table */
 .details-table {
   width: 100%;
-  margin-bottom: 16px;
   border-collapse: collapse;
+  color: #e7eef7;
+  margin-bottom: 8px;
 }
 
 .details-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #333;
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 
-.details-table td:first-child {
-  opacity: 0.7;
-  width: 140px;
+.details-table .label {
+  opacity: 0.8;
+  width: 160px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
 }
 
-.employee-footer {
+.details-table .value {
+  color: rgba(230,238,246,0.95);
+}
+
+/* Socials and footer */
+.social-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
 }
 
+/* icons: default size and background circle like reference */
 .social-icons a {
-  color: #00bfff;
-  margin-right: 10px;
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(0,200,255,0.14), rgba(0,200,255,0.05));
+  color: #7fe6ff;
   text-decoration: none;
+  font-size: 16px;
+  margin-right: 8px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.45);
 }
 
-.social-icons a:hover {
-  color: #fff;
+/* small footer text */
+.made-by {
+  font-size: 13px;
+  color: rgba(230,238,246,0.7);
 }
 
-.footer-text {
-  font-size: 12px;
-  color: #aaa;
+.heart {
+  color: #ff6b6b;
+  margin: 0 4px;
 }
 
-.footer-text .heart {
-  color: red;
+/* Responsive: stack on smaller screens */
+@media (max-width: 860px) {
+  .employee-card-container {
+    flex-direction: column;
+    padding: 20px;
+    gap: 18px;
+  }
+  .left-col {
+    min-width: auto;
+    align-items: center;
+  }
+  .separator { display: none; }
+  .right-col { padding-left: 0; }
+  .details-table .label { width: 110px; }
 }
+
+/* Very small screens: tighten spacing */
+@media (max-width: 420px) {
+  .photo { width: 160px; height: 160px; }
+  .emp-name { font-size: 18px; }
+  .details-table .label { width: 100px; font-size: 13px; }
+}
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
