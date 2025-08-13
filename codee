@@ -1,303 +1,337 @@
-<Typography variant="subtitle1" sx={{ color: titleColor, fontWeight: 600 }}>
-  {title}
-</Typography>
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\CurrentLocation.jsx
+
+
+
+// CurrentLocation.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+export default function CurrentLocation({ empId }) {
+  const [loading, setLoading] = useState(false);
+  const [loc, setLoc] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!empId) {
+      setLoc(null);
+      setError('');
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    setLoc(null);
+
+    axios.get(`http://localhost:5001/api/employees/${empId}/location`, { timeout: 5000 })
+      .then(res => {
+        if (cancelled) return;
+        setLoc(res.data);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        console.error('Location load error', err && err.message ? err.message : err);
+        setError('Failed to load location');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [empId]);
+
+  if (!empId) return null;
+
+  // return (
+  //   <div className="current-location-card" style={{ marginTop: 8 }}>
+  //     <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
+
+  //     {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+
+  //     {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+  //     {!loading && loc && !loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
+
+  //     {!loading && loc && loc.found && (
+  //       <div style={{ fontSize: 14, color: '#fff' }}>
+  //         <div style={{ fontWeight: 600 }}>
+  //           {loc.partition || '—'}{loc.floor ? ` · ${loc.floor}` : ''}
+  //         </div>
+
+  //         <div style={{ marginTop: 6, color: '#fff' }}>
+  //           {loc.door && <div>{loc.door}</div>}
+  //           {loc.direction && <div>Direction: {loc.direction}</div>}
+  //           {loc.timestampUTC && (
+  //             <div style={{ marginTop: 6, fontSize: 13, color: '#fff' }}>
+  //               Last seen: {new Date(loc.timestampUTC).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
+  //             </div>
+  //           )}
+  //         </div>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 
 
 
 
-react-dom-client.development.js:2600 In HTML, <h6> cannot be a child of <h6>.
-This will cause a hydration error.
-
-  ...
-    <div className="MuiBox-roo...">
-      <SummaryCard title={<ForwardRef(Typography)>} total={25} stats={[...]} sx={{width:"100%", ...}} ...>
-        <Card sx={{width:"100%", ...}} elevation={0}>
-          <MuiCard-root className="MuiCard-root" elevation={0} ref={null} ownerState={{...}} sx={{width:"100%", ...}}>
-            <Insertion>
-            <Paper className="MuiCard-ro..." elevation={0}>
-              <MuiPaper-root as="div" ownerState={{...}} className="MuiPaper-r..." ref={null} style={{...}}>
-                <Insertion>
-                <div className="MuiPaper-r..." style={{...}}>
-                  <CardContent>
-                    <MuiCardContent-root as="div" className="MuiCardCon..." ownerState={{children:[...], ...}} ref={null}>
-                      <Insertion>
-                      <div className="MuiCardCon...">
-                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                          <Styled(div) as="div" ref={null} className="MuiBox-root" theme={{...}} ...>
-                            <Insertion>
-                            <div className="MuiBox-roo...">
-                              <Typography variant="subtitle1" sx={{color:"#FF...", ...}}>
-                                <MuiTypography-root as="h6" ref={null} className="MuiTypogra..." ...>
-                                  <Insertion>
->                                 <h6
->                                   className="MuiTypography-root MuiTypography-subtitle1 css-18i7dnd-MuiTypography-root"
->                                   style={{}}
->                                 >
-                                    <Typography variant="subtitle1" sx={{...}}>
-                                      <MuiTypography-root as="h6" ref={null} className="MuiTypogra..." ...>
-                                        <Insertion>
->                                       <h6
->                                         className="MuiTypography-root MuiTypography-subtitle1 css-12ngrzm-MuiTypogra..."
->                                         style={{}}
->                                       >
-                              ...
-                        ...
-
-react-dom-client.development.js:2626 <h6> cannot contain a nested <h6>.
-See this log for the ancestor stack trace.
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\BarChartCard.jsx
-<Typography variant="subtitle1" align="center" gutterBottom>{title}</Typography>
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\ColumnChartCard.jsx
-        <Typography variant="subtitle1" align="center" gutterBottom>{title}</Typography>
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\CompositeChartCard.jsx
-
-<Card sx={{ border: `1px solid #fff`, bgcolor: 'rgba(0,0,0,0.4)' }}>
-        <CardContent>
-          <Typography variant="subtitle1" align="center" color="text.secondary">
-            {title}
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
-            No realtime employee data
-          </Typography>
-        </CardContent>
-      </Card>
-
-
-<CardContent sx={{ p: 1 }}>
-        <Typography
-          variant="subtitle1"
-          align="center"
-          gutterBottom
-          color="text.primary"
-        >
-          {title}
-        </Typography>
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\LineChartCard.jsx
-
-
-  <CardContent>
-          <Typography variant="subtitle1" align="center" color="text.primary">
-            {title}
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 4, color: 'text.secondary' }}>
-            No realtime employee data
-          </Typography>
-        </CardContent>
-
-   <Typography variant="subtitle1" align="center" gutterBottom color="text.primary">
-          {title}
-        </Typography>
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\PieChartCard.jsx
-
-  <CardContent>
-          <Typography variant="subtitle1" align="center" color="text.primary">
-            {title}
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt:4, color:'text.secondary' }}>
-            {noDataMessage}
-          </Typography>
-        </CardContent>
-
-
-<CardContent sx={{ p:1 }}>
-        <Typography variant="subtitle1" align="center" color="text.primary">
-          {title}
-        </Typography>
-
-
-  <Typography variant="h4" align="center" sx={{ color: colors[0], fontWeight: 'bold' }}>
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\SummaryCard.jsx
-    {/* Top Section */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-          <Typography variant="subtitle1" sx={{ color: titleColor, fontWeight: 600 }}>
-            {title}
-          </Typography>
-          <Box>{icon}</Box>
-              {total}
-            </Typography>
-            <Typography variant="caption" align="center" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              </Typography>
-              
-
-            <Typography variant="caption" align="center" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {/* of {totalSeats} seats */}
-            </Typography>
-
-
-
-
-  <Typography variant="subtitle2" sx={{ color: '#000' }}>
-          <strong>{data.name}</strong>
-        </Typography>
-        <Typography variant="body2" sx={{ color: '#000' }}>Total: {data.value}</Typography>
-
-        {data.emp !== undefined && (
-          <Typography variant="body2" sx={{ color: '#000' }}>Employees: {data.emp}</Typography>
-        )}
-        {data.cont !== undefined && (
-          <Typography variant="body2" sx={{ color: '#000' }}>Contractors: {data.cont}</Typography>
-        )}
-      </Box>
-
-
-
-  {/* Top Section */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-          <Typography variant="subtitle1" sx={{ color: titleColor, fontWeight: 600 }}>
-            {title}
-          </Typography>
-          <Box>{icon}</Box>
-        </Box>
-
-        {/* Total Number */}
-        <Typography variant="h4" sx={{ color: totalColor, fontWeight: 700, mb: stats.length ? 1 : 0 }}>
-          {total}
-        </Typography>
-
-        {/* Bottom Stats */}
-        {stats.map(stat => (
-          <Box key={stat.label} display="flex" justifyContent="space-between" mt={1}>
-            {/* Label with stat.color */}
-            <Typography
-              variant="body2"
-              fontWeight="bold"
-              fontSize={18}
-              sx={{ color: stat.label === 'Employees' ? '#2ecc71' : '#ec7063' }}
-            >
-              {stat.label}
-            </Typography>
-
-            {/* Value with same stat.color */}
-            <Typography
-              variant="body2"
-              fontWeight="bold"
-              fontSize={22}
-              sx={{ color: stat.label === 'Employees' ? '#2ecc71' : '#ec7063' }}
-            >
-              {stat.value}
-            </Typography>
-          </Box>
-        ))}
-
-
-      </CardContent>
-    </Card>
-  );
-}
-
-
-// ..................
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\pages\Dashboard.jsx
-<SummaryCard
-                  title={
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        fontWeight: 'bold',
-                        color: '#FFC107',  // Change this to your desired color
-                        fontSize: '1.3rem'
-                      }}
-                    >
-                      {p.name.replace(/^.*\./, '')}
-                    </Typography>
-                  }
-
-
-
-
- {crPartition.total === 0
-                ? <Typography align="center" sx={{ py: 4, color: 'white' }}>
-                  No realtime employee data
-                </Typography>
-                : <CompositeChartCard
-
-
-function NoData({ text }) {
   return (
-    <Typography align="center" sx={{ py: 4, color: 'white' }}>
-      No realtime employee data in {text}
-    </Typography>
+    <div className="current-location-card" style={{ marginTop: 2 }}>
+      <h4 style={{ margin: '0 0 2px 0', fontSize: 14 }}>Swipe Details</h4>
+
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+      {!loading && loc && !loc.found && (
+        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
+      )}
+
+
+     {!loading && loc && loc.found && (() => {
+  const istDate = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
+
+  const istTime = loc.timestampUTC
+    ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+      })
+    : '';
+
+  return (
+    <div
+      className="location-info"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '140px 1fr',
+        gap: '6px 12px',
+        alignItems: 'center',
+        fontSize: 13,
+        color: '#000',
+      }}
+    >
+      <label style={{ opacity: 0.8 }}>Location</label>
+      <span>
+        {loc.partition || '—'}
+        {loc.floor ? ` · ${loc.floor}` : ''}
+       
+      </span>
+
+      <label style={{ opacity: 0.8 }}>Zone :</label>
+      <span>{loc.Zone || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Date :</label>
+      <span>{istDate || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Time :</label>
+      <span>{istTime || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Door :</label>
+      <span>{loc.door || '—'}</span>
+
+      <label style={{ opacity: 0.8 }}>Direction :</label>
+      <span>{loc.direction || '—'}</span>
+    </div>
+  );
+})()}
+
+
+
+    </div>
+  )
+
+}
+
+
+
+
+
+
+
+
+///////////////////////
+
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\EmployeeCard.jsx
+
+
+
+
+// EmployeeCard.jsx
+import React from 'react';
+import CurrentLocation from './CurrentLocation';
+
+export default function EmployeeCard({ emp }) {
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+  const isTerminated = normalizedStatus === 'terminated';
+
+  return (
+    // <div
+    //   className={`employee-card ${isTerminated ? 'terminated' : ''}`}
+    //   data-status={normalizedStatus}
+    //   style={{
+    //     display: 'flex',
+    //     gap: '1rem',
+    //     background: '#000',
+    //     padding: '1rem',
+    //     borderRadius: '8px',
+    //     boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+    //   }}
+    // >
+
+
+
+
+    
+<div
+  className={`employee-card ${isTerminated ? 'terminated' : ''}`}
+  data-status={normalizedStatus}
+  style={{
+    display: 'flex',
+    gap: '1rem',
+    background:
+      normalizedStatus === 'active'
+        ? 'linear-gradient(to right, rgba(40, 167, 69, 1) 0%, rgba(40, 167, 69, 0.1) 100%)'
+        : '#000',
+    padding: '1rem',
+    borderRadius: '8px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+    color:'#000'
+  }}
+>
+
+      {/* Profile Image */}
+      {/* <div className="card-photo-section" style={{ minWidth: 140 }}>
+        <div className="photo-wrapper" style={{ position: 'relative' }}>
+          <img
+            src={`http://localhost:5001${emp.imageUrl}`}
+            alt={emp.EmpName}
+            style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}  
+          />
+          <span
+            className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+            style={{
+              position: 'absolute',
+              bottom: 6,
+              left: 6,
+              background: normalizedStatus === 'active' ? '#0b9' : '#999',
+              color: '#fff',
+              padding: '4px 8px',
+              borderRadius: 6,
+              fontSize: 12
+            }}
+          >
+            {rawStatus}
+          </span>
+        </div>
+      </div> */}
+
+
+      {/* Profile Image */}
+<div
+  className="card-photo-section"
+  style={{
+    minWidth: 140,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }}
+>
+  <div className="photo-wrapper" style={{ position: 'relative' }}>
+    <img
+      src={`http://localhost:5001${emp.imageUrl}`}
+      alt={emp.EmpName}
+      style={{
+        width: 325,
+        height: 350,
+        // objectFit: 'cover',
+       
+        border: '2px solid #f0f0f0'
+      }}
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/images/no-photo.jpg';
+      }}
+    />
+    <span
+      className={`status-badge ${normalizedStatus === 'active' ? 'active' : 'deactive'}`}
+      style={{
+        position: 'absolute',
+        bottom: 6,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: normalizedStatus === 'active' ? '#0b9' : '#999',
+        color: '#fff',
+        padding: '4px 8px',
+        borderRadius: 6,
+        fontSize: 12
+      }}
+    >
+      {rawStatus}
+    </span>
+  </div>
+</div>
+
+
+      
+
+
+
+      {/* Employee Info */}
+      <div className="card-details" style={{ flex: 1 }}>
+        <h2 className="emp-name" style={{ margin: 0, marginBottom: 8 }}>{emp.EmpName}</h2>
+
+        <div className="card-info" style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '6px 12px', alignItems: 'center' }}>
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Employee ID</label>
+          <span>{emp.EmployeeID || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Personnel Type</label>
+          <span>{emp.PersonnelType || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager</label>
+          <span>{emp.Manager_Name || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Manager WU ID</label>
+          <span>{emp.Manager_WU_ID || '—'}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Status</label>
+          <span>{rawStatus}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Total Cards</label>
+          <span>{emp.Total_Cards ?? 0}</span>
+
+          <label style={{ opacity: 0.8, fontSize: 13 }}>Active Cards</label>
+          <span>{emp.Active_Cards ?? 0}</span>
+        </div>
+
+        {/* Current Location component (live) */}
+        <div style={{ marginTop: 1 , color:'#2ced0e'}}>
+          <CurrentLocation empId={emp.id} style={{  color:'#fff'}} />
+        </div>
+      </div>
+    </div>
   );
 }
 
 
 
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\pages\PartitionDetailDetails.jsx
 
-  <Paper sx={{ border:'2px solid #FFC107', p:2, background:'rgba(0,0,0,0.4)' }}>
-                          <Typography variant="subtitle1" fontWeight={600} sx={{ color:'#FFC107', mb:1 }}>
-                            {floor} (Total {liveCounts[floor]||0})
-                          </Typography>
-                          <TableContainer com
+///////////////////////////
 
 
 
-<Box sx={{ px:2, mt:2 }}>
-                    <Typography variant="h6" sx={{ color:'#FFC107' }} gutterBottom>
-                      {expandedFloor} — All Entries
-                    </Typography>
-                    <DataTable
 
 
 
-  </Box>
-          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px:2 }}>
-            <Typography variant="h6" sx={{ color:'#FFC107' }}>Floor Details</Typography>
-            <Typography variant="body2" sx={{ color:'#FFC107' }}>
-              Last updated: {lastUpdate}
-            </Typography>
-            <TextField
 
-  <Paper sx={{ border:'2px solid #FFC107', p:2, background:'rgba(0,0,0,0.4)' }}>
-                          <Typography variant="subtitle1" fontWeight={600} sx={{ color:'#FFC107', mb:1 }}>
-                            {floor} (Total {liveCounts[floor]||0})
-                          </Typography>
-
-
-
-   <Typography variant="h6" sx={{ color:'#FFC107' }} gutterBottom>
-                      {expandedFloor} — All Entries
-                    </Typography>
-                    <DataTable
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\theme\westernUnionTheme.js
-
-
-  typography: {
-    fontFamily: '"Roboto","Helvetica","Arial",sans-serif',
-    // Card titles
-    subtitle1: { fontWeight: 900, color: '#FFE599' },
-    // Totals (variant h4 in SummaryCard)
-    h4: { color: '#fcf3cf', fontWeight: 'bold' },
-    // Stat values (variant h6)
-    h6: { color: '#FFC107', fontWeight: 900 },
-    // Stat labels (variant caption)
-    caption: { color: '#FFC107', fontWeight: 900 },
-
-    // You can leave other variants untouched
-    body1:   { color: '#FFFFFF' },
-    body2:   { color: 'rgba(255,255,255,0.7)' }
-  },
-
-  components: {
