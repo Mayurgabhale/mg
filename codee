@@ -1,3 +1,77 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+export default function CurrentLocation({ empId }) {
+  // ... existing state and effect logic ...
+
+  return (
+    <div className="current-location-card">
+      <h4 className="location-header">Swipe Details</h4>
+
+      {loading && <div className="loading-indicator">Loading location...</div>}
+      {error && <div className="error-message">{error}</div>}
+      
+      {!loading && loc && !loc.found && (
+        <div className="no-swipe">No recent swipe</div>
+      )}
+
+      {!loading && loc && loc.found && (() => {
+        const istDate = loc.timestampUTC
+          ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            })
+          : '';
+
+        const istTime = loc.timestampUTC
+          ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+            })
+          : '';
+
+        return (
+          <div className="location-table">
+            <div className="table-row">
+              <div className="table-label">Location</div>
+              <div className="table-value">
+                {loc.partition || '—'}
+                {loc.floor ? ` · ${loc.floor}` : ''}
+              </div>
+            </div>
+            
+            <div className="table-row">
+              <div className="table-label">Zone</div>
+              <div className="table-value">{loc.Zone || '—'}</div>
+            </div>
+            
+            <div className="table-row">
+              <div className="table-label">Date</div>
+              <div className="table-value">{istDate || '—'}</div>
+            </div>
+            
+            <div className="table-row">
+              <div className="table-label">Time</div>
+              <div className="table-value">{istTime || '—'}</div>
+            </div>
+            
+            <div className="table-row">
+              <div className="table-label">Door</div>
+              <div className="table-value">{loc.door || '—'}</div>
+            </div>
+            
+            <div className="table-row">
+              <div className="table-label">Direction</div>
+              <div className="table-value">{loc.direction || '—'}</div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+
+.......
+
 /* Employee Card Container */
 .employee-card {
   background: white;
