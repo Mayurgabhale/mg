@@ -38,4 +38,259 @@ This will cause a hydration error.
 
 react-dom-client.development.js:2626 <h6> cannot contain a nested <h6>.
 See this log for the ancestor stack trace.
-﻿
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\BarChartCard.jsx
+<Typography variant="subtitle1" align="center" gutterBottom>{title}</Typography>
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\ColumnChartCard.jsx
+        <Typography variant="subtitle1" align="center" gutterBottom>{title}</Typography>
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\CompositeChartCard.jsx
+
+<Card sx={{ border: `1px solid #fff`, bgcolor: 'rgba(0,0,0,0.4)' }}>
+        <CardContent>
+          <Typography variant="subtitle1" align="center" color="text.secondary">
+            {title}
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
+            No realtime employee data
+          </Typography>
+        </CardContent>
+      </Card>
+
+
+<CardContent sx={{ p: 1 }}>
+        <Typography
+          variant="subtitle1"
+          align="center"
+          gutterBottom
+          color="text.primary"
+        >
+          {title}
+        </Typography>
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\LineChartCard.jsx
+
+
+  <CardContent>
+          <Typography variant="subtitle1" align="center" color="text.primary">
+            {title}
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ mt: 4, color: 'text.secondary' }}>
+            No realtime employee data
+          </Typography>
+        </CardContent>
+
+   <Typography variant="subtitle1" align="center" gutterBottom color="text.primary">
+          {title}
+        </Typography>
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\PieChartCard.jsx
+
+  <CardContent>
+          <Typography variant="subtitle1" align="center" color="text.primary">
+            {title}
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ mt:4, color:'text.secondary' }}>
+            {noDataMessage}
+          </Typography>
+        </CardContent>
+
+
+<CardContent sx={{ p:1 }}>
+        <Typography variant="subtitle1" align="center" color="text.primary">
+          {title}
+        </Typography>
+
+
+  <Typography variant="h4" align="center" sx={{ color: colors[0], fontWeight: 'bold' }}>
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\SummaryCard.jsx
+    {/* Top Section */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Typography variant="subtitle1" sx={{ color: titleColor, fontWeight: 600 }}>
+            {title}
+          </Typography>
+          <Box>{icon}</Box>
+              {total}
+            </Typography>
+            <Typography variant="caption" align="center" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              </Typography>
+              
+
+            <Typography variant="caption" align="center" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              {/* of {totalSeats} seats */}
+            </Typography>
+
+
+
+
+  <Typography variant="subtitle2" sx={{ color: '#000' }}>
+          <strong>{data.name}</strong>
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#000' }}>Total: {data.value}</Typography>
+
+        {data.emp !== undefined && (
+          <Typography variant="body2" sx={{ color: '#000' }}>Employees: {data.emp}</Typography>
+        )}
+        {data.cont !== undefined && (
+          <Typography variant="body2" sx={{ color: '#000' }}>Contractors: {data.cont}</Typography>
+        )}
+      </Box>
+
+
+
+  {/* Top Section */}
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Typography variant="subtitle1" sx={{ color: titleColor, fontWeight: 600 }}>
+            {title}
+          </Typography>
+          <Box>{icon}</Box>
+        </Box>
+
+        {/* Total Number */}
+        <Typography variant="h4" sx={{ color: totalColor, fontWeight: 700, mb: stats.length ? 1 : 0 }}>
+          {total}
+        </Typography>
+
+        {/* Bottom Stats */}
+        {stats.map(stat => (
+          <Box key={stat.label} display="flex" justifyContent="space-between" mt={1}>
+            {/* Label with stat.color */}
+            <Typography
+              variant="body2"
+              fontWeight="bold"
+              fontSize={18}
+              sx={{ color: stat.label === 'Employees' ? '#2ecc71' : '#ec7063' }}
+            >
+              {stat.label}
+            </Typography>
+
+            {/* Value with same stat.color */}
+            <Typography
+              variant="body2"
+              fontWeight="bold"
+              fontSize={22}
+              sx={{ color: stat.label === 'Employees' ? '#2ecc71' : '#ec7063' }}
+            >
+              {stat.value}
+            </Typography>
+          </Box>
+        ))}
+
+
+      </CardContent>
+    </Card>
+  );
+}
+
+
+// ..................
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\pages\Dashboard.jsx
+<SummaryCard
+                  title={
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: '#FFC107',  // Change this to your desired color
+                        fontSize: '1.3rem'
+                      }}
+                    >
+                      {p.name.replace(/^.*\./, '')}
+                    </Typography>
+                  }
+
+
+
+
+ {crPartition.total === 0
+                ? <Typography align="center" sx={{ py: 4, color: 'white' }}>
+                  No realtime employee data
+                </Typography>
+                : <CompositeChartCard
+
+
+function NoData({ text }) {
+  return (
+    <Typography align="center" sx={{ py: 4, color: 'white' }}>
+      No realtime employee data in {text}
+    </Typography>
+  );
+}
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\pages\PartitionDetailDetails.jsx
+
+  <Paper sx={{ border:'2px solid #FFC107', p:2, background:'rgba(0,0,0,0.4)' }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color:'#FFC107', mb:1 }}>
+                            {floor} (Total {liveCounts[floor]||0})
+                          </Typography>
+                          <TableContainer com
+
+
+
+<Box sx={{ px:2, mt:2 }}>
+                    <Typography variant="h6" sx={{ color:'#FFC107' }} gutterBottom>
+                      {expandedFloor} — All Entries
+                    </Typography>
+                    <DataTable
+
+
+
+  </Box>
+          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px:2 }}>
+            <Typography variant="h6" sx={{ color:'#FFC107' }}>Floor Details</Typography>
+            <Typography variant="body2" sx={{ color:'#FFC107' }}>
+              Last updated: {lastUpdate}
+            </Typography>
+            <TextField
+
+  <Paper sx={{ border:'2px solid #FFC107', p:2, background:'rgba(0,0,0,0.4)' }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color:'#FFC107', mb:1 }}>
+                            {floor} (Total {liveCounts[floor]||0})
+                          </Typography>
+
+
+
+   <Typography variant="h6" sx={{ color:'#FFC107' }} gutterBottom>
+                      {expandedFloor} — All Entries
+                    </Typography>
+                    <DataTable
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\theme\westernUnionTheme.js
+
+
+  typography: {
+    fontFamily: '"Roboto","Helvetica","Arial",sans-serif',
+    // Card titles
+    subtitle1: { fontWeight: 900, color: '#FFE599' },
+    // Totals (variant h4 in SummaryCard)
+    h4: { color: '#fcf3cf', fontWeight: 'bold' },
+    // Stat values (variant h6)
+    h6: { color: '#FFC107', fontWeight: 900 },
+    // Stat labels (variant caption)
+    caption: { color: '#FFC107', fontWeight: 900 },
+
+    // You can leave other variants untouched
+    body1:   { color: '#FFFFFF' },
+    body2:   { color: 'rgba(255,255,255,0.7)' }
+  },
+
+  components: {
