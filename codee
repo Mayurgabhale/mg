@@ -1,101 +1,5 @@
-useEffect(() => {
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return;
-  }
-
-  // Filter only matches
-  const matches = allEmployees.filter(emp =>
-    (emp.EmployeeID || '').toLowerCase().includes(term) ||
-    (emp.EmpName || '').toLowerCase().includes(term)
-  );
-
-  // Sort so best matches come first
-  const sortedMatches = matches.sort((a, b) => {
-    const aName = (a.EmpName || '').toLowerCase();
-    const bName = (b.EmpName || '').toLowerCase();
-    const aID = (a.EmployeeID || '').toLowerCase();
-    const bID = (b.EmployeeID || '').toLowerCase();
-
-    // 1. Exact ID match
-    if (aID === term && bID !== term) return -1;
-    if (bID === term && aID !== term) return 1;
-
-    // 2. Exact name match
-    if (aName === term && bName !== term) return -1;
-    if (bName === term && aName !== term) return 1;
-
-    // 3. Starts with term in name
-    if (aName.startsWith(term) && !bName.startsWith(term)) return -1;
-    if (bName.startsWith(term) && !aName.startsWith(term)) return 1;
-
-    // 4. Starts with term in ID
-    if (aID.startsWith(term) && !bID.startsWith(term)) return -1;
-    if (bID.startsWith(term) && !aID.startsWith(term)) return 1;
-
-    // Keep original order for others
-    return 0;
-  });
-
-  setSuggestions(sortedMatches.slice(0, 40));
-}, [searchTerm, allEmployees]);
-
-.....
-
-
-i search lloyds
-
-but his show n last 
-
-
-
-i want ot show here 
-..... 
-15th Floor Construction 18, Howell
-15th Floor Construction 18, Howell
-15th Floor Construction 19, Howell
-15th Floor Construction 19, Howell
-Bellotto, Alessandro (196742)
-Bellotto, Alessandro (196742)
-15th Floor Construction 18, Howell
-15th Floor Construction 19, Howell
-15th Floor Construction 18, Howell
-15th Floor Construction 18, Howell
-15th Floor Construction 19, Howell
-15th Floor Construction 19, Howell
-Bellotto, Alessandro (196742)
-Dass, Lloyds (314345)
-
-useEffect(() => {
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return;
-  }
-  
-  // First try to find exact matches (name or ID)
-  const exactMatches = allEmployees.filter(emp => 
-    (emp.EmpName || '').toLowerCase() === term ||
-    (emp.EmployeeID || '').toLowerCase() === term
-  );
-  
-  // Then find partial matches excluding exact matches
-  const partialMatches = allEmployees.filter(emp => 
-    !exactMatches.includes(emp) && (
-      (emp.EmployeeID || '').toLowerCase().includes(term) ||
-      (emp.EmpName || '').toLowerCase().includes(term)
-    )
-  );
-  
-  // Combine results with exact matches first
-  setSuggestions([...exactMatches, ...partialMatches].slice(0, 40));
-}, [searchTerm, allEmployees]);
-
-
-
-.....
-
+this pickSuggestion not work correct 
+if i search lloyds pickup   <h3>Related Results</h3>  not select nor not show emplloye card 
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -140,6 +44,8 @@ function App() {
     );
     setSuggestions(matches.slice(0, 40));
   }, [searchTerm, allEmployees]);
+
+
 
   const handleSearch = () => {
     setError('');
