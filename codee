@@ -1,3 +1,49 @@
+useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    setSuggestions([]);
+    return;
+  }
+
+  // Filter only matches
+  const matches = allEmployees.filter(emp =>
+    (emp.EmployeeID || '').toLowerCase().includes(term) ||
+    (emp.EmpName || '').toLowerCase().includes(term)
+  );
+
+  // Sort so best matches come first
+  const sortedMatches = matches.sort((a, b) => {
+    const aName = (a.EmpName || '').toLowerCase();
+    const bName = (b.EmpName || '').toLowerCase();
+    const aID = (a.EmployeeID || '').toLowerCase();
+    const bID = (b.EmployeeID || '').toLowerCase();
+
+    // 1. Exact ID match
+    if (aID === term && bID !== term) return -1;
+    if (bID === term && aID !== term) return 1;
+
+    // 2. Exact name match
+    if (aName === term && bName !== term) return -1;
+    if (bName === term && aName !== term) return 1;
+
+    // 3. Starts with term in name
+    if (aName.startsWith(term) && !bName.startsWith(term)) return -1;
+    if (bName.startsWith(term) && !aName.startsWith(term)) return 1;
+
+    // 4. Starts with term in ID
+    if (aID.startsWith(term) && !bID.startsWith(term)) return -1;
+    if (bID.startsWith(term) && !aID.startsWith(term)) return 1;
+
+    // Keep original order for others
+    return 0;
+  });
+
+  setSuggestions(sortedMatches.slice(0, 40));
+}, [searchTerm, allEmployees]);
+
+.....
+
+
 i search lloyds
 
 but his show n last 
