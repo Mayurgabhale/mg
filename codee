@@ -1,3 +1,13 @@
+
+{suggestions.map(emp => (
+  <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
+    {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
+  </li>
+))}
+
+....
+
+
 react-dom-client.development.js:7563 Encountered two children with the same key, `2097201235`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
 (anonymous)	@	react-dom-client.development.js:7563
 runWithFiberInDEV	@	react-dom-client.development.js:1518
