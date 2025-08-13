@@ -1,3 +1,11 @@
+(emp.EmployeeID || '').toLowerCase() === term ||
+(emp.EmpName || '').toLowerCase().includes(term)
+
+
+
+
+
+
 this pickSuggestion not work correct 
 if i search lloyds pickup   <h3>Related Results</h3>  not select nor not show emplloye card 
 // src/App.js
