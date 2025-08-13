@@ -1,4 +1,53 @@
 
+import React, { useRef, useEffect } from 'react';
+
+export default function SearchBar({ value, onChange, onSearch, suggestions, onSelectSuggestion }) {
+  const wrapperRef = useRef();
+
+  // Close suggestions dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        onSelectSuggestion(null); // Clear suggestions
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onSelectSuggestion]);
+
+  return (
+    <div className="search-bar-container" ref={wrapperRef}>
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
+
+      {suggestions?.length > 0 && (
+        <ul className="suggestions-dropdown">
+          {suggestions.map(emp => (
+            <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
+              {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 
 
 // src/App.js
