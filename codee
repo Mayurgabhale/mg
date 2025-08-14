@@ -1,4 +1,112 @@
-i wanto create employee card more better, and atractive
+
+// EmployeeCard.jsx
+import React, { useState } from 'react';
+import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaMapMarkerAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import CurrentLocation from './CurrentLocation';
+import './EmployeeCard.css';
+
+export default function EmployeeCard({ emp }) {
+  const [showMore, setShowMore] = useState(false);
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+  const isRedStatus = normalizedStatus === 'deactive' || normalizedStatus === 'terminated';
+
+  return (
+    <div
+      className="employee-card-container"
+      style={{
+        background: isRedStatus
+          ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
+          : 'linear-gradient(135deg, #1f1c2c, #928dab)',
+        color: '#fff',
+        borderRadius: '15px',
+        padding: '20px',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+        maxWidth: '450px',
+        margin: '20px auto',
+        transition: '0.3s ease-in-out',
+      }}
+    >
+      {/* Header Section */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <img
+          src={emp.imageUrl ? `http://localhost:5001${emp.imageUrl}` : '/images/no-photo.jpg'}
+          alt={emp.EmpName || 'Employee photo'}
+          style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            objectFit: 'cover',
+            border: '3px solid #fff',
+          }}
+        />
+        <div>
+          <h2 style={{ margin: 0 }}>{emp.EmpName || '—'}</h2>
+          <span style={{ fontSize: '14px', opacity: 0.8 }}>{emp.PersonnelType || 'Employee'}</span>
+          <div
+            style={{
+              background: isRedStatus ? '#ff7675' : '#2ecc71',
+              padding: '3px 10px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              display: 'inline-block',
+              marginTop: '5px',
+            }}
+          >
+            {rawStatus}
+          </div>
+        </div>
+      </div>
+
+      {/* Basic Details */}
+      <div style={{ marginTop: '20px' }}>
+        <p><FaUser /> <strong>Name:</strong> {emp.EmpName || '—'}</p>
+        <p><FaIdBadge /> <strong>Employee ID:</strong> {emp.EmployeeID || '—'}</p>
+        <p><FaUserTie /> <strong>Manager:</strong> {emp.Manager_Name || '—'}</p>
+        <p><FaIdCard /> <strong>Active Cards:</strong> {emp.Active_Cards ?? 0}</p>
+
+        {/* Swipe Details */}
+        <div style={{ marginTop: '10px' }}>
+          <h4><FaMapMarkerAlt /> Swipe Details</h4>
+          <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
+        </div>
+      </div>
+
+      {/* Show More Button */}
+      <button
+        onClick={() => setShowMore(!showMore)}
+        style={{
+          background: 'transparent',
+          color: '#fff',
+          border: 'none',
+          fontSize: '14px',
+          cursor: 'pointer',
+          marginTop: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+        }}
+      >
+        {showMore ? <>Hide Details <FaChevronUp /></> : <>View More Details <FaChevronDown /></>}
+      </button>
+
+      {/* Extra Details */}
+      {showMore && (
+        <div style={{ marginTop: '15px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '10px' }}>
+          <p><strong>Total Cards:</strong> {emp.Total_Cards ?? 0}</p>
+          {/* Add any other extra fields here */}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+
+.....i wanto create employee card more better, and atractive
 so, i wanto to disply only requie informatin first, 
 one buttion  add after clikc on this buttion then show all information,
 
