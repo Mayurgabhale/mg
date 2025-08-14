@@ -1,4 +1,55 @@
+// Rank: exact (0) -> startsWith (1) -> contains (2)
+const rankOf = (emp) => {
+  const id = (emp.EmployeeID || '').toLowerCase();
+  const name = (emp.EmpName || '').toLowerCase();
+  if (name === term || id === term) return 0; // exact match FIRST
+  if (name.startsWith(term) || id.startsWith(term)) return 1; // then startsWith
+  return 2; // contains term anywhere
+};
 
+const sorted = filtered
+  .map((emp, idx) => ({ emp, idx }))
+  .sort((a, b) => {
+    const ra = rankOf(a.emp);
+    const rb = rankOf(b.emp);
+    if (ra !== rb) return ra - rb;
+
+    // Tie-breaker 1: exact name match gets priority over other exact IDs
+    if (ra === 0) {
+      const anExactName = a.emp.EmpName.toLowerCase() === term;
+      const bnExactName = b.emp.EmpName.toLowerCase() === term;
+      if (anExactName && !bnExactName) return -1;
+      if (!anExactName && bnExactName) return 1;
+    }
+
+    // Tie-breaker 2: earlier occurrence of the term
+    const pos = (str) => {
+      const i = str.indexOf(term);
+      return i === -1 ? Number.POSITIVE_INFINITY : i;
+    };
+    const an = (a.emp.EmpName || '').toLowerCase();
+    const bn = (b.emp.EmpName || '').toLowerCase();
+    const ai = (a.emp.EmployeeID || '').toLowerCase();
+    const bi = (b.emp.EmployeeID || '').toLowerCase();
+    const pa = Math.min(pos(an), pos(ai));
+    const pb = Math.min(pos(bn), pos(bi));
+    if (pa !== pb) return pa - pb;
+
+    // Tie-breaker 3: shorter name first
+    if (an.length !== bn.length) return an.length - bn.length;
+
+    // Tie-breaker 4: original order
+    return a.idx - b.idx;
+  })
+  .slice(0, 40)
+  .map(x => x.emp);
+
+
+
+
+
+
+....
 
 // src/App.js
 import React, { useState, useEffect } from 'react';
