@@ -1,71 +1,21 @@
-
-not work, 
-
-in search bar i dont search anything, but in releted result show names,
-fromt a to z this is wrong
-
-if only show reletd rsults, if i search data, not othe 
-if i search  mayur then only show in name has mayur only this name are shows,
-
-other wise, releted results i want to dispy empty,
-
-read all code echh line chekc what is the problme why this not show empty if not any search, 
-pleae correct this, an give me update code with correct
-
-// src/App.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import SearchBar from './components/SearchBar';
-import EmployeeCard from './components/EmployeeCard';
-import './App.css';
-import wulogo from './assets/img/WU-logo.png';
-
-function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [allEmployees, setAllEmployees] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    setLoading(true);
-    axios.get('http://localhost:5001/api/employees')
-      .then(res => setAllEmployees(res.data))
-      .catch(() => setError('Failed to load employees'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    axios.get('http://localhost:5001/api/stats')
-      .then(res => setStats(res.data))
-      .catch(err => console.error('❌ Stats load failed', err));
-  }, []);
-
-  // --- Build Related Results only (no dropdown) and sort by relevance
-
+// Build Related Results only (no dropdown) and sort by relevance
 useEffect(() => {
   const term = searchTerm.trim().toLowerCase();
+
+  // If search term is empty, clear suggestions
   if (!term) {
     setSuggestions([]);
     return;
   }
 
-  // Only include employees whose name or ID includes the term
+  // Filter employees by name or ID containing term
   const filtered = allEmployees.filter(emp => {
-    const id = (emp.EmployeeID || '').toLowerCase();
     const name = (emp.EmpName || '').toLowerCase();
+    const id = (emp.EmployeeID || '').toLowerCase();
     return name.includes(term) || id.includes(term);
   });
 
-  if (filtered.length === 0) {
-    setSuggestions([]);
-    return;
-  }
-
-  // Sort so exact matches come first
+  // Sort exact matches first
   const sorted = filtered.sort((a, b) => {
     const nameA = (a.EmpName || '').toLowerCase();
     const nameB = (b.EmpName || '').toLowerCase();
@@ -80,143 +30,3 @@ useEffect(() => {
 
   setSuggestions(sorted);
 }, [searchTerm, allEmployees]);
-
-
-
-const handleSearch = () => {
-  setError('');
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return setError('Please enter name or ID');
-  }
-
-  // Clear previous suggestions before new search
-  setSuggestions([]);
-
-  const match = allEmployees.find(emp => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    return name === term || id === term;
-  });
-  
-  if (match) {
-    selectEmployee(match);
-  } else {
-    setSelected(null);
-    setError('No matching employee');
-  }
-};
-
-
-  const selectEmployee = emp => {
-    setSelected(emp);
-    setSearchTerm(emp.EmpName || '');
-    setHistory(prev => {
-      if (prev.find(e => e.id === emp.id)) return prev;
-      return [emp, ...prev];
-    });
-  };
-
-  // Clicking a related result should NOT clear the list
-  const pickSuggestion = emp => {
-    if (!emp) return;
-    selectEmployee(emp);
-  };
-
-  const pickHistory = emp => {
-    selectEmployee(emp);
-  };
-
-  return (
-    <div>
-      <header className="header">
-        <div className="header-content">
-          <div className="header-logo-text">
-            <img src={wulogo} alt="WU Logo" className="logo" />
-            <div className="header-text">
-              <h1>Associate Verification Tool</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="main-container">
-        <div className="left-panel">
-          <div className="search-bar">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              onSearch={handleSearch}
-            />
-          </div>
-          {loading && <p>Loading…</p>}
-          {error && <p className="error">{error}</p>}
-          {selected && <EmployeeCard emp={selected} />}
-        </div>
-
-        <div className="right-panel">
-          <div className="lists-container">
-            <div className="history-list">
-              <h3>Related Results</h3>
-              <ul>
-                {suggestions.map(emp => (
-                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="history-list">
-              <h3>Search History</h3>
-              <ul>
-                {history.map(emp => (
-                  <li key={emp.id} onClick={() => pickHistory(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <footer
-        style={{
-          backgroundColor: '#000',
-          color: '#FFC72C',
-          padding: '1.5rem 0',
-          textAlign: 'center',
-          marginTop: '0rem',
-          borderTop: '2px solid #FFC72C',
-          fontSize: '0.95rem',
-          lineHeight: '1.6'
-        }}
-      >
-        <div>
-          <strong>Global Security Operations Center</strong>
-          <br />
-          Associate Verification Tool — Western Union
-        </div>
-        <div style={{ }}>
-          Contact us:&nbsp;
-          <a
-            href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-            style={{ color: '#FFC72C', textDecoration: 'underline' }}
-          >
-            GSOC Mail
-          </a>
-          &nbsp;|&nbsp;
-          Landline:&nbsp;
-          <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-export default App;
-
-
-
