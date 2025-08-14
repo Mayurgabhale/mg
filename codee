@@ -1,297 +1,165 @@
-useEffect(() => {
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return;
-  }
 
-  const filtered = allEmployees.filter(emp => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    return id.includes(term) || name.includes(term);
-  });
-
-  const rankOf = (emp) => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    if (name === term || id === term) return 0;
-    if (name.startsWith(term) || id.startsWith(term)) return 1;
-    return 2;
-  };
-
-  const pos = (str) => {
-    const i = str.indexOf(term);
-    return i === -1 ? Number.POSITIVE_INFINITY : i;
-  };
-
-  const sorted = filtered
-    .map((emp, idx) => ({ emp, idx }))
-    .sort((a, b) => {
-      const an = (a.emp.EmpName || '').toLowerCase();
-      const bn = (b.emp.EmpName || '').toLowerCase();
-      const ai = (a.emp.EmployeeID || '').toLowerCase();
-      const bi = (b.emp.EmployeeID || '').toLowerCase();
-
-      const ra = rankOf(a.emp);
-      const rb = rankOf(b.emp);
-      if (ra !== rb) return ra - rb;
-
-      const pa = Math.min(pos(an), pos(ai));
-      const pb = Math.min(pos(bn), pos(bi));
-      if (pa !== pb) return pa - pb;
-
-      if (an.length !== bn.length) return an.length - bn.length;
-      return a.idx - b.idx;
-    })
-    .slice(0, 40)
-    .map(x => x.emp);
-
-  setSuggestions(sorted);
-}, [searchTerm, allEmployees]);
-
-
-
-
-....
-
-ERROR
-i is not defined
-ReferenceError: i is not defined
-    at pos (http://localhost:3000/static/js/bundle.js:55898:7)
-    at http://localhost:3000/static/js/bundle.js:55913:27
-    at Array.sort (<anonymous>)
-    at http://localhost:3000/static/js/bundle.js:55905:9
-    at react-stack-bottom-frame (http://localhost:3000/static/js/bundle.js:21180:18)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:9098:68)
-    at commitHookEffectListMount (http://localhost:3000/static/js/bundle.js:14089:618)
-    at commitHookPassiveMountEffects (http://localhost:3000/static/js/bundle.js:14126:56)
-    at commitPassiveMountOnFiber (http://localhost:3000/static/js/bundle.js:15028:25)
-    at recursivelyTraversePassiveMountEffects (http://localhost:3000/static/js/bundle.js:15019:104)
-
-
-
-
-
-
-// src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import SearchBar from './components/SearchBar';
-import EmployeeCard from './components/EmployeeCard';
-import './App.css';
-import wulogo from './assets/img/WU-logo.png';
-
-function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [allEmployees, setAllEmployees] = useState([]);
-  const [selected, setSelected] = useState(null);
+import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
+import './EmployeeCard.css';
+export default function CurrentLocation({ empId, showMore }) {
   const [loading, setLoading] = useState(false);
+  const [loc, setLoc] = useState(null);
   const [error, setError] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [stats, setStats] = useState(null);
 
   useEffect(() => {
+    if (!empId) {
+      setLoc(null);
+      setError('');
+      return;
+    }
+
+    let cancelled = false;
     setLoading(true);
-    axios.get('http://localhost:5001/api/employees')
-      .then(res => setAllEmployees(res.data))
-      .catch(() => setError('Failed to load employees'))
-      .finally(() => setLoading(false));
-  }, []);
+    setError('');
+    setLoc(null);
 
-  useEffect(() => {
-    axios.get('http://localhost:5001/api/stats')
-      .then(res => setStats(res.data))
-      .catch(err => console.error('❌ Stats load failed', err));
-  }, []);
+    axios
+      .get(`http://localhost:5001/api/employees/${empId}/location`)
+      .then((res) => {
+        if (cancelled) return;
+        setLoc(res.data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Location load error', err?.message || err);
+        setError('Failed to load location');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  // --- Build Related Results only (no dropdown) and sort by relevance
+    return () => {
+      cancelled = true;
+    };
+  }, [empId]);
 
-
-  useEffect(() => {
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return;
-  }
-
-  const filtered = allEmployees.filter(emp => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    return id.includes(term) || name.includes(term);
-  });
-
-  const rankOf = (emp) => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    if (name === term || id === term) return 0;
-   if (name.startsWith(term) || id.startsWith(term)) return 1;
-    return 2;
-  };
-
-  const pos = (str) => {
-       return i === -1 ? Number.POSITIVE_INFINITY : i;
-        const i = str.indexOf(term);
-  };
-  const sorted = filtered
-
-    .map((emp, idx) => ({ emp, idx }))
-    .sort((a, b) => {
-      const an = (a.emp.EmpName || '').toLowerCase();
-      const bn = (b.emp.EmpName || '').toLowerCase();
-      const ai = (a.emp.EmployeeID || '').toLowerCase();
-      const bi = (b.emp.EmployeeID || '').toLowerCase();
-
-      const ra = rankOf(a.emp);
-      const rb = rankOf(b.emp);
-      if (ra !== rb) return ra - rb;
-
-      const pa = Math.min(pos(an), pos(ai));
-      const pb = Math.min(pos(bn), pos(bi));
-      if (pa !== pb) return pa - pb;
-
-      if (an.length !== bn.length) return an.length - bn.length;
-      return a.idx - b.idx;
-    })
-    .slice(0, 40)
-    .map(x => x.emp);
-
-  setSuggestions(sorted);
-}, [searchTerm, allEmployees]);
-
-
-
-
-const handleSearch = () => {
-  setError('');
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return setError('Please enter name or ID');
-  }
-
-    const match = allEmployees.find(emp => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    return name === term || id === term;
-  });
-  if (match) {
-    selectEmployee(match);
-  } else {
-    setSelected(null);
-    setError('No matching employee');
-  }
-
-};
-
-  const selectEmployee = emp => {
-    setSelected(emp);
-    setSearchTerm(emp.EmpName || '');
-    setHistory(prev => {
-      if (prev.find(e => e.id === emp.id)) return prev;
-      return [emp, ...prev];
-    });
-  };
-
-  // Clicking a related result should NOT clear the list
-  const pickSuggestion = emp => {
-    if (!emp) return;
-    selectEmployee(emp);
-  };
-
-  const pickHistory = emp => {
-    selectEmployee(emp);
-  };
+  if (!empId) return null;
 
   return (
-    <div>
-      <header className="header">
-        <div className="header-content">
-          <div className="header-logo-text">
-            <img src={wulogo} alt="WU Logo" className="logo" />
-            <div className="header-text">
-              <h1>Associate Verification Tool</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="current-location-card" style={{ marginTop: 1 }}>
+      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color: '#f5a742' }}>Swipe Details</h4>
 
-      <div className="main-container">
-        <div className="left-panel">
-          <div className="search-bar">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              onSearch={handleSearch}
-            />
-          </div>
-          {loading && <p>Loading…</p>}
-          {error && <p className="error">{error}</p>}
-          {selected && <EmployeeCard emp={selected} />}
-        </div>
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
 
-        <div className="right-panel">
-          <div className="lists-container">
-            <div className="history-list">
-              <h3>Related Results</h3>
-              <ul>
-                {suggestions.map(emp => (
-                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      {!loading && loc && !loc.found && (
+        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
+      )}
 
-            <div className="history-list">
-              <h3>Search History</h3>
-              <ul>
-                {history.map(emp => (
-                  <li key={emp.id} onClick={() => pickHistory(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+      {!loading && loc && loc.found && (
 
-      <footer
-        style={{
-          backgroundColor: '#000',
-          color: '#FFC72C',
-          padding: '1.5rem 0',
-          textAlign: 'center',
-          marginTop: '0rem',
-          borderTop: '2px solid #FFC72C',
-          fontSize: '0.95rem',
-          lineHeight: '1.6'
-        }}
-      >
-        <div>
-          <strong>Global Security Operations Center</strong>
-          <br />
-          Associate Verification Tool — Western Union
-        </div>
-        <div style={{ marginTop: '0.75rem' }}>
-          Contact us:&nbsp;
-          <a
-            href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-            style={{ color: '#FFC72C', textDecoration: 'underline' }}
-          >
-            GSOC Mail
-          </a>
-          &nbsp;|&nbsp;
-          Landline:&nbsp;
-          <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-        </div>
-      </footer>
+        // <table className="table">
+        //   <tbody>
+        //     {/* Always visible */}
+        //     <tr>
+        //       <td style={{ opacity: 0.8, width: 140 }}><FaMapMarkerAlt color='#f01916' /> Location</td>
+        //       <td>
+        //         {loc.partition || '—'}
+        //         {loc.floor ? ` · ${loc.floor}` : ''}
+        //       </td>
+        //     </tr>
+        //     <tr>
+        //       <td style={{ opacity: 0.8 }}><FaPalette color='#16b9f0' /> Zone</td>
+        //       <td>{loc.Zone || '—'}</td>
+        //     </tr>
+
+        //     {/* Extra swipe details only if showMore is true */}
+        //     {showMore && (
+        //       <>
+        //         <tr>
+        //           <td style={{ opacity: 0.8 }}><FaCalendarAlt /> Date</td>
+        //           <td>
+        //             {loc.timestampUTC
+        //               ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
+        //                   timeZone: 'Asia/Kolkata',
+        //                 })
+        //               : '—'}
+        //           </td>
+        //         </tr>
+        //         <tr>
+        //           <td style={{ opacity: 0.8 }}><FaClock /> Time</td>
+        //           <td>
+        //             {loc.timestampUTC
+        //               ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
+        //                   timeZone: 'Asia/Kolkata',
+        //                 })
+        //               : '—'}
+        //           </td>
+        //         </tr>
+        //         <tr>
+        //           <td style={{ opacity: 0.8 }}><FaDoorClosed /> Door</td>
+        //           <td>{loc.door || '—'}</td>
+        //         </tr>
+        //         <tr>
+        //           <td><FaExchangeAlt /> Direction</td>
+        //           <td>{loc.direction || '—'}</td>
+        //         </tr>
+        //       </>
+        //     )}
+        //   </tbody>
+        // </table>
+
+
+
+        <table className="swipe-details-table">
+          <tbody>
+            <tr>
+              <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
+              <td className="value">
+                {loc.partition || '—'}
+                {loc.floor ? ` · ${loc.floor}` : ''}
+              </td>
+            </tr>
+            <tr>
+              <td className="label"><FaPalette className="icon zone" /> Zone</td>
+              <td className="value">{loc.Zone || '—'}</td>
+            </tr>
+
+            {showMore && (
+              <>
+                <tr>
+                  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+                  <td className="value">
+                    {loc.timestampUTC
+                      ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+                      : '—'}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="label"><FaClock className="icon time" /> Time</td>
+                  <td className="value">
+                    {loc.timestampUTC
+                      ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+                      : '—'}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="label"><FaDoorClosed className="icon door" /> Door</td>
+                  <td className="value">{loc.door || '—'}</td>
+                </tr>
+                <tr>
+                  <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
+                  <td className="value">{loc.direction || '—'}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+
+
+
+      )}
     </div>
   );
 }
 
-export default App;
 
 
 
