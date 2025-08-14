@@ -1,3 +1,28 @@
+<tr>
+  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+  <td className="value">
+    {loc.timestampUTC
+      ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+      : '—'}
+  </td>
+</tr>
+<tr>
+  <td className="label"><FaClock className="icon time" /> Time</td>
+  <td className="value">
+    {loc.timestampUTC
+      ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+      : '—'}
+  </td>
+</tr>
+
+
+
+
+
+
+
+.....
+
 chekc all code each line and chekc what is the issue why time not show
 
  Date	—
