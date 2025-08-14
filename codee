@@ -1,4 +1,49 @@
+const handleSearch = () => {
+  setError('');
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) return setError('Please enter name or ID');
 
+  // Filter related results fresh for this term only
+  const filtered = allEmployees.filter(emp => {
+    const id = (emp.EmployeeID || '').toLowerCase();
+    const name = (emp.EmpName || '').toLowerCase();
+    return id.includes(term) || name.includes(term);
+  });
+  setSuggestions(filtered); // <-- clears old, shows only current matches
+
+  // Prefer exact -> startsWith -> contains
+  const exact = allEmployees.find(emp => {
+    const id = (emp.EmployeeID || '').toLowerCase();
+    const name = (emp.EmpName || '').toLowerCase();
+    return id === term || name === term;
+  });
+
+  const starts = exact ? null : allEmployees.find(emp => {
+    const id = (emp.EmployeeID || '').toLowerCase();
+    const name = (emp.EmpName || '').toLowerCase();
+    return id.startsWith(term) || name.startsWith(term);
+  });
+
+  const partial = (exact || starts) ? null : allEmployees.find(emp => {
+    const id = (emp.EmployeeID || '').toLowerCase();
+    const name = (emp.EmpName || '').toLowerCase();
+    return id.includes(term) || name.includes(term);
+  });
+
+  const found = exact || starts || partial;
+
+  if (!found) {
+    setSelected(null);
+    setError('No matching employee');
+  } else {
+    selectEmployee(found);
+  }
+};
+
+
+
+
+....
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
