@@ -1,4 +1,4 @@
-  {
+ {
       "ObjectName1": "Diwate, Swapnil",
       "Door": "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR",
       "PersonnelType": "Contractor",
@@ -12,17 +12,7 @@
       "Floor": "Podium Floor"
     },
 
-time is not show  correct,
-see above api response
-
-but in frontend time is show this 
- Date	14/8/2025
- Time	9:51:00 pm this is incorrect, this is wrong time,
-
-read below all code each line carefuulym, and disply correct time,
-
-
-
+print time as it is in backend, dont convert 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
@@ -102,7 +92,7 @@ export default function CurrentLocation({ empId, showMore }) {
 
             {showMore && (
               <>
-                {/* <tr>
+                <tr>
                   <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
                   <td className="value">
                     {loc.timestampUTC
@@ -118,26 +108,11 @@ export default function CurrentLocation({ empId, showMore }) {
                       ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
                       : '—'}
                   </td>
-                </tr> */}
+                </tr>
 
 
 
-                <tr>
-  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
-  <td className="value">
-    {loc.timestampUTC
-      ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
-      : '—'}
-  </td>
-</tr>
-<tr>
-  <td className="label"><FaClock className="icon time" /> Time</td>
-  <td className="value">
-    {loc.timestampUTC
-      ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
-      : '—'}
-  </td>
-</tr>
+                
 
 
 
@@ -159,8 +134,6 @@ export default function CurrentLocation({ empId, showMore }) {
     </div>
   );
 }
-
-
 
 
 
@@ -322,6 +295,9 @@ async function getEmployeeLiveLocation(req, res) {
 }
 
 module.exports = { getEmployeeLiveLocation };
+
+
+
 
 
 
