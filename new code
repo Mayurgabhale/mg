@@ -1,4 +1,128 @@
-<tr>
+  {
+      "ObjectName1": "Diwate, Swapnil",
+      "Door": "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR",
+      "PersonnelType": "Contractor",
+      "EmployeeID": "W0024618",
+      "CardNumber": "619957",
+      "PartitionName2": "Pune",
+      "LocaleMessageTime": "2025-08-14T16:21:00.000Z",
+      "Direction": "InDirection",
+      "PersonGUID": "FCEDB0C8-993C-416C-8D3F-43F4B87BC572",
+      "Zone": "Green Zone",
+      "Floor": "Podium Floor"
+    },
+
+time is not show  correct,
+see above api response
+
+but in frontend time is show this 
+ Date	14/8/2025
+ Time	9:51:00 pm this is incorrect, this is wrong time,
+
+read below all code each line carefuulym, and disply correct time,
+
+
+
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
+import './EmployeeCard.css';
+export default function CurrentLocation({ empId, showMore }) {
+  const [loading, setLoading] = useState(false);
+  const [loc, setLoc] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!empId) {
+      setLoc(null);
+      setError('');
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    setLoc(null);
+
+    axios
+      .get(`http://localhost:5001/api/employees/${empId}/location`)
+      .then((res) => {
+        if (cancelled) return;
+        setLoc(res.data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Location load error', err?.message || err);
+        setError('Failed to load location');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [empId]);
+
+  if (!empId) return null;
+
+  return (
+    <div className="current-location-card" style={{ marginTop: 1 }}>
+      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color: '#f5a742' }}>Swipe Details</h4>
+
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+      {!loading && loc && !loc.found && (
+        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
+      )}
+
+      {!loading && loc && loc.found && (
+
+
+        <table className="swipe-details-table">
+          <tbody>
+            <tr>
+              <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
+              <td className="value">
+                {loc.partition || '—'}
+                {loc.floor ? ` · ${loc.floor}` : ''}
+              </td>
+            </tr>
+
+
+            <tr>
+              <td className="label">
+                <FaPalette className="icon zone" /> {loc.Zone ? 'Zone' : 'Floor'}
+              </td>
+              <td className="value">
+                {loc.Zone || loc.floor || '—'}
+              </td>
+            </tr>
+
+            {showMore && (
+              <>
+                {/* <tr>
+                  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+                  <td className="value">
+                    {loc.timestampUTC
+                      ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+                      : '—'}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td className="label"><FaClock className="icon time" /> Time</td>
+                  <td className="value">
+                    {loc.timestampUTC
+                      ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+                      : '—'}
+                  </td>
+                </tr> */}
+
+
+
+                <tr>
   <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
   <td className="value">
     {loc.timestampUTC
@@ -18,17 +142,26 @@
 
 
 
+                <tr>
+                  <td className="label"><FaDoorClosed className="icon door" /> Door</td>
+                  <td className="value">{loc.door || '—'}</td>
+                </tr>
+                <tr>
+                  <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
+                  <td className="value">{loc.direction || '—'}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+
+      )}
+    </div>
+  );
+}
 
 
 
-.....
-
-chekc all code each line and chekc what is the issue why time not show
-
- Date	—
- Time	—
-
-read all code carefuuly and show live time, correclty 
 
 
 // controllers/employeeLocationController.js
@@ -189,148 +322,6 @@ async function getEmployeeLiveLocation(req, res) {
 }
 
 module.exports = { getEmployeeLiveLocation };
-
-
-
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
-import './EmployeeCard.css';
-export default function CurrentLocation({ empId, showMore }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
-
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
-      .then((res) => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Location load error', err?.message || err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
-
-  if (!empId) return null;
-
-  return (
-    <div className="current-location-card" style={{ marginTop: 1 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color: '#f5a742' }}>Swipe Details</h4>
-
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-      {!loading && loc && !loc.found && (
-        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-      )}
-
-      {!loading && loc && loc.found && (
-
-
-        <table className="swipe-details-table">
-          <tbody>
-            <tr>
-              <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
-              <td className="value">
-                {loc.partition || '—'}
-                {loc.floor ? ` · ${loc.floor}` : ''}
-              </td>
-            </tr>
-
-
-            <tr>
-              <td className="label">
-                <FaPalette className="icon zone" /> {loc.Zone ? 'Zone' : 'Floor'}
-              </td>
-              <td className="value">
-                {loc.Zone || loc.floor || '—'}
-              </td>
-            </tr>
-
-            {showMore && (
-              <>
-                {/* <tr>
-                  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
-                  <td className="value">
-                    {loc.timestampUTC
-                      ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
-                      : '—'}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="label"><FaClock className="icon time" /> Time</td>
-                  <td className="value">
-                    {loc.timestampUTC
-                      ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
-                      : '—'}
-                  </td>
-                </tr> */}
-
-
-
-                <tr>
-                  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
-                  <td className="value">
-                    {loc.LocaleMessageTime
-                      ? loc.LocaleMessageTime.split('T')[0]
-                      : '—'}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="label"><FaClock className="icon time" /> Time</td>
-                  <td className="value">
-                    {loc.LocaleMessageTime
-                      ? loc.LocaleMessageTime.split('T')[1].replace('Z', '')
-                      : '—'}
-                  </td>
-                </tr>
-
-
-
-
-                <tr>
-                  <td className="label"><FaDoorClosed className="icon door" /> Door</td>
-                  <td className="value">{loc.door || '—'}</td>
-                </tr>
-                <tr>
-                  <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
-                  <td className="value">{loc.direction || '—'}</td>
-                </tr>
-              </>
-            )}
-          </tbody>
-        </table>
-
-      )}
-    </div>
-  );
-}
-
-
-
 
 
 
