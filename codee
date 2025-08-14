@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
@@ -44,7 +43,7 @@ export default function CurrentLocation({ empId, showMore }) {
 
   return (
     <div className="current-location-card" style={{ marginTop: 1 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color:'#f5a742' }}>Swipe Details</h4>
+      <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
 
       {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
       {error && <div style={{ color: '#fff' }}>{error}</div>}
@@ -58,14 +57,14 @@ export default function CurrentLocation({ empId, showMore }) {
           <tbody>
             {/* Always visible */}
             <tr>
-              <td style={{ opacity: 0.8, width: 140 }}><FaMapMarkerAlt color='#f01916' /> Location</td>
+              <td style={{ opacity: 0.8, width: 140 }}><FaMapMarkerAlt /> Location</td>
               <td>
                 {loc.partition || '—'}
                 {loc.floor ? ` · ${loc.floor}` : ''}
               </td>
             </tr>
             <tr>
-              <td style={{ opacity: 0.8 }}><FaPalette color='#16b9f0' /> Zone</td>
+              <td style={{ opacity: 0.8 }}><FaPalette /> Zone</td>
               <td>{loc.Zone || '—'}</td>
             </tr>
 
@@ -108,5 +107,3 @@ export default function CurrentLocation({ empId, showMore }) {
     </div>
   );
 }
-
-
