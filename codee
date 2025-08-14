@@ -1,41 +1,64 @@
-useEffect(() => {
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return;
-  }
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\SearchBar.jsx
+import React, { useRef, useEffect } from 'react';
 
-  const matches = allEmployees
-    .filter(emp =>
-      (emp.EmployeeID || '').toLowerCase().includes(term) ||
-      (emp.EmpName || '').toLowerCase().includes(term)
-    )
-    .sort((a, b) => {
-      const aName = (a.EmpName || '').toLowerCase();
-      const bName = (b.EmpName || '').toLowerCase();
+export default function SearchBar({ value, onChange, onSearch, suggestions, onSelectSuggestion }) {
+  const wrapperRef = useRef();
 
-      // Exact match first
-      if (aName === term && bName !== term) return -1;
-      if (bName === term && aName !== term) return 1;
+  // Close suggestions dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        onSelectSuggestion(null); // Clear suggestions
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onSelectSuggestion]);
 
-      // Then starts-with matches
-      if (aName.startsWith(term) && !bName.startsWith(term)) return -1;
-      if (bName.startsWith(term) && !aName.startsWith(term)) return 1;
+  return (
+    <div className="search-bar-container" ref={wrapperRef}>
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
 
-      // Otherwise keep original API order
-      return 0;
-    });
-
-  setSuggestions(matches.slice(0, 40));
-}, [searchTerm, allEmployees]);
-
-
-
-
-
+      {suggestions?.length > 0 && (
+        <ul className="suggestions-dropdown">
+          {suggestions.map(emp => (
+            <li key={emp.id} onClick={() => onSelectSuggestion(emp)}>
+              {emp.EmpName} {emp.EmployeeID && `(${emp.EmployeeID})`}
+            </li>
+          ))}
+        </ul>
+      )}
 
 
-....
+
+
+    </div>
+  );
+}
+
+
+
+
+
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\App.js
+
+
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
