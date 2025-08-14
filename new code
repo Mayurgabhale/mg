@@ -1,4 +1,24 @@
+<tr>
+  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+  <td className="value">
+    {loc.LocaleMessageTime
+      ? loc.LocaleMessageTime.split('T')[0]
+      : '—'}
+  </td>
+</tr>
+<tr>
+  <td className="label"><FaClock className="icon time" /> Time</td>
+  <td className="value">
+    {loc.LocaleMessageTime
+      ? loc.LocaleMessageTime.split('T')[1].replace('Z', '')
+      : '—'}
+  </td>
+</tr>
 
+
+
+
+....
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
