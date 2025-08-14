@@ -1,17 +1,21 @@
-{suggestions.map(emp => (
-  <li key={emp.EmployeeID ?? emp.EmpName} onClick={() => pickSuggestion(emp)}>
-    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-  </li>
-))}
+Encountered two children with the same key, `2097201235`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+(anonymous) @ react-dom-client.development.js:7563
+runWithFiberInDEV @ react-dom-client.development.js:1518
+warnOnInvalidKey @ react-dom-client.development.js:7562
+reconcileChildrenArray @ react-dom-client.development.js:7628
+reconcileChildFibersImpl @ react-dom-client.development.js:7949
+(anonymous) @ react-dom-client.development.js:8057
+reconcileChildren @ react-dom-client.development.js:8619
+beginWork @ react-dom-client.development.js:10732
+runWithFiberInDEV @ react-dom-client.development.js:1518
+performUnitOfWork @ react-dom-client.development.js:15130
+workLoopSync @ react-dom-client.development.js:14956
+renderRootSync @ react-dom-client.development.js:14936
+performWorkOnRoot @ react-dom-client.development.js:14417
+performWorkOnRootViaSchedulerTask @ react-dom-client.development.js:16216
+performWorkUntilDeadline @ scheduler.development.js:45Understand this error
+react
 
 
 
-
-
-
-
-{history.map(emp => (
-  <li key={emp.EmployeeID ?? emp.EmpName} onClick={() => pickHistory(emp)}>
-    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-  </li>
-))}
+Encountered two children with the same key, `2097201236`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
