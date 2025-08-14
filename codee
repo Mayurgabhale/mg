@@ -1,3 +1,244 @@
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import SearchBar from './components/SearchBar';
+import EmployeeCard from './components/EmployeeCard';
+import './App.css';
+import wulogo from './assets/img/WU-logo.png';
+
+function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    axios.get('http://localhost:5001/api/employees')
+      .then(res => setAllEmployees(res.data))
+      .catch(() => setError('Failed to load employees'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    axios.get('http://localhost:5001/api/stats')
+      .then(res => setStats(res.data))
+      .catch(err => console.error('❌ Stats load failed', err));
+  }, []);
+
+  // --- Build Related Results only (no dropdown) and sort by relevance
+  useEffect(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      setSuggestions([]);
+      return;
+    }
+
+    // Filter first
+    const filtered = allEmployees.filter(emp => {
+      const id = (emp.EmployeeID || '').toLowerCase();
+      const name = (emp.EmpName || '').toLowerCase();
+      return id.includes(term) || name.includes(term);
+    });
+
+    // Rank: exact (0) -> startsWith (1) -> contains (2)
+    const rankOf = (emp) => {
+      const id = (emp.EmployeeID || '').toLowerCase();
+      const name = (emp.EmpName || '').toLowerCase();
+      if (name === term || id === term) return 0;
+      if (name.startsWith(term) || id.startsWith(term)) return 1;
+      return 2; // contains
+    };
+
+    const pos = (str) => {
+      const i = str.indexOf(term);
+      return i === -1 ? Number.POSITIVE_INFINITY : i;
+    };
+
+    const sorted = filtered
+      .map((emp, idx) => ({ emp, idx }))
+      .sort((a, b) => {
+        const an = (a.emp.EmpName || '').toLowerCase();
+        const bn = (b.emp.EmpName || '').toLowerCase();
+        const ai = (a.emp.EmployeeID || '').toLowerCase();
+        const bi = (b.emp.EmployeeID || '').toLowerCase();
+
+        const ra = rankOf(a.emp);
+        const rb = rankOf(b.emp);
+        if (ra !== rb) return ra - rb;
+
+        // Tie-breaker 1: earlier occurrence of the term
+        const pa = Math.min(pos(an), pos(ai));
+        const pb = Math.min(pos(bn), pos(bi));
+        if (pa !== pb) return pa - pb;
+
+        // Tie-breaker 2: shorter name first (often nicer)
+        if (an.length !== bn.length) return an.length - bn.length;
+
+        // Tie-breaker 3: original order (stable)
+        return a.idx - b.idx;
+      })
+      .slice(0, 40)
+      .map(x => x.emp);
+
+    setSuggestions(sorted);
+  }, [searchTerm, allEmployees]);
+
+  // --- Search should NOT clear suggestions anymore
+  const handleSearch = () => {
+    setError('');
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return setError('Please enter name or ID');
+
+    // Prefer exact -> startsWith -> contains
+    const exact = allEmployees.find(emp => {
+      const id = (emp.EmployeeID || '').toLowerCase();
+      const name = (emp.EmpName || '').toLowerCase();
+      return id === term || name === term;
+    });
+
+    const starts = exact ? null : allEmployees.find(emp => {
+      const id = (emp.EmployeeID || '').toLowerCase();
+      const name = (emp.EmpName || '').toLowerCase();
+      return id.startsWith(term) || name.startsWith(term);
+    });
+
+    const partial = (exact || starts) ? null : allEmployees.find(emp => {
+      const id = (emp.EmployeeID || '').toLowerCase();
+      const name = (emp.EmpName || '').toLowerCase();
+      return id.includes(term) || name.includes(term);
+    });
+
+    const found = exact || starts || partial;
+
+    if (!found) {
+      setSelected(null);
+      setError('No matching employee');
+    } else {
+      selectEmployee(found);
+      // IMPORTANT: do NOT clear suggestions; right panel stays populated
+    }
+  };
+
+  const selectEmployee = emp => {
+    setSelected(emp);
+    setSearchTerm(emp.EmpName || '');
+    setHistory(prev => {
+      if (prev.find(e => e.id === emp.id)) return prev;
+      return [emp, ...prev];
+    });
+  };
+
+  // Clicking a related result should NOT clear the list
+  const pickSuggestion = emp => {
+    if (!emp) return;
+    selectEmployee(emp);
+  };
+
+  const pickHistory = emp => {
+    selectEmployee(emp);
+  };
+
+  return (
+    <div>
+      <header className="header">
+        <div className="header-content">
+          <div className="header-logo-text">
+            <img src={wulogo} alt="WU Logo" className="logo" />
+            <div className="header-text">
+              <h1>Associate Verification Tool</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="main-container">
+        <div className="left-panel">
+          <div className="search-bar">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onSearch={handleSearch}
+            />
+          </div>
+          {loading && <p>Loading…</p>}
+          {error && <p className="error">{error}</p>}
+          {selected && <EmployeeCard emp={selected} />}
+        </div>
+
+        <div className="right-panel">
+          <div className="lists-container">
+            <div className="history-list">
+              <h3>Related Results</h3>
+              <ul>
+                {suggestions.map(emp => (
+                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="history-list">
+              <h3>Search History</h3>
+              <ul>
+                {history.map(emp => (
+                  <li key={emp.id} onClick={() => pickHistory(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer
+        style={{
+          backgroundColor: '#000',
+          color: '#FFC72C',
+          padding: '1.5rem 0',
+          textAlign: 'center',
+          marginTop: '0rem',
+          borderTop: '2px solid #FFC72C',
+          fontSize: '0.95rem',
+          lineHeight: '1.6'
+        }}
+      >
+        <div>
+          <strong>Global Security Operations Center</strong>
+          <br />
+          Associate Verification Tool — Western Union
+        </div>
+        <div style={{ marginTop: '0.75rem' }}>
+          Contact us:&nbsp;
+          <a
+            href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+            style={{ color: '#FFC72C', textDecoration: 'underline' }}
+          >
+            GSOC Mail
+          </a>
+          &nbsp;|&nbsp;
+          Landline:&nbsp;
+          <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+
+ ......
+
 import React from 'react';
 
 export default function SearchBar({ value, onChange, onSearch }) {
