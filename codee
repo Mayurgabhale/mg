@@ -1,8 +1,61 @@
+useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+
+  // If search term is empty → show nothing
+  if (!term) {
+    setSuggestions([]);
+    return;
+  }
+
+  // Filter employees whose name or ID contains the search term
+  const filtered = allEmployees.filter(emp => {
+    const name = emp.EmpName ? emp.EmpName.toLowerCase() : '';
+    const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
+    return name.includes(term) || id.includes(term);
+  });
+
+  // Only show filtered results (empty if no match)
+  setSuggestions(filtered);
+}, [searchTerm, allEmployees]);
 
 
 
 
 
+
+
+......
+
+
+
+
+const handleSearch = () => {
+  const term = searchTerm.trim().toLowerCase();
+  setError('');
+
+  if (!term) {
+    setSuggestions([]); // clear related results
+    return setError('Please enter name or ID');
+  }
+
+  const match = allEmployees.find(emp => {
+    const name = emp.EmpName ? emp.EmpName.toLowerCase() : '';
+    const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
+    return name === term || id === term;
+  });
+
+  if (match) {
+    selectEmployee(match);
+  } else {
+    setSelected(null);
+    setSuggestions([]); // clear related results if no exact match
+    setError('No matching employee');
+  }
+};
+
+
+
+....
 
 useEffect(() => {
   const term = searchTerm.trim().toLowerCase();
