@@ -1,3 +1,34 @@
+const handleSearch = () => {
+  setError('');
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    setSuggestions([]);
+    return setError('Please enter name or ID');
+  }
+
+  // Clear previous suggestions before new search
+  setSuggestions([]);
+
+  const match = allEmployees.find(emp => {
+    const id = (emp.EmployeeID || '').toLowerCase();
+    const name = (emp.EmpName || '').toLowerCase();
+    return name === term || id === term;
+  });
+  
+  if (match) {
+    selectEmployee(match);
+  } else {
+    setSelected(null);
+    setError('No matching employee');
+  }
+};
+
+
+
+
+
+....
+
 
 // src/App.js
 import React, { useState, useEffect } from 'react';
