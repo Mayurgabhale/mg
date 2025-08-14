@@ -1,29 +1,83 @@
-// Update Related Results based on searchTerm
 useEffect(() => {
   const term = searchTerm.trim().toLowerCase();
 
   if (!term) {
-    setSuggestions([]); // empty if no search term
+    setSuggestions([]);
     return;
   }
 
-  // Split search term into parts (for first, middle, last name matching)
-  const searchParts = term.split(/\s+/);
-
   const filtered = allEmployees.filter(emp => {
-    const name = emp.EmpName ? emp.EmpName.toLowerCase() : '';
+    if (!emp.EmpName) return false;
+    
+    // Check EmployeeID first
     const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
-    const nameParts = name.split(/\s+/); // split employee name into parts
+    if (id.includes(term)) return true;
 
-    // Check if any search part matches any part of employee name OR ID
-    const matchesName = searchParts.every(sp =>
-      nameParts.some(np => np.includes(sp))
-    );
-
-    const matchesId = id.includes(term);
-
-    return matchesName || matchesId;
+    // Split name into components
+    const nameParts = emp.EmpName.toLowerCase().split(' ');
+    
+    // Check each name component
+    return nameParts.some(part => part.includes(term));
   });
 
-  setSuggestions(filtered.length > 0 ? filtered : []); // empty array if nothing matched
+  setSuggestions(filtered);
 }, [searchTerm, allEmployees]);
+
+
+
+
+
+
+const handleSearch = () => {
+  const term = searchTerm.trim().toLowerCase();
+  setError('');
+
+  if (!term) {
+    setSuggestions([]);
+    setSelected(null);
+    return setError('Please enter name or ID');
+  }
+
+  // Find matches - now checking name components
+  const matches = allEmployees.filter(emp => {
+    if (!emp.EmpName) return false;
+    
+    // Check ID first
+    const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
+    if (id === term) return true;
+
+    // Check name components
+    const nameParts = emp.EmpName.toLowerCase().split(' ');
+    return nameParts.some(part => part === term);
+  });
+
+  if (matches.length === 1) {
+    selectEmployee(matches[0]);
+  } else if (matches.length > 1) {
+    setSuggestions(matches);
+    setError('Multiple matches found - please select one');
+  } else {
+    setSelected(null);
+    setError('No exact matching employee found');
+  }
+};
+
+
+
+
+
+
+
+
+<div className="history-list">
+  <h3>Related Results</h3>
+  <ul>
+    {suggestions.length === 0 && searchTerm && <li>No matching employees found</li>}
+    {!searchTerm && <li>Start typing to see suggestions</li>}
+    {suggestions.map(emp => (
+      <li key={emp.id} onClick={() => pickSuggestion(emp)}>
+        {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+      </li>
+    ))}
+  </ul>
+</div>
