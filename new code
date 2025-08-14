@@ -1,3 +1,19 @@
+{suggestions.map((emp, idx) => (
+  <li key={`${emp.EmployeeID ?? emp.EmpName}-${idx}`} onClick={() => pickSuggestion(emp)}>
+    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+  </li>
+))}
+
+{history.map((emp, idx) => (
+  <li key={`${emp.EmployeeID ?? emp.EmpName}-${idx}`} onClick={() => pickHistory(emp)}>
+    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+  </li>
+))}
+
+
+
+
+....
 <li key={`${emp.EmployeeID ?? emp.EmpName}-${idx}`} onClick={() => pickSuggestion(emp)}>
 
 
