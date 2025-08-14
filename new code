@@ -1,4 +1,10 @@
-.get(`http://localhost:5001/api/employees/${236473}/location`)
+http://localhost:5001/api/employees/$328260%7D/location
+
+{
+  "error": "Failed to fetch live location",
+  "message": "Validation failed for parameter 'objid'. Cannot convert $328260} to a BigInt"
+}
 
 
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
+
+ .get(`http://localhost:5001/api/employees/${empId}/location`)
