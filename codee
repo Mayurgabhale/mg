@@ -1,3 +1,43 @@
+useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    setSuggestions([]);
+    return;
+  }
+
+  // Only include employees whose name or ID includes the term
+  const filtered = allEmployees.filter(emp => {
+    const id = (emp.EmployeeID || '').toLowerCase();
+    const name = (emp.EmpName || '').toLowerCase();
+    return name.includes(term) || id.includes(term);
+  });
+
+  if (filtered.length === 0) {
+    setSuggestions([]);
+    return;
+  }
+
+  // Sort so exact matches come first
+  const sorted = filtered.sort((a, b) => {
+    const nameA = (a.EmpName || '').toLowerCase();
+    const nameB = (b.EmpName || '').toLowerCase();
+    const idA = (a.EmployeeID || '').toLowerCase();
+    const idB = (b.EmployeeID || '').toLowerCase();
+
+    const exactA = nameA === term || idA === term ? 0 : 1;
+    const exactB = nameB === term || idB === term ? 0 : 1;
+
+    return exactA - exactB;
+  });
+
+  setSuggestions(sorted);
+}, [searchTerm, allEmployees]);
+
+
+
+....
+
+
 Read all code carefully,
 
 my requirements
