@@ -1,3 +1,48 @@
+react-dom-client.development.js:7563 Encountered two children with the same key, `2097183331`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+(anonymous)	@	react-dom-client.development.js:7563
+
+react-dom-client.development.js:7563 Encountered two children with the same key, `2097179418`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+(anonymous)	@	react-dom-client.development.js:7563
+react-dom-client.development.js:7563 Encountered two children with the same key, `2097179418`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+
+slove above error
+
+read each line carefully
+for all files
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import SearchBar from './components/SearchBar';
+import EmployeeCard from './components/EmployeeCard';
+import './App.css';
+import wulogo from './assets/img/WU-logo.png';
+
+function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    axios.get('http://localhost:5001/api/employees')
+      .then(res => setAllEmployees(res.data))
+      .catch(() => setError('Failed to load employees'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    axios.get('http://localhost:5001/api/stats')
+      .then(res => setStats(res.data))
+      .catch(err => console.error('❌ Stats load failed', err));
+  }, []);
+
+  // Update Related Results based on searchTerm
 useEffect(() => {
   const term = searchTerm.trim().toLowerCase();
 
@@ -22,9 +67,6 @@ useEffect(() => {
 
   setSuggestions(filtered);
 }, [searchTerm, allEmployees]);
-
-
-
 
 
 
@@ -62,14 +104,68 @@ const handleSearch = () => {
   }
 };
 
+  const selectEmployee = emp => {
+    setSelected(emp);
+    setSearchTerm(emp.EmpName || '');
+    setHistory(prev => {
+      if (prev.find(e => e.id === emp.id)) return prev;
+      return [emp, ...prev];
+    });
+  };
+
+  const pickSuggestion = emp => {
+    if (!emp) return;
+    selectEmployee(emp);
+  };
+
+  const pickHistory = emp => {
+    selectEmployee(emp);
+  };
+
+  return (
+    <div>
+      <header className="header">
+        <div className="header-content">
+          <div className="header-logo-text">
+            <img src={wulogo} alt="WU Logo" className="logo" />
+            <div className="header-text">
+              <h1>Associate Verification Tool</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="main-container">
+        <div className="left-panel">
+          <div className="search-bar">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onSearch={handleSearch}
+            />
+          </div>
+          {loading && <p>Loading…</p>}
+          {error && <p className="error">{error}</p>}
+          {selected && <EmployeeCard emp={selected} />}
+        </div>
+
+        <div className="right-panel">
+          <div className="lists-container">
+
+            {/* <div className="history-list">
+              <h3>Related Results</h3>
+              <ul>
+                {suggestions.length === 0 && <li>No results</li>}
+                {suggestions.map(emp => (
+                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div> */}
 
 
-
-
-
-
-
-<div className="history-list">
+            <div className="history-list">
   <h3>Related Results</h3>
   <ul>
     {suggestions.length === 0 && searchTerm && <li>No matching employees found</li>}
@@ -81,3 +177,196 @@ const handleSearch = () => {
     ))}
   </ul>
 </div>
+
+            <div className="history-list">
+              <h3>Search History</h3>
+              <ul>
+                {history.map(emp => (
+                  <li key={emp.id} onClick={() => pickHistory(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer
+        style={{
+          backgroundColor: '#000',
+          color: '#FFC72C',
+          padding: '1.5rem 0',
+          textAlign: 'center',
+          marginTop: '0rem',
+          borderTop: '2px solid #FFC72C',
+          fontSize: '0.95rem',
+          lineHeight: '1.6'
+        }}
+      >
+        <div>
+          <strong>Global Security Operations Center</strong>
+          <br />
+          Associate Verification Tool — Western Union
+        </div>
+        <div>
+          Contact us:&nbsp;
+          <a
+            href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+            style={{ color: '#FFC72C', textDecoration: 'underline' }}
+          >
+            GSOC Mail
+          </a>
+          &nbsp;|&nbsp;
+          Landline:&nbsp;
+          <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState } from 'react';
+import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaCheckCircle, FaClone } from 'react-icons/fa';
+import CurrentLocation from './CurrentLocation';
+import './EmployeeCard.css';
+
+export default function EmployeeCard({ emp }) {
+  const [showMore, setShowMore] = useState(false);
+
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+  const isRedStatus =
+    normalizedStatus === 'deactive' || normalizedStatus === 'terminated';
+
+  return (
+    <div
+      className="employee-card-container"
+      data-status={normalizedStatus}
+      style={{
+        background: isRedStatus
+          ? '#e7776b'
+          : 'linear-gradient(180deg, #131318 0%, #1d1d26 100%)',
+      }}
+    >
+      {/* Left column */}
+      <div className="left-col">
+        <div className="photo-ring">
+          <img
+            className="photo"
+            src={emp.imageUrl ? `http://localhost:5001${emp.imageUrl}` : '/images/no-photo.jpg'}
+            alt={emp.EmpName || 'Employee photo'}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}
+          />
+        </div>
+
+        <div className="photo-meta">
+          <div className="emp-name">{emp.EmpName || '—'}</div>
+          <div className="emp-role">{emp.PersonnelType || 'Employee'}</div>
+          <div className={`status-pill ${normalizedStatus}`}>{rawStatus}</div>
+        </div>
+      </div>
+
+      {/* Separator */}
+      <div className="separator" aria-hidden />
+
+      {/* Right column */}
+      <div className="right-col">
+        <h3 className="profile-title">Profile Details</h3>
+
+        <table className="details-table" aria-label="employee details">
+          <tbody>
+            {/* Always visible */}
+            <tr>
+              <td className="label "><FaUser color='#FFDD00' /> Name</td>
+              <td className="value v-color">{emp.EmpName || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaIdBadge color='#FFDD00' /> Employee ID</td>
+              <td className="value v-color">{emp.EmployeeID || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaUserTie color='#FFDD00'/> Manager</td>
+              <td className="value v-color">{emp.Manager_Name || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaIdCard /> Active Cards</td>
+              <td className="value v-color">{emp.Active_Cards ?? 0}</td>
+            </tr>
+            <tr>
+              <td colSpan="2" style={{ paddingTop: 1 }}>
+                <CurrentLocation empId={emp.id ?? emp.EmployeeID} showMore={showMore} />
+              </td>
+            </tr>
+
+            {/* Hidden until showMore is true */}
+            {showMore && (
+              <>
+                <tr>
+                  <td className="label"><FaClone /> Total Cards</td>
+                  <td className="value">{emp.Total_Cards ?? 0}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+
+        {/* Toggle Button */}
+        <button
+          className="show-more-btn"
+          onClick={() => setShowMore((prev) => !prev)}
+        >
+          {showMore ? 'Show Less' : 'Show More'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+import React from 'react';
+
+export default function SearchBar({ value, onChange, onSearch }) {
+  return (
+    <div className="search-bar-container">
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+  );
+}
+
+
