@@ -1,3 +1,34 @@
+const handleSearch = () => {
+  const term = searchTerm.trim().toLowerCase();
+  setError('');
+
+  if (!term) {
+    setSuggestions([]); // ensure suggestions empty
+    return setError('Please enter name or ID');
+  }
+
+  // Find exact match
+  const match = allEmployees.find(emp => {
+    const name = (emp.EmpName || '').toLowerCase();
+    const id = (emp.EmployeeID || '').toLowerCase();
+    return name === term || id === term;
+  });
+
+  if (match) {
+    selectEmployee(match);
+  } else {
+    setSelected(null);
+    setSuggestions([]); // no match → clear suggestions
+    setError('No matching employee');
+  }
+};
+
+
+
+
+
+....
+
 // Build Related Results only (no dropdown) and sort by relevance
 useEffect(() => {
   const term = searchTerm.trim().toLowerCase();
