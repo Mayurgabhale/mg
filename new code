@@ -1,3 +1,20 @@
+
+<tr>
+  <td className="label"><FaClock className="icon time" /> Time</td>
+  <td className="value">
+    {loc.timestampUTC
+      ? new Date(`1970-01-01T${loc.timestampUTC.split('T')[1].replace('Z', '')}Z`)
+          .toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })
+      : '—'}
+  </td>
+</tr>
+
+
+
+
+
+
+....
 24 hour convernt in to 12 hour
 this "16:21:00" in to this 4:21 PM
 
