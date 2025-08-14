@@ -1,3 +1,42 @@
+the issue in releted search not format correclty
+
+if is search neil
+
+we got this results
+
+NEIL, AMY (322441)
+Neill, Jane (244095)
+Nayve, Jason (324088)
+Nelson, John (240777)
+Nelson, Katie (303274)
+Nelliyat, Raneesh (C694504)
+McNeill, Lance Alan (312229)
+O'Neill-Szerman, Jonathan (313703)
+Gray, Neil (242404)
+Hall, Neil E (304195)
+Marsh, Neil (250314)
+Murphy-Neilson, Scott (245693)
+Gaikwad, Neil (90762427)
+Herring, Neil (320788)
+O'Brien, Neil (73993)
+Poblete, Neil (324868)
+Zibrick, Neila (W0026208)
+De Sosa, Neil Brian Daguing (319644)
+Ragandap, Neil Carlo (309209)
+Junevicius, Neimantas (314199)
+Padua, Francis Neil (W0018191)
+Dela Cruz, Rhenmart Neil (325841)
+
+
+we want to show Neil match first in top,
+
+
+and provius are not clear, 
+for example we search neil is show, but afte we search lloyds,
+
+is releted results show all provices and present seach all
+
+but we want to show only search present only lloyds releted 
 
 // src/App.js
 import React, { useState, useEffect } from 'react';
