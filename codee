@@ -1,3 +1,15 @@
+useEffect(() => {
+  if (!searchTerm.trim()) {
+    setSuggestions([]); // Clear Related Results if search bar is empty
+  }
+}, [searchTerm]);
+
+
+
+
+
+
+
 search bar empty then alos we want Related Results also empty
 
 not any privieus show in Related Results ok
