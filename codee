@@ -1,3 +1,11 @@
+<tr>
+  <td className="label"><FaPalette className="icon zone" /> Zone</td>
+  <td className="value">
+    {loc.Zone ? loc.Zone : (loc.floor || '—')}
+  </td>
+</tr>
+
+
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
