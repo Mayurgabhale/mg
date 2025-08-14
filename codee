@@ -1,3 +1,44 @@
+
+
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import SearchBar from './components/SearchBar';
+import EmployeeCard from './components/EmployeeCard';
+import './App.css';
+import wulogo from './assets/img/WU-logo.png';
+
+function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    axios.get('http://localhost:5001/api/employees')
+      .then(res => setAllEmployees(res.data))
+      .catch(() => setError('Failed to load employees'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    axios.get('http://localhost:5001/api/stats')
+      .then(res => setStats(res.data))
+      .catch(err => console.error('❌ Stats load failed', err));
+  }, []);
+
+  // --- Build Related Results only (no dropdown) and sort by relevance
+useEffect(() => {
+  if (!searchTerm.trim()) {
+    setSuggestions([]); // Clear Related Results if search bar is empty
+  }
+}, [searchTerm]);
+
 const handleSearch = () => {
   setError('');
   const term = searchTerm.trim().toLowerCase();
@@ -56,212 +97,6 @@ const handleSearch = () => {
     setError('No matching employee');
   }
 };
-
-
-
-
-
-
-....
-useEffect(() => {
-  if (!searchTerm.trim()) {
-    setSuggestions([]); // Clear Related Results if search bar is empty
-  }
-}, [searchTerm]);
-
-
-
-
-
-
-
-search bar empty then alos we want Related Results also empty
-
-not any privieus show in Related Results ok
-
-
-import React from 'react';
-
-export default function SearchBar({ value, onChange, onSearch }) {
-  return (
-    <div className="search-bar-container">
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          onSearch();
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search by Name or EmpID"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          autoComplete="off"
-        />
-        <button type="submit">Search</button>
-      </form>
-    </div>
-  );
-}
-
-
-
-
-
-
-
-
-// src/App.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import SearchBar from './components/SearchBar';
-import EmployeeCard from './components/EmployeeCard';
-import './App.css';
-import wulogo from './assets/img/WU-logo.png';
-
-function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [allEmployees, setAllEmployees] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    setLoading(true);
-    axios.get('http://localhost:5001/api/employees')
-      .then(res => setAllEmployees(res.data))
-      .catch(() => setError('Failed to load employees'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    axios.get('http://localhost:5001/api/stats')
-      .then(res => setStats(res.data))
-      .catch(err => console.error('❌ Stats load failed', err));
-  }, []);
-
-  // --- Build Related Results only (no dropdown) and sort by relevance
-  useEffect(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) {
-      setSuggestions([]);
-      return;
-    }
-
-    // Filter first
-    const filtered = allEmployees.filter(emp => {
-      const id = (emp.EmployeeID || '').toLowerCase();
-      const name = (emp.EmpName || '').toLowerCase();
-      return id.includes(term) || name.includes(term);
-    });
-
-    // Rank: exact (0) -> startsWith (1) -> contains (2)
-    const rankOf = (emp) => {
-      const id = (emp.EmployeeID || '').toLowerCase();
-      const name = (emp.EmpName || '').toLowerCase();
-      if (name === term || id === term) return 0;
-      if (name.startsWith(term) || id.startsWith(term)) return 1;
-      return 2; // contains
-    };
-
-    const pos = (str) => {
-      const i = str.indexOf(term);
-      return i === -1 ? Number.POSITIVE_INFINITY : i;
-    };
-
-    const sorted = filtered
-      .map((emp, idx) => ({ emp, idx }))
-      .sort((a, b) => {
-        const an = (a.emp.EmpName || '').toLowerCase();
-        const bn = (b.emp.EmpName || '').toLowerCase();
-        const ai = (a.emp.EmployeeID || '').toLowerCase();
-        const bi = (b.emp.EmployeeID || '').toLowerCase();
-
-        const ra = rankOf(a.emp);
-        const rb = rankOf(b.emp);
-        if (ra !== rb) return ra - rb;
-
-        // Tie-breaker 1: earlier occurrence of the term
-        const pa = Math.min(pos(an), pos(ai));
-        const pb = Math.min(pos(bn), pos(bi));
-        if (pa !== pb) return pa - pb;
-
-        // Tie-breaker 2: shorter name first (often nicer)
-        if (an.length !== bn.length) return an.length - bn.length;
-
-        // Tie-breaker 3: original order (stable)
-        return a.idx - b.idx;
-      })
-      .slice(0, 40)
-      .map(x => x.emp);
-
-    setSuggestions(sorted);
-  }, [searchTerm, allEmployees]);
-
-const handleSearch = () => {
-  setError('');
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) {
-    setSuggestions([]);
-    return setError('Please enter name or ID');
-  }
-
-  // Filter and rank (exact → startsWith → contains)
-  const filtered = allEmployees.filter(emp => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    return id.includes(term) || name.includes(term);
-  });
-
-  const rankOf = (emp) => {
-    const id = (emp.EmployeeID || '').toLowerCase();
-    const name = (emp.EmpName || '').toLowerCase();
-    if (name === term || id === term) return 0;
-    if (name.startsWith(term) || id.startsWith(term)) return 1;
-    return 2; // contains
-  };
-
-  const pos = (str) => {
-    const i = str.indexOf(term);
-    return i === -1 ? Number.POSITIVE_INFINITY : i;
-  };
-
-  const sorted = filtered
-    .map((emp, idx) => ({ emp, idx }))
-    .sort((a, b) => {
-      const an = (a.emp.EmpName || '').toLowerCase();
-      const bn = (b.emp.EmpName || '').toLowerCase();
-      const ai = (a.emp.EmployeeID || '').toLowerCase();
-      const bi = (b.emp.EmployeeID || '').toLowerCase();
-
-      const ra = rankOf(a.emp);
-      const rb = rankOf(b.emp);
-      if (ra !== rb) return ra - rb;
-
-      const pa = Math.min(pos(an), pos(ai));
-      const pb = Math.min(pos(bn), pos(bi));
-      if (pa !== pb) return pa - pb;
-
-      if (an.length !== bn.length) return an.length - bn.length;
-      return a.idx - b.idx;
-    })
-    .slice(0, 40)
-    .map(x => x.emp);
-
-  setSuggestions(sorted); // ✅ Always fresh list for current search only
-
-  // Pick the best match for main display
-  if (sorted.length > 0) {
-    selectEmployee(sorted[0]);
-  } else {
-    setSelected(null);
-    setError('No matching employee');
-  }
-};
-
 
   const selectEmployee = emp => {
     setSelected(emp);
