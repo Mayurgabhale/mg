@@ -1,3 +1,32 @@
+<tr>
+  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+  <td className="value">
+    {loc.timestampUTC
+      ? loc.timestampUTC.split('T')[0] // "2025-08-14"
+      : '—'}
+  </td>
+</tr>
+
+<tr>
+  <td className="label"><FaClock className="icon time" /> Time</td>
+  <td className="value">
+    {loc.timestampUTC
+      ? loc.timestampUTC.split('T')[1].replace('Z', '') // "16:21:00"
+      : '—'}
+  </td>
+</tr>
+
+
+
+
+
+
+
+
+
+.....
+
+
     {
       "ObjectName1": "Diwate, Swapnil",
       "Door": "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR",
