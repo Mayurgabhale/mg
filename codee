@@ -238,3 +238,108 @@ function App() {
 
 export default App;
 
+
+
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\EmployeeCard.jsx
+
+
+
+import React from 'react';
+import CurrentLocation from './CurrentLocation';
+import './EmployeeCard.css';
+
+export default function EmployeeCard({ emp }) {
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+
+    // Determine if we should apply red background
+  const isRedStatus =
+    normalizedStatus === 'deactive' || normalizedStatus === 'terminated';
+
+  return (
+    <div className="employee-card-container" data-status={normalizedStatus }
+    style={{
+        background: isRedStatus
+          ? '#e74c3c' // red background for deactive/terminated
+          : 'linear-gradient(180deg, #131318 0%, #1d1d26 100%)',
+      }}
+    >
+      {/* Left column: big photo, name, role, status */}
+      <div className="left-col">
+        <div className="photo-ring">
+          <img
+            className="photo"
+            src={emp.imageUrl ? `http://localhost:5001${emp.imageUrl}` : '/images/no-photo.jpg'}
+            alt={emp.EmpName || 'Employee photo'}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}
+          />
+        </div>
+
+        <div className="photo-meta">
+          <div className="emp-name">{emp.EmpName || '—'}</div>
+          <div className="emp-role">{emp.PersonnelType || 'Employee'}</div>
+          <div className={`status-pill ${normalizedStatus}`}>{rawStatus}</div>
+        </div>
+      </div>
+
+      {/* Separator line on wide screens */}
+      <div className="separator" aria-hidden />
+
+      {/* Right column: profile details and socials */}
+      <div className="right-col">
+        <h3 className="profile-title">Profile Details</h3>
+
+        <table className="details-table" aria-label="employee details">
+          <tbody>
+            <tr>
+              <td className="label">Name :</td>
+              <td className="value">{emp.EmpName || '—'}</td>
+            </tr>
+           
+            {/* other rows you previously had */}
+            <tr>
+              <td className="label">Employee ID</td>
+              <td className="value">{emp.EmployeeID || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label">Manager</td>
+              <td className="value">{emp.Manager_Name || '—'}</td>
+            </tr>
+            {/* <tr>
+              <td className="label">Status</td>
+              <td className="value">{rawStatus}</td>
+            </tr> */}
+
+            {/* <tr>
+              <td className="label">Active Cards</td>
+              <td className="value">{emp.Active_Cards ?? 0}</td>
+            </tr>
+            <tr>
+              <td className="label">Total Cards</td>
+              <td className="value">{emp.Total_Cards ?? 0}</td>
+            </tr> */}
+
+            {/* Current location component will render its own table rows */}
+            <tr>
+              <td colSpan="2" style={{ paddingTop: 1 }}>
+                <CurrentLocation empId={emp.id ?? emp.EmployeeID} />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
