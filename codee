@@ -1,109 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
+<table className="swipe-details-table">
+  <tbody>
+    <tr>
+      <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
+      <td className="value">
+        {loc.partition || '—'}
+        {loc.floor ? ` · ${loc.floor}` : ''}
+      </td>
+    </tr>
+    <tr>
+      <td className="label"><FaPalette className="icon zone" /> Zone</td>
+      <td className="value">{loc.Zone || '—'}</td>
+    </tr>
 
-export default function CurrentLocation({ empId, showMore }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
+    {showMore && (
+      <>
+        <tr>
+          <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+          <td className="value">
+            {loc.timestampUTC
+              ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
+              : '—'}
+          </td>
+        </tr>
+        <tr>
+          <td className="label"><FaClock className="icon time" /> Time</td>
+          <td className="value">
+            {loc.timestampUTC
+              ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+              : '—'}
+          </td>
+        </tr>
+        <tr>
+          <td className="label"><FaDoorClosed className="icon door" /> Door</td>
+          <td className="value">{loc.door || '—'}</td>
+        </tr>
+        <tr>
+          <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
+          <td className="value">{loc.direction || '—'}</td>
+        </tr>
+      </>
+    )}
+  </tbody>
+</table>
 
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
 
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
 
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
-      .then((res) => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Location load error', err?.message || err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
 
-  if (!empId) return null;
 
-  return (
-    <div className="current-location-card" style={{ marginTop: 1 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14 }}>Swipe Details</h4>
 
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
 
-      {!loading && loc && !loc.found && (
-        <div style={{ color: '#2ced0e' }}>No recent swipe</div>
-      )}
 
-      {!loading && loc && loc.found && (
-        <table className="table">
-          <tbody>
-            {/* Always visible */}
-            <tr>
-              <td style={{ opacity: 0.8, width: 140 }}><FaMapMarkerAlt /> Location</td>
-              <td>
-                {loc.partition || '—'}
-                {loc.floor ? ` · ${loc.floor}` : ''}
-              </td>
-            </tr>
-            <tr>
-              <td style={{ opacity: 0.8 }}><FaPalette /> Zone</td>
-              <td>{loc.Zone || '—'}</td>
-            </tr>
 
-            {/* Extra swipe details only if showMore is true */}
-            {showMore && (
-              <>
-                <tr>
-                  <td style={{ opacity: 0.8 }}><FaCalendarAlt /> Date</td>
-                  <td>
-                    {loc.timestampUTC
-                      ? new Date(loc.timestampUTC).toLocaleDateString('en-IN', {
-                          timeZone: 'Asia/Kolkata',
-                        })
-                      : '—'}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ opacity: 0.8 }}><FaClock /> Time</td>
-                  <td>
-                    {loc.timestampUTC
-                      ? new Date(loc.timestampUTC).toLocaleTimeString('en-IN', {
-                          timeZone: 'Asia/Kolkata',
-                        })
-                      : '—'}
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ opacity: 0.8 }}><FaDoorClosed /> Door</td>
-                  <td>{loc.door || '—'}</td>
-                </tr>
-                <tr>
-                  <td><FaExchangeAlt /> Direction</td>
-                  <td>{loc.direction || '—'}</td>
-                </tr>
-              </>
-            )}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
+.swipe-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.swipe-details-table td {
+  padding: 8px 12px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.swipe-details-table .label {
+  font-weight: 600;
+  white-space: nowrap;
+  color: #ccc;
+}
+
+.swipe-details-table .value {
+  color: #fff;
+  word-break: break-word;
+}
+
+.icon {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.icon.location { color: #ff4d4d; }
+.icon.zone { color: #00bfff; }
+.icon.date { color: #ffa500; }
+.icon.time { color: #00ff7f; }
+.icon.door { color: #ff69b4; }
+.icon.direction { color: #9370db; }
+
+/* 📱 Mobile styles */
+@media (max-width: 600px) {
+  .swipe-details-table td {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+  }
+  
+  .swipe-details-table tr {
+    display: block;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .swipe-details-table .label {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
 }
