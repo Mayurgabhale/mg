@@ -1,3 +1,15 @@
+Read below File line by line 
+Our issue is regarding Related search and search history..
+
+Basically if i want to search Dass,Lloyds name 
+When i enter name like Lloyds , Then display on top Lloyds related all result in related search colimn .. carefully.
+If Lloyds not match anywhere then display there no matching employee found ..like 
+
+but add extra condtion for related search for first name as well last name , middle name add all condtion and fix this issue smooothly .....
+
+
+
+
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -181,5 +193,144 @@ function App() {
     </div>
   );
 }
+
+
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\SearchBar.jsx
+
+
+
+
+import React from 'react';
+
+export default function SearchBar({ value, onChange, onSearch }) {
+  return (
+    <div className="search-bar-container">
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+  );
+}
+
+
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\EmployeeCard.jsx
+
+
+
+
+import React, { useState } from 'react';
+import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaCheckCircle, FaClone } from 'react-icons/fa';
+import CurrentLocation from './CurrentLocation';
+import './EmployeeCard.css';
+
+export default function EmployeeCard({ emp }) {
+  const [showMore, setShowMore] = useState(false);
+
+  if (!emp) return null;
+
+  const rawStatus = emp.Employee_Status || 'Deactive';
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+  const isRedStatus =
+    normalizedStatus === 'deactive' || normalizedStatus === 'terminated';
+
+  return (
+    <div
+      className="employee-card-container"
+      data-status={normalizedStatus}
+      style={{
+        background: isRedStatus
+          ? '#e7776b'
+          : 'linear-gradient(180deg, #131318 0%, #1d1d26 100%)',
+      }}
+    >
+      {/* Left column */}
+      <div className="left-col">
+        <div className="photo-ring">
+          <img
+            className="photo"
+            src={emp.imageUrl ? `http://localhost:5001${emp.imageUrl}` : '/images/no-photo.jpg'}
+            alt={emp.EmpName || 'Employee photo'}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/images/no-photo.jpg';
+            }}
+          />
+        </div>
+
+        <div className="photo-meta">
+          <div className="emp-name">{emp.EmpName || '—'}</div>
+          <div className="emp-role">{emp.PersonnelType || 'Employee'}</div>
+          <div className={`status-pill ${normalizedStatus}`}>{rawStatus}</div>
+        </div>
+      </div>
+
+      {/* Separator */}
+      <div className="separator" aria-hidden />
+
+      {/* Right column */}
+      <div className="right-col">
+        <h3 className="profile-title">Profile Details</h3>
+
+        <table className="details-table" aria-label="employee details">
+          <tbody>
+            {/* Always visible */}
+            <tr>
+              <td className="label "><FaUser color='#FFDD00' /> Name</td>
+              <td className="value v-color">{emp.EmpName || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaIdBadge color='#FFDD00' /> Employee ID</td>
+              <td className="value v-color">{emp.EmployeeID || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaUserTie color='#FFDD00'/> Manager</td>
+              <td className="value v-color">{emp.Manager_Name || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaIdCard /> Active Cards</td>
+              <td className="value v-color">{emp.Active_Cards ?? 0}</td>
+            </tr>
+            <tr>
+              <td colSpan="2" style={{ paddingTop: 1 }}>
+                <CurrentLocation empId={emp.id ?? emp.EmployeeID} showMore={showMore} />
+              </td>
+            </tr>
+
+            {/* Hidden until showMore is true */}
+            {showMore && (
+              <>
+                <tr>
+                  <td className="label"><FaClone /> Total Cards</td>
+                  <td className="value">{emp.Total_Cards ?? 0}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+
+        {/* Toggle Button */}
+        <button
+          className="show-more-btn"
+          onClick={() => setShowMore((prev) => !prev)}
+        >
+          {showMore ? 'Show Less' : 'Show More'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 export default App;
