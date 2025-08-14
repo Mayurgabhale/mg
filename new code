@@ -1,3 +1,6 @@
+24 hour convernt in to 12 hour
+this "16:21:00" in to this 4:21 PM
+
 <tr>
   <td className="label"><FaClock className="icon time" /> Time</td>
   <td className="value">
