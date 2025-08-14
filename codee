@@ -1,4 +1,45 @@
 
+
+
+
+
+
+useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+
+  // Only show suggestions if user typed something
+  if (!term) {
+    setSuggestions([]);
+    return;
+  }
+
+  // Filter employees whose name or ID contains the search term
+  const filtered = allEmployees.filter(emp => {
+    const name = (emp.EmpName || '').toLowerCase();
+    const id = (emp.EmployeeID || '').toLowerCase();
+    return name.includes(term) || id.includes(term);
+  });
+
+  // Sort exact matches first, then partial matches
+  const sorted = [...filtered].sort((a, b) => {
+    const nameA = (a.EmpName || '').toLowerCase();
+    const nameB = (b.EmpName || '').toLowerCase();
+    const idA = (a.EmployeeID || '').toLowerCase();
+    const idB = (b.EmployeeID || '').toLowerCase();
+
+    const exactA = nameA === term || idA === term ? 0 : 1;
+    const exactB = nameB === term || idB === term ? 0 : 1;
+
+    return exactA - exactB;
+  });
+
+  setSuggestions(sorted);
+}, [searchTerm, allEmployees]);
+
+
+
+
+....
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
