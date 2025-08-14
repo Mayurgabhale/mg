@@ -1,4 +1,19 @@
 <tr>
+  <td className="label">
+    <FaPalette className="icon zone" /> {loc.Zone ? 'Zone' : 'Floor'}
+  </td>
+  <td className="value">
+    {loc.Zone || loc.floor || '—'}
+  </td>
+</tr>
+
+
+..
+
+
+
+
+<tr>
   <td className="label"><FaPalette className="icon zone" /> Zone</td>
   <td className="value">
     {loc.Zone ? loc.Zone : (loc.floor || '—')}
