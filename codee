@@ -1,4 +1,41 @@
+useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    setSuggestions([]);
+    return;
+  }
 
+  const matches = allEmployees
+    .filter(emp =>
+      (emp.EmployeeID || '').toLowerCase().includes(term) ||
+      (emp.EmpName || '').toLowerCase().includes(term)
+    )
+    .sort((a, b) => {
+      const aName = (a.EmpName || '').toLowerCase();
+      const bName = (b.EmpName || '').toLowerCase();
+
+      // Exact match first
+      if (aName === term && bName !== term) return -1;
+      if (bName === term && aName !== term) return 1;
+
+      // Then starts-with matches
+      if (aName.startsWith(term) && !bName.startsWith(term)) return -1;
+      if (bName.startsWith(term) && !aName.startsWith(term)) return 1;
+
+      // Otherwise keep original API order
+      return 0;
+    });
+
+  setSuggestions(matches.slice(0, 40));
+}, [searchTerm, allEmployees]);
+
+
+
+
+
+
+
+....
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
