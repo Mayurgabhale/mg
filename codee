@@ -1,42 +1,63 @@
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 13803
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-🎯 [GET] /api/employees/2097205590/image called
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 13827
-🎯 [GET] /api/employees called
-✅ DB pool acquired
-🎯 [GET] /api/employees called
-✅ DB pool acquired
-✅ Query executed, rows: 17687
-✅ Query executed, rows: 17687
-🎯 [GET] /api/employees/2097197974/image called
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 12942
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-🎯 [GET] /api/employees/2097207990/image called
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 13803
-🎯 [GET] /api/employees/2097205590/image called
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 13827
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+http://10.199.22.57:4000/api/occupancy/live-summary
+
+{
+      "LocaleMessageTime": "2025-08-15T22:42:12.000Z",
+      "Dateonly": "2025-08-15",
+      "Swipe_Time": "22:42:12",
+      "EmployeeID": "W0026146",
+      "PersonGUID": "AE191490-D301-41F9-9E31-D9FA49F8690A",
+      "ObjectName1": "Montenegro, Norma",
+      "Door": "LACA ARG MOLINETE 1 IN",
+      "PersonnelType": "Contractor",
+      "CardNumber": "617920",
+      "Text5": "Buenos Aires - Montevideo 825",
+      "PartitionName2": "AR.Cordoba",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "Floor": "1st Floor"
+    },
 
 
 
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-Why this come, chek all code, each line,
-and how to slove it, 
+ Name	Montenegro, Norma
+ Employee ID	W0026146
+ Manager	Andres Ferreira
+ Active Cards	1
+Swipe Details
+No recent swipe
+ Total Cards	1
 
 
-C:\Users\W0024618\Desktop\employee-verification\controllers\employeeLocationController.js
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 145191
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+🎯 [GET] /api/employees/2097210273/image called
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 48911
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+
+
+ Name	Montenegro, Norma
+ Employee ID	W0026146
+ Manager	Andres Ferreira
+ Active Cards	1
+Swipe Details  <---- thi is 
+No recent swipe
+ Total Cards	1
+
+chekc api, she is preset but  in thsi not show swppte detail
+but in api is how 
+
+chekc all code carefully and slove this iisue , why not show swpite details 
+
+// ////////////////////////////////////////////
+// ////////////////////////////////////////////
+
+
+
+
 
 // controllers/employeeLocationController.js
 const axios = require('axios');
