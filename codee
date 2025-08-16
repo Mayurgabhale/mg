@@ -160,5 +160,88 @@ export default function Header() {
 }
 
 
+Read the above apac header, use same logic pune 
+ if (newPartition === 'Pune' && suffixSegments.length === 0) {
+      window.location.href = 'http://10.199.22.57:3011/';
+      return;
+this
+
+
+for 
+if Denver then get this location http://10.199.22.57:3012/
+
+just chanee only this dont change other anhthings ok 
+
+
+
+
+
+// ── Header Component ──────────────────────────────────────────────────────────
+export default function Header({
+  title,
+  mode,
+  onTimeSelect,
+  onLiveClick
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+
+  const [lastUpdate, setLastUpdate] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [draftDate, setDraftDate] = useState(dayjs().utc());
+
+  // Update the “last update” timestamp on each live fetch
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  // ── Routing logic ──────────────────────────────────────────────────────────
+  const segments = location.pathname.split('/').filter(Boolean);
+  const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+  const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+  const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+
+  const flagMap = {
+    'US.CO.OBS': DenverFlag,
+    'US.FL.Miami': MiamiFlag,
+    'US.NYC': NewYorkFlag,
+    'USA/Canada Default': AustinFlag
+  };
+  const selectedFlag = flagMap[currentPartition] || DefaultFlag;
+
+
+
+  // Detect if we’re currently on any “history” page
+  const isHistoryPage = location.pathname.includes('/history');
+
+  const handlePartitionChange = newPartition => {
+    if (!newPartition) return navigate('/');
+    // Always point at the new partition
+    let path = `/partition/${encodeURIComponent(newPartition)}`;
+    // If we were on “history”, keep the history view
+    if (isHistoryPage) path += '/history';
+    navigate(path);
+  };
+
+
+  const handleDetailsClick = () => {
+    if (isPartitionPage) {
+      navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+    } else {
+      navigate('/partition/US.CO.OBS/details');
+    }
+  };
+
+  // ── Date/Time popover handlers ─────────────────────────────────────────────
+  const openPopover = e => {
+    setDraftDate(dayjs().utc());
+    setAnchorEl(e.currentTarget);
+  };
+  const closePopover = () => setAnchorEl(null);
+  const handleGo = () => {
+    onTimeSelect(draftDate.toISOString());
+    closePopover();
+  };
 
 
