@@ -1,8 +1,7 @@
 only for this  http://localhost:3000/partition/US.CO.OBS 
 
 not for all means
-this http://localhost:3000/partition/US.CO.OBS
-
+this not for this  http://localhost:3000/partition/US.CO.OBS/history
 // src/components/Header.jsx
 
 // ── ALL IMPORTS AT THE VERY TOP ───────────────────────────────────────────────
