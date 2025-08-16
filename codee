@@ -1,26 +1,4 @@
-you not add this 
-add alos this it is import
-
- <IconButton
-              color={mode === 'time' ? 'secondary' : 'inherit'}
-              onClick={openPopover}
-              title="Jump to specific time"
-            >
-              <AccessTimeIcon />
-            </IconButton>
-
-            <IconButton
-              color={mode === 'live' ? 'secondary' : 'inherit'}
-              onClick={onLiveClick}
-              title="Return to live"
-            >
-              <LiveTvIcon />
-            </IconButton>
-
-only add this 
-
-
-// src/components/Header.jsx
+src/components/Header.jsx
 
 // ── ALL IMPORTS AT THE VERY TOP ───────────────────────────────────────────────
 import React, { useEffect, useState } from 'react';
@@ -188,7 +166,21 @@ export default function Header({
               <InfoIcon />
             </IconButton>
 
-           
+            <IconButton
+              color={mode === 'time' ? 'secondary' : 'inherit'}
+              onClick={openPopover}
+              title="Jump to specific time"
+            >
+              <AccessTimeIcon />
+            </IconButton>
+
+            <IconButton
+              color={mode === 'live' ? 'secondary' : 'inherit'}
+              onClick={onLiveClick}
+              title="Return to live"
+            >
+              <LiveTvIcon />
+            </IconButton>
           </Box>
 
           {/* ── Right: region selector, flag, last-update/historic label ── */}
@@ -251,151 +243,3 @@ export default function Header({
 }
 
 
-
-
-
-
-.......
-
-
-
-
-// src/components/HeaderNamer.jsx
-import React, { useEffect, useState } from 'react';
-import {
-  AppBar, Toolbar, Box, Typography,
-  Select, MenuItem, IconButton
-} from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
-
-import HomeIcon from '@mui/icons-material/Home';
-import HistoryIcon from '@mui/icons-material/History';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-
-import WuLogo from '../assets/wu-logo.png';
-import DenverFlag from '../assets/flags/denver.png';
-import MiamiFlag from '../assets/flags/miami.png';
-import NewYorkFlag from '../assets/flags/new-york.png';
-import AustinFlag from '../assets/flags/austin.png';
-import DefaultFlag from '../assets/flags/default.png';
-
-import { partitionList } from '../services/occupancy.service';
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-
-const displayNameMap = {
-  'US.CO.OBS': 'Denver',
-  'US.FL.Miami': 'Miami',
-  'US.NYC': 'New York',
-  'USA/Canada Default': 'Austin Texas',
-};
-
-const flagMap = {
-  'US.CO.OBS': DenverFlag,
-  'US.FL.Miami': MiamiFlag,
-  'US.NYC': NewYorkFlag,
-  'USA/Canada Default': AustinFlag,
-};
-
-export default function HeaderNamer() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { data } = useLiveOccupancy(1000);
-  const [lastUpdate, setLastUpdate] = useState('');
-
-  useEffect(() => {
-    if (data) setLastUpdate(new Date().toLocaleTimeString());
-  }, [data]);
-
-  const parts = location.pathname.split('/').filter(Boolean);
-  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
-  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
-  const suffixSegments = isPartitionPath
-    ? parts.slice(2)
-    : parts[0] === 'history'
-      ? ['history']
-      : [];
-
-  const selectedFlag = flagMap[currentPartition] || DefaultFlag;
-
-  const makePartitionPath = (suffix) => {
-    const base = `/partition/${encodeURIComponent(currentPartition)}`;
-    return suffix ? `${base}/${suffix}` : base;
-  };
-
-  const handlePartitionChange = (newPartition) => {
-    if (!newPartition) return navigate('/');
-
-    // Optional: special handling for Denver redirect
-    if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
-      window.location.href = 'http://10.199.22.57:3000/';
-      return;
-    }
-
-    const base = `/partition/${encodeURIComponent(newPartition)}`;
-    const full = suffixSegments.length
-      ? `${base}/${suffixSegments.join('/')}`
-      : base;
-    navigate(full);
-  };
-
-  return (
-    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
-        {/* Left: Logo + Navigation */}
-        <Box display="flex" alignItems="center">
-          <Box component="img" src={WuLogo} alt="WU" sx={{ height: 36, mr: 2 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            NAMER Occupancy
-            {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
-          </Typography>
-
-          <IconButton color="inherit" onClick={() => navigate('/')}>
-            <HomeIcon />
-          </IconButton>
-
-          <IconButton color="inherit" onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
-            <HistoryIcon />
-          </IconButton>
-
-          <IconButton
-            color="inherit"
-            onClick={() =>
-              navigate(currentPartition
-                ? makePartitionPath('details')
-                : '/partition/US.CO.OBS/details'
-              )
-            }
-          >
-            <ListAltIcon />
-          </IconButton>
-        </Box>
-
-        {/* Right: Dropdown Selector + Flag */}
-        <Box display="flex" alignItems="center">
-          <Select
-            size="small"
-            value={currentPartition}
-            displayEmpty
-            onChange={(e) => handlePartitionChange(e.target.value)}
-            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
-            renderValue={(selected) =>
-              selected ? (
-                <Box display="flex" alignItems="center">
-                  <Box component="img" src={flagMap[selected] || DefaultFlag} alt={selected} sx={{ width: 24, height: 16, mr: 1 }} />
-                  {displayNameMap[selected] || selected}
-                </Box>
-              ) : "— Select Site —"
-            }
-          >
-            <MenuItem value="">— Select Site —</MenuItem>
-            {partitionList.map((p) => (
-              <MenuItem key={p} value={p}>
-                {displayNameMap[p] || p}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
-      </Toolbar>
-    </AppBar>
-  );
-}
