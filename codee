@@ -1,371 +1,202 @@
-react-dom-client.development.js:7563 Encountered two children with the same key, `2097158380`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
-(anonymous)	@	react-dom-client.development.js:7563
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-warnOnInvalidKey	@	react-dom-client.development.js:7562
-reconcileChildrenArray	@	react-dom-client.development.js:7628
-reconcileChildFibersImpl	@	react-dom-client.development.js:7949
-(anonymous)	@	react-dom-client.development.js:8057
-reconcileChildren	@	react-dom-client.development.js:8619
-beginWork	@	react-dom-client.development.js:10869
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-performUnitOfWork	@	react-dom-client.development.js:15130
-workLoopSync	@	react-dom-client.development.js:14956
-renderRootSync	@	react-dom-client.development.js:14936
-performWorkOnRoot	@	react-dom-client.development.js:14417
-performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
-performWorkUntilDeadline	@	scheduler.development.js:45
-<li>		
-exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
-(anonymous)	@	App.js:1279
-App	@	App.js:1279
-react-stack-bottom-frame	@	react-dom-client.development.js:23863
-renderWithHooksAgain	@	react-dom-client.development.js:5629
-renderWithHooks	@	react-dom-client.development.js:5541
-updateFunctionComponent	@	react-dom-client.development.js:8897
-beginWork	@	react-dom-client.development.js:10522
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-performUnitOfWork	@	react-dom-client.development.js:15130
-workLoopSync	@	react-dom-client.development.js:14956
-renderRootSync	@	react-dom-client.development.js:14936
-performWorkOnRoot	@	react-dom-client.development.js:14417
-performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
-performWorkUntilDeadline	@	scheduler.development.js:45
-
-also slove chekc above issue
-
-Read below File line by line 
-Our issue is regarding Related search and search history..
-
-Basically if i want to search Dass,Lloyds name 
-When i enter name like Lloyds , Then display on top Lloyds related all result in related search colimn .. carefully.
-If Lloyds not match anywhere then display there no matching employee found ..like 
-
-but add extra condtion for related search for first name as well last name , middle name add all condtion and fix this issue smooothly .....
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 13803
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+🎯 [GET] /api/employees/2097205590/image called
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 13827
+🎯 [GET] /api/employees called
+✅ DB pool acquired
+🎯 [GET] /api/employees called
+✅ DB pool acquired
+✅ Query executed, rows: 17687
+✅ Query executed, rows: 17687
+🎯 [GET] /api/employees/2097197974/image called
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 12942
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+🎯 [GET] /api/employees/2097207990/image called
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 13803
+🎯 [GET] /api/employees/2097205590/image called
+✅ DB pool acquired for image
+✅ Image query rows: 1
+✅ Serving image, type: image/jpeg size: 13827
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
 
 
 
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
+Why this come, chek all code, each line,
+and how to slove it, 
 
-// src/App.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import SearchBar from './components/SearchBar';
-import EmployeeCard from './components/EmployeeCard';
-import './App.css';
-import wulogo from './assets/img/WU-logo.png';
 
-function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [allEmployees, setAllEmployees] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [stats, setStats] = useState(null);
+C:\Users\W0024618\Desktop\employee-verification\controllers\employeeLocationController.js
 
-  useEffect(() => {
-    setLoading(true);
-    axios.get('http://localhost:5001/api/employees')
-      .then(res => setAllEmployees(res.data))
-      .catch(() => setError('Failed to load employees'))
-      .finally(() => setLoading(false));
-  }, []);
+// controllers/employeeLocationController.js
+const axios = require('axios');
+const sql = require('mssql');
+const { getPool } = require('../config/db');
 
-  useEffect(() => {
-    axios.get('http://localhost:5001/api/stats')
-      .then(res => setStats(res.data))
-      .catch(err => console.error('❌ Stats load failed', err));
-  }, []);
+const OCCUPANCY_URLS = [
+  'http://10.199.22.57:3006/api/occupancy/live-summary',
 
-  // Update Related Results based on searchTerm
-  useEffect(() => {
-    const term = searchTerm.trim().toLowerCase();
+  'http://10.199.22.57:3007/api/occupancy/live-summary',  // EMEA
 
-    if (!term) {
-      setSuggestions([]); // empty if no search term
-      return;
-    }
 
-    // Filter employees that include the search term in name or ID
-    const filtered = allEmployees.filter(emp => {
-      const name = emp.EmpName ? emp.EmpName.toLowerCase() : '';
-      const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
-      return name.includes(term) || id.includes(term);
-    });
+  'http://10.199.22.57:3008/api/occupancy/live-summary',  //Pune
 
-    setSuggestions(filtered);
-  }, [searchTerm, allEmployees]);
 
-  const handleSearch = () => {
-    const term = searchTerm.trim().toLowerCase();
-    setError('');
+  'http://10.199.22.57:4000/api/occupancy/live-summary'   //laca
 
-    if (!term) {
-      setSuggestions([]);
-      setSelected(null);
-      return setError('Please enter name or ID');
-    }
+];
 
-    // Find exact match
-    const match = allEmployees.find(emp => {
-      const name = emp.EmpName ? emp.EmpName.toLowerCase() : '';
-      const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
-      return name === term || id === term;
-    });
+// Simple in-memory cache: { [employeeObjId]: { ts: Number, data: Object } }
+const cache = {};
+const CACHE_TTL_MS = 50000; // 5 seconds — tune as needed
 
-    if (match) {
-      selectEmployee(match);
-    } else {
-      setSelected(null);
-      setSuggestions([]); // clear related results if no match
-      setError('No matching employee');
-    }
-  };
-
-  const selectEmployee = emp => {
-    setSelected(emp);
-    setSearchTerm(emp.EmpName || '');
-    setHistory(prev => {
-      if (prev.find(e => e.id === emp.id)) return prev;
-      return [emp, ...prev];
-    });
-  };
-
-  const pickSuggestion = emp => {
-    if (!emp) return;
-    selectEmployee(emp);
-  };
-
-  const pickHistory = emp => {
-    selectEmployee(emp);
-  };
-
-  return (
-    <div>
-      <header className="header">
-        <div className="header-content">
-          <div className="header-logo-text">
-            <img src={wulogo} alt="WU Logo" className="logo" />
-            <div className="header-text">
-              <h1>Associate Verification Tool</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="main-container">
-        <div className="left-panel">
-          <div className="search-bar">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              onSearch={handleSearch}
-            />
-          </div>
-          {loading && <p>Loading…</p>}
-          {error && <p className="error">{error}</p>}
-          {selected && <EmployeeCard emp={selected} />}
-        </div>
-
-        <div className="right-panel">
-          <div className="lists-container">
-            <div className="history-list">
-              <h3>Related Results</h3>
-              <ul>
-                {suggestions.length === 0 && <li>No results</li>}
-                {suggestions.map(emp => (
-                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="history-list">
-              <h3>Search History</h3>
-              <ul>
-                {history.map(emp => (
-                  <li key={emp.id} onClick={() => pickHistory(emp)}>
-                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <footer
-        style={{
-          backgroundColor: '#000',
-          color: '#FFC72C',
-          padding: '1.5rem 0',
-          textAlign: 'center',
-          marginTop: '0rem',
-          borderTop: '2px solid #FFC72C',
-          fontSize: '0.95rem',
-          lineHeight: '1.6'
-        }}
-      >
-        <div>
-          <strong>Global Security Operations Center</strong>
-          <br />
-          Associate Verification Tool — Western Union
-        </div>
-        <div>
-          Contact us:&nbsp;
-          <a
-            href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-            style={{ color: '#FFC72C', textDecoration: 'underline' }}
-          >
-            GSOC Mail
-          </a>
-          &nbsp;|&nbsp;
-          Landline:&nbsp;
-          <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-        </div>
-      </footer>
-    </div>
-  );
+function normalizeString(s) {
+  if (!s && s !== 0) return '';
+  return String(s).trim().toLowerCase();
 }
 
-
-C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\SearchBar.jsx
-
-
-
-
-import React from 'react';
-
-export default function SearchBar({ value, onChange, onSearch }) {
-  return (
-    <div className="search-bar-container">
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          onSearch();
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Search by Name or EmpID"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          autoComplete="off"
-        />
-        <button type="submit">Search</button>
-      </form>
-    </div>
-  );
+function parseRecordTime(rec) {
+  // Priority: LocaleMessageTime -> snapshotTime -> Dateonly + Swipe_Time
+  if (rec.LocaleMessageTime) return new Date(rec.LocaleMessageTime);
+  if (rec.snapshotTime) return new Date(rec.snapshotTime);
+  if (rec.Dateonly && rec.Swipe_Time) {
+    // e.g. "2025-08-11" + "00:02:41"
+    return new Date(`${rec.Dateonly}T${rec.Swipe_Time}Z`);
+  }
+  return null;
 }
 
+async function getEmployeeLiveLocation(req, res) {
+  const employeeObjId = req.params.id;
+  if (!employeeObjId) return res.status(400).json({ error: 'Missing id' });
 
-C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\EmployeeCard.jsx
+  // Serve cache if fresh
+  const cached = cache[employeeObjId];
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return res.json({ cached: true, ...cached.data });
+  }
+
+  try {
+    // 1) Fetch EmployeeID and Name from DB (same logic as getEmployees)
+    const pool = await getPool();
+    const empResult = await pool.request()
+      .input('objid', sql.BigInt, employeeObjId)
+      .query(`
+        SELECT AP.ObjectID,
+               AP.Name AS EmpName,
+               AP.Int1,
+               AP.Text12
+        FROM ACVSCore.Access.Personnel AP
+        WHERE AP.ObjectID = @objid
+      `);
+
+    if (!empResult.recordset.length) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    const empRow = empResult.recordset[0];
+    // EmployeeID logic mirroring existing query:
+    const EmployeeID = (empRow.Int1 === 0 || empRow.Int1 === '0' || empRow.Int1 === null)
+      ? (empRow.Text12 ? String(empRow.Text12) : '')
+      : String(empRow.Int1);
+
+    const empName = empRow.EmpName || '';
+
+    // 2) Query occupancy endpoints concurrently
+    const requests = OCCUPANCY_URLS.map(u => axios.get(u, { timeout: 5000 }).catch(e => ({ error: e, url: u })));
+    const responses = await Promise.all(requests);
+
+    // 3) Collect and flatten details
+    let allDetails = [];
+    for (const r of responses) {
+      if (!r || r.error) {
+        // Log but continue
+        console.warn('Occupancy fetch failed for', r && r.url, r && r.error && r.error.message);
+        continue;
+      }
+      if (r.data && Array.isArray(r.data.details)) {
+        // Keep source url for debugging
+        const src = r.config && r.config.url ? r.config.url : null;
+        const annotated = r.data.details.map(d => ({ ...d, __source: src }));
+        allDetails.push(...annotated);
+      }
+    }
+
+    // 4) Find matches by EmployeeID (preferred), fallback to name (ObjectName1), then PersonGUID
+    const normEmployeeID = normalizeString(EmployeeID);
+    const normEmpName = normalizeString(empName);
+
+    const matches = allDetails.filter(rec => {
+      const recEmpId = normalizeString(rec.EmployeeID);
+      if (recEmpId && normEmployeeID && recEmpId === normEmployeeID) return true;
+
+      const recName = normalizeString(rec.ObjectName1);
+      if (recName && normEmpName && recName === normEmpName) return true;
+
+      if (rec.PersonGUID) {
+        // optionally, you can compare GUIDs if you have them
+      }
+      return false;
+    });
+
+    if (!matches.length) {
+      const result = { found: false, message: 'No recent swipe found' };
+      cache[employeeObjId] = { ts: Date.now(), data: result };
+      return res.json(result);
+    }
+
+    // 5) Select most recent
+    let best = null;
+    for (const m of matches) {
+      const t = parseRecordTime(m);
+      if (!t) continue;
+      if (!best) best = { rec: m, time: t };
+      else if (t > best.time) best = { rec: m, time: t };
+    }
+
+    if (!best) {
+      const result = { found: false, message: 'No timestamped swipe found' };
+      cache[employeeObjId] = { ts: Date.now(), data: result };
+      return res.json(result);
+    }
+
+    const r = best.rec;
 
 
 
+    const payload = {
+      found: true,
+      source: r.__source || null,
+      partition: r.PartitionName2 || r.Partition || null,
+      floor: r.Floor || r.Zone || r.floor || null,
+      Zone: r.Zone,
+      door: r.Door || null,
+      direction: r.Direction || null,
+      timestampUTC: r.LocaleMessageTime || r.snapshotTime || `${r.Dateonly}T${r.Swipe_Time}Z` || null,
+      personnelType: r.PersonnelType || null,
+      cardNumber: r.CardNumber || null,
+      raw: r
+    };
+    cache[employeeObjId] = { ts: Date.now(), data: payload };
 
-import React, { useState } from 'react';
-import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaCheckCircle, FaClone } from 'react-icons/fa';
-import CurrentLocation from './CurrentLocation';
-import './EmployeeCard.css';
+    return res.json(payload);
 
-export default function EmployeeCard({ emp }) {
-  const [showMore, setShowMore] = useState(false);
-
-  if (!emp) return null;
-
-  const rawStatus = emp.Employee_Status || 'Deactive';
-  const normalizedStatus = rawStatus.trim().toLowerCase();
-  const isRedStatus =
-    normalizedStatus === 'deactive' || normalizedStatus === 'terminated';
-
-  return (
-    <div
-      className="employee-card-container"
-      data-status={normalizedStatus}
-      style={{
-        background: isRedStatus
-          ? '#e7776b'
-          : 'linear-gradient(180deg, #131318 0%, #1d1d26 100%)',
-      }}
-    >
-      {/* Left column */}
-      <div className="left-col">
-        <div className="photo-ring">
-          <img
-            className="photo"
-            src={emp.imageUrl ? `http://localhost:5001${emp.imageUrl}` : '/images/no-photo.jpg'}
-            alt={emp.EmpName || 'Employee photo'}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/images/no-photo.jpg';
-            }}
-          />
-        </div>
-
-        <div className="photo-meta">
-          <div className="emp-name">{emp.EmpName || '—'}</div>
-          <div className="emp-role">{emp.PersonnelType || 'Employee'}</div>
-          <div className={`status-pill ${normalizedStatus}`}>{rawStatus}</div>
-        </div>
-      </div>
-
-      {/* Separator */}
-      <div className="separator" aria-hidden />
-
-      {/* Right column */}
-      <div className="right-col">
-        <h3 className="profile-title">Profile Details</h3>
-
-        <table className="details-table" aria-label="employee details">
-          <tbody>
-            {/* Always visible */}
-            <tr>
-              <td className="label "><FaUser color='#FFDD00' /> Name</td>
-              <td className="value v-color">{emp.EmpName || '—'}</td>
-            </tr>
-            <tr>
-              <td className="label"><FaIdBadge color='#FFDD00' /> Employee ID</td>
-              <td className="value v-color">{emp.EmployeeID || '—'}</td>
-            </tr>
-            <tr>
-              <td className="label"><FaUserTie color='#FFDD00'/> Manager</td>
-              <td className="value v-color">{emp.Manager_Name || '—'}</td>
-            </tr>
-            <tr>
-              <td className="label"><FaIdCard /> Active Cards</td>
-              <td className="value v-color">{emp.Active_Cards ?? 0}</td>
-            </tr>
-            <tr>
-              <td colSpan="2" style={{ paddingTop: 1 }}>
-                <CurrentLocation empId={emp.id ?? emp.EmployeeID} showMore={showMore} />
-              </td>
-            </tr>
-
-            {/* Hidden until showMore is true */}
-            {showMore && (
-              <>
-                <tr>
-                  <td className="label"><FaClone /> Total Cards</td>
-                  <td className="value">{emp.Total_Cards ?? 0}</td>
-                </tr>
-              </>
-            )}
-          </tbody>
-        </table>
-
-        {/* Toggle Button */}
-        <button
-          className="show-more-btn"
-          onClick={() => setShowMore((prev) => !prev)}
-        >
-          {showMore ? 'Show Less' : 'Show More'}
-        </button>
-      </div>
-    </div>
-  );
+  } catch (err) {
+    console.error('getEmployeeLiveLocation error', err && err.stack || err);
+    return res.status(500).json({ error: 'Failed to fetch live location', message: err.message });
+  }
 }
 
+module.exports = { getEmployeeLiveLocation };
 
-export default App;
+
