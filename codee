@@ -1,16 +1,21 @@
-
-// src/components/Header.jsx
 // src/components/HeaderNamer.jsx
 import React, { useEffect, useState } from 'react';
 import {
   AppBar, Toolbar, Box, Typography,
-  Select, MenuItem, IconButton
+  Select, MenuItem, IconButton,
+  Popover, Button, TextField
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import HomeIcon from '@mui/icons-material/Home';
 import HistoryIcon from '@mui/icons-material/History';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+
+import { LocalizationProvider, DatePicker, TimePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 import WuLogo from '../assets/wu-logo.png';
 import DenverFlag from '../assets/flags/denver.png';
@@ -42,6 +47,10 @@ export default function HeaderNamer() {
   const { data } = useLiveOccupancy(1000);
   const [lastUpdate, setLastUpdate] = useState('');
 
+  // Popover & time state
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [draftDate, setDraftDate] = useState(dayjs());
+
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
@@ -65,7 +74,6 @@ export default function HeaderNamer() {
   const handlePartitionChange = (newPartition) => {
     if (!newPartition) return navigate('/');
 
-    // Optional: special handling for Denver redirect
     if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
       window.location.href = 'http://10.199.22.57:3000/';
       return;
@@ -78,10 +86,23 @@ export default function HeaderNamer() {
     navigate(full);
   };
 
+  const openPopover = (e) => setAnchorEl(e.currentTarget);
+  const closePopover = () => setAnchorEl(null);
+
+  const handleGo = () => {
+    console.log('Selected date/time:', draftDate.toISOString());
+    closePopover();
+  };
+
+  const handleLiveClick = () => {
+    console.log('Return to live clicked');
+    // You can implement your live logic here
+  };
+
   return (
     <AppBar position="static" color="primary" sx={{ mb: 2 }}>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
-        {/* Left: Logo + Navigation */}
+        {/* Left: Logo + Navigation + Extra Buttons */}
         <Box display="flex" alignItems="center">
           <Box component="img" src={WuLogo} alt="WU" sx={{ height: 36, mr: 2 }} />
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -107,6 +128,23 @@ export default function HeaderNamer() {
             }
           >
             <ListAltIcon />
+          </IconButton>
+
+          {/* New Buttons */}
+          <IconButton
+            color="inherit"
+            onClick={openPopover}
+            title="Jump to specific time"
+          >
+            <AccessTimeIcon />
+          </IconButton>
+
+          <IconButton
+            color="inherit"
+            onClick={handleLiveClick}
+            title="Return to live"
+          >
+            <LiveTvIcon />
           </IconButton>
         </Box>
 
@@ -136,6 +174,35 @@ export default function HeaderNamer() {
           </Select>
         </Box>
       </Toolbar>
+
+      {/* Popover for Date/Time Picker */}
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Box p={2} display="flex" flexDirection="column" gap={2}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Select Date"
+              value={draftDate}
+              onChange={(newVal) => setDraftDate(newVal)}
+              renderInput={(props) => <TextField {...props} />}
+            />
+            <TimePicker
+              label="Select Time"
+              value={draftDate}
+              onChange={(newVal) => setDraftDate(newVal)}
+              renderInput={(props) => <TextField {...props} />}
+            />
+          </LocalizationProvider>
+          <Box display="flex" justifyContent="flex-end" gap={1}>
+            <Button onClick={closePopover}>Cancel</Button>
+            <Button variant="contained" onClick={handleGo}>Go</Button>
+          </Box>
+        </Box>
+      </Popover>
     </AppBar>
   );
 }
