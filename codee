@@ -1,3 +1,16 @@
+const handleDetailsClick = () => {
+  if (currentPartition) {
+    // Always go to /partition/<partition>/details
+    navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+  } else {
+    // Fallback default
+    navigate('/partition/US.CO.OBS/details');
+  }
+};
+
+
+
+....
 in this headr the issu in thie <IconButton onClick={handleDetailsClick} color="inherit">
               <InfoIcon />
             </IconButton>
