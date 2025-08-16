@@ -1,225 +1,3 @@
-const handlePartitionChange = newPartition => {
-  if (!newPartition) return navigate('/');
-
-  // Only redirect if selecting Denver base partition (no suffix)
-  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
-    window.location.href = 'http://10.199.22.57:3012/';
-    return;
-  }
-
-  // Regular navigation for all other cases
-  const basePath = `/partition/${encodeURIComponent(newPartition)}`;
-  const fullPath = suffixSegments.length ? `${basePath}/${suffixSegments.join('/')}` : basePath;
-  navigate(fullPath);
-};
-
-
-
-
-
-
-...
-
-const handlePartitionChange = newPartition => {
-  if (!newPartition) return navigate('/');
-
-  // Special handling for Denver base partition
-  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
-    window.location.href = 'http://10.199.22.57:3012/';
-    return;
-  }
-
-  // Regular navigation
-  let path = `/partition/${encodeURIComponent(newPartition)}`;
-  if (isHistoryPage) path += '/history';
-  navigate(path);
-};
-
-
-
-.....
-// src/components/Header.jsx — APAC Edition
-import React, { useEffect, useState } from 'react';
-import {
-  AppBar, Toolbar, Box, Typography,
-  Select, MenuItem, IconButton
-} from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
-
-import HomeIcon from '@mui/icons-material/Home';
-import HistoryIcon from '@mui/icons-material/History';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-
-// import wuLogo from '../assets/wu-logo.png';
-import wuLogo from '../assets/images/wu-logo.png';
-import IndiaFlag     from '../assets/flags/india.png';
-import MalaysiaFlag  from '../assets/flags/malaysia.png';
-import PhilippinesFlag from '../assets/flags/philippines.png';
-import TaguigFlag    from '../assets/flags/Taguig.png';
-import JapanFlag     from '../assets/flags/japan.png';
-import DefaultFlag   from '../assets/flags/default.png';
-
-import { partitionList } from '../services/occupancy.service';
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-
-
-
-const displayNameMap = {
-  'IN.Pune':         'Pune',
-  'MY.Kuala Lumpur': 'Kuala Lumpur',
-  'PH.Quezon':       'Quezon City',
-  'PH.Taguig':       'Taguig',
-  'JP.Tokyo':        'Tokyo',
-};
-
-
-// Flag lookup by partition code
-const flagMap = {
-  'Pune':         IndiaFlag,
-  'MY.Kuala Lumpur': MalaysiaFlag,
-  'Quezon City':       PhilippinesFlag,
-  'Taguig City':       PhilippinesFlag,
-  'JP.Tokyo':        JapanFlag,
-};
-export default function Header() {
-
- 
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { data } = useLiveOccupancy(1000);
-  const [lastUpdate, setLastUpdate] = useState('');
-
-  useEffect(() => {
-    if (data) setLastUpdate(new Date().toLocaleTimeString());
-  }, [data]);
-
-  const parts = location.pathname.split('/').filter(Boolean);
-  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
-  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
-  const suffixSegments = isPartitionPath
-    ? parts.slice(2)
-    : parts[0] === 'history'
-      ? ['history']
-      : [];
-
-  const selectedFlag = flagMap[currentPartition];
-
-  const makePartitionPath = (suffix) => {
-    const base = `/partition/${encodeURIComponent(currentPartition)}`;
-    return suffix ? `${base}/${suffix}` : base;
-  };
-
-  const handlePartitionChange = (newPartition) => {
-    if (!newPartition) return navigate('/');
-    
-    // Special handling for Pune partition - only redirect when going to base partition route
-    if (newPartition === 'Pune' && suffixSegments.length === 0) {
-      window.location.href = 'http://10.199.22.57:3011/';
-      return;
-    }
-    
-    const base = `/partition/${encodeURIComponent(newPartition)}`;
-    const full = suffixSegments.length
-      ? `${base}/${suffixSegments.join('/')}`
-      : base;
-    navigate(full);
-  };
-
-
-  // //////////////
-
-  return (
-    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
-        {/* Left: Logo + Navigation */}
-        <Box display="flex" alignItems="center">
-          <Box component="img" src={wuLogo} alt="WU" sx={{ height: 36, mr: 2 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            APAC Occupancy
-            {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
-          </Typography>
-
-          {/* Home */}
-     {/* <IconButton color="inherit" onClick={() => navigate(currentPartition ? `/partition/${encodeURIComponent(currentPartition)}` : '/')}>
-            <HomeIcon />
-          </IconButton> */}
-     <IconButton color="inherit" onClick={() => navigate('/')}>
-            <HomeIcon />
-          </IconButton>
-
-          {/* History */}
-          <IconButton color="inherit" onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
-            <HistoryIcon />
-          </IconButton>
-
-          {/* Details */}
-          <IconButton
-            color="inherit"
-            onClick={() =>
-              navigate(currentPartition
-                ? makePartitionPath('details')
-                : '/partition/Pune/details'
-              )
-            }
-          >
-            <ListAltIcon />
-          </IconButton>
-        </Box>
-
-        {/* Right: Dropdown Selector + Flag */}
-        <Box display="flex" alignItems="center">
-          <Select
-            size="small"
-            value={currentPartition}
-            displayEmpty
-            onChange={(e) => handlePartitionChange(e.target.value)}
-            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
-            renderValue={(selected) =>
-              selected ? (
-                <Box display="flex" alignItems="center">
-                  <Box component="img" src={flagMap[selected]} alt={selected} sx={{ width: 24, height: 16, mr: 1 }} />
-                  {displayNameMap[selected] || selected}
-                </Box>
-              ) : "— Select Site —"
-            }
-          >
-            <MenuItem value="">— Select Site —</MenuItem>
-            {partitionList.map((p) => (
-              <MenuItem key={p} value={p}>
-                {displayNameMap[p] || p}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
-      </Toolbar>
-    </AppBar>
-  );
-}
-
-
-
-Read above apac header carefuuly, get referen apac code, and apply for below namer code
-
-
-in above code pune if slect pune mean this  if (newPartition === 'Pune' && suffixSegments.length === 0) {
-      window.location.href = 'http://10.199.22.57:3011/';
-      return;
-    }
-
-
-
-same for in this 
-if seelct http://localhost:3000/partition/US.CO.OBS only for this /partition/US.CO.OBS not for all denver ,only  /partition/US.CO.OBS  this
-then we got this page http://10.199.22.57:3012/
-ok 
-
-
-
-
-
-
-
-
 
 // src/components/Header.jsx
 
@@ -321,14 +99,33 @@ export default function Header({
   // Detect if we’re currently on any “history” page
   const isHistoryPage = location.pathname.includes('/history');
 
-  const handlePartitionChange = newPartition => {
-    if (!newPartition) return navigate('/');
-    // Always point at the new partition
-    let path = `/partition/${encodeURIComponent(newPartition)}`;
-    // If we were on “history”, keep the history view
-    if (isHistoryPage) path += '/history';
-    navigate(path);
-  };
+  // const handlePartitionChange = newPartition => {
+  //   if (!newPartition) return navigate('/');
+  //   // Always point at the new partition
+  //   let path = `/partition/${encodeURIComponent(newPartition)}`;
+  //   // If we were on “history”, keep the history view
+  //   if (isHistoryPage) path += '/history';
+  //   navigate(path);
+  // };
+
+
+
+const handlePartitionChange = newPartition => {
+  if (!newPartition) return navigate('/');
+
+  // Only redirect if selecting Denver base partition (no suffix)
+  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
+    window.location.href = 'http://10.199.22.57:3012/';
+    return;
+  }
+
+  // Regular navigation for all other cases
+  const basePath = `/partition/${encodeURIComponent(newPartition)}`;
+  const fullPath = suffixSegments.length ? `${basePath}/${suffixSegments.join('/')}` : basePath;
+  navigate(fullPath);
+};
+
+
 
 
   const handleDetailsClick = () => {
@@ -464,6 +261,24 @@ export default function Header({
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
