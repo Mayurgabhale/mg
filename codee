@@ -1,5 +1,23 @@
 const handleDetailsClick = () => {
   if (currentPartition) {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    const fullPath = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}/details`
+      : `${base}/details`;
+    navigate(fullPath);
+  } else {
+    navigate('/partition/US.CO.OBS/details');
+  }
+};
+
+
+
+
+
+
+....
+const handleDetailsClick = () => {
+  if (currentPartition) {
     // Preserve existing suffix segments if they exist
     const basePath = `/partition/${encodeURIComponent(currentPartition)}`;
     const fullPath = suffixSegments.length
