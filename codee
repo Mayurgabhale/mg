@@ -1,3 +1,23 @@
+
+
+const handleDetailsClick = () => {
+  // If we have a partition, navigate to its details page
+  const partitionForDetails = isPartitionPage
+    ? currentPartition
+    : 'US.CO.OBS';
+
+  navigate(`/partition/${encodeURIComponent(partitionForDetails)}/details`);
+};
+
+
+
+
+
+
+
+
+...
+
 not work we got this route http://localhost:3000/partition/US.FL.Miami this is wrong 
 but we want this route http://localhost:3000/partition/US.FL.Miami/details
 
