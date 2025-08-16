@@ -1,3 +1,22 @@
+const handlePartitionChange = (newPartition) => {
+  if (!newPartition) return navigate('/');
+
+  const basePath = `/partition/${encodeURIComponent(newPartition)}`;
+  const fullPath = suffixSegments.length ? `${basePath}/${suffixSegments.join('/')}` : basePath;
+
+  // Only redirect for Denver partition if on base path (no suffix)
+  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
+    window.location.href = 'http://10.199.22.57:3012/';
+    return;
+  }
+
+  // For all other cases, navigate normally, preserving suffix
+  navigate(fullPath);
+};
+
+
+...
+
 // src/components/HeaderNamer.jsx
 import React, { useEffect, useState } from 'react';
 import {
