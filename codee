@@ -1,3 +1,17 @@
+const handleDetailsClick = () => {
+  if (currentPartition) {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    const fullPath = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}/details`
+      : `${base}/details`;
+    navigate(fullPath);
+  } else {
+    navigate('/partition/US.CO.OBS/details');
+  }
+};
+
+
+
 
 ......
 // with pune partition redairect page code here 
