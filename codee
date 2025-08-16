@@ -1,3 +1,53 @@
+// Routing logic
+const segments = location.pathname.split('/').filter(Boolean);
+const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+// Suffix now tracks any sub-page, like "details" or "history"
+const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+
+// Flag lookup
+const flagMap = {
+  'US.CO.OBS': DenverFlag,
+  'US.FL.Miami': MiamiFlag,
+  'US.NYC': NewYorkFlag,
+  'USA/Canada Default': AustinFlag
+};
+const selectedFlag = flagMap[currentPartition] || DefaultFlag;
+
+// ── Corrected handlePartitionChange ─────────────────────────────
+const handlePartitionChange = (newPartition) => {
+  if (!newPartition) return navigate('/');
+
+  // Special handling for Denver partition base route
+  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
+    window.location.href = 'http://10.199.22.57:3012/';
+    return;
+  }
+
+  // Always preserve the current suffix (details, history, etc.)
+  let path = `/partition/${encodeURIComponent(newPartition)}`;
+  if (suffixSegments.length > 0) {
+    path += '/' + suffixSegments.join('/');
+  }
+
+  navigate(path);
+};
+
+// ── Corrected handleDetailsClick ─────────────────────────────
+const handleDetailsClick = () => {
+  if (currentPartition) {
+    navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+  } else {
+    navigate('/partition/US.CO.OBS/details');
+  }
+};
+
+
+
+
+......
+.....
+
 
 // src/components/Header.jsx — APAC Edition
 import React, { useEffect, useState } from 'react';
