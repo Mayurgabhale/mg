@@ -1,12 +1,24 @@
-const handleDetailsClick = () => {
+not work we got this route http://localhost:3000/partition/US.FL.Miami this is wrong 
+but we want this route http://localhost:3000/partition/US.FL.Miami/details
+
+
+
+
+
+  // const handleDetailsClick = () => {
+  //   if (isPartitionPage) {
+  //     navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+  //   } else {
+  //     navigate('/partition/US.CO.OBS/details');
+  //   }
+  // };
+
+
+  const handleDetailsClick = () => {
   // Always navigate to the details page of the current partition
   const partitionForDetails = currentPartition || 'US.CO.OBS';
   navigate(`/partition/${encodeURIComponent(partitionForDetails)}/details`);
 };
-
-
-
-
 
 
 
