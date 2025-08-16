@@ -1,4 +1,21 @@
+const handlePartitionChange = newPartition => {
+  if (!newPartition) return navigate('/');
 
+  // Only redirect for the exact Denver partition selection
+  if (newPartition === 'US.CO.OBS') {
+    window.location.href = 'http://10.199.22.57:3012/';
+    return;
+  }
+
+  // Regular navigation for all other partitions
+  navigate(`/partition/${encodeURIComponent(newPartition)}`);
+};
+
+
+
+
+
+....
 // src/components/Header.jsx
 
 // ── ALL IMPORTS AT THE VERY TOP ───────────────────────────────────────────────
