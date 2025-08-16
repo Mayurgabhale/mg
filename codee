@@ -1,76 +1,3 @@
-const handleDetailsClick = () => {
-  if (currentPartition) {
-    const base = `/partition/${encodeURIComponent(currentPartition)}`;
-    const fullPath = suffixSegments.length
-      ? `${base}/${suffixSegments.join('/')}/details`
-      : `${base}/details`;
-    navigate(fullPath);
-  } else {
-    navigate('/partition/US.CO.OBS/details');
-  }
-};
-
-
-
-
-
-
-....
-const handleDetailsClick = () => {
-  if (currentPartition) {
-    // Preserve existing suffix segments if they exist
-    const basePath = `/partition/${encodeURIComponent(currentPartition)}`;
-    const fullPath = suffixSegments.length
-      ? `${basePath}/${suffixSegments.join('/')}/details`
-      : `${basePath}/details`;
-    navigate(fullPath);
-  } else {
-    navigate('/partition/US.CO.OBS/details');
-  }
-};
-
-
-
-......
-const handleDetailsClick = () => {
-  // Always navigate to the details page of the current partition
-  const partitionForDetails = currentPartition || 'US.CO.OBS';
-  navigate(`/partition/${encodeURIComponent(partitionForDetails)}/details`);
-};
-
-...
-
-
-
-
-
-
-not work 
-...
-
-not work we got this route http://localhost:3000/partition/US.FL.Miami this is wrong 
-but we want this route http://localhost:3000/partition/US.FL.Miami/details
-
-
-
-
-
-  // const handleDetailsClick = () => {
-  //   if (isPartitionPage) {
-  //     navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
-  //   } else {
-  //     navigate('/partition/US.CO.OBS/details');
-  //   }
-  // };
-
-
-  const handleDetailsClick = () => {
-  // Always navigate to the details page of the current partition
-  const partitionForDetails = currentPartition || 'US.CO.OBS';
-  navigate(`/partition/${encodeURIComponent(partitionForDetails)}/details`);
-};
-
-
 
 ......
 // with pune partition redairect page code here 
@@ -234,36 +161,20 @@ export default function Header() {
 }
 
 
-know the issue in partion details
-in this 
-
-it is work  navigate('/partition/US.CO.OBS/details');
-
-but after slect box i slect Miami
-we got this route http://localhost:3000/partition/US.FL.Miami this is wrong
-
-for exmplae we select Miami we want to got like this route http://localhost:3000/partition/US.FL.Miami/details 
 
 
-for this <IconButton onClick={handleDetailsClick} color="inherit">
+check apac details, section logic
+and use for same in   namer header, only for details 
+mesn this 
+ <IconButton onClick={handleDetailsClick} color="inherit">
               <InfoIcon />
             </IconButton>
 
-  const handleDetailsClick = () => {
-    if (isPartitionPage) {
-      navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
-    } else {
-      navigate('/partition/US.CO.OBS/details');
-    }
-  };
-
-just chanee only this dont change other anhthings ok 
 
 
-check apac logic this is wokr correctly 
 
+read each line code carefully
 
-read carefuuly below file each line 
 
 
 
@@ -388,13 +299,16 @@ export default function Header({
   // };
 
 
-  const handleDetailsClick = () => {
-  // If we have a partition, navigate to its details page
-  const partitionForDetails = isPartitionPage
-    ? currentPartition
-    : 'US.CO.OBS';
-
-  navigate(`/partition/${encodeURIComponent(partitionForDetails)}/details`);
+ const handleDetailsClick = () => {
+  if (currentPartition) {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    const fullPath = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}/details`
+      : `${base}/details`;
+    navigate(fullPath);
+  } else {
+    navigate('/partition/US.CO.OBS/details');
+  }
 };
 
   // ── Date/Time popover handlers ─────────────────────────────────────────────
@@ -522,4 +436,3 @@ export default function Header({
     </>
   );
 }
-
