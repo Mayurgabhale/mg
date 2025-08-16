@@ -1,4 +1,29 @@
+const handlePartitionChange = newPartition => {
+  if (!newPartition) return navigate('/');
 
+  // Special handling for Denver partition - only redirect when going to base partition route
+  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
+    window.location.href = 'http://10.199.22.57:3012/';
+    return;
+  }
+
+  // Always point at the new partition
+  let path = `/partition/${encodeURIComponent(newPartition)}`;
+  
+  // If we were on “history”, keep the history view
+  if (isHistoryPage) path += '/history';
+
+  navigate(path);
+};
+
+
+
+
+
+
+
+
+......
 // with pune partition redairect page code here 
 
 // src/components/Header.jsx — APAC Edition
