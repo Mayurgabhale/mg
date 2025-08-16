@@ -1,148 +1,128 @@
-const handlePartitionChange = (newPartition) => {
-  if (!newPartition) return navigate('/');
-
-  const basePath = `/partition/${encodeURIComponent(newPartition)}`;
-  const fullPath = suffixSegments.length ? `${basePath}/${suffixSegments.join('/')}` : basePath;
-
-  // Only redirect for Denver partition if on base path (no suffix)
-  if (newPartition === 'US.CO.OBS' && suffixSegments.length === 0) {
-    window.location.href = 'http://10.199.22.57:3012/';
-    return;
-  }
-
-  // For all other cases, navigate normally, preserving suffix
-  navigate(fullPath);
-};
-
-
-...
-
-// src/components/HeaderNamer.jsx
+// src/components/Header.jsx — APAC Edition
 import React, { useEffect, useState } from 'react';
 import {
   AppBar, Toolbar, Box, Typography,
   Select, MenuItem, IconButton
 } from '@mui/material';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import HomeIcon from '@mui/icons-material/Home';
 import HistoryIcon from '@mui/icons-material/History';
-import InfoIcon from '@mui/icons-material/Info';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import LiveTvIcon from '@mui/icons-material/LiveTv';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 
-import WuLogo from '../assets/wu-logo.png';
-import DenverFlag from '../assets/flags/denver.png';
-import MiamiFlag from '../assets/flags/miami.png';
-import NewYorkFlag from '../assets/flags/new-york.png';
-import AustinFlag from '../assets/flags/austin.png';
-import DefaultFlag from '../assets/flags/default.png';
+// import wuLogo from '../assets/wu-logo.png';
+import wuLogo from '../assets/images/wu-logo.png';
+import IndiaFlag     from '../assets/flags/india.png';
+import MalaysiaFlag  from '../assets/flags/malaysia.png';
+import PhilippinesFlag from '../assets/flags/philippines.png';
+import TaguigFlag    from '../assets/flags/Taguig.png';
+import JapanFlag     from '../assets/flags/japan.png';
+import DefaultFlag   from '../assets/flags/default.png';
 
 import { partitionList } from '../services/occupancy.service';
 import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 
+
+
 const displayNameMap = {
-  'US.CO.OBS': 'Denver',
-  'US.FL.Miami': 'Miami',
-  'US.NYC': 'New York',
-  'USA/Canada Default': 'Austin Texas'
+  'IN.Pune':         'Pune',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon':       'Quezon City',
+  'PH.Taguig':       'Taguig',
+  'JP.Tokyo':        'Tokyo',
 };
 
+
+// Flag lookup by partition code
 const flagMap = {
-  'US.CO.OBS': DenverFlag,
-  'US.FL.Miami': MiamiFlag,
-  'US.NYC': NewYorkFlag,
-  'USA/Canada Default': AustinFlag
+  'Pune':         IndiaFlag,
+  'MY.Kuala Lumpur': MalaysiaFlag,
+  'Quezon City':       PhilippinesFlag,
+  'Taguig City':       PhilippinesFlag,
+  'JP.Tokyo':        JapanFlag,
 };
+export default function Header() {
 
-export default function Header({ title, mode, onTimeSelect, onLiveClick }) {
+ 
   const navigate = useNavigate();
   const location = useLocation();
   const { data } = useLiveOccupancy(1000);
-
   const [lastUpdate, setLastUpdate] = useState('');
 
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
 
-  const segments = location.pathname.split('/').filter(Boolean);
-  const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
-  const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
-  const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+  const parts = location.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
 
-  const selectedFlag = flagMap[currentPartition] || DefaultFlag;
+  const selectedFlag = flagMap[currentPartition];
+
+  const makePartitionPath = (suffix) => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
 
   const handlePartitionChange = (newPartition) => {
     if (!newPartition) return navigate('/');
-
-    if (newPartition === 'US.CO.OBS') {
-      window.location.href = 'http://10.199.22.57:3012/';
+    
+    // Special handling for Pune partition - only redirect when going to base partition route
+    if (newPartition === 'Pune' && suffixSegments.length === 0) {
+      window.location.href = 'http://10.199.22.57:3011/';
       return;
     }
-
+    
     const base = `/partition/${encodeURIComponent(newPartition)}`;
-    const full = suffixSegments.length ? `${base}/${suffixSegments.join('/')}` : base;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
     navigate(full);
   };
 
-  const handleDetailsClick = () => {
-    if (isPartitionPage) {
-      navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
-    } else {
-      navigate('/partition/US.CO.OBS/details');
-    }
-  };
+
+  // //////////////
 
   return (
     <AppBar position="static" color="primary" sx={{ mb: 2 }}>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         {/* Left: Logo + Navigation */}
         <Box display="flex" alignItems="center">
-          <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
+          <Box component="img" src={wuLogo} alt="WU" sx={{ height: 36, mr: 2 }} />
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {title}
+            APAC Occupancy
             {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
           </Typography>
 
-          <IconButton
-            component={Link}
-            to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
-            color="inherit"
-          >
+          {/* Home */}
+     {/* <IconButton color="inherit" onClick={() => navigate(currentPartition ? `/partition/${encodeURIComponent(currentPartition)}` : '/')}>
+            <HomeIcon />
+          </IconButton> */}
+     <IconButton color="inherit" onClick={() => navigate('/')}>
             <HomeIcon />
           </IconButton>
 
-          <IconButton
-            component={Link}
-            to={
-              currentPartition
-                ? `/partition/${encodeURIComponent(currentPartition)}/history`
-                : '/history'
-            }
-            color="inherit"
-          >
+          {/* History */}
+          <IconButton color="inherit" onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
             <HistoryIcon />
           </IconButton>
 
-          <IconButton onClick={handleDetailsClick} color="inherit">
-            <InfoIcon />
-          </IconButton>
-
+          {/* Details */}
           <IconButton
-            color={mode === 'time' ? 'secondary' : 'inherit'}
-            onClick={() => onTimeSelect()}
-            title="Jump to specific time"
+            color="inherit"
+            onClick={() =>
+              navigate(currentPartition
+                ? makePartitionPath('details')
+                : '/partition/Pune/details'
+              )
+            }
           >
-            <AccessTimeIcon />
-          </IconButton>
-
-          <IconButton
-            color={mode === 'live' ? 'secondary' : 'inherit'}
-            onClick={onLiveClick}
-            title="Return to live"
-          >
-            <LiveTvIcon />
+            <ListAltIcon />
           </IconButton>
         </Box>
 
@@ -160,22 +140,16 @@ export default function Header({ title, mode, onTimeSelect, onLiveClick }) {
                   <Box component="img" src={flagMap[selected]} alt={selected} sx={{ width: 24, height: 16, mr: 1 }} />
                   {displayNameMap[selected] || selected}
                 </Box>
-              ) : "— Select Region —"
+              ) : "— Select Site —"
             }
           >
-            <MenuItem value="">— Select Region —</MenuItem>
+            <MenuItem value="">— Select Site —</MenuItem>
             {partitionList.map((p) => (
               <MenuItem key={p} value={p}>
                 {displayNameMap[p] || p}
               </MenuItem>
             ))}
           </Select>
-
-          <Box component="img" src={selectedFlag} alt="Flag" sx={{ height: 32, mr: 2 }} />
-
-          <Typography variant="body2" sx={{ color: '#FFF' }}>
-            {mode === 'live' ? `Last update: ${lastUpdate}` : 'Viewing historic'}
-          </Typography>
         </Box>
       </Toolbar>
     </AppBar>
