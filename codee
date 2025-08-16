@@ -1,299 +1,281 @@
-http://10.199.22.57:4000/api/occupancy/live-summary
+Search bard wrok also, name, employee id, and  card number
 
-{
-      "LocaleMessageTime": "2025-08-15T22:42:12.000Z",
-      "Dateonly": "2025-08-15",
-      "Swipe_Time": "22:42:12",
-      "EmployeeID": "W0026146",
-      "PersonGUID": "AE191490-D301-41F9-9E31-D9FA49F8690A",
-      "ObjectName1": "Montenegro, Norma",
-      "Door": "LACA ARG MOLINETE 1 IN",
-      "PersonnelType": "Contractor",
-      "CardNumber": "617920",
-      "Text5": "Buenos Aires - Montevideo 825",
-      "PartitionName2": "AR.Cordoba",
-      "AdmitCode": "Admit",
+   {
+      "ObjectName1": "India, TEMP_PUN_006",
+      "Door": "APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door",
+      "PersonnelType": "Temp Badge",
+      "EmployeeID": "",
+      "CardNumber": "411106",
+      "PartitionName2": "Pune",
+      "LocaleMessageTime": "2025-08-16T10:54:00.000Z",
       "Direction": "InDirection",
-      "Floor": "1st Floor"
+      "PersonGUID": "8369E38D-9D1D-41AB-930B-6D9E1304CEB5",
+      "Zone": "Yellow Zone",
+      "Floor": "Podium Floor"
+    },
+  {
+      "ObjectName1": "Arcilla, Lea D",
+      "Door": "APAC_PH_Manila_7th Floor_Open Office Door 2-721",
+      "PersonnelType": "Employee",
+      "EmployeeID": "322769",
+      "CardNumber": "608245",
+      "PartitionName2": "Quezon City",
+      "LocaleMessageTime": "2025-08-16T13:04:17.000Z",
+      "Direction": "InDirection",
+      "PersonGUID": "F0742FA2-AF43-4B5A-9652-7687DAAA6008",
+      "Zone": "7th Floor",
+      "Floor": "7th Floor"
     },
 
-
-
- Name	Montenegro, Norma
- Employee ID	W0026146
- Manager	Andres Ferreira
- Active Cards	1
-Swipe Details
-No recent swipe
- Total Cards	1
-
-
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 145191
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-🎯 [GET] /api/employees/2097210273/image called
-✅ DB pool acquired for image
-✅ Image query rows: 1
-✅ Serving image, type: image/jpeg size: 48911
-Occupancy fetch failed for http://10.199.22.57:4000/api/occupancy/live-summary timeout of 5000ms exceeded
-
-
- Name	Montenegro, Norma
- Employee ID	W0026146
- Manager	Andres Ferreira
- Active Cards	1
-Swipe Details  <---- thi is 
-No recent swipe
- Total Cards	1
-
-chekc api, she is preset but  in thsi not show swppte detail
-but in api is how 
-
-chekc all code carefully and slove this iisue , why not show swpite details 
-
-// ////////////////////////////////////////////
-// ////////////////////////////////////////////
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\SearchBar.jsx
 
 
 
+// C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\SearchBar.jsx
+import React from 'react';
 
-
-// controllers/employeeLocationController.js
-const axios = require('axios');
-const sql = require('mssql');
-const { getPool } = require('../config/db');
-
-const OCCUPANCY_URLS = [
-  'http://10.199.22.57:3006/api/occupancy/live-summary',
-
-  'http://10.199.22.57:3007/api/occupancy/live-summary',  // EMEA
-
-
-  'http://10.199.22.57:3008/api/occupancy/live-summary',  //Pune
-
-
-  'http://10.199.22.57:4000/api/occupancy/live-summary'   //laca
-
-];
-
-// Simple in-memory cache: { [employeeObjId]: { ts: Number, data: Object } }
-const cache = {};
-const CACHE_TTL_MS = 50000; // 5 seconds — tune as needed
-
-function normalizeString(s) {
-  if (!s && s !== 0) return '';
-  return String(s).trim().toLowerCase();
+export default function SearchBar({ value, onChange, onSearch }) {
+  return (
+    <div className="search-bar-container">
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSearch();
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Search by Name or EmpID"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+  );
 }
 
-function parseRecordTime(rec) {
-  // Priority: LocaleMessageTime -> snapshotTime -> Dateonly + Swipe_Time
-  if (rec.LocaleMessageTime) return new Date(rec.LocaleMessageTime);
-  if (rec.snapshotTime) return new Date(rec.snapshotTime);
-  if (rec.Dateonly && rec.Swipe_Time) {
-    // e.g. "2025-08-11" + "00:02:41"
-    return new Date(`${rec.Dateonly}T${rec.Swipe_Time}Z`);
-  }
-  return null;
-}
 
-async function getEmployeeLiveLocation(req, res) {
-  const employeeObjId = req.params.id;
-  if (!employeeObjId) return res.status(400).json({ error: 'Missing id' });
+C:\Users\W0024618\Desktop\employee-verification\frontend\src\App.js
 
-  // Serve cache if fresh
-  const cached = cache[employeeObjId];
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-    return res.json({ cached: true, ...cached.data });
-  }
 
-  try {
-    // 1) Fetch EmployeeID and Name from DB (same logic as getEmployees)
-    const pool = await getPool();
-    const empResult = await pool.request()
-      .input('objid', sql.BigInt, employeeObjId)
-      .query(`
-        SELECT AP.ObjectID,
-               AP.Name AS EmpName,
-               AP.Int1,
-               AP.Text12
-        FROM ACVSCore.Access.Personnel AP
-        WHERE AP.ObjectID = @objid
-      `);
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import SearchBar from './components/SearchBar';
+import EmployeeCard from './components/EmployeeCard';
+import './App.css';
+import wulogo from './assets/img/WU-logo.png';
 
-    if (!empResult.recordset.length) {
-      return res.status(404).json({ error: 'Employee not found' });
+function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allEmployees, setAllEmployees] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    axios.get('http://localhost:5001/api/employees')
+      .then(res => setAllEmployees(res.data))
+      .catch(() => setError('Failed to load employees'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    axios.get('http://localhost:5001/api/stats')
+      .then(res => setStats(res.data))
+      .catch(err => console.error('❌ Stats load failed', err));
+  }, []);
+
+  // Update Related Results based on searchTerm
+  useEffect(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    if (!term) {
+      setSuggestions([]);
+      return;
     }
 
-    const empRow = empResult.recordset[0];
-    // EmployeeID logic mirroring existing query:
-    const EmployeeID = (empRow.Int1 === 0 || empRow.Int1 === '0' || empRow.Int1 === null)
-      ? (empRow.Text12 ? String(empRow.Text12) : '')
-      : String(empRow.Int1);
+    const filtered = allEmployees.filter(emp => {
+      if (!emp.EmpName) return false;
 
-    const empName = empRow.EmpName || '';
+      // Check EmployeeID first
+      const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
+      if (id.includes(term)) return true;
 
-    // 2) Query occupancy endpoints concurrently
-    const requests = OCCUPANCY_URLS.map(u => axios.get(u, { timeout: 5000 }).catch(e => ({ error: e, url: u })));
-    const responses = await Promise.all(requests);
+      // Split name into components
+      const nameParts = emp.EmpName.toLowerCase().split(' ');
 
-    // 3) Collect and flatten details
-    let allDetails = [];
-    for (const r of responses) {
-      if (!r || r.error) {
-        // Log but continue
-        console.warn('Occupancy fetch failed for', r && r.url, r && r.error && r.error.message);
-        continue;
-      }
-      if (r.data && Array.isArray(r.data.details)) {
-        // Keep source url for debugging
-        const src = r.config && r.config.url ? r.config.url : null;
-        const annotated = r.data.details.map(d => ({ ...d, __source: src }));
-        allDetails.push(...annotated);
-      }
-    }
-
-    // 4) Find matches by EmployeeID (preferred), fallback to name (ObjectName1), then PersonGUID
-    const normEmployeeID = normalizeString(EmployeeID);
-    const normEmpName = normalizeString(empName);
-
-    const matches = allDetails.filter(rec => {
-      const recEmpId = normalizeString(rec.EmployeeID);
-      if (recEmpId && normEmployeeID && recEmpId === normEmployeeID) return true;
-
-      const recName = normalizeString(rec.ObjectName1);
-      if (recName && normEmpName && recName === normEmpName) return true;
-
-      if (rec.PersonGUID) {
-        // optionally, you can compare GUIDs if you have them
-      }
-      return false;
+      // Check each name component
+      return nameParts.some(part => part.includes(term));
     });
 
-    if (!matches.length) {
-      const result = { found: false, message: 'No recent swipe found' };
-      cache[employeeObjId] = { ts: Date.now(), data: result };
-      return res.json(result);
+    setSuggestions(filtered);
+  }, [searchTerm, allEmployees]);
+
+
+
+  const handleSearch = () => {
+    const term = searchTerm.trim().toLowerCase();
+    setError('');
+
+    if (!term) {
+      setSuggestions([]);
+      setSelected(null);
+      return setError('Please enter name or ID');
     }
 
-    // 5) Select most recent
-    let best = null;
-    for (const m of matches) {
-      const t = parseRecordTime(m);
-      if (!t) continue;
-      if (!best) best = { rec: m, time: t };
-      else if (t > best.time) best = { rec: m, time: t };
+    // Find matches - now checking name components
+    const matches = allEmployees.filter(emp => {
+      if (!emp.EmpName) return false;
+
+      // Check ID first
+      const id = emp.EmployeeID ? emp.EmployeeID.toLowerCase() : '';
+      if (id === term) return true;
+
+      // Check name components
+      const nameParts = emp.EmpName.toLowerCase().split(' ');
+      return nameParts.some(part => part === term);
+    });
+
+    if (matches.length === 1) {
+      selectEmployee(matches[0]);
+    } else if (matches.length > 1) {
+      setSuggestions(matches);
+      setError('Multiple matches found - please select one');
+    } else {
+      setSelected(null);
+      setError('No exact matching employee found');
     }
+  };
 
-    if (!best) {
-      const result = { found: false, message: 'No timestamped swipe found' };
-      cache[employeeObjId] = { ts: Date.now(), data: result };
-      return res.json(result);
-    }
+  const selectEmployee = emp => {
+    setSelected(emp);
+    setSearchTerm(emp.EmpName || '');
+    setHistory(prev => {
+      if (prev.find(e => e.id === emp.id)) return prev;
+      return [emp, ...prev];
+    });
+  };
 
-    const r = best.rec;
+  const pickSuggestion = emp => {
+    if (!emp) return;
+    selectEmployee(emp);
+  };
+
+  const pickHistory = emp => {
+    selectEmployee(emp);
+  };
+
+  return (
+    <div>
+      <header className="header">
+        <div className="header-content">
+          <div className="header-logo-text">
+            <img src={wulogo} alt="WU Logo" className="logo" />
+            <div className="header-text">
+              <h1>Associate Verification Tool</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="main-container">
+        <div className="left-panel">
+          <div className="search-bar">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onSearch={handleSearch}
+            />
+          </div>
+          {loading && <p>Loading…</p>}
+          {error && <p className="error">{error}</p>}
+          {selected && <EmployeeCard emp={selected} />}
+        </div>
+
+        <div className="right-panel">
+          <div className="lists-container">
+
+            {/* <div className="history-list">
+              <h3>Related Results</h3>
+              <ul>
+                {suggestions.length === 0 && <li>No results</li>}
+                {suggestions.map(emp => (
+                  <li key={emp.id} onClick={() => pickSuggestion(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div> */}
 
 
+            <div className="history-list">
+              <h3>Related Results</h3>
+              <ul>
+                {suggestions.length === 0 && searchTerm && <li>No matching employees found</li>}
+                {!searchTerm && <li>Start typing to see suggestions</li>}
+                {suggestions.map((emp, idx) => (
+                  <li key={`${emp.EmployeeID ?? emp.EmpName}-${idx}`} onClick={() => pickSuggestion(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
 
-    const payload = {
-      found: true,
-      source: r.__source || null,
-      partition: r.PartitionName2 || r.Partition || null,
-      floor: r.Floor || r.Zone || r.floor || null,
-      Zone: r.Zone,
-      door: r.Door || null,
-      direction: r.Direction || null,
-      timestampUTC: r.LocaleMessageTime || r.snapshotTime || `${r.Dateonly}T${r.Swipe_Time}Z` || null,
-      personnelType: r.PersonnelType || null,
-      cardNumber: r.CardNumber || null,
-      raw: r
-    };
-    cache[employeeObjId] = { ts: Date.now(), data: payload };
 
-    return res.json(payload);
+              </ul>
+            </div>
 
-  } catch (err) {
-    console.error('getEmployeeLiveLocation error', err && err.stack || err);
-    return res.status(500).json({ error: 'Failed to fetch live location', message: err.message });
-  }
+            <div className="history-list">
+              <h3>Search History</h3>
+              <ul>
+                {history.map((emp, idx) => (
+                  <li key={`${emp.EmployeeID ?? emp.EmpName}-${idx}`} onClick={() => pickHistory(emp)}>
+                    {emp.EmpName}{emp.EmployeeID && ` (${emp.EmployeeID})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer
+        style={{
+          backgroundColor: '#000',
+          color: '#FFC72C',
+          padding: '1.5rem 0',
+          textAlign: 'center',
+          marginTop: '0rem',
+          borderTop: '2px solid #FFC72C',
+          fontSize: '0.95rem',
+          lineHeight: '1.6'
+        }}
+      >
+        <div>
+          <strong>Global Security Operations Center</strong>
+          <br />
+          Associate Verification Tool — Western Union
+        </div>
+        <div>
+          Contact us:&nbsp;
+          <a
+            href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+            style={{ color: '#FFC72C', textDecoration: 'underline' }}
+          >
+            GSOC Mail
+          </a>
+          &nbsp;|&nbsp;
+          Landline:&nbsp;
+          <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
-module.exports = { getEmployeeLiveLocation };
-
-
-
-C:\Users\W0024618\Desktop\employee-verification\config\db.js
-
-const sql    = require('mssql');
-const dotenv = require('dotenv');
-dotenv.config();
-
-const config = {
-  server:   process.env.DB_SERVER,
-  user:     process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  connectionTimeout: 30000,    // 30 s to establish
-  requestTimeout:    0,        // no timeout on individual queries
-  pool: {
-    max:                  100,
-    min:                   0,
-
-    // Use maximum 32-bit signed‐int (~24.8 days) so Node/tarn doesn't overflow
-    idleTimeoutMillis:    2147483647,
-    acquireTimeoutMillis: 2147483647
-  },
-  options: {
-    encrypt:               true,
-    trustServerCertificate: true
-  }
-};
-
-let poolPromise = null;
-
-async function getPool(attempts = 100) {
-  if (poolPromise) return poolPromise;
-
-  poolPromise = (async () => {
-    try {
-      const pool = await sql.connect(config);
-      console.log('✅ MSSQL pool connected');
-      return pool;
-    } catch (err) {
-      console.error('❌ MSSQL pool connection failed:', err);
-      poolPromise = null;
-      if (attempts > 0) {
-        console.log(`⏳ Retrying MSSQL connect (${attempts} left)…`);
-        await new Promise(res => setTimeout(res, 3000));
-        return getPool(attempts - 1);
-      }
-      throw err;
-    }
-  })();
-
-  sql.on('error', err => {
-    console.error('❌ MSSQL global error:', err);
-    // Don’t force‐reset poolPromise here unless it’s a fatal error you want to recover from.
-  });
-
-  return poolPromise;
-}
-
-// Keep‐alive ping every 5 minutes
-setInterval(async () => {
-  try {
-    const pool = await getPool();
-    await pool.request().query('SELECT 1');
-    // console.log('🔄 MSSQL keep‐alive succeeded');
-  } catch (err) {
-    console.error('⚠️ MSSQL keep‐alive ping failed:', err);
-    // poolPromise stays intact so we keep using the same pool
-  }
-}, 5 * 60 * 1000);
-
-module.exports = { sql, getPool };
-
-
-
-chek all code each line carefully. 
-
+export default App;
