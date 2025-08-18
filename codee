@@ -1,3 +1,7 @@
+we have alread this excl file,
+
+
+in excl only this, it is ok, in excl through, ip through
 cameraname 	Ip_address	Location	City
 Green Zone to yellow zone passage - 10.199.10.20 (FLIR CM-3102-11-I T71552107) - 350	10.199.10.20	APAC	Pune Podium
 IN-PNQ-PF - Green Zone Exit Passage 10.199.10.139	10.199.10.139	APAC	Pune Podium
@@ -7,15 +11,16 @@ IN-PNQ-PF - Green Zone Reception Entry 10.199.10.10	10.199.10.10	APAC	Pune Podiu
 IN-PNQ-PF Green Zone Lift Lobby - 10.199.12.15 (c26B-6D) - 28	10.199.12.15	APAC	Pune Podium
 IN-PNQ-PF- Green Zone ST4 10.199.10.11	10.199.10.11	APAC	Pune Podium
 IN-PNQ-PF- Green Zone UPS B 10.199.10.14	10.199.10.14	APAC	Pune Podium
-
-
-http://10.199.10.20/control/userimage.html
-http://10.199.10.139/www/index.html
-http://10.199.10.142/www/index.html
-http://10.199.10.141/www/index.html
-http://10.199.10.10/www/index.html
-https://10.199.10.146/#/login
-http://10.199.9.146/control/userimage.html
-http://10.199.11.146/control/userimage.html
-https://10.199.11.16/#/login
-http://10.199.16.35/view/view.shtml?id=25535&imagepath=%2Fmjpg%2Fvideo.mjpg%3Fcamera%3D1&size=1
+IN-PNQ-PF- Green Zone UPS Room 10.199.10.13	10.199.10.13	APAC	Pune Podium
+IN-PNQ-PF- Green Zone Workstations 10.199.10.12	10.199.10.12	APAC	Pune Podium
+IN-PNQ-PF- Green Zone Workstations to Breakout Passage 10.199.10.140	10.199.10.140	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Breakout Area 10.199.12.10	10.199.12.10	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone IDF-03 Room 10.199.12.12	10.199.12.12	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Reception Area Seating Corner 10.199.12.13	10.199.12.13	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Workstation passage infront of IDF-03 10.199.12.142	10.199.12.142	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Workstations to Reception Exit 10.199.12.141	10.199.12.141	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Workstations to Staircase-03 Exit passage 10.199.12.140	10.199.12.140	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Workstatios passage infront of IDF-03 10.199.12.11	10.199.12.11	APAC	Pune Podium
+IN-PNQ-PF- Orange Zone Workstatios to Staircase -04 Exit passage 10.199.12.139	10.199.12.139	APAC	Pune Podium
+IN-PNQ-PF- Red Zone IDF-02 Room 10.199.11.143	10.199.11.143	APAC	Pune Podium
+IN-PNQ-PF- Red Zone Podium Area to Reception Entrance 10.199.11.10	10.199.11.10	APAC	Pune Podium
