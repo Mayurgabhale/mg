@@ -1,378 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
-import {
-  FaHome,
-  FaBuilding,
-  FaLayerGroup,
-  FaEnvelopeOpenText,
-  FaMobileAlt,
-  FaMapMarkerAlt,
-  FaUserTie,
-  FaUserShield,
-  FaUserNurse,
-  FaUsers
-} from 'react-icons/fa';
-
-const firstColumnRoles = [
-  'Site Head',
-  'BCM Team / Site Operations',
-  'HR',
-  'Incident Controller'
-];
-
-const roleIcons = {
-  'Site Head': <FaUserTie style={{ color: '#2E86C1' }} />,
-  'BCM Team / Site Operations': <FaUserShield style={{ color: '#28B463' }} />,
-  'HR': <FaUserTie style={{ color: '#8E44AD' }} />,
-  'Incident Controller': <FaUserShield style={{ color: '#D35400' }} />,
-  'ERT Team Leader': <FaUserShield style={{ color: '#C0392B' }} />,
-  'ERT Team Members': <FaUsers style={{ color: '#16A085' }} />,
-  'First Aid Team': <FaUserNurse style={{ color: '#E74C3C' }} />
-};
-
-const baseLocationByRole = {
-  'Site Head': 'Podium Floor – Red Zone',
-  'HR': 'Podium Floor – Red Zone',
-  'Incident Controller': 'Podium Floor – Red Zone',
-  'First Aid Team': 'Podium Floor – Green Zone',
-  'ERT Team Leader': 'Podium Floor – Green Zone',
-  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
-};
-
-function renderRoleCard(role, membersRaw, filterZone) {
-  const members = filterZone
-    ? membersRaw.filter(m =>
-        m.present && (
-          (m.zone && m.zone.includes(filterZone)) ||
-          baseLocationByRole[role].includes(filterZone)
-        )
-      )
-    : membersRaw;
-
-  return (
-    <Card className="shadow-sm mb-3" key={role}>
-      <Card.Header style={{ 
-        borderBottom: '1px solid #EAECEE', 
-        fontWeight: '600',
-        // backgroundColor: '#F8F9FA',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px'
-      }}>
-        {roleIcons[role] || <FaUserTie style={{ color: '#7F8C8D' }} />}
-        {role}
-      </Card.Header>
-      <Card.Body style={{ padding: '1rem' }}>
-        {members.length > 0 ? members.map((m, i) => {
-          const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
-          return (
-            <div key={i} className="mb-3 pb-2 " style={{ borderColor: '#EAECEE',borderBottom: '0.5px solid #595959' }}>
-              <div className="d-flex justify-content-between align-items-center">
-                <span style={{ fontWeight: '500' }}>{m.name}</span>
-                <Badge bg={m.present ? 'success' : 'danger'} pill>
-                  {m.present ? 'Available' : 'Away'}
-                </Badge>
-              </div>
-              <div className="mt-2" style={{ fontSize: '0.85rem' }}>
-                <div className="d-flex align-items-center mb-1">
-                  <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
-                  <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
-                    {m.email}
-                  </a>
-                </div>
-                <div className="d-flex align-items-center mb-1">
-                  <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
-                  <span style={{ color: '#27AE60' }}>{m.phone}</span>
-                </div>
-                <div className="d-flex align-items-center">
-                  <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
-                  <span style={{ color: '#E74C3C' }}>{location}</span>
-                </div>
-              </div>
-            </div>
-          );
-        }) : (
-          <div className="text-muted text-center py-2">No members</div>
-        )}
-      </Card.Body>
-    </Card>
-  );
-}
-
-export default function ERTOverview({ ertStatus }) {
-  const [filterZone, setFilterZone] = useState(null);
-  const [showAllMembers, setShowAllMembers] = useState(false);
-
-  const allMembers = useMemo(() => {
-    const list = [];
-    Object.entries(ertStatus).forEach(([role, members]) => {
-      members.forEach(m => list.push({ role, ...m }));
-    });
-    return list;
-  }, [ertStatus]);
-
-  const floorCounts = useMemo(() => {
-    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
-    allMembers.forEach(m => {
-      if (!m.present) return;
-      const z = m.zone?.toLowerCase() || '';
-      if (z.includes('2nd')) counts['2nd Floor']++;
-      else if (z.includes('tower b')) counts['Tower B']++;
-      else counts['Podium Floor']++;
-    });
-    return counts;
-  }, [allMembers]);
-
-  const ertLeaders = useMemo(() => {
-    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
-    const filtered = filterZone
-      ? raw.filter(m =>
-          m.present && (
-            (m.zone && m.zone.includes(filterZone)) ||
-            baseLocationByRole['ERT Team Leader'].includes(filterZone)
-          )
-      )
-      : raw;
-
-    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
-    return filtered.sort((a, b) => {
-      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
-      if (pa !== pb) return pb - pa;
-      const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
-      if (ia !== -1 || ib !== -1) {
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-        return ia - ib;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  }, [ertStatus, filterZone]);
-
-  const ertMembers = useMemo(() => {
-    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
-      role: 'ERT Team Members',
-      name: m.Name || m.name,
-      baseLocation: m['Base Location'] || m.Floor || m.zone,
-      liveLocation: m.zone,
-      email: m.Email || m.email,
-      phone: m.Phone || m.phone,
-      present: m.present
-    }));
-
-    const filtered = filterZone 
-      ? members.filter(m => 
-          m.present && (
-            (m.liveLocation && m.liveLocation.includes(filterZone)) || 
-            m.baseLocation.includes(filterZone)
-          )
-        )
-      : members;
-    
-    filtered.sort((a, b) => {
-      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
-      if (pa !== pb) return pb - pa;
-      return a.name.localeCompare(b.name);
-    });
-    return showAllMembers ? filtered : filtered.slice(0, 8);
-  }, [ertStatus, filterZone, showAllMembers]);
-
-  const floorIcons = {
-    'Podium Floor': <FaHome size={24} style={{ color: '#E74C3C' }} />,
-    '2nd Floor': <FaBuilding size={24} style={{ color: '#3498DB' }} />,
-    'Tower B': <FaLayerGroup size={24} style={{ color: '#2ECC71' }} />
-  };
-
-  return (
-    <div className="container-fluid py-3">
-      <h4 className="mb-4" style={{ color: '#fff', fontWeight: '600' }}>
-        {/* Emergency Response Team Overview */}
-      </h4>
-      
-      {/* Floor Filters */}
-      <Row className="g-3 mb-4">
-        <Col xs={12} md={3}>
-          <Card className="text-center shadow-sm h-100 border-0" style={{ backgroundColor: '#061f38' }}>
-            <Card.Body className="py-3">
-              <FaLayerGroup size={28} style={{ color: '#7F8C8D' }} className="mb-2" />
-              <h5 className="mb-1" style={{ fontWeight: '500', color: '#fff' }}>Total Members</h5>
-              <h2 className="m-0" style={{ color: '#fff', fontWeight: '600' }}>
-                {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-        
-        {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
-          const count = floorCounts[floor] || 0;
-          const isSelected = filterZone === floor;
-          return (
-            <Col key={floor} xs={12} md={3}>
-              <Card 
-                className={`text-center shadow-sm h-100 ${isSelected ? 'border-primary' : 'border-0'}`}
-                style={{ 
-                  cursor: 'pointer',
-                  backgroundColor: isSelected ? '#EBF5FB' : '#061f38'
-                }}
-                onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
-              >
-                <Card.Body className="py-3">
-                  {floorIcons[floor]}
-                  <h5 className="mb-1 mt-2" style={{ fontWeight: '500', color: isSelected ? '#3498DB' : '#fff' }}>
-                    {floor}
-                  </h5>
-                  <h2 className="m-0" style={{ color: isSelected ? '#2C3E50' : '#fff', fontWeight: '600' }}>
-                    {count}
-                  </h2>
-                </Card.Body>
-              </Card>
-            </Col>
-          );
-        })}
-      </Row>
-
-      {/* Three-column layout */}
-      <Row className="g-3">
-        {/* LEFT COLUMN: Fixed roles */}
-        <Col xs={12} lg={4}>
-          {firstColumnRoles.map(role => renderRoleCard(role, ertStatus[role] || [], filterZone))}
-        </Col>
-
-        {/* MIDDLE COLUMN: ERT Team Leaders */}
-        <Col xs={12} lg={4}>
-          <Card className="shadow-sm mb-3">
-            <Card.Header style={{ 
-              borderBottom: '1px solid #EAECEE', 
-              fontWeight: '600',
-              // backgroundColor: '#F8F9FA',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              {roleIcons['ERT Team Leader']}
-              ERT Team Leader
-            </Card.Header>
-            <Card.Body style={{ padding: '1rem' }}>
-              {ertLeaders.map((m, i) => {
-                const location = m.present ? m.zone || 'Unknown Zone' : baseLocationByRole['ERT Team Leader'];
-                return (
-                  <div key={i} className="mb-3 pb-2 " style={{ borderColor: '#595959',borderBottom: '0.5px solid #595959' }}>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <span style={{ fontWeight: '500' }}>{m.name}</span>
-                      <Badge bg={m.present ? 'success' : 'danger'} pill>
-                        {m.present ? 'Available' : 'Away'}
-                      </Badge>
-                    </div>
-                    <div className="mt-2" style={{ fontSize: '0.85rem' }}>
-                      <div className="d-flex align-items-center mb-1">
-                        <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
-                        <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
-                          {m.email}
-                        </a>
-                      </div>
-                      <div className="d-flex align-items-center mb-1">
-                        <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
-                        <span style={{ color: '#27AE60' }}>{m.phone}</span>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
-                        <span style={{ color: '#E74C3C' }}>{location}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {!ertLeaders.length && <div className="text-muted text-center py-2">No Team Leaders</div>}
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* RIGHT COLUMN: ERT Team Members */}
-        <Col xs={12} lg={4}>
-          <Card className="shadow-sm">
-            <Card.Header style={{ 
-              borderBottom: '1px solid #EAECEE', 
-              fontWeight: '600',
-              // backgroundColor: '#F8F9FA',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              {roleIcons['ERT Team Members']}
-              ERT Team Members
-            </Card.Header>
-            <Card.Body style={{ padding: '1rem' }}>
-              {ertMembers.map((m, i) => {
-                const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
-                return (
-                  <div key={i} className="mb-3 pb-2 " style={{ borderColor: '#595959X', borderBottom: '0.5px solid #595959' }}>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <span style={{ fontWeight: '500' }}>{m.name}</span>
-                      <Badge bg={m.present ? 'success' : 'danger'} pill>
-                        {m.present ? 'Available' : 'Away'}
-                      </Badge>
-                    </div>
-                    <div className="mt-2" style={{ fontSize: '0.85rem' }}>
-                      <div className="d-flex align-items-center mb-1">
-                        <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
-                        <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
-                          {m.email}
-                        </a>
-                      </div>
-                      <div className="d-flex align-items-center mb-1">
-                        <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
-                        <span style={{ color: '#27AE60' }}>{m.phone}</span>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
-                        <span style={{ color: '#E74C3C' }}>{location}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {!ertMembers.length && <div className="text-muted text-center py-2">No members</div>}
-              <div className="text-center mt-3">
-                <Button 
-                  variant="outline-primary" 
-                  size="sm" 
-                  onClick={() => setShowAllMembers(prev => !prev)}
-                  style={{ minWidth: '120px' }}
-                >
-                  {showAllMembers ? 'Show Less' : 'Show More'}
-                </Button>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </div>
-  );
-}
-****************************
-chnage only desing and add bleow carefuuly dont change logic
-create same desing like aobve page 
-
-in this only has  ERT Team Members ok 
-Read above code carefully, and in this add below,
-1. total member and Available member count in top like above
-2. add mobile number
-3. and employe new line 
-
-
-
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\ERTOverview.jsx
-
-
-
-
-
 // src/components/ERTOverview.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, Badge, Row, Col } from "react-bootstrap";
-import { FaEnvelopeOpenText, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
+import {
+  FaEnvelopeOpenText,
+  FaMapMarkerAlt,
+  FaUsers,
+  FaMobileAlt,
+  FaLayerGroup,
+} from "react-icons/fa";
 import membersData from "../data/lacaErtMembers.json";
 import Header from "../components/Header";
 import { lookupFloor } from "../utils/floorLookup";
@@ -380,24 +15,17 @@ import { lookupFloor } from "../utils/floorLookup";
 export default function LacaERTOverview() {
   const [members, setMembers] = useState([]);
 
-
-
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(
-          "http://localhost:3001/api/occupancy/live-summary"
-        );
+        const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
         const liveData = await res.json();
 
-        const liveDetails = Array.isArray(liveData.details)
-          ? liveData.details
-          : [];
+        const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
 
         const merged = membersData["Team Members"].map((m) => {
-          const live = liveDetails.find(
-            (d) => d.EmployeeID === m.emp_id
-          ) || {};
+          const live =
+            liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
 
           const inLocation =
             live.PartitionName2 && live.Door
@@ -414,11 +42,13 @@ export default function LacaERTOverview() {
             inLocation,
             outLocation,
             door: live.Door || "",
+            phone: m.phone || "", // ✅ add phone if available later
           };
         });
 
-        // ✅ Sort so available members are first
-        const sorted = merged.sort((a, b) => (a.present === b.present ? 0 : a.present ? -1 : 1));
+        const sorted = merged.sort((a, b) =>
+          a.present === b.present ? 0 : a.present ? -1 : 1
+        );
 
         setMembers(sorted);
       } catch (err) {
@@ -431,10 +61,55 @@ export default function LacaERTOverview() {
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ counts for header cards
+  const totalCount = useMemo(() => members.length, [members]);
+  const availableCount = useMemo(
+    () => members.filter((m) => m.present).length,
+    [members]
+  );
+
   return (
     <>
       <Header />
 
+      {/* === TOP SUMMARY CARDS === */}
+      <Row className="g-3 mb-4">
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100 border-0"
+            style={{ backgroundColor: "#061f38" }}
+          >
+            <Card.Body className="py-3">
+              <FaLayerGroup size={28} style={{ color: "#7F8C8D" }} className="mb-2" />
+              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
+                Total Members
+              </h5>
+              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
+                {totalCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100 border-0"
+            style={{ backgroundColor: "#061f38" }}
+          >
+            <Card.Body className="py-3">
+              <FaUsers size={28} style={{ color: "#1ABC9C" }} className="mb-2" />
+              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
+                Available Members
+              </h5>
+              <h2 className="m-0" style={{ color: "#1ABC9C", fontWeight: "600" }}>
+                {availableCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* === MAIN CARD === */}
       <Card
         style={{
           backgroundColor: "#1C1C1C",
@@ -443,7 +118,7 @@ export default function LacaERTOverview() {
           borderRadius: "12px",
         }}
       >
-        <Card.Header  
+        <Card.Header
           style={{
             borderBottom: "1px solid #333",
             fontWeight: "600",
@@ -461,11 +136,11 @@ export default function LacaERTOverview() {
 
         <Card.Body style={{ padding: "1.5rem" }}>
           <Row xs={1} md={3} className="g-4">
-
             {members.map((m, i) => {
               const isAway =
                 !m.present ||
-                (m.outLocation && m.outLocation.trim().toLowerCase() === "out of office");
+                (m.outLocation &&
+                  m.outLocation.trim().toLowerCase() === "out of office");
 
               return (
                 <Col key={i}>
@@ -478,178 +153,80 @@ export default function LacaERTOverview() {
                       height: "100%",
                     }}
                   >
-                    {/* Name + Status */}
-                    <div className="d-flex justify-content-between align-items-center">
-                      <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                        {m.name}{" "}
-                        <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
-                          ({m.emp_id})
-                        </span>
-                      </h5>
+                    {/* Name */}
+                    <h5 style={{ fontWeight: "600", marginBottom: "0.3rem" }}>
+                      {m.name}
+                    </h5>
+                    {/* Employee ID on new line */}
+                    <div style={{ fontSize: "0.85rem", color: "#bbb", marginBottom: "0.5rem" }}>
+                      ID: {m.emp_id}
+                    </div>
 
-                      <Badge
-                        bg={!isAway ? "success" : "danger"}
-                        pill
-                        style={{ marginBottom: "0.8rem" }}
-                      >
+                    {/* Status */}
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span></span>
+                      <Badge bg={!isAway ? "success" : "danger"} pill>
                         {!isAway ? "Available" : "Away"}
                       </Badge>
                     </div>
 
                     {/* Email */}
-                    <div style={{ fontSize: "0.85rem" }}>
-                      <div className="d-flex align-items-center mb-2">
-                        <FaEnvelopeOpenText
-                          className="me-2"
-                          style={{ color: "#3498DB", minWidth: "16px" }}
-                        />
-                        <a
-                          href={`mailto:${m.email}`}
-                          style={{ color: "#5DADE2", textDecoration: "none" }}
-                        >
-                          {m.email}
-                        </a>
-                      </div>
-
-                      {/* Location Info */}
-                      {m.present && (m.inLocation || m.outLocation) && (
-                        <div className="mb-2">
-                          <div className="d-flex align-items-center">
-                            <FaMapMarkerAlt
-                              className="me-2"
-                              style={{ color: "#E74C3C", minWidth: "16px" }}
-                            />
-                            <span style={{ color: "#E74C3C" }}>
-                              {m.inLocation || "Unknown"}
-                            </span>
-                          </div>
-                          {m.outLocation && m.outLocation !== m.inLocation && (
-                            <div
-                              style={{
-                                marginLeft: "1.5rem",
-                                fontSize: "0.8rem",
-                                color: "#aaa",
-                              }}
-                            >
-                              Exit To: {m.outLocation}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                    <div className="d-flex align-items-center mb-2" style={{ fontSize: "0.85rem" }}>
+                      <FaEnvelopeOpenText
+                        className="me-2"
+                        style={{ color: "#3498DB", minWidth: "16px" }}
+                      />
+                      <a
+                        href={`mailto:${m.email}`}
+                        style={{ color: "#5DADE2", textDecoration: "none" }}
+                      >
+                        {m.email}
+                      </a>
                     </div>
+
+                    {/* Mobile Number */}
+                    {m.phone && (
+                      <div className="d-flex align-items-center mb-2" style={{ fontSize: "0.85rem" }}>
+                        <FaMobileAlt
+                          className="me-2"
+                          style={{ color: "#27AE60", minWidth: "16px" }}
+                        />
+                        <span style={{ color: "#27AE60" }}>{m.phone}</span>
+                      </div>
+                    )}
+
+                    {/* Location Info */}
+                    {m.present && (m.inLocation || m.outLocation) && (
+                      <div className="mb-2" style={{ fontSize: "0.85rem" }}>
+                        <div className="d-flex align-items-center">
+                          <FaMapMarkerAlt
+                            className="me-2"
+                            style={{ color: "#E74C3C", minWidth: "16px" }}
+                          />
+                          <span style={{ color: "#E74C3C" }}>
+                            {m.inLocation || "Unknown"}
+                          </span>
+                        </div>
+                        {m.outLocation && m.outLocation !== m.inLocation && (
+                          <div
+                            style={{
+                              marginLeft: "1.5rem",
+                              fontSize: "0.8rem",
+                              color: "#aaa",
+                            }}
+                          >
+                            Exit To: {m.outLocation}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Col>
               );
             })}
-
-
-
           </Row>
         </Card.Body>
-
       </Card>
     </>
   );
 }
-
-
-
-
-
-
-
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\data\lacaErtMembers.json
-
-{
-  "Team Members": [
-    { "name": "Esteban Lopez Villalobos", "email": "Esteban.LopezVillalobos@wu.com", "emp_id": "302566" },
-    { "name": "Melissa Castro", "email": "Melissa.CastroUgalde@wu.com", "emp_id": "308530" },
-    { "name": "Leonardo Escalante", "email": "Leonardo.Escalante@wu.com", "emp_id": "249719" },
-    { "name": "María Gabriela Brenes", "email": "Maria.Brenes@wu.com", "emp_id": "239462" },
-    { "name": "Jose David Hernandez Salazar", "email": "JOSE.HERNANDEZ@wu.com", "emp_id": "315501" },
-    { "name": "Montserrat Sanabria Moreno", "email": "Monserrat.Sanabria@wu.com", "emp_id": "313147" },
-    { "name": "Marcelo Rivera Gutierrez", "email": "Marcelo.Rivera@wu.com", "emp_id": "315354" },
-    { "name": "Leandro Agredo Orozco", "email": "Leandro.AgredoOrozco@wu.com", "emp_id": "328465" },
-    { "name": "Natalia Araya Morera", "email": "NATALIA.ARAYA@wu.com", "emp_id": "81241784" },
-    { "name": "Carolina Flores Reyes", "email": "carolina.floresreyes@wu.com", "emp_id": "73432644" },
-    { "name": "Paula Jimenez", "email": "paula.jimenez@wu.com", "emp_id": "305073" },
-    { "name": "Guido Alberto Ramírez Camacho", "email": "guido.ramirez@westernunion.com", "emp_id": "238287" },
-    { "name": "Jason Chaves Vega", "email": "jason.chaves@westernunion.com", "emp_id": "324949" },
-    { "name": "Anahita Hashemi", "email": "anahita.hashemi@wu.com", "emp_id": "311968" },
-    { "name": "Olga Carvajal Castillo", "email": "olga.carvajal@westernunion.com", "emp_id": "319021" },
-    { "name": "Warner Alberto Granados Ewers", "email": "warner.granados@westernunion.com", "emp_id": "178990" },
-    { "name": "David Arce Calvo", "email": "david.arce@wu.com", "emp_id": "319972" },
-    { "name": "David Briceño", "email": "david.briceno@wu.com", "emp_id": "314240" },
-    { "name": "Jafeth Alexander Morales", "email": "Jafet.Morales@westernunion.com", "emp_id": "326589" },
-    { "name": "Karl Anthony Orozco", "email": "karl.orozcochinchilla@westernunion.com", "emp_id": "306365" },
-    { "name": "Omar Arias", "email": "omar.arias@westernunion.com", "emp_id": "313388" },
-    { "name": "Alfonso Guardia", "email": "alfonso.guardia@westernunion.com", "emp_id": "308280" },
-    { "name": "Ximena Espinoza", "email": "ximena.espinoza@westernunion.com", "emp_id": "327061" },
-    { "name": "Mayer Pereira", "email": "meyer.pereira@westernunion.com", "emp_id": "237998" },
-    { "name": "Steven Alexander Alvarado Fallas", "email": "steven.alvarado@wu.com", "emp_id": "243957" },
-    { "name": "Kevin Alonso Arce", "email": "kevin.arce@wu.com", "emp_id": "314618" },
-    { "name": "Ronald Andrey Garro", "email": "ronald.garro@wu.com", "emp_id": "306147" },
-    { "name": "Carlos Manuel Hernandez", "email": "carlos.hernandezgonzalez@westernunion.com", "emp_id": "304864" },
-    { "name": "Taeseung Josue Yoon", "email": "taeseung.yoon@westernunion.com", "emp_id": "325507" },
-    { "name": "Andrey Molina", "email": "Andrey.Molina@wu.com", "emp_id": "323105" },
-    { "name": "Dra Lillan Marti", "email": "Lillan.Marti@westernunion.com", "emp_id": "11561479" }
-  ]
-}
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\utils\floorLookup.js
-
-
-// src/utils/floorLookup.js
-import doorMap from './doorMap'; // relative to this file
-
-/**
- * Given a partition, door and direction, return the mapped floor string.
- * Falls back to 'Unmapped' only if there's no matching entry.
- */
-export function lookupFloor(partition, door, direction) {
-  const entry = doorMap.find(d =>
-    d.partition === partition && d.door === door
-  );
-  if (!entry) return 'Unmapped';
-
-
-  // return direction === 'InDirection'
-  //   ? entry.inDirectionFloor
-  //   : entry.outDirectionFloor;
-
-  // trim off any accidental leading/trailing spaces
-  const raw = direction === 'InDirection'
-    ? entry.inDirectionFloor
-    : entry.outDirectionFloor;
-  return raw.trim() || 'Unmapped';
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
