@@ -1,323 +1,97 @@
+<Row className="g-3">
+  {members.map((m, i) => {
+    const isAway =
+      !m.present ||
+      (m.outLocation &&
+        m.outLocation.trim().toLowerCase() === "out of office");
+    const location = m.present
+      ? m.inLocation || "Unknown Zone"
+      : m.outLocation || "Away";
 
-
-// src/components/LacaERTOverview.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Card, Row, Col } from "react-bootstrap";
-import {
-  FaEnvelopeOpenText,
-  FaMapMarkerAlt,
-  FaUsers,
-  FaMobileAlt,
-  FaLayerGroup,
-} from "react-icons/fa";
-import membersData from "../data/lacaErtMembers.json";
-import Header from "../components/Header";
-import { lookupFloor } from "../utils/floorLookup";
-
-export default function LacaERTOverview() {
-  const [members, setMembers] = useState([]);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-        const liveData = await res.json();
-        const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-        const merged = membersData["Team Members"].map((m) => {
-          const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-          const inLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-              : "";
-          const outLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-              : "";
-
-          return {
-            ...m,
-            present: !!live.EmployeeID,
-            inLocation,
-            outLocation,
-            door: live.Door || "",
-            phone: m.phone || "",
-          };
-        });
-
-        const sorted = merged.sort((a, b) =>
-          a.present === b.present ? 0 : a.present ? -1 : 1
-        );
-
-        setMembers(sorted);
-      } catch (err) {
-        console.error("Error fetching live data:", err);
-      }
-    }
-
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const totalCount = useMemo(() => members.length, [members]);
-  const availableCount = useMemo(
-    () => members.filter((m) => m.present).length,
-    [members]
-  );
-
-  return (
-    <>
-      <Header />
-      {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
-      <Row className="g-3 mb-4">
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100"
-            style={{
-              backgroundColor: "#061f38",
-
-            }}
-          >
-            <Card.Body className="py-3">
-              <FaLayerGroup
-                size={28}
-                style={{ color: "#7F8C8D" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Total Members
-              </h5>
-              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
-                {totalCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100"
-            style={{
-              backgroundColor: "#061f38",
-
-            }}
-          >
-            <Card.Body className="py-3">
-              <FaUsers
-                size={28}
-                style={{ color: "#1ABC9C" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Available Members
-              </h5>
-              <h2
-                className="m-0"
-                style={{ color: "#1ABC9C", fontWeight: "600" }}
-              >
-                {availableCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* === MEMBERS CARD (Black theme, yellow border, 3-column layout) === */}
-      <Card
-        className="shadow-sm"
-        style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
+    return (
+      <Col
+        xs={12}
+        md={6}
+        lg={4}
+        key={i}
+        className="member-col"
       >
-        <Card.Header
+        <div
+          className="mb-3 pb-2"
           style={{
-            borderBottom: "1px solid #F1C40F",
-
-            fontWeight: "600",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
+            borderBottom: "0.5px solid rgb(86, 86, 85)",
             color: "#fff",
           }}
         >
-          <FaUsers style={{ color: "#F1C40F" }} />
-          Costa Rica ERT Team Members
-        </Card.Header>
+          {/* === NAME + STATUS === */}
+          <div className="d-flex justify-content-between align-items-center">
+            <span style={{ fontWeight: "500" }}>{m.name}</span>
+            <span
+              style={{
+                fontSize: "0.9rem",
+                fontWeight: "600",
+                color: !isAway ? "#28B463" : "#E74C3C",
+              }}
+            >
+              {!isAway ? "Available" : "Away"}
+            </span>
+          </div>
 
-        <Card.Body style={{ padding: "1.5rem" }}>
-          {members.length > 0 ? (
-            <Row className="g-3">
-              {members.map((m, i) => {
-                const isAway =
-                  !m.present ||
-                  (m.outLocation &&
-                    m.outLocation.trim().toLowerCase() === "out of office");
-                const location = m.present
-                  ? m.inLocation || "Unknown Zone"
-                  : m.outLocation || "Away";
+          {/* === Email === */}
+          <div
+            className="d-flex align-items-center mt-2 mb-1"
+            style={{ fontSize: "0.85rem" }}
+          >
+            <FaEnvelopeOpenText
+              className="me-2"
+              style={{ color: "#3498DB", minWidth: "16px" }}
+            />
+            <a
+              href={`mailto:${m.email}`}
+              style={{ color: "#2980B9", textDecoration: "none" }}
+            >
+              {m.email}
+            </a>
+          </div>
 
-                return (
-
-                  // <Col xs={12} md={6} lg={4} key={i}>
-                  //   <div
-                  //     className="mb-3 pb-2"
-                  //     style={{
-                  //       borderBottom: "0.5px solid rgb(86, 86, 85)",
-                  //       color: "#fff",
-
-                  //     }}
-                  //   >
-                  //     {/* === NAME + STATUS === */}
-                  //     <div className="d-flex justify-content-between align-items-center">
-                  //       <span style={{ fontWeight: "500" }}>{m.name}</span>
-                  //       <span
-                  //         style={{
-                  //           fontSize: "0.9rem",
-                  //           fontWeight: "600",
-                  //           color: !isAway ? "#28B463" : "#E74C3C",
-                  //         }}
-                  //       >
-                  //         {!isAway ? "Available" : "Away"}
-                  //       </span>
-                  //     </div>
-
-                  //     {/* === Email === */}
-                  //     <div
-                  //       className="d-flex align-items-center mt-2 mb-1"
-                  //       style={{ fontSize: "0.85rem" }}
-                  //     >
-                  //       <FaEnvelopeOpenText
-                  //         className="me-2"
-                  //         style={{ color: "#3498DB", minWidth: "16px" }}
-                  //       />
-                  //       <a
-                  //         href={`mailto:${m.email}`}
-                  //         style={{ color: "#2980B9", textDecoration: "none" }}
-                  //       >
-                  //         {m.email}
-                  //       </a>
-                  //     </div>
-
-                  //     {/* === Phone === */}
-                  //     {m.phone && (
-                  //       <div
-                  //         className="d-flex align-items-center mb-1"
-                  //         style={{ fontSize: "0.85rem" }}
-                  //       >
-                  //         <FaMobileAlt
-                  //           className="me-2"
-                  //           style={{ color: "#27AE60", minWidth: "16px" }}
-                  //         />
-                  //         <span style={{ color: "#27AE60" }}>{m.phone}</span>
-                  //       </div>
-                  //     )}
-
-                  //     {/* === Location === */}
-                  //     <div
-                  //       className="d-flex align-items-center"
-                  //       style={{ fontSize: "0.85rem" }}
-                  //     >
-                  //       <FaMapMarkerAlt
-                  //         className="me-2"
-                  //         style={{ color: "#E74C3C", minWidth: "16px" }}
-                  //       />
-                  //       <span style={{ color: "#E74C3C" }}>{location}</span>
-                  //     </div>
-                  //   </div>
-                  // </Col>
-
-
-                  <Col
-                    xs={12}
-                    md={6}
-                    lg={4}
-                    key={i}
-                    style={{
-                      borderRight:
-                        (i % 3 !== 2) && i !== members.length - 1 // skip last col of each row
-                          ? "2px solid #F1C40F"
-                          : "none",
-                    }}
-                  >
-                    <div
-                      className="mb-3 pb-2"
-                      style={{
-                        borderBottom: "0.5px solid rgb(86, 86, 85)",
-                        color: "#fff",
-                      }}
-                    >
-                      {/* === NAME + STATUS === */}
-                      <div className="d-flex justify-content-between align-items-center">
-                        <span style={{ fontWeight: "500" }}>{m.name}</span>
-                        <span
-                          style={{
-                            fontSize: "0.9rem",
-                            fontWeight: "600",
-                            color: !isAway ? "#28B463" : "#E74C3C",
-                          }}
-                        >
-                          {!isAway ? "Available" : "Away"}
-                        </span>
-                      </div>
-
-                      {/* === Email === */}
-                      <div
-                        className="d-flex align-items-center mt-2 mb-1"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        <FaEnvelopeOpenText
-                          className="me-2"
-                          style={{ color: "#3498DB", minWidth: "16px" }}
-                        />
-                        <a
-                          href={`mailto:${m.email}`}
-                          style={{ color: "#2980B9", textDecoration: "none" }}
-                        >
-                          {m.email}
-                        </a>
-                      </div>
-
-                      {/* === Phone === */}
-                      {m.phone && (
-                        <div
-                          className="d-flex align-items-center mb-1"
-                          style={{ fontSize: "0.85rem" }}
-                        >
-                          <FaMobileAlt
-                            className="me-2"
-                            style={{ color: "#27AE60", minWidth: "16px" }}
-                          />
-                          <span style={{ color: "#27AE60" }}>{m.phone}</span>
-                        </div>
-                      )}
-
-                      {/* === Location === */}
-                      <div
-                        className="d-flex align-items-center"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        <FaMapMarkerAlt
-                          className="me-2"
-                          style={{ color: "#E74C3C", minWidth: "16px" }}
-                        />
-                        <span style={{ color: "#E74C3C" }}>{location}</span>
-                      </div>
-                    </div>
-                  </Col>
-
-
-
-
-                );
-              })}
-            </Row>
-          ) : (
-            <div className="text-muted text-center py-2">No members</div>
+          {/* === Phone === */}
+          {m.phone && (
+            <div
+              className="d-flex align-items-center mb-1"
+              style={{ fontSize: "0.85rem" }}
+            >
+              <FaMobileAlt
+                className="me-2"
+                style={{ color: "#27AE60", minWidth: "16px" }}
+              />
+              <span style={{ color: "#27AE60" }}>{m.phone}</span>
+            </div>
           )}
-        </Card.Body>
-      </Card>
-    </>
-  );
+
+          {/* === Location === */}
+          <div
+            className="d-flex align-items-center"
+            style={{ fontSize: "0.85rem" }}
+          >
+            <FaMapMarkerAlt
+              className="me-2"
+              style={{ color: "#E74C3C", minWidth: "16px" }}
+            />
+            <span style={{ color: "#E74C3C" }}>{location}</span>
+          </div>
+        </div>
+      </Col>
+    );
+  })}
+</Row>
+
+
+.member-col {
+  border-right: 2px solid #F1C40F;
 }
 
+/* remove border from last column of each row */
+.member-col:nth-child(3n) {
+  border-right: none;
+}
 
