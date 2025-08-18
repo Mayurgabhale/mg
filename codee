@@ -1,97 +1,107 @@
-<Row className="g-3">
-  {members.map((m, i) => {
-    const isAway =
-      !m.present ||
-      (m.outLocation &&
-        m.outLocation.trim().toLowerCase() === "out of office");
-    const location = m.present
-      ? m.inLocation || "Unknown Zone"
-      : m.outLocation || "Away";
+{/* === MEMBERS CARD (Black theme, yellow border, 3-column layout) === */}
+<Card
+  className="shadow-sm"
+  style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
+>
+  <Card.Header
+    style={{
+      borderBottom: "1px solid #F1C40F",
+      fontWeight: "600",
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      color: "#fff",
+    }}
+  >
+    <FaUsers style={{ color: "#F1C40F" }} />
+    Costa Rica ERT Team Members
+  </Card.Header>
 
-    return (
-      <Col
-        xs={12}
-        md={6}
-        lg={4}
-        key={i}
-        className="member-col"
-      >
-        <div
-          className="mb-3 pb-2"
-          style={{
-            borderBottom: "0.5px solid rgb(86, 86, 85)",
-            color: "#fff",
-          }}
-        >
-          {/* === NAME + STATUS === */}
-          <div className="d-flex justify-content-between align-items-center">
-            <span style={{ fontWeight: "500" }}>{m.name}</span>
-            <span
-              style={{
-                fontSize: "0.9rem",
-                fontWeight: "600",
-                color: !isAway ? "#28B463" : "#E74C3C",
-              }}
-            >
-              {!isAway ? "Available" : "Away"}
-            </span>
-          </div>
+  <Card.Body style={{ padding: "1.5rem" }}>
+    {members.length > 0 ? (
+      // ⬇️ add the three-col-divider class here
+      <Row className="g-3 three-col-divider">
+        {members.map((m, i) => {
+          const isAway =
+            !m.present ||
+            (m.outLocation &&
+              m.outLocation.trim().toLowerCase() === "out of office");
+          const location = m.present
+            ? m.inLocation || "Unknown Zone"
+            : m.outLocation || "Away";
 
-          {/* === Email === */}
-          <div
-            className="d-flex align-items-center mt-2 mb-1"
-            style={{ fontSize: "0.85rem" }}
-          >
-            <FaEnvelopeOpenText
-              className="me-2"
-              style={{ color: "#3498DB", minWidth: "16px" }}
-            />
-            <a
-              href={`mailto:${m.email}`}
-              style={{ color: "#2980B9", textDecoration: "none" }}
-            >
-              {m.email}
-            </a>
-          </div>
+          return (
+            <Col xs={12} md={6} lg={4} key={i}>
+              <div
+                className="mb-3 pb-2"
+                style={{
+                  borderBottom: "0.5px solid rgb(86, 86, 85)",
+                  color: "#fff",
+                }}
+              >
+                {/* === NAME + STATUS === */}
+                <div className="d-flex justify-content-between align-items-center">
+                  <span style={{ fontWeight: "500" }}>{m.name}</span>
+                  <span
+                    style={{
+                      fontSize: "0.9rem",
+                      fontWeight: "600",
+                      color: !isAway ? "#28B463" : "#E74C3C",
+                    }}
+                  >
+                    {!isAway ? "Available" : "Away"}
+                  </span>
+                </div>
 
-          {/* === Phone === */}
-          {m.phone && (
-            <div
-              className="d-flex align-items-center mb-1"
-              style={{ fontSize: "0.85rem" }}
-            >
-              <FaMobileAlt
-                className="me-2"
-                style={{ color: "#27AE60", minWidth: "16px" }}
-              />
-              <span style={{ color: "#27AE60" }}>{m.phone}</span>
-            </div>
-          )}
+                {/* === Email === */}
+                <div
+                  className="d-flex align-items-center mt-2 mb-1"
+                  style={{ fontSize: "0.85rem" }}
+                >
+                  <FaEnvelopeOpenText
+                    className="me-2"
+                    style={{ color: "#3498DB", minWidth: "16px" }}
+                  />
+                  <a
+                    href={`mailto:${m.email}`}
+                    style={{ color: "#2980B9", textDecoration: "none" }}
+                  >
+                    {m.email}
+                  </a>
+                </div>
 
-          {/* === Location === */}
-          <div
-            className="d-flex align-items-center"
-            style={{ fontSize: "0.85rem" }}
-          >
-            <FaMapMarkerAlt
-              className="me-2"
-              style={{ color: "#E74C3C", minWidth: "16px" }}
-            />
-            <span style={{ color: "#E74C3C" }}>{location}</span>
-          </div>
-        </div>
-      </Col>
-    );
-  })}
-</Row>
+                {/* === Phone === */}
+                {m.phone && (
+                  <div
+                    className="d-flex align-items-center mb-1"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <FaMobileAlt
+                      className="me-2"
+                      style={{ color: "#27AE60", minWidth: "16px" }}
+                    />
+                    <span style={{ color: "#27AE60" }}>{m.phone}</span>
+                  </div>
+                )}
 
-
-.member-col {
-  border-right: 2px solid #F1C40F;
-}
-
-/* remove border from last column of each row */
-.member-col:nth-child(3n) {
-  border-right: none;
-}
-
+                {/* === Location === */}
+                <div
+                  className="d-flex align-items-center"
+                  style={{ fontSize: "0.85rem" }}
+                >
+                  <FaMapMarkerAlt
+                    className="me-2"
+                    style={{ color: "#E74C3C", minWidth: "16px" }}
+                  />
+                  <span style={{ color: "#E74C3C" }}>{location}</span>
+                </div>
+              </div>
+            </Col>
+          );
+        })}
+      </Row>
+    ) : (
+      <div className="text-muted text-center py-2">No members</div>
+    )}
+  </Card.Body>
+</Card>
