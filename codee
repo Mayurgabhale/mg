@@ -351,6 +351,8 @@ export default function ERTOverview({ ertStatus }) {
 ****************************
 chnage only desing and add bleow carefuuly dont change logic
 create same desing like aobve page 
+
+in this only has  ERT Team Members ok 
 Read above code carefully, and in this add below,
 1. total member and Available member count in top like above
 2. add mobile number
