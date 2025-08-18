@@ -1,86 +1,5 @@
-<Col
-  xs={12}
-  md={6}
-  lg={4}
-  key={i}
-  style={{
-    borderRight:
-      (i % 3 !== 2) && i !== members.length - 1 // skip last col of each row
-        ? "2px solid #F1C40F"
-        : "none",
-  }}
->
-  <div
-    className="mb-3 pb-2"
-    style={{
-      borderBottom: "0.5px solid rgb(86, 86, 85)",
-      color: "#fff",
-    }}
-  >
-    {/* === NAME + STATUS === */}
-    <div className="d-flex justify-content-between align-items-center">
-      <span style={{ fontWeight: "500" }}>{m.name}</span>
-      <span
-        style={{
-          fontSize: "0.9rem",
-          fontWeight: "600",
-          color: !isAway ? "#28B463" : "#E74C3C",
-        }}
-      >
-        {!isAway ? "Available" : "Away"}
-      </span>
-    </div>
-
-    {/* === Email === */}
-    <div
-      className="d-flex align-items-center mt-2 mb-1"
-      style={{ fontSize: "0.85rem" }}
-    >
-      <FaEnvelopeOpenText
-        className="me-2"
-        style={{ color: "#3498DB", minWidth: "16px" }}
-      />
-      <a
-        href={`mailto:${m.email}`}
-        style={{ color: "#2980B9", textDecoration: "none" }}
-      >
-        {m.email}
-      </a>
-    </div>
-
-    {/* === Phone === */}
-    {m.phone && (
-      <div
-        className="d-flex align-items-center mb-1"
-        style={{ fontSize: "0.85rem" }}
-      >
-        <FaMobileAlt
-          className="me-2"
-          style={{ color: "#27AE60", minWidth: "16px" }}
-        />
-        <span style={{ color: "#27AE60" }}>{m.phone}</span>
-      </div>
-    )}
-
-    {/* === Location === */}
-    <div
-      className="d-flex align-items-center"
-      style={{ fontSize: "0.85rem" }}
-    >
-      <FaMapMarkerAlt
-        className="me-2"
-        style={{ color: "#E74C3C", minWidth: "16px" }}
-      />
-      <span style={{ color: "#E74C3C" }}>{location}</span>
-    </div>
-  </div>
-</Col>
 
 
-
-
-
-.....
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, Row, Col } from "react-bootstrap";
@@ -152,12 +71,13 @@ export default function LacaERTOverview() {
       <Header />
       {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
       <Row className="g-3 mb-4">
+
         <Col xs={12} md={6}>
           <Card
             className="text-center shadow-sm h-100"
             style={{
               backgroundColor: "#061f38",
-              
+
             }}
           >
             <Card.Body className="py-3">
@@ -181,7 +101,7 @@ export default function LacaERTOverview() {
             className="text-center shadow-sm h-100"
             style={{
               backgroundColor: "#061f38",
-            
+
             }}
           >
             <Card.Body className="py-3">
@@ -212,7 +132,7 @@ export default function LacaERTOverview() {
         <Card.Header
           style={{
             borderBottom: "1px solid #F1C40F",
-            
+
             fontWeight: "600",
             display: "flex",
             alignItems: "center",
@@ -237,13 +157,93 @@ export default function LacaERTOverview() {
                   : m.outLocation || "Away";
 
                 return (
-                  <Col xs={12} md={6} lg={4} key={i}>
+
+                  // <Col xs={12} md={6} lg={4} key={i}>
+                  //   <div
+                  //     className="mb-3 pb-2"
+                  //     style={{
+                  //       borderBottom: "0.5px solid rgb(86, 86, 85)",
+                  //       color: "#fff",
+
+                  //     }}
+                  //   >
+                  //     {/* === NAME + STATUS === */}
+                  //     <div className="d-flex justify-content-between align-items-center">
+                  //       <span style={{ fontWeight: "500" }}>{m.name}</span>
+                  //       <span
+                  //         style={{
+                  //           fontSize: "0.9rem",
+                  //           fontWeight: "600",
+                  //           color: !isAway ? "#28B463" : "#E74C3C",
+                  //         }}
+                  //       >
+                  //         {!isAway ? "Available" : "Away"}
+                  //       </span>
+                  //     </div>
+
+                  //     {/* === Email === */}
+                  //     <div
+                  //       className="d-flex align-items-center mt-2 mb-1"
+                  //       style={{ fontSize: "0.85rem" }}
+                  //     >
+                  //       <FaEnvelopeOpenText
+                  //         className="me-2"
+                  //         style={{ color: "#3498DB", minWidth: "16px" }}
+                  //       />
+                  //       <a
+                  //         href={`mailto:${m.email}`}
+                  //         style={{ color: "#2980B9", textDecoration: "none" }}
+                  //       >
+                  //         {m.email}
+                  //       </a>
+                  //     </div>
+
+                  //     {/* === Phone === */}
+                  //     {m.phone && (
+                  //       <div
+                  //         className="d-flex align-items-center mb-1"
+                  //         style={{ fontSize: "0.85rem" }}
+                  //       >
+                  //         <FaMobileAlt
+                  //           className="me-2"
+                  //           style={{ color: "#27AE60", minWidth: "16px" }}
+                  //         />
+                  //         <span style={{ color: "#27AE60" }}>{m.phone}</span>
+                  //       </div>
+                  //     )}
+
+                  //     {/* === Location === */}
+                  //     <div
+                  //       className="d-flex align-items-center"
+                  //       style={{ fontSize: "0.85rem" }}
+                  //     >
+                  //       <FaMapMarkerAlt
+                  //         className="me-2"
+                  //         style={{ color: "#E74C3C", minWidth: "16px" }}
+                  //       />
+                  //       <span style={{ color: "#E74C3C" }}>{location}</span>
+                  //     </div>
+                  //   </div>
+                  // </Col>
+
+
+                  <Col
+                    xs={12}
+                    md={6}
+                    lg={4}
+                    key={i}
+                    style={{
+                      borderRight:
+                        (i % 3 !== 2) && i !== members.length - 1 // skip last col of each row
+                          ? "2px solid #F1C40F"
+                          : "none",
+                    }}
+                  >
                     <div
                       className="mb-3 pb-2"
                       style={{
                         borderBottom: "0.5px solid rgb(86, 86, 85)",
                         color: "#fff",
-                        
                       }}
                     >
                       {/* === NAME + STATUS === */}
@@ -304,6 +304,10 @@ export default function LacaERTOverview() {
                       </div>
                     </div>
                   </Col>
+
+
+
+
                 );
               })}
             </Row>
@@ -315,4 +319,5 @@ export default function LacaERTOverview() {
     </>
   );
 }
+
 
