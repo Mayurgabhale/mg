@@ -105,3 +105,50 @@
     )}
   </Card.Body>
 </Card>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Two continuous dividers for a 3-column grid */
+.three-col-divider {
+  position: relative;
+}
+
+/* draw two lines */
+.three-col-divider::before,
+.three-col-divider::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;          /* full height of the entire grid */
+  width: 2px;
+  background: #F1C40F;
+  pointer-events: none;
+}
+
+/* align roughly with Bootstrap's 3 equal columns + gutter */
+.three-col-divider::before {
+  left: calc(33.333% + var(--bs-gutter-x) / 2);
+}
+.three-col-divider::after {
+  left: calc(66.666% + var(--bs-gutter-x));
+}
+
+/* Hide the vertical dividers when not in 3-col layout */
+@media (max-width: 991.98px) { /* < lg */
+  .three-col-divider::before,
+  .three-col-divider::after {
+    display: none;
+  }
+}
