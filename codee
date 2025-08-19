@@ -1,10 +1,52 @@
-${
+After hover in then disply name opne camera 
+and this disply right side on card 
+like  
+
+CAMERAS .......... icon
+
+card.insertAdjacentHTML("beforeend", `
+    <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
+        ${device.cameraname || device.controllername || device.archivername || device.servername || "Unknown Device"}
+    </h3>
+
+    <div class="card-content">
+        <p class="device-type-label ${deviceType}" style="font-size: 1.05rem; font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: 600; margin-bottom: 10px;">
+            <strong><i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> ${deviceType.toUpperCase()}</strong>
+             ${
           deviceType.includes("camera")
             ? `<button class="open-camera-btn"
                         onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}')"
                         style="margin-top:10px;color:#000;border:none;  background: #2894bf; cursor: pointer;  text-align: center; border-radius: 2px;">
-                        <i class="bi bi-webcam" style="margin-left: 4px;"></i>
+                        <i class="bi bi-webcam" style="margin-left: 4px; color:#000"></i>
                 </button>`
                   
             : ""
         }
+        </p>
+
+        <p style="font-size: 1.1rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;">
+            <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
+            <span 
+                class="device-ip" 
+                style="font-weight: 900; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3); font-family: 'Times New Roman', Times, serif;"
+                onclick="copyToClipboard('${deviceIP}')"
+                title="Click to copy IP"
+            >
+                ${deviceIP}
+            </span>
+        </p>
+
+        <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 6px;">
+            <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
+            <span style="font-size: 1rem; font-weight: bold; color: rgb(8, 9, 9); margin-left: 12px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${device.location || "N/A"}</span>
+        </p>
+
+        <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif;">
+            <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
+            <span style="font-weight: bold; color: rgb(7, 7, 7); margin-left: 4px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${city}</span>
+        </p>
+
+       
+    </div>
+`);
+      
