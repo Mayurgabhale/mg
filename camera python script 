@@ -1,0 +1,36 @@
+import requests
+import webbrowser
+
+def detect_camera_platform(ip):
+    urls_to_try = [
+        f"http://{ip}",
+        f"https://{ip}"
+    ]
+
+    for url in urls_to_try:
+        try:
+            r = requests.get(url, timeout=3, verify=False)
+            html = r.text.lower()
+
+            if "verkada" in html or "/#/login" in html:
+                return f"https://{ip}/#/login"
+            elif "flir" in html or "userimage" in html:
+                return f"http://{ip}/control/userimage.html"
+            elif "honeywell" in html or "/www/index.html" in html:
+                return f"http://{ip}/www/index.html"
+            elif "view/view.shtml" in html or "mjpg" in html:
+                return f"http://{ip}/view/view.shtml"
+            else:
+                return url   # fallback: just open base URL
+        except:
+            continue
+    return None
+
+# Example usage:
+ip = "10.199.10.20"  # you can load this from Excel
+camera_url = detect_camera_platform(ip)
+if camera_url:
+    print(f"Opening {camera_url}")
+    webbrowser.open(camera_url)
+else:
+    print(f"Could not detect platform for {ip}")
