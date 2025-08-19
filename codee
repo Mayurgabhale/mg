@@ -1,3 +1,8 @@
+http://10.199.9.146/www/index.html this wrong 
+http://10.199.9.146/control/userimage.html this is correct 
+
+
+
 function buildUrlFromHints(ip, cameraname = "") {
   const name = (cameraname || "").toLowerCase();
 
@@ -8,8 +13,8 @@ function buildUrlFromHints(ip, cameraname = "") {
   if (/\baxis\b/.test(name))     return `http://${ip}/view/view.shtml`;
 
   // Subnet heuristics (optional)
-  if (ip.startsWith("10.199.16.")) return `http://${ip}/view/view.shtml`;
-  if (ip.startsWith("10.199.11.")) return `https://${ip}/#/login`;
+//   if (ip.startsWith("10.199.16.")) return `http://${ip}/view/view.shtml`;
+//   if (ip.startsWith("10.199.11.")) return `https://${ip}/#/login`;
 
   // Default fallback
   return `http://${ip}/www/index.html`;
@@ -19,62 +24,3 @@ function openCamera(ip, name) {
   const url = buildUrlFromHints(ip, name);
   window.open(url, "_blank", "noopener");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-card.insertAdjacentHTML("beforeend", `
-    <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
-        ${device.cameraname || device.controllername || device.archivername || device.servername || "Unknown Device"}
-    </h3>
-
-    <div class="card-content">
-        <p class="device-type-label ${deviceType}" style="font-size: 1.05rem; font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: 600; margin-bottom: 10px;">
-            <strong><i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> ${deviceType.toUpperCase()}</strong>
-        </p>
-
-        <p style="font-size: 1.1rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;">
-            <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
-            <span 
-                class="device-ip" 
-                style="font-weight: 900; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3); font-family: 'Times New Roman', Times, serif;"
-                onclick="copyToClipboard('${deviceIP}')"
-                title="Click to copy IP"
-            >
-                ${deviceIP}
-            </span>
-        </p>
-
-        <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 6px;">
-            <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-            <span style="font-size: 1rem; font-weight: bold; color: rgb(8, 9, 9); margin-left: 12px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${device.location || "N/A"}</span>
-        </p>
-
-        <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif;">
-            <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
-            <span style="font-weight: bold; color: rgb(7, 7, 7); margin-left: 4px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${city}</span>
-        </p>
-
-        ${
-          deviceType.includes("camera")
-            ? `<button class="open-camera-btn"
-                        onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}')"
-                        style="margin-top:10px;background:#1976d2;color:#fff;border:none;
-                               border-radius:6px;padding:8px 12px;cursor:pointer;font-weight:600;">
-                  <i class="fas fa-external-link-alt" style="margin-right:6px;"></i>
-                  Open Camera
-               </button>`
-            : ""
-        }
-    </div>
-`);
-
