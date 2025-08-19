@@ -1,3 +1,12 @@
+script.js:1729 Uncaught SyntaxError: Failed to execute 'open' on 'Window': Unable to open a window with invalid URL 'http://%2010.64.23.71/'.
+
+    at openCamera (script.js:1729:10)
+    at HTMLButtonElement.onclick (index.html:1:1)
+openCamera	@	script.js:1729
+onclick	@	index.html:1
+
+
+
 function buildUrlFromHints(ip, cameraname = "") {
   // 1) Always try direct IP first
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
