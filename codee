@@ -1,36 +1,10 @@
-know verkada camare like this url, know this opne by cameraname 
-
-
-https://wu.command.verkada.com/login#redirect=%2Fcameras%2F61950b60-c4a7-4bdc-a2d6-8af8e265e1f7%2F
-
-https://wu.command.verkada.com/cameras/8db932a8-f609-4e81-9e02-7ef01ee237a5/
-
-https://wu.command.verkada.com/cameras/29705333-9f58-487a-820e-c65a09b5942b/
-https://wu.command.verkada.com/cameras/06f21d3e-3075-4793-859a-2bf90736f839/
-https://wu.command.verkada.com/cameras/37b5977b-20fb-4e27-9d19-1158335898b7/
-
-
-
-function buildUrlFromHints(ip, cameraname = "") {
-  ip = ip.trim(); // remove leading/trailing spaces
-
-  // 1) Always try direct IP first
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
-    return `http://${ip}`;  // Open exactly like typing in browser
-  }
-
-  // 2) Optional: Brand-based detection (if IP not valid)
-  const name = (cameraname || "").toLowerCase();
-  if (/\bverkada\b/.test(name))   return `https://${ip}/#/login`;
-  if (/\bflir\b/.test(name))      return `http://${ip}/control/userimage.html`;
-  if (/\bhoneywell\b/.test(name)) return `http://${ip}/www/index.html`;
-  if (/axis/.test(name))          return `http://${ip}/view/view.shtml`;
-
-  // 3) Fallback (just open IP)
-  return `http://${ip}`;
-}
-
-function openCamera(ip, name) {
-  const url = buildUrlFromHints(ip, name);
-  window.open(url, "_blank", "noopener");
-}
+${
+          deviceType.includes("camera")
+            ? `<button class="open-camera-btn"
+                        onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}')"
+                        style="margin-top:10px;color:#000;border:none;  background: #2894bf; cursor: pointer;  text-align: center; border-radius: 2px;">
+                        <i class="bi bi-webcam" style="margin-left: 4px;"></i>
+                </button>`
+                  
+            : ""
+        }
