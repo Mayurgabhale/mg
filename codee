@@ -1,3 +1,31 @@
+if (deviceType.includes("camera")) {
+  const openWrap = document.createElement("div");
+  openWrap.style.marginTop = "10px";
+  openWrap.innerHTML = `
+    <button class="open-camera-btn"
+            style="background:#1976d2;color:#fff;border:none;border-radius:6px;
+                   padding:8px 12px;cursor:pointer;font-weight:600;">
+      <i class="fas fa-external-link-alt" style="margin-right:6px;"></i>
+      Open Camera
+    </button>
+  `;
+  card.appendChild(openWrap);
+
+  const btn = openWrap.querySelector(".open-camera-btn");
+  const cameraname = device.cameraname || device.controllername || device.archivername || device.servername || "";
+  btn.addEventListener("click", () => openCamera(deviceIP, cameraname));
+}
+
+
+
+
+
+
+
+
+
+
+
 // --- Camera URL auto-detect helpers ---
 function buildUrlFromHints(ip, cameraname = "") {
   const name = (cameraname || "").toLowerCase();
