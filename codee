@@ -1,23 +1,18 @@
-http://10.199.9.146/www/index.html this wrong 
-http://10.199.9.146/control/userimage.html this is correct 
-
-
-
 function buildUrlFromHints(ip, cameraname = "") {
-  const name = (cameraname || "").toLowerCase();
+  // 1) Always try direct IP first
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+    return `http://${ip}`;  // Open exactly like typing in browser
+  }
 
-  // Brand-based detection
-  if (/\bverkada\b/.test(name)) return `https://${ip}/#/login`;
+  // 2) Optional: Brand-based detection (if IP not valid)
+  const name = (cameraname || "").toLowerCase();
+  if (/\bverkada\b/.test(name))  return `https://${ip}/#/login`;
   if (/\bflir\b/.test(name))     return `http://${ip}/control/userimage.html`;
   if (/\bhoneywell\b/.test(name))return `http://${ip}/www/index.html`;
-  if (/\baxis\b/.test(name))     return `http://${ip}/view/view.shtml`;
+  if (/axis/.test(name))         return `http://${ip}/view/view.shtml`;
 
-  // Subnet heuristics (optional)
-//   if (ip.startsWith("10.199.16.")) return `http://${ip}/view/view.shtml`;
-//   if (ip.startsWith("10.199.11.")) return `https://${ip}/#/login`;
-
-  // Default fallback
-  return `http://${ip}/www/index.html`;
+  // 3) Fallback (just open IP)
+  return `http://${ip}`;
 }
 
 function openCamera(ip, name) {
