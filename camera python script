@@ -34,3 +34,53 @@ if camera_url:
     webbrowser.open(camera_url)
 else:
     print(f"Could not detect platform for {ip}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function buildUrlFromHints(ip, cameraname = "") {
+  // 1) Always try direct IP first
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+    return `http://${ip}`;  // Open exactly like typing in browser
+  }
+
+  // 2) Optional: Brand-based detection (if IP not valid)
+  const name = (cameraname || "").toLowerCase();
+  if (/\bverkada\b/.test(name))  return `https://${ip}/#/login`;
+  if (/\bflir\b/.test(name))     return `http://${ip}/control/userimage.html`;
+  if (/\bhoneywell\b/.test(name))return `http://${ip}/www/index.html`;
+  if (/axis/.test(name))         return `http://${ip}/view/view.shtml`;
+
+  // 3) Fallback (just open IP)
+  return `http://${ip}`;
+}
+
+function openCamera(ip, name) {
+  const url = buildUrlFromHints(ip, name);
+  window.open(url, "_blank", "noopener");
+}
