@@ -1,3 +1,16 @@
+know verkada camare like this url, know this opne by cameraname 
+
+
+https://wu.command.verkada.com/login#redirect=%2Fcameras%2F61950b60-c4a7-4bdc-a2d6-8af8e265e1f7%2F
+
+https://wu.command.verkada.com/cameras/8db932a8-f609-4e81-9e02-7ef01ee237a5/
+
+https://wu.command.verkada.com/cameras/29705333-9f58-487a-820e-c65a09b5942b/
+https://wu.command.verkada.com/cameras/06f21d3e-3075-4793-859a-2bf90736f839/
+https://wu.command.verkada.com/cameras/37b5977b-20fb-4e27-9d19-1158335898b7/
+
+
+
 function buildUrlFromHints(ip, cameraname = "") {
   ip = ip.trim(); // remove leading/trailing spaces
 
