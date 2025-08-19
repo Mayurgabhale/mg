@@ -1,40 +1,48 @@
+// --- Camera URL auto-detect helpers ---
+function buildUrlFromHints(ip, cameraname = "") {
+  const name = (cameraname || "").toLowerCase();
 
-                    card.insertAdjacentHTML("beforeend", `
-                                <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700;  font-family: 'Times New Roman', Times, serif;, sans-serif; margin-bottom: 10px;">
-                                    ${device.cameraname || device.controllername || device.archivername || device.servername || "Unknown Device"}
-                                </h3>
+  // brand cues inside controllername / cameraname
+  if (/\bverkada\b/.test(name)) return `https://${ip}/#/login`;
+  if (/\bflir\b/.test(name))     return `http://${ip}/control/userimage.html`;
+  if (/\bhoneywell\b/.test(name))return `http://${ip}/www/index.html`;
+  if (/\baxis\b/.test(name))     return `http://${ip}/view/view.shtml`;
 
-                                <div class="card-content">
-                                <p class="device-type-label ${deviceType}" style="font-size: 1.05rem;  font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: 600; margin-bottom: 10px;">
+  // subnet heuristics (optional, edit to your network)
+  if (ip.startsWith("10.199.16.")) return `http://${ip}/view/view.shtml`;
+  if (ip.startsWith("10.199.11.")) return `https://${ip}/#/login`;
 
-                                <strong><i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;    "></i> ${deviceType.toUpperCase()}</strong>
-                                    </p>
+  // general fallback
+  return `http://${ip}/www/index.html`;
+}
 
-                            <p style="font-size: 1.1rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;">
-                                <strong style="color:rgb(8, 8, 8);">
-                                    <i class="fas fa-network-wired" style="margin-right: 6px;"></i>
-                                </strong>
-                                <span 
-                                    class="device-ip" 
-                                    style="font-weight: 900; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3); font-family: 'Times New Roman', Times, serif;
-" 
-                                    onclick="copyToClipboard('${deviceIP}')"
-                                    title="Click to copy IP"
-                                >
-                                    ${deviceIP}
-                                </span>
-                            </p>
+function openCamera(ip, name) {
+  const url = buildUrlFromHints(ip, name);
+  window.open(url, "_blank", "noopener");
+}
 
-                                <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 6px;">
-                                    <strong style="color: rgb(13, 13, 13);;"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-                                    <span style=" font-size: 1rem; font-weight: bold; color: rgb(8, 9, 9);  margin-left: 12px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${device.location || "N/A"}</span>
-                                </p>
 
-                                <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif;">
-                                    <strong style="color: rgb(215, 217, 222);;"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
-                                    <span style="font-weight: bold; color: rgb(7, 7, 7); margin-left: 4px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${city}</span>
-                                </p>
 
-                                </div>
 
-                            `);
+
+
+.....
+
+
+if (deviceType.includes("camera")) {
+  const openWrap = document.createElement("div");
+  openWrap.style.marginTop = "10px";
+  openWrap.innerHTML = `
+    <button class="open-camera-btn"
+            style="background:#1976d2;color:#fff;border:none;border-radius:6px;
+                   padding:8px 12px;cursor:pointer;font-weight:600;">
+      <i class="fas fa-external-link-alt" style="margin-right:6px;"></i>
+      Open Camera
+    </button>
+  `;
+  card.appendChild(openWrap);
+
+  const btn = openWrap.querySelector(".open-camera-btn");
+  const cameraname = device.cameraname || device.controllername || device.archivername || device.servername || "";
+  btn.addEventListener("click", () => openCamera(deviceIP, cameraname));
+}
