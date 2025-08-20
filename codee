@@ -1,3 +1,14 @@
+<button class="open-camera-btn"
+        onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}', '${device.hyperlink || ""}')"
+        title="Open Camera"
+        style="border:none; cursor:pointer; font-weight:900; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+</button>
+
+
+
+...
+
 chek all code and chekc why hyperlink are not opne
 
 cameraname 	Ip_address	Location	City	hyperlink	Remark		
