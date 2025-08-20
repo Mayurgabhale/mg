@@ -1,3 +1,10 @@
+Opening URL: http://10.21.6.80
+script.js:1738 Opening URL: http://10.21.6.74
+
+
+
+
+
 function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
     ip = (ip || "").trim();
     hyperlink = (hyperlink || "").trim();   // clean Excel export
