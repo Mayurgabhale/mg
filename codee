@@ -1,3 +1,170 @@
+chek all code and chekc why hyperlink are not opne
+
+cameraname 	Ip_address	Location	City	hyperlink	Remark		
+IN-PNQ-PF- Green Zone UPS Room 10.199.10.13	10.199.10.13	APAC	Pune Podium
+HQ-6-EUC STORAGE ENTRANCE	10.58.7.107	NAMER	Denver Colorado		
+HQ-6-FITNESS SOUTH WEST	10.58.7.127	NAMER	Denver Colorado		
+HQ-6-WUNDERBAR CENTER	10.58.7.103	NAMER	Denver Colorado		
+Backyard East Facing	10.1.10.249	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/9292172b-4c44-4bef-9a10-72d97951f14f	
+Driveway South Facing	10.1.10.188	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/3634e578-1e31-4387-8a55-244c1156dd0f	
+Patio West Facing	10.1.10.12	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/a2c2d99c-d308-41da-a9ca-16f7c98995aa	
+Garage South East Facing	10.1.10.182	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/c505e4f1-9643-4e4d-aea1-74c7cf2f9383	
+Lower Patio South West Facing	10.1.10.183	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/c7809512-9df7-416a-9cc9-a331e42ec28b	 Not accessible 
+Front Door	10.1.10.5	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/b60ca706-9316-452b-83ce-03ca69859ffe	Not accessible 
+Top porch	10.1.10.235	NAMER	EP- Castle Pines	https://wu.command.verkada.com/cameras/1bae910f-09d6-4540-b1e1-1eb77d1c67da	Not accessible 
+Main Entry	10.21.6.80	NAMER	NEW YORK 	https://wu.command.verkada.com/cameras/734217db-f619-4036-86a3-917313e05fa5	Not accessible 
+Cafe	10.21.6.72	NAMER	NEW YORK 	https://wu.command.verkada.com/cameras/4def77da-d0b9-4a5c-8cf0-14fdb38d04c1	Not accessible 
+
+C:\Users\W0024618\Desktop\Backend\src\services\excelService.js
+
+
+ 
+const fs = require("fs");
+const xlsx = require("xlsx");
+const path = require("path");
+ const pLimit = require("p-limit");
+ const { pingHost } = require("./pingService");
+ 
+const { DateTime } = require("luxon");
+ 
+// Excel paths
+const archiverPath = path.join(__dirname, "../data/ArchiverData.xlsx");
+const controllerPath = path.join(__dirname, "../data/ControllerData.xlsx");
+const cameraPath = path.join(__dirname, "../data/CameraData.xlsx");
+const serverPath = path.join(__dirname, "../data/ServerData.xlsx");
+ 
+// In‑memory cache
+let allData = {};
+ 
+// Helper: prune old entries
+function pruneOldEntries(entries, days = 30) {
+  const cutoff = DateTime.now().minus({ days }).toMillis();
+  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+}
+ 
+// Load Excel sheets once
+function loadExcelData() {
+  if (Object.keys(allData).length) return;
+  const loadSheet = file => {
+    const wb = xlsx.readFile(file);
+    const rows = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    return rows.map(r => {
+      const norm = {};
+      Object.entries(r).forEach(([k, v]) => {
+        norm[k.trim().toLowerCase().replace(/\s+/g, "_")] = v;
+      });
+      norm.history = [];
+      return norm;
+    });
+  };
+  allData = {
+    archivers: loadSheet(archiverPath),
+    controllers: loadSheet(controllerPath),
+    cameras: loadSheet(cameraPath),
+    servers: loadSheet(serverPath),
+  };
+  console.log("Excel Data Loaded:", Object.keys(allData));
+}
+loadExcelData();
+ 
+// Build IP→region map
+const ipRegionMap = {};
+Object.values(allData).flat().forEach(dev => {
+  if (dev.ip_address && dev.location) {
+    ipRegionMap[dev.ip_address] = dev.location.toLowerCase();
+  }
+});
+ 
+// Fetch all IPs
+function fetchAllIpAddress() {
+  return Object.values(allData)
+    .flat()
+    .map(d => d.ip_address)
+    .filter(Boolean);
+}
+ 
+// Ping helpers
+ const cache = new Map();
+ async function pingDevice(ip) {
+    if (!ip) return "IP Address Missing";
+     return await pingHost(ip);
+   }
+ 
+ cache.clear();
+ 
+ async function pingDevices(devices) {
+   //cache.clear();
+    const limit = pLimit(20);
+    await Promise.all(
+      devices.map(dev =>
+        limit(async () => {
+          const status = cache.get(dev.ip_address) || await pingDevice(dev.ip_address);
+          cache.set(dev.ip_address, status);
+          dev.status = status;
+        })
+      )
+    );
+  }
+ 
+ 
+// Summary calculators
+function calculateSummary(groups) {
+  const summary = {};
+  for (const [k, list] of Object.entries(groups)) {
+    const total = list.length;
+    const online = list.filter(d => d.status === "Online").length;
+    summary[k] = { total, online, offline: total - online };
+  }
+  return {
+    totalDevices: Object.values(summary).reduce((s, g) => s + g.total, 0),
+    totalOnlineDevices: Object.values(summary).reduce((s, g) => s + g.online, 0),
+    totalOfflineDevices: Object.values(summary).reduce((s, g) => s + g.offline, 0),
+    ...summary
+  };
+}
+ 
+// Public APIs
+async function fetchGlobalData() {
+  const all = [...allData.cameras, ...allData.archivers, ...allData.controllers, ...allData.servers];
+  await pingDevices(all);
+  return { summary: calculateSummary(allData), details: allData };
+}
+ 
+async function fetchRegionData(regionName) {
+  const filter = list => list.filter(d => d.location?.toLowerCase() === regionName.toLowerCase());
+  const regionDevices = {
+    cameras: filter(allData.cameras),
+    archivers: filter(allData.archivers),
+    controllers: filter(allData.controllers),
+    servers: filter(allData.servers),
+  };
+  await pingDevices([].concat(...Object.values(regionDevices)));
+  return { summary: calculateSummary(regionDevices), details: regionDevices };
+}
+
+
+function getDeviceInfo(ip) {
+  for (const list of Object.values(allData)) {
+    const dev = list.find(d => d.ip_address === ip);
+    if (dev) return dev;
+  }
+  return null;
+}
+
+
+
+ 
+module.exports = {
+  fetchGlobalData,
+  fetchRegionData,
+  fetchAllIpAddress,
+  ipRegionMap,
+  getDeviceInfo,       // ← new
+
+};
+
+
+
 
 
 function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
@@ -29,6 +196,7 @@ function openCamera(ip, name, hyperlink = "") {
     console.log("Opening URL:", url);  // Debug
     window.open(url, "_blank", "noopener");
 }
+
 
 
 
