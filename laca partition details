@@ -1,0 +1,251 @@
+
+
+//C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\pages\PartitionDetail.jsx
+import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+
+import SummaryCard from "../components/SummaryCard";
+import ChartCard from "../components/ChartCard";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErtOverview from "../components/ERTOverview";
+import ertData from "../data/lacaErtMembers.json"
+
+import { fetchLiveSummary, fetchHistory } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup";
+
+import buildingCapacities from "../data/buildingCapacities";
+
+import GroupIcon from "@mui/icons-material/Group";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import PeopleIcon from "@mui/icons-material/People";
+import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
+
+export default function PartitionDetail() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [liveSummary, setLiveSummary] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState("");
+
+  // Auto‐refresh live summary
+  useEffect(() => {
+    let timer;
+    async function loadLive() {
+      const json = await fetchLiveSummary();
+      setLiveSummary(json);
+      setLastUpdate(new Date().toLocaleTimeString());
+    }
+    loadLive();
+    timer = setInterval(loadLive, 1000);
+    return () => clearInterval(timer);
+  }, [partition]);
+
+  // Load historical summary once
+  useEffect(() => {
+    setHistoryLoading(true);
+    fetchHistory(partition).then((json) => {
+      setHistory(json);
+      setHistoryLoading(false);
+    });
+  }, [partition]);
+
+  if (!liveSummary || !history) return <LoadingSpinner />;
+
+  // Totals for cards
+  const lastDay = history.summaryByDate.at(-1);
+  const partToday = lastDay.region;
+  const live = liveSummary.realtime[partition] || {
+    total: 0,
+    Employee: 0,
+    Contractor: 0,
+    TempBadge: 0,
+    floors: {},
+  };
+
+  // Build floorEntries with capacity
+  const floorEntries = Object.entries(live.floors).map(([floor, cnt]) => {
+    const name     = floor.trim();
+    const capacity = buildingCapacities[name] ?? 0;
+    const pct      = capacity ? Math.round((cnt / capacity) * 100) : 0;
+
+    return {
+      name,
+      Headcount: cnt,
+      Capacity:  capacity,
+      breakdown: {
+        Headcount: cnt,
+      'Total Seat': capacity,           // renamed
+       Usage:        pct + '%',          // renamed
+      },
+    };
+  });
+
+  return (
+    <>
+      <Header />
+
+      <Box component="main" sx={{ pt: 1, pb: 1 }}>
+        <Container maxWidth={false} disableGutters>
+          {/* Back button */}
+          <Box display="flex" alignItems="center" mb={1} sx={{ px: "20px" }}>
+            <Button size="small" onClick={() => navigate(-1)}>
+              ← Back
+            </Button>
+          </Box>
+
+          {/* Six‐card partition summary */}
+         <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+  {[
+    {
+      title: "Today's Total Headcount",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.total,
+      icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+      border: '#FFB300',
+    },
+    {
+      title: "Today's Employees Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Employee,
+      icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+      border: '#8BC34A',
+    },
+    {
+      title: "Today's Contractors Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+      border: '#E57373',
+    },
+    {
+      title: "Realtime Headcount",
+      value: live.total,
+      icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+      border: '#FFD180',
+    },
+    {
+      title: "Realtime Employees Count",
+      value: live.Employee,
+      icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+      border: '#AED581',
+    },
+    {
+      title: "Realtime Contractors Count",
+      value: live.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+      border: '#EF5350',
+    },
+  ].map((card) => (
+    <Box key={card.title} sx={{ flex: "1 1 calc(16.66% - 8px)" }}>
+      <SummaryCard
+        title={card.title}
+        total={card.value}
+        stats={[]}
+        icon={card.icon}
+        sx={{
+          height: 140,
+          border: `2px solid ${card.border}`,
+        }}
+      />
+    </Box>
+  ))}
+</Box>
+          {/* Floor‐capacity chart */}
+          {/* <Box mb={4} sx={{ px: "20px", p: 2, border: "2px solid #FFC107" }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Typography variant="h6">Live Floor Headcount against Occupancy</Typography>
+              <Typography variant="body2" color="textSecondary">
+                Last updated: {lastUpdate}
+              </Typography>
+            </Box>
+
+            <ChartCard
+              data={floorEntries}
+              dataKey="Headcount"
+              chartHeight={320}
+              colors={{ head: "#28B463", cap: "#FDDA0D" }}
+              axisProps={{
+                xAxis: { angle: -0, textAnchor: "end", tick: { fill: "#fff" } },
+                yAxis: { tick: { fill: "#fff" } },
+              }}
+            />
+          </Box> */}
+
+
+          {/* Floor‐capacity chart + ERT Overview for Costa Rica */}
+{partition === "CR.Costa Rica Partition" ? (
+  <Box
+    display="flex"
+    flexDirection={{ xs: "column", md: "row" }}
+    gap={2}
+    px="20px"
+    mb={4}
+  >
+    {/* Left: Floor Chart */}
+    <Box flex={1} sx={{ p: 2, border: "2px solid #FFC107" }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+        <Typography variant="h6">Live Floor Headcount against Occupancy</Typography>
+        <Typography variant="body2" color="textSecondary">
+          Last updated: {lastUpdate}
+        </Typography>
+      </Box>
+
+      <ChartCard
+        data={floorEntries}
+        dataKey="Headcount"
+        chartHeight={320}
+        colors={{ head: "#28B463", cap: "#FDDA0D" }}
+        axisProps={{
+          xAxis: { angle: -0, textAnchor: "end", tick: { fill: "#fff" } },
+          yAxis: { tick: { fill: "#fff" } },
+        }}
+      />
+    </Box>
+
+    {/* Right: ERT Overview */}
+    <Box flex={1} sx={{ backgroundColor: "#1c1c1c", borderRadius: "8px" }}>
+      <ErtOverview ertData={ertData} />
+    </Box>
+  </Box>
+) : (
+  // For other partitions, just show the chart
+  <Box mb={4} sx={{ px: "20px", p: 2, border: "2px solid #FFC107" }}>
+    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+      <Typography variant="h6">Live Floor Headcount against Occupancy</Typography>
+      <Typography variant="body2" color="textSecondary">
+        Last updated: {lastUpdate}
+      </Typography>
+    </Box>
+
+    <ChartCard
+      data={floorEntries}
+      dataKey="Headcount"
+      chartHeight={320}
+      colors={{ head: "#28B463", cap: "#FDDA0D" }}
+      axisProps={{
+        xAxis: { angle: -0, textAnchor: "end", tick: { fill: "#fff" } },
+        yAxis: { tick: { fill: "#fff" } },
+      }}
+    />
+  </Box>
+)}
+
+
+
+
+
+        </Container>
+      </Box>
+
+      <Footer />
+    </>
+  );
+}
