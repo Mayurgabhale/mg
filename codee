@@ -1,134 +1,9 @@
-export default function LacaERTOverview() {
-  const [members, setMembers] = useState([]);
-+ const [filterType, setFilterType] = useState("total"); // "total" | "available"
+this i want to in center display 
+  ? "Available Costa Rica ERT Members"
+           : "All Costa Rica ERT Members"}
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-        const liveData = await res.json();
-        const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
 
-        const merged = membersData["Team Members"].map((m) => {
-          const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-          const inLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-              : "";
-          const outLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-              : "";
-
-          return {
-            ...m,
-            present: !!live.EmployeeID,
-+           direction: live.Direction || "",
-            inLocation,
-            outLocation,
-            door: live.Door || "",
-            phone: m.phone || "",
-          };
-        });
-
-        const sorted = merged.sort((a, b) =>
-          a.present === b.present ? 0 : a.present ? -1 : 1
-        );
-
-        setMembers(sorted);
-      } catch (err) {
-        console.error("Error fetching live data:", err);
-      }
-    }
-
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const totalCount = useMemo(() => members.length, [members]);
-  const availableCount = useMemo(
-    () => members.filter((m) => m.present).length,
-    [members]
-  );
-
-+ // Filter members to display based on selection
-+ const displayedMembers =
-+   filterType === "available"
-+     ? members.filter((m) => m.present)
-+     : members;
-
-  return (
-    <>
-      <Header />
-      {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
-      <Row className="g-3 mb-4">
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100"
-            style={{ backgroundColor: "#061f38", cursor: "pointer" }}
-+           onClick={() => setFilterType("total")}
-          >
-            <Card.Body className="py-3">
-              <FaLayerGroup
-                size={28}
-                style={{ color: "#7F8C8D" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Total Members
-              </h5>
-              <h2
-                className="m-0"
-                style={{
-                  color: "#fff",
-                  fontWeight: "600",
-+                 textDecoration: filterType === "total" ? "underline" : "none",
-                }}
-              >
-                {totalCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100"
-            style={{ backgroundColor: "#061f38", cursor: "pointer" }}
-+           onClick={() => setFilterType("available")}
-          >
-            <Card.Body className="py-3">
-              <FaUsers
-                size={28}
-                style={{ color: "#1ABC9C" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Available Members
-              </h5>
-              <h2
-                className="m-0"
-                style={{
-                  color: "#1ABC9C",
-                  fontWeight: "600",
-+                 textDecoration: filterType === "available" ? "underline" : "none",
-                }}
-              >
-                {availableCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* === MEMBERS CARD === */}
-      <Card
-        className="shadow-sm"
-        style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
-      >
-        <Card.Header
+<Card.Header
           style={{
             borderBottom: "1px solid #F1C40F",
             fontWeight: "600",
@@ -139,16 +14,9 @@ export default function LacaERTOverview() {
             color: "#fff",
           }}
         >
-          <FaUsers style={{ color: "#F1C40F" }} />
--         Costa Rica ERT Team Members
-+         {filterType === "available"
-+           ? "Available Costa Rica ERT Members"
-+           : "All Costa Rica ERT Members"}
+          <FaUsers style={{ color: "#F1C40F", alignItems: "center", textAlign:"center" }} />
+          {/* Costa Rica ERT Team Members */}
+                   {filterType === "available"
+           ? "Available Costa Rica ERT Members"
+           : "All Costa Rica ERT Members"}
         </Card.Header>
-
-        <Card.Body style={{ padding: "1.5rem" }}>
--         {members.length > 0 ? (
-+         {displayedMembers.length > 0 ? (
-            <Row className="g-3 three-col-divider">
--             {members.map((m, i) => {
-+             {displayedMembers.map((m, i) => {
