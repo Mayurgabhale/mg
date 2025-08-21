@@ -1,4 +1,104 @@
+// src/components/LacaERTOverview.jsx
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Card, Row, Col, Badge } from "react-bootstrap";
+import {
+  FaEnvelopeOpenText,
+  FaMapMarkerAlt,
+  FaUsers,
+  FaMobileAlt,
+  FaLayerGroup,
+} from "react-icons/fa";
+import LoadingSpinner from "./LoadingSpinner";
+import { mergeMembers } from "../utils/mergeMembers";
+import "../App.css";
 
+export default function LacaERTOverview() {
+  const [members, setMembers] = useState([]);
+  const [filterType, setFilterType] = useState("total");
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
+      const liveData = await res.json();
+      const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
+      setMembers(mergeMembers(liveDetails));
+    } catch (err) {
+      console.error("Error fetching live data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const totalCount = useMemo(() => members.length, [members]);
+  const availableCount = useMemo(
+    () => members.filter((m) => m.present).length,
+    [members]
+  );
+
+  const displayedMembers =
+    filterType === "available" ? members.filter((m) => m.present) : members;
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <>
+      {/* === TOP SUMMARY CARDS === */}
+      <Row className="g-3 mb-4">
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100 hover-card"
+            style={{ backgroundColor: "#061f38", cursor: "pointer" }}
+            onClick={() => setFilterType("total")}
+          >
+            <Card.Body className="py-3">
+              <FaLayerGroup size={28} style={{ color: "#7F8C8D" }} className="mb-2" />
+              <h5 className="mb-1" style={{ color: "#fff" }}>
+                Total Members
+              </h5>
+              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
+                {totalCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100 hover-card"
+            style={{ backgroundColor: "#061f38", cursor: "pointer" }}
+            onClick={() => setFilterType("available")}
+          >
+            <Card.Body className="py-3">
+              <FaUsers size={28} style={{ color: "#1ABC9C" }} className="mb-2" />
+              <h5 className="mb-1" style={{ color: "#fff" }}>
+                Available Members
+              </h5>
+              <h2 className="m-0" style={{ color: "#1ABC9C", fontWeight: "600" }}>
+                {availableCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* === MEMBERS CARD === */}
+      {/* ... your existing card rendering ... */}
+    </>
+  );
+}
+
+
+
+
+
+
+...
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, Row, Col, Badge } from "react-bootstrap";
