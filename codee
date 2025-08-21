@@ -1,9 +1,290 @@
-  <Row className="g-3 mb-4">
+//C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\pages\PartitionDetail.jsx
+import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+
+import SummaryCard from "../components/SummaryCard";
+import ChartCard from "../components/ChartCard";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+import { fetchLiveSummary, fetchHistory } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup";
+
+import buildingCapacities from "../data/buildingCapacities";
+
+
+
+export default function PartitionDetail() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [liveSummary, setLiveSummary] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState("");
+
+  // Auto‐refresh live summary
+  useEffect(() => {
+    let timer;
+    async function loadLive() {
+      const json = await fetchLiveSummary();
+      setLiveSummary(json);
+      setLastUpdate(new Date().toLocaleTimeString());
+    }
+    loadLive();
+    timer = setInterval(loadLive, 1000);
+    return () => clearInterval(timer);
+  }, [partition]);
+
+  // Load historical summary once
+  useEffect(() => {
+    setHistoryLoading(true);
+    fetchHistory(partition).then((json) => {
+      setHistory(json);
+      setHistoryLoading(false);
+    });
+  }, [partition]);
+
+  if (!liveSummary || !history) return <LoadingSpinner />;
+
+  // Totals for cards
+  const lastDay = history.summaryByDate.at(-1);
+  const partToday = lastDay.region;
+  const live = liveSummary.realtime[partition] || {
+    total: 0,
+    Employee: 0,
+    Contractor: 0,
+    TempBadge: 0,
+    floors: {},
+  };
+
+  // Build floorEntries with capacity
+  const floorEntries = Object.entries(live.floors).map(([floor, cnt]) => {
+    const name     = floor.trim();
+    const capacity = buildingCapacities[name] ?? 0;
+    const pct      = capacity ? Math.round((cnt / capacity) * 100) : 0;
+
+    return {
+      name,
+      Headcount: cnt,
+      Capacity:  capacity,
+      breakdown: {
+        Headcount: cnt,
+      'Total Seat': capacity,           // renamed
+       Usage:        pct + '%',          // renamed
+      },
+    };
+  });
+
+  return (
+    <>
+      <Header />
+
+      <Box component="main" sx={{ pt: 1, pb: 1 }}>
+        <Container maxWidth={false} disableGutters>
+          {/* Back button */}
+          <Box display="flex" alignItems="center" mb={1} sx={{ px: "20px" }}>
+            <Button size="small" onClick={() => navigate(-1)}>
+              ← Back
+            </Button>
+          </Box>
+
+          {/* Six‐card partition summary */}
+         <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+  {[
+    {
+      title: "Today's Total Headcount",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.total,
+      icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+      border: '#FFB300',
+    },
+    {
+      title: "Today's Employees Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Employee,
+      icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+      border: '#8BC34A',
+    },
+    {
+      title: "Today's Contractors Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+      border: '#E57373',
+    },
+    {
+      title: "Realtime Headcount",
+      value: live.total,
+      icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+      border: '#FFD180',
+    },
+    {
+      title: "Realtime Employees Count",
+      value: live.Employee,
+      icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+      border: '#AED581',
+    },
+    {
+      title: "Realtime Contractors Count",
+      value: live.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+      border: '#EF5350',
+    },
+  ].map((card) => (
+    <Box key={card.title} sx={{ flex: "1 1 calc(16.66% - 8px)" }}>
+      <SummaryCard
+        title={card.title}
+        total={card.value}
+        stats={[]}
+        icon={card.icon}
+        sx={{
+          height: 140,
+          border: `2px solid ${card.border}`,
+        }}
+      />
+    </Box>
+  ))}
+</Box>
+          {/* Floor‐capacity chart */}
+          <Box mb={4} sx={{ px: "20px", p: 2, border: "2px solid #FFC107" }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Typography variant="h6">Live Floor Headcount against Occupancy</Typography>
+              <Typography variant="body2" color="textSecondary">
+                Last updated: {lastUpdate}
+              </Typography>
+            </Box>
+
+            <ChartCard
+              data={floorEntries}
+              dataKey="Headcount"
+              chartHeight={320}
+              colors={{ head: "#28B463", cap: "#FDDA0D" }}
+              axisProps={{
+                xAxis: { angle: -0, textAnchor: "end", tick: { fill: "#fff" } },
+                yAxis: { tick: { fill: "#fff" } },
+              }}
+            />
+          </Box>
+        </Container>
+      </Box>
+
+      <Footer />
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+REad the above code and in below code add only loding spinner, only not chane other carefuuly 
+
+
+
+
+
+
+
+// src/components/LacaERTOverview.jsx
+import React, { useState, useEffect, useMemo } from "react";
+import { Card, Row, Col, Badge } from "react-bootstrap";
+import {
+  FaEnvelopeOpenText,
+  FaMapMarkerAlt,
+  FaUsers,
+  FaMobileAlt,
+  FaLayerGroup,
+} from "react-icons/fa";
+import membersData from "../data/lacaErtMembers.json";
+
+import { lookupFloor } from "../utils/floorLookup";
+import '../App.css';
+
+
+export default function LacaERTOverview() {
+  const [members, setMembers] = useState([]);
+   const [filterType, setFilterType] = useState("total"); // "total" | "available"
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
+        const liveData = await res.json();
+        const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
+
+        const merged = membersData["Team Members"].map((m) => {
+          const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
+          const inLocation =
+            live.PartitionName2 && live.Door
+              ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
+              : "";
+          const outLocation =
+            live.PartitionName2 && live.Door
+              ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
+              : "";
+
+          return {
+            ...m,
+            present: !!live.EmployeeID,
+               direction: live.Direction || "",
+            inLocation,
+            outLocation,
+            door: live.Door || "",
+            phone: m.phone || "",
+          };
+        });
+
+        const sorted = merged.sort((a, b) =>
+          a.present === b.present ? 0 : a.present ? -1 : 1
+        );
+
+        setMembers(sorted);
+      } catch (err) {
+        console.error("Error fetching live data:", err);
+      }
+    }
+
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const totalCount = useMemo(() => members.length, [members]);
+  const availableCount = useMemo(
+    () => members.filter((m) => m.present).length,
+    [members]
+  );
+
+   // Filter members to display based on selection
+ const displayedMembers =
+   filterType === "available"
+     ? members.filter((m) => m.present)
+     : members;
+
+
+  return (
+    <>
+     
+      {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
+      <Row className="g-3 mb-4">
 
         <Col xs={12} md={6}>
           <Card
-            className="text-center shadow-sm h-100"
+            className="text-center shadow-sm h-100 hover-card"
             style={{
+              // backgroundColor: "#061f38",
               backgroundColor: "#061f38",
                cursor: "pointer"
               
@@ -29,10 +310,11 @@
 
         <Col xs={12} md={6}>
           <Card
-            className="text-center shadow-sm h-100"
+            className="text-center shadow-sm h-100 hover-card"
             style={{
               backgroundColor: "#061f38",
                cursor: "pointer"
+               
 
             }}
               onClick={() => setFilterType("available")}
@@ -56,3 +338,138 @@
           </Card>
         </Col>
       </Row>
+
+      {/* === MEMBERS CARD (Black theme, yellow border, 3-column layout) === */}
+      <Card
+        className="shadow-sm"
+        style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
+      >
+        <Card.Header
+          style={{
+            borderBottom: "1px solid #F1C40F",
+            fontWeight: "600",
+            display: "flex",
+            fontSize:"20px",
+            justifyContent:"center",
+            alignItems: "center",
+            textAlign:"center",
+            gap: "10px",
+            color: "#fff",
+          }}
+        >
+          <FaUsers style={{ color: "#F1C40F", alignItems: "center", textAlign:"center" }} />
+          {/* Costa Rica ERT Team Members */}
+                   {filterType === "available"
+           ? "Available Costa Rica ERT Members"
+           : "All Costa Rica ERT Members"}
+        </Card.Header>
+
+        <Card.Body style={{ padding: "1.5rem" }}>
+      
+                   {displayedMembers.length > 0 ? (
+            // ⬇️ add the three-col-divider class here
+            <Row className="g-3 three-col-divider">
+             
+                          {displayedMembers.map((m, i) => {
+                const isAway =
+                  m.present === false ||
+                  (m.direction === "OutDirection" &&
+                    m.outLocation.trim().toLowerCase() === "out of office");
+
+                const location = m.present
+                  ? m.inLocation || "Unknown Zone"
+                  : "Away";
+
+                return (
+                  <Col xs={12} md={6} lg={4} key={i}>
+                    <div
+                      className="mb-3 pb-2"
+                      style={{
+                        borderBottom: "0.5px solid rgb(86, 86, 85)",
+                        color: "#fff",
+                      }}
+                    >
+                      {/* === NAME + STATUS === */}
+                      <div className="d-flex justify-content-between align-items-center">
+                        <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
+                          {m.name}{" "}
+                          <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
+                            ({m.emp_id})
+                          </span>
+                        </h5>
+
+                        <Badge
+                          bg={!isAway ? "success" : "danger"}
+                          pill
+                          style={{ marginBottom: "0.8rem" }}
+                        >
+                          {!isAway ? "Available" : "Away"}
+                        </Badge>
+                      </div>
+
+                      {/* === Email === */}
+                      <div
+                        className="d-flex align-items-center mt-2 mb-1"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        <FaEnvelopeOpenText
+                          className="me-2"
+                          style={{ color: "#3498DB", minWidth: "16px" }}
+                        />
+                        <a
+                          href={`mailto:${m.email}`}
+                          style={{ color: "#2980B9", textDecoration: "none" }}
+                        >
+                          {m.email}
+                        </a>
+                      </div>
+
+                      {/* === Phone === */}
+                      {m.phone && (
+                        <div
+                          className="d-flex align-items-center mb-1"
+                          style={{ fontSize: "0.85rem" }}
+                        >
+                          <FaMobileAlt
+                            className="me-2"
+                            style={{ color: "#27AE60", minWidth: "16px" }}
+                          />
+                          <span style={{ color: "#27AE60" }}>{m.phone}</span>
+                        </div>
+                      )}
+
+                      {/* === Location === */}
+                      <div
+                        className="d-flex align-items-center"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        <FaMapMarkerAlt
+                          className="me-2"
+                          style={{ color: "#E74C3C", minWidth: "16px" }}
+                        />
+                        <span style={{ color: "#E74C3C" }}>{location}</span>
+                      </div>
+                    </div>
+                  </Col>
+
+
+
+                );
+              })}
+            </Row>
+          ) : (
+            <div className="text-muted text-center py-2" style={{ color: "#fff" }}>No members</div>
+          )}
+        </Card.Body>
+      </Card>
+
+
+    </>
+  );
+}
+
+
+
+
+
+
