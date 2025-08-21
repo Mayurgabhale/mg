@@ -1,25 +1,11 @@
-{members.map((m, i) => {
--  const isAway =
--    !m.present ||
--    (m.outLocation &&
--      m.outLocation.trim().toLowerCase() === "out of office");
--  const location = m.present
--    ? m.inLocation || "Unknown Zone"
--    : m.outLocation || "Away";
-+  const isAway =
-+    m.present === false ||
-+    (m.outLocation &&
-+      m.outLocation.trim().toLowerCase() === "out of office");
-+
-+  // Show real location if present, otherwise fallback
-+  const location = !isAway
-+    ? m.inLocation || "Unknown Zone"
-+    : "Away";
+One member is avalable but in not show, check each line carefuuly, and show locaion 
 
-
-....
+count show correct 
+Available Members
+1
+but in in below deatins show away 
 http://localhost:3001/api/occupancy/live-summary
-"details": [
+ "details": [
     {
       "LocaleMessageTime": "2025-08-20T06:42:50.000Z",
       "Dateonly": "2025-08-20",
@@ -36,19 +22,6 @@ http://localhost:3001/api/occupancy/live-summary
       "Direction": "InDirection",
       "Floor": "Men Shower"
     },
-    {
-
-
-member is avalable but in frontedn is 
-Andrey Molina (323105)
-Away                  <-------------- away this is wrong 
-Andrey.Molina@wu.com
-xxx-xxx-xxx
-Men Shower
-
-Away show only if outDirection Out of office, that time only away, ok 
-
-
 
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
@@ -201,12 +174,14 @@ export default function LacaERTOverview() {
             <Row className="g-3 three-col-divider">
               {members.map((m, i) => {
                 const isAway =
-                  !m.present ||
+                  m.present === false ||
                   (m.outLocation &&
                     m.outLocation.trim().toLowerCase() === "out of office");
-                const location = m.present
+
+                // Show real location if present, otherwise fallback
+                const location = !isAway
                   ? m.inLocation || "Unknown Zone"
-                  : m.outLocation || "Away";
+                  : "Away";
 
                 return (
 
@@ -370,30 +345,3 @@ export default function LacaERTOverview() {
 
 
 
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\utils\floorLookup.js
-
-// src/utils/floorLookup.js
-import doorMap from './doorMap'; // relative to this file
-
-/**
- * Given a partition, door and direction, return the mapped floor string.
- * Falls back to 'Unmapped' only if there's no matching entry.
- */
-export function lookupFloor(partition, door, direction) {
-  const entry = doorMap.find(d =>
-    d.partition === partition && d.door === door
-  );
-  if (!entry) return 'Unmapped';
-
-
-  // return direction === 'InDirection'
-  //   ? entry.inDirectionFloor
-  //   : entry.outDirectionFloor;
-
-  // trim off any accidental leading/trailing spaces
-  const raw = direction === 'InDirection'
-    ? entry.inDirectionFloor
-    : entry.outDirectionFloor;
-  return raw.trim() || 'Unmapped';
-
-}
