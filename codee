@@ -1,60 +1,30 @@
-i want to change backgroud color: click on card 
-Total Members and   Available Members
-<Row className="g-3 mb-4">
+{/* Total Members Card */}
+<Card
+  className="text-center shadow-sm h-100"
+  style={{
+    backgroundColor: filterType === "total" ? "#0B3D91" : "#061f38", // brighter blue when active
+    cursor: "pointer",
+    border: filterType === "total" ? "2px solid #F1C40F" : "1px solid transparent",
+    transform: filterType === "total" ? "scale(1.05)" : "scale(1)", // + zoom effect
+    transition: "all 0.2s ease-in-out", // smooth animation
+  }}
+  onClick={() => setFilterType("total")}
+>
 
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100"
-            style={{
-              backgroundColor: "#061f38",
-               cursor: "pointer"
-              
-            }}
-            onClick={() => setFilterType("total")}
-            
-          >
-            <Card.Body className="py-3">
-              <FaLayerGroup
-                size={28}
-                style={{ color: "#7F8C8D" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff",textDecoration: filterType === "total" ? "underline" : "none",textDecoration: "none" }}>
-                Total Members
-              </h5>
-              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
-                {totalCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
 
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100"
-            style={{
-              backgroundColor: "#061f38",
-               cursor: "pointer"
 
-            }}
-              onClick={() => setFilterType("available")}
-          >
-            <Card.Body className="py-3">
-              <FaUsers
-                size={28}
-                style={{ color: "#1ABC9C" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Available Members
-              </h5>
-              <h2
-                className="m-0"
-                style={{ color: "#1ABC9C", fontWeight: "600",textDecoration: filterType === "available" ? "underline" : "none",textDecoration: "none" }}
-              >
-                {availableCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+
+
+
+{/* Available Members Card */}
+<Card
+  className="text-center shadow-sm h-100"
+  style={{
+    backgroundColor: filterType === "available" ? "#0E6655" : "#061f38", // brighter green when active
+    cursor: "pointer",
+    border: filterType === "available" ? "2px solid #1ABC9C" : "1px solid transparent",
+    transform: filterType === "available" ? "scale(1.05)" : "scale(1)", // + zoom effect
+    transition: "all 0.2s ease-in-out",
+  }}
+  onClick={() => setFilterType("available")}
+>
