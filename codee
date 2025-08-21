@@ -1,3 +1,23 @@
+{members.map((m, i) => {
+-  const isAway =
+-    !m.present ||
+-    (m.outLocation &&
+-      m.outLocation.trim().toLowerCase() === "out of office");
+-  const location = m.present
+-    ? m.inLocation || "Unknown Zone"
+-    : m.outLocation || "Away";
++  const isAway =
++    m.present === false ||
++    (m.outLocation &&
++      m.outLocation.trim().toLowerCase() === "out of office");
++
++  // Show real location if present, otherwise fallback
++  const location = !isAway
++    ? m.inLocation || "Unknown Zone"
++    : "Away";
+
+
+....
 http://localhost:3001/api/occupancy/live-summary
 "details": [
     {
