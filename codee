@@ -1,4 +1,67 @@
 useEffect(() => {
+  let isMounted = true;
+
+  async function fetchData(showLoader = false) {
+    try {
+      if (showLoader) setLoading(true); // only show spinner if first load
+      const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
+      const liveData = await res.json();
+      const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
+
+      const merged = membersData["Team Members"].map((m) => {
+        const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
+        const inLocation =
+          live.PartitionName2 && live.Door
+            ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
+            : "";
+        const outLocation =
+          live.PartitionName2 && live.Door
+            ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
+            : "";
+
+        return {
+          ...m,
+          present: !!live.EmployeeID,
+          direction: live.Direction || "",
+          inLocation,
+          outLocation,
+          door: live.Door || "",
+          phone: m.phone || "",
+        };
+      });
+
+      const sorted = merged.sort((a, b) =>
+        a.present === b.present ? 0 : a.present ? -1 : 1
+      );
+
+      if (isMounted) setMembers(sorted);
+    } catch (err) {
+      console.error("Error fetching live data:", err);
+    } finally {
+      if (isMounted && showLoader) setLoading(false);
+    }
+  }
+
+  // First load → show spinner
+  fetchData(true);
+
+  // Interval loads → no spinner
+  const interval = setInterval(() => fetchData(false), 10000);
+
+  return () => {
+    isMounted = false;
+    clearInterval(interval);
+  };
+}, []);
+
+
+
+
+
+...
+..
+
+useEffect(() => {
   let isMounted = true; // avoid setting state after unmount
 
   async function fetchData() {
