@@ -1,51 +1,63 @@
-{members.map((m, i) => {
-- const isAway =
--   m.present === false ||
--   (m.outLocation &&
--     m.outLocation.trim().toLowerCase() === "out of office");
+Add filter 
 
-- const location = !isAway
--   ? m.inLocation || "Unknown Zone"
--   : "Away";
+when clikc on total mebers then disply all total 
+and when click on  Available Members card then disply  Available Members then disply only  Available Members
 
-+ const isAway =
-+   m.present === false ||
-+   (m.direction === "OutDirection" &&
-+     m.outLocation.trim().toLowerCase() === "out of office");
-+
-+ const location = m.present
-+   ? m.inLocation || "Unknown Zone"
-+   : "Away";
+wheck clikc on 
+ {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
+      <Row className="g-3 mb-4">
 
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100"
+            style={{
+              backgroundColor: "#061f38",
 
+            }}
+          >
+            <Card.Body className="py-3">
+              <FaLayerGroup
+                size={28}
+                style={{ color: "#7F8C8D" }}
+                className="mb-2"
+              />
+              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
+                Total Members
+              </h5>
+              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
+                {totalCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
 
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100"
+            style={{
+              backgroundColor: "#061f38",
 
-
-....
-One member is avalable but in not show, check each line carefuuly, and show locaion 
-
-count show correct 
-Available Members
-1
-but in in below deatins show away 
-http://localhost:3001/api/occupancy/live-summary
- "details": [
-    {
-      "LocaleMessageTime": "2025-08-20T06:42:50.000Z",
-      "Dateonly": "2025-08-20",
-      "Swipe_Time": "06:42:50",
-      "EmployeeID": "323105",
-      "PersonGUID": "90B95867-EB4B-4D70-AF38-F6E346395187",
-      "ObjectName1": "Molina, Andrey",
-      "Door": "LACA CR Shower Men Door",
-      "PersonnelType": "Employee",
-      "CardNumber": "607131",
-      "Text5": "Santa Ana - Parque Empresarial",
-      "PartitionName2": "CR.Costa Rica Partition",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "Floor": "Men Shower"
-    },
+            }}
+          >
+            <Card.Body className="py-3">
+              <FaUsers
+                size={28}
+                style={{ color: "#1ABC9C" }}
+                className="mb-2"
+              />
+              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
+                Available Members
+              </h5>
+              <h2
+                className="m-0"
+                style={{ color: "#1ABC9C", fontWeight: "600" }}
+              >
+                {availableCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
@@ -184,11 +196,12 @@ export default function LacaERTOverview() {
             fontWeight: "600",
             display: "flex",
             alignItems: "center",
+            textAlign:"center",
             gap: "10px",
             color: "#fff",
           }}
         >
-          <FaUsers style={{ color: "#F1C40F" }} />
+          <FaUsers style={{ color: "#F1C40F", alignItems: "center", }} />
           Costa Rica ERT Team Members
         </Card.Header>
 
@@ -199,84 +212,14 @@ export default function LacaERTOverview() {
               {members.map((m, i) => {
                 const isAway =
                   m.present === false ||
-                  (m.outLocation &&
+                  (m.direction === "OutDirection" &&
                     m.outLocation.trim().toLowerCase() === "out of office");
 
-                // Show real location if present, otherwise fallback
-                const location = !isAway
+                const location = m.present
                   ? m.inLocation || "Unknown Zone"
                   : "Away";
 
                 return (
-
-                  // <Col xs={12} md={6} lg={4} key={i}>
-                  //   <div
-                  //     className="mb-3 pb-2"
-                  //     style={{
-                  //       borderBottom: "0.5px solid rgb(86, 86, 85)",
-                  //       color: "#fff",
-                  //     }}
-                  //   >
-                  //     {/* === NAME + STATUS === */}
-                  //     <div className="d-flex justify-content-between align-items-center">
-                  //       <span style={{ fontWeight: "500" }}>{m.name}</span>
-                  //       <span
-                  //         style={{
-                  //           fontSize: "0.9rem",
-                  //           fontWeight: "600",
-                  //           color: !isAway ? "#28B463" : "#E74C3C",
-                  //         }}
-                  //       >
-                  //         {!isAway ? "Available" : "Away"}
-                  //       </span>
-                  //     </div>
-
-                  //     {/* === Email === */}
-                  //     <div
-                  //       className="d-flex align-items-center mt-2 mb-1"
-                  //       style={{ fontSize: "0.85rem" }}
-                  //     >
-                  //       <FaEnvelopeOpenText
-                  //         className="me-2"
-                  //         style={{ color: "#3498DB", minWidth: "16px" }}
-                  //       />
-                  //       <a
-                  //         href={`mailto:${m.email}`}
-                  //         style={{ color: "#2980B9", textDecoration: "none" }}
-                  //       >
-                  //         {m.email}
-                  //       </a>
-                  //     </div>
-
-                  //     {/* === Phone === */}
-                  //     {m.phone && (
-                  //       <div
-                  //         className="d-flex align-items-center mb-1"
-                  //         style={{ fontSize: "0.85rem" }}
-                  //       >
-                  //         <FaMobileAlt
-                  //           className="me-2"
-                  //           style={{ color: "#27AE60", minWidth: "16px" }}
-                  //         />
-                  //         <span style={{ color: "#27AE60" }}>{m.phone}</span>
-                  //       </div>
-                  //     )}
-
-                  //     {/* === Location === */}
-                  //     <div
-                  //       className="d-flex align-items-center"
-                  //       style={{ fontSize: "0.85rem" }}
-                  //     >
-                  //       <FaMapMarkerAlt
-                  //         className="me-2"
-                  //         style={{ color: "#E74C3C", minWidth: "16px" }}
-                  //       />
-                  //       <span style={{ color: "#E74C3C" }}>{location}</span>
-                  //     </div>
-                  //   </div>
-                  // </Col>
-
-
                   <Col xs={12} md={6} lg={4} key={i}>
                     <div
                       className="mb-3 pb-2"
