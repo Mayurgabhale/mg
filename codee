@@ -1,91 +1,379 @@
-CAN YOU crate auto login verakada
+http://localhost:3001/api/occupancy/live-summary
+"details": [
+    {
+      "LocaleMessageTime": "2025-08-20T06:42:50.000Z",
+      "Dateonly": "2025-08-20",
+      "Swipe_Time": "06:42:50",
+      "EmployeeID": "323105",
+      "PersonGUID": "90B95867-EB4B-4D70-AF38-F6E346395187",
+      "ObjectName1": "Molina, Andrey",
+      "Door": "LACA CR Shower Men Door",
+      "PersonnelType": "Employee",
+      "CardNumber": "607131",
+      "Text5": "Santa Ana - Parque Empresarial",
+      "PartitionName2": "CR.Costa Rica Partition",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "Floor": "Men Shower"
+    },
+    {
 
-this is emil and password
-gsoc-globalsecurityoperationcenter.sharedmailbox@westernunion.com
-Western@123
+
+member is avalable but in frontedn is 
+Andrey Molina (323105)
+Away                  <-------------- away this is wrong 
+Andrey.Molina@wu.com
+xxx-xxx-xxx
+Men Shower
+
+Away show only if outDirection Out of office, that time only away, ok 
 
 
-function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
-    ip = (ip || "").trim();
-    hyperlink = (hyperlink || "").trim();
 
-    // 🔑 Always prefer Excel's hyperlink if present
-    if (hyperlink && /^https?:\/\//.test(hyperlink)) {
-        return hyperlink;
+// src/components/LacaERTOverview.jsx
+import React, { useState, useEffect, useMemo } from "react";
+import { Card, Row, Col, Badge } from "react-bootstrap";
+import {
+  FaEnvelopeOpenText,
+  FaMapMarkerAlt,
+  FaUsers,
+  FaMobileAlt,
+  FaLayerGroup,
+} from "react-icons/fa";
+import membersData from "../data/lacaErtMembers.json";
+import Header from "../components/Header";
+import { lookupFloor } from "../utils/floorLookup";
+import '../App.css';
+
+
+export default function LacaERTOverview() {
+  const [members, setMembers] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
+        const liveData = await res.json();
+        const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
+
+        const merged = membersData["Team Members"].map((m) => {
+          const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
+          const inLocation =
+            live.PartitionName2 && live.Door
+              ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
+              : "";
+          const outLocation =
+            live.PartitionName2 && live.Door
+              ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
+              : "";
+
+          return {
+            ...m,
+            present: !!live.EmployeeID,
+            inLocation,
+            outLocation,
+            door: live.Door || "",
+            phone: m.phone || "",
+          };
+        });
+
+        const sorted = merged.sort((a, b) =>
+          a.present === b.present ? 0 : a.present ? -1 : 1
+        );
+
+        setMembers(sorted);
+      } catch (err) {
+        console.error("Error fetching live data:", err);
+      }
     }
 
-    // Direct IP
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
-        return `http://${ip}`;
-    }
+    fetchData();
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Brand-based fallback
-    const name = (cameraname || "").toLowerCase();
-    if (/\bverkada\b/.test(name)) return `https://${ip}/#/login`;
-    if (/\bflir\b/.test(name)) return `http://${ip}/control/userimage.html`;
-    if (/\bhoneywell\b/.test(name)) return `http://${ip}/www/index.html`;
-    if (/axis/.test(name)) return `http://${ip}/view/view.shtml`;
+  const totalCount = useMemo(() => members.length, [members]);
+  const availableCount = useMemo(
+    () => members.filter((m) => m.present).length,
+    [members]
+  );
 
-    return `http://${ip}`;
-}
+  return (
+    <>
+      <Header />
+      {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
+      <Row className="g-3 mb-4">
 
-function openCamera(ip, name, hyperlink = "") {
-    const url = buildUrlFromHints(ip, name, hyperlink);
-    console.log("Opening URL:", url);  // Debug
-    window.open(url, "_blank", "noopener");
-}
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100"
+            style={{
+              backgroundColor: "#061f38",
 
-
-
-
-
-
-                    card.insertAdjacentHTML("beforeend", `
-  <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
-      ${device.cameraname || device.controllername || device.archivername || device.servername || "Unknown Device"}
-  </h3>
-
-  <div class="card-content">
-      <p class="device-type-label ${deviceType}" 
-         style="font-size: 1.05rem; font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: 600; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-          
-          <strong>
-            <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
-            ${deviceType.toUpperCase()}
-          </strong>
-          
-          ${deviceType.includes("camera")
-                            ? `<button class="open-camera-btn"
-        onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}', '${device.hyperlink || ""}')"
-        title="Open Camera"
-        style="border:none; cursor:pointer; font-weight:900; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
-    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
-</button>`
-                            : ""
-                        }
-      </p>
-
-      <p style="font-size: 1.1rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;">
-          <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
-          <span 
-              class="device-ip" 
-              style="font-weight: 900; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3); font-family: 'Times New Roman', Times, serif;"
-              onclick="copyToClipboard('${deviceIP}')"
-              title="Click to copy IP"
+            }}
           >
-              ${deviceIP}
-          </span>
-      </p>
+            <Card.Body className="py-3">
+              <FaLayerGroup
+                size={28}
+                style={{ color: "#7F8C8D" }}
+                className="mb-2"
+              />
+              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
+                Total Members
+              </h5>
+              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
+                {totalCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
 
-      <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 6px;">
-          <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-          <span style="font-size: 1rem; font-weight: bold; color: rgb(8, 9, 9); margin-left: 12px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${device.location || "N/A"}</span>
-      </p>
+        <Col xs={12} md={6}>
+          <Card
+            className="text-center shadow-sm h-100"
+            style={{
+              backgroundColor: "#061f38",
 
-      <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif;">
-          <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
-          <span style="font-weight: bold; color: rgb(7, 7, 7); margin-left: 4px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${city}</span>
-      </p>
-  </div>
-`);
+            }}
+          >
+            <Card.Body className="py-3">
+              <FaUsers
+                size={28}
+                style={{ color: "#1ABC9C" }}
+                className="mb-2"
+              />
+              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
+                Available Members
+              </h5>
+              <h2
+                className="m-0"
+                style={{ color: "#1ABC9C", fontWeight: "600" }}
+              >
+                {availableCount}
+              </h2>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
+      {/* === MEMBERS CARD (Black theme, yellow border, 3-column layout) === */}
+      <Card
+        className="shadow-sm"
+        style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
+      >
+        <Card.Header
+          style={{
+            borderBottom: "1px solid #F1C40F",
+            fontWeight: "600",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            color: "#fff",
+          }}
+        >
+          <FaUsers style={{ color: "#F1C40F" }} />
+          Costa Rica ERT Team Members
+        </Card.Header>
+
+        <Card.Body style={{ padding: "1.5rem" }}>
+          {members.length > 0 ? (
+            // ⬇️ add the three-col-divider class here
+            <Row className="g-3 three-col-divider">
+              {members.map((m, i) => {
+                const isAway =
+                  !m.present ||
+                  (m.outLocation &&
+                    m.outLocation.trim().toLowerCase() === "out of office");
+                const location = m.present
+                  ? m.inLocation || "Unknown Zone"
+                  : m.outLocation || "Away";
+
+                return (
+
+                  // <Col xs={12} md={6} lg={4} key={i}>
+                  //   <div
+                  //     className="mb-3 pb-2"
+                  //     style={{
+                  //       borderBottom: "0.5px solid rgb(86, 86, 85)",
+                  //       color: "#fff",
+                  //     }}
+                  //   >
+                  //     {/* === NAME + STATUS === */}
+                  //     <div className="d-flex justify-content-between align-items-center">
+                  //       <span style={{ fontWeight: "500" }}>{m.name}</span>
+                  //       <span
+                  //         style={{
+                  //           fontSize: "0.9rem",
+                  //           fontWeight: "600",
+                  //           color: !isAway ? "#28B463" : "#E74C3C",
+                  //         }}
+                  //       >
+                  //         {!isAway ? "Available" : "Away"}
+                  //       </span>
+                  //     </div>
+
+                  //     {/* === Email === */}
+                  //     <div
+                  //       className="d-flex align-items-center mt-2 mb-1"
+                  //       style={{ fontSize: "0.85rem" }}
+                  //     >
+                  //       <FaEnvelopeOpenText
+                  //         className="me-2"
+                  //         style={{ color: "#3498DB", minWidth: "16px" }}
+                  //       />
+                  //       <a
+                  //         href={`mailto:${m.email}`}
+                  //         style={{ color: "#2980B9", textDecoration: "none" }}
+                  //       >
+                  //         {m.email}
+                  //       </a>
+                  //     </div>
+
+                  //     {/* === Phone === */}
+                  //     {m.phone && (
+                  //       <div
+                  //         className="d-flex align-items-center mb-1"
+                  //         style={{ fontSize: "0.85rem" }}
+                  //       >
+                  //         <FaMobileAlt
+                  //           className="me-2"
+                  //           style={{ color: "#27AE60", minWidth: "16px" }}
+                  //         />
+                  //         <span style={{ color: "#27AE60" }}>{m.phone}</span>
+                  //       </div>
+                  //     )}
+
+                  //     {/* === Location === */}
+                  //     <div
+                  //       className="d-flex align-items-center"
+                  //       style={{ fontSize: "0.85rem" }}
+                  //     >
+                  //       <FaMapMarkerAlt
+                  //         className="me-2"
+                  //         style={{ color: "#E74C3C", minWidth: "16px" }}
+                  //       />
+                  //       <span style={{ color: "#E74C3C" }}>{location}</span>
+                  //     </div>
+                  //   </div>
+                  // </Col>
+
+
+                  <Col xs={12} md={6} lg={4} key={i}>
+                    <div
+                      className="mb-3 pb-2"
+                      style={{
+                        borderBottom: "0.5px solid rgb(86, 86, 85)",
+                        color: "#fff",
+                      }}
+                    >
+                      {/* === NAME + STATUS === */}
+                      <div className="d-flex justify-content-between align-items-center">
+                        <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
+                          {m.name}{" "}
+                          <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
+                            ({m.emp_id})
+                          </span>
+                        </h5>
+
+                        <Badge
+                          bg={!isAway ? "success" : "danger"}
+                          pill
+                          style={{ marginBottom: "0.8rem" }}
+                        >
+                          {!isAway ? "Available" : "Away"}
+                        </Badge>
+                      </div>
+
+                      {/* === Email === */}
+                      <div
+                        className="d-flex align-items-center mt-2 mb-1"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        <FaEnvelopeOpenText
+                          className="me-2"
+                          style={{ color: "#3498DB", minWidth: "16px" }}
+                        />
+                        <a
+                          href={`mailto:${m.email}`}
+                          style={{ color: "#2980B9", textDecoration: "none" }}
+                        >
+                          {m.email}
+                        </a>
+                      </div>
+
+                      {/* === Phone === */}
+                      {m.phone && (
+                        <div
+                          className="d-flex align-items-center mb-1"
+                          style={{ fontSize: "0.85rem" }}
+                        >
+                          <FaMobileAlt
+                            className="me-2"
+                            style={{ color: "#27AE60", minWidth: "16px" }}
+                          />
+                          <span style={{ color: "#27AE60" }}>{m.phone}</span>
+                        </div>
+                      )}
+
+                      {/* === Location === */}
+                      <div
+                        className="d-flex align-items-center"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        <FaMapMarkerAlt
+                          className="me-2"
+                          style={{ color: "#E74C3C", minWidth: "16px" }}
+                        />
+                        <span style={{ color: "#E74C3C" }}>{location}</span>
+                      </div>
+                    </div>
+                  </Col>
+
+
+
+                );
+              })}
+            </Row>
+          ) : (
+            <div className="text-muted text-center py-2">No members</div>
+          )}
+        </Card.Body>
+      </Card>
+
+
+    </>
+  );
+}
+
+
+
+
+
+
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\utils\floorLookup.js
+
+// src/utils/floorLookup.js
+import doorMap from './doorMap'; // relative to this file
+
+/**
+ * Given a partition, door and direction, return the mapped floor string.
+ * Falls back to 'Unmapped' only if there's no matching entry.
+ */
+export function lookupFloor(partition, door, direction) {
+  const entry = doorMap.find(d =>
+    d.partition === partition && d.door === door
+  );
+  if (!entry) return 'Unmapped';
+
+
+  // return direction === 'InDirection'
+  //   ? entry.inDirectionFloor
+  //   : entry.outDirectionFloor;
+
+  // trim off any accidental leading/trailing spaces
+  const raw = direction === 'InDirection'
+    ? entry.inDirectionFloor
+    : entry.outDirectionFloor;
+  return raw.trim() || 'Unmapped';
+
+}
