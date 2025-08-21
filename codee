@@ -1,3 +1,27 @@
+async function fetchData() {
+  try {
+    setLoading(true); // ⬅️ add this line
+    const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
+    const liveData = await res.json();
+    // ... your existing merge logic
+    setMembers(sorted);
+  } catch (err) {
+    console.error("Error fetching live data:", err);
+  } finally {
+    setLoading(false); // ⬅️ add this line
+  }
+}
+
+
+
+
+
+if (loading) {
+  return <LoadingSpinner />;
+}
+
+...
+
 dont change anything only add loadng spinner  
 
 import LoadingSpinner from "./LoadingSpinner"; // ⬅️ add at top with imports
