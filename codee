@@ -1,3 +1,27 @@
+{members.map((m, i) => {
+- const isAway =
+-   m.present === false ||
+-   (m.outLocation &&
+-     m.outLocation.trim().toLowerCase() === "out of office");
+
+- const location = !isAway
+-   ? m.inLocation || "Unknown Zone"
+-   : "Away";
+
++ const isAway =
++   m.present === false ||
++   (m.direction === "OutDirection" &&
++     m.outLocation.trim().toLowerCase() === "out of office");
++
++ const location = m.present
++   ? m.inLocation || "Unknown Zone"
++   : "Away";
+
+
+
+
+
+....
 One member is avalable but in not show, check each line carefuuly, and show locaion 
 
 count show correct 
