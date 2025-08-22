@@ -1,3 +1,6 @@
+border: m.present ? '3px solid red' : '2px solid #475569',
+
+
 
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
