@@ -1,43 +1,6 @@
-{/* Three-column layout */}
-<Row className="align-items-stretch">
-  {/* LEFT COLUMN: Fixed roles */}
-  <Col xs={12} lg={4} className="mb-4 d-flex">
-    <div className="w-100 h-100">
-      {firstColumnRoles.map(role =>
-        renderRoleCard(role, ertStatus[role] || [], filterZone)
-      )}
-    </div>
-  </Col>
-
-  {/* MIDDLE COLUMN: ERT Team Leaders */}
-  <Col xs={12} lg={4} className="mb-4 d-flex">
-    <Card className="shadow-sm mb-3 h-100 w-100" style={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px' }}>
-      <Card.Header style={{ ... }}>
-        {roleIcons['ERT Team Leader']}
-        ERT Team Leader
-      </Card.Header>
-      <Card.Body style={{ padding: '1rem' }}>
-        {/* your leader rendering */}
-      </Card.Body>
-    </Card>
-  </Col>
-
-  {/* RIGHT COLUMN: ERT Team Members */}
-  <Col xs={12} lg={4} className="mb-4 d-flex">
-    <Card className="shadow-sm h-100 w-100" style={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px' }}>
-      <Card.Header style={{ ... }}>
-        {roleIcons['ERT Team Members']}
-        ERT Team Members
-      </Card.Header>
-      <Card.Body style={{ padding: '1rem' }}>
-        {/* your members rendering */}
-      </Card.Body>
-    </Card>
-  </Col>
-</Row>
 
 
-....
+
 
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
@@ -621,6 +584,7 @@ export default function ERTOverview({ ertStatus }) {
             </Card>
           </Col>
         </Row>
+        
       </div>
     </div>
   );
