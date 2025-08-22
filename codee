@@ -1,40 +1,23 @@
-rajeev_mago.png
-rohit_singla.png
-suma_roy.png
-sameer_kanade.png
-lloyds_dass.png
-uday_prakash_singh.png
-vishal_chaudhari.png
-vinit_kumar.png
-sagar_jamdade.png
-satish_bhoyane.png
-sonu_pandey.png
-bhupendra_babu_rangare.png
-saurabh_nair.png
-hirav_ladva.png
-charandeep_singh_ahuja.png
-samar_samrendra.png
-sachin_mahajan.png
-rajesh_sharma.png
-vikas_palve.png
-khushboo_nalband.png
-srikanth_nerella.png
-mayank_patle.png
-vaibhav_kolhe.png
-vighnesh_dalal.png
-bhavik_shah.png
-devdatta_mulye.png
-anurag_mishra.png
-priyank_bamoriya.png
-sangramsinh_patil.png
-anurag_pillai.png
-kumar_yash.png
-deepak_punde.png
-renuka_barua.png
-shanker_choudhary.png
-ravi_ahuja.png
-yashraj_dhavale.png
-atharva_bedre.png
-rajesh_thirumala.png
-juned_ahmed_shaikh.png
-shiva_prasad_pachimatla.png
+
+              <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center">
+                  <img
+                    src={getPhotoSrc(m)}
+                    alt={m.name || 'Member'}
+                    style={{
+                      width: 35,
+                      height: 35,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      marginRight: 8,
+                     objectPosition:'center right'
+                      
+                    }}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }}
+                  />
+                  <span style={{ fontWeight: '500' }}>{m.name}</span>
+                </div>
+                <Badge bg={m.present ? 'success' : 'danger'} pill>
+                  {m.present ? 'Available' : 'Away'}
+                </Badge>
+              </div>
