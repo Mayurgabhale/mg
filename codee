@@ -1,62 +1,65 @@
-"ERT Team Leader": [
-  { 
-    "name": "Vishal Chaudhari", 
-    "email": "Vishal.Chaudhary@wu.com", 
-    "phone": "xxx-xxx-xxxx",
-    "photo": "/images/vishal.jpg" 
-  },
-  { 
-    "name": "Vinit Kumar", 
-    "email": "Vinit.Kumar@wu.com", 
-    "phone": "xxx-xxx-xxxx",
-    "photo": "/images/vinit.jpg"
-  }
-]
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\assets\img
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\puneErtMembers.json
+
+{
+     "Site Head": [
+    { "name": "Rajeev Mago",      "email": "rajeev.mago@wu.com",      "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"  }
+  ],
+
+ "BCM Team / Site Operations": [
+    { "name": "Rohit Singla",     "email": "rohit.singla@wu.com",     "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" }
+  ],
+   "HR": [
+    { "name": "Suma Roy",         "email": "suma.roy@wu.com",         "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" }
+  ],
+
+"Incident Controller": [
+     { "name": "Sameer Kanade",   "email": "Sameer.Kanade@wu.com",   "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+     { "name": "Lloyds Dass",      "email": "Lloyds.Dass@wu.com",      "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+      { "name": "Singh, Uday Prakash",      "email": "Uday.Singh@westernunion.com",      "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" }
+  ],
+
+  "ERT Team Leader": [
+    { "name": "Vishal Chaudhari", "email": "Vishal.Chaudhary@wu.com", "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+    { "name": "Vinit Kumar",      "email": "Vinit.Kumar@wu.com",      "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+    { "name": "Sagar Jamdade",    "email": "sagar.jamdade@wu.com",    "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+    { "name": "Satish Bhoyane",   "email": "satishpandurang.bhoyane@westernunion.com",   "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+    { "name": "Sonu Pandey",      "email": "Sonu.Pandey@westernunion.com",      "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+    { "name": "Rangare, Bhupendra Babu","email": "bhupendra.rangare@wu.com","phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" }
+  ],
+
+  "ERT Team Members": [
+  { "Name": "Nair, Saurabh",                    "Base Location": "Podium Floor -Yellow Zone",  "Email": "Saurabh.Nair@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  { "Name": "Ladva, Hirav",                     "Floor": "Podium Floor- Yellow Zone",  "Email": "Hirav.Ladva@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Ahuja, Charandeep Singh",          "Floor": "Podium Floor-Green Zone - 2", "Email": "CharandeepSingh.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Samrendra, Samar",                 "Floor": "Podium Floor-Green Zone - 2",  "Email": "Samar.Samrendra@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Mahajan, Sachin",               "Floor": "Podium Floor-Green Zone - 2",  "Email": "sachin.mahajan@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Sharma, Rajesh",                  "Floor": "Podium Floor-Green Zone - 2", "Email": "Rajesh.Sharma@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Palve, Vikas",                     "Floor": "2nd Floor",  "Email": "Vikas.Palve@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Nalband, Khushboo",               "Floor": "2nd Floor",  "Email": "Khushboo.Nalband@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Nerella, Srikanth",             "Floor": "2nd Floor",  "Email": "Srikanth.Nerella@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Patle, Mayank",                  "Floor": "2nd Floor",  "Email": "Mayank.Patle@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Kolhe, Vaibhav",                   "Floor": "2nd Floor",  "Email": "Vaibhav.Kolhe@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"  },
+  { "Name": "Dalal, Vighnesh",                 "Floor": "Podium Floor-Red Zone",  "Email": "Vighnesh.Dalal@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Shah, Bhavik",                    "Floor": "Podium Floor-Red Zone",  "Email": "Bhavik.Shah@wu.com", "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Mulye, Devdatta",                 "Floor": "Podium Floor-Red Zone",   "Email": "devdatta.mulye@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Mishra, Anurag",                   "Floor": "Podium Floor-Yellow Zone", "Email": "Anurag.Mishra@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Bamoriya, Priyank",              "Floor": "Podium Floor-Yellow Zone",  "Email": "Priyank.Bamoriya@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Patil, Sangramsinh",               "Floor": "Podium Floor-Orange Zone",  "Email": "Sangramsinh.Patil@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Pillai, Anurag",                   "Floor": "Podium Floor-Orange Zone", "Email": "Anurag.Pillai@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Yash, Kumar",                   "Floor": "Podium Floor-Red Zone",   "Email": "kumar.yash@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Punde, Deepak",                    "Floor": "Podium Floor-Red Zone",  "Email": "Deepak.Punde@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Barua, Renuka",                   "Floor": "Tower B",  "Email": "Renuka.Barua@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"  },
+  {  "Name": "Choudhary, Shanker",            "Floor": "Tower B",  "Email": "Shanker.Choudhary@wu.com" , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  { "Name": "Ahuja, Ravi",                      "Floor": "Tower B",  "Email": "Ravi.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  { "Name": "Dhavale, Yashraj",                "Floor": "Tower B", "Email": "Yashraj.Dhavale@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg" },
+  {  "Name": "Bedre, Atharva",                   "Floor": "Tower B",  "Email": "Atharva.Bedre@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Thirumala, Rajesh",             "Floor": "Tower B",   "Email": "Rajesh.Thirumala@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+  {  "Name": "Shaikh, Juned Ahmed",             "Floor": "Tower B", "Email": "Juned.Ahmed@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"},
+   {  "Name": "Pachimatla, Shiva Prasad",        "Floor": "Tower B", "Email": "Shiva.Pachimatla@wu.com"  , "phone": "xxx-xxx-xxxx", "photo": "/images/vishal.jpg"}
 
 
+  ]
+}
 
 
-
-<div key={i} className="mb-3 pb-2 d-flex align-items-start" 
-     style={{ borderColor: '#EAECEE', borderBottom: '0.5px solid #595959' }}>
-  
-  {/* Member Photo */}
-  {m.photo && (
-    <img 
-      src={m.photo} 
-      alt={m.name} 
-      style={{ 
-        width: '50px', 
-        height: '50px', 
-        borderRadius: '50%', 
-        objectFit: 'cover', 
-        marginRight: '12px' 
-      }} 
-    />
-  )}
-
-  <div style={{ flex: 1 }}>
-    <div className="d-flex justify-content-between align-items-center">
-      <span style={{ fontWeight: '500' }}>{m.name}</span>
-      <Badge bg={m.present ? 'success' : 'danger'} pill>
-        {m.present ? 'Available' : 'Away'}
-      </Badge>
-    </div>
-    <div className="mt-2" style={{ fontSize: '0.85rem' }}>
-      <div className="d-flex align-items-center mb-1">
-        <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
-        <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
-          {m.email}
-        </a>
-      </div>
-      <div className="d-flex align-items-center mb-1">
-        <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
-        <span style={{ color: '#27AE60' }}>{m.phone}</span>
-      </div>
-      <div className="d-flex align-items-center">
-        <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
-        <span style={{ color: '#E74C3C' }}>{m.zone || m.baseLocation || 'Unknown Zone'}</span>
-      </div>
-    </div>
-  </div>
-</div>
