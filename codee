@@ -1,14 +1,184 @@
-WARNING in [eslint]
-src\components\ERTOverview.jsx
-  Line 1061:6:  React Hook useMemo has a missing dependency: 'baseLocationByRole'. Either include it or remove the dependency array  react-hooks/exhaustive-deps 
+import React, { useState, useMemo } from "react";
+import {
+  FaHome,
+  FaBuilding,
+  FaLayerGroup,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers,
+  FaEnvelopeOpenText,
+  FaMobileAlt,
+  FaMapMarkerAlt,
+} from "react-icons/fa";
 
-ERROR in ./src/components/ERTOverview.jsx 831:0-69
-Module not found: Error: Can't resolve '@/components/ui/card' in 'C:\Users\W0024618\Desktop\swipeData\client\src\components'
+/* ---- Simple UI Wrappers (instead of shadcn/ui) ---- */
+const Card = ({ children, className }) => (
+  <div className={`bg-white rounded-xl border shadow ${className || ""}`}>
+    {children}
+  </div>
+);
+const CardHeader = ({ children, className }) => (
+  <div className={`px-4 py-2 border-b font-semibold ${className || ""}`}>
+    {children}
+  </div>
+);
+const CardContent = ({ children, className }) => (
+  <div className={`p-4 ${className || ""}`}>{children}</div>
+);
+const Badge = ({ children, variant, className }) => {
+  const base =
+    "px-2 py-0.5 rounded-full text-xs font-medium inline-block text-white";
+  const variants = {
+    success: "bg-green-500",
+    destructive: "bg-red-500",
+    default: "bg-gray-500",
+  };
+  return (
+    <span className={`${base} ${variants[variant] || ""} ${className || ""}`}>
+      {children}
+    </span>
+  );
+};
+const Button = ({ children, onClick, variant, size, className }) => {
+  const base =
+    "rounded-lg font-medium transition focus:outline-none focus:ring";
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700",
+    outline: "border border-gray-300 text-gray-700 hover:bg-gray-100",
+  };
+  const sizes = {
+    sm: "px-3 py-1 text-sm",
+    md: "px-4 py-2",
+  };
+  return (
+    <button
+      onClick={onClick}
+      className={`${base} ${variants[variant] || ""} ${
+        sizes[size || "md"]
+      } ${className || ""}`}
+    >
+      {children}
+    </button>
+  );
+};
 
-ERROR in ./src/components/ERTOverview.jsx 832:0-46
-Module not found: Error: Can't resolve '@/components/ui/badge' in 'C:\Users\W0024618\Desktop\swipeData\client\src\components'
+/* ---- Constants moved outside component to avoid ESLint warnings ---- */
+const firstColumnRoles = [
+  "Site Head",
+  "BCM Team / Site Operations",
+  "HR",
+  "Incident Controller",
+];
 
-ERROR in ./src/components/ERTOverview.jsx 833:0-48
-Module not found: Error: Can't resolve '@/components/ui/button' in 'C:\Users\W0024618\Desktop\swipeData\client\src\components'
+const roleIcons = {
+  "Site Head": <FaUserTie className="text-blue-600" />,
+  "BCM Team / Site Operations": <FaUserShield className="text-green-600" />,
+  HR: <FaUserTie className="text-purple-600" />,
+  "Incident Controller": <FaUserShield className="text-orange-600" />,
+  "ERT Team Leader": <FaUserShield className="text-red-600" />,
+  "ERT Team Members": <FaUsers className="text-teal-600" />,
+  "First Aid Team": <FaUserNurse className="text-pink-600" />,
+};
 
-webpack compiled with 3 errors and 1 warning
+const baseLocationByRole = {
+  "Site Head": "Podium Floor – Red Zone",
+  HR: "Podium Floor – Red Zone",
+  "Incident Controller": "Podium Floor – Red Zone",
+  "First Aid Team": "Podium Floor – Green Zone",
+  "ERT Team Leader": "Podium Floor – Green Zone",
+  "BCM Team / Site Operations": "Podium Floor – Red Zone",
+};
+
+/* ---- Main Component ---- */
+export default function ERTOverview({ ertStatus }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+
+  const DEFAULT_PHOTO = "/photos/default.png";
+  const toSlug = (name = "") =>
+    name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+  const getPhotoSrc = (member) => {
+    if (!member) return DEFAULT_PHOTO;
+    if (member.photo) return member.photo;
+    const name = member.name || member.Name;
+    if (name) return `/photos/${toSlug(name)}.png`;
+    return DEFAULT_PHOTO;
+  };
+
+  /* --- Member Card --- */
+  const MemberCard = ({ member, location }) => (
+    <div className="flex items-start gap-3 p-3 border-b last:border-0">
+      <img
+        src={getPhotoSrc(member)}
+        alt={member.name || "Member"}
+        className="w-12 h-12 rounded-full object-cover shadow"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = DEFAULT_PHOTO;
+        }}
+      />
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-gray-800">{member.name}</span>
+          <Badge variant={member.present ? "success" : "destructive"}>
+            {member.present ? "Available" : "Away"}
+          </Badge>
+        </div>
+        <div className="text-sm text-gray-600 mt-1 space-y-1">
+          <div className="flex items-center gap-2">
+            <FaEnvelopeOpenText className="text-blue-500" />
+            <a href={`mailto:${member.email}`} className="hover:underline">
+              {member.email}
+            </a>
+          </div>
+          <div className="flex items-center gap-2">
+            <FaMobileAlt className="text-green-500" /> {member.phone}
+          </div>
+          <div className="flex items-center gap-2">
+            <FaMapMarkerAlt className="text-red-500" /> {location}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  /* --- Role Card --- */
+  const RoleCard = ({ role, members }) => {
+    const filteredMembers = filterZone
+      ? members.filter(
+          (m) =>
+            m.present &&
+            ((m.zone && m.zone.includes(filterZone)) ||
+              baseLocationByRole[role].includes(filterZone))
+        )
+      : members;
+
+    return (
+      <Card>
+        <CardHeader className="flex items-center gap-2 bg-gray-50">
+          {roleIcons[role]} {role}
+        </CardHeader>
+        <CardContent className="p-0">
+          {filteredMembers.length > 0 ? (
+            filteredMembers.map((m, i) => (
+              <MemberCard
+                key={i}
+                member={m}
+                location={
+                  m.present ? m.zone || "Unknown Zone" : baseLocationByRole[role]
+                }
+              />
+            ))
+          ) : (
+            <div className="text-center text-gray-500 py-4">No members</div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  /* --- Rest of your useMemo + layout remains same --- */
+  // (useMemo hooks + rendering code would stay as before, just with Card/Badge/Button from above)
+}
