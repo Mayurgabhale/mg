@@ -1,3 +1,20 @@
+
+Compiled with problems:
+×
+ERROR in ./src/components/ERTOverview.jsx 911:10
+Module parse failed: Invalid regular expression: /^+|_+$/: Nothing to repeat (911:10)
+File was processed with these loaders:
+ * ./node_modules/@pmmmwh/react-refresh-webpack-plugin/loader/index.js
+ * ./node_modules/babel-loader/lib/index.js
+ * ./node_modules/source-map-loader/dist/cjs.js
+You may need an additional loader to handle the result of these loaders.
+| const DEFAULT_PHOTO = '/photos/default.png';
+| const toSlug = (name = '') => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '') // non-alphanumerics -> underscore
+> .replace(/^+|_+$/g, ''); // trim leading/trailing underscores
+| 
+| const getPhotoSrc = member => {
+
+
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
 import {
