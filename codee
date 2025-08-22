@@ -1,4 +1,36 @@
+<div className="d-flex justify-content-between align-items-center">
+  <div className="d-flex align-items-center">
+    <img
+      src={getPhotoSrc(m)}
+      alt={m.name || 'Member'}
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: '50%',
+        objectFit: 'cover',
+        objectPosition: 'center',
+        marginRight: 10,
+        border: '2px solid #f0f0f0',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+        backgroundColor: '#fff'
+      }}
+      onError={(e) => { 
+        e.currentTarget.onerror = null; 
+        e.currentTarget.src = DEFAULT_PHOTO; 
+      }}
+    />
+    <span style={{ fontWeight: '600', color: '#2C3E50' }}>
+      {m.name}
+    </span>
+  </div>
+  <Badge bg={m.present ? 'success' : 'danger'} pill>
+    {m.present ? 'Available' : 'Away'}
+  </Badge>
+</div>
 
+
+
+......
               <div className="d-flex justify-content-between align-items-center">
                 <div className="d-flex align-items-center">
                   <img
