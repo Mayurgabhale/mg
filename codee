@@ -1,26 +1,68 @@
-import React from "react";
-import { Badge } from "react-bootstrap";
-import { FaEnvelopeOpenText, FaMobileAlt, FaMapMarkerAlt } from "react-icons/fa";
+import React, { useState, useMemo } from "react";
+import { Card, Row, Col, Button, Badge } from "react-bootstrap";
+import {
+  FaHome,
+  FaBuilding,
+  FaLayerGroup,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers,
+  FaEnvelopeOpenText,
+  FaMobileAlt,
+  FaMapMarkerAlt,
+} from "react-icons/fa";
 
-const DEFAULT_PHOTO = "/photos/default.png";
+export default function ERTOverview({ ertStatus }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
 
-const toSlug = (name = "") =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+  /** ----------------- ICONS & ROLES ----------------- */
+  const firstColumnRoles = [
+    "Site Head",
+    "BCM Team / Site Operations",
+    "HR",
+    "Incident Controller",
+  ];
 
-const getPhotoSrc = (member) => {
-  if (!member) return DEFAULT_PHOTO;
-  if (member.photo) return member.photo;
-  const name = member.name || member.Name;
-  if (name) return `/photos/${toSlug(name)}.png`;
-  return DEFAULT_PHOTO;
-};
+  const roleIcons = {
+    "Site Head": <FaUserTie className="text-primary" />,
+    "BCM Team / Site Operations": <FaUserShield className="text-success" />,
+    HR: <FaUserTie style={{ color: "#8E44AD" }} />,
+    "Incident Controller": <FaUserShield style={{ color: "#D35400" }} />,
+    "ERT Team Leader": <FaUserShield style={{ color: "#C0392B" }} />,
+    "ERT Team Members": <FaUsers style={{ color: "#16A085" }} />,
+    "First Aid Team": <FaUserNurse style={{ color: "#E74C3C" }} />,
+  };
 
-export default function MemberCard({ member, location }) {
-  return (
+  const baseLocationByRole = {
+    "Site Head": "Podium Floor – Red Zone",
+    HR: "Podium Floor – Red Zone",
+    "Incident Controller": "Podium Floor – Red Zone",
+    "First Aid Team": "Podium Floor – Green Zone",
+    "ERT Team Leader": "Podium Floor – Green Zone",
+    "BCM Team / Site Operations": "Podium Floor – Red Zone",
+  };
+
+  /** ----------------- HELPERS ----------------- */
+  const DEFAULT_PHOTO = "/photos/default.png";
+  const toSlug = (name = "") =>
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+  const getPhotoSrc = (member) => {
+    if (!member) return DEFAULT_PHOTO;
+    if (member.photo) return member.photo;
+    const name = member.name || member.Name;
+    if (name) return `/photos/${toSlug(name)}.png`;
+    return DEFAULT_PHOTO;
+  };
+
+  /** ----------------- MEMBER CARD ----------------- */
+  const MemberCard = ({ member, location }) => (
     <div className="mb-3 pb-3 border-bottom" style={{ borderColor: "#eee" }}>
       <div className="d-flex justify-content-between align-items-center">
         <div className="d-flex align-items-center">
@@ -70,117 +112,41 @@ export default function MemberCard({ member, location }) {
       </div>
     </div>
   );
-}
 
+  /** ----------------- ROLE CARD ----------------- */
+  const RoleCard = ({ role, members }) => {
+    const filteredMembers = filterZone
+      ? members.filter(
+          (m) =>
+            m.present &&
+            ((m.zone && m.zone.includes(filterZone)) ||
+              baseLocationByRole[role].includes(filterZone))
+        )
+      : members;
 
+    return (
+      <Card className="shadow rounded-3 border-0 mb-3">
+        <Card.Header className="bg-light d-flex align-items-center fw-semibold" style={{ gap: "10px" }}>
+          {roleIcons[role]} {role}
+        </Card.Header>
+        <Card.Body>
+          {filteredMembers.length > 0 ? (
+            filteredMembers.map((m, i) => (
+              <MemberCard
+                key={i}
+                member={m}
+                location={m.present ? m.zone || "Unknown Zone" : baseLocationByRole[role]}
+              />
+            ))
+          ) : (
+            <div className="text-muted text-center py-2">No members</div>
+          )}
+        </Card.Body>
+      </Card>
+    );
+  };
 
-
-
-
-.....
-
-
-
-
-import React from "react";
-import { Card } from "react-bootstrap";
-import MemberCard from "./MemberCard";
-
-export default function RoleCard({ role, members, filterZone, roleIcons, baseLocationByRole }) {
-  const filteredMembers = filterZone
-    ? members.filter(
-        (m) =>
-          m.present &&
-          ((m.zone && m.zone.includes(filterZone)) ||
-            baseLocationByRole[role].includes(filterZone))
-      )
-    : members;
-
-  return (
-    <Card className="shadow rounded-3 border-0 mb-3">
-      <Card.Header
-        className="bg-light d-flex align-items-center fw-semibold"
-        style={{ gap: "10px" }}
-      >
-        {roleIcons[role]} {role}
-      </Card.Header>
-      <Card.Body>
-        {filteredMembers.length > 0 ? (
-          filteredMembers.map((m, i) => (
-            <MemberCard
-              key={i}
-              member={m}
-              location={
-                m.present ? m.zone || "Unknown Zone" : baseLocationByRole[role]
-              }
-            />
-          ))
-        ) : (
-          <div className="text-muted text-center py-2">No members</div>
-        )}
-      </Card.Body>
-    </Card>
-  );
-}
-
-
-
-
-
-
-
-.......
-
-
-
-
-
-
-import React, { useState, useMemo } from "react";
-import { Card, Row, Col, Button } from "react-bootstrap";
-import {
-  FaHome,
-  FaBuilding,
-  FaLayerGroup,
-  FaUserTie,
-  FaUserShield,
-  FaUserNurse,
-  FaUsers,
-} from "react-icons/fa";
-
-import MemberCard from "../components/MemberCard";
-import RoleCard from "../components/RoleCard";
-
-const firstColumnRoles = [
-  "Site Head",
-  "BCM Team / Site Operations",
-  "HR",
-  "Incident Controller",
-];
-
-const roleIcons = {
-  "Site Head": <FaUserTie className="text-primary" />,
-  "BCM Team / Site Operations": <FaUserShield className="text-success" />,
-  HR: <FaUserTie style={{ color: "#8E44AD" }} />,
-  "Incident Controller": <FaUserShield style={{ color: "#D35400" }} />,
-  "ERT Team Leader": <FaUserShield style={{ color: "#C0392B" }} />,
-  "ERT Team Members": <FaUsers style={{ color: "#16A085" }} />,
-  "First Aid Team": <FaUserNurse style={{ color: "#E74C3C" }} />,
-};
-
-const baseLocationByRole = {
-  "Site Head": "Podium Floor – Red Zone",
-  HR: "Podium Floor – Red Zone",
-  "Incident Controller": "Podium Floor – Red Zone",
-  "First Aid Team": "Podium Floor – Green Zone",
-  "ERT Team Leader": "Podium Floor – Green Zone",
-  "BCM Team / Site Operations": "Podium Floor – Red Zone",
-};
-
-export default function ERTOverview({ ertStatus }) {
-  const [filterZone, setFilterZone] = useState(null);
-  const [showAllMembers, setShowAllMembers] = useState(false);
-
+  /** ----------------- DATA PROCESSING ----------------- */
   const allMembers = useMemo(() => {
     const list = [];
     Object.entries(ertStatus).forEach(([role, members]) => {
@@ -245,9 +211,10 @@ export default function ERTOverview({ ertStatus }) {
     "Tower B": <FaLayerGroup size={26} className="text-success" />,
   };
 
+  /** ----------------- RENDER ----------------- */
   return (
     <div className="container-fluid py-4">
-      {/* Top stats */}
+      {/* Top Stats */}
       <Row className="g-3 mb-4">
         <Col xs={12} md={3}>
           <Card className="text-center shadow-sm h-100 border-0 bg-dark text-white rounded-3">
@@ -295,33 +262,17 @@ export default function ERTOverview({ ertStatus }) {
       <Row className="g-3">
         <Col xs={12} lg={4}>
           {firstColumnRoles.map((role) => (
-            <RoleCard
-              key={role}
-              role={role}
-              members={ertStatus[role] || []}
-              filterZone={filterZone}
-              roleIcons={roleIcons}
-              baseLocationByRole={baseLocationByRole}
-            />
+            <RoleCard key={role} role={role} members={ertStatus[role] || []} />
           ))}
         </Col>
 
         <Col xs={12} lg={4}>
-          <RoleCard
-            role="ERT Team Leader"
-            members={ertLeaders}
-            filterZone={filterZone}
-            roleIcons={roleIcons}
-            baseLocationByRole={baseLocationByRole}
-          />
+          <RoleCard role="ERT Team Leader" members={ertLeaders} />
         </Col>
 
         <Col xs={12} lg={4}>
           <Card className="shadow rounded-3 border-0">
-            <Card.Header
-              className="bg-light d-flex align-items-center fw-semibold"
-              style={{ gap: "10px" }}
-            >
+            <Card.Header className="bg-light d-flex align-items-center fw-semibold" style={{ gap: "10px" }}>
               {roleIcons["ERT Team Members"]} ERT Team Members
             </Card.Header>
             <Card.Body>
