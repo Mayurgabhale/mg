@@ -1,6 +1,53 @@
+<div 
+  key={i} 
+  className="d-flex align-items-center justify-content-between p-2 mb-2 rounded shadow-sm"
+  style={{
+    backgroundColor: '#ffffff',
+    border: '1px solid #eaeaea',
+    borderRadius: '12px',
+  }}
+>
+  {/* Left side: Avatar + Info */}
+  <div className="d-flex align-items-center">
+    <img
+      src={getPhotoSrc(m)}
+      alt={m.name || 'Member'}
+      style={{
+        width: 45,
+        height: 45,
+        borderRadius: '50%',
+        objectFit: 'cover',
+        objectPosition: 'center',
+        marginRight: 12,
+        border: '2px solid #f0f0f0',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+      }}
+      onError={(e) => { 
+        e.currentTarget.onerror = null; 
+        e.currentTarget.src = DEFAULT_PHOTO; 
+      }}
+    />
+    <div>
+      <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#2C3E50' }}>
+        {m.name}
+      </div>
+      <div style={{ fontSize: '0.8rem', color: '#7F8C8D' }}>
+        {m.role || 'Team Member'}
+      </div>
+    </div>
+  </div>
 
+  {/* Right side: Availability badge */}
+  <Badge 
+    bg={m.present ? 'success' : 'danger'} 
+    pill
+    style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+  >
+    {m.present ? 'Available' : 'Away'}
+  </Badge>
+</div>
 
-
+.....
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
 import {
