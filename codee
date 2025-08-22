@@ -1,465 +1,427 @@
-useEffect(() => {
-  let isMounted = true;
-
-  async function fetchData(showLoader = false) {
-    try {
-      if (showLoader) setLoading(true); // only show spinner if first load
-      const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-      const liveData = await res.json();
-      const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-      const merged = membersData["Team Members"].map((m) => {
-        const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-        const inLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-            : "";
-        const outLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-            : "";
-
-        return {
-          ...m,
-          present: !!live.EmployeeID,
-          direction: live.Direction || "",
-          inLocation,
-          outLocation,
-          door: live.Door || "",
-          phone: m.phone || "",
-        };
-      });
-
-      const sorted = merged.sort((a, b) =>
-        a.present === b.present ? 0 : a.present ? -1 : 1
-      );
-
-      if (isMounted) setMembers(sorted);
-    } catch (err) {
-      console.error("Error fetching live data:", err);
-    } finally {
-      if (isMounted && showLoader) setLoading(false);
-    }
-  }
-
-  // First load → show spinner
-  fetchData(true);
-
-  // Interval loads → no spinner
-  const interval = setInterval(() => fetchData(false), 10000);
-
-  return () => {
-    isMounted = false;
-    clearInterval(interval);
-  };
-}, []);
+IN ert page i want ot add photo, so who to add photo 
 
 
 
-
-
-...
-..
-
-useEffect(() => {
-  let isMounted = true; // avoid setting state after unmount
-
-  async function fetchData() {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-      const liveData = await res.json();
-      const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-      const merged = membersData["Team Members"].map((m) => {
-        const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-        const inLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-            : "";
-        const outLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-            : "";
-
-        return {
-          ...m,
-          present: !!live.EmployeeID,
-          direction: live.Direction || "",
-          inLocation,
-          outLocation,
-          door: live.Door || "",
-          phone: m.phone || "",
-        };
-      });
-
-      const sorted = merged.sort((a, b) =>
-        a.present === b.present ? 0 : a.present ? -1 : 1
-      );
-
-      if (isMounted) {
-        setMembers(sorted);
-      }
-    } catch (err) {
-      console.error("Error fetching live data:", err);
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-  }
-
-  fetchData(); // run once at mount
-  const interval = setInterval(fetchData, 10000); // refresh every 10s
-
-  return () => {
-    isMounted = false;
-    clearInterval(interval); // cleanup on unmount
-  };
-}, []);
-
-when i add this, loading spinner is show every 10 second, why this come
-
-
-
-
-// src/components/LacaERTOverview.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Card, Row, Col, Badge } from "react-bootstrap";
+import React, { useState, useMemo } from 'react';
+import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
 import {
-  FaEnvelopeOpenText,
-  FaMapMarkerAlt,
-  FaUsers,
-  FaMobileAlt,
+  FaHome,
+  FaBuilding,
   FaLayerGroup,
-} from "react-icons/fa";
-import membersData from "../data/lacaErtMembers.json";
-import LoadingSpinner from "./LoadingSpinner";
-import { lookupFloor } from "../utils/floorLookup";
-import '../App.css';
+  FaEnvelopeOpenText,
+  FaMobileAlt,
+  FaMapMarkerAlt,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers
+} from 'react-icons/fa';
 
+const firstColumnRoles = [
+  'Site Head',
+  'BCM Team / Site Operations',
+  'HR',
+  'Incident Controller'
+];
 
-export default function LacaERTOverview() {
-  const [members, setMembers] = useState([]);
-  const [filterType, setFilterType] = useState("total"); // "total" | "available"
-  const [loading, setLoading] = useState(true); // ⬅️ add state
+const roleIcons = {
+  'Site Head': <FaUserTie style={{ color: '#2E86C1' }} />,
+  'BCM Team / Site Operations': <FaUserShield style={{ color: '#28B463' }} />,
+  'HR': <FaUserTie style={{ color: '#8E44AD' }} />,
+  'Incident Controller': <FaUserShield style={{ color: '#D35400' }} />,
+  'ERT Team Leader': <FaUserShield style={{ color: '#C0392B' }} />,
+  'ERT Team Members': <FaUsers style={{ color: '#16A085' }} />,
+  'First Aid Team': <FaUserNurse style={{ color: '#E74C3C' }} />
+};
 
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       setLoading(true); // ⬅️ add this line
-  //       const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-  //       const liveData = await res.json();
-  //       const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
+const baseLocationByRole = {
+  'Site Head': 'Podium Floor – Red Zone',
+  'HR': 'Podium Floor – Red Zone',
+  'Incident Controller': 'Podium Floor – Red Zone',
+  'First Aid Team': 'Podium Floor – Green Zone',
+  'ERT Team Leader': 'Podium Floor – Green Zone',
+  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
+};
 
-  //       const merged = membersData["Team Members"].map((m) => {
-  //         const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-  //         const inLocation =
-  //           live.PartitionName2 && live.Door
-  //             ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-  //             : "";
-  //         const outLocation =
-  //           live.PartitionName2 && live.Door
-  //             ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-  //             : "";
-
-  //         return {
-  //           ...m,
-  //           present: !!live.EmployeeID,
-  //           direction: live.Direction || "",
-  //           inLocation,
-  //           outLocation,
-  //           door: live.Door || "",
-  //           phone: m.phone || "",
-  //         };
-  //       });
-
-  //       const sorted = merged.sort((a, b) =>
-  //         a.present === b.present ? 0 : a.present ? -1 : 1
-  //       );
-
-  //       setMembers(sorted);
-  //     } catch (err) {
-  //       console.error("Error fetching live data:", err);
-  //     } finally {
-  //       setLoading(false); // ⬅️ add this line
-  //     }
-  //   }
-
-  //   fetchData();
-  //   // const interval = setInterval(fetchData, 15000);
-  //   // return () => clearInterval(interval);
-  // }, []);
-
-
-
-
-
-  useEffect(() => {
-  let isMounted = true; // avoid setting state after unmount
-
-  async function fetchData() {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-      const liveData = await res.json();
-      const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-      const merged = membersData["Team Members"].map((m) => {
-        const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-        const inLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-            : "";
-        const outLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-            : "";
-
-        return {
-          ...m,
-          present: !!live.EmployeeID,
-          direction: live.Direction || "",
-          inLocation,
-          outLocation,
-          door: live.Door || "",
-          phone: m.phone || "",
-        };
-      });
-
-      const sorted = merged.sort((a, b) =>
-        a.present === b.present ? 0 : a.present ? -1 : 1
-      );
-
-      if (isMounted) {
-        setMembers(sorted);
-      }
-    } catch (err) {
-      console.error("Error fetching live data:", err);
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-  }
-
-  fetchData(); // run once at mount
-  const interval = setInterval(fetchData, 10000); // refresh every 10s
-
-  return () => {
-    isMounted = false;
-    clearInterval(interval); // cleanup on unmount
-  };
-}, []);
-
-  const totalCount = useMemo(() => members.length, [members]);
-  const availableCount = useMemo(
-    () => members.filter((m) => m.present).length,
-    [members]
-  );
-
-  // Filter members to display based on selection
-  const displayedMembers =
-    filterType === "available"
-      ? members.filter((m) => m.present)
-      : members;
-
-
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
+function renderRoleCard(role, membersRaw, filterZone) {
+  const members = filterZone
+    ? membersRaw.filter(m =>
+        m.present && (
+          (m.zone && m.zone.includes(filterZone)) ||
+          baseLocationByRole[role].includes(filterZone)
+        )
+      )
+    : membersRaw;
 
   return (
-    <>
+    <Card className="shadow-sm mb-3" key={role}>
+      <Card.Header style={{ 
+        borderBottom: '1px solid #EAECEE', 
+        fontWeight: '600',
+        // backgroundColor: '#F8F9FA',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        {roleIcons[role] || <FaUserTie style={{ color: '#7F8C8D' }} />}
+        {role}
+      </Card.Header>
+      <Card.Body style={{ padding: '1rem' }}>
+        {members.length > 0 ? members.map((m, i) => {
+          const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
+          return (
+            <div key={i} className="mb-3 pb-2 " style={{ borderColor: '#EAECEE',borderBottom: '0.5px solid #595959' }}>
+              <div className="d-flex justify-content-between align-items-center">
+                <span style={{ fontWeight: '500' }}>{m.name}</span>
+                <Badge bg={m.present ? 'success' : 'danger'} pill>
+                  {m.present ? 'Available' : 'Away'}
+                </Badge>
+              </div>
+              <div className="mt-2" style={{ fontSize: '0.85rem' }}>
+                <div className="d-flex align-items-center mb-1">
+                  <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
+                  <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
+                    {m.email}
+                  </a>
+                </div>
+                <div className="d-flex align-items-center mb-1">
+                  <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
+                  <span style={{ color: '#27AE60' }}>{m.phone}</span>
+                </div>
+                <div className="d-flex align-items-center">
+                  <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
+                  <span style={{ color: '#E74C3C' }}>{location}</span>
+                </div>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="text-muted text-center py-2">No members</div>
+        )}
+      </Card.Body>
+    </Card>
+  );
+}
 
-      {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
+export default function ERTOverview({ ertStatus }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+
+  const allMembers = useMemo(() => {
+    const list = [];
+    Object.entries(ertStatus).forEach(([role, members]) => {
+      members.forEach(m => list.push({ role, ...m }));
+    });
+    return list;
+  }, [ertStatus]);
+
+  const floorCounts = useMemo(() => {
+    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+    allMembers.forEach(m => {
+      if (!m.present) return;
+      const z = m.zone?.toLowerCase() || '';
+      if (z.includes('2nd')) counts['2nd Floor']++;
+      else if (z.includes('tower b')) counts['Tower B']++;
+      else counts['Podium Floor']++;
+    });
+    return counts;
+  }, [allMembers]);
+
+  const ertLeaders = useMemo(() => {
+    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
+    const filtered = filterZone
+      ? raw.filter(m =>
+          m.present && (
+            (m.zone && m.zone.includes(filterZone)) ||
+            baseLocationByRole['ERT Team Leader'].includes(filterZone)
+          )
+      )
+      : raw;
+
+    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
+    return filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+      if (ia !== -1 || ib !== -1) {
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [ertStatus, filterZone]);
+
+  const ertMembers = useMemo(() => {
+    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
+      role: 'ERT Team Members',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone,
+      liveLocation: m.zone,
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    const filtered = filterZone 
+      ? members.filter(m => 
+          m.present && (
+            (m.liveLocation && m.liveLocation.includes(filterZone)) || 
+            m.baseLocation.includes(filterZone)
+          )
+        )
+      : members;
+    
+    filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return a.name.localeCompare(b.name);
+    });
+    return showAllMembers ? filtered : filtered.slice(0, 8);
+  }, [ertStatus, filterZone, showAllMembers]);
+
+  const floorIcons = {
+    'Podium Floor': <FaHome size={24} style={{ color: '#E74C3C' }} />,
+    '2nd Floor': <FaBuilding size={24} style={{ color: '#3498DB' }} />,
+    'Tower B': <FaLayerGroup size={24} style={{ color: '#2ECC71' }} />
+  };
+
+  return (
+    <div className="container-fluid py-3">
+      <h4 className="mb-4" style={{ color: '#fff', fontWeight: '600' }}>
+        {/* Emergency Response Team Overview */}
+      </h4>
+      
+      {/* Floor Filters */}
       <Row className="g-3 mb-4">
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100 hover-card"
-            style={{
-              // backgroundColor: "#061f38",
-              backgroundColor: "#061f38",
-              cursor: "pointer"
-
-            }}
-            onClick={() => setFilterType("total")}
-
-          >
+        <Col xs={12} md={3}>
+          <Card className="text-center shadow-sm h-100 border-0" style={{ backgroundColor: '#061f38' }}>
             <Card.Body className="py-3">
-              <FaLayerGroup
-                size={28}
-                style={{ color: "#7F8C8D" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff", textDecoration: filterType === "total" ? "underline" : "none", textDecoration: "none" }}>
-                Total Members
-              </h5>
-              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
-                {totalCount}
+              <FaLayerGroup size={28} style={{ color: '#7F8C8D' }} className="mb-2" />
+              <h5 className="mb-1" style={{ fontWeight: '500', color: '#fff' }}>Total Members</h5>
+              <h2 className="m-0" style={{ color: '#fff', fontWeight: '600' }}>
+                {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
               </h2>
             </Card.Body>
           </Card>
         </Col>
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100 hover-card"
-            style={{
-              backgroundColor: "#061f38",
-              cursor: "pointer"
-
-
-            }}
-            onClick={() => setFilterType("available")}
-          >
-            <Card.Body className="py-3">
-              <FaUsers
-                size={28}
-                style={{ color: "#1ABC9C" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Available Members
-              </h5>
-              <h2
-                className="m-0"
-                style={{ color: "#1ABC9C", fontWeight: "600", textDecoration: filterType === "available" ? "underline" : "none", textDecoration: "none" }}
+        
+        {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
+          const count = floorCounts[floor] || 0;
+          const isSelected = filterZone === floor;
+          return (
+            <Col key={floor} xs={12} md={3}>
+              <Card 
+                className={`text-center shadow-sm h-100 ${isSelected ? 'border-primary' : 'border-0'}`}
+                style={{ 
+                  cursor: 'pointer',
+                  backgroundColor: isSelected ? '#EBF5FB' : '#061f38'
+                }}
+                onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
               >
-                {availableCount}
-              </h2>
+                <Card.Body className="py-3">
+                  {floorIcons[floor]}
+                  <h5 className="mb-1 mt-2" style={{ fontWeight: '500', color: isSelected ? '#3498DB' : '#fff' }}>
+                    {floor}
+                  </h5>
+                  <h2 className="m-0" style={{ color: isSelected ? '#2C3E50' : '#fff', fontWeight: '600' }}>
+                    {count}
+                  </h2>
+                </Card.Body>
+              </Card>
+            </Col>
+          );
+        })}
+      </Row>
+
+      {/* Three-column layout */}
+      <Row className="g-3">
+        {/* LEFT COLUMN: Fixed roles */}
+        <Col xs={12} lg={4}>
+          {firstColumnRoles.map(role => renderRoleCard(role, ertStatus[role] || [], filterZone))}
+        </Col>
+
+        {/* MIDDLE COLUMN: ERT Team Leaders */}
+        <Col xs={12} lg={4}>
+          <Card className="shadow-sm mb-3">
+            <Card.Header style={{ 
+              borderBottom: '1px solid #EAECEE', 
+              fontWeight: '600',
+              // backgroundColor: '#F8F9FA',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              {roleIcons['ERT Team Leader']}
+              ERT Team Leader
+            </Card.Header>
+            <Card.Body style={{ padding: '1rem' }}>
+              {ertLeaders.map((m, i) => {
+                const location = m.present ? m.zone || 'Unknown Zone' : baseLocationByRole['ERT Team Leader'];
+                return (
+                  <div key={i} className="mb-3 pb-2 " style={{ borderColor: '#595959',borderBottom: '0.5px solid #595959' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span style={{ fontWeight: '500' }}>{m.name}</span>
+                      <Badge bg={m.present ? 'success' : 'danger'} pill>
+                        {m.present ? 'Available' : 'Away'}
+                      </Badge>
+                    </div>
+                    <div className="mt-2" style={{ fontSize: '0.85rem' }}>
+                      <div className="d-flex align-items-center mb-1">
+                        <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
+                        <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
+                          {m.email}
+                        </a>
+                      </div>
+                      <div className="d-flex align-items-center mb-1">
+                        <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
+                        <span style={{ color: '#27AE60' }}>{m.phone}</span>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
+                        <span style={{ color: '#E74C3C' }}>{location}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {!ertLeaders.length && <div className="text-muted text-center py-2">No Team Leaders</div>}
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* RIGHT COLUMN: ERT Team Members */}
+        <Col xs={12} lg={4}>
+          <Card className="shadow-sm">
+            <Card.Header style={{ 
+              borderBottom: '1px solid #EAECEE', 
+              fontWeight: '600',
+              // backgroundColor: '#F8F9FA',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              {roleIcons['ERT Team Members']}
+              ERT Team Members
+            </Card.Header>
+            <Card.Body style={{ padding: '1rem' }}>
+              {ertMembers.map((m, i) => {
+                const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
+                return (
+                  <div key={i} className="mb-3 pb-2 " style={{ borderColor: '#595959X', borderBottom: '0.5px solid #595959' }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span style={{ fontWeight: '500' }}>{m.name}</span>
+                      <Badge bg={m.present ? 'success' : 'danger'} pill>
+                        {m.present ? 'Available' : 'Away'}
+                      </Badge>
+                    </div>
+                    <div className="mt-2" style={{ fontSize: '0.85rem' }}>
+                      <div className="d-flex align-items-center mb-1">
+                        <FaEnvelopeOpenText className="me-2" style={{ color: '#3498DB', minWidth: '16px' }} />
+                        <a href={`mailto:${m.email}`} style={{ color: '#2980B9', textDecoration: 'none' }}>
+                          {m.email}
+                        </a>
+                      </div>
+                      <div className="d-flex align-items-center mb-1">
+                        <FaMobileAlt className="me-2" style={{ color: '#27AE60', minWidth: '16px' }} />
+                        <span style={{ color: '#27AE60' }}>{m.phone}</span>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <FaMapMarkerAlt className="me-2" style={{ color: '#E74C3C', minWidth: '16px' }} />
+                        <span style={{ color: '#E74C3C' }}>{location}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {!ertMembers.length && <div className="text-muted text-center py-2">No members</div>}
+              <div className="text-center mt-3">
+                <Button 
+                  variant="outline-primary" 
+                  size="sm" 
+                  onClick={() => setShowAllMembers(prev => !prev)}
+                  style={{ minWidth: '120px' }}
+                >
+                  {showAllMembers ? 'Show Less' : 'Show More'}
+                </Button>
+              </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
-
-      {/* === MEMBERS CARD (Black theme, yellow border, 3-column layout) === */}
-      <Card
-        className="shadow-sm"
-        style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
-      >
-        <Card.Header
-          style={{
-            borderBottom: "1px solid #F1C40F",
-            fontWeight: "600",
-            display: "flex",
-            fontSize: "20px",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            gap: "10px",
-            color: "#fff",
-          }}
-        >
-          <FaUsers style={{ color: "#F1C40F", alignItems: "center", textAlign: "center" }} />
-          {/* Costa Rica ERT Team Members */}
-          {filterType === "available"
-            ? "Available Costa Rica ERT Members"
-            : "All Costa Rica ERT Members"}
-        </Card.Header>
-
-        <Card.Body style={{ padding: "1.5rem" }}>
-
-          {displayedMembers.length > 0 ? (
-            // ⬇️ add the three-col-divider class here
-            <Row className="g-3 three-col-divider">
-
-              {displayedMembers.map((m, i) => {
-                const isAway =
-                  m.present === false ||
-                  (m.direction === "OutDirection" &&
-                    m.outLocation.trim().toLowerCase() === "out of office");
-
-                const location = m.present
-                  ? m.inLocation || "Unknown Zone"
-                  : "Away";
-
-                return (
-                  <Col xs={12} md={6} lg={4} key={i}>
-                    <div
-                      className="mb-3 pb-2"
-                      style={{
-                        borderBottom: "0.5px solid rgb(86, 86, 85)",
-                        color: "#fff",
-                      }}
-                    >
-                      {/* === NAME + STATUS === */}
-                      <div className="d-flex justify-content-between align-items-center">
-                        <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                          {m.name}{" "}
-                          <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
-                            ({m.emp_id})
-                          </span>
-                        </h5>
-
-                        <Badge
-                          bg={!isAway ? "success" : "danger"}
-                          pill
-                          style={{ marginBottom: "0.8rem" }}
-                        >
-                          {!isAway ? "Available" : "Away"}
-                        </Badge>
-                      </div>
-
-                      {/* === Email === */}
-                      <div
-                        className="d-flex align-items-center mt-2 mb-1"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        <FaEnvelopeOpenText
-                          className="me-2"
-                          style={{ color: "#3498DB", minWidth: "16px" }}
-                        />
-                        <a
-                          href={`mailto:${m.email}`}
-                          style={{ color: "#2980B9", textDecoration: "none" }}
-                        >
-                          {m.email}
-                        </a>
-                      </div>
-
-                      {/* === Phone === */}
-                      {m.phone && (
-                        <div
-                          className="d-flex align-items-center mb-1"
-                          style={{ fontSize: "0.85rem" }}
-                        >
-                          <FaMobileAlt
-                            className="me-2"
-                            style={{ color: "#27AE60", minWidth: "16px" }}
-                          />
-                          <span style={{ color: "#27AE60" }}>{m.phone}</span>
-                        </div>
-                      )}
-
-                      {/* === Location === */}
-                      <div
-                        className="d-flex align-items-center"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        <FaMapMarkerAlt
-                          className="me-2"
-                          style={{ color: "#E74C3C", minWidth: "16px" }}
-                        />
-                        <span style={{ color: "#E74C3C" }}>{location}</span>
-                      </div>
-                    </div>
-                  </Col>
-
-
-
-                );
-              })}
-            </Row>
-          ) : (
-            <div className="text-muted text-center py-2" style={{ color: "#fff" }}>No members</div>
-          )}
-        </Card.Body>
-      </Card>
-
-
-    </>
+    </div>
   );
 }
+
+
+
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\puneErtMembers.json
+
+
+
+{
+     "Site Head": [
+    { "name": "Rajeev Mago",      "email": "rajeev.mago@wu.com",      "phone": "xxx-xxx-xxxx" }
+  ],
+
+ "BCM Team / Site Operations": [
+    { "name": "Rohit Singla",     "email": "rohit.singla@wu.com",     "phone": "xxx-xxx-xxxx" }
+  ],
+   "HR": [
+    { "name": "Suma Roy",         "email": "suma.roy@wu.com",         "phone": "xxx-xxx-xxxx" }
+  ],
+
+"Incident Controller": [
+     { "name": "Sameer Kanade",   "email": "Sameer.Kanade@wu.com",   "phone": "xxx-xxx-xxxx" },
+     { "name": "Lloyds Dass",      "email": "Lloyds.Dass@wu.com",      "phone": "xxx-xxx-xxxx" },
+      { "name": "Singh, Uday Prakash",      "email": "Uday.Singh@westernunion.com",      "phone": "xxx-xxx-xxxx" }
+  ],
+
+  "ERT Team Leader": [
+    { "name": "Vishal Chaudhari", "email": "Vishal.Chaudhary@wu.com", "phone": "xxx-xxx-xxxx" },
+    { "name": "Vinit Kumar",      "email": "Vinit.Kumar@wu.com",      "phone": "xxx-xxx-xxxx" },
+    { "name": "Sagar Jamdade",    "email": "sagar.jamdade@wu.com",    "phone": "xxx-xxx-xxxx" },
+    { "name": "Satish Bhoyane",   "email": "satishpandurang.bhoyane@westernunion.com",   "phone": "xxx-xxx-xxxx" },
+    { "name": "Sonu Pandey",      "email": "Sonu.Pandey@westernunion.com",      "phone": "xxx-xxx-xxxx" },
+    { "name": "Rangare, Bhupendra Babu","email": "bhupendra.rangare@wu.com","phone": "xxx-xxx-xxxx" }
+  ],
+
+  "ERT Team Members": [
+  { "Name": "Nair, Saurabh",                    "Base Location": "Podium Floor -Yellow Zone",  "Email": "Saurabh.Nair@wu.com" , "phone": "xxx-xxx-xxxx" },
+  { "Name": "Ladva, Hirav",                     "Floor": "Podium Floor- Yellow Zone",  "Email": "Hirav.Ladva@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Ahuja, Charandeep Singh",          "Floor": "Podium Floor-Green Zone - 2", "Email": "CharandeepSingh.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Samrendra, Samar",                 "Floor": "Podium Floor-Green Zone - 2",  "Email": "Samar.Samrendra@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Mahajan, Sachin",               "Floor": "Podium Floor-Green Zone - 2",  "Email": "sachin.mahajan@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Sharma, Rajesh",                  "Floor": "Podium Floor-Green Zone - 2", "Email": "Rajesh.Sharma@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Palve, Vikas",                     "Floor": "2nd Floor",  "Email": "Vikas.Palve@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Nalband, Khushboo",               "Floor": "2nd Floor",  "Email": "Khushboo.Nalband@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Nerella, Srikanth",             "Floor": "2nd Floor",  "Email": "Srikanth.Nerella@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Patle, Mayank",                  "Floor": "2nd Floor",  "Email": "Mayank.Patle@wu.com" , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Kolhe, Vaibhav",                   "Floor": "2nd Floor",  "Email": "Vaibhav.Kolhe@wu.com" , "phone": "xxx-xxx-xxxx"  },
+  { "Name": "Dalal, Vighnesh",                 "Floor": "Podium Floor-Red Zone",  "Email": "Vighnesh.Dalal@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Shah, Bhavik",                    "Floor": "Podium Floor-Red Zone",  "Email": "Bhavik.Shah@wu.com", "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Mulye, Devdatta",                 "Floor": "Podium Floor-Red Zone",   "Email": "devdatta.mulye@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Mishra, Anurag",                   "Floor": "Podium Floor-Yellow Zone", "Email": "Anurag.Mishra@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Bamoriya, Priyank",              "Floor": "Podium Floor-Yellow Zone",  "Email": "Priyank.Bamoriya@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Patil, Sangramsinh",               "Floor": "Podium Floor-Orange Zone",  "Email": "Sangramsinh.Patil@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Pillai, Anurag",                   "Floor": "Podium Floor-Orange Zone", "Email": "Anurag.Pillai@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Yash, Kumar",                   "Floor": "Podium Floor-Red Zone",   "Email": "kumar.yash@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Punde, Deepak",                    "Floor": "Podium Floor-Red Zone",  "Email": "Deepak.Punde@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Barua, Renuka",                   "Floor": "Tower B",  "Email": "Renuka.Barua@wu.com" , "phone": "xxx-xxx-xxxx"  },
+  {  "Name": "Choudhary, Shanker",            "Floor": "Tower B",  "Email": "Shanker.Choudhary@wu.com" , "phone": "xxx-xxx-xxxx" },
+  { "Name": "Ahuja, Ravi",                      "Floor": "Tower B",  "Email": "Ravi.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  { "Name": "Dhavale, Yashraj",                "Floor": "Tower B", "Email": "Yashraj.Dhavale@wu.com"  , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Bedre, Atharva",                   "Floor": "Tower B",  "Email": "Atharva.Bedre@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Thirumala, Rajesh",             "Floor": "Tower B",   "Email": "Rajesh.Thirumala@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Shaikh, Juned Ahmed",             "Floor": "Tower B", "Email": "Juned.Ahmed@wu.com"  , "phone": "xxx-xxx-xxxx"},
+   {  "Name": "Pachimatla, Shiva Prasad",        "Floor": "Tower B", "Email": "Shiva.Pachimatla@wu.com"  , "phone": "xxx-xxx-xxxx"}
+
+
+  ]
+}
+
+
+
 
 
 
