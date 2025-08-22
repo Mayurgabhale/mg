@@ -1,4 +1,4 @@
-C:\Users\W0024618\Desktop\swipeData\client\src\components\FloorOccupancyChart.jsx
+C:\Users\W0024618\Desktop\swipeData\client\src\components\ERTOverview.jsx
 
 
 import React, { useState, useMemo } from 'react';
@@ -353,76 +353,3 @@ export default function ERTOverview({ ertStatus }) {
 }
 
 
-
-C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\puneErtMembers.json
-
-
-
-{
-     "Site Head": [
-    { "name": "Rajeev Mago",      "email": "rajeev.mago@wu.com",      "phone": "xxx-xxx-xxxx" }
-  ],
-
- "BCM Team / Site Operations": [
-    { "name": "Rohit Singla",     "email": "rohit.singla@wu.com",     "phone": "xxx-xxx-xxxx" }
-  ],
-   "HR": [
-    { "name": "Suma Roy",         "email": "suma.roy@wu.com",         "phone": "xxx-xxx-xxxx" }
-  ],
-
-"Incident Controller": [
-     { "name": "Sameer Kanade",   "email": "Sameer.Kanade@wu.com",   "phone": "xxx-xxx-xxxx" },
-     { "name": "Lloyds Dass",      "email": "Lloyds.Dass@wu.com",      "phone": "xxx-xxx-xxxx" },
-      { "name": "Singh, Uday Prakash",      "email": "Uday.Singh@westernunion.com",      "phone": "xxx-xxx-xxxx" }
-  ],
-
-  "ERT Team Leader": [
-    { "name": "Vishal Chaudhari", "email": "Vishal.Chaudhary@wu.com", "phone": "xxx-xxx-xxxx" },
-    { "name": "Vinit Kumar",      "email": "Vinit.Kumar@wu.com",      "phone": "xxx-xxx-xxxx" },
-    { "name": "Sagar Jamdade",    "email": "sagar.jamdade@wu.com",    "phone": "xxx-xxx-xxxx" },
-    { "name": "Satish Bhoyane",   "email": "satishpandurang.bhoyane@westernunion.com",   "phone": "xxx-xxx-xxxx" },
-    { "name": "Sonu Pandey",      "email": "Sonu.Pandey@westernunion.com",      "phone": "xxx-xxx-xxxx" },
-    { "name": "Rangare, Bhupendra Babu","email": "bhupendra.rangare@wu.com","phone": "xxx-xxx-xxxx" }
-  ],
-
-  "ERT Team Members": [
-  { "Name": "Nair, Saurabh",                    "Base Location": "Podium Floor -Yellow Zone",  "Email": "Saurabh.Nair@wu.com" , "phone": "xxx-xxx-xxxx" },
-  { "Name": "Ladva, Hirav",                     "Floor": "Podium Floor- Yellow Zone",  "Email": "Hirav.Ladva@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Ahuja, Charandeep Singh",          "Floor": "Podium Floor-Green Zone - 2", "Email": "CharandeepSingh.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Samrendra, Samar",                 "Floor": "Podium Floor-Green Zone - 2",  "Email": "Samar.Samrendra@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Mahajan, Sachin",               "Floor": "Podium Floor-Green Zone - 2",  "Email": "sachin.mahajan@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Sharma, Rajesh",                  "Floor": "Podium Floor-Green Zone - 2", "Email": "Rajesh.Sharma@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Palve, Vikas",                     "Floor": "2nd Floor",  "Email": "Vikas.Palve@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Nalband, Khushboo",               "Floor": "2nd Floor",  "Email": "Khushboo.Nalband@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Nerella, Srikanth",             "Floor": "2nd Floor",  "Email": "Srikanth.Nerella@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Patle, Mayank",                  "Floor": "2nd Floor",  "Email": "Mayank.Patle@wu.com" , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Kolhe, Vaibhav",                   "Floor": "2nd Floor",  "Email": "Vaibhav.Kolhe@wu.com" , "phone": "xxx-xxx-xxxx"  },
-  { "Name": "Dalal, Vighnesh",                 "Floor": "Podium Floor-Red Zone",  "Email": "Vighnesh.Dalal@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Shah, Bhavik",                    "Floor": "Podium Floor-Red Zone",  "Email": "Bhavik.Shah@wu.com", "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Mulye, Devdatta",                 "Floor": "Podium Floor-Red Zone",   "Email": "devdatta.mulye@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Mishra, Anurag",                   "Floor": "Podium Floor-Yellow Zone", "Email": "Anurag.Mishra@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Bamoriya, Priyank",              "Floor": "Podium Floor-Yellow Zone",  "Email": "Priyank.Bamoriya@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Patil, Sangramsinh",               "Floor": "Podium Floor-Orange Zone",  "Email": "Sangramsinh.Patil@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Pillai, Anurag",                   "Floor": "Podium Floor-Orange Zone", "Email": "Anurag.Pillai@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Yash, Kumar",                   "Floor": "Podium Floor-Red Zone",   "Email": "kumar.yash@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Punde, Deepak",                    "Floor": "Podium Floor-Red Zone",  "Email": "Deepak.Punde@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Barua, Renuka",                   "Floor": "Tower B",  "Email": "Renuka.Barua@wu.com" , "phone": "xxx-xxx-xxxx"  },
-  {  "Name": "Choudhary, Shanker",            "Floor": "Tower B",  "Email": "Shanker.Choudhary@wu.com" , "phone": "xxx-xxx-xxxx" },
-  { "Name": "Ahuja, Ravi",                      "Floor": "Tower B",  "Email": "Ravi.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  { "Name": "Dhavale, Yashraj",                "Floor": "Tower B", "Email": "Yashraj.Dhavale@wu.com"  , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Bedre, Atharva",                   "Floor": "Tower B",  "Email": "Atharva.Bedre@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Thirumala, Rajesh",             "Floor": "Tower B",   "Email": "Rajesh.Thirumala@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Shaikh, Juned Ahmed",             "Floor": "Tower B", "Email": "Juned.Ahmed@wu.com"  , "phone": "xxx-xxx-xxxx"},
-   {  "Name": "Pachimatla, Shiva Prasad",        "Floor": "Tower B", "Email": "Shiva.Pachimatla@wu.com"  , "phone": "xxx-xxx-xxxx"}
-
-
-  ]
-}
-
-
-
-
-
-
-
-C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\puneErtMembers.json
