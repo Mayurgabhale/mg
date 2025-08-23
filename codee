@@ -1,4 +1,18 @@
 <IconButton
+  component={Link}
+  to="/"
+  color="inherit"
+>
+  <HomeIcon />
+</IconButton>
+
+
+
+
+...
+
+
+<IconButton
               component={Link}
               to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
               color="inherit"
