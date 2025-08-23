@@ -1,7 +1,44 @@
-// ── Denver-only redirect settings ─────────────────────────────────────────────
+
+//C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages\PartitionDetail.jsx
+import React, { useEffect, useState } from "react";
+import { useMemo } from 'react';
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+
+import SummaryCard from "../components/SummaryCard";
+import ChartCard from "../components/ChartCard";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+import { fetchLiveSummary, fetchHistory } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup"; // This is correct
+
+import buildingCapacities from "../data/buildingCapacities";
+
+import seatCapacities from "../data/seatCapacities";
+
+
+
+export default function PartitionDetail() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [liveSummary, setLiveSummary] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState("");
+
+
+  // ── Denver-only redirect settings ─────────────────────────────────────────────
 const DENVER_PARTITION = "US.CO.OBS";
 const DENVER_EXTERNAL_URL = "http://10.199.22.57:3012";
-
 
 
 
@@ -11,8 +48,177 @@ useEffect(() => {
   }
 }, [partition]);
 
+  // Auto‐refresh live summary
+  useEffect(() => {
+    let timer;
+    async function loadLive() {
+      const json = await fetchLiveSummary();
+      setLiveSummary(json);
+      setLastUpdate(new Date().toLocaleTimeString());
+    }
+    loadLive();
+    timer = setInterval(loadLive, 1000);
+    return () => clearInterval(timer);
+  }, [partition]);
+
+
+  
+
+
+
+  // Load historical summary once
+  useEffect(() => {
+    setHistoryLoading(true);
+    fetchHistory(partition).then((json) => {
+      setHistory(json);
+      setHistoryLoading(false);
+    });
+  }, [partition]);
 
 
 
 
-if (partition === DENVER_PARTITION) return null;
+
+  if (!liveSummary || !history) return <LoadingSpinner />;
+
+  // Totals for cards
+  const lastDay = history.summaryByDate.at(-1);
+  const partToday = lastDay.region;
+  const live = liveSummary.realtime[partition] || {
+    total: 0,
+    Employee: 0,
+    Contractor: 0,
+    TempBadge: 0,
+    floors: {},
+  };
+
+  // Build floorEntries with capacity
+ const floorEntries = Object.entries(live.floors)
+  .filter(([floor]) => floor && floor.trim() !== '')
+  .map(([floor, cnt]) => {
+    const name = floor.trim();
+    const capacity = buildingCapacities[name] ?? seatCapacities[partition] ?? 0;
+    const pct = capacity ? Math.round((cnt / capacity) * 100) : 0;
+
+    return {
+      name,
+      Headcount: cnt,
+      Capacity: capacity,
+      breakdown: {
+        Headcount: cnt,
+        'Total Seat': capacity,
+        Usage: `${pct}%`,
+      },
+    };
+  });
+
+
+
+  return (
+    <>
+      <Header />
+
+      <Box component="main" sx={{ pt: 1, pb: 1 }}>
+        <Container maxWidth={false} disableGutters>
+          {/* Back button */}
+          <Box display="flex" alignItems="center" mb={1} sx={{ px: "20px" }}>
+            <Button size="small" onClick={() => navigate(-1)}>
+              ← Back
+            </Button>
+          </Box>
+
+          {/* Six‐card partition summary */}
+          <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+  {[
+    {
+      title: "Today's Total Headcount",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.total,
+      icon: <i className="fa-solid fa-users" style={{ color: '#E57373', fontSize: 25 }} />,
+      border: '#FFD666'
+    },
+    {
+      title: "Today's Employees Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Employee,
+      icon: <i className="bi bi-people" style={{ color: '#81C784', fontSize: 25 }} />,
+      border: '#81C784'
+    },
+    {
+      title: "Today's Contractors Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ color: '#64B5F6', fontSize: 25 }} />,
+      border: '#FFE599'
+    },
+    {
+      title: "Realtime Headcount",
+      value: live.total,
+      icon: <i className="fa-solid fa-users" style={{ color: '#BA68C8', fontSize: 25 }} />,
+      border: '#FFF2CC'
+    },
+    {
+      title: "Realtime Employees Count",
+      value: live.Employee,
+      icon: <i className="bi bi-people" style={{ color: '#FFB74D', fontSize: 25 }} />,
+      border: '#FFD666'
+    },
+    {
+      title: "Realtime Contractors Count",
+      value: live.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ color: '#4DB6AC', fontSize: 25 }} />,
+      border: '#FFE599'
+    }
+  ].map(card => (
+    <Box key={card.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+      <SummaryCard
+        title={card.title}
+        total={card.value}
+        stats={[]}
+        icon={card.icon}
+        sx={{
+          height: 140,
+          border: `2px solid ${card.border}`
+        }}
+      />
+    </Box>
+  ))}
+</Box>
+
+          {/* Floor‐capacity chart */}
+          <Box mb={4} sx={{ 
+            px: "20px", 
+            p: 2, 
+            border: "2px solid #FFC107",
+            background: 'rgba(0,0,0,0.4)'
+          }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Typography variant="h6" sx={{ color: '#FFC107' }}>
+                Live Floor Headcount against Occupancy
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#FFC107' }}>
+                Last updated: {lastUpdate}
+              </Typography>
+            </Box>
+
+            <ChartCard
+              data={floorEntries}
+              dataKey="Headcount"
+              chartHeight={320}
+              colors={{ head: "#28B463", cap: "#FDDA0D" }}
+              axisProps={{
+                xAxis: { tick: { fill: "#fff" } },
+                yAxis: { tick: { fill: "#fff" } },
+              }}
+            />
+          </Box>
+        </Container>
+      </Box>
+
+      <Footer />
+    </>
+  );
+}
+
+
+
+
+
+
