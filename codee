@@ -1,4 +1,8 @@
+if (partition === DENVER_PARTITION) return null;
 
+
+
+...
 //C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages\PartitionDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useMemo } from 'react';
