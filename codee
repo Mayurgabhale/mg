@@ -1,135 +1,20 @@
- "pcDetails": [
-      {
-        "hostname": "WKSWUPUN4501",
-        "ip_address": "WKSWUPUN4501",
-        "location": "APAC",
-        "city": "Pune Podium",
-        "pc_name": "Screen 03",
-        "history": [],
-        "status": "Online"
-      },
-      {
-        "hostname": "WKSPUN-392353",
-        "ip_address": "WKSPUN-392353",
-        "location": "APAC",
-        "city": "Pune Podium",
-        "pc_name": "Screen 04",
-        "history": [],
-        "status": "Online"
-      },
-      {
-        "hostname": "WKSPUN-492142",
-        "ip_address": "WKSPUN-492142",
-        "location": "APAC",
-        "city": "Pune Podium",
-        "pc_name": "Screen 07",
-        "history": [],
-        "status": "Online"
-      },
-
-
-in card we got this
-
-WKSWUPUN4501
-     PCDETAILS <--- on this i want to show  "pc_name": "Screen 07", pc name 
-     WKSWUPUN4501
-     APAC
-     Pune Podium
-Online
-
-
-how to do this, carefully 
-
-function updateDetails(data) {
-    const detailsContainer = document.getElementById("device-details");
-    const deviceFilter = document.getElementById("device-filter");
-    const onlineFilterButton = document.getElementById("filter-online");
-    const offlineFilterButton = document.getElementById("filter-offline");
-    const allFilterButton = document.getElementById("filter-all");
-    const cityFilter = document.getElementById("city-filter");
-
-    detailsContainer.innerHTML = "";
-    cityFilter.innerHTML = '<option value="all">All Cities</option>';
-
-    let combinedDevices = [];
-    let citySet = new Set();
-
-    // Icon utility based on device type
-    function getDeviceIcon(type = "") {
-        type = type.toLowerCase();
-        if (type.includes("camera")) return "fas fa-video";
-        if (type.includes("controller")) return "fas fa-cogs";
-        if (type.includes("archiver")) return "fas fa-database";
-        if (type.includes("server")) return "fas fa-server";
-        if (type.includes("pc")) return "fas fa-desktop"; // <-- added for PC
-        return "fas fa-microchip"; // fallback
-    }
+// compute a nicer label for the device-type area
+const deviceLabel = deviceType.includes("pc")
+    ? (device.pc_name || device.hostname || "PC")
+    : deviceType.toUpperCase();
 
 
 
 
-    // Fetch real-time status if available.
-    fetch("http://localhost:80/api/region/devices/status")
-        .then((response) => response.json())
-        .then((realTimeStatus) => {
-            console.log("Live Status Data:", realTimeStatus);
-
-            for (const [key, devices] of Object.entries(data.details)) {
-                if (!Array.isArray(devices) || devices.length === 0) continue;
-                const deviceType = key.toLowerCase();
-
-                devices.forEach((device) => {
-                    const deviceIP = device.ip_address || "N/A";
-                    let currentStatus = (realTimeStatus[deviceIP] || device.status || "offline").toLowerCase();
-                    const city = device.city || "Unknown";
-                    citySet.add(city);
-
-                    // Create card element.
-                    const card = document.createElement("div");
-                    card.className = "device-card";
-                    card.dataset.type = deviceType;
-                    card.dataset.status = currentStatus;
-                    card.dataset.city = city;
-                    card.setAttribute("data-ip", deviceIP);
-
-                    // Apply background color based on online/offline status
-                    card.style.backgroundColor = currentStatus === "online" ? "#" : "#"; card.style.backgroundColor = currentStatus === "online"
-                        ? ""  // Tailwind's emerald-500 with 12% opacity
-                        : "";  // Tailwind's red-500 with 12% opacity
 
 
-                    card.style.borderColor = currentStatus === "online"
-                        ? ""
-                        : "";
-
-                    // Create a container for status
-                    const statusContainer = document.createElement("p");
-                    statusContainer.className = "device-status";
-                    // statusContainer.textContent = "Status: ";
-
-                    // Status text
-                    const statusText = document.createElement("span");
-                    statusText.className = "status-text";
-                    statusText.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
-                    statusText.style.color = currentStatus === "online" ? "green" : "red";
-
-                    // Status dot
-                    const statusDot = document.createElement("span");
-                    statusDot.classList.add(currentStatus === "online" ? "online-dot" : "offline-dot");
-                    statusDot.style.backgroundColor = (currentStatus === "online") ? "green" : "red";
-                    statusDot.style.display = "inline-block";
-                    statusDot.style.width = "10px";
-                    statusDot.style.height = "10px";
-                    statusDot.style.marginLeft = "5px";
-                    statusDot.style.marginRight = "5px";
-                    statusDot.style.borderRadius = "50%";
-
-                    // Combine status parts
-                    statusContainer.appendChild(statusDot);
-                    statusContainer.appendChild(statusText);
+.....
 
 
-                    card.insertAdjacentHTML("beforeend", `
+
+
+
+card.insertAdjacentHTML("beforeend", `
   <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
       ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
   </h3>
@@ -140,7 +25,7 @@ function updateDetails(data) {
           
           <strong>
             <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
-            ${deviceType.toUpperCase()}
+            ${deviceLabel}
           </strong>
           
           ${deviceType.includes("camera")
@@ -177,166 +62,3 @@ function updateDetails(data) {
       </p>
   </div>
 `);
-
-
-                    card.appendChild(statusContainer);
-
-
-
-                    // ............
-                    combinedDevices.push({
-                        card: card,
-                        device: {
-                            type: deviceType,
-                            status: currentStatus,
-                            city: city
-                        }
-                    });
-                });
-            }
-
-            combinedDevices.sort((a, b) => {
-                const statusA = (a.device.status === "offline") ? 0 : 1;
-                const statusB = (b.device.status === "offline") ? 0 : 1;
-                return statusA - statusB;
-            });
-
-            const allDevices = combinedDevices.map(item => item.card);
-            const deviceObjects = combinedDevices.map(item => item.device);
-
-            citySet.forEach((city) => {
-                const option = document.createElement("option");
-                option.value = city;
-                option.textContent = city;
-                cityFilter.appendChild(option);
-            });
-
-            deviceFilter.value = "all";
-            cityFilter.value = "all";
-            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-            allFilterButton.classList.add("active");
-
-            function filterDevices() {
-                const selectedType = deviceFilter.value;
-                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
-                const selectedCity = cityFilter.value;
-                // Search bar input
-                const searchTerm = document.getElementById("device-search").value.toLowerCase();
-
-                detailsContainer.innerHTML = "";
-
-
-                const filteredDevices = allDevices.filter((device) =>
-                    (selectedType === "all" || device.dataset.type === selectedType) &&
-                    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
-                    (selectedCity === "all" || device.dataset.city === selectedCity) &&
-                    (
-                        !searchTerm ||
-                        device.innerText.toLowerCase().includes(searchTerm)
-                    )
-                );
-
-                filteredDevices.forEach((deviceCard) => {
-                    detailsContainer.appendChild(deviceCard);
-                });
-
-
-
-
-                const region = currentRegion?.toUpperCase() || "GLOBAL";
-                const titleElement = document.getElementById("region-title");
-
-                const logoHTML = `
-                    <span class="region-logo">
-                        <img src="images/header-logo.png" alt="Logo"
-                        style="height: 37px; width: auto; object-fit: contain;" />
-                    </span>
-                    `;
-                if (selectedCity !== "all") {
-                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
-                } else {
-                    titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
-                }
-
-                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
-                    const correspondingCard = allDevices[index];
-                    return (
-                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
-                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
-                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity)
-                    );
-                });
-
-                const summary = calculateCitySummary(filteredSummaryDevices);
-                updateSummary(summary);
-            }
-
-            function calculateCitySummary(devices) {
-                const summary = {
-                    summary: {
-                        totalDevices: devices.length,
-                        totalOnlineDevices: devices.filter(d => d.status === "online").length,
-                        totalOfflineDevices: devices.filter(d => d.status === "offline").length,
-                        cameras: { total: 0, online: 0, offline: 0 },
-                        archivers: { total: 0, online: 0, offline: 0 },
-                        controllers: { total: 0, online: 0, offline: 0 },
-                        servers: { total: 0, online: 0, offline: 0 },
-                        pcDetails: { total: 0, online: 0, offline: 0 } // 🔹 added
-                    }
-                };
-
-                devices.forEach((device) => {
-                    if (!summary.summary[device.type]) return;
-                    summary.summary[device.type].total += 1;
-                    if (device.status === "online") summary.summary[device.type].online += 1;
-                    else summary.summary[device.type].offline += 1;
-                });
-
-                return summary;
-            }
-
-            filterDevices();
-
-            setTimeout(() => {
-                const selectedCity = cityFilter.value;
-                const selectedType = deviceFilter.value;
-                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
-
-                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
-                    const correspondingCard = allDevices[index];
-                    return (
-                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
-                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
-                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity)
-                    );
-                });
-
-                const summary = calculateCitySummary(filteredSummaryDevices);
-                updateSummary(summary);
-            }, 100);
-
-            deviceFilter.addEventListener("change", filterDevices);
-            // Search bar input
-            document.getElementById("device-search").addEventListener("input", filterDevices);
-            cityFilter.addEventListener("change", filterDevices);
-            allFilterButton.addEventListener("click", () => {
-                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-                allFilterButton.classList.add("active");
-                filterDevices();
-            });
-            onlineFilterButton.addEventListener("click", () => {
-                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-                onlineFilterButton.classList.add("active");
-                filterDevices();
-            });
-            offlineFilterButton.addEventListener("click", () => {
-                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-                offlineFilterButton.classList.add("active");
-                filterDevices();
-            });
-        })
-        .catch((error) => {
-            console.error("Error fetching real-time device status:", error);
-            detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
-        });
-}
