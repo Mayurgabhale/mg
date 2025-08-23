@@ -1,28 +1,3 @@
-Uncaught runtime errors:
-×
-ERROR
-Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
-
-Check the render method of `Header`.
-Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
-
-Check the render method of `Header`.
-    at createFiberFromTypeAndProps (http://localhost:3000/static/js/bundle.js:17138:24)
-    at createFiberFromElement (http://localhost:3000/static/js/bundle.js:17149:12)
-    at createChild (http://localhost:3000/static/js/bundle.js:19052:28)
-    at reconcileChildrenArray (http://localhost:3000/static/js/bundle.js:19165:66)
-    at reconcileChildFibersImpl (http://localhost:3000/static/js/bundle.js:19272:109)
-    at http://localhost:3000/static/js/bundle.js:19299:31
-    at reconcileChildren (http://localhost:3000/static/js/bundle.js:19561:47)
-    at beginWork (http://localhost:3000/static/js/bundle.js:20326:16)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15742:68)
-    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22323:93)
-
-
-
-why come this error check each and every line
-
-
 
 
 // src/components/Header.jsx
@@ -106,20 +81,11 @@ export default function Header({
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
 
-  // // ── Routing logic ──────────────────────────────────────────────────────────
-  // const segments = location.pathname.split('/').filter(Boolean);
-  // const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
-  // const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
-  // const suffixSegments = isPartitionPage ? segments.slice(2) : [];
-
   // ── Routing logic ──────────────────────────────────────────────────────────
   const segments = location.pathname.split('/').filter(Boolean);
   const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
   const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
-  // preserve everything after the partition segment (e.g. "details", "history", etc.)
   const suffixSegments = isPartitionPage ? segments.slice(2) : [];
-
-
 
   const flagMap = {
     'US.CO.OBS': DenverFlag,
@@ -134,50 +100,23 @@ export default function Header({
   // Detect if we’re currently on any “history” page
   const isHistoryPage = location.pathname.includes('/history');
 
-  // const handlePartitionChange = newPartition => {
-  //   if (!newPartition) return navigate('/');
-  //   // Always point at the new partition
-  //   let path = `/partition/${encodeURIComponent(newPartition)}`;
-  //   // If we were on “history”, keep the history view
-  //   if (isHistoryPage) path += '/history';
-  //   navigate(path);
-  // };
-
-
   const handlePartitionChange = newPartition => {
     if (!newPartition) return navigate('/');
-    // build the base path for the new partition
+    // Always point at the new partition
     let path = `/partition/${encodeURIComponent(newPartition)}`;
-    // if we had suffix segments (like "details" or "history/123"), preserve them
-    if (suffixSegments.length) {
-      path += '/' + suffixSegments.join('/');
-    }
+    // If we were on “history”, keep the history view
+    if (isHistoryPage) path += '/history';
     navigate(path);
   };
 
 
-  // const handleDetailsClick = () => {
-  //   if (isPartitionPage) {
-  //     navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
-  //   } else {
-  //     navigate('/partition/US.CO.OBS/details');
-  //   }
-  // };
-
-
   const handleDetailsClick = () => {
     if (isPartitionPage) {
-      // keep any existing suffix (if already details, this will effectively re-navigate to same path)
-      const suffix = suffixSegments.length ? '/' + suffixSegments.join('/') : '';
-      // ensure we end up on <partition>/details — override or append details
-      // replace any existing suffix with 'details' (so /partition/X/history -> /partition/X/details)
-      // simpler: always navigate explicitly to details
       navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
     } else {
       navigate('/partition/US.CO.OBS/details');
     }
   };
-
 
   // ── Date/Time popover handlers ─────────────────────────────────────────────
   const openPopover = e => {
@@ -204,34 +143,26 @@ export default function Header({
               {currentPartition ? ` • ${displayNameMap[currentPartition]}` : ''}
             </Typography>
 
-            {/* <IconButton
+            <IconButton
               component={Link}
               to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
               color="inherit"
             >
               <HomeIcon />
-            </IconButton> */}
-
-            <IconButton
-              component={Link}
-              to="/"
-              color="inherit"
-            >
-              <HomeIcon />
             </IconButton>
 
-
-            <IconButton
-              component={Link}
-              to={
-                currentPartition
-                  ? `/partition/${encodeURIComponent(currentPartition)}/history`
-                  : '/history'
-              }
-              color="inherit"
-            >
-              <HistoryIcon />
-            </IconButton>
+    
+ <IconButton
+   component={Link}
+   to={
+     currentPartition
+       ? `/partition/${encodeURIComponent(currentPartition)}/history`
+       : '/history'
+   }
+   color="inherit"
+ >
+   <HistoryIcon />
+ </IconButton>
 
             <IconButton onClick={handleDetailsClick} color="inherit">
               <InfoIcon />
@@ -312,9 +243,3 @@ export default function Header({
     </>
   );
 }
-
-
-
-
-
-
