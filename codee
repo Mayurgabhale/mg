@@ -1,3 +1,43 @@
+// Update the routing logic to properly detect the current view
+const segments = location.pathname.split('/').filter(Boolean);
+const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+
+// Detect current view more accurately
+let currentView = null;
+if (isPartitionPage && segments.length > 2) {
+  // For partition pages with a view (details/history)
+  currentView = segments[2];
+} else if (segments.length === 1 && segments[0] === 'history') {
+  // For the standalone history page
+  currentView = 'history';
+}
+
+// Update handlePartitionChange to handle all cases
+const handlePartitionChange = newPartition => {
+  if (!newPartition) return navigate('/');
+  
+  let path = `/partition/${encodeURIComponent(newPartition)}`;
+  
+  // Preserve the current view if it exists
+  if (currentView) {
+    path += `/${currentView}`;
+  } else if (location.pathname === '/history') {
+    // Special case: if we're on the standalone history page
+    path += '/history';
+  }
+  
+  navigate(path);
+};
+
+
+
+
+
+
+
+....
+
 know problme in history 
 http://localhost:3000/history this in correct 
 but in select box select 
