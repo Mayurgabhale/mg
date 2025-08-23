@@ -1,3 +1,15 @@
+<IconButton
+              component={Link}
+              to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
+              color="inherit"
+            >
+              <HomeIcon />
+            </IconButton>
+
+
+
+
+
 // ── Routing logic ──────────────────────────────────────────────────────────
 const segments = location.pathname.split('/').filter(Boolean);
 const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
