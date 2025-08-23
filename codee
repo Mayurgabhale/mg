@@ -1,117 +1,477 @@
- <Col xs={12} lg={4} className="mb-4 d-flex">
-            <Card className="shadow-sm w-100 h-100" style={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px' }}>
-              <Card.Header style={{
-                borderBottom: '1px solid #334155',
-                fontWeight: '600',
-                fontSize: '1.1rem',
-                backgroundColor: 'rgba(30, 41, 59, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                // padding: '1rem',
-                color: '#e2e8f0'
-              }}>
-                {roleIcons['ERT Team Members']}
-                ERT Team Members
-              </Card.Header>
-              <Card.Body style={{ padding: '1rem' }}>
-                {ertMembers.map((m, i) => {
-                  const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
-                  return (
-                    <div key={i} className="mb-2 pb-2" style={{ borderBottom: i < ertMembers.length - 1 ? '1px solid #334155' : 'none' }}>
+in this only 
+partion means PartitionDetail 
+if i select  Denver, then i want to redirect on this route http://10.199.22.57:3012
+only in partiondetail if denver, not for all
+read all code carefuly, and give me update code, 
+only for PartitionDetail not other ok 
 
-                      {/* <div className="d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img 
-                            src={getPhotoSrc(m)} 
-                            alt={m.name || 'Member'} 
-                            style={{ 
-                              width: 52, 
-                              height: 52, 
-                              borderRadius: '50%', 
-                              objectFit: 'cover', 
-                              marginRight: 12,
-                              border: '1px solid #475569'
-                            }} 
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = DEFAULT_PHOTO;
-                            }} 
-                          />
-                          <span style={{ fontWeight: '500', color: '#f1f5f9' }}>{m.name}</span>
-                        </div>
-                        <Badge bg={m.present ? 'success' : 'danger'} pill style={{ fontSize: '0.7rem' }}>
-                          {m.present ? 'Available' : 'Away'}
-                        </Badge>
-                      </div> */}
+// src/components/Header.jsx
 
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <div style={{
-                            width: 52,
-                            height: 52,
-                            borderRadius: '50%',
-                            overflow: 'hidden',
-                            marginRight: 12,
-                            // border: '2px solid #475569',
-                            border: m.present ? '3px solid #0df705' : '2px solid rgb(227, 230, 235)',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                          }}>
-                            <img
-                              src={getPhotoSrc(m)}
-                              alt={m.name || 'Member'}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                objectPosition: 'center top' // This will focus on the face area
-                              }}
-                              onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = DEFAULT_PHOTO;
-                              }}
-                            />
-                          </div>
-                          <span style={{ fontWeight: '500', color: '#f1f5f9' }}>{m.name}</span>
-                        </div>
-                        <Badge bg={m.present ? 'success' : 'danger'} pill style={{ fontSize: '0.7rem' }}>
-                          {m.present ? 'Available' : 'Away'}
-                        </Badge>
-                      </div>
+// ── ALL IMPORTS AT THE VERY TOP ───────────────────────────────────────────────
+import React, { useEffect, useState } from 'react';
+
+// MUI core + pickers
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  IconButton,
+  Popover,
+  TextField,
+  Button
+} from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker, TimePicker } from '@mui/x-date-pickers';
+
+// Day.js + plugins
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// React Router
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+
+// Icons
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import InfoIcon from '@mui/icons-material/Info';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+
+// Assets & hooks
+import WuLogo from '../assets/wu-logo.png';
+import DenverFlag from '../assets/flags/denver.png';
+import MiamiFlag from '../assets/flags/miami.png';
+import NewYorkFlag from '../assets/flags/new-york.png';
+import AustinFlag from '../assets/flags/austin.png';
+import DefaultFlag from '../assets/flags/default.png';
+
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+// ── Initialize Day.js UTC/timezone ────────────────────────────────────────────
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('UTC');
+
+// ── Display name map ─────────────────────────────────────────────────────────
+const displayNameMap = {
+  'US.CO.OBS': 'Denver',
+  'US.FL.Miami': 'Miami',
+  'US.NYC': 'New York',
+  'USA/Canada Default': 'Austin Texas'
+};
+
+// ── Header Component ──────────────────────────────────────────────────────────
+export default function Header({
+  title,
+  mode,
+  onTimeSelect,
+  onLiveClick
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+
+  const [lastUpdate, setLastUpdate] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [draftDate, setDraftDate] = useState(dayjs().utc());
+
+  // Update the “last update” timestamp on each live fetch
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  // ── Routing logic ──────────────────────────────────────────────────────────
+  const segments = location.pathname.split('/').filter(Boolean);
+  const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+  const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+  const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+
+  const flagMap = {
+    'US.CO.OBS': DenverFlag,
+    'US.FL.Miami': MiamiFlag,
+    'US.NYC': NewYorkFlag,
+    'USA/Canada Default': AustinFlag
+  };
+  const selectedFlag = flagMap[currentPartition] || DefaultFlag;
 
 
-                      <div className="mt-2" style={{ fontSize: '0.85rem' }}>
-                        <div className="d-flex align-items-center mb-1">
-                          <FaEnvelopeOpenText className="me-2" style={{ color: '#60a5fa', minWidth: '16px' }} />
-                          <a href={`mailto:${m.email}`} style={{ color: '#93c5fd', textDecoration: 'none' }}>
-                            {m.email}
-                          </a>
-                        </div>
-                        <div className="d-flex align-items-center mb-1">
-                          <FaMobileAlt className="me-2" style={{ color: '#34d399', minWidth: '16px' }} />
-                          <span style={{ color: '#34d399' }}>{m.phone}</span>
-                        </div>
-                        <div className="d-flex align-items-center">
-                          <FaMapMarkerAlt className="me-2" style={{ color: '#f87171', minWidth: '16px' }} />
-                          <span style={{ color: '#f87171' }}>{location}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {!ertMembers.length && <div className="text-center py-2" style={{ color: '#94a3b8' }}>No members</div>}
-                <div className="text-center mt-3">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() => setShowAllMembers(prev => !prev)}
-                    style={{ minWidth: '120px' }}
-                  >
-                    {showAllMembers ? <><FaEyeSlash className="me-1" /> Show Less</> : <><FaEye className="me-1" /> Show More</>}
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
+
+  // Detect if we’re currently on any “history” page
+  const isHistoryPage = location.pathname.includes('/history');
+
+  const handlePartitionChange = newPartition => {
+    if (!newPartition) return navigate('/');
+    // Always point at the new partition
+    let path = `/partition/${encodeURIComponent(newPartition)}`;
+    // If we were on “history”, keep the history view
+    if (isHistoryPage) path += '/history';
+    navigate(path);
+  };
+
+
+  const handleDetailsClick = () => {
+    if (isPartitionPage) {
+      navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+    } else {
+      navigate('/partition/US.CO.OBS/details');
+    }
+  };
+
+  // ── Date/Time popover handlers ─────────────────────────────────────────────
+  const openPopover = e => {
+    setDraftDate(dayjs().utc());
+    setAnchorEl(e.currentTarget);
+  };
+  const closePopover = () => setAnchorEl(null);
+  const handleGo = () => {
+    onTimeSelect(draftDate.toISOString());
+    closePopover();
+  };
+
+  return (
+    <>
+      <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+        <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+
+          {/* ── Left: logo, title, nav & time/live icons ── */}
+          <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
+            <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
+
+            <Typography variant="h6" sx={{ fontWeight: 600, mr: 3 }}>
+              {title}
+              {currentPartition ? ` • ${displayNameMap[currentPartition]}` : ''}
+            </Typography>
+
+            <IconButton
+              component={Link}
+              to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
+              color="inherit"
+            >
+              <HomeIcon />
+            </IconButton>
+
+    
+ <IconButton
+   component={Link}
+   to={
+     currentPartition
+       ? `/partition/${encodeURIComponent(currentPartition)}/history`
+       : '/history'
+   }
+   color="inherit"
+ >
+   <HistoryIcon />
+ </IconButton>
+
+            <IconButton onClick={handleDetailsClick} color="inherit">
+              <InfoIcon />
+            </IconButton>
+
+            <IconButton
+              color={mode === 'time' ? 'secondary' : 'inherit'}
+              onClick={openPopover}
+              title="Jump to specific time"
+            >
+              <AccessTimeIcon />
+            </IconButton>
+
+            <IconButton
+              color={mode === 'live' ? 'secondary' : 'inherit'}
+              onClick={onLiveClick}
+              title="Return to live"
+            >
+              <LiveTvIcon />
+            </IconButton>
+          </Box>
+
+          {/* ── Right: region selector, flag, last-update/historic label ── */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <Select
+              size="small"
+              value={currentPartition}
+              displayEmpty
+              onChange={e => handlePartitionChange(e.target.value)}
+              sx={{ bgcolor: 'background.paper', mr: 1, minWidth: 160 }}
+            >
+              <MenuItem value="">— Select Region —</MenuItem>
+              {partitionList.map(p => (
+                <MenuItem key={p} value={p}>
+                  {displayNameMap[p] || p}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Box component="img" src={selectedFlag} alt="Flag" sx={{ height: 32, mr: 2 }} />
+
+            <Typography variant="body2" sx={{ color: '#FFF' }}>
+              {mode === 'live'
+                ? `Last update: ${lastUpdate}`
+                : 'Viewing historic'}
+            </Typography>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Box p={2} display="flex" flexDirection="column" gap={2}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Select Date (UTC)"
+              value={draftDate}
+              onChange={newVal => setDraftDate(newVal)}
+              renderInput={props => <TextField {...props} />}
+            />
+            <TimePicker
+              label="Select Time (UTC)"
+              value={draftDate}
+              onChange={newVal => setDraftDate(newVal)}
+              renderInput={props => <TextField {...props} />}
+            />
+          </LocalizationProvider>
+          <Box display="flex" justifyContent="flex-end" gap={1}>
+            <Button onClick={closePopover}>Cancel</Button>
+            <Button variant="contained" onClick={handleGo}>Go</Button>
+          </Box>
+        </Box>
+      </Popover>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages\PartitionDetail.jsx
+import React, { useEffect, useState } from "react";
+import { useMemo } from 'react';
+import {
+  Container,
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+
+import SummaryCard from "../components/SummaryCard";
+import ChartCard from "../components/ChartCard";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+
+import { fetchLiveSummary, fetchHistory } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup"; // This is correct
+
+import buildingCapacities from "../data/buildingCapacities";
+
+import seatCapacities from "../data/seatCapacities";
+
+
+
+export default function PartitionDetail() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [liveSummary, setLiveSummary] = useState(null);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState("");
+
+  // Auto‐refresh live summary
+  useEffect(() => {
+    let timer;
+    async function loadLive() {
+      const json = await fetchLiveSummary();
+      setLiveSummary(json);
+      setLastUpdate(new Date().toLocaleTimeString());
+    }
+    loadLive();
+    timer = setInterval(loadLive, 1000);
+    return () => clearInterval(timer);
+  }, [partition]);
+
+
+  
+
+
+
+  // Load historical summary once
+  useEffect(() => {
+    setHistoryLoading(true);
+    fetchHistory(partition).then((json) => {
+      setHistory(json);
+      setHistoryLoading(false);
+    });
+  }, [partition]);
+
+
+
+
+
+  if (!liveSummary || !history) return <LoadingSpinner />;
+
+  // Totals for cards
+  const lastDay = history.summaryByDate.at(-1);
+  const partToday = lastDay.region;
+  const live = liveSummary.realtime[partition] || {
+    total: 0,
+    Employee: 0,
+    Contractor: 0,
+    TempBadge: 0,
+    floors: {},
+  };
+
+  // Build floorEntries with capacity
+ const floorEntries = Object.entries(live.floors)
+  .filter(([floor]) => floor && floor.trim() !== '')
+  .map(([floor, cnt]) => {
+    const name = floor.trim();
+    const capacity = buildingCapacities[name] ?? seatCapacities[partition] ?? 0;
+    const pct = capacity ? Math.round((cnt / capacity) * 100) : 0;
+
+    return {
+      name,
+      Headcount: cnt,
+      Capacity: capacity,
+      breakdown: {
+        Headcount: cnt,
+        'Total Seat': capacity,
+        Usage: `${pct}%`,
+      },
+    };
+  });
+
+
+
+  return (
+    <>
+      <Header />
+
+      <Box component="main" sx={{ pt: 1, pb: 1 }}>
+        <Container maxWidth={false} disableGutters>
+          {/* Back button */}
+          <Box display="flex" alignItems="center" mb={1} sx={{ px: "20px" }}>
+            <Button size="small" onClick={() => navigate(-1)}>
+              ← Back
+            </Button>
+          </Box>
+
+          {/* Six‐card partition summary */}
+          <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+  {[
+    {
+      title: "Today's Total Headcount",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.total,
+      icon: <i className="fa-solid fa-users" style={{ color: '#E57373', fontSize: 25 }} />,
+      border: '#FFD666'
+    },
+    {
+      title: "Today's Employees Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Employee,
+      icon: <i className="bi bi-people" style={{ color: '#81C784', fontSize: 25 }} />,
+      border: '#81C784'
+    },
+    {
+      title: "Today's Contractors Count",
+      value: historyLoading ? <CircularProgress size={20} /> : partToday.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ color: '#64B5F6', fontSize: 25 }} />,
+      border: '#FFE599'
+    },
+    {
+      title: "Realtime Headcount",
+      value: live.total,
+      icon: <i className="fa-solid fa-users" style={{ color: '#BA68C8', fontSize: 25 }} />,
+      border: '#FFF2CC'
+    },
+    {
+      title: "Realtime Employees Count",
+      value: live.Employee,
+      icon: <i className="bi bi-people" style={{ color: '#FFB74D', fontSize: 25 }} />,
+      border: '#FFD666'
+    },
+    {
+      title: "Realtime Contractors Count",
+      value: live.Contractor,
+      icon: <i className="fa-solid fa-circle-user" style={{ color: '#4DB6AC', fontSize: 25 }} />,
+      border: '#FFE599'
+    }
+  ].map(card => (
+    <Box key={card.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+      <SummaryCard
+        title={card.title}
+        total={card.value}
+        stats={[]}
+        icon={card.icon}
+        sx={{
+          height: 140,
+          border: `2px solid ${card.border}`
+        }}
+      />
+    </Box>
+  ))}
+</Box>
+
+          {/* Floor‐capacity chart */}
+          <Box mb={4} sx={{ 
+            px: "20px", 
+            p: 2, 
+            border: "2px solid #FFC107",
+            background: 'rgba(0,0,0,0.4)'
+          }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Typography variant="h6" sx={{ color: '#FFC107' }}>
+                Live Floor Headcount against Occupancy
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#FFC107' }}>
+                Last updated: {lastUpdate}
+              </Typography>
+            </Box>
+
+            <ChartCard
+              data={floorEntries}
+              dataKey="Headcount"
+              chartHeight={320}
+              colors={{ head: "#28B463", cap: "#FDDA0D" }}
+              axisProps={{
+                xAxis: { tick: { fill: "#fff" } },
+                yAxis: { tick: { fill: "#fff" } },
+              }}
+            />
+          </Box>
+        </Container>
+      </Box>
+
+      <Footer />
+    </>
+  );
+}
+
+
+
+
+
