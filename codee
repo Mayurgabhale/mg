@@ -1,3 +1,42 @@
+// ── Routing logic ──────────────────────────────────────────────────────────
+const segments = location.pathname.split('/').filter(Boolean);
+const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+// preserve everything after the partition segment (e.g. "details", "history", etc.)
+const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+
+// ... flagMap etc ...
+
+const handlePartitionChange = newPartition => {
+  if (!newPartition) return navigate('/');
+  // build the base path for the new partition
+  let path = `/partition/${encodeURIComponent(newPartition)}`;
+  // if we had suffix segments (like "details" or "history/123"), preserve them
+  if (suffixSegments.length) {
+    path += '/' + suffixSegments.join('/');
+  }
+  navigate(path);
+};
+
+const handleDetailsClick = () => {
+  if (isPartitionPage) {
+    // keep any existing suffix (if already details, this will effectively re-navigate to same path)
+    const suffix = suffixSegments.length ? '/' + suffixSegments.join('/') : '';
+    // ensure we end up on <partition>/details — override or append details
+    // replace any existing suffix with 'details' (so /partition/X/history -> /partition/X/details)
+    // simpler: always navigate explicitly to details
+    navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+  } else {
+    navigate('/partition/US.CO.OBS/details');
+  }
+};
+
+
+
+
+
+
+....
 in this one problme in 
 <IconButton onClick={handleDetailsClick} color="inherit">
               <InfoIcon />
