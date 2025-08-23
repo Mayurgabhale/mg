@@ -1,80 +1,27 @@
-<IconButton
-  component={Link}
-  to="/"
-  color="inherit"
->
-  <HomeIcon />
-</IconButton>
+Uncaught runtime errors:
+×
+ERROR
+Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
 
-...
+Check the render method of `Header`.
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
 
-<IconButton
-              component={Link}
-              to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
-              color="inherit"
-            >
-              <HomeIcon />
-            </IconButton>
-
-
-
-
-
-// ── Routing logic ──────────────────────────────────────────────────────────
-const segments = location.pathname.split('/').filter(Boolean);
-const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
-const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
-// preserve everything after the partition segment (e.g. "details", "history", etc.)
-const suffixSegments = isPartitionPage ? segments.slice(2) : [];
-
-// ... flagMap etc ...
-
-const handlePartitionChange = newPartition => {
-  if (!newPartition) return navigate('/');
-  // build the base path for the new partition
-  let path = `/partition/${encodeURIComponent(newPartition)}`;
-  // if we had suffix segments (like "details" or "history/123"), preserve them
-  if (suffixSegments.length) {
-    path += '/' + suffixSegments.join('/');
-  }
-  navigate(path);
-};
-
-const handleDetailsClick = () => {
-  if (isPartitionPage) {
-    // keep any existing suffix (if already details, this will effectively re-navigate to same path)
-    const suffix = suffixSegments.length ? '/' + suffixSegments.join('/') : '';
-    // ensure we end up on <partition>/details — override or append details
-    // replace any existing suffix with 'details' (so /partition/X/history -> /partition/X/details)
-    // simpler: always navigate explicitly to details
-    navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
-  } else {
-    navigate('/partition/US.CO.OBS/details');
-  }
-};
+Check the render method of `Header`.
+    at createFiberFromTypeAndProps (http://localhost:3000/static/js/bundle.js:17138:24)
+    at createFiberFromElement (http://localhost:3000/static/js/bundle.js:17149:12)
+    at createChild (http://localhost:3000/static/js/bundle.js:19052:28)
+    at reconcileChildrenArray (http://localhost:3000/static/js/bundle.js:19165:66)
+    at reconcileChildFibersImpl (http://localhost:3000/static/js/bundle.js:19272:109)
+    at http://localhost:3000/static/js/bundle.js:19299:31
+    at reconcileChildren (http://localhost:3000/static/js/bundle.js:19561:47)
+    at beginWork (http://localhost:3000/static/js/bundle.js:20326:16)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15742:68)
+    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22323:93)
 
 
 
+why come this error check each and every line
 
-
-
-....
-in this one problme in 
-<IconButton onClick={handleDetailsClick} color="inherit">
-              <InfoIcon />
-            </IconButton>
-get this http://localhost:3000/partition/US.CO.OBS/details this is correct but
-after in select box i select 
-Miami
-New York
- Austin Texas
-
-we got this http://localhost:3000/partition/US.FL.Miami, but this is wrong 
-
-but we require this http://localhost:3000/partition/US.FL.Miami/details
-
-i hove you understand 
-when i click on on this i got this problme, 
 
 
 
@@ -159,11 +106,20 @@ export default function Header({
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
 
+  // // ── Routing logic ──────────────────────────────────────────────────────────
+  // const segments = location.pathname.split('/').filter(Boolean);
+  // const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+  // const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+  // const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+
   // ── Routing logic ──────────────────────────────────────────────────────────
   const segments = location.pathname.split('/').filter(Boolean);
   const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
   const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+  // preserve everything after the partition segment (e.g. "details", "history", etc.)
   const suffixSegments = isPartitionPage ? segments.slice(2) : [];
+
+
 
   const flagMap = {
     'US.CO.OBS': DenverFlag,
@@ -178,23 +134,50 @@ export default function Header({
   // Detect if we’re currently on any “history” page
   const isHistoryPage = location.pathname.includes('/history');
 
+  // const handlePartitionChange = newPartition => {
+  //   if (!newPartition) return navigate('/');
+  //   // Always point at the new partition
+  //   let path = `/partition/${encodeURIComponent(newPartition)}`;
+  //   // If we were on “history”, keep the history view
+  //   if (isHistoryPage) path += '/history';
+  //   navigate(path);
+  // };
+
+
   const handlePartitionChange = newPartition => {
     if (!newPartition) return navigate('/');
-    // Always point at the new partition
+    // build the base path for the new partition
     let path = `/partition/${encodeURIComponent(newPartition)}`;
-    // If we were on “history”, keep the history view
-    if (isHistoryPage) path += '/history';
+    // if we had suffix segments (like "details" or "history/123"), preserve them
+    if (suffixSegments.length) {
+      path += '/' + suffixSegments.join('/');
+    }
     navigate(path);
   };
 
 
+  // const handleDetailsClick = () => {
+  //   if (isPartitionPage) {
+  //     navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+  //   } else {
+  //     navigate('/partition/US.CO.OBS/details');
+  //   }
+  // };
+
+
   const handleDetailsClick = () => {
     if (isPartitionPage) {
+      // keep any existing suffix (if already details, this will effectively re-navigate to same path)
+      const suffix = suffixSegments.length ? '/' + suffixSegments.join('/') : '';
+      // ensure we end up on <partition>/details — override or append details
+      // replace any existing suffix with 'details' (so /partition/X/history -> /partition/X/details)
+      // simpler: always navigate explicitly to details
       navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
     } else {
       navigate('/partition/US.CO.OBS/details');
     }
   };
+
 
   // ── Date/Time popover handlers ─────────────────────────────────────────────
   const openPopover = e => {
@@ -221,26 +204,34 @@ export default function Header({
               {currentPartition ? ` • ${displayNameMap[currentPartition]}` : ''}
             </Typography>
 
-            <IconButton
+            {/* <IconButton
               component={Link}
               to={isPartitionPage ? `/partition/${encodeURIComponent(currentPartition)}` : '/'}
               color="inherit"
             >
               <HomeIcon />
+            </IconButton> */}
+
+            <IconButton
+              component={Link}
+              to="/"
+              color="inherit"
+            >
+              <HomeIcon />
             </IconButton>
 
-    
- <IconButton
-   component={Link}
-   to={
-     currentPartition
-       ? `/partition/${encodeURIComponent(currentPartition)}/history`
-       : '/history'
-   }
-   color="inherit"
- >
-   <HistoryIcon />
- </IconButton>
+
+            <IconButton
+              component={Link}
+              to={
+                currentPartition
+                  ? `/partition/${encodeURIComponent(currentPartition)}/history`
+                  : '/history'
+              }
+              color="inherit"
+            >
+              <HistoryIcon />
+            </IconButton>
 
             <IconButton onClick={handleDetailsClick} color="inherit">
               <InfoIcon />
@@ -252,7 +243,7 @@ export default function Header({
               title="Jump to specific time"
             >
               <AccessTimeIcon />
-            </IconButton>  
+            </IconButton>
 
             <IconButton
               color={mode === 'live' ? 'secondary' : 'inherit'}
@@ -327,399 +318,3 @@ export default function Header({
 
 
 
-
-
-
-
-
-
-
-
-
-//C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages\PartitionDetailDetails.jsx
-
-import React, { useEffect, useState, useMemo } from "react";
-import { fetchHistory } from "../api/occupancy.service";
-import {
-  Container,
-  Box,
-  Typography,
-  Button,
-  TextField,
-  TableContainer,
-  Paper,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import LoadingSpinner from "../components/LoadingSpinner";
-import DataTable from "../components/DataTable";
-import { fetchLiveSummary } from "../api/occupancy.service";
-import { lookupFloor } from "../utils/floorLookup";
-
-export default function PartitionDetailDetails() {
-  const { partition } = useParams();
-  const navigate = useNavigate();
-  const [mode, setMode] = useState("live");
-
-  const [details, setDetails] = useState([]);
-  const [liveCounts, setLiveCounts] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [expandedFloor, setExpandedFloor] = useState(null);
-
-  
-
-
-  // handler when user jumps to a historic timestamp
-  const handleTimeSelect = async isoTimestamp => {
-    setMode("time");
-    setLoading(true);
-    // Assuming you have an API that can return summary/details at a given ISO time:
-
-  const json = await fetchHistory(partition, isoTimestamp);
-
-  // defensive: if `realtime` or that partition key is missing, default to empty
-    // defensive: if `realtime` or that partition key is missing, default to empty
-
-
-  //  const partitionRealtime = json.realtime?.[partition] ?? {};
-  //   setLiveCounts(partitionRealtime.floors ?? {});
-
-    
-     // stamp each record with its computed floor
-   const detRaw = json.details.filter(
-      r => r.PartitionName2 === partition && r.Direction === "InDirection"
-    );
-    const det = detRaw.map(r => ({
-      ...r,
-      floor: lookupFloor(partition, r.Door, r.Direction)
-    }));
-    setDetails(det);
-
-
- // **recompute counts** based on your stamped floors
- const counts = det.reduce((acc, r) => {
-   const f = r.floor || "Unknown";
-   acc[f] = (acc[f] || 0) + 1;
-   return acc;
- }, {});
- setLiveCounts(counts);
-
-
-    
-    setLastUpdate(new Date(isoTimestamp).toLocaleTimeString());
-    setLoading(false);  
-  };
-  // handler to go back to live mode
-  const handleLiveClick = () => {
-    setMode("live");
-    // you could also fire your original live-fetch effect immediately:
-    fetchLiveSummary().then(json => {
-      setLiveCounts(json.realtime[partition]?.floors || {});
-
-     // stamp each record with its computed floor
-    const detRaw = json.details.filter(
-      r => r.PartitionName2 === partition && r.Direction === "InDirection"
-    );
-    const det = detRaw.map(r => ({
-      ...r,
-      floor: lookupFloor(partition, r.Door, r.Direction)
-    }));
-    setDetails(det);
-
-
-      setLastUpdate(new Date().toLocaleTimeString());
-    });
-  };
-
-
-  // Initial load
-  useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    fetchLiveSummary().then(json => {
-      if (!isMounted) return;
-      const counts = json.realtime[partition]?.floors || {};
-      setLiveCounts(counts);
-
-   
-      // details already stamped with .floor by your backend — just filter & use that
-      const det = json.details.filter(
-        r => r.PartitionName2 === partition && r.Direction === "InDirection"
-      );
-
-
-      setDetails(det);
-      setLastUpdate(new Date().toLocaleTimeString());
-      setLoading(false);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [partition, mode]);
-  // Auto-refresh
-  useEffect(() => {
-    const interval = setInterval(async () => {
-
-
-      let json;
-
-      if (mode === "live") {
-        // live mode: fetch the latest
-        json = await fetchLiveSummary();
-      } else {
-        // time mode: do nothing (or optionally skip)
-        return;
-      }
-
-      // now json is always defined for live mode:
-      setLiveCounts(json.realtime[partition]?.floors || {});
-
-      const det = json.details.filter(
-        r => r.PartitionName2 === partition && r.Direction === "InDirection"
-      );
-      setDetails(det);
-      setLastUpdate(new Date().toLocaleTimeString());
-
-
-
-
-    }, 1000);
-    return () => clearInterval(interval);
- }, [partition, mode]);
-
-  // Group by floor
-  const floorMap = useMemo(() => {
-    const m = {};
-    Object.keys(liveCounts).forEach(floorName => {
-      m[floorName] = [];
-    });
-    details.forEach(r => {
-      if (!(r.floor in m)) m[r.floor] = [];
-      m[r.floor].push(r);
-    });
-    return m;
-  }, [details, liveCounts]);
-
-  // Filter + sort
-  const displayed = useMemo(() => {
-  const term = searchTerm.trim().toLowerCase();
-  return Object.entries(floorMap)
-    .map(([floor, emps]) => {
-      const filtered = !term
-        ? emps
-        : emps.filter(e =>
-            e.ObjectName1?.toLowerCase().includes(term) ||
-            e.EmployeeID?.toString().toLowerCase().includes(term) ||
-            e.CardNumber?.toString().toLowerCase().includes(term)
-          );
-      return [floor, filtered];
-    })
-    .filter(([, filtered]) => filtered.length > 0) // show only floors with matching results
-    .sort(([aFloor], [bFloor]) => (liveCounts[bFloor] || 0) - (liveCounts[aFloor] || 0));
-}, [floorMap, searchTerm, liveCounts]);
-
-  const columns = [
-    { field: "EmployeeID", headerName: "Emp ID" },
-    { field: "ObjectName1", headerName: "Name" },
-    { field: "LocaleMessageTime", headerName: "Swipe Time" },
-    { field: "PersonnelType", headerName: "Type" },
-    { field: "CardNumber", headerName: "Card" },
-    { field: "Door", headerName: "Door" },
-  ];
-
-  return (
-    <>
-      {/* <Header /> */}
-
-      <Header
-        title={`Partition: ${partition}`}
-        mode={mode}
-        onTimeSelect={handleTimeSelect}
-        onLiveClick={handleLiveClick}
-      />
-
-      <Box component="main" sx={{ pt: 1, pb: 1, background: 'rgba(0,0,0,0.6)' }}>
-        <Container maxWidth={false} disableGutters>
-          {/* Back button */}
-          <Box display="flex" alignItems="center" mb={2} sx={{ px: "20px" }}>
-            <Button 
-              size="small" 
-              onClick={() => navigate(-1)}
-              sx={{ color: '#FFC107' }}
-            >
-              ← Back to Overview
-            </Button>
-          </Box>
-
-          {/* Search */}
-          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: "20px" }}>
-            <Typography variant="h6" sx={{ color: '#FFC107' }}>
-              Floor Details
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#FFC107' }}>
-              Last updated: {lastUpdate}
-            </Typography>
-            <TextField
-              size="small"
-              placeholder="Search floor / emp…"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              sx={{
-                '& .MuiInputBase-input': { color: '#FFC107' },
-                '& .MuiInputLabel-root': { color: '#FFC107' },
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#FFC107' },
-                }
-              }}
-            />
-          </Box>
-
-          {loading ? (
-            <Box sx={{ px: "20px", py: 8 }}>
-              <LoadingSpinner />
-            </Box>
-          ) : (
-            <>
-              {/* Cards */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  width: "100%",
-                  margin: 0,
-                  padding: 0,
-                }}
-              >
-                {displayed.map(([floor, emps]) => (
-                  <Box
-                    key={floor}
-                    sx={{
-                      width: "50%",
-                      boxSizing: "border-box",
-                      p: "20px",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        border: "2px solid #FFC107",
-                        borderRadius: 2,
-                        height: "100%",
-                        p: 2,
-                        background: 'rgba(0,0,0,0.4)'
-                      }}
-                    >
-                      <Typography 
-                        variant="subtitle1" 
-                        fontWeight={600} 
-                        gutterBottom
-                        sx={{ color: '#FFC107' }}
-                      >
-                        {floor} (Total {liveCounts[floor] ?? 0})
-                      </Typography>
-
-                      <TableContainer 
-                        component={Paper} 
-                        variant="outlined" 
-                        sx={{ mb: 1, background: 'rgba(0,0,0,0.4)' }}
-                      >
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow sx={{ bgcolor: '#000' }}>
-                              {["Emp ID", "Name", "Swipe Time", "Type", "Card", "Door"].map(h => (
-                                <TableCell 
-                                  key={h} 
-                                  sx={{ 
-                                    fontWeight: "bold",
-                                    color: '#FFC107',
-                                    border: '1px solid #FFC107'
-                                  }}
-                                >
-                                  {h}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {emps.slice(0, 10).map((r, i) => {
-                              const term = searchTerm.trim().toLowerCase();
-                              const isMatch =
-                                term &&
-                                (r.ObjectName1.toLowerCase().includes(term) ||
-                                  r.EmployeeID.toLowerCase().includes(term));
-                              return (
-                                <TableRow
-                                  key={`${r.PersonGUID}-${i}`}
-                                  sx={isMatch ? { 
-                                    backgroundColor: "rgba(255, 235, 59, 0.3)" 
-                                  } : {}}
-                                >
-                                  <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
-                                    {r.EmployeeID}
-                                  </TableCell>
-                                  <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
-                                    {r.ObjectName1}
-                                  </TableCell>
-                                  <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
-                                    {new Date(r.LocaleMessageTime).toLocaleTimeString()}
-                                  </TableCell>
-                                  <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
-                                    {r.PersonnelType}
-                                  </TableCell>
-                                  <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
-                                    {r.CardNumber}
-                                  </TableCell>
-                                  <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
-                                    {r.Door}
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                      <Button
-                        size="small"
-                        onClick={() =>
-                          setExpandedFloor(expandedFloor === floor ? null : floor)
-                        }
-                        sx={{ color: '#FFC107' }}
-                      >
-                        {expandedFloor === floor ? "Hide" : "See more…"}
-                      </Button>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-
-              {/* Expanded table */}
-              {expandedFloor && (
-                <Box sx={{ px: "20px", mt: 2 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#FFC107' }}>
-                    {expandedFloor} — All Entries
-                  </Typography>
-                  <DataTable
-                    columns={columns}
-                    rows={floorMap[expandedFloor].map(r => ({
-                      ...r,
-                      LocaleMessageTime: new Date(r.LocaleMessageTime).toLocaleTimeString(),
-                    }))}
-                  />
-                </Box>
-              )}
-            </>
-          )}
-        </Container>
-      </Box>
-
-      <Footer />
-    </>
-  );
-}
