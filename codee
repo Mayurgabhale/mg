@@ -88,6 +88,8 @@ function populateDeviceTable(details, historyData) {
       {
 
 
+Sr. No	Device IP	Device Name	Device Type	City	Uptime Duration	Downtime Count	Downtime Duration	Details	Remark
+1	WKSPUN-890294	Unknown	PCDETAIL	Pune Podium	0h/0m/0s	6	43m/11s	View History	 i got like this 
 
 let deviceUptimeTimers = {};
 let deviceDowntimeTimers = {};
