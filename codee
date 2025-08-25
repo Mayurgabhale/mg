@@ -1,3 +1,32 @@
+// --- Vendor / subtype filter (shows when deviceFilter === 'cameras') ---
+let vendorFilter = document.getElementById("subtype-filter");
+if (!vendorFilter) {
+    vendorFilter = document.createElement("select");
+    vendorFilter.id = "subtype-filter";
+    vendorFilter.style.marginTop = "8px";
+    vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
+    // insert vendorFilter after deviceFilter and before cityFilter
+    deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
+}
+
+// populate vendor options (clear previous)
+vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
+[...vendorSet].sort().forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    vendorFilter.appendChild(opt);
+});
+
+// hide by default unless cameras selected
+vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+
+// when vendor changes, re-filter
+vendorFilter.addEventListener("change", filterDevices);
+
+
+..m
+
 const city = device.city || "Unknown";
 citySet.add(city);
 
