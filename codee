@@ -1,3 +1,10 @@
+<label for="vendorFilter" id="vendorFilterLabel">Filter by Camera:</label>
+<select id="vendorFilter">
+    <option value="all">All camera</option>
+</select>
+
+...
+
 const vendorFilterLabel = document.getElementById("vendorFilterLabel");
 
 vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
