@@ -1,3 +1,9 @@
+
+
+const name      = dev.hostname || dev.pc_name || dev[type.slice(0,-1) + 'name'] || dev.name || dev.device_name || dev.ip_address || 'Unknown';
+
+
+....
 in this i am  add this two new 'pcDetails','DBDetails'
 but this two  Device Name are show Unknown
 add Device Name as hostname ok
