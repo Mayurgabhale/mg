@@ -1,76 +1,25 @@
-i want to hid alos this lable   <label for="vendorFilter">Filter by Camera:</label> how to do it
+const vendorFilterLabel = document.getElementById("vendorFilterLabel");
+
+vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+if (vendorFilterLabel) {
+    vendorFilterLabel.style.display = vendorFilter.style.display;
+}
+
+
+....
 
 
 
-            <label for="vendorFilter">Filter by Camera:</label>
-            <select id="vendorFilter">
-                <option value="all">All camera</option>
-            </select>
+if (vendorFilterElem) {
+    const show = (selectedType === "cameras") ? "block" : "none";
+    vendorFilterElem.style.display = show;
+    const vendorLabel = document.getElementById("vendorFilterLabel");
+    if (vendorLabel) vendorLabel.style.display = show;
+}
 
 
 
-
-            // --- Vendor / Camera filter (populate existing #vendorFilter or create fallback) ---
-            let vendorFilter = document.getElementById("vendorFilter");
-            if (!vendorFilter) {
-                // fallback: create and insert before cityFilter (only if your HTML doesn't already have it)
-                vendorFilter = document.createElement("select");
-                vendorFilter.id = "vendorFilter";
-                vendorFilter.style.marginTop = "8px";
-                deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
-            }
-
-            // populate vendor options (clear previous and ensure 'All camera' first)
-            vendorFilter.innerHTML = `<option value="all">All camera</option>`;
-            [...vendorSet].sort().forEach(v => {
-                if (!v) return; // skip empty
-                const opt = document.createElement("option");
-                opt.value = v;       // normalized uppercase key
-                opt.textContent = v; // display (e.g. FLIR, VERKADA)
-                vendorFilter.appendChild(opt);
-            });
-
-            // hide by default unless cameras selected
-            vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
-
-            // avoid duplicate listeners on repeated updates
-            vendorFilter.onchange = filterDevices;
-
-
-
-
-            function filterDevices() {
-                const selectedType = deviceFilter.value;
-                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
-                const selectedCity = cityFilter.value;
-                // get vendor selection (if filter exists)
-                const vendorFilterElem = document.getElementById("vendorFilter");
-                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
-
-                // Search bar input
-                const searchTerm = document.getElementById("device-search").value.toLowerCase();
-
-                // Show/hide vendor filter based on type
-                if (vendorFilterElem) {
-                    vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
-                }
-
-                detailsContainer.innerHTML = "";
-
-                const filteredDevices = allDevices.filter((device) =>
-                    (selectedType === "all" || device.dataset.type === selectedType) &&
-                    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
-                    (selectedCity === "all" || device.dataset.city === selectedCity) &&
-                    // Compare normalized values: dataset.vendor is uppercase or missing
-                    (selectedVendor === "all" || (device.dataset.vendor || "") === selectedVendor) &&
-                    (
-                        !searchTerm ||
-                        device.innerText.toLowerCase().includes(searchTerm)
-                    )
-                );
-
-                filteredDevices.forEach((deviceCard) => {
-                    detailsContainer.appendChild(deviceCard);
-                });
-
-                const region = currentRegion?.toUpperCase() || "GLOBAL";
+....
+label[for="vendorFilter"] {
+  display: none;
+}
