@@ -1,4 +1,64 @@
-devices.push({ ip, safe, name, category, rawHist, hist, status, downCount, city, remark: dev.remark || '' });
+// modern hover message for "Not accessible" rows
+if (d.remark && /not\s+access/i.test(d.remark)) {
+  row.classList.add('row-not-accessible');
+  
+  // create tooltip element
+  const tooltip = document.createElement("div");
+  tooltip.className = "modern-tooltip";
+  tooltip.textContent = "Due to policy, this camera is Not accessible";
+  row.appendChild(tooltip);
+}
+
+.....
+
+
+
+
+/* highlight the row slightly */
+.row-not-accessible {
+  position: relative; /* so tooltip can be positioned */
+  background-color: #fff4f4; /* light red tint */
+}
+
+/* hidden by default */
+.row-not-accessible .modern-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 20px;
+  margin-bottom: 6px;
+  background: #e63946;       /* modern red */
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(5px);
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* show on hover */
+.row-not-accessible:hover .modern-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+.........devices.push({ ip, safe, name, category, rawHist, hist, status, downCount, city, remark: dev.remark || '' });
 
 
 .....
