@@ -1,3 +1,23 @@
+const city = device.city || "Unknown";
+citySet.add(city);
+
+// --- VENDOR: try common fields and fall back to Unknown ---
+const vendor = device.vendor || device.vendor_name || (device.device_details && device.device_details.vendor) || device.manufacturer || "Unknown";
+vendorSet.add(vendor);
+
+// Create card element.
+const card = document.createElement("div");
+card.className = "device-card";
+card.dataset.type = deviceType;
+card.dataset.status = currentStatus;
+card.dataset.city = city;
+card.dataset.vendor = vendor; // <-- NEW
+card.setAttribute("data-ip", deviceIP);
+
+
+
+
+.......
 let combinedDevices = [];
 let citySet = new Set();
 let vendorSet = new Set(); // <-- added to collect vendor/device_details values
