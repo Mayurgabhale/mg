@@ -1,3 +1,15 @@
+ vendorFilter.innerHTML = `<option value="all">All Vendors</option>`; 
+this is come under Filter by Location:
+but i want different slect box 
+<label for="city-filter">Filter by Camera:</label>
+            <select id="vendorFilter">
+                <option value="all">All camera</option>
+            </select>
+            <label for="city-filter">Filter by Location:</label>
+            <select id="city-filter">
+                <option value="all">All Cities</option>
+            </select>
+
 function updateDetails(data) {
     const detailsContainer = document.getElementById("device-details");
     const deviceFilter = document.getElementById("device-filter");
@@ -5,6 +17,7 @@ function updateDetails(data) {
     const offlineFilterButton = document.getElementById("filter-offline");
     const allFilterButton = document.getElementById("filter-all");
     const cityFilter = document.getElementById("city-filter");
+    
 
     detailsContainer.innerHTML = "";
     cityFilter.innerHTML = '<option value="all">All Cities</option>';
@@ -342,3 +355,37 @@ function updateDetails(data) {
             detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
         });
 }
+
+
+
+
+
+
+
+function showModal(name, ip, location, status, city) {
+    document.getElementById("modal-title").textContent = `Details for ${name}`;
+    document.getElementById("modal-body").innerHTML = `
+            <li><strong>Name:</strong> ${name}</li>
+            <li><strong>IP:</strong> ${ip}</li>
+            <li><strong>Location:</strong> ${location}</li>
+            <li><strong>Status:</strong> ${status}</li>
+            <li><strong>City:</strong> ${city}</li>
+        `;
+    document.getElementById("modal").style.display = "block";
+}
+
+
+// Show/hide button on scroll
+window.addEventListener("scroll", () => {
+    const btn = document.getElementById("scrollToTopBtn");
+    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+        btn.style.display = "block";
+    } else {
+        btn.style.display = "none";
+    }
+});
+
+// Scroll to top on click
+document.getElementById("scrollToTopBtn").addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
