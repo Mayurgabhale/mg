@@ -1,456 +1,3 @@
-
-know is the blme in Filter by Location: 
-for example 
-Filter by Device Type:
-i select DB Server
-then in 
- Filter by Location: 
-show only location wher db server is avalable, not all location show in Filter by Location: 
-like this 
- Denver,Pune,Frankfurt,Costa Rica
-like this for all
-read all code carefully,and update
-dont chagne my privius logic, only update it, and chekc wher is the problme 
-
-see this
-SRVWUDEN0890v
- CCURE MAS SQL DB
-
- 10.58.118.22
-
- NAMER
-
- Denver
-
-Online
-
-SRVWUDEN0190V
- CCURE MAS APP
-
- 10.58.118.20
-
- NAMER
-
- Denver
-
-Online
-
-SRVWUDEN0891v
- CCURE SAS USA DB
-
- 10.58.118.23
-
- NAMER
-
- Denver
-
-Online
-
-SRVWUDEN0191V
- CCURE SAS App
-
- 10.58.118.21
-
- NAMER
-
- Denver
-
-Online
-
-SRVWUPNQ0986V
- CCURE SAS DB  APAC(new)
-
- 10.199.22.62
-
- APAC
-
- Pune
-
-Online
-
-SRVWUPNQ0971V
- CCURE SAS App  APAC(new)
-
- 10.199.22.61
-
- APAC
-
- Pune
-
-Online
-
-SRVWUFRA0986v
- CCURE SAS DB EMEA
-
- 10.130.36.55
-
- EMEA
-
- Frankfurt
-
-Online
-
-SRVWUFRA0971v
- CCURE SAS App EMEA
-
- 10.130.36.56
-
- EMEA
-
- Frankfurt
-
-Online
-
-SRVWUSJO0986V
- CCURE SAS DB LACA
-
- 10.64.10.65
-
- LACA
-
- Costa Rica
-
-Online
-
-SRVWUSJO0971V
- CCURE SAS App LACA
-
- 10.64.10.50
-
- LACA
-
- Costa Rica
-
-Online
-
-
-<aside id="sidebar">
-            <!-- <h2><i class="fas fa-globe"></i></h2> -->
-            <button class="region-button" data-region="global"><i class="fas fa-globe"></i> Global</button>
-            <button class="region-button" data-region="apac"><i class="fas fa-map-marker-alt"></i> APAC</button>
-            <button class="region-button" data-region="emea"><i class="fas fa-map-marker-alt"></i> EMEA</button>
-            <button class="region-button" data-region="laca"><i class="fas fa-map-marker-alt"></i> LACA</button>
-            <button class="region-button" data-region="namer"><i class="fas fa-map-marker-alt"></i> NAMER</button>
-
-            <button class="nav-button" onclick="location.href='trend.html'"><i class="fas fa-chart-line"></i> View Trend
-                Analysis</button>
-            <button class="nav-button" onclick="location.href='summary.html'"><i class="fas fa-table"></i> View Devices
-                Summary</button>
-
-            <div id="countdown" class="countdown-timer">Loading Timer...</div>
-
-            <div class="filter-buttons">
-                <button id="filter-all" class="status-filter active" data-status="all"><i
-                        class="fas fa-layer-group"></i> All Devices</button>
-                <button id="filter-online" class="status-filter" data-status="online"><i class="fas fa-wifi"></i> Online
-                    Devices</button>
-                <button id="filter-offline" class="status-filter" data-status="offline"><i
-                        class="fas fa-plug-circle-xmark"></i> Offline Devices</button>
-            </div>
-
-            <label for="device-filter">Filter by Device Type:</label>
-            <select id="device-filter">
-                <option value="all">All</option>
-                <option value="cameras">Cameras</option>
-                <option value="archivers">Archivers</option>
-                <option value="controllers">Controllers</option>
-                <option value="servers">CCURE</option>
-                <option value="pcdetails">Desktop Details</option>
-                <option value="dbdetails">DB Server</option>
-            </select>
-
-            
-
-           
-
-
-            <label for="vendorFilter" id="vendorFilterLabel">Filter by Camera:</label>
-            <select id="vendorFilter">
-                <option value="all">All camera</option>
-            </select>
-
-            <label for="city-filter">Filter by Location:</label>
-            <select id="city-filter">
-                <option value="all">All Cities</option>
-            </select>
-
-        </aside>
-// C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
-
-const baseUrl = "http://localhost:80/api/regions";
-let refreshInterval = 300000; // 5 minutes
-let pingInterval = 60000; // 30 seconds
-let countdownTime = refreshInterval / 1000; // Convert to seconds
-let currentRegion = "global";
-let deviceDetailsCache = {}; // Store previous details to prevent redundant updates
-let latestDetails = null; // Cache the latest fetched details
-
-document.addEventListener("DOMContentLoaded", () => {
-    fetchData("global"); // Load initial data
-    startAutoRefresh("global");
-
-    document.querySelectorAll(".region-button").forEach((button) => {
-        button.addEventListener("click", () => {
-            const region = button.getAttribute("data-region");
-            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
-            switchRegion(region);
-        });
-    });
-
-    document.getElementById("close-modal").addEventListener("click", () => {
-        document.getElementById("modal").style.display = "none";
-    });
-});
-
-// // --- Camera URL auto-detect helpers ---
-
-function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
-    ip = (ip || "").trim();
-    hyperlink = (hyperlink || "").trim();
-
-    // 🔑 Always prefer Excel's hyperlink if present
-    if (hyperlink && /^https?:\/\//.test(hyperlink)) {
-        return hyperlink;
-    }
-
-    // Direct IP
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
-        return `http://${ip}`;
-    }
-
-    // Brand-based fallback
-    const name = (cameraname || "").toLowerCase();
-    if (/\bverkada\b/.test(name)) return `https://${ip}/#/login`;
-    if (/\bflir\b/.test(name)) return `http://${ip}/control/userimage.html`;
-    if (/\bhoneywell\b/.test(name)) return `http://${ip}/www/index.html`;
-    if (/axis/.test(name)) return `http://${ip}/view/view.shtml`;
-
-    return `http://${ip}`;
-}
-
-function openCamera(ip, name, hyperlink = "") {
-    const url = buildUrlFromHints(ip, name, hyperlink);
-    console.log("Opening URL:", url);  // Debug
-    window.open(url, "_blank", "noopener");
-}
-
-
-
-
-
-function switchRegion(region) {
-    clearExistingIntervals(); // Avoid interval duplication
-    currentRegion = region;
-    deviceDetailsCache = {};
-    fetchData(region);
-    startAutoRefresh(region);
-}
-
-// **Auto-refresh mechanism**
-function startAutoRefresh(regionName) {
-    fetchData(regionName); // Fetch initial data
-
-    clearExistingIntervals();
-
-    // Start countdown timer
-    window.countdownTimer = setInterval(() => {
-        document.getElementById("countdown").innerText = `Refreshing in ${countdownTime} seconds`;
-        countdownTime--;
-        if (countdownTime < 0) countdownTime = refreshInterval / 1000;
-    }, 1000);
-
-    // Refresh summary & details every 5 minutes
-    window.refreshTimer = setInterval(() => {
-        fetchData(regionName);
-        countdownTime = refreshInterval / 1000;
-    }, refreshInterval);
-
-    // Ping devices every 30 seconds using history API
-    window.pingTimer = setInterval(() => {
-        pingAllDevices(regionName);
-    }, pingInterval);
-}
-
-function clearExistingIntervals() {
-    clearInterval(window.countdownTimer);
-    clearInterval(window.refreshTimer);
-    clearInterval(window.pingTimer);
-}
-
-// **Fetch summary and details together**
-function fetchData(regionName) {
-    Promise.all([
-        fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
-        fetch(`${baseUrl}/details/${regionName}`).then(res => res.json())
-    ])
-        .then(([summary, details]) => {
-            console.log("Summary Data:", summary);
-            console.log("Details Data:", details);
-
-            updateSummary(summary);
-
-            if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
-                updateDetails(details);
-                deviceDetailsCache = details; // Update cache
-            }
-            // Cache details for pinging
-            latestDetails = details;
-        })
-        .catch((error) => console.error("Error fetching data:", error));
-}
-
-/*
-   Updated pingAllDevices:
-   Instead of calling a non-existent ping endpoint, we now use the history API to fetch 
-   device history and update each device’s status by updating the separate status dot and text.
-*/
-
-function copyToClipboard(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                alert("IP copied: " + text);
-            })
-            .catch(err => {
-                console.error("Clipboard API failed", err);
-                fallbackCopyTextToClipboard(text);
-            });
-    } else {
-        fallbackCopyTextToClipboard(text);
-    }
-}
-
-function fallbackCopyTextToClipboard(text) {
-    // Create a temporary textarea
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    // Prevent scrolling to bottom
-    textArea.style.position = "fixed";
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    textArea.style.opacity = "0";
-
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-
-    try {
-        const successful = document.execCommand("copy");
-        if (successful) {
-            alert("IP copied (fallback): " + text);
-        } else {
-            alert("Fallback copy failed");
-        }
-    } catch (err) {
-        console.error("Fallback copy failed", err);
-        alert("Unable to copy");
-    }
-
-    document.body.removeChild(textArea);
-}
-
-function pingAllDevices(regionName) {
-    let details = latestDetails;
-    if (!details || !details.details) return;
-
-    fetch("http://localhost/api/devices/history")
-        .then(response => response.json())
-        .then(historyData => {
-            let statusChanged = false;
-
-            for (const [key, devices] of Object.entries(details.details)) {
-                if (!Array.isArray(devices) || devices.length === 0) continue;
-
-                devices.forEach((device) => {
-                    const ip = device.ip_address || "N/A";
-                    const card = document.querySelector(`[data-ip="${ip}"]`);
-                    if (!card) return;
-
-                    // Determine new status from history API if available.
-                    const historyArray = historyData[ip];
-                    let newStatus = (device.status || "offline").toLowerCase();
-                    if (Array.isArray(historyArray) && historyArray.length > 0) {
-                        const latestEntry = historyArray[historyArray.length - 1];
-                        newStatus = (latestEntry.status || "offline").toLowerCase();
-                    }
-                    const currentStatus = card.dataset.status;
-
-                    // Update UI: update the dot and the text.
-                    const statusDot = card.querySelector(".status-dot");
-                    const statusText = card.querySelector(".status-text");
-                    if (statusDot) {
-                        statusDot.style.backgroundColor = newStatus === "online" ? "green" : "red";
-                        statusDot.classList.remove("online-dot", "offline-dot");
-                        statusDot.classList.add(newStatus === "online" ? "online-dot" : "offline-dot");
-                    }
-                    else {
-                        console.warn(`Status dot element not found for IP: ${ip}`);
-                    }
-                    if (statusText) {
-                        const textColor = newStatus === "online" ? "green" : "red";
-
-                        statusText.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
-                        statusText.style.color = textColor;
-                        statusText.style.backgroundColor = "transparent";
-                        statusText.style.padding = "0";
-                        statusText.style.borderRadius = "0";
-                    } else {
-                        console.warn(`Status text element not found for IP: ${ip}`);
-                    }
-
-                    if (newStatus !== currentStatus) {
-                        statusChanged = true;
-                        card.dataset.status = newStatus;
-                    }
-                });
-            }
-
-            setTimeout(() => {
-                if (statusChanged) {
-                    fetchData(regionName);
-                }
-            }, 5000);
-        })
-        .catch(error => {
-            console.error("Error fetching device history:", error);
-        });
-}
-
-function updateSummary(data) {
-    document.getElementById("total-devices").textContent = data.summary?.totalDevices || "0";
-    document.getElementById("online-devices").textContent = data.summary?.totalOnlineDevices || "0";
-    document.getElementById("offline-devices").textContent = data.summary?.totalOfflineDevices || "0";
-
-    document.getElementById("camera-total").textContent = data.summary?.cameras?.total || "0";
-    document.getElementById("camera-online").textContent = data.summary?.cameras?.online || "0";
-    document.getElementById("camera-offline").textContent = data.summary?.cameras?.offline || "0";
-
-    document.getElementById("archiver-total").textContent = data.summary?.archivers?.total || "0";
-    document.getElementById("archiver-online").textContent = data.summary?.archivers?.online || "0";
-    document.getElementById("archiver-offline").textContent = data.summary?.archivers?.offline || "0";
-
-    document.getElementById("controller-total").textContent = data.summary?.controllers?.total || "0";
-    document.getElementById("controller-online").textContent = data.summary?.controllers?.online || "0";
-    document.getElementById("controller-offline").textContent = data.summary?.controllers?.offline || "0";
-
-    document.getElementById("server-total").textContent = data.summary?.servers?.total || "0";
-    document.getElementById("server-online").textContent = data.summary?.servers?.online || "0";
-    document.getElementById("server-offline").textContent = data.summary?.servers?.offline || "0";
-
-    document.getElementById("pc-total").textContent = data.summary?.pcdetails?.total || "0";
-    document.getElementById("pc-online").textContent = data.summary?.pcdetails?.online || "0";
-    document.getElementById("pc-offline").textContent = data.summary?.pcdetails?.offline || "0";
-
-    document.getElementById("db-total").textContent = data.summary?.dbdetails?.total || "0";
-    document.getElementById("db-online").textContent = data.summary?.dbdetails?.online || "0";
-    document.getElementById("db-offline").textContent = data.summary?.dbdetails?.offline || "0";
-
-}
-/*
-   Updated updateDetails:
-   Each device card is built with separate elements for the status dot and status text.
-   This ensures that later updates from pingAllDevices can reliably find and update them.
-*/
 function updateDetails(data) {
     const detailsContainer = document.getElementById("device-details");
     const deviceFilter = document.getElementById("device-filter");
@@ -465,6 +12,7 @@ function updateDetails(data) {
     let combinedDevices = [];
     let citySet = new Set();
     let vendorSet = new Set(); // collect normalized vendor values
+    let typeCityMap = {}; // <-- NEW: map deviceType -> Set of cities
 
     // Icon utility based on device type
     function getDeviceIcon(type = "") {
@@ -488,11 +36,17 @@ function updateDetails(data) {
                 if (!Array.isArray(devices) || devices.length === 0) continue;
                 const deviceType = key.toLowerCase();
 
+                // ensure map entry exists
+                if (!typeCityMap[deviceType]) typeCityMap[deviceType] = new Set();
+
                 devices.forEach((device) => {
                     const deviceIP = device.ip_address || "N/A";
                     let currentStatus = (realTimeStatus[deviceIP] || device.status || "offline").toLowerCase();
                     const city = device.city || "Unknown";
+
+                    // collect city globally and per device type
                     citySet.add(city);
+                    typeCityMap[deviceType].add(city);
 
                     // --- VENDOR: read possible fields, normalize, skip empty/unknown ---
                     // NOTE: your JSON uses the key "deviec_details" (typo) — we read that first.
@@ -507,8 +61,7 @@ function updateDetails(data) {
                         vendorSet.add(vendorNormalized);
                     }
 
-                    // Use vendorNormalized for dataset; store actual dataset vendor as normalized or leave blank
-                    const datasetVendorValue = vendorNormalized || ""; // keep empty string if unknown
+                    const datasetVendorValue = vendorNormalized || "";
 
                     // Create card element.
                     const card = document.createElement("div");
@@ -548,12 +101,6 @@ function updateDetails(data) {
                     statusContainer.appendChild(statusDot);
                     statusContainer.appendChild(statusText);
 
-                    // // compute a nicer label for the device-type area
-                    // const deviceLabel = deviceType.includes("pc")
-                    //     ? (device.pc_name || device.hostname || "PC")
-                    //     : deviceType.toUpperCase();
-
-
                     // compute a nicer label for the device-type area
                     let deviceLabel;
 
@@ -565,10 +112,6 @@ function updateDetails(data) {
                     } else {
                         deviceLabel = deviceType.toUpperCase();
                     }
-
-
-
-
 
                     card.insertAdjacentHTML("beforeend", `
   <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
@@ -620,19 +163,15 @@ function updateDetails(data) {
 `);
                     card.appendChild(statusContainer);
 
-
                     // --- show policy tooltip for devices marked "Not accessible" ---
                     const remarkText = (device.remark || "").toString().trim();
                     if (remarkText && /not\s+access/i.test(remarkText)) {
-                        // ensure card is relatively positioned so the tooltip can be absolutely positioned
                         if (!card.style.position) card.style.position = "relative";
 
-                        // create tooltip element
                         const tooltip = document.createElement("div");
                         tooltip.className = "device-access-tooltip";
                         tooltip.textContent = "Due to Network policy, this camera is Not accessible";
 
-                        // inline styles so no external CSS changes required
                         tooltip.style.position = "absolute";
                         tooltip.style.bottom = "100%";
                         tooltip.style.left = "8px";
@@ -642,16 +181,14 @@ function updateDetails(data) {
                         tooltip.style.borderRadius = "4px";
                         tooltip.style.fontSize = "12px";
                         tooltip.style.whiteSpace = "nowrap";
-                        tooltip.style.pointerEvents = "none"; // don't block mouse events
+                        tooltip.style.pointerEvents = "none";
                         tooltip.style.opacity = "0";
                         tooltip.style.transform = "translateY(-6px)";
                         tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
                         tooltip.style.zIndex = "999";
 
-                        // attach tooltip to card
                         card.appendChild(tooltip);
 
-                        // show/hide on hover
                         card.addEventListener("mouseenter", () => {
                             tooltip.style.opacity = "1";
                             tooltip.style.transform = "translateY(-10px)";
@@ -661,7 +198,6 @@ function updateDetails(data) {
                             tooltip.style.transform = "translateY(-6px)";
                         });
 
-                        // optional: set native title too (fallback)
                         card.title = tooltip.textContent;
                     }
 
@@ -687,62 +223,86 @@ function updateDetails(data) {
             const allDevices = combinedDevices.map(item => item.card);
             const deviceObjects = combinedDevices.map(item => item.device);
 
-            // populate city options
-            citySet.forEach((city) => {
-                const option = document.createElement("option");
-                option.value = city;
-                option.textContent = city;
-                cityFilter.appendChild(option);
-            });
+            // --- NEW: function to populate city select based on selected device type ---
+            function populateCityOptions(selectedType = "all") {
+                // preserve current selected city if possible
+                const prevSelected = cityFilter.value;
 
-            // Build or reuse vendor select
-            deviceFilter.value = "all";
-            cityFilter.value = "all";
-            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-            allFilterButton.classList.add("active");
+                cityFilter.innerHTML = '<option value="all">All Cities</option>';
 
-            // --- Vendor / Camera filter (populate existing #vendorFilter or create fallback) ---
+                let citiesToShow = new Set();
+
+                if (!selectedType || selectedType === "all") {
+                    citiesToShow = citySet;
+                } else {
+                    const setForType = typeCityMap[selectedType];
+                    if (setForType && setForType.size > 0) {
+                        citiesToShow = setForType;
+                    } else {
+                        // no cities for selected type -> keep empty (except "All Cities")
+                        citiesToShow = new Set();
+                    }
+                }
+
+                // Add cities in sorted order for stable UI
+                Array.from(citiesToShow).sort().forEach((city) => {
+                    const option = document.createElement("option");
+                    option.value = city;
+                    option.textContent = city;
+                    cityFilter.appendChild(option);
+                });
+
+                // restore previous if still valid, otherwise set to 'all'
+                if (prevSelected && Array.from(citiesToShow).includes(prevSelected)) {
+                    cityFilter.value = prevSelected;
+                } else {
+                    cityFilter.value = "all";
+                }
+            }
+
+            // populate vendor options
             let vendorFilter = document.getElementById("vendorFilter");
             if (!vendorFilter) {
-                // fallback: create and insert before cityFilter (only if your HTML doesn't already have it)
                 vendorFilter = document.createElement("select");
                 vendorFilter.id = "vendorFilter";
                 vendorFilter.style.marginTop = "8px";
                 deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
             }
 
-            // populate vendor options (clear previous and ensure 'All camera' first)
             vendorFilter.innerHTML = `<option value="all">All camera</option>`;
             [...vendorSet].sort().forEach(v => {
-                if (!v) return; // skip empty
+                if (!v) return;
                 const opt = document.createElement("option");
-                opt.value = v;       // normalized uppercase key
-                opt.textContent = v; // display (e.g. FLIR, VERKADA)
+                opt.value = v;
+                opt.textContent = v;
                 vendorFilter.appendChild(opt);
             });
 
-            // hide by default unless cameras selected
+            // hide vendor filter by default unless cameras selected
             vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
 
+            vendorFilter.onchange = filterDevices; // uses filterDevices defined below
+
+            // Build initial city options for the current deviceFilter selection
+            populateCityOptions(deviceFilter.value || "all");
+
             // avoid duplicate listeners on repeated updates
-            vendorFilter.onchange = filterDevices;
-
-
-
+            deviceFilter.value = "all";
+            cityFilter.value = "all";
+            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+            allFilterButton.classList.add("active");
 
             function filterDevices() {
                 const selectedType = deviceFilter.value;
                 const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
                 const selectedCity = cityFilter.value;
-
-
                 const vendorFilterLabel = document.getElementById("vendorFilterLabel");
 
+                // toggle vendor UI
                 vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
                 if (vendorFilterLabel) {
                     vendorFilterLabel.style.display = vendorFilter.style.display;
                 }
-
 
                 // get vendor selection (if filter exists)
                 const vendorFilterElem = document.getElementById("vendorFilter");
@@ -762,7 +322,6 @@ function updateDetails(data) {
                     (selectedType === "all" || device.dataset.type === selectedType) &&
                     (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
                     (selectedCity === "all" || device.dataset.city === selectedCity) &&
-                    // Compare normalized values: dataset.vendor is uppercase or missing
                     (selectedVendor === "all" || (device.dataset.vendor || "") === selectedVendor) &&
                     (
                         !searchTerm ||
@@ -777,12 +336,6 @@ function updateDetails(data) {
                 const region = currentRegion?.toUpperCase() || "GLOBAL";
                 const titleElement = document.getElementById("region-title");
 
-                // const logoHTML = `
-                //     <span class="region-logo">
-                //         <img src="images/new-header.png" alt="Logo"
-                //         style="height: 37px; width: auto; object-fit: contain;" />
-                //     </span>
-                //     `;
                 if (selectedCity !== "all") {
                     titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
                 } else {
@@ -828,6 +381,7 @@ function updateDetails(data) {
                 return summary;
             }
 
+            // initial filter run
             filterDevices();
 
             setTimeout(() => {
@@ -851,7 +405,13 @@ function updateDetails(data) {
                 updateSummary(summary);
             }, 100);
 
-            deviceFilter.addEventListener("change", filterDevices);
+            // ---- EVENTS ----
+            // When device type changes, rebuild city options first then apply filters.
+            deviceFilter.addEventListener("change", () => {
+                populateCityOptions(deviceFilter.value || "all");
+                filterDevices();
+            });
+
             // Search bar input
             document.getElementById("device-search").addEventListener("input", filterDevices);
             cityFilter.addEventListener("change", filterDevices);
@@ -876,37 +436,3 @@ function updateDetails(data) {
             detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
         });
 }
-
-
-
-
-
-
-
-function showModal(name, ip, location, status, city) {
-    document.getElementById("modal-title").textContent = `Details for ${name}`;
-    document.getElementById("modal-body").innerHTML = `
-            <li><strong>Name:</strong> ${name}</li>
-            <li><strong>IP:</strong> ${ip}</li>
-            <li><strong>Location:</strong> ${location}</li>
-            <li><strong>Status:</strong> ${status}</li>
-            <li><strong>City:</strong> ${city}</li>
-        `;
-    document.getElementById("modal").style.display = "block";
-}
-
-
-// Show/hide button on scroll
-window.addEventListener("scroll", () => {
-    const btn = document.getElementById("scrollToTopBtn");
-    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-        btn.style.display = "block";
-    } else {
-        btn.style.display = "none";
-    }
-});
-
-// Scroll to top on click
-document.getElementById("scrollToTopBtn").addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-});
