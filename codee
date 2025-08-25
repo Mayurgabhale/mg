@@ -1,3 +1,13 @@
+// if remark says "Not accessible", set tooltip on the whole row
+if (d.remark && /not\s+access/i.test(d.remark)) {
+    row.title = "Due to policy, this camera is Not accessible";
+}
+
+
+
+
+
+
 card.appendChild(statusContainer);
 
 
