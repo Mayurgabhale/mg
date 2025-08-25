@@ -55,7 +55,7 @@ update DBDetails or create,
 carefully, withou chanign privious logic, only update DBDetails ok,. carefuuly
 read each and every line in file code. 
 
-  <div class="summary">
+    <div class="summary">
                 <div class="card">
 
                     <h3><i class="fas fa-microchip icon-3d"></i> Total Devices</h3>
@@ -106,16 +106,21 @@ read each and every line in file code.
                 </div>
 
                 <div class="card">
-                    <h3><i class="fas fa-desktop icon-3d"></i>Desktop</h3>
-                    <div class="card-status total">Total <span id="pc-total">0</span></div>
+                    <h3><i class="fas fa-desktop icon-3d"></i>DB Details</h3>
+                    <div class="card-status total">Total <span id="pc-total">0</span></div>   add this know ok 
                     <div class="card-status online">Online <span id="pc-online">0</span></div>
                     <div class="card-status offline">Offline <span id="pc-offline">0</span></div>
                 </div>
 
 
-addd in this ...... 
+                
             </div>
 
+
+            </div>
+
+
+i hope you undersnt, 
  <!-- Device Details -->
             <section id="details-section" class="details-section">
                 <div class="details-header">
