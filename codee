@@ -1,3 +1,16 @@
+const filteredDevices = allDevices.filter((device) =>
+    (selectedType === "all" || device.dataset.type === selectedType) &&
+    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
+    (selectedCity === "all" || device.dataset.city === selectedCity) &&
+    (selectedVendor === "all" || (device.dataset.vendor || "Unknown") === selectedVendor) &&
+    (
+        !searchTerm ||
+        device.innerText.toLowerCase().includes(searchTerm)
+    )
+);
+....
+
+
 function filterDevices() {
     const selectedType = deviceFilter.value;
     const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
