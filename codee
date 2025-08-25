@@ -1,4 +1,17 @@
+// compute a nicer label for the device-type area
+let deviceLabel;
 
+if (deviceType === "dbdetails") {
+    // For DB Details: show the application if available, else fallback
+    deviceLabel = device.application || deviceType.toUpperCase();
+} else if (deviceType.includes("pc")) {
+    deviceLabel = device.pc_name || device.hostname || "PC";
+} else {
+    deviceLabel = deviceType.toUpperCase();
+}
+
+
+....
 
 "DBDetails": [
       {
