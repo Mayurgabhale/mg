@@ -1,4 +1,17 @@
+devices.push({ ip, safe, name, category, rawHist, hist, status, downCount, city, remark: dev.remark || '' });
 
+
+.....
+
+// show policy tooltip on hover for rows with explicit "Not accessible" remark
+if (d.remark && /not\s+access/i.test(d.remark)) {
+  row.title = "Due to policy, this camera is Not accessible";
+  row.classList.add('row-not-accessible'); // optional visual flag you can style in CSS
+}
+
+
+
+....
 let deviceUptimeTimers = {};
 let deviceDowntimeTimers = {};
 
