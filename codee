@@ -1,169 +1,66 @@
-const filteredDevices = allDevices.filter((device) =>
-    (selectedType === "all" || device.dataset.type === selectedType) &&
-    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
-    (selectedCity === "all" || device.dataset.city === selectedCity) &&
-    (selectedVendor === "all" || (device.dataset.vendor || "Unknown") === selectedVendor) &&
-    (
-        !searchTerm ||
-        device.innerText.toLowerCase().includes(searchTerm)
-    )
-);
-....
-
-
-function filterDevices() {
-    const selectedType = deviceFilter.value;
-    const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
-    const selectedCity = cityFilter.value;
-    // get vendor selection (if filter exists)
-    const vendorFilterElem = document.getElementById("subtype-filter");
-    const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
-
-    // Search bar input
-    const searchTerm = document.getElementById("device-search").value.toLowerCase();
-
-    // Show/hide vendor filter based on type
-    if (vendorFilterElem) {
-        vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
-    }
-
-    detailsContainer.innerHTML = "";
-
-
-
-....
-// --- Vendor / subtype filter (shows when deviceFilter === 'cameras') ---
-let vendorFilter = document.getElementById("subtype-filter");
-if (!vendorFilter) {
-    vendorFilter = document.createElement("select");
-    vendorFilter.id = "subtype-filter";
-    vendorFilter.style.marginTop = "8px";
-    vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
-    // insert vendorFilter after deviceFilter and before cityFilter
-    deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
-}
-
-// populate vendor options (clear previous)
-vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
-[...vendorSet].sort().forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v;
-    vendorFilter.appendChild(opt);
-});
-
-// hide by default unless cameras selected
-vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
-
-// when vendor changes, re-filter
-vendorFilter.addEventListener("change", filterDevices);
-
-
-..m
-
-const city = device.city || "Unknown";
-citySet.add(city);
-
-// --- VENDOR: try common fields and fall back to Unknown ---
-const vendor = device.vendor || device.vendor_name || (device.device_details && device.device_details.vendor) || device.manufacturer || "Unknown";
-vendorSet.add(vendor);
-
-// Create card element.
-const card = document.createElement("div");
-card.className = "device-card";
-card.dataset.type = deviceType;
-card.dataset.status = currentStatus;
-card.dataset.city = city;
-card.dataset.vendor = vendor; // <-- NEW
-card.setAttribute("data-ip", deviceIP);
+ "cameras": [
+      {
+        "cameraname": "Green Zone to yellow zone passage - 10.199.10.20 (FLIR CM-3102-11-I T71552107) - 350",
+        "ip_address": "10.199.10.20",
+        "location": "APAC",
+        "city": "Pune Podium",
+        "deviec_details": "FLIR",
+        "history": [],
+        "status": "Online"
+      },
+      {
+        "cameraname": "IN-PNQ-PF - Green Zone Exit Passage 10.199.10.139",
+        "ip_address": "10.199.10.139",
+        "location": "APAC",
+        "city": "Pune Podium",
+        "deviec_details": "FLIR",
+        "history": [],
+        "status": "Online"
+      },
+ {
+        "cameraname": "Taguig Office- Emergency Exit 1 (near reception area)",
+        "ip_address": "10.194.2.139",
+        "location": "APAC",
+        "city": "Taguig City",
+        "deviec_details": "VERKADA",
+        "hyperlink": "https://wu.command.verkada.com/cameras/8f38473d-90d4-4068-ae72-dedc1b655d3f/",
+        "history": [],
+        "status": "Online"
+      },
+      {
+        "cameraname": "AUT-VIE-11th Fl Reception entrance",
+        "ip_address": "10.128.202.136",
+        "location": "EMEA",
+        "city": "Austria, Vienna",
+        "deviec_details": "FLIR",
+        "remark": "Not accessible ",
+        "history": [],
+        "status": "Offline"
+      },
+      {
+        "cameraname": "AUT-VIE-11th Fl WUIB bd entrance",
+        "ip_address": "10.128.202.140",
+        "location": "EMEA",
+        "city": "Austria, Vienna",
+        "deviec_details": "FLIR",
+        "remark": "Not accessible ",
+        "history": [],
+        "status": "Offline"
+      },
 
 
 
 
-.......
-let combinedDevices = [];
-let citySet = new Set();
-let vendorSet = new Set(); // <-- added to collect vendor/device_details values
-
-
-
-
-
-.....
-
-combinedDevices.push({
-    card: card,
-    device: {
-        type: deviceType,
-        status: currentStatus,
-        city: city,
-        vendor: vendor
-    }
-});
-
-
-
-
-....
-
-
-
-
-// --- Vendor / subtype filter (shows when deviceFilter === 'cameras') ---
-let vendorFilter = document.getElementById("subtype-filter");
-if (!vendorFilter) {
-    vendorFilter = document.createElement("select");
-    vendorFilter.id = "subtype-filter";
-    vendorFilter.style.marginTop = "8px";
-    vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
-    // insert vendorFilter after deviceFilter and before cityFilter
-    deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
-}
-
-// populate vendor options (clear previous)
-vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
-[...vendorSet].sort().forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v;
-    opt.textContent = v;
-    vendorFilter.appendChild(opt);
-});
-
-// hide by default unless cameras selected
-vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
-
-// when vendor changes, re-filter
-vendorFilter.addEventListener("change", filterDevices);
-
-
-
-
-.....
-
-
-const filteredDevices = allDevices.filter((device) =>
-    (selectedType === "all" || device.dataset.type === selectedType) &&
-    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
-    (selectedCity === "all" || device.dataset.city === selectedCity) &&
-    (selectedVendor === "all" || (device.dataset.vendor || "Unknown") === selectedVendor) &&
-    (
-        !searchTerm ||
-        device.innerText.toLowerCase().includes(searchTerm)
-    )
-);
-
-
-
-
-
-
-....
-
-tell me where to add above code 
-
-excalty
-
-
+What is the problme in <option value="all">All Vendors</option>`;
+i got correct deviec_details name, but alos gettng unknown devic alos in select box 
+like 
+All Vendors
+FLIR
+UNKNOWN
+VERKADA
+like this 
+but alos show UNKNOWN this is wrong 
+read all code each line, and fix this problme correctlu and carefully, 
 
 // C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
 
@@ -457,6 +354,7 @@ function updateDetails(data) {
 
     let combinedDevices = [];
     let citySet = new Set();
+    let vendorSet = new Set(); // <-- added to collect vendor/device_details values
 
     // Icon utility based on device type
     function getDeviceIcon(type = "") {
@@ -488,12 +386,19 @@ function updateDetails(data) {
                     const city = device.city || "Unknown";
                     citySet.add(city);
 
+
+
+                    // --- VENDOR: try common fields and fall back to Unknown ---
+                    const vendor = device.deviec_details || (device.device_details && device.device_details.vendor) || device.manufacturer || "Unknown";
+                    vendorSet.add(vendor);
+
                     // Create card element.
                     const card = document.createElement("div");
                     card.className = "device-card";
                     card.dataset.type = deviceType;
                     card.dataset.status = currentStatus;
                     card.dataset.city = city;
+                    card.dataset.vendor = vendor; // <-- NEW
                     card.setAttribute("data-ip", deviceIP);
 
                     // Apply background color based on online/offline status
@@ -533,63 +438,63 @@ function updateDetails(data) {
                     statusContainer.appendChild(statusText);
 
                     // compute a nicer label for the device-type area
-const deviceLabel = deviceType.includes("pc")
-    ? (device.pc_name || device.hostname || "PC")
-    : deviceType.toUpperCase();
+                    const deviceLabel = deviceType.includes("pc")
+                        ? (device.pc_name || device.hostname || "PC")
+                        : deviceType.toUpperCase();
 
 
-//                     card.insertAdjacentHTML("beforeend", `
-//   <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
-//       ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
-//   </h3>
+                    //                     card.insertAdjacentHTML("beforeend", `
+                    //   <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
+                    //       ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
+                    //   </h3>
 
-//   <div class="card-content">
-//       <p class="device-type-label ${deviceType}" 
-//          style="font-size: 1.05rem; font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: 600; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-          
-//           <strong>
-//             <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
-//             ${deviceType.toUpperCase()}
-//           </strong>
-          
-//           ${deviceType.includes("camera")
-//                             ? `<button class="open-camera-btn"
-//         onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}', '${device.hyperlink || ""}')"
-//         title="Open Camera"
-//         style="border:none; cursor:pointer; font-weight:900; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
-//     <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
-// </button>`
-//                             : ""
-//                         }
-//       </p>
+                    //   <div class="card-content">
+                    //       <p class="device-type-label ${deviceType}" 
+                    //          style="font-size: 1.05rem; font-family: Verdana, Geneva, Tahoma, sans-serif; font-weight: 600; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
 
-//       <p style="font-size: 1.1rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;">
-//           <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
-//           <span 
-//               class="device-ip" 
-//               style="font-weight: 900; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3); font-family: 'Times New Roman', Times, serif;"
-//               onclick="copyToClipboard('${deviceIP}')"
-//               title="Click to copy IP"
-//           >
-//               ${deviceIP}
-//           </span>
-//       </p>
+                    //           <strong>
+                    //             <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
+                    //             ${deviceType.toUpperCase()}
+                    //           </strong>
 
-//       <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 6px;">
-//           <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-//           <span style="font-size: 1rem; font-weight: bold; color: rgb(8, 9, 9); margin-left: 12px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${device.location || "N/A"}</span>
-//       </p>
+                    //           ${deviceType.includes("camera")
+                    //                             ? `<button class="open-camera-btn"
+                    //         onclick="openCamera('${deviceIP}', '${device.cameraname || device.controllername || ""}', '${device.hyperlink || ""}')"
+                    //         title="Open Camera"
+                    //         style="border:none; cursor:pointer; font-weight:900; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+                    //     <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+                    // </button>`
+                    //                             : ""
+                    //                         }
+                    //       </p>
 
-//       <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif;">
-//           <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
-//           <span style="font-weight: bold; color: rgb(7, 7, 7); margin-left: 4px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${city}</span>
-//       </p>
-//   </div>
-// `);
+                    //       <p style="font-size: 1.1rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 8px;">
+                    //           <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
+                    //           <span 
+                    //               class="device-ip" 
+                    //               style="font-weight: 900; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3); font-family: 'Times New Roman', Times, serif;"
+                    //               onclick="copyToClipboard('${deviceIP}')"
+                    //               title="Click to copy IP"
+                    //           >
+                    //               ${deviceIP}
+                    //           </span>
+                    //       </p>
+
+                    //       <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif; margin-bottom: 6px;">
+                    //           <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
+                    //           <span style="font-size: 1rem; font-weight: bold; color: rgb(8, 9, 9); margin-left: 12px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${device.location || "N/A"}</span>
+                    //       </p>
+
+                    //       <p style="font-size: 0.95rem; font-family: 'Segoe UI', sans-serif;">
+                    //           <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
+                    //           <span style="font-weight: bold; color: rgb(7, 7, 7); margin-left: 4px; font-family: 'Times New Roman', Times, serif; font-size: 1.1rem;">${city}</span>
+                    //       </p>
+                    //   </div>
+                    // `);
 
 
 
-card.insertAdjacentHTML("beforeend", `
+                    card.insertAdjacentHTML("beforeend", `
   <h3 class="device-name" style="font-size: 1.1rem; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-bottom: 10px;">
       ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
   </h3>
@@ -651,7 +556,8 @@ card.insertAdjacentHTML("beforeend", `
                         device: {
                             type: deviceType,
                             status: currentStatus,
-                            city: city
+                            city: city,
+                            vendor: vendor
                         }
                     });
                 });
@@ -678,12 +584,50 @@ card.insertAdjacentHTML("beforeend", `
             document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
             allFilterButton.classList.add("active");
 
+
+            // --- Vendor / subtype filter (shows when deviceFilter === 'cameras') ---
+            let vendorFilter = document.getElementById("subtype-filter");
+            if (!vendorFilter) {
+                vendorFilter = document.createElement("select");
+                vendorFilter.id = "subtype-filter";
+                vendorFilter.style.marginTop = "8px";
+                vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
+                // insert vendorFilter after deviceFilter and before cityFilter
+                deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
+            }
+
+            // populate vendor options (clear previous)
+            vendorFilter.innerHTML = `<option value="all">All Vendors</option>`;
+            [...vendorSet].sort().forEach(v => {
+                const opt = document.createElement("option");
+                opt.value = v;
+                opt.textContent = v;
+                vendorFilter.appendChild(opt);
+            });
+
+            // hide by default unless cameras selected
+            vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+
+            // when vendor changes, re-filter
+            vendorFilter.addEventListener("change", filterDevices);
+
+
+
             function filterDevices() {
                 const selectedType = deviceFilter.value;
                 const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
                 const selectedCity = cityFilter.value;
+                // get vendor selection (if filter exists)
+                const vendorFilterElem = document.getElementById("subtype-filter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
                 // Search bar input
                 const searchTerm = document.getElementById("device-search").value.toLowerCase();
+
+                // Show/hide vendor filter based on type
+                if (vendorFilterElem) {
+                    vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
+                }
 
                 detailsContainer.innerHTML = "";
 
@@ -692,6 +636,7 @@ card.insertAdjacentHTML("beforeend", `
                     (selectedType === "all" || device.dataset.type === selectedType) &&
                     (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
                     (selectedCity === "all" || device.dataset.city === selectedCity) &&
+                     (selectedVendor === "all" || (device.dataset.vendor || "Unknown") === selectedVendor) &&
                     (
                         !searchTerm ||
                         device.innerText.toLowerCase().includes(searchTerm)
@@ -830,4 +775,3 @@ window.addEventListener("scroll", () => {
 document.getElementById("scrollToTopBtn").addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 });
-
