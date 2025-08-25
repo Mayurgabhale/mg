@@ -1,3 +1,39 @@
+
+// REPLACE your existing filterData() with this:
+
+function filterData() {
+  const rawTypeSel = document.getElementById('device-type').value.toUpperCase();
+  // normalize select values to match the Category text in the table
+  const typeSel = rawTypeSel === 'PCDETAILS' ? 'PCDETAIL'
+                : rawTypeSel === 'DBDETAILS' ? 'DBDETAIL'
+                : rawTypeSel;
+
+  const remarkSel = document.getElementById('remark-filter').value.toUpperCase();
+  const citySel   = document.getElementById('cityFilter')?.value.toUpperCase() || "ALL";
+  const searchTxt = document.getElementById('search-input').value.toUpperCase();
+
+  document.querySelectorAll('#device-table tbody tr').forEach(r => {
+    const ip     = r.cells[1].textContent.toUpperCase();
+    const name   = r.cells[2].textContent.toUpperCase();
+    const type   = r.cells[3].textContent.toUpperCase(); // e.g., CONTROLLER, PCDETAIL, DBDETAIL
+    const city   = r.cells[4].textContent.toUpperCase();
+    const remark = r.cells[9]?.textContent.toUpperCase();
+
+    const matchesType   = (typeSel === 'ALL' || type === typeSel);
+    const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
+    const matchesCity   = (citySel === 'ALL' || city === citySel);
+    const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
+
+    r.style.display = matchesType && matchesRemark && matchesCity && matchesSearch ? '' : 'none';
+  });
+}
+
+
+
+
+......
+
+
    <option value="pcDetails">Desktop</option>
                 <option value="DBDetails">DB Server</option> 
 this two are not filte out, what is the issuue check carefully,
