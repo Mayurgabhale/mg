@@ -1,3 +1,30 @@
+// --- replace existing category + devices.push(...) parts with this ---
+// compute internal category (keeps existing logic)
+let category = type.slice(0, -1).toUpperCase();
+
+// friendly label for UI (only display changes)
+let displayCategory = category;
+if (category === 'PCDETAIL') displayCategory = 'Desktop';
+if (category === 'DBDETAIL') displayCategory = 'DB Server';   // optional: nicer label
+if (category === 'SERVERS') displayCategory = 'CCURE';        // optional: nicer label
+
+devices.push({
+  ip,
+  safe,
+  name,
+  category,         // used for filtering (e.g., 'PCDETAIL')
+  displayCategory,  // used for visible UI (e.g., 'Desktop')
+  rawHist,
+  hist,
+  status,
+  downCount,
+  city,
+  remark: dev.remark || ''
+});
+
+
+...
+
 i want to chagen pc device type: in table, 
 i want to take for PCDETAIL device type can be this Desktop. ok 
 so what it do
