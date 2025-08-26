@@ -1,4 +1,72 @@
+ <div id="sidebar-content">
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search by IP, Location, City" />
+            </div>
+            <!-- <button onclick="exportDeviceTableToExcel()"><i class="fas fa-file-export"></i> Export Device Table</button> -->
+            <button onclick="exportDeviceTableToExcel()" id="export-btn"><i class="fas fa-file-export"></i> Export
+                Device Table</button>
+            <label for="region">Select Region:</label>
+            <select id="region" onchange="fetchDeviceData()">
+                <option value="global" selected>Global</option>
+                <option value="apac">APAC</option>
+                <option value="emea">EMEA</option>
+                <option value="laca">LACA</option>
+                <option value="namer">NAMER</option>
+            </select>
+            <label for="device-type">Filter by Device Type:</label>
+            <select id="device-type" onchange="filterData()">
+                <option value="ALL">All</option>
+                <option value="CONTROLLER">Controller</option>
+                <option value="ARCHIVER">Archiver</option>
+                <option value="CAMERA">Camera</option>
+                <option value="SERVER">Server</option>
+                 <option value="Desktop">Desktop</option>
+                <option value="DB Server">DB Server</option>  
+            </select>
+            <label for="remark-filter">Filter by Remark:</label>
+            <select id="remark-filter" onchange="filterData()">
+                <option value="ALL">All</option>
+                <option value="Device needs repair">Device needs repair</option>
+                <option value="Device is Online">Device is Online</option>
+                <option value="Device is Offline">Device is Offline</option>
+            </select>
+            <label for="cityFilter">City:</label>
+            <select id="cityFilter" id="remark-filter">
+                <option value="all">All Cities</option>
+            </select>
+        </div>
 
+
+
+
+know in this one prbomle is city not filter out when i select 
+this mean
+ <label for="device-type">Filter by Device Type:</label>
+            <select id="device-type" onchange="filterData()">
+                <option value="ALL">All</option>
+                <option value="CONTROLLER">Controller</option>
+                <option value="ARCHIVER">Archiver</option>
+                <option value="CAMERA">Camera</option>
+                <option value="SERVER">Server</option>
+                 <option value="Desktop">Desktop</option>
+                <option value="DB Server">DB Server</option>  
+            </select>
+
+means when i select Desktop only show city where avalble city. show onl
+
+for example 
+ <label for="device-type">Filter by Device Type:</label>
+i select Desktop
+then city show only  
+Pune Podium
+Costa Rica like 
+not all city disply ok
+i hove you understand
+
+note dont chagen my priviuse code logic,
+only give me update code, tell me whee to update, 
+carefully
 
 let deviceUptimeTimers = {};
 let deviceDowntimeTimers = {};
