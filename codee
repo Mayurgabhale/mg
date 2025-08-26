@@ -1,74 +1,37 @@
-function fetchDeviceHistory(details) {
-    fetch(`http://localhost/api/devices/history`)
-        .then(res => res.json())
-        .then(historyData => {
-            // set global first to avoid race when user clicks fast
-            window.deviceHistoryData = historyData;
-            populateDeviceTable(details, historyData);
-        })
-        .catch(err => console.error('Error fetching device history:', err));
-}
+summary.js:743 Error fetching device history: ReferenceError: total is not defined
+    at filterData (summary.js:1187:74)
+    at populateDeviceTable (summary.js:883:5)
+    at summary.js:741:13
+(anonymous)	@	summary.js:743
+Promise.catch		
+fetchDeviceHistory	@	summary.js:743
+(anonymous)	@	summary.js:718
+Promise.then		
+fetchDeviceData	@	summary.js:696
+(anonymous)	@	summary.html:188
 
-function filterHistoryForDisplay(hist, category) {
-    const cat = (category || '').toString().toUpperCase();
-    if (cat === 'SERVER') return hist.slice(); // show all for servers
-
-    // remove any offline entries that resolve within 5 minutes
-    const filtered = [];
-    let lastOff = null;
-    hist.forEach(e => {
-        if (e.status === 'Offline') {
-            lastOff = e;
-        } else if (e.status === 'Online' && lastOff) {
-            const diff = (new Date(e.timestamp) - new Date(lastOff.timestamp)) / 1000;
-            if (diff >= 300) {
-                filtered.push(lastOff, e);
-            }
-            lastOff = null;
-        } else {
-            filtered.push(e);
-        }
-    });
-    if (lastOff) {
-        const diff = (Date.now() - new Date(lastOff.timestamp)) / 1000;
-        if (diff >= 300) filtered.push(lastOff);
-    }
-    return filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-}
-
-function openDeviceHistory(ip, name, category) {
-    if (!window.deviceHistoryData) {
-        console.error("No history loaded");
-        showToast("History still loading — please try again in a moment.");
-        return;
-    }
-    const raw = window.deviceHistoryData[ip] || [];
-    const hist = filterHistoryForDisplay(raw, (category || '').toUpperCase());
-    displayDeviceHistory(ip, name, category, hist);
-    const modal = document.getElementById('device-history-modal');
-    if (modal) modal.style.display = 'block';
-}
+summary.js:743 Error fetching device history: ReferenceError: total is not defined
+    at filterData (summary.js:1187:74)
+    at populateDeviceTable (summary.js:883:5)
+    at summary.js:741:13
+(anonymous)	@	summary.js:743
+Promise.catch		
+fetchDeviceHistory	@	summary.js:743
+(anonymous)	@	summary.js:718
+Promise.then		
+fetchDeviceData	@	summary.js:696
+(anonymous)	@	summary.js:1222
 
 
 
 
 
-...
-
-summary.js:973 No history loaded
-openDeviceHistory	@	summary.js:973
-
-summary.js:973 No history loaded
-summary.js:973 No history loaded
-summary.js:973 No history loaded
-summary.js:973 No history loaded
-summary.js:973 No history loaded
 
 
 
 
-chekc View History why not open 
-read all code carefully, 
+
+
 
 let deviceUptimeTimers = {};
 let deviceDowntimeTimers = {};
@@ -146,15 +109,28 @@ function fetchDeviceData() {
     }
 }
 
+// function fetchDeviceHistory(details) {
+//     fetch(`http://localhost/api/devices/history`)
+//         .then(res => res.json())
+//         .then(historyData => {
+//             populateDeviceTable(details, historyData);
+//             window.deviceHistoryData = historyData;
+//         })
+//         .catch(err => console.error('Error fetching device history:', err));
+// }
+
+
 function fetchDeviceHistory(details) {
     fetch(`http://localhost/api/devices/history`)
         .then(res => res.json())
         .then(historyData => {
-            populateDeviceTable(details, historyData);
+            // set global first to avoid race when user clicks fast
             window.deviceHistoryData = historyData;
+            populateDeviceTable(details, historyData);
         })
         .catch(err => console.error('Error fetching device history:', err));
 }
+
 
 function populateDeviceTable(details, historyData) {
     const tbody = document.getElementById('device-table').getElementsByTagName('tbody')[0];
@@ -295,9 +271,41 @@ function populateDeviceTable(details, historyData) {
     filterData();
 }
 
+// function filterHistoryForDisplay(hist, category) {
+//     if (category === 'SERVER') return hist.slice(); // show all
+//     // else: remove any offline entries that resolve within 5 minutes
+//     const filtered = [];
+//     let lastOff = null;
+//     hist.forEach(e => {
+//         if (e.status === 'Offline') {
+//             lastOff = e;
+//         } else if (e.status === 'Online' && lastOff) {
+//             const diff = (new Date(e.timestamp) - new Date(lastOff.timestamp)) / 1000;
+//             if (diff >= 300) {
+//                 // keep the offline event and the matching online event
+//                 filtered.push(lastOff, e);
+//             }
+//             lastOff = null;
+//         } else {
+//             filtered.push(e);
+//         }
+//     });
+//     // If an Offline at end with no Online, and it's >5min ago, keep it
+//     if (lastOff) {
+//         const diff = (Date.now() - new Date(lastOff.timestamp)) / 1000;
+//         if (diff >= 300) filtered.push(lastOff);
+//     }
+//     return filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+// }
+
+
+
+
 function filterHistoryForDisplay(hist, category) {
-    if (category === 'SERVER') return hist.slice(); // show all
-    // else: remove any offline entries that resolve within 5 minutes
+    const cat = (category || '').toString().toUpperCase();
+    if (cat === 'SERVER') return hist.slice(); // show all for servers
+
+    // remove any offline entries that resolve within 5 minutes
     const filtered = [];
     let lastOff = null;
     hist.forEach(e => {
@@ -306,7 +314,6 @@ function filterHistoryForDisplay(hist, category) {
         } else if (e.status === 'Online' && lastOff) {
             const diff = (new Date(e.timestamp) - new Date(lastOff.timestamp)) / 1000;
             if (diff >= 300) {
-                // keep the offline event and the matching online event
                 filtered.push(lastOff, e);
             }
             lastOff = null;
@@ -314,13 +321,15 @@ function filterHistoryForDisplay(hist, category) {
             filtered.push(e);
         }
     });
-    // If an Offline at end with no Online, and it's >5min ago, keep it
     if (lastOff) {
         const diff = (Date.now() - new Date(lastOff.timestamp)) / 1000;
         if (diff >= 300) filtered.push(lastOff);
     }
     return filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 }
+
+
+
 
 function startUptime(ip, hist) {
     const safe = sanitizeId(ip);
@@ -394,10 +403,25 @@ function formatDuration(seconds) {
     return parts.join('/');
 }
 
+// function openDeviceHistory(ip, name, category) {
+//     if (!window.deviceHistoryData) return console.error("No history loaded");
+//     const raw = window.deviceHistoryData[ip] || [];
+//     const hist = filterHistoryForDisplay(raw, category);
+//     displayDeviceHistory(ip, name, category, hist);
+//     const modal = document.getElementById('device-history-modal');
+//     if (modal) modal.style.display = 'block';
+// }
+
+
+
 function openDeviceHistory(ip, name, category) {
-    if (!window.deviceHistoryData) return console.error("No history loaded");
+    if (!window.deviceHistoryData) {
+        console.error("No history loaded");
+        showToast("History still loading — please try again in a moment.");
+        return;
+    }
     const raw = window.deviceHistoryData[ip] || [];
-    const hist = filterHistoryForDisplay(raw, category);
+    const hist = filterHistoryForDisplay(raw, (category || '').toUpperCase());
     displayDeviceHistory(ip, name, category, hist);
     const modal = document.getElementById('device-history-modal');
     if (modal) modal.style.display = 'block';
