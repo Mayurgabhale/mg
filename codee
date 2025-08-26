@@ -1,39 +1,11 @@
-// inside fetchDeviceData(), in the selectedRegion !== 'All' branch
-.then(regionData => {
-    const d = regionData.details || {};
-    const total = (d.cameras?.length || 0) + (d.archivers?.length || 0) + (d.controllers?.length || 0) + (d.servers?.length || 0) + (d.pcDetails?.length || 0) + (d.DBDetails?.length || 0);
-    const online = ([...(d.cameras || []), ...(d.archivers || []), ...(d.controllers || []), ...(d.servers || []), ...(d.pcDetails || []), ...(d.DBDetails || [])]
-        .filter(dev => dev.status === "Online").length);
+// Prefer region totals (authoritative) if available; otherwise fall back to computed filtered totals
+const region = window.regionSummary || {};
 
-    const setWithIcon = (id, iconClass, label, value, colorClass = "") => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.innerHTML = `<i class="${iconClass}"></i> ${label}: <span class="${colorClass}" style="font-weight: 700;">${value}</span>`;
-        }
-    };
-
-    // Update UI
-    setWithIcon("total-devices", "fas fa-network-wired", "Total Devices", total, "text-green");
-    setWithIcon("total-online", "fas fa-signal", "Online Devices", online, "text-green");
-    setWithIcon("total-cameras", "fas fa-video", "Total Cameras", d.cameras?.length || 0, "text-green");
-    setWithIcon("total-controllers", "fas fa-microchip", "Total Controllers", d.controllers?.length || 0, "text-green");
-    setWithIcon("total-archivers", "fas fa-database", "Total Archivers", d.archivers?.length || 0, "text-green");
-    setWithIcon("total-servers", "fas fa-server", "Total Servers", d.servers?.length || 0, "text-green");
-    setWithIcon("total-pcs", "fas fa-desktop", "Total Desktop", d.pcDetails?.length || 0, "text-green");
-    setWithIcon("total-dbs", "fas fa-database", "Total DB Server", d.DBDetails?.length || 0, "text-green");
-
-    // Save the authoritative region totals so filterData() can keep them
-    window.regionSummary = {
-        totalDevices: total,
-        totalOnline: online,
-        totalCameras: d.cameras?.length || 0,
-        totalControllers: d.controllers?.length || 0,
-        totalArchivers: d.archivers?.length || 0,
-        totalServers: d.servers?.length || 0,
-        totalPCs: d.pcDetails?.length || 0,
-        totalDBs: d.DBDetails?.length || 0
-    };
-
-    // then fetch history and build table
-    fetchDeviceHistory(d);
-})
+setSummary("total-devices", "fas fa-network-wired", "Total Devices", region.totalDevices ?? totalDevices);
+setSummary("total-online", "fas fa-signal", "Online Devices", region.totalOnline ?? totalOnline);
+setSummary("total-cameras", "fas fa-video", "Total Cameras", region.totalCameras ?? totalCameras);
+setSummary("total-controllers", "fas fa-microchip", "Total Controllers", region.totalControllers ?? totalControllers);
+setSummary("total-archivers", "fas fa-database", "Total Archivers", region.totalArchivers ?? totalArchivers);
+setSummary("total-servers", "fas fa-server", "Total Servers", region.totalServers ?? totalServers);
+setSummary("total-pcs", "fas fa-desktop", "Total Desktop", region.totalPCs ?? totalPCs);
+setSummary("total-dbs", "fas fa-database", "Total DB Server", region.totalDBs ?? totalDBs);
