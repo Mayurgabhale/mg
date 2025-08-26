@@ -1,3 +1,29 @@
+// inside the devices.forEach loop, after you have `d.category`
+const displayCategory =
+  d.category === 'PCDETAIL' ? 'Desktop'
+  : d.category === 'DBDETAIL' ? 'DB Server'
+  : d.category;
+
+// ... then when building the row HTML, use data-category and show displayCategory
+row.innerHTML = `
+<td>${i + 1}</td>
+<td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
+<td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
+<td data-category="${d.category}">${displayCategory}</td>
+<td>${d.city}</td>
+<td id="uptime-${d.safe}">0h/0m/0s</td>
+<td id="downtime-count-${d.safe}">${d.downCount}</td>
+<td id="downtime-${d.safe}">0h/0m/0s</td>
+<td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
+<td id="remark-${d.safe}" data-city="${d.city}">–</td>
+`;
+
+
+
+
+
+
+...
 in table. show PCDETAIL, DBDETAIL
 
 but i want i want ot show PCDETAIL<-- destop and DBDETAIL < --- DB Server
