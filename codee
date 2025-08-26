@@ -1,4 +1,22 @@
+i want to chagen pc device type: in table, 
+i want to take for PCDETAIL device type can be this Desktop. ok 
+so what it do
 
+Device Type	City	Uptime Duration	Downtime Count	Downtime Duration	Details	Remark
+1	WKSPUN-346056	WKSPUN-346056	PCDETAIL	Pune Podium	0h/0m/0s	12	9m/45s	View History	Device is Offline, needs check.
+2	WKSPUN-890294	WKSPUN-890294	PCDETAIL
+
+
+            <label for="device-type">Filter by Device Type:</label>
+            <select id="device-type" onchange="filterData()">
+                <option value="ALL">All</option>
+                <option value="CONTROLLER">Controller</option>
+                <option value="ARCHIVER">Archiver</option>
+                <option value="CAMERA">Camera</option>
+                <option value="SERVER">Server</option>
+                <option value="pcDetails">Desktop</option>
+                <option value="DBDetails">DB Server</option>
+            </select>
 
 let deviceUptimeTimers = {};
 let deviceDowntimeTimers = {};
@@ -588,25 +606,7 @@ function copyToClipboard(id) {
 //   });
 
 //   document.getElementById('search-input')?.addEventListener('input', filterData);
-i want to chagen pc device type: in table, 
-i want to take for PCDETAIL device type can be this Desktop. ok 
-so what it do
 
-Device Type	City	Uptime Duration	Downtime Count	Downtime Duration	Details	Remark
-1	WKSPUN-346056	WKSPUN-346056	PCDETAIL	Pune Podium	0h/0m/0s	12	9m/45s	View History	Device is Offline, needs check.
-2	WKSPUN-890294	WKSPUN-890294	PCDETAIL
-
-
-            <label for="device-type">Filter by Device Type:</label>
-            <select id="device-type" onchange="filterData()">
-                <option value="ALL">All</option>
-                <option value="CONTROLLER">Controller</option>
-                <option value="ARCHIVER">Archiver</option>
-                <option value="CAMERA">Camera</option>
-                <option value="SERVER">Server</option>
-                <option value="pcDetails">Desktop</option>
-                <option value="DBDetails">DB Server</option>
-            </select>
 /
 
 /   // ✅ Add cityFilter event
