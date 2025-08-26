@@ -1,3 +1,31 @@
+const cityFilter = document.getElementById('cityFilter');
+  if (cityFilter) {
+    const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
+
+    // Build dropdown from scratch, ensure ALL option is uppercase and selected
+    cityFilter.innerHTML = '';
+    const allOpt = document.createElement('option');
+    allOpt.value = 'ALL';            // use 'ALL' (uppercase) to match filterData()
+    allOpt.textContent = 'All Cities';
+    allOpt.selected = true;          // explicitly mark selected so it shows on first render
+    cityFilter.appendChild(allOpt);
+
+    uniqueCities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      cityFilter.appendChild(option);
+    });
+
+    // Force value + trigger change so UI and any listeners update immediately
+    cityFilter.value = 'ALL';
+    cityFilter.dispatchEvent(new Event('change'));
+  }
+
+
+..
+
+
 when i repres page the in city select box not show All Cities
 when i clikc on selct box then i selct then show 
 
