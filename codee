@@ -1,30 +1,37 @@
-<select id="device-type" onchange="filterData()">
-  <option value="ALL">All</option>
-  <option value="Controller">Controller</option>
-  <option value="Archiver">Archiver</option>
-  <option value="Camera">Camera</option>
-  <option value="CCURE">CCURE</option>
-  <option value="Desktop">Desktop</option>
-  <option value="DB Server">DB Server</option>
-</select>
+in table. show PCDETAIL, DBDETAIL
+
+but i want i want ot show PCDETAIL<-- destop and DBDETAIL < --- DB Server
+so tell me what i dot, read code carefuuly, and tell me. 
+
+ const typeSel = rawTypeSel === 'PCDETAILS' ? 'PCDETAIL'
+                : rawTypeSel === 'DBDETAILS' ? 'DBDETAIL'
+                : rawTypeSel
 
 
-....
-const rawTypeSel = document.getElementById('device-type').value.toUpperCase();
-const typeSel = rawTypeSel === 'PCDETAILS' ? 'PCDETAIL'
-             : rawTypeSel === 'DBDETAILS' ? 'DBDETAIL'
-             : rawTypeSel;
-...
-const type   = r.cells[3].textContent.toUpperCase(); // e.g., CONTROLLER, PCDETAIL, DBDETAIL
-const matchesType = (typeSel === 'ALL' || type === typeSel);
+function filterData() {
+  const rawTypeSel = document.getElementById('device-type').value.toUpperCase();
+  // normalize select values to match the Category text in the table
+  const typeSel = rawTypeSel === 'PCDETAILS' ? 'PCDETAIL'
+                : rawTypeSel === 'DBDETAILS' ? 'DBDETAIL'
+                : rawTypeSel;
 
+  const remarkSel = document.getElementById('remark-filter').value.toUpperCase();
+  const citySel   = document.getElementById('cityFilter')?.value.toUpperCase() || "ALL";
+  const searchTxt = document.getElementById('search-input').value.toUpperCase();
 
-..
+  document.querySelectorAll('#device-table tbody tr').forEach(r => {
+    const ip     = r.cells[1].textContent.toUpperCase();
+    const name   = r.cells[2].textContent.toUpperCase();
+    const type   = r.cells[3].textContent.toUpperCase(); // e.g., CONTROLLER, PCDETAIL, DBDETAIL
+    const city   = r.cells[4].textContent.toUpperCase();
+    const remark = r.cells[9]?.textContent.toUpperCase();
 
+    const matchesType   = (typeSel === 'ALL' || type === typeSel);
+    const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
+    const matchesCity   = (citySel === 'ALL' || city === citySel);
+    const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
 
+    r.style.display = matchesType && matchesRemark && matchesCity && matchesSearch ? '' : 'none';
+  });
+}
 
-
-const typeSel = document.getElementById('device-type').value; // e.g., "Desktop", "DB Server"
-...
-const type = r.cells[3].textContent; // this column now holds displayCategory
-const matchesType = (typeSel === 'ALL' || type === typeSel);
