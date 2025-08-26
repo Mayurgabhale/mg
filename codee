@@ -1,3 +1,23 @@
+function mapCardTitleToFilterValue(title) {
+    if (!title) return "all";
+    const t = title.toLowerCase();
+
+    if (t.includes("camera")) return "cameras";
+    if (t.includes("archiver")) return "archivers";
+    if (t.includes("controller")) return "controllers";
+    if (t.includes("ccure")) return "servers";       // CCURE servers
+    if (t.includes("db")) return "dbdetails";        // DB servers
+    if (t.includes("desktop")) return "pcdetails";
+    if (t.includes("total")) return "all";
+
+    return "all";
+}
+
+
+
+
+...
+
 // <your original header and variables remain unchanged>
 
 const baseUrl = "http://localhost:80/api/regions";
