@@ -35,3 +35,124 @@ function filterData() {
   });
 }
 
+function populateDeviceTable(details, historyData) {
+  const Devices = [];
+  const tbody = document.querySelector('#device-table tbody');
+  tbody.innerHTML = '';
+
+  const devices = [];
+  ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'].forEach(type => {
+    (details[type] || []).forEach(dev => {
+      const ip = dev.ip_address;
+      const safe = sanitizeId(ip);
+      // const name      = dev[type.slice(0,-1) + 'name'] || 'Unknown';
+      const name = dev.hostname || dev.pc_name || dev[type.slice(0, -1) + 'name'] || dev.name || dev.device_name || dev.ip_address || 'Unknown';
+      const category = type.slice(0, -1).toUpperCase();
+      const rawHist = historyData[ip] || [];
+      const city = dev.city || 'Unknown';
+      const hist = filterHistoryForDisplay(rawHist, category);
+      const lastRaw = rawHist[rawHist.length - 1]?.status || 'Unknown';
+      // if last raw Offline but <5min, treat Online
+      let status = lastRaw;
+      if (lastRaw === 'Offline' && ((Date.now() - new Date(rawHist[rawHist.length - 1].timestamp)) / 1000) < 300) {
+        status = 'Online';
+      }
+      const downCount = hist.filter(e => e.status === 'Offline').length;
+
+      // devices.push({ ip, safe, name, category, rawHist, hist, status, downCount,city  });
+      devices.push({ ip, safe, name, category, rawHist, hist, status, downCount, city, remark: dev.remark || '' });
+
+    });
+  });
+
+  // sort by ongoing ≥5min offline first, then by downCount desc
+  devices.sort((a, b) => {
+    const now = Date.now();
+    const aLast = a.hist[a.hist.length - 1], bLast = b.hist[b.hist.length - 1];
+    const aOff = aLast?.status === 'Offline' ? (now - new Date(aLast.timestamp)) / 1000 : 0;
+    const bOff = bLast?.status === 'Offline' ? (now - new Date(bLast.timestamp)) / 1000 : 0;
+    if ((aOff >= 300) !== (bOff >= 300)) return aOff >= 300 ? -1 : 1;
+    return b.downCount - a.downCount;
+  });
+
+  devices.forEach((d, i) => {
+    const row = tbody.insertRow();
+
+    // row.classList.add(d.status==='Online' ? 'status-online' : 'status-offline');
+
+    if (d.status === 'Offline') {
+      row.classList.add('row-offline');
+    } else if (d.status === 'Online') {
+      row.classList.add('row-online');
+    } else {
+      // Optional: handle unknown or other cases
+      row.classList.add('row-repair');
+    }
+
+
+    //     row.innerHTML = `
+    // <td>${i+1}</td>
+    // <td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
+    // <td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
+    // <td>${d.category}</td>
+    // <td id="uptime-${d.safe}">0h/0m/0s</td>
+    // <td id="downtime-count-${d.safe}">${d.downCount}</td>
+    // <td id="downtime-${d.safe}">0h/0m/0s</td>
+    // <td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
+    // <td id="remark-${d.safe}">–</td>
+    // `;
+
+
+    row.innerHTML = `
+<td>${i + 1}</td>
+<td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
+<td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
+<td>${d.category}</td>
+<td>${d.city}</td>
+<td id="uptime-${d.safe}">0h/0m/0s</td>
+<td id="downtime-count-${d.safe}">${d.downCount}</td>
+<td id="downtime-${d.safe}">0h/0m/0s</td>
+<td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
+<td id="remark-${d.safe}" data-city="${d.city}">–</td>
+`;
+
+
+
+    // show policy tooltip on hover for rows with explicit "Not accessible" remark
+    // modern hover message for "Not accessible" rows
+    if (d.remark && /not\s+access/i.test(d.remark)) {
+      row.classList.add('row-not-accessible');
+
+      // create tooltip element
+      const tooltip = document.createElement("div");
+      tooltip.className = "modern-tooltip";
+      tooltip.textContent = "Due to Network policy, this camera is Not accessible";
+      row.appendChild(tooltip);
+    }
+
+
+    if (d.status === 'Online') startUptime(d.ip, d.hist, d.category);
+    else startDowntime(d.ip, d.hist, d.category);
+
+    updateRemarks(d.ip, d.hist, d.status, d.downCount);
+  });
+
+
+
+  // ✅ Add this block AFTER `devices.forEach(...)` inside populateDeviceTable
+  const cityFilter = document.getElementById('cityFilter');
+  if (cityFilter) {
+    const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
+    cityFilter.innerHTML = '<option value="all">All Cities</option>';
+    uniqueCities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      cityFilter.appendChild(option);
+    });
+  }
+
+  filterData();
+
+
+}
