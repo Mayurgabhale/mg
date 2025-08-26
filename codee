@@ -1,63 +1,17 @@
-
-Read all code carefully, each line and slove above error, 
-without chane any privius logic. carefully,.....
-
-Uncaught ReferenceError: updateCityFilter is not defined
-    at HTMLSelectElement.onchange (trend.html:220:94)
-onchange @ trend.html:220Understand this error
-trend.js:1423 Uncaught ReferenceError: updateCityFilter is not defined
-    at HTMLSelectElement.<anonymous> (trend.js:1423:9)
-(anonymous) @ trend.js:1423Understand this error
-trend.html:232 Uncaught ReferenceError: updateCityFilter is not defined
-    at HTMLSelectElement.onchange (trend.html:232:96)
-onchange @ trend.html:232Understand this error
-trend.html:220 Uncaught ReferenceError: updateCityFilter is not defined
-    at HTMLSelectElement.onchange (trend.html:220:94)
-onchange @ trend.html:220Understand this error
-trend.js:1423 Uncaught ReferenceError: updateCityFilter is not defined
-    at HTMLSelectElement.<anonymous> (trend.js:1423:9)
-(anonymous) @ trend.js:1423Understand this error
-trend.html:232 Uncaught ReferenceError: updateCityFilter is not defined
-    at HTMLSelectElement.onchange (trend.html:232:96)
-onchange @ trend.html:232Understand this error
-trend.js:827 Uncaught TypeError: Cannot set properties of null (setting 'innerText')
-    at trend.js:827:59
-(anonymous) @ trend.js:827
-setInterval
-startDowntime @ trend.js:825
-(anonymous) @ trend.js:1022
-populateDeviceTable @ trend.js:959
-(anonymous) @ trend.js:913
-Promise.then
-fetchDeviceHistory @ trend.js:912
-(anonymous) @ trend.js:905
-Promise.then
-fetchDeviceData @ trend.js:905
-(anonymous) @ trend.html:308Understand this error
-trend.js:827 Uncaught TypeError: Cannot set properties of null (setting 'innerText')
-    at trend.js:827:59
-
-Read all code carefully, each line and slove above error, 
-without chane any privius logic. carefully,
+city select box not filterou not
+when select   <label for="device-type">Filter by Device Type:</label> and   <label for="remark-filter">Filter by Remark:</label>
+this both. 
+in city disply all city, this is wrong, i want disply only avalbe city, city box, 
 
 
-   <!-- Sidebar -->
-        <div id="sidebar-content">
+when select <label for="region">Select Region:</label> then city work correcty,
 
+but Filter by Device Type: and Filter by Remark: that time not work,ok 
+read all code carefuulu, each line, and update carefullu
 
-            <div class="search-bar">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="search-input" placeholder="Search by IP, Location, City" />
-            </div>
+and dont change my privius code logic, carefuuluy
 
-
-
-
-            <!-- <button onclick="exportDeviceTableToExcel()"><i class="fas fa-file-export"></i> Export Device Table</button> -->
-            <button onclick="exportDeviceTableToExcel()" id="export-btn"><i class="fas fa-file-export"></i> Export
-                Device Table</button>
-
-            <label for="region">Select Region:</label>
+<label for="region">Select Region:</label>
             <select id="region" onchange="fetchDeviceData()">
                 <option value="global" selected>Global</option>
                 <option value="apac">APAC</option>
@@ -67,7 +21,7 @@ without chane any privius logic. carefully,
             </select>
 
             <label for="device-type">Filter by Device Type:</label>
-            <select id="device-type" onchange="filterData();updateCityFilter()">
+            <select id="device-type" onchange="filterData()">
                 <option value="ALL">All</option>
                 <option value="CONTROLLER">Controller</option>
                 <option value="ARCHIVER">Archiver</option>
@@ -79,7 +33,7 @@ without chane any privius logic. carefully,
             </select>
 
             <label for="remark-filter">Filter by Remark:</label>
-            <select id="remark-filter" onchange="filterData();updateCityFilter()">
+            <select id="remark-filter" onchange="filterData()">
                 <option value="ALL">All</option>
                 <option value="Device needs repair">Device needs repair</option>
                 <option value="Device is Online">Device is Online</option>
@@ -89,20 +43,10 @@ without chane any privius logic. carefully,
 
 
 
-            <!-- <label for="cityFilter">City:</label>
+            <label for="cityFilter">City:</label>
             <select id="cityFilter" id="remark-filter">
                 <option value="all">All Cities</option>
-            </select> -->
-
-            <label for="cityFilter">City:</label>
-            <select id="cityFilter">
-                <option value="all">All Cities</option>
             </select>
-
-
-
-        </div>
-
 
 
 
@@ -379,65 +323,19 @@ function populateDeviceTable(details, historyData) {
 
 
   // ✅ Add this block AFTER `devices.forEach(...)` inside populateDeviceTable
-  // const cityFilter = document.getElementById('cityFilter');
-  // if (cityFilter) {
-  //   const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
-  //   cityFilter.innerHTML = '<option value="all">All Cities</option>';
-  //   uniqueCities.forEach(city => {
-  //     const option = document.createElement('option');
-  //     option.value = city;
-  //     option.textContent = city;
-  //     cityFilter.appendChild(option);
-  //   });
-  // }
-
-
-// ---------- MOVE/ADD: global updateCityFilter() ----------
-function updateCityFilter() {
   const cityFilter = document.getElementById('cityFilter');
-  if (!cityFilter) return;
-
-  // Get selected device type from the device-type select (normalized to uppercase)
-  const selectedType = (document.getElementById('device-type').value || 'ALL').toUpperCase();
-
-  // Collect cities from table rows that match the selected device type.
-  const citiesSet = new Set();
-  document.querySelectorAll('#device-table tbody tr').forEach(r => {
-    const rowType = (r.cells[3]?.textContent || '').trim().toUpperCase(); // displayCategory column
-    const rowCity = (r.cells[4]?.textContent || '').trim();
-    if (!rowCity) return;
-
-    // If 'ALL' selected, include all cities; otherwise only include if row type matches.
-    if (selectedType === 'ALL' || rowType === selectedType) {
-      citiesSet.add(rowCity);
-    }
-  });
-
-  const uniqueCities = Array.from(citiesSet).sort((a,b) => a.localeCompare(b));
-
-  // Preserve previous selection where possible
-  const previous = cityFilter.value;
-
-  cityFilter.innerHTML = '<option value="all">All Cities</option>';
-  uniqueCities.forEach(city => {
-    const opt = document.createElement('option');
-    opt.value = city;
-    opt.textContent = city;
-    cityFilter.appendChild(opt);
-  });
-
-  // If the previous value still exists, keep it; otherwise reset to 'all'
-  if (previous && Array.from(cityFilter.options).some(o => o.value === previous)) {
-    cityFilter.value = previous;
-  } else {
-    cityFilter.value = 'all';
+  if (cityFilter) {
+    const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
+    cityFilter.innerHTML = '<option value="all">All Cities</option>';
+    uniqueCities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      cityFilter.appendChild(option);
+    });
   }
-}
-
 
   filterData();
-  updateCityFilter()
-  
 
 
 }
@@ -759,28 +657,9 @@ document.addEventListener('DOMContentLoaded', () => {
     Notification.requestPermission();
   }
 
-  // ['region', 'device-type', 'remark-filter'].forEach(id => {
-  //   document.getElementById(id)?.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
-  // });
-
   ['region', 'device-type', 'remark-filter'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    if (id === 'region') {
-      el.addEventListener('change', fetchDeviceData);
-    } else if (id === 'device-type') {
-      el.addEventListener('change', () => {
-        filterData();
-        updateCityFilter();
-      });
-    } else {
-      // remark-filter
-      el.addEventListener('change', filterData);
-    }
+    document.getElementById(id)?.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
   });
-
-
 
   document.getElementById('search-input')?.addEventListener('input', filterData);
   document.getElementById('cityFilter')?.addEventListener('change', filterData);
