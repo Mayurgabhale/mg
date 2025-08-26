@@ -1,3 +1,22 @@
+
+// Map internal category → user-friendly label
+const displayCategory = (function() {
+    switch (category.toUpperCase()) {
+        case "PCDETAIL": return "Desktop";
+        case "DBDETAIL": return "DB Server";
+        case "SERVERS": return "CCURE";
+        default: return category; // fallback
+    }
+})();
+
+row.innerHTML = `
+  <td>${device.name || "N/A"}</td>
+  <td data-category="${category}">${displayCategory}</td>
+  ...
+`;
+
+
+....
 // --- replace existing category + devices.push(...) parts with this ---
 // compute internal category (keeps existing logic)
 let category = type.slice(0, -1).toUpperCase();
