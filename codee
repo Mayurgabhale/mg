@@ -1,5 +1,217 @@
 
 
+/* top card section  */
+.icon-3d {
+  font-size: 26px;
+  margin-right: 10px;
+  padding: 7px;
+  border-radius: 12px;
+  /* background: linear-gradient(145deg, #1f1f1f, #2b2b2b); */
+  background: #ffcc00;
+  /* box-shadow: 4px 4px 8px #111, -4px -4px 8px #333; */
+  color: #00ffe5;
+  transition: transform 0.3s ease;
+}
+
+
+
+
+.region-logo img {
+  height: 10px;
+  width: auto;
+  object-fit: contain;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root {
+  --yellow: #ffcc00;
+  --black: #0f0f0f;
+  --dark-gray: #1a1a1a;
+  --gray: #2b2b2b;
+  --white: #f5f5f5;
+  --green: #2cb67d;
+  --red: #ef4565;
+  --blue: #00adb5;
+}
+
+/* ===== Layout ===== */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  /* font-family: 'Poppins', sans-serif; */
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  
+
+
+}
+
+/* ===== Card Design ===== */
+.card {
+ 
+  background: #f0f8fc;
+  border: 1px solid #131313;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  text-align: center;
+  /* color: var(--white); */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+
+}
+
+.card:hover {
+  transform: translateY(-5px);
+
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--card-border));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+  border: 1px solid #000000;
+
+
+
+}
+
+/* ===== Card Title ===== */
+.card h3 {
+  font-size: 1.11rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: 'Poppins', sans-serif;
+
+}
+
+.card h3 i {
+  color: #000000bd;
+}
+
+/*  */
+
+/* ===== Status Boxes ===== */
+.card-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* padding: 12px 16px; */
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: black;
+ 
+  font-family: 'Poppins', sans-serif;
+
+}
+
+/* Specific Status Styling */
+.card-status.total {
+  border: 1px solid #0a0b0b;
+
+  border-left: 4px solid;
+  border-left-color: #121212;
+  font-family: 'Poppins', sans-serif;
+  background-color: #bbdbf6 !important;
+  /* Light green */
+
+
+}
+
+.card-status.online {
+  border: 1px solid var(--green);
+  border-left: 4px solid;
+  border-left-color: #12e844;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 900px;
+  background-color: #bbf6db !important;
+  /* Light green */
+
+}
+
+.card-status.offline {
+  border: 1px solid var(--red);
+  border-left: 4px solid var(--red);
+  font-family: 'Poppins', sans-serif;
+  border-left-color: #df0a20;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 900;
+  background-color: #fdbdbd !important;
+  /* Light red */
+
+}
+
+
+
+/* ===== Badge/Text inside card-status ===== */
+.card-status span {
+  /* font-weight: bold; */
+  font-size: 1.2rem;
+  font-weight: 900;
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+/* ===== Divider ===== */
+.section-divider {
+  border: none;
+  height: 2px;
+  /* background: linear-gradient(to right, #00adb5, #fbc531, #00adb5); */
+  background: gray;
+  border-radius: 4px;
+  opacity: 0.8;
+  /* margin: 2rem auto; */
+  /* width: 80%; */
+}
+
+/* ===== Responsive Adjustments ===== */
+@media screen and (max-width: 600px) {
+  .summary {
+    padding: 1rem;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+  }
+
+  .card-status {
+    font-size: 0.9rem;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
+
+/* top card section  */
+
+
+
+
+
+
+
+
             <div class="summary">
                 <div class="card">
 
