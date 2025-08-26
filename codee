@@ -1,3 +1,66 @@
+
+            <div class="summary">
+                <div class="card">
+
+                    <h3><i class="fas fa-microchip icon-3d"></i> Total Devices</h3>
+                    <div class="card-status total">Total <span id="total-devices">0</span></div>
+                    <div class="card-status online">Online <span id="online-devices">0</span></div>
+                    <div class="card-status offline">Offline <span id="offline-devices">0</span></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-video icon-3d"></i> Cameras</h3>
+                    <div class="card-status total">Total <span id="camera-total">0</span></div>
+                    <div class="card-status online">Online <span id="camera-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="camera-offline">0</span></div>
+                </div>
+
+
+
+                <div class="card">
+                    <h3><i class="fas fa-database icon-3d"></i> Archivers</h3>
+
+                    <div class="card-status total">Total <span id="archiver-total">0</span></div>
+                    <div class="card-status online">Online <span id="archiver-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="archiver-offline">0</span></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-id-card icon-3d"></i> Controllers</h3>
+                    <div class="card-status total">Total <span id="controller-total">0</span></div>
+                    <div class="card-status online">Online <span id="controller-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="controller-offline">0</span></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-server icon-3d"></i>CCURE</h3>
+                    <div class="card-status total">Total <span id="server-total">0</span></div>
+                    <div class="card-status online">Online <span id="server-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="server-offline">0</span></div>
+                </div>
+
+
+
+
+                <div class="card">
+                    <h3><i class="fas fa-desktop icon-3d"></i>Desktop</h3>
+                    <div class="card-status total">Total <span id="pc-total">0</span></div>
+                    <div class="card-status online">Online <span id="pc-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="pc-offline">0</span></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fa-solid fa-life-ring icon-3d"></i>DB Server</h3>
+                    <div class="card-status total">Total <span id="db-total">0</span></div>
+                    <div class="card-status online">Online <span id="db-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="db-offline">0</span></div>
+                </div>
+
+
+
+            </div>
+
+
 function mapCardTitleToFilterValue(title) {
     if (!title) return "all";
     const t = title.toLowerCase();
