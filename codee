@@ -1,3 +1,58 @@
+// Robust copy helper: uses navigator.clipboard when available, falls back to a textarea.
+function copyToClipboard(elementId) {
+  const el = document.getElementById(elementId);
+  if (!el) {
+    showToast("Nothing to copy");
+    return;
+  }
+
+  const text = (el.innerText ?? el.value ?? '').trim();
+  if (!text) {
+    showToast("Nothing to copy");
+    return;
+  }
+
+  // Use navigator.clipboard if available (works on https or localhost)
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast(`Copied: ${text}`))
+      .catch(err => {
+        console.error("Clipboard API write failed:", err);
+        // fallback to execCommand method
+        _fallbackCopy(text);
+      });
+  } else {
+    // Fallback for non-secure contexts or older browsers
+    _fallbackCopy(text);
+  }
+}
+
+function _fallbackCopy(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    // Avoid scrolling to bottom
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (ok) showToast(`Copied: ${text}`);
+    else {
+      console.error("Fallback copy returned false");
+      showToast("Copy failed");
+    }
+  } catch (err) {
+    console.error("Fallback copy failed:", err);
+    showToast("Copy failed");
+  }
+}
+
+
+
+...
 Uncaught TypeError: Cannot read properties of undefined (reading 'writeText')
     at copyToClipboard (trend.js:722:25)
     at HTMLSpanElement.onclick (trend.html:1:1)
