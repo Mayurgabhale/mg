@@ -1,3 +1,27 @@
+['region', 'device-type', 'remark-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    if (id === 'region') {
+      el.addEventListener('change', fetchDeviceData);
+    } else if (id === 'device-type') {
+      el.addEventListener('change', () => {
+        filterData();
+        updateCityFilter();
+      });
+    } else {
+      // remark-filter
+      el.addEventListener('change', filterData);
+    }
+  });
+
+
+
+
+
+.
+...
+
 // ---------- ADD: updateCityFilter() ----------
 function updateCityFilter() {
   const cityFilter = document.getElementById('cityFilter');
