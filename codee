@@ -1,36 +1,91 @@
-summary.js:743 Error fetching device history: ReferenceError: total is not defined
-    at filterData (summary.js:1187:74)
-    at populateDeviceTable (summary.js:883:5)
-    at summary.js:741:13
-(anonymous)	@	summary.js:743
-Promise.catch		
-fetchDeviceHistory	@	summary.js:743
-(anonymous)	@	summary.js:718
-Promise.then		
-fetchDeviceData	@	summary.js:696
-(anonymous)	@	summary.html:188
+this sectin count is not update 
+Downtime > 15 min:
+Devices with >15 downtimes: 3
 
-summary.js:743 Error fetching device history: ReferenceError: total is not defined
-    at filterData (summary.js:1187:74)
-    at populateDeviceTable (summary.js:883:5)
-    at summary.js:741:13
-(anonymous)	@	summary.js:743
-Promise.catch		
-fetchDeviceHistory	@	summary.js:743
-(anonymous)	@	summary.js:718
-Promise.then		
-fetchDeviceData	@	summary.js:696
-(anonymous)	@	summary.js:1222
+ Currently Offline:
+Devices currently Offline: 16
 
+
+when i selct 
+Filter by Device Type:
+Server
+Filter by Remark:
+All
+Filter by Location:
+
+
+
+Downtime > 15 min:
+Devices with >15 downtimes: 3
+
+ Currently Offline:
+Devices currently Offline: 16 update only whne select Select Region:, but othe is selct then not update check it what is problme. 
 
 
 
 
 
+        <div class="filter-panel">
+            <!-- Downtime & Offline Cards -->
+            <div class="device-summary">
+                <div class="device-card">
+                    <i class="fas fa-clock icon"></i>
+                    <span class="label">Downtime &gt; 15 min:</span>
+                    <p class="value" id="count-downtime-over-15">0</p>
+                </div>
+                <div class="device-card">
+                    <i class="fas fa-power-off icon"></i>
+                    <span class="label">Currently Offline:</span>
+                    <p class="value offline" id="count-currently-offline">0</p>
+                </div>
+            </div>
 
+            <!-- Region Filter -->
+            <div class="filter-group">
+                <label for="region">Select Region:</label>
+                <select id="region" onchange="fetchDeviceData()">
+                    <option value="global">Global</option>
+                    <option value="apac">APAC</option>
+                    <option value="emea">EMEA</option>
+                    <option value="laca">LACA</option>
+                    <option value="namer">NAMER</option>
+                </select>
+            </div>
 
+            <!-- Device Type Filter -->
+            <div class="filter-group">
+                <label for="device-type">Filter by Device Type:</label>
+                <select id="device-type" onchange="filterData()">
+                    <option value="ALL">All</option>
+                    <option value="CONTROLLER">Controller</option>
+                    <option value="ARCHIVER">Archiver</option>
+                    <option value="CAMERA">Camera</option>
+                    <option value="SERVER">Server</option>
+                    <option value="Desktop">Desktop</option>
+                    <option value="DB Server">DB Server</option>
+                </select>
+            </div>
 
+            <!-- Remark Filter -->
+            <div class="filter-group">
+                <label for="remark-filter">Filter by Remark:</label>
+                <select id="remark-filter" onchange="filterData()">
+                    <option value="ALL">All</option>
+                    <option value="Device needs repair">Device needs repair</option>
+                    <option value="Device is Online">Device is Online</option>
+                    <option value="Device is Offline">Device is Offline</option>
+                </select>
+            </div>
 
+            <div class="filter-group">
+                <label for="city-filter">Filter by Location:</label>
+
+                <select id="cityFilter">
+                    <option value="">All Cities</option>
+                </select>
+            </div>
+
+        </div>
 
 
 let deviceUptimeTimers = {};
