@@ -1,4 +1,25 @@
+// Helper: format API ISO (UTC) to "hh:mm:ss AM/PM"
+const formatApiDateTime = iso => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
 
+  const hours24 = d.getUTCHours();
+  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(d.getUTCSeconds()).padStart(2, "0");
+
+  const ampm = hours24 >= 12 ? "PM" : "AM";
+  let hour12 = hours24 % 12;
+  if (hour12 === 0) hour12 = 12;
+  const hourStr = String(hour12).padStart(2, "0");
+
+  return `${hourStr}:${minutes}:${seconds} ${ampm}`;
+};
+
+
+
+
+....
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Container, Box, Typography, Button, TextField,
