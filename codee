@@ -1,25 +1,32 @@
-// Helper: format API ISO (UTC) to "hh:mm:ss AM/PM"
-const formatApiDateTime = iso => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d)) return iso;
+add CompanyName name 
 
-  const hours24 = d.getUTCHours();
-  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
-  const seconds = String(d.getUTCSeconds()).padStart(2, "0");
+http://localhost:3007/api/occupancy/live-summary
+{
+      "ObjectName1": "Diwate, Swapnil",
+      "Door": "APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door",
+      "PersonnelType": "Contractor",
+      "EmployeeID": "W0024618",
+      "CardNumber": "619957",
+      "PartitionName2": "Pune",
+      "LocaleMessageTime": "2025-08-28T17:49:49.000Z",
+      "Direction": "InDirection",
+      "PersonGUID": "FCEDB0C8-993C-416C-8D3F-43F4B87BC572",
+      "CompanyName": "Poona Security India Pvt. Ltd.",
+      "PrimaryLocation": "Pune - Business Bay",
+      "Zone": "Yellow Zone",
+      "Floor": "Podium Floor"
+    },
 
-  const ampm = hours24 >= 12 ? "PM" : "AM";
-  let hour12 = hours24 % 12;
-  if (hour12 === 0) hour12 = 12;
-  const hourStr = String(hour12).padStart(2, "0");
 
-  return `${hourStr}:${minutes}:${seconds} ${ampm}`;
-};
+Emp ID	Name	Swipe Time	Type	Card	Door
+W0024618	Diwate, Swapnil	07:28:45 PM	Contractor	619957	APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door
+327546	Penta, Kesava Amith Pavan Swamy	05:51:33 PM	Employee	615787	APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE
 
+dont chang any thisng only add in tabl compnay name afte type column 
 
 
+// src/pages/PartitionDetailDetails.jsx
 
-....
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Container, Box, Typography, Button, TextField,
@@ -46,27 +53,24 @@ export default function PartitionDetailDetails() {
   const [search, setSearchTerm] = useState("");
   const [expandedFloor, setExpandedFloor] = useState(null);
 
-  // Helper: format API ISO (UTC) to "YYYY-MM-DD hh:mm:ss AM/PM"
-  const formatApiDateTime = iso => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    if (isNaN(d)) return iso;
 
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(d.getUTCDate()).padStart(2, "0");
+ // Helper: format API ISO (UTC) to "hh:mm:ss AM/PM"
+const formatApiDateTime = iso => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
 
-    const hours24 = d.getUTCHours();
-    const minutes = String(d.getUTCMinutes()).padStart(2, "0");
-    const seconds = String(d.getUTCSeconds()).padStart(2, "0");
+  const hours24 = d.getUTCHours();
+  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(d.getUTCSeconds()).padStart(2, "0");
 
-    const ampm = hours24 >= 12 ? "PM" : "AM";
-    let hour12 = hours24 % 12;
-    if (hour12 === 0) hour12 = 12;
-    const hourStr = String(hour12).padStart(2, "0");
+  const ampm = hours24 >= 12 ? "PM" : "AM";
+  let hour12 = hours24 % 12;
+  if (hour12 === 0) hour12 = 12;
+  const hourStr = String(hour12).padStart(2, "0");
 
-    return `${year}-${month}-${day} ${hourStr}:${minutes}:${seconds} ${ampm}`;
-  };
+  return `${hourStr}:${minutes}:${seconds} ${ampm}`;
+};
 
 
 
@@ -229,32 +233,6 @@ export default function PartitionDetailDetails() {
                           ))}
                         </TableRow>
                       </TableHead>
-
-                      {/* <TableBody>
-                        {emps.slice(0, 10).map((r, i) => (
-                          <TableRow key={i}>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.EmployeeID}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.ObjectName1}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {new Date(r.LocaleMessageTime).toLocaleTimeString()}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.PersonnelType}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.CardNumber}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.Door}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody> */}
-
                       <TableBody>
                         {emps.slice(0, 10).map((r, i) => (
                           <TableRow key={i}>
@@ -306,15 +284,6 @@ export default function PartitionDetailDetails() {
               <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
                 {expandedFloor} — All Entries
               </Typography>
-
-              {/* <DataTable
-                columns={columns}
-                rows={floorMap[expandedFloor].map(r => ({
-                  ...r,
-                  LocaleMessageTime: new Date(r.LocaleMessageTime).toLocaleTimeString()
-                }))}
-              /> */}
-
 
               <DataTable
                 columns={columns}
