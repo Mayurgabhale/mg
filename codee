@@ -1,229 +1,5 @@
-Read below code carefully, and in this one issue in in the time,
-see api respons and 
-  "LocaleMessageTime": "2025-08-28T18:25:10.000Z", this is api responsivd time it is correct 
-but in talb not correct 
-	11:55:10 PM	
-this time si wrong, i want to disply as it is time came fomr api, ok
-i hove you undestnd better, 
-so read all code carefuuly, and correct it, carefuuly, 
-dont change my privuis code logic, only give me correct code for time 
-Tower B (Total 33)
-Emp ID	Name	Swipe Time	Type	Card	Door
-Pune, VIS_PUN_142	11:52:54 PM	Visitor	413955	APAC_IN_PUN_TOWER B_GYM ROOM
-328105	Gupta, Saurabh	11:55:10 PM	Employee	615724	APAC_IN_PUN_TOWER B_GYM ROOM
+// ... top imports and code unchanged
 
-
-
-{
-      "ObjectName1": "Gupta, Saurabh",
-      "Door": "APAC_IN_PUN_TOWER B_GYM ROOM",
-      "PersonnelType": "Employee",
-      "EmployeeID": "328105",
-      "CardNumber": "615724",
-      "PartitionName2": "Pune",
-      "LocaleMessageTime": "2025-08-28T18:25:10.000Z",
-      "Direction": "InDirection",
-      "PersonGUID": "FCF7DE53-6160-49E0-AC2D-0452C1039EE5",
-      "CompanyName": "WU Srvcs India Private Ltd",
-      "PrimaryLocation": "Pune - Business Bay",
-      "Zone": "Tower B GYM",
-      "Floor": "Tower B"
-    },
-
-
-Tower B (Total 33)
-Emp ID	Name	Swipe Time	Type	Card	Door
-Pune, VIS_PUN_142	11:52:54 PM	Visitor	413955	APAC_IN_PUN_TOWER B_GYM ROOM
-328105	Gupta, Saurabh	11:55:10 PM	Employee	615724	APAC_IN_PUN_TOWER B_GYM ROOM
-
-
-  
-
-// src/pages/PartitionDetailDetails.jsx
-
-import React, { useEffect, useState, useMemo } from "react";
-import {
-  Container, Box, Typography, Button, TextField,
-  Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
-} from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
-
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import LoadingSpinner from "../components/LoadingSpinner";
-import DataTable from "../components/DataTable";
-
-import { fetchLiveSummary } from "../api/occupancy.service";
-import { lookupFloor } from "../utils/floorLookup";
-
-export default function PartitionDetailDetails() {
-  const { partition } = useParams();
-  const navigate = useNavigate();
-
-  const [details, setDetails]       = useState([]);
-  const [liveCounts, setLiveCounts] = useState({});
-  const [loading, setLoading]       = useState(true);
-  const [lastUpdate, setLastUpdate] = useState("");
-  const [search, setSearchTerm]     = useState("");
-  const [expandedFloor, setExpandedFloor] = useState(null);
-
-  // 1) Filter the raw details → keep only In/Out for this partition,
-  //    map to include floor, then drop any that resolve to "Unmapped"
-  const filterAndMap = json =>
-    json.details
-      .filter(r =>
-        r.PartitionName2 === partition &&
-        (r.Direction === "InDirection" || r.Direction === "OutDirection")
-      )
-      .map(r => {
-        const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction);
-        return { ...r, floor };
-      })
-      .filter(r => r.floor !== "Unmapped");  // remove any Out-of-office / unmapped
-
-  // initial load
-  useEffect(() => {
-    let active = true;
-    fetchLiveSummary().then(json => {
-      if (!active) return;
-      setLiveCounts(json.realtime[partition]?.floors || {});
-      setDetails(filterAndMap(json));
-      setLastUpdate(new Date().toLocaleTimeString());
-      setLoading(false);
-    });
-    return () => { active = false };
-  }, [partition]);
-
-  // poll every second
-  useEffect(() => {
-    const iv = setInterval(async () => {
-      const json = await fetchLiveSummary();
-      setLiveCounts(json.realtime[partition]?.floors || {});
-      setDetails(filterAndMap(json));
-      setLastUpdate(new Date().toLocaleTimeString());
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [partition]);
-
-  // group by floor name
-  const floorMap = useMemo(() => {
-    const m = {};
-    Object.keys(liveCounts).forEach(f => { m[f] = [] });
-    details.forEach(r => {
-      if (!m[r.floor]) m[r.floor] = [];
-      m[r.floor].push(r);
-    });
-    return m;
-  }, [details, liveCounts]);
-
-  // apply search filter to each floor's list
-  const displayed = useMemo(() => {
-    const term = search.toLowerCase();
-    return Object.entries(floorMap)
-      .map(([floor, emps]) => {
-        const filtered = emps.filter(e =>
-          floor.toLowerCase().includes(term) ||
-          e.ObjectName1?.toLowerCase().includes(term) ||
-          `${e.EmployeeID}`.toLowerCase().includes(term) ||
-          `${e.CardNumber}`.toLowerCase().includes(term)
-        );
-        return [floor, filtered];
-      })
-      .filter(([, emps]) => emps.length > 0);
-  }, [floorMap, search]);
-
-  const columns = [
-    { field: "EmployeeID",      headerName: "Emp ID" },
-    { field: "ObjectName1",     headerName: "Name" },
-    { field: "LocaleMessageTime", headerName: "Swipe Time" },
-    { field: "PersonnelType",   headerName: "Type" },
-    { field: "CardNumber",      headerName: "Card" },
-    { field: "Door",            headerName: "Door" },
-  ];
-
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box>
-        <Footer />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Header />
-      <Box sx={{ pt: 1, pb: 1, background: "rgba(0,0,0,0.6)" }}>
-        <Container disableGutters maxWidth={false}>
-
-          {/* Back button + title */}
-          <Box display="flex" alignItems="center" mb={2} sx={{ px: 2 }}>
-            <Button size="small" onClick={() => navigate(-1)} sx={{ color: "#FFC107" }}>
-              ← Back to Overview
-            </Button>
-          </Box>
-
-          {/* Search + timestamp */}
-          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: 2 }}>
-            <Typography variant="h6" sx={{ color: "#FFC107" }}>
-              Floor Details
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#FFC107" }}>
-              Last updated: {lastUpdate}
-            </Typography>
-            <TextField
-              size="small"
-              placeholder="Search floor / emp…"
-              value={search}
-              onChange={e => setSearchTerm(e.target.value)}
-              sx={{
-                "& .MuiInputBase-input": { color: "#FFC107" },
-                "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" }
-              }}
-            />
-          </Box>
-
-          {/* Floor cards */}
-          <Box display="flex" flexWrap="wrap" width="100%" sx={{ px: 2 }}>
-            {displayed.map(([floor, emps]) => (
-              <Box key={floor} sx={{ width: "50%", p: 2 }}>
-                <Paper sx={{
-                  border: "2px solid #FFC107",
-                  p: 2,
-                  background: "rgba(0,0,0,0.4)"
-                }}>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    gutterBottom
-                    sx={{ color: "#FFC107" }}
-                  >
-                    {floor} (Total {emps.length})
-                  </Typography>
-
-                  <TableContainer
-                    component={Paper}
-                    variant="outlined"
-                    sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}
-                  >
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: "#000" }}>
-                          {["Emp ID","Name","Swipe Time","Type","Card","Door"].map(h => (
-                            <TableCell
-                              key={h}
-                              sx={{
-                                color: "#FFC107",
-                                border: "1px solid #FFC107",
-                                fontWeight: "bold"
-                              }}
-                            >
-                              {h}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
                       <TableBody>
                         {emps.slice(0, 10).map((r, i) => (
                           <TableRow key={i}>
@@ -234,7 +10,14 @@ export default function PartitionDetailDetails() {
                               {r.ObjectName1}
                             </TableCell>
                             <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {new Date(r.LocaleMessageTime).toLocaleTimeString()}
+                              {/* Display API time exactly as received (ISO UTC). 
+                                  Fallback to empty string if missing. */}
+                              {r.LocaleMessageTime || ""}
+                              {/*
+                                // Alternative: show only HH:MM:SS in UTC (no conversion to local timezone)
+                                // Uncomment if you prefer "18:25:10" instead of full ISO:
+                                // { (r.LocaleMessageTime && r.LocaleMessageTime.split('T')[1]?.replace('Z','').split('.')[0]) || "" }
+                              */}
                             </TableCell>
                             <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
                               {r.PersonnelType}
@@ -248,43 +31,15 @@ export default function PartitionDetailDetails() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
-                  </TableContainer>
 
-                  <Button
-                    size="small"
-                    onClick={() => setExpandedFloor(f => f === floor ? null : floor)}
-                    sx={{ color: "#FFC107" }}
-                  >
-                    {expandedFloor === floor ? "Hide" : "See more…"}
-                  </Button>
-                </Paper>
-              </Box>
-            ))}
-          </Box>
-
-          {/* Expanded table */}
-          {expandedFloor && (
-            <Box sx={{ px: 2, mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
-                {expandedFloor} — All Entries
-              </Typography>
+// ... later, expanded DataTable mapping (only changed mapping line)
               <DataTable
                 columns={columns}
                 rows={floorMap[expandedFloor].map(r => ({
                   ...r,
-                  LocaleMessageTime: new Date(r.LocaleMessageTime).toLocaleTimeString()
+                  // keep the API value as-is (no local conversion)
+                  LocaleMessageTime: r.LocaleMessageTime || ""
+                  // Alternative if you want just the UTC time portion (HH:MM:SS):
+                  // LocaleMessageTime: (r.LocaleMessageTime && r.LocaleMessageTime.split('T')[1]?.replace('Z','').split('.')[0]) || ""
                 }))}
               />
-            </Box>
-          )}
-
-        </Container>
-      </Box>
-      <Footer />
-    </>
-  );
-}
-
-
-
