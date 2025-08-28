@@ -1,47 +1,316 @@
-// Helper: format API ISO (UTC) to "YYYY-MM-DD hh:mm:ss AM/PM"
-const formatApiDateTime = iso => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d)) return iso;
 
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  Container, Box, Typography, Button, TextField,
+  Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
+} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
 
-  const hours24 = d.getUTCHours();
-  const minutes = String(d.getUTCMinutes()).padStart(2, "0");
-  const seconds = String(d.getUTCSeconds()).padStart(2, "0");
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+import DataTable from "../components/DataTable";
 
-  const ampm = hours24 >= 12 ? "PM" : "AM";
-  let hour12 = hours24 % 12;
-  if (hour12 === 0) hour12 = 12;
-  const hourStr = String(hour12).padStart(2, "0");
+import { fetchLiveSummary } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup";
 
-  return `${year}-${month}-${day} ${hourStr}:${minutes}:${seconds} ${ampm}`;
-};
+export default function PartitionDetailDetails() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [details, setDetails] = useState([]);
+  const [liveCounts, setLiveCounts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState("");
+  const [search, setSearchTerm] = useState("");
+  const [expandedFloor, setExpandedFloor] = useState(null);
+
+  // Helper: format API ISO (UTC) to "YYYY-MM-DD hh:mm:ss AM/PM"
+  const formatApiDateTime = iso => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+
+    const hours24 = d.getUTCHours();
+    const minutes = String(d.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(d.getUTCSeconds()).padStart(2, "0");
+
+    const ampm = hours24 >= 12 ? "PM" : "AM";
+    let hour12 = hours24 % 12;
+    if (hour12 === 0) hour12 = 12;
+    const hourStr = String(hour12).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hourStr}:${minutes}:${seconds} ${ampm}`;
+  };
 
 
 
 
-.....
+
+  // 1) Filter the raw details → keep only In/Out for this partition,
+  //    map to include floor, then drop any that resolve to "Unmapped"
+  const filterAndMap = json =>
+    json.details
+      .filter(r =>
+        r.PartitionName2 === partition &&
+        (r.Direction === "InDirection" || r.Direction === "OutDirection")
+      )
+      .map(r => {
+        const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction);
+        return { ...r, floor };
+      })
+      .filter(r => r.floor !== "Unmapped");  // remove any Out-of-office / unmapped
+
+  // initial load
+  useEffect(() => {
+    let active = true;
+    fetchLiveSummary().then(json => {
+      if (!active) return;
+      setLiveCounts(json.realtime[partition]?.floors || {});
+      setDetails(filterAndMap(json));
+      setLastUpdate(new Date().toLocaleTimeString());
+      setLoading(false);
+    });
+    return () => { active = false };
+  }, [partition]);
+
+  // poll every second
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      const json = await fetchLiveSummary();
+      setLiveCounts(json.realtime[partition]?.floors || {});
+      setDetails(filterAndMap(json));
+      setLastUpdate(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [partition]);
+
+  // group by floor name
+  const floorMap = useMemo(() => {
+    const m = {};
+    Object.keys(liveCounts).forEach(f => { m[f] = [] });
+    details.forEach(r => {
+      if (!m[r.floor]) m[r.floor] = [];
+      m[r.floor].push(r);
+    });
+    return m;
+  }, [details, liveCounts]);
+
+  // apply search filter to each floor's list
+  const displayed = useMemo(() => {
+    const term = search.toLowerCase();
+    return Object.entries(floorMap)
+      .map(([floor, emps]) => {
+        const filtered = emps.filter(e =>
+          floor.toLowerCase().includes(term) ||
+          e.ObjectName1?.toLowerCase().includes(term) ||
+          `${e.EmployeeID}`.toLowerCase().includes(term) ||
+          `${e.CardNumber}`.toLowerCase().includes(term)
+        );
+        return [floor, filtered];
+      })
+      .filter(([, emps]) => emps.length > 0);
+  }, [floorMap, search]);
+
+  const columns = [
+    { field: "EmployeeID", headerName: "Emp ID" },
+    { field: "ObjectName1", headerName: "Name" },
+    { field: "LocaleMessageTime", headerName: "Swipe Time" },
+    { field: "PersonnelType", headerName: "Type" },
+    { field: "CardNumber", headerName: "Card" },
+    { field: "Door", headerName: "Door" },
+  ];
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box>
+        <Footer />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Header />
+      <Box sx={{ pt: 1, pb: 1, background: "rgba(0,0,0,0.6)" }}>
+        <Container disableGutters maxWidth={false}>
+
+          {/* Back button + title */}
+          <Box display="flex" alignItems="center" mb={2} sx={{ px: 2 }}>
+            <Button size="small" onClick={() => navigate(-1)} sx={{ color: "#FFC107" }}>
+              ← Back to Overview
+            </Button>
+          </Box>
+
+          {/* Search + timestamp */}
+          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: 2 }}>
+            <Typography variant="h6" sx={{ color: "#FFC107" }}>
+              Floor Details
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#FFC107" }}>
+              Last updated: {lastUpdate}
+            </Typography>
+            <TextField
+              size="small"
+              placeholder="Search floor / emp…"
+              value={search}
+              onChange={e => setSearchTerm(e.target.value)}
+              sx={{
+                "& .MuiInputBase-input": { color: "#FFC107" },
+                "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" }
+              }}
+            />
+          </Box>
+
+          {/* Floor cards */}
+          <Box display="flex" flexWrap="wrap" width="100%" sx={{ px: 2 }}>
+            {displayed.map(([floor, emps]) => (
+              <Box key={floor} sx={{ width: "50%", p: 2 }}>
+                <Paper sx={{
+                  border: "2px solid #FFC107",
+                  p: 2,
+                  background: "rgba(0,0,0,0.4)"
+                }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={600}
+                    gutterBottom
+                    sx={{ color: "#FFC107" }}
+                  >
+                    {floor} (Total {emps.length})
+                  </Typography>
+
+                  <TableContainer
+                    component={Paper}
+                    variant="outlined"
+                    sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}
+                  >
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: "#000" }}>
+                          {["Emp ID", "Name", "Swipe Time", "Type", "Card", "Door"].map(h => (
+                            <TableCell
+                              key={h}
+                              sx={{
+                                color: "#FFC107",
+                                border: "1px solid #FFC107",
+                                fontWeight: "bold"
+                              }}
+                            >
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+
+                      {/* <TableBody>
+                        {emps.slice(0, 10).map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.EmployeeID}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.ObjectName1}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {new Date(r.LocaleMessageTime).toLocaleTimeString()}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.PersonnelType}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.CardNumber}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.Door}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody> */}
+
+                      <TableBody>
+                        {emps.slice(0, 10).map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.EmployeeID}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.ObjectName1}
+                            </TableCell>
 
 
-
-<TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-  {formatApiDateTime(r.LocaleMessageTime)}
-</TableCell>
-
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {formatApiDateTime(r.LocaleMessageTime)}
+                            </TableCell>
 
 
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.PersonnelType}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.CardNumber}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.Door}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
 
-.....
-<DataTable
-  columns={columns}
-  rows={floorMap[expandedFloor].map(r => ({
-    ...r,
-    LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime)
-  }))}
-/>
+
+                    </Table>
+                  </TableContainer>
+
+                  <Button
+                    size="small"
+                    onClick={() => setExpandedFloor(f => f === floor ? null : floor)}
+                    sx={{ color: "#FFC107" }}
+                  >
+                    {expandedFloor === floor ? "Hide" : "See more…"}
+                  </Button>
+                </Paper>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Expanded table */}
+          {expandedFloor && (
+            <Box sx={{ px: 2, mt: 2 }}>
+              <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
+                {expandedFloor} — All Entries
+              </Typography>
+
+              {/* <DataTable
+                columns={columns}
+                rows={floorMap[expandedFloor].map(r => ({
+                  ...r,
+                  LocaleMessageTime: new Date(r.LocaleMessageTime).toLocaleTimeString()
+                }))}
+              /> */}
+
+
+              <DataTable
+                columns={columns}
+                rows={floorMap[expandedFloor].map(r => ({
+                  ...r,
+                  LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime)
+                }))}
+              />
+            </Box>
+          )}
+
+        </Container>
+      </Box>
+      <Footer />
+    </>
+  );
+}
 
 
 
