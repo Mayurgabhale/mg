@@ -1,3 +1,9 @@
+<TableCell sx={{border:'2px solid #000'}}>
+  {format(new Date(r.LocaleMessageTime), 'hh:mm a')}
+</TableCell>
+
+
+
 2025-08-28	2025-08-28T00:23:19.000Z	244045	418941	Tablan, Catherine Lopez	Employee	Western Union Svs Philippines	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
 like this
 but i want time in 
