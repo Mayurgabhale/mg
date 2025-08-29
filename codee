@@ -1,3 +1,25 @@
+{/* Expanded table */}
+{expandedFloor && (
+  <Box sx={{ px: 2, mt: 2 }}>
+    <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
+      {expandedFloor} — All Entries
+    </Typography>
+
+    <DataTable
+      // add a Sr No column only for the expanded table (keeps original `columns` unchanged)
+      columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
+      rows={(floorMap[expandedFloor] || []).map((r, i) => ({
+        ...r,
+        LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
+        SrNo: i + 1 // 1,2,3...
+      }))}
+    />
+  </Box>
+)}
+
+..m.
+
+
 // src/pages/PartitionDetailDetails.jsx
 
 import React, { useEffect, useState, useMemo } from "react";
