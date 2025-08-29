@@ -1,53 +1,19 @@
-{/* Expanded table */}
-{expandedFloor && (
-  <Box sx={{ px: 2, mt: 2 }}>
-    <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
-      {expandedFloor} — All Entries
-    </Typography>
-
-    <DataTable
-      // add a Sr No column only for the expanded table (keeps original `columns` unchanged)
-      columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
-      rows={floorMap[expandedFloor].map((r, i) => ({
-        ...r,
-        LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
-        SrNo: i + 1 // 1,2,3...
-      }))}
-    />
-  </Box>
-)}
-
-....
-
-{/* Expanded table */}
-          {expandedFloor && (
-            <Box sx={{ px: 2, mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
-                {expandedFloor} — All Entries
-              </Typography>
-
-              <DataTable
-                columns={columns}
-                rows={floorMap[expandedFloor].map(r => ({
-                  ...r,
-                  LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime)
-                }))}
-              />
-            </Box>
-          )}
+ERROR
+Cannot read properties of undefined (reading 'map')
+TypeError: Cannot read properties of undefined (reading 'map')
+    at PartitionDetailDetails (http://localhost:3002/static/js/src_pages_PartitionDetailDetails_jsx.chunk.js:1210:43)
+    at react-stack-bottom-frame (http://localhost:3002/static/js/bundle.js:27441:18)
+    at renderWithHooks (http://localhost:3002/static/js/bundle.js:17651:20)
+    at updateFunctionComponent (http://localhost:3002/static/js/bundle.js:19344:17)
+    at beginWork (http://localhost:3002/static/js/bundle.js:19930:16)
+    at runWithFiberInDEV (http://localhost:3002/static/js/bundle.js:15422:68)
+    at performUnitOfWork (http://localhost:3002/static/js/bundle.js:22003:93)
+    at workLoopSync (http://localhost:3002/static/js/bundle.js:21896:38)
+    at renderRootSync (http://localhost:3002/static/js/bundle.js:21880:7)
+    at performWorkOnRoot (http://localhost:3002/static/js/bundle.js:21644:42)
 
 
-in all entries add, sr no column,
-mens 
-1
-2
-3
-....
-like 
-
-dont chang any thing just add this
-give me only this update code, ok 
-
+what is the error, why this came check all cod each line
 
 
 
@@ -311,7 +277,8 @@ const formatApiDateTime = iso => {
           </Box>
 
           {/* Expanded table */}
-          {expandedFloor && (
+
+          {/* {expandedFloor && (
             <Box sx={{ px: 2, mt: 2 }}>
               <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
                 {expandedFloor} — All Entries
@@ -325,7 +292,31 @@ const formatApiDateTime = iso => {
                 }))}
               />
             </Box>
-          )}
+          )} */}
+
+
+          {/* Expanded table */}
+{expandedFloor && (
+  <Box sx={{ px: 2, mt: 2 }}>
+    <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
+      {expandedFloor} — All Entries
+    </Typography>
+
+    <DataTable
+      // add a Sr No column only for the expanded table (keeps original `columns` unchanged)
+      columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
+      rows={floorMap[expandedFloor].map((r, i) => ({
+        ...r,
+        LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
+        SrNo: i + 1 // 1,2,3...
+      }))}
+    />
+  </Box>
+)}
+
+
+
+
 
         </Container>
       </Box>
