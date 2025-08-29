@@ -1,3 +1,33 @@
+// format API ISO (UTC) time part to 12-hour without converting to local tz
+const formatApiTime12 = iso => {
+  if (!iso) return "";
+  // safe slice: get HH:MM:SS from ISO like "2025-08-28T10:22:33.000Z"
+  const tp = (iso && iso.slice(11, 19)) || "";
+  if (!tp) return "";
+  const [hStr, mStr/*, sStr*/] = tp.split(':');
+  const hh = parseInt(hStr, 10);
+  if (Number.isNaN(hh)) return tp;
+  let h12 = hh % 12;
+  if (h12 === 0) h12 = 12;
+  const ampm = hh >= 12 ? "PM" : "AM";
+  return `${String(h12).padStart(2, "0")}:${mStr} ${ampm}`;
+};
+
+
+
+
+
+
+...
+
+<TableCell sx={{ border: '2px solid #000' }}>
+  {formatApiTime12(r.LocaleMessageTime)}
+</TableCell>
+
+
+
+..
+
 {
       "LocaleMessageTime": "2025-08-28T10:22:33.000Z",
       "ObjectName1": "Diwate, Swapnil",
