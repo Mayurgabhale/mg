@@ -1,30 +1,17 @@
-excle sheet in more atractive format
-
-man all border 
-
-Thursday, 28 August, 2025 top in middle, 
-Country	City	Employees	Contractors	Total then this with border wiht space, 
-Philippines	Quezon City	338	42	380
-India	Pune	721	96	817
-Philippines	Taguig	13	2	15
-Malaysia	Kuala Lumpur	5	1	6
-Japan	Tokyo	8	1	9
-Total	1085	142	1227
-
-create excle sheet more atractive mormat ok 
-
-// NEW: export summary (partitionRows) to Excel -- fixed format
+// UPDATED: prettier Excel export for summary (date centered, full borders, header styling, spacing, column widths)
 const handleExportSummary = () => {
   if (!pickedDate) return;
 
-  // Build rows manually in the exact order you want
+  // Build rows with a blank row between header and data for spacing
   const rows = [
     // Row 1: Date only (first cell filled, rest blank)
     [format(pickedDate, 'EEEE, d MMMM, yyyy')],
-    // Row 2: Blank
+    // Row 2: blank
     [],
     // Row 3: Column headers
     ['Country', 'City', 'Employees', 'Contractors', 'Total'],
+    // Row 4: blank (visual spacing)
+    [],
     // Data rows
     ...partitionRows.map(r => [
       r.country,
@@ -33,7 +20,7 @@ const handleExportSummary = () => {
       r.contractor,
       r.total,
     ]),
-    // Total row
+    // Final total row
     [
       'Total',
       '',
@@ -46,13 +33,129 @@ const handleExportSummary = () => {
   // Convert array-of-arrays to worksheet
   const ws = XLSX.utils.aoa_to_sheet(rows);
 
-  // Optional: make the top date row span all 5 columns
+  // Merge the top date row across all 5 columns and vertically center it
   ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
 
-  // Create workbook and export
+  // Column widths (approx characters)
+  ws['!cols'] = [
+    { wch: 20 }, // Country
+    { wch: 25 }, // City
+    { wch: 12 }, // Employees
+    { wch: 12 }, // Contractors
+    { wch: 12 }, // Total
+  ];
+
+  // Helper: cell address from row/col (0-indexed)
+  const cellAddr = (r, c) => XLSX.utils.encode_cell({ r, c });
+
+  // Styles used
+  const borderThin = {
+    top:    { style: "thin", color: { rgb: "000000" } },
+    bottom: { style: "thin", color: { rgb: "000000" } },
+    left:   { style: "thin", color: { rgb: "000000" } },
+    right:  { style: "thin", color: { rgb: "000000" } },
+  };
+
+  const dateStyle = {
+    font: { name: "Calibri", sz: 14, bold: true },
+    alignment: { horizontal: "center", vertical: "center" },
+  };
+
+  const headerStyle = {
+    font: { name: "Calibri", sz: 12, bold: true, color: { rgb: "000000" } },
+    fill: { fgColor: { rgb: "FFC107" } }, // yellow header bg
+    alignment: { horizontal: "center", vertical: "center" },
+    border: borderThin,
+  };
+
+  const dataStyle = {
+    font: { name: "Calibri", sz: 11, color: { rgb: "000000" } },
+    alignment: { horizontal: "left", vertical: "center" },
+    border: borderThin,
+  };
+
+  const numericStyle = {
+    font: { name: "Calibri", sz: 11, color: { rgb: "000000" } },
+    alignment: { horizontal: "right", vertical: "center" },
+    border: borderThin,
+  };
+
+  const totalStyle = {
+    font: { name: "Calibri", sz: 12, bold: true },
+    fill: { fgColor: { rgb: "D9D9D9" } }, // light gray
+    alignment: { horizontal: "right", vertical: "center" },
+    border: borderThin,
+  };
+
+  // Compute used range rows & cols
+  const rowCount = rows.length;
+  const colCount = 5;
+
+  // Apply styles to each cell in the used range
+  for (let r = 0; r < rowCount; r++) {
+    for (let c = 0; c < colCount; c++) {
+      const addr = cellAddr(r, c);
+      const cell = ws[addr] || (ws[addr] = { t: 's', v: '' });
+
+      // Default style
+      cell.s = dataStyle;
+
+      // Row 0: date (merged) -> apply dateStyle only to A1 (merge is visual)
+      if (r === 0 && c === 0) {
+        cell.s = { ...dateStyle, border: borderThin };
+      }
+
+      // Row 2: header row index 2 (0-based) -> apply header style
+      else if (r === 2) {
+        cell.s = headerStyle;
+      }
+
+      // Row 3 is blank spacing row -> keep borderless but set vertical alignment
+      else if (r === 3) {
+        cell.s = { alignment: { vertical: "center" } };
+      }
+
+      // Data rows start at row index 4 and go until rowCount - 2 (last is total)
+      else if (r >= 4 && r < rowCount - 1) {
+        // numeric columns (Employees/Contractors/Total) are c >= 2
+        if (c >= 2) {
+          cell.s = numericStyle;
+          // ensure numeric cells are numbers
+          const val = rows[r] && rows[r][c];
+          if (val !== undefined && val !== '' && !Number.isNaN(Number(val))) {
+            cell.t = 'n';
+            cell.v = Number(val);
+          }
+        } else {
+          cell.s = dataStyle;
+        }
+      }
+
+      // Last row -> total style
+      else if (r === rowCount - 1) {
+        // Country cell for "Total" should be bold left, other numeric cells styled
+        if (c === 0) {
+          cell.s = { ...totalStyle, alignment: { horizontal: "left", vertical: "center" } };
+        } else if (c === 1) {
+          cell.s = { ...totalStyle, alignment: { horizontal: "center", vertical: "center" } };
+        } else {
+          cell.s = totalStyle;
+          const val = rows[r] && rows[r][c];
+          if (val !== undefined && val !== '' && !Number.isNaN(Number(val))) {
+            cell.t = 'n';
+            cell.v = Number(val);
+          }
+        }
+      }
+    }
+  }
+
+  // Freeze the header row (so when users open Excel they see header)
+  ws['!freeze'] = { xSplit: '1', ySplit: 4 };
+
+  // Create workbook and export (include cellStyles)
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Summary');
-  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
   saveAs(new Blob([buf]), `apac_summary_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
 };
-
