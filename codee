@@ -1,3 +1,123 @@
+<Box sx={{ flex:1, display:'flex', gap:2, alignItems:'flex-start' }}>
+  {/* left: existing summary card (keeps your exact Paper + Table) */}
+  <Box sx={{ flex: 1, maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Paper elevation={3} sx={{ p:3, border:'3px solid #000', borderRadius:2 }}>
+      <Table sx={{ border:'2px solid #000' }} size='small'>
+        <TableHead>
+          <TableRow><TableCell colSpan={5} align="center"
+            sx={{ fontWeight:'bold', fontSize:16, bgcolor:'#000', color:'#FFC107', border:'2px solid #000' }}
+          >
+            {format(pickedDate,'EEEE, d MMMM, yyyy')}
+          </TableCell></TableRow>
+          <TableRow sx={{ bgcolor:'#FFC107' }}>
+            {['Country','City','Employees','Contractors','Total'].map(h=>(
+              <TableCell key={h} align={h==='Country'||h==='City'?'left':'right'}
+                sx={{ color:'#000', fontWeight:'bold', fontSize:14, border:'2px solid #000' }}>
+                {h}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {partitionRows.map((r,i)=>(
+            <TableRow key={i}>
+              <TableCell sx={{border:'2px solid #000'}}>{r.country}</TableCell>
+              <TableCell sx={{border:'2px solid #000'}}>{r.city}</TableCell>
+              <TableCell align="right" sx={{border:'2px solid #000'}}>{r.employee}</TableCell>
+              <TableCell align="right" sx={{border:'2px solid #000'}}>{r.contractor}</TableCell>
+              <TableCell align="right" sx={{bgcolor:'#FFC107',fontWeight:'bold',border:'2px solid #000'}}>
+                {r.total}
+              </TableCell>
+            </TableRow>
+          ))}
+          <TableRow sx={{ bgcolor:'#666' }}>
+            <TableCell colSpan={2} align="right" sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
+              Total
+            </TableCell>
+            <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
+              {partitionRows.reduce((s,r)=>s+r.employee,0)}
+            </TableCell>
+            <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
+              {partitionRows.reduce((s,r)=>s+r.contractor,0)}
+            </TableCell>
+            <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', bgcolor:'#333', border:'2px solid #000' }}>
+              {partitionRows.reduce((s,r)=>s+r.total,0)}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Paper>
+
+    <Box display="flex" justifyContent="center" sx={{ mt:1 }}>
+      <Button variant="contained" sx={{ bgcolor:'#FFC107', color:'#000' }}
+        onClick={()=>setShowDetails(v=>!v)}>
+        {showDetails?'Hide Details':'See Details'}
+      </Button>
+      {showDetails && (
+        <Button variant="outlined" sx={{ ml:2, borderColor:'#FFC107', color:'#FFC107' }}
+          onClick={handleExport}>
+          Export to Excel
+        </Button>
+      )}
+    </Box>
+  </Box>
+
+  {/* right: NEW company table */}
+  <Box sx={{ width: 360 }}>
+    <Paper elevation={3} sx={{ p:2, border:'3px solid #000', borderRadius:2 }}>
+      <Typography sx={{ fontWeight:'bold', mb:1, color:'#FFC107', textAlign:'center' }}>
+        Company counts
+      </Typography>
+
+      <Table size="small" sx={{ border:'1px solid #000' }}>
+        <TableHead>
+          <TableRow sx={{ bgcolor:'#000' }}>
+            {['Country','City','Company','Count'].map(h=>(
+              <TableCell key={h} align={h==='Count' ? 'right' : 'left'}
+                sx={{ color:'#FFC107', fontWeight:'bold', border:'1px solid #000' }}>
+                {h}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {companyRows.map((cr, idx) => (
+            <TableRow key={`${cr.country}-${cr.city}-${cr.company}-${idx}`}>
+              <TableCell sx={{ border:'1px solid #000' }}>{cr.country}</TableCell>
+              <TableCell sx={{ border:'1px solid #000' }}>{cr.city}</TableCell>
+              <TableCell sx={{ border:'1px solid #000' }}>{cr.company}</TableCell>
+              <TableCell align="right" sx={{ border:'1px solid #000' }}>{cr.count}</TableCell>
+            </TableRow>
+          ))}
+
+          {/* total row */}
+          <TableRow sx={{ bgcolor:'#666' }}>
+            <TableCell colSpan={3} align="right" sx={{ color:'#fff', fontWeight:'bold', border:'1px solid #000' }}>
+              Total
+            </TableCell>
+            <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', border:'1px solid #000' }}>
+              {companyRows.reduce((s,r)=>s + (r.count||0), 0)}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </Paper>
+  </Box>
+</Box>
+
+
+
+
+
+
+
+
+
+
+
+
+.....m
+
 // Add after `partitionRows` useMemo
 const companyRows = useMemo(() => {
   if (!data || !pickedDate) return [];
