@@ -1,5 +1,53 @@
+// NEW: export summary (partitionRows) to Excel -- fixed format
+const handleExportSummary = () => {
+  if (!pickedDate) return;
+
+  // Build rows manually in the exact order you want
+  const rows = [
+    // Row 1: Date only (first cell filled, rest blank)
+    [format(pickedDate, 'EEEE, d MMMM, yyyy')],
+    // Row 2: Blank
+    [],
+    // Row 3: Column headers
+    ['Country', 'City', 'Employees', 'Contractors', 'Total'],
+    // Data rows
+    ...partitionRows.map(r => [
+      r.country,
+      r.city,
+      r.employee,
+      r.contractor,
+      r.total,
+    ]),
+    // Total row
+    [
+      'Total',
+      '',
+      partitionRows.reduce((s, r) => s + r.employee, 0),
+      partitionRows.reduce((s, r) => s + r.contractor, 0),
+      partitionRows.reduce((s, r) => s + r.total, 0),
+    ],
+  ];
+
+  // Convert array-of-arrays to worksheet
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Optional: make the top date row span all 5 columns
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+
+  // Create workbook and export
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  saveAs(new Blob([buf]), `apac_summary_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+};
 
 
+
+
+
+
+
+....
 
 in excle like this disply
 Country	City	Employees	Contractors	Total
