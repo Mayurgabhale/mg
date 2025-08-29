@@ -1,108 +1,23 @@
-npm install exceljs file-saver
-
-
-Compiled with problems:
-×
-ERROR in ./src/pages/History.jsx 341:0-30
-Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages'
-
-
-// add at top of file
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-
-// replace your handleExportSummary with this
-const handleExportSummary = async () => {
-  if (!pickedDate) return;
-
-  // workbook / sheet
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet('Summary');
-
-  // columns (widths)
-  ws.columns = [
-    { header: 'Country', key: 'country', width: 20 },
-    { header: 'City', key: 'city', width: 25 },
-    { header: 'Employees', key: 'employees', width: 12 },
-    { header: 'Contractors', key: 'contractors', width: 12 },
-    { header: 'Total', key: 'total', width: 12 },
-  ];
-
-  // Row 1: merged date centered
-  ws.mergeCells('A1:E1');
-  const dateCell = ws.getCell('A1');
-  dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
-  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  dateCell.font = { name: 'Calibri', size: 14, bold: true };
-
-  // Row 2: blank spacing
-  ws.addRow([]);
-
-  // Row 3: header row (we'll style it)
-  const headerRow = ws.addRow(['Country', 'City', 'Employees', 'Contractors', 'Total']);
-  headerRow.height = 20;
-
-  // style helpers
-  const thinBorder = { style: 'thin', color: { argb: 'FF000000' } };
-  const allThinBorder = { top: thinBorder, left: thinBorder, bottom: thinBorder, right: thinBorder };
-
-  // header style: yellow fill, bold, centered
-  headerRow.eachCell(cell => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } }; // yellow
-    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = allThinBorder;
-  });
-
-  // Row 4: blank spacing (visual)
-  ws.addRow([]);
-
-  // Data rows start at excelRowIndex = current row number + 1
-  partitionRows.forEach(r => {
-    const row = ws.addRow([r.country, r.city, r.employee, r.contractor, r.total]);
-    // style cells & numeric formatting
-    row.eachCell((cell, colNumber) => {
-      cell.border = allThinBorder;
-      if (colNumber >= 3) {
-        // numeric columns: right align, number format
-        cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
-          cell.numFmt = '#,##0';
-        }
-      } else {
-        cell.alignment = { horizontal: 'left', vertical: 'middle' };
-      }
-      cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF000000' } };
-    });
-  });
-
-  // Final total row
-  const totalEmployees = partitionRows.reduce((s, r) => s + r.employee, 0);
-  const totalContractors = partitionRows.reduce((s, r) => s + r.contractor, 0);
-  const totalTotal = partitionRows.reduce((s, r) => s + r.total, 0);
-  const totalRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotal]);
-
-  // style total row: bold and light-gray fill
-  totalRow.eachCell((cell, colNumber) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; // light gray
-    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
-    cell.border = allThinBorder;
-    if (colNumber >= 3) {
-      cell.alignment = { horizontal: 'right', vertical: 'middle' };
-      cell.numFmt = '#,##0';
-    } else {
-      cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
-    }
-  });
-
-  // Freeze panes so header is visible (freeze above data rows: after row 4)
-  ws.views = [{ state: 'frozen', ySplit: 4 }];
-
-  // Optional: set sheet outline or table-like styling can be added here
-
-  // export
-  const buf = await wb.xlsx.writeBuffer();
-  const safeDate = format(pickedDate, 'yyyyMMdd');
-  const filename = `apac_summary_${safeDate}.xlsx`;
-  saveAs(new Blob([buf]), filename);
-};
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      detailRows.map((r, i) => ({
+        Sr: i + 1,
+        // use the raw API date part (no timezone conversion)
+        Date: r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : '',
+        // use the same helper as the UI so Excel matches frontend (12-hour, no TZ conversion)
+        Time: formatApiTime12(r.LocaleMessageTime),
+        EmployeeID: r.EmployeeID,
+        CardNumber: r.CardNumber,
+        Name: r.ObjectName1,
+        PersonnelType: r.PersonnelType,
+        CompanyName: r.CompanyName,
+        PrimaryLocation: r.PrimaryLocation,
+        Door: r.Door,
+        Partition: formatPartition(r.PartitionNameFriendly)
+      }))
+    );
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Details');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf]), `apac_history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+  };
