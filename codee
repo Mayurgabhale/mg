@@ -1,27 +1,10 @@
- {
-      "LocaleMessageTime": "2025-07-01T09:30:53.000Z",
-      "ObjectName1": "Sakthivel, Sangeetha",
-      "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
-      "EmployeeID": "328108",
-      "PersonnelType": "Employee",
-      "PersonGUID": "43DCC544-285C-43E1-8085-74B178630BCA",
-      "CompanyName": "WU Srvcs India Private Ltd",
-      "PrimaryLocation": "Pune - Business Bay",
-      "PartitionNameFriendly": "Pune",
-      "CardNumber": "615812",
-      "Direction": "InDirection"
-    },
-    {
+2025-08-28	2025-08-28T00:23:19.000Z	244045	418941	Tablan, Catherine Lopez	Employee	Western Union Svs Philippines	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
+like this
+but i want time in 
+12 hours and removie t00or 000z like othr 
+only show time in 12 hourse
 
 
-
-
-we need to api show time  excaly show in fontent 
-
-dont convert as it is show
-
-2025-08-28	00:23:19	244045	418941	Tablan, Catherine Lopez	Employee	Western Union Svs Philippines	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
-// src/pages/History.jsx — APAC Edition
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
@@ -369,7 +352,7 @@ const companyRows = useMemo(() => {
                       <TableRow key={`${r.PersonGUID}-${i}`}>
                         <TableCell sx={{border:'2px solid #000'}}>{i+1}</TableCell>
                         <TableCell sx={{border:'2px solid #000'}}>{r.LocaleMessageTime.slice(0,10)}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.LocaleMessageTime.slice(11,19)}</TableCell>
+                        <TableCell sx={{border:'2px solid #000'}}>{r.LocaleMessageTime}</TableCell>
                         <TableCell sx={{border:'2px solid #000'}}>{r.EmployeeID}</TableCell>
                         <TableCell sx={{border:'2px solid #000'}}>{r.CardNumber}</TableCell>
                         <TableCell sx={{border:'2px solid #000'}}>{r.ObjectName1}</TableCell>
@@ -396,4 +379,16 @@ const companyRows = useMemo(() => {
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
