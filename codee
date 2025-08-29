@@ -1,50 +1,3 @@
-const handleExportSummary = () => {
-    if (!pickedDate) return;
--    const rows = partitionRows.map(r => ({
-+    const rows = [];
-
-+    // Add date row first
-+    rows.push({
-+      Country: format(pickedDate, 'EEEE, d MMMM, yyyy'),
-+      City: '',
-+      Employees: '',
-+      Contractors: '',
-+      Total: ''
-+    });
-
-+    // Then a blank row for readability (optional)
-+    rows.push({ Country: '', City: '', Employees: '', Contractors: '', Total: '' });
-
-+    // Then the actual summary rows
-+    rows.push(...partitionRows.map(r => ({
-       Country: r.country,
-       City: r.city,
-       Employees: r.employee,
-       Contractors: r.contractor,
-       Total: r.total,
--    }));
-+    })));
-
--    rows.push({
-+    rows.push({
-       Country: 'Total',
-       City: '',
-       Employees: partitionRows.reduce((s, r) => s + r.employee, 0),
-       Contractors: partitionRows.reduce((s, r) => s + r.contractor, 0),
-       Total: partitionRows.reduce((s, r) => s + r.total, 0),
-     });
-
-     const ws = XLSX.utils.json_to_sheet(rows);
-
-
-
-
-
-
-
-
-m.......
-
 Thursday, 28 August, 2025
 Country	City	Employees	Contractors	Total
 Philippines	Quezon City	338	42	380
@@ -54,17 +7,62 @@ Malaysia	Kuala Lumpur	5	1	6
 Japan	Tokyo	8	1	9
 Total	1085	142	1227
 
+
+
 in excle data not show 
-means this Thursday, 28 August, 2025 is not show 
-i want alos date
-this is excle
-Country	City	Employees	Contractors	Total
-Philippines	Quezon City	338	42	380
-India	Pune	721	96	817
-Philippines	Taguig	13	2	15
-Malaysia	Kuala Lumpur	5	1	6
-Japan	Tokyo	8	1	9
-Total		1085	142	1227
+
+
+  // NEW: export summary (partitionRows) to Excel -- minimal addition as requested
+  const handleExportSummary = () => {
+    if (!pickedDate) return;
+
+    const rows = [];
+    // Add date row first
+    rows.push({
+      Country: format(pickedDate, 'EEEE, d MMMM, yyyy'),
+      City: '',
+      Employees: '',
+      Contractors: '',
+      Total: ''
+    });
+
+
+    // Then a blank row for readability (optional)
+    rows.push({ Country: '', City: '', Employees: '', Contractors: '', Total: '' });
+
+    // Then the actual summary rows
+    rows.push(...partitionRows.map(r => ({
+      Country: r.country,
+      City: r.city,
+      Employees: r.employee,
+      Contractors: r.contractor,
+      Total: r.total,
+
+    })));
+
+
+    rows.push({
+      Country: 'Total',
+      City: '',
+      Employees: partitionRows.reduce((s, r) => s + r.employee, 0),
+      Contractors: partitionRows.reduce((s, r) => s + r.contractor, 0),
+      Total: partitionRows.reduce((s, r) => s + r.total, 0),
+    });
+
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf]), `apac_summary_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+  };
+
+
+
+
+
+
+
 
 
 
@@ -317,16 +315,36 @@ export default function History() {
 
 
 
+
+
   // NEW: export summary (partitionRows) to Excel -- minimal addition as requested
   const handleExportSummary = () => {
     if (!pickedDate) return;
-    const rows = partitionRows.map(r => ({
+
+    const rows = [];
+    // Add date row first
+    rows.push({
+      Country: format(pickedDate, 'EEEE, d MMMM, yyyy'),
+      City: '',
+      Employees: '',
+      Contractors: '',
+      Total: ''
+    });
+
+
+    // Then a blank row for readability (optional)
+    rows.push({ Country: '', City: '', Employees: '', Contractors: '', Total: '' });
+
+    // Then the actual summary rows
+    rows.push(...partitionRows.map(r => ({
       Country: r.country,
       City: r.city,
       Employees: r.employee,
       Contractors: r.contractor,
       Total: r.total,
-    }));
+
+    })));
+
 
     rows.push({
       Country: 'Total',
@@ -336,12 +354,16 @@ export default function History() {
       Total: partitionRows.reduce((s, r) => s + r.total, 0),
     });
 
+
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Summary');
     const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     saveAs(new Blob([buf]), `apac_summary_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
   };
+
+
+
 
 
 
@@ -538,3 +560,4 @@ export default function History() {
     </>
   );
 }
+
