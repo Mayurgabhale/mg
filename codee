@@ -1,3 +1,32 @@
+
+const handleExport = () => {
+  const ws = XLSX.utils.json_to_sheet(
+    detailRows.map((r, i) => ({
+      Sr:             i + 1,
+      // use the raw API date part (no timezone conversion)
+      Date:           r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : '',
+      // use the same helper as the UI so Excel matches frontend (12-hour, no TZ conversion)
+      Time:           formatApiTime12(r.LocaleMessageTime),
+      EmployeeID:     r.EmployeeID,
+      Name:           r.ObjectName1,
+      PersonnelType:  r.PersonnelType,
+      CompanyName:    r.CompanyName,
+      PrimaryLocation:r.PrimaryLocation,
+      Door:           r.Door,
+      CardNumber:     r.CardNumber,
+      Partition:      formatPartition(r.PartitionNameFriendly)
+    }))
+  );
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Details');
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  saveAs(new Blob([buf]), `apac_history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+};
+
+
+
+
+....
 this is in excle data --- 902	2025-08-28	15:52:33	W0024618	619957	Diwate, Swapnil	Contractor	Poona Security India Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
 
 and this is in fontend --- 902	2025-08-28	10:22 AM	W0024618	619957	Diwate, Swapnil	Contractor	Poona Security India Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
