@@ -1,7 +1,12 @@
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
 
-const handleExport = async () => {
+     Sr	Date	Time	Employee ID	Card Number	Name	Personnel Type	Company	Primary Location	Door	Partition
+......1	2025-08-28	12:00:06 AM	303123	609952	Tiongson, Jonathan	Employee	Western Union Svs Philippines	Quezon City - Vertis Corporate Center	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
+......2	2025-08-28	12:00:07 AM	324065	608296	Perez, Madel Otocan	Employee	Western Union Svs Philippines	Quezon City - Vertis Corporate Center	APAC_PH_Manila_6th Floor_Entry Door 3	Quezon City
+you add more space 
+we dont watn more space 
+
+
+  const handleExport = async () => {
   if (!pickedDate || !detailRows.length) return;
 
   const workbook = new ExcelJS.Workbook();
@@ -86,3 +91,4 @@ const handleExport = async () => {
   const buf = await workbook.xlsx.writeBuffer();
   saveAs(new Blob([buf]), `apac_history_${format(pickedDate, "yyyyMMdd")}.xlsx`);
 };
+
