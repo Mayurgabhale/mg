@@ -1,3 +1,50 @@
+const handleExportSummary = () => {
+    if (!pickedDate) return;
+-    const rows = partitionRows.map(r => ({
++    const rows = [];
+
++    // Add date row first
++    rows.push({
++      Country: format(pickedDate, 'EEEE, d MMMM, yyyy'),
++      City: '',
++      Employees: '',
++      Contractors: '',
++      Total: ''
++    });
+
++    // Then a blank row for readability (optional)
++    rows.push({ Country: '', City: '', Employees: '', Contractors: '', Total: '' });
+
++    // Then the actual summary rows
++    rows.push(...partitionRows.map(r => ({
+       Country: r.country,
+       City: r.city,
+       Employees: r.employee,
+       Contractors: r.contractor,
+       Total: r.total,
+-    }));
++    })));
+
+-    rows.push({
++    rows.push({
+       Country: 'Total',
+       City: '',
+       Employees: partitionRows.reduce((s, r) => s + r.employee, 0),
+       Contractors: partitionRows.reduce((s, r) => s + r.contractor, 0),
+       Total: partitionRows.reduce((s, r) => s + r.total, 0),
+     });
+
+     const ws = XLSX.utils.json_to_sheet(rows);
+
+
+
+
+
+
+
+
+m.......
+
 Thursday, 28 August, 2025
 Country	City	Employees	Contractors	Total
 Philippines	Quezon City	338	42	380
