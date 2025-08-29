@@ -1,15 +1,28 @@
-<TableCell sx={{border:'2px solid #000'}}>
-  {format(new Date(r.LocaleMessageTime), 'hh:mm a')}
-</TableCell>
+{
+      "LocaleMessageTime": "2025-08-28T10:22:33.000Z",
+      "ObjectName1": "Diwate, Swapnil",
+      "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR",
+      "EmployeeID": "W0024618",
+      "PersonnelType": "Contractor",
+      "PersonGUID": "FCEDB0C8-993C-416C-8D3F-43F4B87BC572",
+      "CompanyName": "Poona Security India Pvt. Ltd.",
+      "PrimaryLocation": "Pune - Business Bay",
+      "PartitionNameFriendly": "Pune",
+      "CardNumber": "619957",
+      "Direction": "InDirection"
+    },
+    {
 
 
 
-2025-08-28	2025-08-28T00:23:19.000Z	244045	418941	Tablan, Catherine Lopez	Employee	Western Union Svs Philippines	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
-like this
-but i want time in 
-12 hours and removie t00or 000z like othr 
-only show time in 12 hourse
+2025-08-28	03:52 PM	W0024618	619957	Diwate, Swapnil	Contractor	Poona Security India Pvt. Ltd.	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
 
+
+api disply this time       "LocaleMessageTime": "2025-08-28T10:22:33.000Z",
+
+but in this fontend disply this  03:52 PM	
+i i want ot show same time this time get in api this time showin fontend in 12 hourse ok
+// src/pages/History.jsx — APAC Edition
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
@@ -39,20 +52,20 @@ import { fetchHistory } from '../api/occupancy.service';
 
 // APAC display mapping
 const apacPartitionDisplay = {
-  'IN.Pune':         { country: 'India',       city: 'Pune' },
-  'MY.Kuala Lumpur': { country: 'Malaysia',    city: 'Kuala Lumpur' },
-  'PH.Quezon':       { country: 'Philippines', city: 'Quezon City' },
-  'PH.Taguig':       { country: 'Philippines', city: 'Taguig' },
-  'JP.Tokyo':        { country: 'Japan',       city: 'Tokyo' },
+  'IN.Pune': { country: 'India', city: 'Pune' },
+  'MY.Kuala Lumpur': { country: 'Malaysia', city: 'Kuala Lumpur' },
+  'PH.Quezon': { country: 'Philippines', city: 'Quezon City' },
+  'PH.Taguig': { country: 'Philippines', city: 'Taguig' },
+  'JP.Tokyo': { country: 'Japan', city: 'Tokyo' },
 };
 
 // FE ↔ BE keys
 const apacForwardKey = {
-  'IN.Pune':         'Pune',
+  'IN.Pune': 'Pune',
   'MY.Kuala Lumpur': 'MY.Kuala Lumpur',
-  'PH.Quezon':       'Quezon City',
-  'PH.Taguig':       'Taguig City',
-  'JP.Tokyo':        'JP.Tokyo',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig City',
+  'JP.Tokyo': 'JP.Tokyo',
 };
 const apacReverseKey = Object.fromEntries(
   Object.entries(apacForwardKey).map(([fe, be]) => [be, fe])
@@ -73,8 +86,8 @@ export default function History() {
     ? apacForwardKey[decodedPartition] || decodedPartition
     : null;
 
-  const [data, setData]             = useState(null);
-  const [loading, setLoading]       = useState(true);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [pickedDate, setPickedDate] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -103,71 +116,71 @@ export default function History() {
       );
       const disp = fe ? apacPartitionDisplay[fe] : {};
       return [{
-        country:    disp.country  || 'Unknown',
-        city:       disp.city     || backendFilterKey.replace(' City',''),
-        employee:   summaryEntry.region.Employee   || 0,
+        country: disp.country || 'Unknown',
+        city: disp.city || backendFilterKey.replace(' City', ''),
+        employee: summaryEntry.region.Employee || 0,
         contractor: summaryEntry.region.Contractor || 0,
-        total:      summaryEntry.region.total      || 0
+        total: summaryEntry.region.total || 0
       }];
     }
     return Object.entries(summaryEntry.partitions).map(([key, v]) => {
-      const fe = Object.entries(apacForwardKey).find(([,be]) =>
+      const fe = Object.entries(apacForwardKey).find(([, be]) =>
         be === key || `${be} City` === key
       )?.[0];
       const disp = fe
         ? apacPartitionDisplay[fe]
         : Object.values(apacPartitionDisplay)
-            .find(d => d.city === key.replace(' City',''));
+          .find(d => d.city === key.replace(' City', ''));
       return {
-        country:    disp?.country   || 'Unknown',
-        city:       disp?.city      || key.replace(' City',''),
-        employee:   v.Employee   || v.EmployeeCount   || 0,
+        country: disp?.country || 'Unknown',
+        city: disp?.city || key.replace(' City', ''),
+        employee: v.Employee || v.EmployeeCount || 0,
         contractor: v.Contractor || v.ContractorCount || 0,
-        total:      v.total      || 0
+        total: v.total || 0
       };
     });
   }, [summaryEntry, backendFilterKey]);
 
 
-// Add after `partitionRows` useMemo
-const companyRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
+  // Add after `partitionRows` useMemo
+  const companyRows = useMemo(() => {
+    if (!data || !pickedDate) return [];
+    const ds = format(pickedDate, 'yyyy-MM-dd');
 
-  // filter details for the date and partition (reuse same filter logic)
-  const filtered = (data.details || []).filter(r =>
-    r.LocaleMessageTime?.slice(0, 10) === ds &&
-    (
-      !backendFilterKey ||
-      r.PartitionNameFriendly === backendFilterKey ||
-      apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
-    )
-  );
+    // filter details for the date and partition (reuse same filter logic)
+    const filtered = (data.details || []).filter(r =>
+      r.LocaleMessageTime?.slice(0, 10) === ds &&
+      (
+        !backendFilterKey ||
+        r.PartitionNameFriendly === backendFilterKey ||
+        apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
+      )
+    );
 
-  // group by country|city|company
-  const map = {};
-  filtered.forEach(r => {
-    // find display mapping for partition (same approach as partitionRows)
-    const fe = Object.entries(apacForwardKey).find(([, be]) =>
-      be === r.PartitionNameFriendly || `${be} City` === r.PartitionNameFriendly
-    )?.[0];
-    const disp = fe
-      ? apacPartitionDisplay[fe]
-      : Object.values(apacPartitionDisplay).find(d => d.city === (r.PartitionNameFriendly || '').replace(' City','')) || {};
+    // group by country|city|company
+    const map = {};
+    filtered.forEach(r => {
+      // find display mapping for partition (same approach as partitionRows)
+      const fe = Object.entries(apacForwardKey).find(([, be]) =>
+        be === r.PartitionNameFriendly || `${be} City` === r.PartitionNameFriendly
+      )?.[0];
+      const disp = fe
+        ? apacPartitionDisplay[fe]
+        : Object.values(apacPartitionDisplay).find(d => d.city === (r.PartitionNameFriendly || '').replace(' City', '')) || {};
 
-    const country = disp?.country || 'Unknown';
-    const city = disp?.city || (r.PartitionNameFriendly || '').replace(' City','');
-    const company = (r.CompanyName || 'Unknown').trim();
+      const country = disp?.country || 'Unknown';
+      const city = disp?.city || (r.PartitionNameFriendly || '').replace(' City', '');
+      const company = (r.CompanyName || 'Unknown').trim();
 
-    const key = `${country}||${city}||${company}`;
-    map[key] = (map[key] || 0) + 1;
-  });
+      const key = `${country}||${city}||${company}`;
+      map[key] = (map[key] || 0) + 1;
+    });
 
-  return Object.entries(map).map(([k, count]) => {
-    const [country, city, company] = k.split('||');
-    return { country, city, company, count };
-  }).sort((a, b) => b.count - a.count);
-}, [data, pickedDate, backendFilterKey]);
+    return Object.entries(map).map(([k, count]) => {
+      const [country, city, company] = k.split('||');
+      return { country, city, company, count };
+    }).sort((a, b) => b.count - a.count);
+  }, [data, pickedDate, backendFilterKey]);
 
 
   // ←——— FIXED detailRows: only filter by date & partition, no dedupe, no Direction check
@@ -183,10 +196,10 @@ const companyRows = useMemo(() => {
         // && (!backendFilterKey || r.PartitionNameFriendly === backendFilterKey)
 
         && (
-  !backendFilterKey ||
-  r.PartitionNameFriendly === backendFilterKey ||
-  apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
-)
+          !backendFilterKey ||
+          r.PartitionNameFriendly === backendFilterKey ||
+          apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
+        )
 
       )
       .sort((a, b) =>
@@ -197,16 +210,16 @@ const companyRows = useMemo(() => {
   const handleExport = () => {
     const ws = XLSX.utils.json_to_sheet(
       detailRows.map((r, i) => ({
-        Sr:            i + 1,
-        Date:          format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
-        Time:          format(new Date(r.LocaleMessageTime), 'HH:mm:ss'),
-        EmployeeID:    r.EmployeeID,
-        Name:          r.ObjectName1,
+        Sr: i + 1,
+        Date: format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
+        Time: format(new Date(r.LocaleMessageTime), 'HH:mm:ss'),
+        EmployeeID: r.EmployeeID,
+        Name: r.ObjectName1,
         PersonnelType: r.PersonnelType,
-        CompanyName:   r.CompanyName,
-        Door:          r.Door,
-        CardNumber:    r.CardNumber,
-        Partition:     formatPartition(r.PartitionNameFriendly)
+        CompanyName: r.CompanyName,
+        Door: r.Door,
+        CardNumber: r.CardNumber,
+        Partition: formatPartition(r.PartitionNameFriendly)
       }))
     );
     const wb = XLSX.utils.book_new();
@@ -216,7 +229,7 @@ const companyRows = useMemo(() => {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (!data)    return null;
+  if (!data) return null;
 
   const datePickerSx = {
     backgroundColor: '#000',
@@ -230,76 +243,76 @@ const companyRows = useMemo(() => {
   return (
     <>
       <Header />
-      <Container maxWidth={false} disableGutters sx={{ pt:2, pb:4 }}>
+      <Container maxWidth={false} disableGutters sx={{ pt: 2, pb: 4 }}>
         {/* ‣ Date & summary */}
         {pickedDate && summaryEntry ? (
 
-          <Box display="flex" alignItems="flex-start" sx={{ px:2, mb:2, gap:1 }}>
-            <Box sx={{ width:200 }}>
+          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 1 }}>
+            <Box sx={{ width: 200 }}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Select date"
                   value={pickedDate}
                   onChange={d => { setPickedDate(d); setShowDetails(false); }}
-                  renderInput={params => <TextField fullWidth {...params} sx={datePickerSx}/>}
+                  renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
                 />
               </LocalizationProvider>
             </Box>
 
-            <Box sx={{ flex:1, maxWidth:900, display:'flex', flexDirection:'column', gap:2 }}>
-              <Paper elevation={3} sx={{ p:3, border:'3px solid #000', borderRadius:2 }}>
-                <Table sx={{ border:'2px solid #000' }} size='small'>
+            <Box sx={{ flex: 1, maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
+                <Table sx={{ border: '2px solid #000' }} size='small'>
                   <TableHead>
                     <TableRow><TableCell colSpan={5} align="center"
-                      sx={{ fontWeight:'bold', fontSize:16, bgcolor:'#000', color:'#FFC107', border:'2px solid #000' }}
+                      sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}
                     >
-                      {format(pickedDate,'EEEE, d MMMM, yyyy')}
+                      {format(pickedDate, 'EEEE, d MMMM, yyyy')}
                     </TableCell></TableRow>
-                    <TableRow sx={{ bgcolor:'#FFC107' }}>
-                      {['Country','City','Employees','Contractors','Total'].map(h=>(
-                        <TableCell key={h} align={h==='Country'||h==='City'?'left':'right'}
-                          sx={{ color:'#000', fontWeight:'bold', fontSize:14, border:'2px solid #000' }}>
+                    <TableRow sx={{ bgcolor: '#FFC107' }}>
+                      {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => (
+                        <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'right'}
+                          sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
                           {h}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {partitionRows.map((r,i)=>(
+                    {partitionRows.map((r, i) => (
                       <TableRow key={i}>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.country}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.city}</TableCell>
-                        <TableCell align="right" sx={{border:'2px solid #000'}}>{r.employee}</TableCell>
-                        <TableCell align="right" sx={{border:'2px solid #000'}}>{r.contractor}</TableCell>
-                        <TableCell align="right" sx={{bgcolor:'#FFC107',fontWeight:'bold',border:'2px solid #000'}}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
+                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
+                        <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
                           {r.total}
                         </TableCell>
                       </TableRow>
                     ))}
-                    <TableRow sx={{ bgcolor:'#666' }}>
-                      <TableCell colSpan={2} align="right" sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
+                    <TableRow sx={{ bgcolor: '#666' }}>
+                      <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
                         Total
                       </TableCell>
-                      <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
-                        {partitionRows.reduce((s,r)=>s+r.employee,0)}
+                      <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.employee, 0)}
                       </TableCell>
-                      <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
-                        {partitionRows.reduce((s,r)=>s+r.contractor,0)}
+                      <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.contractor, 0)}
                       </TableCell>
-                      <TableCell align="right" sx={{ color:'#fff', fontWeight:'bold', bgcolor:'#333', border:'2px solid #000' }}>
-                        {partitionRows.reduce((s,r)=>s+r.total,0)}
+                      <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.total, 0)}
                       </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
               </Paper>
-              <Box display="flex" justifyContent="center" sx={{ mt:1 }}>
-                <Button variant="contained" sx={{ bgcolor:'#FFC107', color:'#000' }}
-                  onClick={()=>setShowDetails(v=>!v)}>
-                  {showDetails?'Hide Details':'See Details'}
+              <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+                  onClick={() => setShowDetails(v => !v)}>
+                  {showDetails ? 'Hide Details' : 'See Details'}
                 </Button>
                 {showDetails && (
-                  <Button variant="outlined" sx={{ ml:2, borderColor:'#FFC107', color:'#FFC107' }}
+                  <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
                     onClick={handleExport}>
                     Export to Excel
                   </Button>
@@ -315,17 +328,17 @@ const companyRows = useMemo(() => {
 
 
         ) : (
-          <Box sx={{ px:2, mb:3 }}>
+          <Box sx={{ px: 2, mb: 3 }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Select date"
                 value={pickedDate}
-                onChange={d=>{ setPickedDate(d); setShowDetails(false); }}
-                renderInput={params=> <TextField fullWidth {...params} sx={datePickerSx}/>}
+                onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
               />
             </LocalizationProvider>
             {!pickedDate && (
-              <Typography variant="body1" color="textSecondary" sx={{ mt:2 }}>
+              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
                 Please pick a date to view region summary.
               </Typography>
             )}
@@ -334,37 +347,40 @@ const companyRows = useMemo(() => {
 
         {/* ‣ Details */}
         {showDetails && (
-          <Box display="flex" justifyContent="center" mb={2} sx={{ width:'100%' }}>
-            <Paper elevation={1} sx={{ p:1, width:'100%', border:'3px solid #000', borderRadius:2 }}>
+          <Box display="flex" justifyContent="center" mb={2} sx={{ width: '100%' }}>
+            <Paper elevation={1} sx={{ p: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
               {detailRows.length > 0 ? (
-                <Table sx={{ border:'2px solid #000', borderCollapse:'collapse' }}>
+                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor:'#000' }}>
+                    <TableRow sx={{ bgcolor: '#000' }}>
                       {[
-                        'Sr','Date','Time',
-                        'Employee ID','Card Number','Name','Personnel Type','CompanyName',
-                        'Door','Partition'
-                      ].map(h=>(
+                        'Sr', 'Date', 'Time',
+                        'Employee ID', 'Card Number', 'Name', 'Personnel Type', 'CompanyName',
+                        'Door', 'Partition'
+                      ].map(h => (
                         <TableCell key={h} align="center"
-                          sx={{ color:'#FFC107', fontWeight:'bold', fontSize:14, border:'2px solid #000' }}>
+                          sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
                           {h}
                         </TableCell>
                       ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {detailRows.map((r,i)=>(
+                    {detailRows.map((r, i) => (
                       <TableRow key={`${r.PersonGUID}-${i}`}>
-                        <TableCell sx={{border:'2px solid #000'}}>{i+1}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.LocaleMessageTime.slice(0,10)}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.LocaleMessageTime}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.EmployeeID}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.CardNumber}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.ObjectName1}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.PersonnelType}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.CompanyName}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.Door}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.LocaleMessageTime.slice(0, 10)}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {format(new Date(r.LocaleMessageTime), 'hh:mm a')}
+                        </TableCell>
+
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
                           {formatPartition(r.PartitionNameFriendly)}
                         </TableCell>
                       </TableRow>
@@ -372,7 +388,7 @@ const companyRows = useMemo(() => {
                   </TableBody>
                 </Table>
               ) : (
-                <Typography variant="body2" sx={{ color:'#666', textAlign:'center', mt:2, fontStyle:'italic' }}>
+                <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic' }}>
                   No swipe records found for this date.
                 </Typography>
               )}
@@ -384,16 +400,6 @@ const companyRows = useMemo(() => {
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
