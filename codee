@@ -1,3 +1,32 @@
+<Table
+  sx={{
+    border: '2px solid #000',
+    borderCollapse: 'collapse',
+    // apply padding to all header and data cells
+    '& th, & td': {
+      padding: '8px 12px',         // vertical 8px, horizontal 12px
+      whiteSpace: 'nowrap',        // prevent wrapping if you want one-line cells
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      verticalAlign: 'middle'
+    },
+    // optional: slightly larger header padding / font
+    '& thead th': {
+      padding: '10px 14px',
+      fontSize: '14px'
+    },
+    // optional: make first column a bit wider (Sr column)
+    '& tbody td:first-of-type': {
+      paddingLeft: '16px'
+    }
+  }}
+>
+
+
+
+
+
+...
 Sr	Date	          Time	        Employee     ID	Card     Number	Name	Personnel Type	CompanyName	PrimaryLocation	Door	Partition
 1	2025-08-28  ....  12:00 AM	   303123	     609952	Tiongson, Jonathan	Employee	Western Union Svs Philippines	Quezon City - Vertis Corporate Center	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
 how to descrip padding in this table. 
