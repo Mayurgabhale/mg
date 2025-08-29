@@ -1,3 +1,34 @@
+
+<TableCell 
+  sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}
+>
+  {r.LocaleMessageTime.slice(0, 10)}
+</TableCell>
+
+<TableCell 
+  sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}
+>
+  {formatApiTime12(r.LocaleMessageTime)}
+</TableCell>
+
+
+....
+
+
+<Table
+  sx={{
+    border: '2px solid #000',
+    borderCollapse: 'collapse',
+    '& td, & th': {
+      whiteSpace: 'nowrap',   // ✅ prevent text from breaking
+      padding: '6px 12px'
+    }
+  }}
+  size="small"
+>
+
+
+....
 Sr	Date	Time	Employee ID	Card Number	Name	Personnel Type	CompanyName	PrimaryLocation	Door	Partition
 1	2025-08-	12:00 	303123	609952	Tiongson, Jonathan	Employee	Western Union Svs Philippines	Quezon City - Vertis Corporate Center	APAC_PH_Manila_6th Floor Enrty Door 1	Quezon City
   28        AM
