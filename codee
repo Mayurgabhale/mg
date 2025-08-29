@@ -1,4 +1,33 @@
-2nd Floor (Total 48) Tower B (Total 85)
+// apply search filter to each floor's list
+const displayed = useMemo(() => {
+  const term = search.toLowerCase();
+
+  const arr = Object.entries(floorMap)
+    .map(([floor, emps]) => {
+      const filtered = emps.filter(e =>
+        floor.toLowerCase().includes(term) ||
+        e.ObjectName1?.toLowerCase().includes(term) ||
+        `${e.EmployeeID}`.toLowerCase().includes(term) ||
+        `${e.CardNumber}`.toLowerCase().includes(term)
+      );
+      return [floor, filtered];
+    })
+    .filter(([, emps]) => emps.length > 0);
+
+  // ✅ sort by length descending (largest totals first)
+  arr.sort((a, b) => b[1].length - a[1].length);
+
+  return arr;
+}, [floorMap, search]);
+
+
+
+
+
+
+
+
+......2nd Floor (Total 48) Tower B (Total 85)
 Tower B (Total 85)
 
 i wan to dilsy talbe in order, means
