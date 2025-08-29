@@ -1,3 +1,9 @@
+Compiled with problems:
+×
+ERROR in ./src/pages/History.jsx 341:0-30
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages'
+
+
 // add at top of file
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
