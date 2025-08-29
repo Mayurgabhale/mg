@@ -1,23 +1,88 @@
-  const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(
-      detailRows.map((r, i) => ({
-        Sr: i + 1,
-        // use the raw API date part (no timezone conversion)
-        Date: r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : '',
-        // use the same helper as the UI so Excel matches frontend (12-hour, no TZ conversion)
-        Time: formatApiTime12(r.LocaleMessageTime),
-        EmployeeID: r.EmployeeID,
-        CardNumber: r.CardNumber,
-        Name: r.ObjectName1,
-        PersonnelType: r.PersonnelType,
-        CompanyName: r.CompanyName,
-        PrimaryLocation: r.PrimaryLocation,
-        Door: r.Door,
-        Partition: formatPartition(r.PartitionNameFriendly)
-      }))
-    );
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Details');
-    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    saveAs(new Blob([buf]), `apac_history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
-  };
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
+const handleExport = async () => {
+  if (!pickedDate || !detailRows.length) return;
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Details");
+
+  // --- Top date row (merged across all columns) ---
+  sheet.mergeCells(1, 1, 1, 11); // adjust to match number of columns
+  const titleCell = sheet.getCell("A1");
+  titleCell.value = format(pickedDate, "EEEE, d MMMM, yyyy");
+  titleCell.alignment = { horizontal: "center", vertical: "middle" };
+  titleCell.font = { bold: true, size: 14 };
+
+  // --- Blank spacer row ---
+  sheet.addRow([]);
+
+  // --- Header row ---
+  const headers = [
+    "Sr",
+    "Date",
+    "Time",
+    "Employee ID",
+    "Card Number",
+    "Name",
+    "Personnel Type",
+    "Company",
+    "Primary Location",
+    "Door",
+    "Partition"
+  ];
+  const headerRow = sheet.addRow(headers);
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF333333" }
+    };
+    cell.alignment = { horizontal: "center" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" }
+    };
+  });
+
+  // --- Data rows ---
+  detailRows.forEach((r, i) => {
+    const row = sheet.addRow([
+      i + 1,
+      r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : "",
+      formatApiTime12(r.LocaleMessageTime),
+      r.EmployeeID,
+      r.CardNumber,
+      r.ObjectName1,
+      r.PersonnelType,
+      r.CompanyName,
+      r.PrimaryLocation,
+      r.Door,
+      formatPartition(r.PartitionNameFriendly)
+    ]);
+    row.eachCell(cell => {
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" }
+      };
+    });
+  });
+
+  // --- Auto column width ---
+  sheet.columns.forEach(col => {
+    let maxLen = 12;
+    col.eachCell({ includeEmpty: true }, c => {
+      maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2);
+    });
+    col.width = maxLen;
+  });
+
+  // --- Save file ---
+  const buf = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), `apac_history_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+};
