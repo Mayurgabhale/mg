@@ -1,3 +1,4 @@
+
 const handleExport = async () => {
   if (!pickedDate || !detailRows.length) return;
 
@@ -5,7 +6,9 @@ const handleExport = async () => {
   const sheet = workbook.addWorksheet("Details");
 
   // --- Top date row (merged across all columns) ---
-  sheet.mergeCells(1, 1, 1, 11); // adjust to match number of columns
+  // sheet.mergeCells(1, 1, 1, 11); 
+  sheet.mergeCells('A1:E1');
+
   const titleCell = sheet.getCell("A1");
   titleCell.value = format(pickedDate, "EEEE, d MMMM, yyyy");
   titleCell.alignment = { horizontal: "center", vertical: "middle" };
@@ -31,7 +34,7 @@ const handleExport = async () => {
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FF333333" }
+      fgColor: { argb: "FFFFC107" }
     };
     cell.alignment = { horizontal: "center" };
     cell.border = {
@@ -69,7 +72,7 @@ const handleExport = async () => {
 
   // --- Auto column width ---
   sheet.columns.forEach(col => {
-    let maxLen = 12;
+    let maxLen = 7;
     col.eachCell({ includeEmpty: true }, c => {
       maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2);
     });
