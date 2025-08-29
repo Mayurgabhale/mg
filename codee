@@ -1,42 +1,10 @@
-// apply search filter to each floor's list
-const displayed = useMemo(() => {
-  const term = search.toLowerCase();
 
-  const arr = Object.entries(floorMap)
-    .map(([floor, emps]) => {
-      const filtered = emps.filter(e =>
-        floor.toLowerCase().includes(term) ||
-        e.ObjectName1?.toLowerCase().includes(term) ||
-        `${e.EmployeeID}`.toLowerCase().includes(term) ||
-        `${e.CardNumber}`.toLowerCase().includes(term)
-      );
-      return [floor, filtered];
-    })
-    .filter(([, emps]) => emps.length > 0);
+in this each table add export buttion on top 
+Podium Floor (Total 362) this is left   ........     and right side in table add exort buttion 
 
-  // ✅ sort by length descending (largest totals first)
-  arr.sort((a, b) => b[1].length - a[1].length);
-
-  return arr;
-}, [floorMap, search]);
-
-
-
-
-
-
-
-
-......2nd Floor (Total 48) Tower B (Total 85)
-Tower B (Total 85)
-
-i wan to dilsy talbe in order, means
-the table, more data thsi apear first then othr 
+data export into excle ok 
 
 // src/pages/PartitionDetailDetails.jsx
-Tower B (Total 85) first then this  Tower B (Total 85) then this 2nd Floor (Total 48)
-desc order ok 
-i hove you undestand 
 
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -137,20 +105,48 @@ export default function PartitionDetailDetails() {
   }, [details, liveCounts]);
 
   // apply search filter to each floor's list
-  const displayed = useMemo(() => {
-    const term = search.toLowerCase();
-    return Object.entries(floorMap)
-      .map(([floor, emps]) => {
-        const filtered = emps.filter(e =>
-          floor.toLowerCase().includes(term) ||
-          e.ObjectName1?.toLowerCase().includes(term) ||
-          `${e.EmployeeID}`.toLowerCase().includes(term) ||
-          `${e.CardNumber}`.toLowerCase().includes(term)
-        );
-        return [floor, filtered];
-      })
-      .filter(([, emps]) => emps.length > 0);
-  }, [floorMap, search]);
+  // const displayed = useMemo(() => {
+  //   const term = search.toLowerCase();
+  //   return Object.entries(floorMap)
+  //     .map(([floor, emps]) => {
+  //       const filtered = emps.filter(e =>
+  //         floor.toLowerCase().includes(term) ||
+  //         e.ObjectName1?.toLowerCase().includes(term) ||
+  //         `${e.EmployeeID}`.toLowerCase().includes(term) ||
+  //         `${e.CardNumber}`.toLowerCase().includes(term)
+  //       );
+  //       return [floor, filtered];
+  //     })
+  //     .filter(([, emps]) => emps.length > 0);
+
+    
+  // }, [floorMap, search]);
+
+
+
+  // apply search filter to each floor's list
+const displayed = useMemo(() => {
+  const term = search.toLowerCase();
+
+  const arr = Object.entries(floorMap)
+    .map(([floor, emps]) => {
+      const filtered = emps.filter(e =>
+        floor.toLowerCase().includes(term) ||
+        e.ObjectName1?.toLowerCase().includes(term) ||
+        `${e.EmployeeID}`.toLowerCase().includes(term) ||
+        `${e.CardNumber}`.toLowerCase().includes(term)
+      );
+      return [floor, filtered];
+    })
+    .filter(([, emps]) => emps.length > 0);
+
+  // ✅ sort by length descending (largest totals first)
+  arr.sort((a, b) => b[1].length - a[1].length);
+
+  return arr;
+}, [floorMap, search]);
+
+
 
   const columns = [
     { field: "EmployeeID", headerName: "Emp ID" },
@@ -346,12 +342,3 @@ export default function PartitionDetailDetails() {
   );
 }
 
-
-
-
-
-///////////
-///////////
-
-
- 
