@@ -1,85 +1,3 @@
-Saturday, 30 August, 2025										
-Sr	Date	Time	Employee ID	Card Number	Name	Personnel Type	Company	Primary Location	Door	Partition
-1	2025-08-30	12:00:19 AM	W0024552	615795	Raza, Ahmed	Contractor	Vedant Enterprises Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_GREEN_UPS ENTRY 2-DOOR Restricted door	Pune
-2	2025-08-30	12:01:49 AM		418970	Potdar, Manoj	Property Management	Poona Security India Pvt. Ltd	Business Bay - Pune	APAC_IN_PUN_TOWER B_ST5_WKS SIDE DOOR	Pune
-3	2025-08-30	12:22:55 AM	W0019059	620011	Satpute, Sejal	Contractor	Poona Security India Pvt.Ltd	Pune - Business Bay	APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)	Pune
-4	2025-08-30	12:31:45 AM		414293	Maurya, Jitendra	Property Management	Poona Security India Pvt. Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW	Pune
-6	2025-08-30	12:40:40 AM		419002	Singh, Amarnath	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR	Pune
-7	2025-08-30	01:15:59 AM		410342	Upadhyay, Tribhuwan	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR	Pune
-8	2025-08-30	06:29:52 AM		414142	Khandare, Ganesh	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-9	2025-08-30	06:36:26 AM		414089	Padwal, Kailash	Property Management	Poona Security India Pvt. Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-10	2025-08-30	06:44:27 AM		410377	Maurya, Anil	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-11	2025-08-30	06:44:30 AM		410358	Kadam, Krishnakant	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-12	2025-08-30	06:44:32 AM		410317	Vasulkar, Sachin	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-13	2025-08-30	06:55:06 AM	W0024619	615828	Choudhari, Manisha	Contractor	Poona Security India Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-14	2025-08-30	07:04:13 AM	W0019061	615830	Paste, Vrutik	Contractor	Poona Security India Pvt.Ltd	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-15	2025-08-30	08:00:21 AM		414240	Minekar, Kisan	Property Management	CBRE - CLR  Facility Services Pvt.Ltd.	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-16	2025-08-30	08:01:09 AM	W0025525	615832	Patil, Sachin	Contractor	Vedant Enterprises Pvt. Ltd	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-17	2025-08-30	08:07:09 AM		419047	Jagtap, Pravin	Property Management	CBRE - CLR  Facility Services Pvt.Ltd.	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-18	2025-08-30	08:11:55 AM	W0024553	615790	Thite, Vishal	Contractor	Vedant Enterprises Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-19	2025-08-30	08:56:32 AM	W0024617	414969	Divekar, Dipali	Contractor	Poona Security India Pvt.Ltd	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-20	2025-08-30	08:57:36 AM		414194	Sonawane, Vilas	Property Management	CBRE - CLR  Facility Services Pvt.Ltd.	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-21	2025-08-30	08:58:13 AM	63167423	615772	Divekar, Harichandra	Contractor	CBRE (HCT)	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-22	2025-08-30	09:04:29 AM		615544	Pandri, Babu	Property Management	CBRE - CLR  Facility Services Pvt.Ltd.	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR	Pune
-23	2025-08-30	09:22:06 AM		414063	Tribhuvan, Satish	Property Management	CBRE - CLR Facility Servises Pvt Ltd.	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-24	2025-08-30	09:22:11 AM	75624480	410385	Shelar, Sheetal	Contractor	Poona Security India Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-25	2025-08-30	09:26:35 AM	W0024618	619957	Diwate, Swapnil	Contractor	Poona Security India Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-27	2025-08-30	10:14:29 AM		413969	Misal, Atul	Property Management	CBRE - CLR  Facility Services Pvt.Ltd.	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR	Pune
-28	2025-08-30	10:21:30 AM	W0025562	619955	Dhobale, Abhishek	Contractor	Poona Security India Pvt. Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-29	2025-08-30	10:29:10 AM	67721699	615776	Pachangane, Deepak	Contractor	CBRE	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-30	2025-08-30	10:35:38 AM		419055	Pawar, Sanjay	Property Management	Poona Security India Pvt. Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-31	2025-08-30	10:42:46 AM	90762427	615827	Gaikwad, Neil	Contractor	Poona Security India Pvt. Ltd	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	Pune
-33	2025-08-30	01:33:33 PM		409947	Hajare, Nagnath	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-34	2025-08-30	01:45:52 PM		410399	Jadhav, Rajendra	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-35	2025-08-30	01:47:32 PM		410333	Singh, Harvinder	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-36	2025-08-30	01:47:47 PM		413837	Chavan, Jairam	Property Management	Poona Security India Pvt. Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-37	2025-08-30	01:47:47 PM		410369	Gavle, Pravin	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-38	2025-08-30	01:48:02 PM	W0019060	615831	Mahitkar, Sankalp	Contractor	Poona Security India Pvt.Ltd	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-39	2025-08-30	01:48:05 PM	W0024616	619960	Kumar, Ayush	Contractor	Poona Security India Pvt Ltd.	Pune - Business Bay	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-40	2025-08-30	01:56:53 PM		410334	Shaikh, Sharif	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	Pune
-41	2025-08-30	01:56:55 PM		410372	Phukan, Nilmani	Property Management	Poona Security India Pvt.Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-42	2025-08-30	01:59:07 PM		414098	Sonawane, Ruchita	Property Management	Poona Security India Pvt. Ltd	Business Bay - Pune	APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	Pune
-
-
- {
-      "LocaleMessageTime": "2025-06-21T01:32:10.000Z",
-      "ObjectName1": "Jogdane, Sagar",
-      "Door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
-      "EmployeeID": "",
-      "PersonnelType": "Property Management",
-      "PersonGUID": "FE788029-F91F-4022-B81B-FC57C4B76A4F",
-      "CompanyName": "CBRE - CLR  Facility Services Pvt.Ltd.",
-      "PrimaryLocation": "Business Bay - Pune",
-      "PartitionNameFriendly": "Pune",
-      "CardNumber": "414229",
-      "Dir
-
-listion 
-if "PersonnelType": "Property Management", and CompanyName is CBRE - CLR  Facility Services Pvt.Ltd.
-then there Company is CLR  Facility Services Pvt.Ltd.
-
-{
-      "LocaleMessageTime": "2025-06-21T10:16:07.000Z",
-      "ObjectName1": "Pachangane, Deepak",
-      "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR",
-      "EmployeeID": "67721699",
-      "PersonnelType": "Contractor",
-      "PersonGUID": "8BE20DD3-8476-49E5-AA98-555C2287372A",
-      "CompanyName": "CBRE",
-      "PrimaryLocation": "Pune - Business Bay",
-      "PartitionNameFriendly": "Pune",
-      "CardNumber": "615776",
-      "Direction": "InDirection"
-    },
-    {
-
-
-and PersonnelType is Contractor and and "CompanyName": "CBRE", only CBRE
-then there Company is CBRE
-
-i hove you undesntd 
-
-
 // companyRows: aggregated by normalized CompanyName for pickedDate (respects backendFilterKey)
 const companyRows = useMemo(() => {
   if (!data || !pickedDate) return [];
@@ -105,31 +23,45 @@ const companyRows = useMemo(() => {
     const country = disp?.country || 'Unknown';
 
     const rawCompany = (r.CompanyName || '').toString().trim();
+    const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
 
-    // ===== UPDATED FALLBACK: check PersonnelType when CompanyName is blank =====
+    // ===== UPDATED COMPANY LOGIC PER YOUR RULES =====
     let company;
-    if (!rawCompany) {
-      const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
 
-      // map explicit personnel-type cases per your instructions
+    const s = rawCompany.toLowerCase();
+
+    // If CompanyName contains CBRE and also mention of CLR or Facility -> extract CLR facility canonical
+    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
+      // User requested the final company to be "CLR  Facility Services Pvt.Ltd."
+      company = 'CLR  Facility Services Pvt.Ltd.';
+    }
+    // If CompanyName is exactly CBRE (or normalizes to CBRE) -> keep CBRE
+    else if (s && (s === 'cbre' || normalizeCompany(rawCompany) === 'CBRE')) {
+      company = 'CBRE';
+    }
+    // If CompanyName is blank -> fall back to PersonnelType rules
+    else if (!rawCompany) {
       if (pt.includes('contractor')) {
         company = 'CBRE';
       } else if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
-        // exact canonical string requested (includes double space between CLR and Facility)
-        company = 'CBRE - CLR Facility Servises Pvt Ltd.';
+        // When company is blank but personnel type indicates property management,
+        // use the CBRE - CLR canonical as the fallback
+        company = 'CBRE - CLR  Facility Services Pvt.Ltd.';
       } else if (pt === 'employee') {
         company = 'Western Union';
-      } else if (pt === 'visitor') {
+      } else if (pt.includes('visitor')) {
         company = 'Visitor';
       } else if (pt.includes('temp')) {
         company = 'Temp Badge';
       } else {
         company = 'Unknown';
       }
-    } else {
+    }
+    // Otherwise normalize the provided company name using existing normalizer
+    else {
       company = normalizeCompany(rawCompany);
     }
-    // ======================================================================
+    // ==================================================================
 
     const key = `${country}||${city}||${company}`;
     const existing = map.get(key);
@@ -147,27 +79,3 @@ const companyRows = useMemo(() => {
     return a.company.localeCompare(b.company);
   });
 }, [data, pickedDate, backendFilterKey]);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
