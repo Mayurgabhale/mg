@@ -1,3 +1,7 @@
+
+CLR Facility Services Pvt.Ltd.
+
+
 // helper: compute canonical company for a single detail row (same logic used by companyRows)
 const getCanonicalCompany = (r) => {
   const rawCompany = (r.CompanyName || '').toString().trim();
@@ -33,65 +37,5 @@ const getCanonicalCompany = (r) => {
   // 4) otherwise use normalizeCompany
   return normalizeCompany(rawCompany);
 };
-
-
-
-
-
-
-
-....
-
-
-
-
-
-
-// companyRows: aggregated by normalized CompanyName for pickedDate (respects backendFilterKey)
-const companyRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // filter details for the date + optional partition filter
-  const filtered = data.details.filter(r =>
-    r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds &&
-    (
-      !backendFilterKey ||
-      r.PartitionNameFriendly === backendFilterKey ||
-      apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
-    )
-  );
-
-  // aggregate into map: key = country||city||normalizedCompany
-  const map = new Map();
-
-  filtered.forEach(r => {
-    const city = formatPartition(r.PartitionNameFriendly || '');
-    const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-    const country = disp?.country || 'Unknown';
-
-    // use the shared canonical helper so companyRows and detail filtering match exactly
-    const company = getCanonicalCompany(r);
-
-    const key = `${country}||${city}||${company}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.total += 1; // counting rows as "total" (same behaviour as before)
-    } else {
-      map.set(key, { country, city, company, total: 1 });
-    }
-  });
-
-  // return sorted list (optional: by country, city, company)
-  return Array.from(map.values()).sort((a, b) => {
-    if (a.country !== b.country) return a.country.localeCompare(b.country);
-    if (a.city !== b.city) return a.city.localeCompare(b.city);
-    return a.company.localeCompare(b.company);
-  });
-}, [data, pickedDate, backendFilterKey]);
-
-
-
 
 
