@@ -171,30 +171,6 @@ export default function History() {
   };
 
 
-  // // ←——— FIXED detailRows: only filter by date & partition, no dedupe, no Direction check
-  // const detailRows = useMemo(() => {
-  //   if (!data || !pickedDate || !showDetails) return [];
-  //   const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  //   return data.details
-  //     .filter(r =>
-  //       // match the date portion of the ISO timestamp
-  //       r.LocaleMessageTime.slice(0, 10) === ds
-  //       // if a partition filter is active, match that too
-  //       // && (!backendFilterKey || r.PartitionNameFriendly === backendFilterKey)
-
-  //       && (
-  //         !backendFilterKey ||
-  //         r.PartitionNameFriendly === backendFilterKey ||
-  //         apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
-  //       )
-
-  //     )
-  //     .sort((a, b) =>
-  //       a.LocaleMessageTime.localeCompare(b.LocaleMessageTime)
-  //     );
-  // }, [data, pickedDate, showDetails, backendFilterKey]);
-
 
 
 
