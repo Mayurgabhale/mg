@@ -1,112 +1,161 @@
-// --- company name normalizer ---
-// keep it deterministic and conservative (only maps the families you listed)
-const normalizeCompany = (raw) => {
-  if (!raw) return 'Unknown';
-  // trim and collapse whitespace
-  const orig = String(raw).trim();
-  const s = orig
-    .toLowerCase()
-    // remove punctuation commonly causing variants
-    .replace(/[.,()\/\-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 
-  // Poona / Poona Security family
-  if (/\bpoona\b/.test(s) || /\bpoona security\b/.test(s) || /\bpoona security india\b/.test(s)) {
-    return 'Poona Security India Pvt Ltd';
-  }
-
-  // Western Union family (map many variants to single canonical)
-  if (
-    /\bwestern union\b/.test(s) ||
-    /\bwesternunion\b/.test(s) ||
-    /\bwu\b/.test(s) ||           // WU standalone
-    /\bwufs\b/.test(s) ||         // WUFS variants
-    /\bwu technology\b/.test(s) ||
-    /\bwu srvcs\b/.test(s) ||
-    /\bwestern union svs\b/.test(s) ||
-    /\bwestern union processing\b/.test(s) ||
-    /\bwestern union japan\b/.test(s) ||
-    /\bwestern union, llc\b/.test(s)
-  ) {
-    return 'Western Union';
-  }
-
-  // Vedant family
-  if (/\bvedant\b/.test(s)) {
-    return 'Vedant Enterprises Pvt. Ltd';
-  }
-
-  // Osource family
-  if (/\bosource\b/.test(s)) {
-    return 'Osource India Pvt Ltd';
-  }
-
-  // CBRE family
-  if (/\bcbre\b/.test(s)) {
-    return 'CBRE';
-  }
-
-  // explicit Unknown canonical
-  if (s === 'unknown' || s === '') return 'Unknown';
-
-  // otherwise return the original trimmed string (preserve casing)
-  return orig;
-};
+add scroll bar for right table, right table heigt same  as  {/* Left: existing summary table */}   table. 
+both talbe widht and height i want same ok.
+{/* Right: NEW company-level table (same style) */}
 
 
+          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 2 }}>
+            <Box sx={{ width: 200 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Select date"
+                  value={pickedDate}
+                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                  renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
+                />
+              </LocalizationProvider>
+            </Box>
+
+            {/* Container for both tables side-by-side */}
+            <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
+              {/* Left: existing summary table */}
+              <Box sx={{ flex: 1, maxWidth: 800, width: 420, }}>
+                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
+                  <Table sx={{ border: '2px solid #000' }} size='small'>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell colSpan={5} align="center"
+                          sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                          {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ bgcolor: '#FFC107' }}>
+                        {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => (
+                          <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'right'}
+                            sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                            {h}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {partitionRows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                          <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                          <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
+                          <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {r.total}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow sx={{ bgcolor: '#666' }}>
+                        <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                          Total
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                          {partitionRows.reduce((s, r) => s + r.employee, 0)}
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                          {partitionRows.reduce((s, r) => s + r.contractor, 0)}
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                          {partitionRows.reduce((s, r) => s + r.total, 0)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Paper>
+
+                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                  <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+                    onClick={() => setShowDetails(v => !v)}>
+                    {showDetails ? 'Hide Details' : 'See Details'}
+                  </Button>
+                  {showDetails && (
+                    <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
+                      onClick={handleExport}>
+                      Export to Excel
+                    </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    sx={{ ml: 2, bgcolor: '#FFC107', color: '#000' }}
+                    onClick={handleExportSummary}
+                  >
+                    Export Summary to Excel
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Right: NEW company-level table (same style) */}
+              <Box sx={{ width: 720, minWidth: 300 }}>
+                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
+                  <Table sx={{ border: '2px solid #000' }} size='small'>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell colSpan={4} align="center"
+                          sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                          {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ bgcolor: '#FFC107' }}>
+                        {['Country', 'City', 'Company', 'Total'].map(h => (
+                          <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'right'}
+                            sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                            {h}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {companyRows.length > 0 ? companyRows.map((r, i) => (
+                        <TableRow key={`${r.company}-${i}`}>
+                          <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                          <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                          <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
+                          <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {r.total}
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                            No records for this date.
+                          </TableCell>
+                        </TableRow>
+                      )}
+
+                      {/* Totals row */}
+                      <TableRow sx={{ bgcolor: '#666' }}>
+                        <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                          Total
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                          {/* empty cell for layout: keep consistent with left table */}
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                          {companyRows.reduce((s, r) => s + r.total, 0)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Paper>
 
 
+                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: '#FFC107', color: '#000' }}
+                    onClick={handleExportCompanies}
+                  >
+                    Export Companies to Excel
+                  </Button>
+                </Box>
+              </Box>
 
 
-....
+            </Box>
+          </Box>
 
-
-
-
-
-
-
-// companyRows: aggregated by normalized CompanyName for pickedDate (respects backendFilterKey)
-const companyRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // filter details for the date + optional partition filter
-  const filtered = data.details.filter(r =>
-    r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds &&
-    (
-      !backendFilterKey ||
-      r.PartitionNameFriendly === backendFilterKey ||
-      apacForwardKey[r.PartitionNameFriendly] === backendFilterKey
-    )
-  );
-
-  // aggregate into map: key = country||city||normalizedCompany
-  const map = new Map();
-
-  filtered.forEach(r => {
-    const city = formatPartition(r.PartitionNameFriendly || '');
-    const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-    const country = disp?.country || 'Unknown';
-
-    const rawCompany = r.CompanyName || 'Unknown';
-    const company = normalizeCompany(rawCompany);
-
-    const key = `${country}||${city}||${company}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.total += 1; // counting rows as "total" (same behaviour as before)
-    } else {
-      map.set(key, { country, city, company, total: 1 });
-    }
-  });
-
-  // return sorted list (optional: by country, city, company)
-  return Array.from(map.values()).sort((a, b) => {
-    if (a.country !== b.country) return a.country.localeCompare(b.country);
-    if (a.city !== b.city) return a.city.localeCompare(b.city);
-    return a.company.localeCompare(b.company);
-  });
-}, [data, pickedDate, backendFilterKey]);
