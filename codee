@@ -1,37 +1,31 @@
-you dit correct 
-in the one more condition is add 
-if CompanyName CBRE and Personnel Type	is Property Management
-then Company is CLR Facility Services Pvt.Ltd.
-ok you undestn 
-
-add this in CLR Facility Services Pvt.Ltd. not separate 
-
-
 // helper: compute canonical company for a single detail row (same logic used by companyRows)
 const getCanonicalCompany = (r) => {
   const rawCompany = (r.CompanyName || '').toString().trim();
   const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
   const s = rawCompany.toLowerCase();
 
-  // 1) If CompanyName contains CBRE and also mention of CLR or Facility -> CLR canonical
+  // If CompanyName contains CBRE and also mention of CLR or Facility -> CLR canonical
   if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
-    return 'CLR  Facility Services Pvt.Ltd.';
+    return 'CLR Facility Services Pvt.Ltd.';
   }
 
-  // 2) If CompanyName is explicitly CBRE (or normalizes to CBRE)
-  //    and PersonnelType indicates Property Management -> CBRE - CLR canonical
+  // If CompanyName is explicitly CBRE (or normalizes to CBRE)
+  // and PersonnelType indicates Property Management -> map to CLR Facility Services
   if (s && (s === 'cbre' || normalizeCompany(rawCompany) === 'CBRE')) {
     if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
-      return 'CBRE - CLR  Facility Services Pvt.Ltd.';
+      // NEW: map CBRE + Property Management -> CLR Facility Services (single canonical)
+      return 'CLR Facility Services Pvt.Ltd.';
     }
+    // otherwise keep as CBRE
     return 'CBRE';
   }
 
-  // 3) If CompanyName is blank -> use PersonnelType fallback rules
+  // If CompanyName is blank -> use PersonnelType fallback rules
   if (!rawCompany) {
     if (pt.includes('contractor')) return 'CBRE';
     if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
-      return 'CBRE - CLR  Facility Services Pvt.Ltd.';
+      // blank company but property-management -> CLR Facility Services (same canonical)
+      return 'CLR Facility Services Pvt.Ltd.';
     }
     if (pt === 'employee') return 'Western Union';
     if (pt.includes('visitor')) return 'Visitor';
@@ -39,8 +33,6 @@ const getCanonicalCompany = (r) => {
     return 'Unknown';
   }
 
-  // 4) otherwise use normalizeCompany
+  // otherwise use normalizeCompany for other families
   return normalizeCompany(rawCompany);
 };
-
-
