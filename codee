@@ -1,134 +1,51 @@
-{/* ‣ Details (responsive) */}
-{showDetails && (
-  <Box display="flex" justifyContent="center" mb={0} sx={{ width: '100%' }}>
-    <Paper elevation={1} sx={{ p: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
-      {detailRows.length > 0 ? (() => {
-        // inside render: use theme + breakpoints
-        const theme = useTheme();
-        const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // small screens
-        const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md')); // optional
+ {/* ‣ Details */}
+        {showDetails && (
+          <Box display="flex" justifyContent="center" mb={0} sx={{ width: '100%' }}>
+            <Paper elevation={1} sx={{ p: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
+              {detailRows.length > 0 ? (
 
-        // Desktop / larger screens: keep table with horizontal scroll if needed
-        if (!isMobile) {
-          return (
-            <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
-              <Table stickyHeader sx={{ minWidth: 1100, border: '2px solid #000' }} size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#000' }}>
-                    {[
-                      'Sr', 'Date', 'Time',
-                      'Employee ID', 'Card Number', 'Name', 'Personnel Type', 'CompanyName', 'PrimaryLocation',
-                      'Door', 'Partition'
-                    ].map(h => (
-                      <TableCell key={h} align="center"
-                        sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000', whiteSpace: 'nowrap' }}>
-                        {h}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {detailRows.map((r, i) => (
-                    <TableRow key={`${r.PersonGUID || i}-${i}`}>
-                      <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{i + 1}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.LocaleMessageTime?.slice(0, 10)}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>
-                        {formatApiTime12(r.LocaleMessageTime)}
-                      </TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
-                      <TableCell sx={{ border: '2px solid #000' }}>
-                        {formatPartition(r.PartitionNameFriendly)}
-                      </TableCell>
+                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }} size='small'>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#000' }}>
+                      {[
+                        'Sr', 'Date', 'Time',
+                        'Employee ID', 'Card Number', 'Name', 'Personnel Type', 'CompanyName', 'PrimaryLocation',
+                        'Door', 'Partition'
+                      ].map(h => (
+                        <TableCell key={h} align="center"
+                          sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                          {h}
+                        </TableCell>
+                      ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          );
-        }
-
-        // Mobile: stacked card view for each row (readable on phones)
-        return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {detailRows.map((r, i) => (
-              <Paper key={`${r.PersonGUID || i}-${i}`} variant="outlined"
-                sx={{
-                  p: 1,
-                  border: '2px solid #000',
-                  borderRadius: 1,
-                  backgroundColor: '#fff'
-                }}>
-                <Grid container spacing={0}>
-                  <Grid item xs={6} sm={4} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Sr</Typography>
-                    <Typography sx={{ fontWeight: 'bold' }}>{i + 1}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={4} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Date</Typography>
-                    <Typography>{r.LocaleMessageTime?.slice(0, 10)}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={4} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Time</Typography>
-                    <Typography>{formatApiTime12(r.LocaleMessageTime)}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={4} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Employee ID</Typography>
-                    <Typography>{r.EmployeeID || '-'}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={4} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Card Number</Typography>
-                    <Typography>{r.CardNumber || '-'}</Typography>
-                  </Grid>
-
-                  <Grid item xs={12} sm={8} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Name</Typography>
-                    <Typography sx={{ fontWeight: 500 }}>{r.ObjectName1}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={4} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Personnel Type</Typography>
-                    <Typography>{r.PersonnelType}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={8} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Company</Typography>
-                    <Typography>{r.CompanyName}</Typography>
-                  </Grid>
-
-                  <Grid item xs={12} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Primary Location</Typography>
-                    <Typography>{r.PrimaryLocation}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={6} sx={{ pr: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Door</Typography>
-                    <Typography>{r.Door}</Typography>
-                  </Grid>
-
-                  <Grid item xs={6} sm={6}>
-                    <Typography variant="caption" sx={{ color: '#666' }}>Partition</Typography>
-                    <Typography>{formatPartition(r.PartitionNameFriendly)}</Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-            ))}
+                  </TableHead>
+                  <TableBody>
+                    {detailRows.map((r, i) => (
+                      <TableRow key={`${r.PersonGUID}-${i}`}>
+                        <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{i + 1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.LocaleMessageTime.slice(0, 10)}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>
+                          {formatApiTime12(r.LocaleMessageTime)}
+                        </TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {formatPartition(r.PartitionNameFriendly)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic' }}>
+                  No swipe records found for this date.
+                </Typography>
+              )}
+            </Paper>
           </Box>
-        );
-      })() : (
-        <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic' }}>
-          No swipe records found for this date.
-        </Typography>
-      )}
-    </Paper>
-  </Box>
-)}
+        )}
