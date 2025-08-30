@@ -1,5 +1,10 @@
+you dit correct 
+in the one more condition is add 
+if CompanyName CBRE and Personnel Type	is Property Management
+then Company is CLR Facility Services Pvt.Ltd.
+ok you undestn 
 
-CLR Facility Services Pvt.Ltd.
+add this in CLR Facility Services Pvt.Ltd.
 
 
 // helper: compute canonical company for a single detail row (same logic used by companyRows)
