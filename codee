@@ -1,54 +1,102 @@
- {/* Right: NEW company-level table (same style) */}
-    <Box sx={{ width: 720, minWidth: 300 }}>
-      <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
-        <Table sx={{ border: '2px solid #000' }} size='small'>
-          <TableHead>
-            <TableRow>
-              <TableCell colSpan={4} align="center"
-                sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
-                {format(pickedDate, 'EEEE, d MMMM, yyyy')}
-              </TableCell>
-            </TableRow>
-            <TableRow sx={{ bgcolor: '#FFC107' }}>
-              {['Country', 'City', 'Company', 'Total'].map(h => (
-                <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'right'}
-                  sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
-                  {h}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {companyRows.length > 0 ? companyRows.map((r, i) => (
-              <TableRow key={`${r.company}-${i}`}>
-                <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-                <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-                <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
-                <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-                  {r.total}
-                </TableCell>
-              </TableRow>
-            )) : (
-              <TableRow>
-                <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                  No records for this date.
-                </TableCell>
-              </TableRow>
-            )}
+const handleExportCompanies = async () => {
+  if (!pickedDate || !companyRows.length) return;
 
-            {/* Totals row */}
-            <TableRow sx={{ bgcolor: '#666' }}>
-              <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                Total
-              </TableCell>
-              <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                {/* empty cell for layout: keep consistent with left table */}
-              </TableCell>
-              <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
-                {companyRows.reduce((s, r) => s + r.total, 0)}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Paper>
-    </Box>
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Company Summary');
+
+  // set up columns
+  ws.columns = [
+    { header: 'Country', key: 'country', width: 20 },
+    { header: 'City', key: 'city', width: 25 },
+    { header: 'Company', key: 'company', width: 40 },
+    { header: 'Total', key: 'total', width: 12 },
+  ];
+
+  // merge top row for date
+  ws.mergeCells('A1:D1');
+  const dateCell = ws.getCell('A1');
+  dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
+  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  dateCell.font = { name: 'Calibri', size: 14, bold: true };
+
+  // blank spacer
+  ws.addRow([]);
+
+  // header row
+  const headerRow = ws.addRow(['Country', 'City', 'Company', 'Total']);
+  headerRow.eachCell(cell => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+    cell.font = { bold: true, color: { argb: 'FF000000' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+  });
+
+  // data rows
+  companyRows.forEach(r => {
+    const row = ws.addRow([r.country, r.city, r.company, r.total]);
+    row.eachCell((cell, colNumber) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      if (colNumber === 4) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0';
+      } else {
+        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+      }
+    });
+  });
+
+  // totals row
+  const total = companyRows.reduce((s, r) => s + r.total, 0);
+  const totalRow = ws.addRow(['Total', '', '', total]);
+  totalRow.eachCell((cell, colNumber) => {
+    cell.font = { bold: true };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+    cell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+    if (colNumber === 4) {
+      cell.alignment = { horizontal: 'right', vertical: 'middle' };
+      cell.numFmt = '#,##0';
+    } else {
+      cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
+    }
+  });
+
+  // save
+  const buf = await wb.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), `apac_companies_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+};
+
+
+
+
+
+
+
+
+......
+
+
+
+<Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+  <Button
+    variant="contained"
+    sx={{ bgcolor: '#FFC107', color: '#000' }}
+    onClick={handleExportCompanies}
+  >
+    Export Companies to Excel
+  </Button>
+</Box>
