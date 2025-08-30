@@ -1,101 +1,26 @@
-{/* ‣ Details */}
-{showDetails && (
-  <Box display="flex" justifyContent="center" mb={0} sx={{ width: '100%' }}>
-    <Paper
-      elevation={1}
-      sx={{
-        p: 1,
-        width: '100%',
-        border: '3px solid #000',
-        borderRadius: 2,
-        overflow: 'hidden', // prevents scrollbars
-      }}
-    >
-      {detailRows.length > 0 ? (
-        <TableContainer
-          sx={{
-            width: '100%',
-            overflow: 'hidden', // disables scrollbars
-          }}
-        >
-          <Table
-            size="small"
-            stickyHeader
-            sx={{
-              width: '100%',
-              border: '2px solid #000',
-              borderCollapse: 'collapse',
-              tableLayout: 'fixed', // ensures columns shrink/wrap instead of scrolling
-            }}
-          >
-            <TableHead>
-              <TableRow>
-                {[
-                  'Sr', 'Date', 'Time',
-                  'Employee ID', 'Card Number', 'Name', 'Personnel Type', 'CompanyName', 'PrimaryLocation',
-                  'Door', 'Partition'
-                ].map(h => (
-                  <TableCell
-                    key={h}
-                    align="center"
-                    sx={{
-                      color: '#FFC107',
-                      fontWeight: 'bold',
-                      fontSize: { xs: 11, sm: 12, md: 13, lg: 14 },
-                      border: '2px solid #000',
-                      backgroundColor: '#000',
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 2,
-                      whiteSpace: 'normal', // allows wrapping instead of nowrap
-                      wordWrap: 'break-word',
-                      p: { xs: 0.5, sm: 1 }, // smaller padding on small screens
-                    }}
-                  >
-                    {h}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
+in this one issue is 
 
-            <TableBody>
-              {detailRows.map((r, i) => (
-                <TableRow key={`${r.PersonGUID}-${i}`}>
-                  <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>
-                    {r.LocaleMessageTime.slice(0, 10)}
-                  </TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>
-                    {formatApiTime12(r.LocaleMessageTime)}
-                  </TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>
-                    {formatPartition(r.PartitionNameFriendly)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <Typography
-          variant="body2"
-          sx={{
-            color: '#666',
-            textAlign: 'center',
-            mt: 2,
-            fontStyle: 'italic',
-          }}
-        >
-          No swipe records found for this date.
-        </Typography>
-      )}
-    </Paper>
-  </Box>
-)}
+
+Country	City	Company	Total
+India	Pune	CBRE	2
+India	Pune	CLR Facility Services Pvt.Ltd.	6
+India	Pune	Poona Security India Pvt Ltd	29
+India	Pune	Temp Badge	1
+India	Pune	Vedant Enterprises Pvt. Ltd	5
+India	Pune	Western Union	2
+Philippines	Quezon City	E-Infomedia Solutions	1
+Philippines	Quezon City	Healthway Medical Clinic Inc.	4
+Philippines	Quezon City	Kitchen City	5
+Philippines	Quezon City	Prime Jobs Network Systems Corporation	14
+Philippines	Quezon City	Temp Badge	1
+Philippines	Quezon City	Tri Mega Force Security Services Corp	7
+Philippines	Quezon City	TUSCANY General ESH Services	2
+Philippines	Quezon City	Western Union	100
+Total			179
+
+
+India	Pune	Western Union then onlye in detial disply one countryt inida an city is pune ok 
+
+not all for 	Western Union ok 
+if i clikc on Philippines	Quezon City	Western Union then only disply in details Philippines and Quezon City and 	Western Unio
+ok i hove you undestand  not all Western Union ok 
