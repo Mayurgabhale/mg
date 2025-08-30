@@ -4,7 +4,7 @@ if CompanyName CBRE and Personnel Type	is Property Management
 then Company is CLR Facility Services Pvt.Ltd.
 ok you undestn 
 
-add this in CLR Facility Services Pvt.Ltd.
+add this in CLR Facility Services Pvt.Ltd. not separate 
 
 
 // helper: compute canonical company for a single detail row (same logic used by companyRows)
