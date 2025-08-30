@@ -1,27 +1,31 @@
-        {/* ‣ Details */}
+{/* ‣ Details */}
 {showDetails && (
   <Box display="flex" justifyContent="center" mb={0} sx={{ width: '100%' }}>
-    <Paper elevation={1} sx={{ p: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
+    <Paper
+      elevation={1}
+      sx={{
+        p: 1,
+        width: '100%',
+        border: '3px solid #000',
+        borderRadius: 2,
+        overflow: 'hidden', // prevents scrollbars
+      }}
+    >
       {detailRows.length > 0 ? (
-
-        // TableContainer makes the table horizontally scrollable when viewport is smaller than table minWidth
         <TableContainer
           sx={{
             width: '100%',
-            overflowX: 'auto',
-            // set a maxHeight so table body can scroll vertically on large screens
-            // maxHeight: { xs: '60vh', sm: '65vh', md: '70vh' },
+            overflow: 'hidden', // disables scrollbars
           }}
         >
           <Table
             size="small"
             stickyHeader
             sx={{
-              // responsive minimum widths so columns have room on larger devices
-              minWidth: { xs: 900, sm: 1000, md: 1100, lg: 1200 },
+              width: '100%',
               border: '2px solid #000',
               borderCollapse: 'collapse',
-              tableLayout: 'auto',
+              tableLayout: 'fixed', // ensures columns shrink/wrap instead of scrolling
             }}
           >
             <TableHead>
@@ -34,17 +38,18 @@
                   <TableCell
                     key={h}
                     align="center"
-                    // sticky header styling applied at cell level so the header stays visible
                     sx={{
                       color: '#FFC107',
                       fontWeight: 'bold',
-                      fontSize: { xs: 12, sm: 13, md: 14 },
+                      fontSize: { xs: 11, sm: 12, md: 13, lg: 14 },
                       border: '2px solid #000',
                       backgroundColor: '#000',
                       position: 'sticky',
                       top: 0,
                       zIndex: 2,
-                      whiteSpace: 'nowrap',
+                      whiteSpace: 'normal', // allows wrapping instead of nowrap
+                      wordWrap: 'break-word',
+                      p: { xs: 0.5, sm: 1 }, // smaller padding on small screens
                     }}
                   >
                     {h}
@@ -56,19 +61,21 @@
             <TableBody>
               {detailRows.map((r, i) => (
                 <TableRow key={`${r.PersonGUID}-${i}`}>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{i + 1}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000' }}>{r.LocaleMessageTime.slice(0, 10)}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>
+                  <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>
+                    {r.LocaleMessageTime.slice(0, 10)}
+                  </TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>
                     {formatApiTime12(r.LocaleMessageTime)}
                   </TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{r.EmployeeID}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{r.CardNumber}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
                   <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{r.PersonnelType}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{r.CompanyName}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
                   <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{r.Door}</TableCell>
-                  <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>
+                  <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>
                     {formatPartition(r.PartitionNameFriendly)}
                   </TableCell>
                 </TableRow>
@@ -76,9 +83,16 @@
             </TableBody>
           </Table>
         </TableContainer>
-
       ) : (
-        <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: '#666',
+            textAlign: 'center',
+            mt: 2,
+            fontStyle: 'italic',
+          }}
+        >
           No swipe records found for this date.
         </Typography>
       )}
