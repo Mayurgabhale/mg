@@ -1,97 +1,83 @@
-// helper: unify the key format used by companyRows and detailRows
-const makeCompanyKey = (country, city, company) => `${country}||${city}||${company}`;
+  const handleExport = async () => {
+    if (!pickedDate || !detailRows.length) return;
 
-...
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Details");
 
-{companyRows.length > 0 ? companyRows.map((r, i) => {
-  const rowKey = makeCompanyKey(r.country, r.city, r.company);
-  return (
-    <TableRow
-      key={`${r.company}-${i}`}
-      onClick={() => {
-        if (selectedCompany === rowKey) {
-          setSelectedCompany(null);   // second click — clear filter
-          setShowDetails(true);
-        } else {
-          setSelectedCompany(rowKey); // first click — filter
-          setShowDetails(true);
-        }
-      }}
-      sx={{
-        cursor: 'pointer',
-        '&:hover': { backgroundColor: '#474747' },
-        ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
-      }}
-      tabIndex={0}
-      role="button"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          if (selectedCompany === rowKey) {
-            setSelectedCompany(null);
-            setShowDetails(true);
-          } else {
-            setSelectedCompany(rowKey);
-            setShowDetails(true);
-          }
-        }
-      }}
-    >
-      <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-      <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-      <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
-      <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-        {r.total}
-      </TableCell>
-    </TableRow>
-  );
-}) : (
-  /* ...no records row... */
-)}
+    // --- Top date row (merged across all columns) ---
+    sheet.mergeCells(1, 1, 1, 11); // merge across 11 columns
+    const titleCell = sheet.getCell("A1");
+    titleCell.value = format(pickedDate, "EEEE, d MMMM, yyyy");
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.font = { bold: true, size: 14 };
 
+    // --- Header row ---
+    const headers = [
+      "Sr",
+      "Date",
+      "Time",
+      "Employee ID",
+      "Card Number",
+      "Name",
+      "Personnel Type",
+      "Company",
+      "Primary Location",
+      "Door",
+      "Partition"
+    ];
+    const headerRow = sheet.addRow(headers);
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFC107" }
+      };
+      cell.alignment = { horizontal: "center" };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" }
+      };
+    });
 
+    // --- Data rows ---
+    detailRows.forEach((r, i) => {
+      const row = sheet.addRow([
+        i + 1,
+        r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : "",
+        formatApiTime12(r.LocaleMessageTime),
+        r.EmployeeID,
+        r.CardNumber,
+        r.ObjectName1,
+        r.PersonnelType,
+        r.CompanyName,
+        r.PrimaryLocation,
+        r.Door,
+        formatPartition(r.PartitionNameFriendly)
+      ]);
+      row.eachCell(cell => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" }
+        };
+      });
+    });
 
+    // --- Auto column width with limits ---
+    sheet.columns.forEach(col => {
+      let maxLen = 7;
+      col.eachCell({ includeEmpty: true }, c => {
+        maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2);
+      });
+      // keep columns within a reasonable range
+      col.width = Math.min(Math.max(maxLen, 10), 40);
+    });
 
-
-
-.....
-
-
-
-const detailRows = useMemo(() => {
-  if (!data || !pickedDate || !showDetails) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  return data.details
-    .filter(r => {
-      // match date
-      if (!r.LocaleMessageTime || r.LocaleMessageTime.slice(0, 10) !== ds) return false;
-
-      // partition (city) filter
-      if (backendFilterKey) {
-        const ok = r.PartitionNameFriendly === backendFilterKey ||
-                   apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
-        if (!ok) return false;
-      }
-
-      // if no company selected, include everything
-      if (!selectedCompany) return true;
-
-      // compute country & city the same way companyRows does
-      const city = formatPartition(r.PartitionNameFriendly || '');
-      const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-      const country = disp?.country || 'Unknown';
-
-      // canonical company name for this row
-      const canonical = getCanonicalCompany(r);
-
-      // build key and compare
-      const rowKey = makeCompanyKey(country, city, canonical);
-      return rowKey === selectedCompany;
-    })
-    .sort((a, b) => a.LocaleMessageTime.localeCompare(b.LocaleMessageTime));
-}, [data, pickedDate, showDetails, backendFilterKey, selectedCompany]);
-
-
-
-
+    // --- Save file ---
+    const buf = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buf]), `apac_history_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+  };
