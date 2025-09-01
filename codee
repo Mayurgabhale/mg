@@ -1,105 +1,81 @@
-add export buttion for summary table 
-listion dont chang my privius code logic, 
-just carefull, 
+const handleExportSummary = () => {
+  if (!partitionRows || partitionRows.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Summary");
+
+  // headers
+  const headers = ["Country", "City", "Employees", "Contractors", "Total"];
+  const headerRow = sheet.addRow(headers);
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFFFC107" }
+    };
+    cell.alignment = { horizontal: "center" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" }
+    };
+  });
+
+  // rows
+  partitionRows.forEach(r => {
+    sheet.addRow([r.country, r.city, r.employee, r.contractor, r.total]);
+  });
+
+  // totals row
+  sheet.addRow([
+    "Total",
+    "",
+    partitionRows.reduce((s, r) => s + r.employee, 0),
+    partitionRows.reduce((s, r) => s + r.contractor, 0),
+    partitionRows.reduce((s, r) => s + r.total, 0)
+  ]);
+
+  // autosize
+  sheet.columns.forEach(col => {
+    let maxLen = 10;
+    col.eachCell({ includeEmpty: true }, c => {
+      maxLen = Math.max(maxLen, c.value ? c.value.toString().length + 2 : 0);
+    });
+    col.width = Math.min(maxLen, 30);
+  });
+
+  // save
+  workbook.xlsx.writeBuffer().then(buf => {
+    saveAs(
+      new Blob([buf]),
+      `summary_${format(pickedDate, "yyyyMMdd")}.xlsx`
+    );
+  });
+};
 
 
-{/* DatePicker + Summary */}
-        {pickedDate && summaryEntry ? (
-          <Box display="flex" alignItems="flex-start" sx={{ px:2, mb:2, gap:1 }}>
-            <Box sx={{ width:200 }}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Select date"
-                  value={pickedDate}
-                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
-                  renderInput={params => <TextField fullWidth {...params} />}
-                />
-              </LocalizationProvider>
-            </Box>
- 
-            <Box sx={{ flex:1, maxWidth:900, display:'flex', flexDirection:'column', gap:2 }}>
-              <Paper elevation={3} sx={{ px:1, py:1, border:'3px solid #000', borderRadius:2 }}>
-                <Table size='small' sx={{ border:'2px solid #000' }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell colSpan={5} align="center"
-                        sx={{ fontWeight:'bold', fontSize:16, bgcolor:'#000', color:'#FFC107', border:'2px solid #000' }}
-                      >
-                        {format(pickedDate,'EEEE, d MMMM, yyyy')}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow sx={{ bgcolor:'#FFC107' }}>
-                      {['Country','City','Employees','Contractors','Total'].map(h=>(
-                        <TableCell key={h}
-                          align={['Country','City'].includes(h)?'left':'right'}
-                          sx={{ color:'#000', fontWeight:'bold', fontSize:14, border:'2px solid #000' }}
-                        >
-                          {h}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {partitionRows.map((r,i)=>(
-                      <TableRow key={i}>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.country}</TableCell>
-                        <TableCell sx={{border:'2px solid #000'}}>{r.city}</TableCell>
-                        <TableCell align="right" sx={{border:'2px solid #000'}}>{r.employee}</TableCell>
-                        <TableCell align="right" sx={{border:'2px solid #000'}}>{r.contractor}</TableCell>
-                        <TableCell align="right" sx={{bgcolor:'#FFC107',fontWeight:'bold',border:'2px solid #000'}}>
-                          {r.total}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow sx={{ bgcolor:'#666' }}>
-                      <TableCell colSpan={2} align="right"
-                        sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
-                        Total
-                      </TableCell>
-                      <TableCell align="right"
-                        sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
-                        {partitionRows.reduce((s,r)=>s+r.employee,0)}
-                      </TableCell>
-                      <TableCell align="right"
-                        sx={{ color:'#fff', fontWeight:'bold', border:'2px solid #000' }}>
-                        {partitionRows.reduce((s,r)=>s+r.contractor,0)}
-                      </TableCell>
-                      <TableCell align="right"
-                        sx={{ color:'#fff', fontWeight:'bold', bgcolor:'#333', border:'2px solid #000' }}>
-                        {partitionRows.reduce((s,r)=>s+r.total,0)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
- 
-                <Box display="flex" justifyContent="center" sx={{ mt:1 }}>
-                  <Button variant="contained" sx={{ bgcolor:'#FFC107', color:'#000' }}
-                    onClick={()=>setShowDetails(v=>!v)}>
-                    {showDetails?'Hide Details':'See Details'}
-                  </Button>
-                  {showDetails && (
-                    <Button variant="outlined" sx={{ ml:2, borderColor:'#FFC107',color:'#FFC107'}}
-                      onClick={handleExport}>
-                      Export to Excel
-                    </Button>
-                  )}
-                </Box>
-              </Paper>
-            </Box>
-          </Box>
-        ) : (
-          <Box sx={{px:2,mb:3}}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Select date"
-                value={pickedDate}
-                onChange={d=>{ setPickedDate(d); setShowDetails(false); }}
-                renderInput={params=><TextField fullWidth {...params}/>}
-              />
-            </LocalizationProvider>
-            {!pickedDate && (
-              <Typography variant="body1" color="textSecondary" sx={{mt:2}}>
-                Please pick a date to view region summary.
-              </Typography>
-            )}
-          </Box>
+
+
+
+
+....
+
+
+<Box display="flex" justifyContent="center" sx={{ mt:1 }}>
+  <Button variant="contained" sx={{ bgcolor:'#FFC107', color:'#000' }}
+    onClick={()=>setShowDetails(v=>!v)}>
+    {showDetails?'Hide Details':'See Details'}
+  </Button>
+  {showDetails && (
+    <Button variant="outlined" sx={{ ml:2, borderColor:'#FFC107',color:'#FFC107'}}
+      onClick={handleExport}>
+      Export Details
+    </Button>
+  )}
+  <Button variant="outlined" sx={{ ml:2, borderColor:'#000', color:'#000' }}
+    onClick={handleExportSummary}>
+    Export Summary
+  </Button>
+</Box>
