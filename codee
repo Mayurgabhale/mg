@@ -1,39 +1,63 @@
-  const handleExport = async () => {
-    if (!pickedDate || !detailRows.length) return;
+const handleExport = async () => {
+  if (!pickedDate || !detailRows.length) return;
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Details");
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Details");
 
-    // --- Top date row (merged across all columns) ---
-    sheet.mergeCells(1, 1, 1, 11); // merge across 11 columns
-    const titleCell = sheet.getCell("A1");
-    titleCell.value = format(pickedDate, "EEEE, d MMMM, yyyy");
-    titleCell.alignment = { horizontal: "center", vertical: "middle" };
-    titleCell.font = { bold: true, size: 14 };
+  // --- Top date row (merged across all columns) ---
+  sheet.mergeCells(1, 1, 1, 11); // merge across 11 columns
+  const titleCell = sheet.getCell("A1");
+  titleCell.value = format(pickedDate, "EEEE, d MMMM, yyyy");
+  titleCell.alignment = { horizontal: "center", vertical: "middle" };
+  titleCell.font = { bold: true, size: 14 };
 
-    // --- Header row ---
-    const headers = [
-      "Sr",
-      "Date",
-      "Time",
-      "Employee ID",
-      "Card Number",
-      "Name",
-      "Personnel Type",
-      "Company",
-      "Primary Location",
-      "Door",
-      "Partition"
-    ];
-    const headerRow = sheet.addRow(headers);
-    headerRow.eachCell(cell => {
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFFC107" }
-      };
-      cell.alignment = { horizontal: "center" };
+  // --- Header row ---
+  const headers = [
+    "Sr",
+    "Date",
+    "Time",
+    "Employee ID",
+    "Card Number",
+    "Name",
+    "Personnel Type",
+    "Company",
+    "Primary Location",
+    "Door",
+    "Partition"
+  ];
+  const headerRow = sheet.addRow(headers);
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFFFC107" }
+    };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" }
+    };
+  });
+
+  // --- Data rows ---
+  detailRows.forEach((r, i) => {
+    const row = sheet.addRow([
+      i + 1,
+      r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : "",
+      formatApiTime12(r.LocaleMessageTime),
+      r.EmployeeID,
+      r.CardNumber,
+      r.ObjectName1,
+      r.PersonnelType,
+      r.CompanyName,
+      r.PrimaryLocation,
+      r.Door,
+      formatPartition(r.PartitionNameFriendly)
+    ]);
+    row.eachCell(cell => {
       cell.border = {
         top: { style: "thin" },
         left: { style: "thin" },
@@ -41,43 +65,83 @@
         right: { style: "thin" }
       };
     });
+  });
 
-    // --- Data rows ---
-    detailRows.forEach((r, i) => {
-      const row = sheet.addRow([
-        i + 1,
-        r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : "",
-        formatApiTime12(r.LocaleMessageTime),
-        r.EmployeeID,
-        r.CardNumber,
-        r.ObjectName1,
-        r.PersonnelType,
-        r.CompanyName,
-        r.PrimaryLocation,
-        r.Door,
-        formatPartition(r.PartitionNameFriendly)
-      ]);
-      row.eachCell(cell => {
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" }
-        };
-      });
-    });
+  // --- Set explicit/sensible widths and alignments ---
+  // ExcelJS column index is 1-based. We'll set fixed widths for small columns
+  // and auto-size the rest with minimal padding.
+  // Map: A=Sr, B=Date, C=Time, D=Employee ID, E=Card Number, F=Name, G=Personnel Type,
+  // H=Company, I=Primary Location, J=Door, K=Partition
 
-    // --- Auto column width with limits ---
-    sheet.columns.forEach(col => {
-      let maxLen = 7;
-      col.eachCell({ includeEmpty: true }, c => {
-        maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2);
-      });
-      // keep columns within a reasonable range
-      col.width = Math.min(Math.max(maxLen, 10), 40);
-    });
+  // First set some defaults (will override specific ones after)
+  sheet.columns = [
+    { key: 'sr' },           // A
+    { key: 'date' },         // B
+    { key: 'time' },         // C
+    { key: 'empid' },        // D
+    { key: 'card' },         // E
+    { key: 'name' },         // F
+    { key: 'ptype' },        // G
+    { key: 'company' },      // H
+    { key: 'ploc' },         // I
+    { key: 'door' },         // J
+    { key: 'partition' }     // K
+  ];
 
-    // --- Save file ---
-    const buf = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buf]), `apac_history_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+  // Explicit compact widths for narrow/ID columns (these are character widths)
+  const explicitWidths = {
+    1: 5,   // Sr
+    2: 11,  // Date (yyyy-mm-dd is 10 chars; give a little room)
+    3: 11,  // Time (hh:mm:ss AM)
+    4: 10,  // Employee ID (IDs are short)
+    5: 10   // Card Number (short)
+    // other columns will be auto-sized below
   };
+
+  // auto-size remaining columns but with minimal padding
+  // compute max length per column from cells (including header)
+  const maxLens = new Array(sheet.columns.length).fill(0);
+  sheet.eachRow((row, rowNumber) => {
+    row.eachCell((cell, colNumber) => {
+      const text = cell.value === null || cell.value === undefined ? '' : String(cell.value);
+      // don't count long strings with weird spacing — trim for measurement
+      const len = text.trim().length;
+      if (len > maxLens[colNumber - 1]) maxLens[colNumber - 1] = len;
+    });
+  });
+
+  // apply widths: use explicit widths where given, otherwise use measured length + small padding
+  sheet.columns.forEach((col, idx) => {
+    const colIndex = idx + 1;
+    if (explicitWidths[colIndex]) {
+      col.width = explicitWidths[colIndex];
+    } else {
+      // small padding: +1 (instead of +2 previously) and min 8, max 40
+      const measured = maxLens[idx] || 8;
+      const width = Math.min(Math.max(measured + 1, 8), 40);
+      col.width = width;
+    }
+
+    // alignment tweaks per column
+    if (colIndex === 1 || colIndex === 4 || colIndex === 5 || colIndex === 10) {
+      // Sr / Employee ID / Card Number / Door -> center or right-aligned
+      col.alignment = { horizontal: 'center', vertical: 'middle' };
+    } else if (colIndex === 3) {
+      // Time -> center
+      col.alignment = { horizontal: 'center', vertical: 'middle' };
+    } else if (colIndex === 2) {
+      // Date -> center
+      col.alignment = { horizontal: 'center', vertical: 'middle' };
+    } else {
+      // text columns -> left
+      col.alignment = { horizontal: 'left', vertical: 'middle' };
+    }
+  });
+
+  // Optional: freeze the header row to keep it visible when scrolling in Excel
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+  // --- Save file ---
+  const buf = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), `apac_history_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+};
