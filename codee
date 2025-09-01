@@ -1,3 +1,8 @@
+// helper: unify the key format used by companyRows and detailRows
+const makeCompanyKey = (country, city, company) => `${country}||${city}||${company}`;
+
+...
+
 {companyRows.length > 0 ? companyRows.map((r, i) => {
   const rowKey = makeCompanyKey(r.country, r.city, r.company);
   return (
