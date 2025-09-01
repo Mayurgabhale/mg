@@ -1,90 +1,435 @@
-const handleExportSummary = async () => {
-  if (!pickedDate) return;
+#apac ====
 
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet('Summary');
 
-  // Row 1: merged date centered (same look as APAC page)
-  ws.mergeCells('A1:E1');
-  const dateCell = ws.getCell('A1');
-  dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
-  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  dateCell.font = { name: 'Calibri', size: 14, bold: true };
+  const handleExportCompanies = async () => {
+    if (!pickedDate || !companyRows.length) return;
 
-  // Row 2: blank spacing
-  ws.addRow([]);
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Company Summary');
 
-  // Row 3: header row
-  const headerRow = ws.addRow(['Country', 'City', 'Employees', 'Contractors', 'Total']);
-  headerRow.height = 20;
+    // set up columns
+    ws.columns = [
+      { header: 'Country', key: 'country', width: 20 },
+      { header: 'City', key: 'city', width: 25 },
+      { header: 'Company', key: 'company', width: 40 },
+      { header: 'Total', key: 'total', width: 12 },
+    ];
 
-  // style helpers
-  const thinBorder = { style: 'thin', color: { argb: 'FF000000' } };
-  const allThinBorder = { top: thinBorder, left: thinBorder, bottom: thinBorder, right: thinBorder };
+    // merge top row for date
+    ws.mergeCells('A1:D1');
+    const dateCell = ws.getCell('A1');
+    dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { name: 'Calibri', size: 14, bold: true };
 
-  // header style: yellow fill, bold, centered
-  headerRow.eachCell(cell => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
-    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    cell.border = allThinBorder;
-  });
+    // blank spacer
+    ws.addRow([]);
 
-  // blank spacer (visual)
-  ws.addRow([]);
+    // header row
+    const headerRow = ws.addRow(['Country', 'City', 'Company', 'Total']);
+    headerRow.eachCell(cell => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.font = { bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
 
-  // Data rows start after the spacer
-  partitionRows.forEach(r => {
-    const row = ws.addRow([r.country, r.city, r.employee, r.contractor, r.total]);
-    row.eachCell((cell, colNumber) => {
-      cell.border = allThinBorder;
-      if (colNumber >= 3) {
-        // numeric columns: right align, number format
-        cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
+    // data rows
+    companyRows.forEach(r => {
+      const row = ws.addRow([r.country, r.city, r.company, r.total]);
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        if (colNumber === 4) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
           cell.numFmt = '#,##0';
+        } else {
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
         }
+      });
+    });
+
+    // totals row
+    const total = companyRows.reduce((s, r) => s + r.total, 0);
+    const totalRow = ws.addRow(['Total', '', '', total]);
+    totalRow.eachCell((cell, colNumber) => {
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      if (colNumber === 4) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0';
       } else {
-        cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
       }
-      cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF000000' } };
     });
-  });
 
-  // Final total row
-  const totalEmployees = partitionRows.reduce((s, r) => s + r.employee, 0);
-  const totalContractors = partitionRows.reduce((s, r) => s + r.contractor, 0);
-  const totalTotal = partitionRows.reduce((s, r) => s + r.total, 0);
-  const totalRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotal]);
+    // save
+    const buf = await wb.xlsx.writeBuffer();
+    saveAs(new Blob([buf]), `apac_companies_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+  };
 
-  totalRow.eachCell((cell, colNumber) => {
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; // light gray
-    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
-    cell.border = allThinBorder;
-    if (colNumber >= 3) {
-      cell.alignment = { horizontal: 'right', vertical: 'middle' };
-      cell.numFmt = '#,##0';
-    } else {
-      cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
-    }
-  });
+..
+ {/* ‣ Date & summary */}
+        {pickedDate && summaryEntry ? (
 
-  // Freeze panes so header is visible (freeze above data rows: after the header + spacer rows)
-  ws.views = [{ state: 'frozen', ySplit: 4 }];
+          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 2 }}>
+            <Box sx={{ width: 200 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Select date"
+                  value={pickedDate}
+                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                  renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
+                />
+              </LocalizationProvider>
+            </Box>
 
-  // Autosize columns (reasonable limits)
-  ws.columns.forEach(col => {
-    let maxLen = 10;
-    col.eachCell({ includeEmpty: true }, c => {
-      const v = c.value === null || c.value === undefined ? '' : String(c.value);
-      maxLen = Math.max(maxLen, v.trim().length + 2);
-    });
-    col.width = Math.min(Math.max(maxLen, 8), 40);
-  });
+            {/* Container for both tables side-by-side */}
 
-  // export
-  const buf = await wb.xlsx.writeBuffer();
-  const safeDate = format(pickedDate, 'yyyyMMdd');
-  const filename = `apac_summary_${safeDate}.xlsx`;
-  saveAs(new Blob([buf]), filename);
-};
+            <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+              {/* Left: existing summary table */}
+
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+
+                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
+                  <TableContainer sx={{ maxHeight: 500, overflowY: 'auto' }}>
+
+                    <Table sx={{ border: '2px solid #000' }} size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={5} align="center"
+                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ bgcolor: '#FFC107' }}>
+                          {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => (
+                            <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'right'}
+                              sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {partitionRows.map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                            <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
+                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
+                            <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                              {r.total}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow sx={{ bgcolor: '#666' }}>
+                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            Total
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {partitionRows.reduce((s, r) => s + r.employee, 0)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {partitionRows.reduce((s, r) => s + r.contractor, 0)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                            {partitionRows.reduce((s, r) => s + r.total, 0)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+
+                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                  <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+                    onClick={() => setShowDetails(v => !v)}>
+                    {showDetails ? 'Hide Details' : 'See Details'}
+                  </Button>
+                  {showDetails && (
+                    <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
+                      onClick={handleExport}>
+                      Export to Excel
+                    </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    sx={{ ml: 2, bgcolor: '#FFC107', color: '#000' }}
+                    onClick={handleExportSummary}
+                  >
+                    Export Summary to Excel
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Right: NEW company-level table (same style) */}
+
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+
+                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
+                  <TableContainer sx={{ maxHeight: 280, overflowY: 'auto' }}>
+
+                    <Table sx={{ border: '2px solid #000' }} size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={4} align="center"
+                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ bgcolor: '#FFC107' }}>
+                          {['Country', 'City', 'Company', 'Total'].map(h => (
+                            <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'center'}
+                              sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+
+                        {companyRows.length > 0 ? companyRows.map((r, i) => {
+                          const rowKey = makeCompanyKey(r.country, r.city, r.company);
+                          return (
+                            <TableRow
+                              key={`${r.company}-${i}`}
+                              onClick={() => {
+                                if (selectedCompany === rowKey) {
+                                  setSelectedCompany(null);   // second click — clear filter
+                                  setShowDetails(true);
+                                } else {
+                                  setSelectedCompany(rowKey); // first click — filter
+                                  setShowDetails(true);
+                                }
+                              }}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': { backgroundColor: '#474747' },
+                                ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
+                              }}
+                              tabIndex={0}
+                              role="button"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  if (selectedCompany === rowKey) {
+                                    setSelectedCompany(null);
+                                    setShowDetails(true);
+                                  } else {
+                                    setSelectedCompany(rowKey);
+                                    setShowDetails(true);
+                                  }
+                                }
+                              }}
+                            >
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
+                              <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                                {r.total}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }):(
+                            <TableRow>
+                              <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                                No records for this date.
+                              </TableCell>
+                            </TableRow>
+                          )}
+
+                        {/* Totals row */}
+                        <TableRow sx={{ bgcolor: '#666' }}>
+                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            Total
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {/* empty cell for layout: keep consistent with left table */}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                            {companyRows.reduce((s, r) => s + r.total, 0)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+
+
+                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: '#FFC107', color: '#000' }}
+                    onClick={handleExportCompanies}
+                  >
+                    Export Companies to Excel
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+
+        ) : (
+          <Box sx={{ px: 2, mb: 3 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Select date"
+                value={pickedDate}
+                onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
+              />
+            </LocalizationProvider>
+            {!pickedDate && (
+              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
+                Please pick a date to view region summary.
+              </Typography>
+            )}
+          </Box>
+        )}
+
+
+
+
+Read above apac code carefuuly, and
+in emea add compnay talbe on right side for summary talbe =, and apply same future like in apca,
+listin dontcha change any thisng jsut add and appllym dont achage anythigns ok
+i hove you understand better. 
+..........................
+#Emea ===
+        {/* DatePicker + Summary */}
+        {pickedDate && summaryEntry ? (
+          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 1 }}>
+            <Box sx={{ width: 200 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Select date"
+                  value={pickedDate}
+                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                  renderInput={params => <TextField fullWidth {...params} />}
+                />
+              </LocalizationProvider>
+            </Box>
+
+            <Box sx={{ flex: 1, maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Paper elevation={3} sx={{ px: 1, py: 1, border: '3px solid #000', borderRadius: 2 }}>
+                <Table size='small' sx={{ border: '2px solid #000' }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={5} align="center"
+                        sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}
+                      >
+                        {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow sx={{ bgcolor: '#FFC107' }}>
+                      {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => (
+                        <TableCell key={h}
+                          align={['Country', 'City'].includes(h) ? 'left' : 'right'}
+                          sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
+                        >
+                          {h}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {partitionRows.map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
+                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
+                        <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                          {r.total}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow sx={{ bgcolor: '#666' }}>
+                      <TableCell colSpan={2} align="right"
+                        sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        Total
+                      </TableCell>
+                      <TableCell align="right"
+                        sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.employee, 0)}
+                      </TableCell>
+                      <TableCell align="right"
+                        sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.contractor, 0)}
+                      </TableCell>
+                      <TableCell align="right"
+                        sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.total, 0)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+
+                {/* <Box display="flex" justifyContent="center" sx={{ mt:1 }}>
+                  <Button variant="contained" sx={{ bgcolor:'#FFC107', color:'#000' }}
+                    onClick={()=>setShowDetails(v=>!v)}>
+                    {showDetails?'Hide Details':'See Details'}
+                  </Button>
+                  {showDetails && (
+                    <Button variant="outlined" sx={{ ml:2, borderColor:'#FFC107',color:'#FFC107'}}
+                      onClick={handleExport}>
+                      Export to Excel
+                    </Button>
+                  )}
+                </Box> */}
+
+                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                  <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+                    onClick={() => setShowDetails(v => !v)}>
+                    {showDetails ? 'Hide Details' : 'See Details'}
+                  </Button>
+                  {showDetails && (
+                    <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
+                      onClick={handleExport}>
+                      Export Details
+                    </Button>
+                  )}
+                  <Button variant="outlined" sx={{ ml: 2, borderColor: '#000', color: '#000',bgcolor: '#FFf' }}
+                    onClick={handleExportSummary}>
+                    Export Summary
+                  </Button>
+                </Box>
+
+
+
+              </Paper>
+            </Box>
+          </Box>
+        ) : (
+          <Box sx={{ px: 2, mb: 3 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Select date"
+                value={pickedDate}
+                onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                renderInput={params => <TextField fullWidth {...params} />}
+              />
+            </LocalizationProvider>
+            {!pickedDate && (
+              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
+                Please pick a date to view region summary.
+              </Typography>
+            )}
+          </Box>
+        )}
