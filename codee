@@ -1,97 +1,44 @@
-<Box
-  key={floor}
-  sx={{
-    width: { xs: '100%', sm: '50%' },
-    p: 1,
-    boxSizing: 'border-box',
-  }}
->
-  {/* Title + Export aligned in one row */}
-  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
-      {floor} (Total {emps.length})
-    </Typography>
-    <Button
-      size="small"
-      variant="contained"
-      onClick={() => exportToExcel(floor, emps)}
-    >
-      Export
-    </Button>
-  </Box>
+create e excle sheet more atractive border and add color, 
+// helper export function
+  const exportToExcel = (floor, data) => {
+    const wsData = [
+      ["Sr No", "ID", "Name", "Time", "Type", "CompanyName", "Card", "Door"], // headers
+      ...data.map((r, i) => [
+        i + 1,
+        r.EmployeeID,
+        r.ObjectName1,
+        new Date(r.LocaleMessageTime).toLocaleTimeString(),
+        r.PersonnelType,
+        r.CompanyName,
+        r.CardNumber,
+        r.Door
+      ])
+    ];
 
-  {/* Smart height layout */}
-  <Box
-    sx={{
-      border: '2px solid #FFC107',
-      borderRadius: 1,
-      p: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: 120,
-      maxHeight: isExpanded ? 600 : 'auto',
-    }}
-  >
-    <TableContainer
-      component={Paper}
-      variant="outlined"
-      sx={{
-        overflowY: 'auto',
-        flexGrow: 1,
-      }}
-    >
-      <Table size="small" stickyHeader>
-        <TableHead>
-          <TableRow>
-            {['ID', 'Name', 'Time', 'Type', 'CompanyName', 'Card', 'Door'].map(
-              (h, idx, arr) => (
-                <TableCell
-                  key={h}
-                  sx={{
-                    fontWeight: 'bold',
-                    py: 0.5,
-                    whiteSpace: 'nowrap',
-                    borderRight:
-                      idx !== arr.length - 1 ? '1px solid #ccc' : 'none',
-                    borderBottom: '1px solid #ccc',
-                  }}
-                >
-                  {h}
-                </TableCell>
-              )
-            )}
-          </TableRow>
-        </TableHead>
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-        <TableBody>
-          {visibleEmps.map((r, i) => (
-            <TableRow key={i}>
-              {[
-                r.EmployeeID,
-                r.ObjectName1,
-                new Date(r.LocaleMessageTime).toLocaleTimeString(),
-                r.PersonnelType,
-                r.CompanyName,
-                r.CardNumber,
-                r.Door,
-              ].map((val, idx, arr) => (
-                <TableCell
-                  key={idx}
-                  sx={{
-                    py: 0.5,
-                    minWidth: [50, 120, 100, 80, 100, 100][idx],
-                    whiteSpace: 'nowrap',
-                    borderRight:
-                      idx !== arr.length - 1 ? '1px solid #eee' : 'none',
-                  }}
-                >
-                  {val}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </Box>
-</Box>
+    // style borders & header color
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellRef]) continue;
+
+        ws[cellRef].s = {
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+          },
+          fill: R === 0 ? { fgColor: { rgb: "FFD966" } } : {}, // header bg color
+          font: { bold: R === 0 }
+        };
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, `${floor}_entries.xlsx`);
+  };
+
