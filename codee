@@ -1,3 +1,12 @@
+
+const all = data.details.filter(r =>
+  filteredPartitionKeys.includes(r.PartitionName2) &&
+  getIsoDate(r) === ds
+);
+
+....
+
+
 const getIsoDate = (r) =>
   (r?.SwipeDate && r.SwipeDate.slice(0, 10))
   || (r?.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10))
