@@ -1,75 +1,99 @@
-// canonical company fallback: prefer CompanyName, otherwise infer from PersonnelType
-const canonicalCompany = (r) => {
-  const raw = r.CompanyName && String(r.CompanyName).trim();
-  if (raw) return raw;
-  const pt = (r.PersonnelType && String(r.PersonnelType).toLowerCase()) || '';
-  if (pt.includes('temp')) return 'Temp Badge';
-  if (pt.includes('visitor')) return 'Visitor';
-  return 'Unknown';
-};
+{
+      "LocaleMessageTime": "2025-08-26T02:23:20.000Z",
+      "ObjectName1": "Cheres, Tetiana",
+      "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+      "EmployeeID": "324194",
+      "Text5": "Vilnius - Gama Business Center",
+      "PartitionName2": "LT.Vilnius",
+      "PersonGUID": "FA99E000-3E22-476C-AA89-CB85C3C72D79",
+      "PersonnelType": "Employee",
+      "CompanyName": "WU Processing Lithuania, UAB",
+      "PrimaryLocation": "Vilnius - Gama Business Center",
+      "CardNumber": "609292",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "SwipeDate": "2025-08-26T00:00:00.000Z"
+    },
+
+i want to show as it is time Time that show in api. ok,
+dont chnage, as it is how in api excalym showing like 
+
+
+        {/* Details table */}
+        {showDetails && (
+          <Box display="flex" justifyContent="center" mb={2} sx={{ width: '100%' }}>
+            <Paper elevation={1} sx={{ px: 4, py: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
+              {detailRows.length > 0 ? (
+                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }} size='small'>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#000' }}>
+                      {['Sr', 'Date', 'Time', 'Emp ID', 'Card', 'Name', 'Type', 'CompanyName', 'PrimaryLocation', 'Door', 'Partition']
+                        .map(h => (
+                          <TableCell key={h} align="center"
+                            sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                            {h}
+                          </TableCell>
+                        ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {detailRows.map((r, i) => (
+                      <TableRow key={r.PersonGUID}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
+
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd')}
+                        </TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {format(new Date(r.LocaleMessageTime), 'HH:mm:ss')}
+                        </TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Typography variant="body2" sx={{
+                  color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic'
+                }}>
+                  No swipe records found for this date.
+                </Typography>
+              )}
+            </Paper>
+          </Box>
+        )}
 
 
 
-
-
-......
-
-
-const detailRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // a) all swipes that day for our partitions
-  const all = data.details.filter(r =>
-    filteredPartitionKeys.includes(r.PartitionName2) &&
-    r.LocaleMessageTime && r.LocaleMessageTime.startsWith(ds)
-  );
-
-  // b) oldest → newest
-  all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
-
-  // c) keep last swipe per person
-  const lastByPerson = {};
-  all.forEach(r => { lastByPerson[r.PersonGUID] = r; });
-
-  // d) values (final swipe entries) and only InDirection (still inside)
-  let rows = Object.values(lastByPerson).filter(r => r.Direction === 'InDirection');
-
-  // Attach computed company for display / filtering / export
-  rows = rows.map(r => ({ ...r, CompanyNameComputed: canonicalCompany(r) }));
-
-  // If a company row was clicked, do the strict triple match (Country||City||Company)
-  if (selectedCompany) {
-    const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
-    const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g, ' ').trim().toLowerCase();
-
-    rows = rows.filter(r => {
-      const rnCompany = String(r.CompanyNameComputed || 'Unknown').replace(/\s+/g,' ').trim().toLowerCase();
-      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
-      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-      return rnCompany === selCompanyNorm && rowCity === selCity && rowCountry === selCountry;
-    });
-  }
-
-  return rows;
-}, [data, pickedDate, filteredPartitionKeys, selectedCompany]);
-
-
-......
-
-filtered.forEach(r => {
-  const city = partitionToDisplay[r.PartitionName2]?.city || (r.PartitionName2 || 'Unknown');
-  const country = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-
-  // use canonicalCompany to handle blank CompanyName
-  const company = canonicalCompany(r);
-
-  const key = `${country}||${city}||${company}`;
-  const existing = map.get(key);
-  if (existing) {
-    existing.total += 1;
-  } else {
-    map.set(key, { country, city, company, total: 1 });
-  }
-});
-
+  // Excel export (includes CardNumber)
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      detailRows.map((r, i) => ({
+        Sr: i + 1,
+        Date: format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
+        // Time: format(new Date(r.LocaleMessageTime), 'HH:mm:ss'),
+        Time: formatApiTime12(r.LocaleMessageTime),
+        EmployeeID: r.EmployeeID,
+        CardNumber: r.CardNumber,
+        Name: r.ObjectName1,
+        PersonnelType: r.PersonnelType,
+        CompanyName: r.CompanyName,
+        PrimaryLocation: r.PrimaryLocation,
+        Door: r.Door,
+        Partition: partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2
+      }))
+    );
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Details');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+  };
