@@ -1,4 +1,49 @@
-// canonical company resolution: normalize & group common variants
+ {
+      "LocaleMessageTime": "2025-08-26T05:18:16.000Z",
+      "ObjectName1": "Marhaba, Ahmed",
+      "Door": "EMEA_MOR_CASA_07_01_Main Entrance",
+      "EmployeeID": "W0020932",
+      "Text5": "Casablanca - 1100 Boulevard Al",
+      "PartitionName2": "MA.Casablanca",
+      "PersonGUID": "8DA8F24A-0D08-45EF-ADAD-0440BDB9589E",
+      "PersonnelType": "Contractor",
+      "CompanyName": "",
+      "PrimaryLocation": "Casablanca - 1100 Boulevard Al",
+      "CardNumber": "615282",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "SwipeDate": "2025-08-26T00:00:00.000Z"
+
+
+ {
+      "LocaleMessageTime": "2025-08-27T12:47:17.000Z",
+      "ObjectName1": "Technical staff 2, Moscow",
+      "Door": "EMEA_RU_Moscow_main entrance",
+      "EmployeeID": "0",
+      "Text5": "Moscow, Russia",
+      "PartitionName2": "RU.Moscow",
+      "PersonGUID": "D3F75553-E0E1-40AC-B7D3-47981FB335B1",
+      "PersonnelType": "Property Management",
+      "CompanyName": "",
+      "PrimaryLocation": "Moscow, Russia",
+      "CardNumber": "201857",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "SwipeDate": "2025-08-27T00:00:00.000Z"
+    },
+
+
+
+know if CompanyName is blanck and PersonnelType  is Contractor then
+compnay is Contractor (compnay name is Contractor)
+
+
+if CompanyName is blanck and PersonnelType  is Property Management then
+compnay is Property Management (compnay name is Property Management)
+
+
+
+  // canonical company resolution: normalize & group common variants
 const getCanonicalCompany = (r) => {
   // helper: normalize a string to lower-case, remove punctuation, collapse spaces
   const normalize = (s) => {
