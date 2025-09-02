@@ -1,48 +1,17 @@
-time is showing wrong 
-see api {
-      "LocaleMessageTime": "2025-09-01T03:35:14.000Z",
-      "ObjectName1": "Shynn, Paul",
-      "Door": "WU-UK-MH-SOUTH LIFT LOBBY ENTRY",
-      "EmployeeID": "240837",
-      "Text5": "GBR - London - 22 Carlisle Place",
-      "PartitionName2": "UK.London",
-      "PersonGUID": "DF7E33F1-25E8-4C73-A4A6-D78C86B48DCA",
-      "PersonnelType": "Employee",
-      "CompanyName": "WU Retail Services GB Limited",
-      "PrimaryLocation": "GBR - London - 22 Carlisle Place",
-      "CardNumber": "615240",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "SwipeDate": "2025-09-01T00:00:00.000Z"
-    },
-
-and this is show in frontend 
-2025-09-01	09:05:14 AM	240837	615240	Shynn, Paul	Employee	WU Retail Services GB Limited	GBR - London - 22 Carlisle Place	WU-UK-MH-SOUTH LIFT LOBBY ENTRY	London
-
-
-this is wrong time 	09:05:14 AM 
-api show this   "LocaleMessageTime": "2025-09-01T03:35:14.000Z",
-
-// convert the API ISO string into 12-hour time (hh:mm:ss AM/PM) as shown by API but human-friendly
+// Interpret the ISO string as UTC and return hh:mm:ss AM/PM (no local timezone conversion)
 const formatApiTime12 = (iso) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true
-  });
+  if (!iso || typeof iso !== 'string') return '';
+  // Expect ISO like "2025-09-01T03:35:14.000Z"
+  const hh = iso.slice(11, 13);
+  const mm = iso.slice(14, 16);
+  const ss = iso.slice(17, 19);
+  if (!hh || !mm || !ss) return '';
+  let h = parseInt(hh, 10);
+  if (Number.isNaN(h)) return `${hh}:${mm}:${ss}`;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return `${String(h12).padStart(2, '0')}:${mm}:${ss} ${ampm}`;
 };
 
 
-
-....
-
-<TableCell sx={{ border: '2px solid #000' }}>
-  {formatApiTime12(r.LocaleMessageTime)}
-</TableCell>
-...
-
-
-Time: formatApiTime12(r.LocaleMessageTime),
