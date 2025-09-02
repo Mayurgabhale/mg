@@ -1,3 +1,38 @@
+
+const detailRows = useMemo(() => {
+  if (!data || !pickedDate || !showDetails) return [];
+  const ds = format(pickedDate, 'yyyy-MM-dd');
+
+  // a) all swipes that day for our partitions
+  const all = data.details.filter(r =>
+    filteredPartitionKeys.includes(r.PartitionName2) &&
+    r.LocaleMessageTime && r.LocaleMessageTime.startsWith(ds)
+  );
+
+  // b) oldest → newest
+  all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
+
+  // c) last swipe per person
+  const lastByPerson = {};
+  all.forEach(r => { lastByPerson[r.PersonGUID] = r; });
+
+  // d) only those whose final swipe was an entry (original behaviour kept)
+  let result = Object.values(lastByPerson);
+
+  // NEW: if a company is selected, filter by company name (case-insensitive, trimmed)
+  if (selectedCompany) {
+    const sc = String(selectedCompany).trim().toLowerCase();
+    result = result.filter(r => {
+      const comp = (r.CompanyName || 'Unknown').toString().trim().toLowerCase();
+      return comp === sc;
+    });
+  }
+
+  return result;
+}, [data, pickedDate, filteredPartitionKeys, selectedCompany, showDetails]);
+
+
+....
 // inside companyRows.map((r, i) => { ... })
 const companyOnly = r.company; // company string only
 const isSelectedCompany = selectedCompany === companyOnly;
