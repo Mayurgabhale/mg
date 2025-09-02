@@ -1,5 +1,30 @@
+time is showing wrong 
+see api {
+      "LocaleMessageTime": "2025-09-01T03:35:14.000Z",
+      "ObjectName1": "Shynn, Paul",
+      "Door": "WU-UK-MH-SOUTH LIFT LOBBY ENTRY",
+      "EmployeeID": "240837",
+      "Text5": "GBR - London - 22 Carlisle Place",
+      "PartitionName2": "UK.London",
+      "PersonGUID": "DF7E33F1-25E8-4C73-A4A6-D78C86B48DCA",
+      "PersonnelType": "Employee",
+      "CompanyName": "WU Retail Services GB Limited",
+      "PrimaryLocation": "GBR - London - 22 Carlisle Place",
+      "CardNumber": "615240",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "SwipeDate": "2025-09-01T00:00:00.000Z"
+    },
+
+and this is show in frontend 
+2025-09-01	09:05:14 AM	240837	615240	Shynn, Paul	Employee	WU Retail Services GB Limited	GBR - London - 22 Carlisle Place	WU-UK-MH-SOUTH LIFT LOBBY ENTRY	London
+
+
+this is wrong time 	09:05:14 AM 
+api show this   "LocaleMessageTime": "2025-09-01T03:35:14.000Z",
+
 // convert the API ISO string into 12-hour time (hh:mm:ss AM/PM) as shown by API but human-friendly
-const getApiTime12 = (iso) => {
+const formatApiTime12 = (iso) => {
   if (!iso) return '';
   const d = new Date(iso);
   return d.toLocaleTimeString('en-US', {
@@ -15,9 +40,9 @@ const getApiTime12 = (iso) => {
 ....
 
 <TableCell sx={{ border: '2px solid #000' }}>
-  {getApiTime12(r.LocaleMessageTime)}
+  {formatApiTime12(r.LocaleMessageTime)}
 </TableCell>
 ...
 
 
-Time: getApiTime12(r.LocaleMessageTime),
+Time: formatApiTime12(r.LocaleMessageTime),
