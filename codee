@@ -1,4 +1,12 @@
 
+
+
+<TableCell sx={{ border: '2px solid #000' }}>
+  {getIsoDate(r)}
+</TableCell>
+
+
+...
 const all = data.details.filter(r =>
   filteredPartitionKeys.includes(r.PartitionName2) &&
   getIsoDate(r) === ds
