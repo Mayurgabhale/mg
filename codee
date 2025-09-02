@@ -1,4 +1,4 @@
-// Excel export (no extra spacing in any column)
+  // Excel export (more attractive) — uses ExcelJS (already imported)
 const handleExport = async () => {
   if (!pickedDate || !detailRows || detailRows.length === 0) return;
 
@@ -7,17 +7,17 @@ const handleExport = async () => {
 
   // Columns to export (order + keys)
   const cols = [
-    { header: 'Sr', key: 'sr' },
-    { header: 'Date', key: 'date' },
-    { header: 'Time', key: 'time' },
-    { header: 'EmployeeID', key: 'employee' },
-    { header: 'CardNumber', key: 'card' },
-    { header: 'Name', key: 'name' },
-    { header: 'PersonnelType', key: 'type' },
-    { header: 'CompanyName', key: 'company' },
-    { header: 'PrimaryLocation', key: 'location' },
-    { header: 'Door', key: 'door' },
-    { header: 'Partition', key: 'partition' },
+    { header: 'Sr', key: 'sr', width: 2 },
+    { header: 'Date', key: 'date', width: 5 },
+    { header: 'Time', key: 'time', width: 5 },
+    { header: 'EmployeeID', key: 'employee', width: 6 },
+    { header: 'CardNumber', key: 'card', width: 6 },
+    { header: 'Name', key: 'name', width: 32 },
+    { header: 'PersonnelType', key: 'type', width: 10 },
+    { header: 'CompanyName', key: 'company', width: 30 },
+    { header: 'PrimaryLocation', key: 'location', width: 32 },
+    { header: 'Door', key: 'door', width: 40 },
+    { header: 'Partition', key: 'partition', width: 10 },
   ];
 
   ws.columns = cols;
@@ -64,8 +64,9 @@ const handleExport = async () => {
       partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || ''
     ]);
 
-    row.eachCell((cell) => {
-      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: false };
+    // Row styling: borders + alignment
+    row.eachCell((cell, colNumber) => {
+      cell.alignment = { vertical: 'middle', horizontal: (colNumber >= 4 && colNumber <= 5) ? 'right' : 'left', wrapText: false };
       cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF000000' } };
       cell.border = {
         top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
@@ -89,7 +90,7 @@ const handleExport = async () => {
   totalRow.eachCell((cell, colNumber) => {
     cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.alignment = { horizontal: colNumber === 11 ? 'right' : 'center', vertical: 'middle' };
     cell.border = {
       top: { style: 'thin', color: { argb: 'FF000000' } },
       left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -101,18 +102,44 @@ const handleExport = async () => {
     }
   });
 
-  // Autosize columns exactly to content (no padding)
-  ws.columns.forEach(col => {
-    let maxLen = col.header ? String(col.header).length : 1;
-    col.eachCell({ includeEmpty: true }, c => {
-      const v = c.value == null ? '' : String(c.value);
-      maxLen = Math.max(maxLen, v.trim().length);
-    });
-    col.width = Math.min(Math.max(maxLen, 4), 40); // no +2 padding
+  // Autosize columns (reasonable limits)
+// Autosize columns (no unnecessary padding for short values)
+ws.columns.forEach((col, index) => {
+  let maxLen = col.header ? String(col.header).length : 1;
+
+  col.eachCell({ includeEmpty: true }, c => {
+    const v = c.value === null || c.value === undefined ? '' : String(c.value);
+    maxLen = Math.max(maxLen, v.trim().length);
   });
+
+  // Remove extra padding, keep small cols tight
+  if (index === 0 ) {
+    // Sr column — force small width
+    col.width = 4;
+  } else {
+    col.width = Math.min(Math.max(maxLen, 2), 30);
+  }
+});
+
+
 
   // Freeze header area (title + spacer + header visible)
   ws.views = [{ state: 'frozen', ySplit: 3 }];
+
+  // Outer thin border polish for the used area
+  const lastRow = ws.rowCount;
+  const lastCol = ws.columns.length;
+  for (let r = 1; r <= lastRow; r++) {
+    for (let c = 1; c <= lastCol; c++) {
+      const cell = ws.getCell(r, c);
+      cell.border = {
+        top: cell.border?.top || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+        left: cell.border?.left || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+        bottom: cell.border?.bottom || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+        right: cell.border?.right || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+      };
+    }
+  }
 
   // Save workbook
   const buf = await wb.xlsx.writeBuffer();
