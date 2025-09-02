@@ -334,8 +334,31 @@ const formatApiTime12 = (iso) => {
   );
 }
 
-
-
+Sr	Date	Time	EmployeeID	Name	PersonnelType	CardNumber	Door	Partition
+1	2025-08-31	09:42:37 PM	W0020261	Parrales, Jorge	Contractor	612769	LACA CR B1 Main Lobby Door	CR.Costa Rica Partition
+2	2025-08-31	12:36:23 AM	73432593	Obando, Kevin	Contractor	612770	LACA CR B1 Main Lobby Door	CR.Costa Rica Partition
+3	2025-08-31	04:57:12 AM	322905	Vega, Juan	Employee	606775	LACA CR A2 Emergency Elevators Door	CR.Costa Rica Partition
+4	2025-08-31	05:42:49 AM	73432652	Mora, Carlos	Contractor	612776	LACA CR B1 Main Lobby Door	CR.Costa Rica Partition
+5	2025-08-31	05:46:47 AM	W0010141	Guadamuz, Kevin	Contractor	612763	LACA CR F4 Main Lobby Door	CR.Costa Rica Partition
+6	2025-08-31	05:57:06 AM	328760	Delgado, Priscilla Maria	Employee	617107	LACA CR B2  Main Lobby Door	CR.Costa Rica Partition
+7	2025-08-31	06:03:46 AM	326170	Flores, Carlos Manuel	Employee	612869	LACA CR B2  Main Lobby Door	CR.Costa Rica Partition
+8	2025-08-31	06:39:34 AM	325360	Hernandez, Kimberly Alejandra	Employee	605557	LACA CR B2  Main Lobby Door	CR.Costa Rica Partition
+9	2025-08-31	06:39:41 AM	323639	Mora, Javier Emilio	Employee	606304	LACA CR F4 Main Lobby Door	CR.Costa Rica Partition
+10	2025-08-31	07:51:45 AM	326974	Rodriguez, Karina Sofia	Employee	613249	LACA CR B2  Main Lobby Door	CR.Costa Rica Partition
+11	2025-08-31	08:12:49 AM	314656	Amundarain, Jesus Orlando	Employee	417638	LACA CR B3 3rd Floor Elevator Emergency Door	CR.Costa Rica Partition
+12	2025-08-31	08:16:49 AM	W0019475	Rodriguez, Darling	Contractor	613083	LACA CR A1 Main Lobby Door	CR.Costa Rica Partition
+13	2025-08-31	08:23:54 AM	317570	Espinoza, Danilo	Employee	415829	LACA CR B1 Main Lobby Door	CR.Costa Rica Partition
+14	2025-08-31	08:44:10 AM	72250974	Valverde, Luis	Contractor	612783	LACA CR B3 Main Lobby Door	CR.Costa Rica Partition
+15	2025-08-31	09:05:08 AM	318906	Chavez, Carlos	Employee	606950	LACA CR E4 Main Lobby Door	CR.Costa Rica Partition
+16	2025-08-31	11:29:21 AM	W0027218	Araya, Ignacio	Contractor	617168	LACA CR B1 Main Lobby Door	CR.Costa Rica Partition
+17	2025-08-31	01:41:04 PM	328311	Urbina, Brayan Antonio	Employee	613148	LACA CR B2 Emergency Elevators Door	CR.Costa Rica Partition
+18	2025-08-31	01:47:59 PM	W0026016	Segura, Kevin	Contractor	606975	LACA CR B1 Main Lobby Door	CR.Costa Rica Partition
+19	2025-08-31	01:59:25 PM	328171	Cruz, Thomas	Employee	612748	LACA CR B2  Main Lobby Door	CR.Costa Rica Partition
+20	2025-08-31	02:11:00 PM	193221	Pull, Brigitte K.	Employee	302606	LACA CR B2 Emergency Elevators Door	CR.Costa Rica Partition
+21	2025-08-31	02:27:27 PM	307010	Marquez, Maxime	Employee	417165	LACA CR B2 Emergency Elevators Door	CR.Costa Rica Partition
+22	2025-08-31	02:55:29 PM	328401	Mejias, Kiany Dayana	Employee	606940	LACA CR B2  Main Lobby Door	CR.Costa Rica Partition
+23	2025-08-31	04:53:33 PM	315037	Peraza, Yamila	Employee	416049	LACA CR F4 Main Lobby Door	CR.Costa Rica Partition
+24	9/1/2025	09:49:34 PM	W0022873	Hernandez, Sofia	Contractor	612791	LACA CR F4 Main Lobby Door	CR.Costa Rica Partition
 
 
 
