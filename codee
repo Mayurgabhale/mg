@@ -1,3 +1,18 @@
+one issue in the space in column 
+Sr	Date	Time	EmployeeID	CardNumber	Name	PersonnelType
+this getting more space
+for example 
+sr 
+1
+2
+3 
+bu they gettin g
+1.....................
+2.....................
+
+like space so it is now lookin better 
+remove space 
+
 // Excel export (more attractive) — uses ExcelJS (already imported)
 const handleExport = async () => {
   if (!pickedDate || !detailRows || detailRows.length === 0) return;
@@ -7,17 +22,17 @@ const handleExport = async () => {
 
   // Columns to export (order + keys)
   const cols = [
-    { header: 'Sr', key: 'sr', width: 6 },
-    { header: 'Date', key: 'date', width: 14 },
-    { header: 'Time', key: 'time', width: 14 },
-    { header: 'EmployeeID', key: 'employee', width: 14 },
-    { header: 'CardNumber', key: 'card', width: 14 },
+    { header: 'Sr', key: 'sr', width: 2 },
+    { header: 'Date', key: 'date', width: 5 },
+    { header: 'Time', key: 'time', width: 5 },
+    { header: 'EmployeeID', key: 'employee', width: 6 },
+    { header: 'CardNumber', key: 'card', width: 6 },
     { header: 'Name', key: 'name', width: 32 },
-    { header: 'PersonnelType', key: 'type', width: 18 },
+    { header: 'PersonnelType', key: 'type', width: 10 },
     { header: 'CompanyName', key: 'company', width: 30 },
     { header: 'PrimaryLocation', key: 'location', width: 32 },
     { header: 'Door', key: 'door', width: 40 },
-    { header: 'Partition', key: 'partition', width: 18 },
+    { header: 'Partition', key: 'partition', width: 10 },
   ];
 
   ws.columns = cols;
@@ -109,7 +124,7 @@ const handleExport = async () => {
       const v = c.value === null || c.value === undefined ? '' : String(c.value);
       maxLen = Math.max(maxLen, v.trim().length + 2);
     });
-    col.width = Math.min(Math.max(maxLen, 8), 50);
+    col.width = Math.min(Math.max(maxLen, 2), 30);
   });
 
   // Freeze header area (title + spacer + header visible)
