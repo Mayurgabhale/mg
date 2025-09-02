@@ -1,7 +1,10 @@
+same problme in this select date is Sunday, Monday, 1 September, 2025
+but alos disply 2025-09-02 data, slove like above, 
 
 
+8	2025-09-02	00:21:15	305065	Konrad, Joe	Employee	613524	US.CO.HQ. 06. South Entrance-IN	Denver
 
-
+Read all code carefully,.
 // src/pages/History.jsx
 
 import React, { useEffect, useState, useMemo } from 'react';
