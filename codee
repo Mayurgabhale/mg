@@ -1,5 +1,28 @@
-http://10.138.161.4:3000/dashboard/index.html
-http://10.199.22.57:3004/
-<IconButton component={Link} to="/" sx={{ color: '#FFC72C', ml: 1 }}><i class="fa-regular fa-camera-cctv fa-flip" color='#FFD700'></i></IconButton>
-<IconButton component={Link} to="/" sx={{ color: '#FFC72C', ml: 1 }}><i class="fa-solid fa-badge-check"></i></IconButton>
-      
+<IconButton
+  component="a"
+  href="http://10.138.161.4:3000/dashboard/index.html"
+  target="_blank"
+  rel="noopener noreferrer"
+  sx={{ color: '#FFC72C', ml: 1 }}
+>
+  <i className="fa-solid fa-camera" style={{ fontSize: 20 }} />
+</IconButton>
+
+<IconButton
+  component="a"
+  href="http://10.199.22.57:3004/"
+  target="_blank"
+  rel="noopener noreferrer"
+  sx={{ color: '#FFC72C', ml: 1 }}
+>
+  <i className="fa-solid fa-badge-check" style={{ fontSize: 20 }} />
+</IconButton>
+
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  integrity="sha512-pVnWr+fkv1z6wA0S4+d7NHgZrQy9QeFvWQ6xLZ3g7S2tvn6i9vN3Z+7D2i7Y/7b2QH+zjv6FvLQ9C9dUvTVOFQ=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
