@@ -1,3 +1,18 @@
+// Autosize all columns tightly (no extra space)
+ws.columns.forEach(col => {
+  let maxLen = col.header ? String(col.header).length : 1;
+
+  col.eachCell({ includeEmpty: true }, c => {
+    const v = c.value === null || c.value === undefined ? '' : String(c.value);
+    maxLen = Math.max(maxLen, v.trim().length);
+  });
+
+  // keep between 4 and 30 chars wide
+  col.width = Math.min(Math.max(maxLen, 4), 30);
+});
+
+ ..
+
   // Excel export (more attractive) — uses ExcelJS (already imported)
 const handleExport = async () => {
   if (!pickedDate || !detailRows || detailRows.length === 0) return;
