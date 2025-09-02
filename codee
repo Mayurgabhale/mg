@@ -1,49 +1,4 @@
- {
-      "LocaleMessageTime": "2025-08-26T05:18:16.000Z",
-      "ObjectName1": "Marhaba, Ahmed",
-      "Door": "EMEA_MOR_CASA_07_01_Main Entrance",
-      "EmployeeID": "W0020932",
-      "Text5": "Casablanca - 1100 Boulevard Al",
-      "PartitionName2": "MA.Casablanca",
-      "PersonGUID": "8DA8F24A-0D08-45EF-ADAD-0440BDB9589E",
-      "PersonnelType": "Contractor",
-      "CompanyName": "",
-      "PrimaryLocation": "Casablanca - 1100 Boulevard Al",
-      "CardNumber": "615282",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "SwipeDate": "2025-08-26T00:00:00.000Z"
-
-
- {
-      "LocaleMessageTime": "2025-08-27T12:47:17.000Z",
-      "ObjectName1": "Technical staff 2, Moscow",
-      "Door": "EMEA_RU_Moscow_main entrance",
-      "EmployeeID": "0",
-      "Text5": "Moscow, Russia",
-      "PartitionName2": "RU.Moscow",
-      "PersonGUID": "D3F75553-E0E1-40AC-B7D3-47981FB335B1",
-      "PersonnelType": "Property Management",
-      "CompanyName": "",
-      "PrimaryLocation": "Moscow, Russia",
-      "CardNumber": "201857",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "SwipeDate": "2025-08-27T00:00:00.000Z"
-    },
-
-
-
-know if CompanyName is blanck and PersonnelType  is Contractor then
-compnay is Contractor (compnay name is Contractor)
-
-
-if CompanyName is blanck and PersonnelType  is Property Management then
-compnay is Property Management (compnay name is Property Management)
-
-
-
-  // canonical company resolution: normalize & group common variants
+// canonical company resolution: normalize & group common variants
 const getCanonicalCompany = (r) => {
   // helper: normalize a string to lower-case, remove punctuation, collapse spaces
   const normalize = (s) => {
@@ -65,8 +20,6 @@ const getCanonicalCompany = (r) => {
     const n = normalize(raw);
 
     // ----- WU / Western Union family -> map to single canonical name -----
-    // This catches forms like: "WU Srvcs India Private Ltd", "WU Paymnt Services Ireland Ltd-IRL",
-    // "WU Processing Lithuania, UAB", "Western Union, LLC", "Western Union Morocco", "WU Retail Services", "WUI Bank GmbH", "WUPSIL", etc.
     if (
       n.includes('western union') ||
       n.startsWith('wu ') ||
@@ -82,7 +35,7 @@ const getCanonicalCompany = (r) => {
       n.includes('westernunionfin') ||
       n.includes('western union fin') ||
       n.includes('western union payment') ||
-      n.includes('payment services') && n.includes('western')
+      (n.includes('payment services') && n.includes('western'))
     ) {
       return 'WU Srvcs India Private Ltd';
     }
@@ -98,24 +51,21 @@ const getCanonicalCompany = (r) => {
     }
 
     // ----- UAB family (Lithuania / UAB prefix) -----
-    // Map UAB-prefixed companies into a single UAB bucket (or you can make it more specific)
     if (n.startsWith('uab ') || n.includes(' uab ') || n.includes('uab')) {
       return 'UAB';
     }
 
-    // ----- WUI / WUI Bank specifics already caught by WU logic above, but keep example mapping -----
-    // if (n.includes('wui bank')) return 'WU Srvcs India Private Ltd';
-
-    // ----- Some other catch-alls you might want grouped -----
-    // If you want "Unknown" mapping for specific tokens:
+    // ----- Other catch-alls -----
     if (n === 'unknown' || n === '') return 'Unknown';
 
-    // If none of the above matched, return the cleaned original (preserves vendor names)
-    // But keep original capitalization from raw for display
+    // If none matched, return the original raw (preserve capitalization)
     return raw;
   }
 
-  // 2) No CompanyName: infer from PersonnelType (as before)
+  // 2) No CompanyName: infer from PersonnelType
+  // Check more specific cases first
+  if (pt.includes('contractor')) return 'Contractor';
+  if (pt.includes('property') || pt.includes('property management')) return 'Property Management';
   if (pt.includes('temp')) return 'Temp Badge';
   if (pt.includes('visitor')) return 'Visitor';
 
