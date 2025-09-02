@@ -1,3 +1,41 @@
+
+// Custom widths by column index
+const fixedWidths = {
+  0: 4,   // Sr
+  1: 12,  // Date
+  2: 10,  // Time
+  3: 12,  // EmployeeID
+  4: 14,  // CardNumber
+  5: 25,  // Name
+  6: 14,  // PersonnelType
+  7: 25,  // CompanyName
+  8: 25,  // PrimaryLocation
+  9: 30,  // Door
+  10: 18, // Partition
+};
+
+// Apply widths
+ws.columns.forEach((col, index) => {
+  let maxLen = col.header ? String(col.header).length : 1;
+
+  col.eachCell({ includeEmpty: true }, c => {
+    const v = c.value === null || c.value === undefined ? '' : String(c.value);
+    maxLen = Math.max(maxLen, v.trim().length);
+  });
+
+  if (fixedWidths[index] !== undefined) {
+    col.width = fixedWidths[index]; // force custom width
+  } else {
+    col.width = Math.min(Math.max(maxLen, 4), 30); // auto fallback
+  }
+});
+
+
+
+
+....
+
+
 // Remove extra padding, keep small cols tight
   if (index === 0 ) {
     // Sr column — force small width
