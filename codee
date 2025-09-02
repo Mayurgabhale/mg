@@ -1,21 +1,889 @@
-const inDay = (r.SwipeDate && r.SwipeDate.startsWith(ds))
-  || (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds);
+same problme in this select date is Sunday, 31 August, 2025 
+but alos disply 2025-09-01 data, slove like above, 
+
+29	2025-09-01	06:42:44 PM	W0009043	615337	KISKIENE, JURGITA	Contractor	UAB CSE (HCT)	Vilnius - Technopolis	EMEA_LT_VNO_GAMA_1st Flr_Main Entrance	Vilnius
+30	2025-09-01	09:58:14 PM	324194	609292	Cheres, Tetiana	Employee	WU Processing Lithuania, UAB	Vilnius - Gama Business Center	EMEA_LT_VNO_GAMA_1st Flr_Main Entrance	Vilnius
+31	2025-09-01	10:17:20 PM	0	615126	UK, TEMP_LON_006	Temp Badge		London UK	WU-UK-MH-NORTH LIFT LOBBY ENTRY	London
+32	2025-09-01	10:20:56 PM	324336	608933	Wagle, Priyanka	Employee	WU Processing Lithuania, UAB	Vilnius - Gama Business Center	EMEA_LT_VNO_GAMA_1st Flr_Main Entrance	Vilnius
+
+read below code carefully......!
+
+... 
+
+
+// C:\Users\W0024618\Desktop\emea-occupancy-frontend\src\pages\History.jsx
+// src/pages/History.jsx
+
+import React, { useEffect, useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  Container, Box, Button, Typography, Table,
+  TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Paper, TextField
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import ExcelJS from "exceljs";
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { fetchHistory } from '../api/occupancy.service';
+
+
+const partitionToDisplay = {
+  'AUT.Vienna': { city: 'Vienna', country: 'Austria' },
+  'DU.Abu Dhab': { city: 'Dubai', country: 'UAE' },
+  'IE.Dublin': { city: 'Dublin', country: 'Ireland' },
+  'LT.Vilnius': { city: 'Vilnius', country: 'Lithuania' },
+
+  'MA.Casablanca': { city: 'Casablanca', country: 'Morocco' },
+  'RU.Moscow': { city: 'Moscow', country: 'Russia' },
+  'UK.London': { city: 'London', country: 'UK' },
+  'ES.Madrid': { city: 'Madrid', country: 'Spain' }
+
+};
+
+
+export default function History() {
+  const { partition: partitionParam } = useParams();
+  const decodedKey = partitionParam ? decodeURIComponent(partitionParam) : null;
+
+  // Wrap in useMemo to keep stable across renders
+  const filteredPartitionKeys = useMemo(
+    () => decodedKey ? [decodedKey] : Object.keys(partitionToDisplay),
+    [decodedKey]
+  );
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [pickedDate, setPickedDate] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+
+
+  // new: company click/filter state
+  const [selectedCompany, setSelectedCompany] = useState(null);
+
+// Interpret the ISO string as UTC and return hh:mm:ss AM/PM (no local timezone conversion)
+const formatApiTime12 = (iso) => {
+  if (!iso || typeof iso !== 'string') return '';
+  // Expect ISO like "2025-09-01T03:35:14.000Z"
+  const hh = iso.slice(11, 13);
+  const mm = iso.slice(14, 16);
+  const ss = iso.slice(17, 19);
+  if (!hh || !mm || !ss) return '';
+  let h = parseInt(hh, 10);
+  if (Number.isNaN(h)) return `${hh}:${mm}:${ss}`;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return `${String(h12).padStart(2, '0')}:${mm}:${ss} ${ampm}`;
+};
 
 
 
 
-......
-
-
-{r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : (r.SwipeDate ? r.SwipeDate.slice(0,10) : '')}
 
 
 
 
-...
+
+// canonical company resolution: normalize & group common variants
+const getCanonicalCompany = (r) => {
+  // helper: normalize a string to lower-case, remove punctuation, collapse spaces
+  const normalize = (s) => {
+    if (!s) return '';
+    return String(s)
+      .toLowerCase()
+      .normalize('NFKD')              // normalize diacritics
+      .replace(/[\u0300-\u036f]/g, '')// strip accents
+      .replace(/[^a-z0-9\s]/g, ' ')   // remove punctuation, keep letters/numbers/spaces
+      .replace(/\s+/g, ' ')           // collapse multiple spaces
+      .trim();
+  };
+
+  const raw = r.CompanyName && String(r.CompanyName).trim();
+  const pt = (r.PersonnelType && String(r.PersonnelType).toLowerCase()) || '';
+
+  // 1) If CompanyName exists, try to canonicalize it
+  if (raw) {
+    const n = normalize(raw);
+
+    // ----- WU / Western Union family -> map to single canonical name -----
+    if (
+      n.includes('western union') ||
+      n.startsWith('wu ') ||
+      n.startsWith('wui') ||
+      n.includes('wuprocessing') ||
+      n.includes('wupay') ||
+      n.includes('wu pay') ||
+      n.includes('wups') ||
+      n.includes('wupsm') ||
+      n.includes('wu retail') ||
+      n.includes('wu financial') ||
+      n.includes('westernunion') ||
+      n.includes('westernunionfin') ||
+      n.includes('western union fin') ||
+      n.includes('western union payment') ||
+      (n.includes('payment services') && n.includes('western'))
+    ) {
+      return 'WU Srvcs India Private Ltd';
+    }
+
+    // ----- Addendum family -----
+    if (n.includes('addendum')) {
+      return 'Addendum Solutions';
+    }
+
+    // ----- G4S family -----
+    if (n.includes('g4s')) {
+      return 'G4S Secure Solutions';
+    }
+
+    // ----- UAB family (Lithuania / UAB prefix) -----
+    if (n.startsWith('uab ') || n.includes(' uab ') || n.includes('uab')) {
+      return 'UAB';
+    }
+
+    // ----- Other catch-alls -----
+    if (n === 'unknown' || n === '') return 'Unknown';
+
+    // If none matched, return the original raw (preserve capitalization)
+    return raw;
+  }
+
+  // 2) No CompanyName: infer from PersonnelType
+  // Check more specific cases first
+  if (pt.includes('contractor')) return 'Contractor';
+  if (pt.includes('property') || pt.includes('property management')) return 'Property Management';
+  if (pt.includes('temp')) return 'Temp Badge';
+  if (pt.includes('visitor')) return 'Visitor';
+
+  // fallback
+  return 'Unknown';
+};
+
+  // 1) Find the summary entry for the chosen date
+  const summaryEntry = useMemo(() => {
+    if (!data || !pickedDate) return null;
+    const ds = format(pickedDate, 'yyyy-MM-dd');
+    return data.summaryByDate.find(r => r.date === ds) || null;
+  }, [data, pickedDate]);
+
+  // 2) Build that summary table’s rows
+  const partitionRows = useMemo(() => {
+    if (!summaryEntry) return [];
+    const codeToCountry = { US: 'United States', CA: 'Canada' };
+    return Object.entries(summaryEntry.partitions)
+      .filter(([key]) => filteredPartitionKeys.includes(key))
+      .map(([key, vals]) => {
+        const disp = partitionToDisplay[key];
+        const country = disp
+          ? disp.country
+          : codeToCountry[key.split('.')[0]] || key;
+        const city = disp ? disp.city : key;
+        return {
+          country,
+          city,
+          employee: vals.Employee ?? 0,
+          contractor: vals.Contractor ?? 0,
+          total: vals.total ?? 0
+        };
+      });
+  }, [summaryEntry, filteredPartitionKeys]);
 
 
-Date:
-  (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10)) ||
-  (r.SwipeDate && r.SwipeDate.slice(0, 10)) ||
-  '',
+const detailRows = useMemo(() => {
+  if (!data || !pickedDate) return [];
+  const ds = format(pickedDate, 'yyyy-MM-dd');
+
+  // a) all swipes that day for our partitions (defensive check for LocaleMessageTime)
+  const all = data.details.filter(r =>
+    filteredPartitionKeys.includes(r.PartitionName2) &&
+    r.LocaleMessageTime && r.LocaleMessageTime.startsWith(ds)
+  );
+
+  // b) sort oldest -> newest (so lastByKey keeps the last swipe of the day)
+  all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
+
+  // c) last swipe per "person-like" key
+  // use PersonGUID when available, otherwise fallback to a stable composite key
+  const lastByKey = {};
+  all.forEach((r, idx) => {
+    const personKey = r.PersonGUID && String(r.PersonGUID).trim();
+    const fallbackKey = `${r.EmployeeID ?? ''}||${r.CardNumber ?? ''}||${String(r.ObjectName1 ?? '').trim()}`;
+    const key = personKey || fallbackKey || `row-${idx}`;
+    lastByKey[key] = r;
+  });
+
+  // d) take the last values (this matches your original working code)
+  let rows = Object.values(lastByKey);
+
+  // Attach computed company (so UI / exports / company filtering all use same canonical name)
+  rows = rows.map(r => ({ ...r, CompanyNameComputed: getCanonicalCompany ? getCanonicalCompany(r) : (r.CompanyName || '') }));
+
+  // If a company row was clicked, do the strict triple match (Country||City||Company) as before
+  if (selectedCompany) {
+    const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
+    const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    rows = rows.filter(r => {
+      const rnCompany = String(r.CompanyNameComputed || 'Unknown').replace(/\s+/g, ' ').trim().toLowerCase();
+      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
+      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+      return rnCompany === selCompanyNorm && rowCity === selCity && rowCountry === selCountry;
+    });
+  }
+  return rows;
+}, [data, pickedDate, filteredPartitionKeys, selectedCompany]);
+
+  // Fetch once on mount
+  useEffect(() => {
+    setLoading(true);
+    fetchHistory()
+      .then(json => setData(json))
+      .finally(() => setLoading(false));
+  }, []);
+
+
+  // Excel export (more attractive) — uses ExcelJS (already imported)
+const handleExport = async () => {
+  if (!pickedDate || !detailRows || detailRows.length === 0) return;
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Details');
+
+  // Columns to export (order + keys)
+  const cols = [
+    { header: 'Sr', key: 'sr', width: 2 },
+    { header: 'Date', key: 'date', width: 5 },
+    { header: 'Time', key: 'time', width: 5 },
+    { header: 'EmployeeID', key: 'employee', width: 6 },
+    { header: 'CardNumber', key: 'card', width: 6 },
+    { header: 'Name', key: 'name', width: 32 },
+    { header: 'PersonnelType', key: 'type', width: 10 },
+    { header: 'CompanyName', key: 'company', width: 30 },
+    { header: 'PrimaryLocation', key: 'location', width: 32 },
+    { header: 'Door', key: 'door', width: 40 },
+    { header: 'Partition', key: 'partition', width: 10 },
+  ];
+
+  ws.columns = cols;
+
+  // Title row (merged)
+  const lastColLetter = String.fromCharCode('A'.charCodeAt(0) + cols.length - 1);
+  ws.mergeCells(`A1:${lastColLetter}1`);
+  const titleCell = ws.getCell('A1');
+  titleCell.value = `${format(pickedDate, 'EEEE, d MMMM, yyyy')} — Details`;
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF000000' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+
+  // Spacer row
+  ws.addRow([]);
+
+  // Header row
+  const headerRow = ws.addRow(cols.map(c => c.header));
+  headerRow.eachCell(cell => {
+    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } }; // amber
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } },
+    };
+  });
+
+  // Data rows
+  detailRows.forEach((r, i) => {
+    const row = ws.addRow([
+      i + 1,
+      format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
+      formatApiTime12(r.LocaleMessageTime),
+      r.EmployeeID ?? '',
+      r.CardNumber ?? '',
+      r.ObjectName1 ?? '',
+      r.PersonnelType ?? '',
+      (r.CompanyNameComputed || r.CompanyName) ?? '',
+      r.PrimaryLocation ?? '',
+      r.Door ?? '',
+      partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || ''
+    ]);
+
+    // Row styling: borders + alignment
+    row.eachCell((cell, colNumber) => {
+      cell.alignment = { vertical: 'middle', horizontal: (colNumber >= 4 && colNumber <= 5) ? 'right' : 'left', wrapText: false };
+      cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF000000' } };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        right: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+      };
+    });
+
+    // Zebra stripe every other row
+    if (i % 2 === 1) {
+      row.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
+      });
+    }
+  });
+
+  // Totals row (count)
+  const totalCount = detailRows.length;
+  const totalRow = ws.addRow(['', '', '', '', '', '', '', '', '', 'Total', totalCount]);
+  totalRow.eachCell((cell, colNumber) => {
+    cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+    cell.alignment = { horizontal: colNumber === 11 ? 'right' : 'center', vertical: 'middle' };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } },
+    };
+    if (colNumber === 11) {
+      cell.numFmt = '#,##0';
+    }
+  });
+
+  
+
+
+// Custom widths by column index
+const fixedWidths = {
+  0: 4,   // Sr
+  1: 15,  // Date
+  2: 15,  // Time
+  3: 15,  // EmployeeID
+  4: 14,  // CardNumber
+  5: 25,  // Name
+  6: 14,  // PersonnelType
+  7: 30,  // CompanyName
+  8: 30,  // PrimaryLocation
+  9: 40,  // Door
+  10: 18, // Partition
+};
+
+// Apply widths
+ws.columns.forEach((col, index) => {
+  let maxLen = col.header ? String(col.header).length : 1;
+
+  col.eachCell({ includeEmpty: true }, c => {
+    const v = c.value === null || c.value === undefined ? '' : String(c.value);
+    maxLen = Math.max(maxLen, v.trim().length);
+  });
+
+  if (fixedWidths[index] !== undefined) {
+    col.width = fixedWidths[index]; // force custom width
+  } else {
+    col.width = Math.min(Math.max(maxLen, 4), 30); // auto fallback
+  }
+});
+
+  // Freeze header area (title + spacer + header visible)
+  ws.views = [{ state: 'frozen', ySplit: 3 }];
+
+  // Outer thin border polish for the used area
+  const lastRow = ws.rowCount;
+  const lastCol = ws.columns.length;
+  for (let r = 1; r <= lastRow; r++) {
+    for (let c = 1; c <= lastCol; c++) {
+      const cell = ws.getCell(r, c);
+      cell.border = {
+        top: cell.border?.top || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+        left: cell.border?.left || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+        bottom: cell.border?.bottom || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+        right: cell.border?.right || { style: 'thin', color: { argb: 'FFEEEEEE' } },
+      };
+    }
+  }
+
+  // Save workbook
+  const buf = await wb.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+};
+
+  // --- EMEA companyRows: aggregated by CompanyName for pickedDate (EMEA-friendly) ---
+  const companyRows = useMemo(() => {
+    if (!data || !pickedDate) return [];
+
+    const ds = format(pickedDate, 'yyyy-MM-dd');
+
+    // filter details for this date and only for partitions we care about
+    const filtered = data.details.filter(r =>
+      r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds &&
+      filteredPartitionKeys.includes(r.PartitionName2)
+    );
+
+    const map = new Map();
+
+    filtered.forEach(r => {
+      const city = partitionToDisplay[r.PartitionName2]?.city || (r.PartitionName2 || 'Unknown');
+      const country = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+
+      // use getCanonicalCompany to handle blank CompanyName
+      const company = getCanonicalCompany(r);
+
+      const key = `${country}||${city}||${company}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.total += 1;
+      } else {
+        map.set(key, { country, city, company, total: 1 });
+      }
+    });
+
+
+
+
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.country !== b.country) return a.country.localeCompare(b.country);
+      if (a.city !== b.city) return a.city.localeCompare(b.city);
+      return a.company.localeCompare(b.company);
+    });
+  }, [data, pickedDate, filteredPartitionKeys]);
+
+  // --- Excel export for company summary (EMEA) ---
+  const handleExportCompanies = async () => {
+    if (!pickedDate || !companyRows.length) return;
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Company Summary');
+
+    // set up columns
+    ws.columns = [
+      { header: 'Country', key: 'country', width: 20 },
+      { header: 'City', key: 'city', width: 25 },
+      { header: 'Company', key: 'company', width: 40 },
+      { header: 'Total', key: 'total', width: 12 },
+    ];
+
+    // merge top row for date
+    ws.mergeCells('A1:D1');
+    const dateCell = ws.getCell('A1');
+    dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { name: 'Calibri', size: 14, bold: true };
+
+    // blank spacer
+    ws.addRow([]);
+
+    // header row
+    const headerRow = ws.addRow(['Country', 'City', 'Company', 'Total']);
+    headerRow.eachCell(cell => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.font = { bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+
+    // data rows
+    companyRows.forEach(r => {
+      const row = ws.addRow([r.country, r.city, r.company, r.total]);
+      row.eachCell((cell, colNumber) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        if (colNumber === 4) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          cell.numFmt = '#,##0';
+        } else {
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        }
+      });
+    });
+
+    // totals row
+    const total = companyRows.reduce((s, r) => s + r.total, 0);
+    const totalRow = ws.addRow(['Total', '', '', total]);
+    totalRow.eachCell((cell, colNumber) => {
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+      if (colNumber === 4) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0';
+      } else {
+        cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
+      }
+    });
+
+    // save
+    const buf = await wb.xlsx.writeBuffer();
+    saveAs(new Blob([buf]), `emea_companies_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+  };
+
+
+  const handleExportSummary = async () => {
+    if (!pickedDate) return;
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Summary');
+
+    // Row 1: merged date centered 
+    ws.mergeCells('A1:E1');
+    const dateCell = ws.getCell('A1');
+    dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
+    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    dateCell.font = { name: 'Calibri', size: 14, bold: true };
+
+    // Row 3: header row
+    const headerRow = ws.addRow(['Country', 'City', 'Employees', 'Contractors', 'Total']);
+    headerRow.height = 20;
+
+    // style helpers
+    const thinBorder = { style: 'thin', color: { argb: 'FF000000' } };
+    const allThinBorder = { top: thinBorder, left: thinBorder, bottom: thinBorder, right: thinBorder };
+
+    // header style: yellow fill, bold, centered
+    headerRow.eachCell(cell => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = allThinBorder;
+    });
+
+    // Data rows start after the spacer
+    partitionRows.forEach(r => {
+      const row = ws.addRow([r.country, r.city, r.employee, r.contractor, r.total]);
+      row.eachCell((cell, colNumber) => {
+        cell.border = allThinBorder;
+        if (colNumber >= 3) {
+          // numeric columns: right align, number format
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
+            cell.numFmt = '#,##0';
+          }
+        } else {
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        }
+        cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF000000' } };
+      });
+    });
+
+    // Final total row
+    const totalEmployees = partitionRows.reduce((s, r) => s + r.employee, 0);
+    const totalContractors = partitionRows.reduce((s, r) => s + r.contractor, 0);
+    const totalTotal = partitionRows.reduce((s, r) => s + r.total, 0);
+    const totalRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotal]);
+
+    totalRow.eachCell((cell, colNumber) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; // light gray
+      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
+      cell.border = allThinBorder;
+      if (colNumber >= 3) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        cell.numFmt = '#,##0';
+      } else {
+        cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
+      }
+    });
+
+    // Freeze panes so header is visible (freeze above data rows: after the header + spacer rows)
+    ws.views = [{ state: 'frozen', ySplit: 2 }];
+
+    // Autosize columns (reasonable limits)
+    ws.columns.forEach(col => {
+      let maxLen = 10;
+      col.eachCell({ includeEmpty: true }, c => {
+        const v = c.value === null || c.value === undefined ? '' : String(c.value);
+        maxLen = Math.max(maxLen, v.trim().length + 2);
+      });
+      col.width = Math.min(Math.max(maxLen, 8), 40);
+    });
+
+    // export
+    const buf = await wb.xlsx.writeBuffer();
+    const safeDate = format(pickedDate, 'yyyyMMdd');
+    const filename = `emea_summary_${safeDate}.xlsx`;
+    saveAs(new Blob([buf]), filename);
+  };
+
+
+  if (loading) return <LoadingSpinner />;
+  if (!data) return null;
+
+
+  return (
+    <>
+      <Header />
+      <Container maxWidth={false} disableGutters sx={{ pt: 2, pb: 4 }}>
+
+        {/* DatePicker + Summary */}
+        {pickedDate && summaryEntry ? (
+
+          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 1 }}>
+            <Box sx={{ width: 200 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Select date"
+                  value={pickedDate}
+                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                  renderInput={params => <TextField fullWidth {...params} />}
+                />
+              </LocalizationProvider>
+            </Box>
+
+            {/* Container for both tables side-by-side */}
+            <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+              {/* Left: existing summary table */}
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+                <Paper elevation={3} sx={{ p: 1, border: '3px solid #000', borderRadius: 2 }}>
+                  <TableContainer sx={{ maxHeight: 500, overflowY: 'auto' }}>
+                    <Table sx={{ border: '2px solid #000' }} size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={5} align="center"
+                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ bgcolor: '#FFC107' }}>
+                          {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => (
+                            <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'right'}
+                              sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {partitionRows.map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                            <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
+                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
+                            <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                              {r.total}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow sx={{ bgcolor: '#666' }}>
+                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            Total
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {partitionRows.reduce((s, r) => s + r.employee, 0)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {partitionRows.reduce((s, r) => s + r.contractor, 0)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                            {partitionRows.reduce((s, r) => s + r.total, 0)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                    <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+                      onClick={() => setShowDetails(v => !v)}>
+                      {showDetails ? 'Hide Details' : 'See Details'}
+                    </Button>
+                    {showDetails && (
+                      <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
+                        onClick={handleExport}>
+                        Export Details
+                      </Button>
+                    )}
+                    <Button
+                      variant="contained"
+                      sx={{ ml: 2, bgcolor: '#FFC107', color: '#000' }}
+                      onClick={handleExportSummary}
+                    >
+                      Export Summary to Excel
+                    </Button>
+                  </Box>
+                </Paper>
+              </Box>
+
+              {/* Right: company-level table (same style as APAC) */}
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+                <Paper elevation={3} sx={{ p: 1, border: '3px solid #000', borderRadius: 2 }}>
+                  <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
+                    <Table sx={{ border: '2px solid #000' }} size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={4} align="center"
+                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ bgcolor: '#FFC107' }}>
+                          {['Country', 'City', 'Company', 'Total'].map(h => (
+                            <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'center'}
+                              sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {companyRows.length > 0 ? companyRows.map((r, i) => {
+
+                          const rowKey = `${r.country}||${r.city}||${r.company}`;
+                          return (
+                            <TableRow
+                              key={`${r.company}-${i}`}
+                              onClick={() => {
+                                // keep existing behaviour: toggle selection if you have selection handler
+                                if (typeof setSelectedCompany === 'function') {
+
+                                  if (selectedCompany === rowKey) {
+                                    setSelectedCompany(null);
+                                    setShowDetails(true);
+                                  } else {
+                                    setSelectedCompany(rowKey);
+                                    setShowDetails(true);
+                                  }
+
+                                }
+                              }}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': { backgroundColor: '#474747' },
+                                ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
+                              }}
+                              tabIndex={0}
+                              role="button"
+                            >
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
+                              <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                                {r.total}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }) : (
+                          <TableRow>
+                            <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                              No records for this date.
+                            </TableCell>
+                          </TableRow>
+                        )}
+
+                        <TableRow sx={{ bgcolor: '#666' }}>
+                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            Total
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {/* empty cell for layout */}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                            {companyRows.reduce((s, r) => s + r.total, 0)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                    <Button
+                      variant="contained"
+                      sx={{ bgcolor: '#FFC107', color: '#000' }}
+                      onClick={handleExportCompanies}
+                    >
+                      Export Companies to Excel
+                    </Button>
+                  </Box>
+                </Paper>
+              </Box>
+            </Box>
+          </Box>
+        ) : (
+          <Box sx={{ px: 2, mb: 3 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Select date"
+                value={pickedDate}
+                onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                renderInput={params => <TextField fullWidth {...params} />}
+              />
+            </LocalizationProvider>
+            {!pickedDate && (
+              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
+                Please pick a date to view region summary.
+              </Typography>
+            )}
+          </Box>
+        )}
+        {/* Details table */}
+        {showDetails && (
+          <Box display="flex" justifyContent="center" mb={2} sx={{ width: '100%' }}>
+            <Paper elevation={1} sx={{ px: 4, py: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
+              {detailRows.length > 0 ? (
+                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }} size='small'>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#000' }}>
+                      {['Sr', 'Date', 'Time', 'Emp ID', 'Card', 'Name', 'Type', 'CompanyName', 'PrimaryLocation', 'Door', 'Partition']
+                        .map(h => (
+                          <TableCell key={h} align="center"
+                            sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                            {h}
+                          </TableCell>
+                        ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {detailRows.map((r, i) => (
+                      <TableRow key={r.PersonGUID}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
+
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd')}
+                        </TableCell>
+
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {formatApiTime12(r.LocaleMessageTime)}
+                        </TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Typography variant="body2" sx={{
+                  color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic'
+                }}>
+                  No swipe records found for this date.
+                </Typography>
+              )}
+            </Paper>
+          </Box>
+        )}
+      </Container>
+      <Footer />
+    </>
+  );
+}
