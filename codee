@@ -1,99 +1,23 @@
-{
-      "LocaleMessageTime": "2025-08-26T02:23:20.000Z",
-      "ObjectName1": "Cheres, Tetiana",
-      "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-      "EmployeeID": "324194",
-      "Text5": "Vilnius - Gama Business Center",
-      "PartitionName2": "LT.Vilnius",
-      "PersonGUID": "FA99E000-3E22-476C-AA89-CB85C3C72D79",
-      "PersonnelType": "Employee",
-      "CompanyName": "WU Processing Lithuania, UAB",
-      "PrimaryLocation": "Vilnius - Gama Business Center",
-      "CardNumber": "609292",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "SwipeDate": "2025-08-26T00:00:00.000Z"
-    },
-
-i want to show as it is time Time that show in api. ok,
-dont chnage, as it is how in api excalym showing like 
-
-
-        {/* Details table */}
-        {showDetails && (
-          <Box display="flex" justifyContent="center" mb={2} sx={{ width: '100%' }}>
-            <Paper elevation={1} sx={{ px: 4, py: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
-              {detailRows.length > 0 ? (
-                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }} size='small'>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#000' }}>
-                      {['Sr', 'Date', 'Time', 'Emp ID', 'Card', 'Name', 'Type', 'CompanyName', 'PrimaryLocation', 'Door', 'Partition']
-                        .map(h => (
-                          <TableCell key={h} align="center"
-                            sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
-                            {h}
-                          </TableCell>
-                        ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {detailRows.map((r, i) => (
-                      <TableRow key={r.PersonGUID}>
-                        <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
-
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd')}
-                        </TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {format(new Date(r.LocaleMessageTime), 'HH:mm:ss')}
-                        </TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <Typography variant="body2" sx={{
-                  color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic'
-                }}>
-                  No swipe records found for this date.
-                </Typography>
-              )}
-            </Paper>
-          </Box>
-        )}
+// convert the API ISO string into 12-hour time (hh:mm:ss AM/PM) as shown by API but human-friendly
+const getApiTime12 = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+};
 
 
 
-  // Excel export (includes CardNumber)
-  const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(
-      detailRows.map((r, i) => ({
-        Sr: i + 1,
-        Date: format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
-        // Time: format(new Date(r.LocaleMessageTime), 'HH:mm:ss'),
-        Time: formatApiTime12(r.LocaleMessageTime),
-        EmployeeID: r.EmployeeID,
-        CardNumber: r.CardNumber,
-        Name: r.ObjectName1,
-        PersonnelType: r.PersonnelType,
-        CompanyName: r.CompanyName,
-        PrimaryLocation: r.PrimaryLocation,
-        Door: r.Door,
-        Partition: partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2
-      }))
-    );
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Details');
-    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
-  };
+....
+
+<TableCell sx={{ border: '2px solid #000' }}>
+  {getApiTime12(r.LocaleMessageTime)}
+</TableCell>
+...
+
+
+Time: getApiTime12(r.LocaleMessageTime),
