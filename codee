@@ -1,29 +1,38 @@
-// prefer SwipeDate (if present) otherwise LocaleMessageTime — return yyyy-MM-dd
-const getIsoDate = (r) =>
-  (r?.SwipeDate && typeof r.SwipeDate === 'string' && r.SwipeDate.slice(0, 10)) ||
-  (r?.LocaleMessageTime && typeof r.LocaleMessageTime === 'string' && r.LocaleMessageTime.slice(0, 10)) ||
-  '';
+const all = data.details.filter(r =>
+  filteredPartitionKeys.includes(r.PartitionName2) &&
+  getIsoDate(r) === ds
+);
 
-// Return the literal hh:mm:ss from the API ISO/time string (NO timezone conversion).
-// Works with "2025-09-01T03:35:14.000Z" or "2025-09-01T03:35:14" or plain "03:35:14".
-const formatApiTime24 = (isoOrTime) => {
-  if (!isoOrTime || typeof isoOrTime !== 'string') return '';
-  const m = isoOrTime.match(/T?(\d{2}):(\d{2}):(\d{2})/);
-  if (!m) return '';
-  return `${m[1]}:${m[2]}:${m[3]}`;
-};
 
-// If you want 12-hour with AM/PM (optional)
-const formatApiTime12 = (isoOrTime) => {
-  if (!isoOrTime || typeof isoOrTime !== 'string') return '';
-  const m = isoOrTime.match(/T?(\d{2}):(\d{2}):(\d{2})/);
-  if (!m) return '';
-  let hh = parseInt(m[1], 10);
-  const mm = m[2];
-  const ss = m[3];
-  if (Number.isNaN(hh)) return `${m[1]}:${mm}:${ss}`;
-  const ampm = hh >= 12 ? 'PM' : 'AM';
-  let h12 = hh % 12;
-  if (h12 === 0) h12 = 12;
-  return `${String(h12).padStart(2, '0')}:${mm}:${ss} ${ampm}`;
-};
+
+
+
+
+....
+
+
+
+// Lexical compare on the ISO timestamp (avoids timezone conversion side effects)
+all.sort((a, b) =>
+  ((a.LocaleMessageTime || '')).localeCompare((b.LocaleMessageTime || ''))
+);
+
+
+
+
+
+....
+
+<TableCell sx={{ border:'2px solid #000' }}>
+  {getIsoDate(r)}
+</TableCell>
+<TableCell sx={{ border:'2px solid #000' }}>
+  {formatApiTime24(r.LocaleMessageTime || r.Swipe_Time || '')}
+</TableCell>
+
+
+
+....
+
+Date: getIsoDate(r),
+Time: formatApiTime24(r.LocaleMessageTime || r.Swipe_Time || ''),
