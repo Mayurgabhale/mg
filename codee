@@ -1,48 +1,24 @@
-const detailRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // a) all swipes that day for our partitions (defensive check for LocaleMessageTime)
-  const all = data.details.filter(r =>
-    filteredPartitionKeys.includes(r.PartitionName2) &&
-    r.LocaleMessageTime && r.LocaleMessageTime.startsWith(ds)
-  );
-
-  // b) sort oldest -> newest (so lastByKey keeps the last swipe of the day)
-  all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
-
-  // c) last swipe per "person-like" key
-  // use PersonGUID when available, otherwise fallback to a stable composite key
-  const lastByKey = {};
-  all.forEach((r, idx) => {
-    const personKey = r.PersonGUID && String(r.PersonGUID).trim();
-    const fallbackKey = `${r.EmployeeID ?? ''}||${r.CardNumber ?? ''}||${String(r.ObjectName1 ?? '').trim()}`;
-    const key = personKey || fallbackKey || `row-${idx}`;
-    lastByKey[key] = r;
-  });
-
-  // d) take the last values (this matches your original working code)
-  let rows = Object.values(lastByKey);
-
-  // Attach computed company (so UI / exports / company filtering all use same canonical name)
-  rows = rows.map(r => ({ ...r, CompanyNameComputed: getCanonicalCompany ? getCanonicalCompany(r) : (r.CompanyName || '') }));
-
-  // If a company row was clicked, do the strict triple match (Country||City||Company) as before
-  if (selectedCompany) {
-    const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
-    const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g, ' ').trim().toLowerCase();
-
-    rows = rows.filter(r => {
-      const rnCompany = String(r.CompanyNameComputed || 'Unknown').replace(/\s+/g, ' ').trim().toLowerCase();
-      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
-      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-      return rnCompany === selCompanyNorm && rowCity === selCity && rowCountry === selCountry;
-    });
-  }
-
-  // NOTE: If you *do* want only people who remain inside (final swipe InDirection),
-  // replace `rows` above with: rows = rows.filter(r => r.Direction === 'InDirection');
-  // But you've told me your original working code returned Object.values(lastByPerson) so I'm not applying that filter here.
-
-  return rows;
-}, [data, pickedDate, filteredPartitionKeys, selectedCompany]);
+create this excle sheete more atractive wiht color and border 
+// Excel export (includes CardNumber)
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      detailRows.map((r, i) => ({
+        Sr: i + 1,
+        Date: format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
+        // Time: format(new Date(r.LocaleMessageTime), 'HH:mm:ss'),    
+        Time: formatApiTime12(r.LocaleMessageTime),
+        EmployeeID: r.EmployeeID,
+        CardNumber: r.CardNumber,
+        Name: r.ObjectName1,
+        PersonnelType: r.PersonnelType,
+        CompanyName: r.CompanyName,
+        PrimaryLocation: r.PrimaryLocation,
+        Door: r.Door,
+        Partition: partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2
+      }))
+    );
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Details');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+  };
