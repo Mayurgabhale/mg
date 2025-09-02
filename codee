@@ -1,74 +1,259 @@
-// canonical company resolution: normalize & group common variants
-const getCanonicalCompany = (r) => {
-  // helper: normalize a string to lower-case, remove punctuation, collapse spaces
-  const normalize = (s) => {
-    if (!s) return '';
-    return String(s)
-      .toLowerCase()
-      .normalize('NFKD')              // normalize diacritics
-      .replace(/[\u0300-\u036f]/g, '')// strip accents
-      .replace(/[^a-z0-9\s]/g, ' ')   // remove punctuation, keep letters/numbers/spaces
-      .replace(/\s+/g, ' ')           // collapse multiple spaces
-      .trim();
-  };
+ {
+      "LocaleMessageTime": "2025-09-02T04:50:09.000Z",
+      "Dateonly": "2025-09-02",
+      "Swipe_Time": "04:50:09",
+      "EmployeeID": "243091",
+      "PersonGUID": "AFC64292-1193-44B3-86CF-25A3C6A5B5E3",
+      "ObjectName1": "Orozco Segura, Juan Alberto",
+      "Door": "LACA CR A3 Main Lobby Door",
+      "PersonnelType": "Employee",
+      "CardNumber": "406851",
+      "Text5": "Santa Ana - Parque Empresarial",
+      "PartitionName2": "CR.Costa Rica Partition",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "CompanyName": "Union del Oeste de Costa Rica",
+      "PrimaryLocation": "Santa Ana - Parque Empresarial",
+      "Floor": "Building A3"
+    },
 
-  const raw = r.CompanyName && String(r.CompanyName).trim();
-  const pt = (r.PersonnelType && String(r.PersonnelType).toLowerCase()) || '';
 
-  // 1) If CompanyName exists, try to canonicalize it
-  if (raw) {
-    const n = normalize(raw);
 
-    // ----- WU / Western Union family -> map to single canonical name -----
-    if (
-      n.includes('western union') ||
-      n.startsWith('wu ') ||
-      n.startsWith('wui') ||
-      n.includes('wuprocessing') ||
-      n.includes('wupay') ||
-      n.includes('wu pay') ||
-      n.includes('wups') ||
-      n.includes('wupsm') ||
-      n.includes('wu retail') ||
-      n.includes('wu financial') ||
-      n.includes('westernunion') ||
-      n.includes('westernunionfin') ||
-      n.includes('western union fin') ||
-      n.includes('western union payment') ||
-      (n.includes('payment services') && n.includes('western'))
-    ) {
-      return 'WU Srvcs India Private Ltd';
-    }
 
-    // ----- Addendum family -----
-    if (n.includes('addendum')) {
-      return 'Addendum Solutions';
-    }
 
-    // ----- G4S family -----
-    if (n.includes('g4s')) {
-      return 'G4S Secure Solutions';
-    }
+know in this i we want to disply api as it is time in frontedn dont convert disply as it is.
+  "LocaleMessageTime": "2025-09-02T04:50:09.000Z", ok
 
-    // ----- UAB family (Lithuania / UAB prefix) -----
-    if (n.startsWith('uab ') || n.includes(' uab ') || n.includes('uab')) {
-      return 'UAB';
-    }
 
-    // ----- Other catch-alls -----
-    if (n === 'unknown' || n === '') return 'Unknown';
+// src/pages/PartitionDetailDetails.jsx
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  Container, Box, Typography, Button, TextField,
+  TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody
+} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
 
-    // If none matched, return the original raw (preserve capitalization)
-    return raw;
-  }
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+import DataTable from "../components/DataTable";
 
-  // 2) No CompanyName: infer from PersonnelType
-  // Check more specific cases first
-  if (pt.includes('contractor')) return 'Contractor';
-  if (pt.includes('property') || pt.includes('property management')) return 'Property Management';
-  if (pt.includes('temp')) return 'Temp Badge';
-  if (pt.includes('visitor')) return 'Visitor';
+import { fetchLiveSummary } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup";
 
-  // fallback
-  return 'Unknown';
-};
+export default function PartitionDetailDetails() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [loading, setLoading]       = useState(true);
+  const [details, setDetails]       = useState([]);
+  const [liveCounts, setLiveCounts] = useState({});
+  const [lastUpdate, setLastUpdate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedFloor, setExpandedFloor] = useState(null);
+
+  // pull + poll
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      let json;
+      try {
+        json = await fetchLiveSummary();
+      } catch (err) {
+        console.error("fetchLiveSummary error:", err);
+        return;
+      }
+      if (!active) return;
+
+      // --- 1) normalize & trim liveCounts keys ---
+      const raw = json.realtime[partition]?.floors || {};
+      const counts = Object.entries(raw).reduce((acc,[floor,count])=>{
+        const f = floor.trim();
+        acc[f] = (acc[f]||0) + count;
+        return acc;
+      }, {});
+      setLiveCounts(counts);
+
+      // --- 2) grab all swipes (in+out) for this partition ---
+      const all = json.details
+        .filter(r =>
+          r.PartitionName2 === partition &&
+          (r.Direction === "InDirection" || r.Direction === "OutDirection")
+        );
+
+      // --- 3) sort oldest→newest & group to last swipe per user ---
+      all.sort((a,b)=>
+        new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime)
+      );
+      const lastByPerson = {};
+      all.forEach(r => { lastByPerson[r.PersonGUID] = r });
+
+      // --- 4) keep only people whose **last** swipe is IN → currently inside ---
+      const inside = Object.values(lastByPerson)
+        .filter(r => r.Direction === "InDirection")
+        .map(r => ({
+          ...r,
+          // 5) lookup & trim floor name
+          floor: lookupFloor(r.PartitionName2, r.Door, r.Direction)
+        }));
+
+      setDetails(inside);
+      setLastUpdate(new Date().toLocaleTimeString());
+      setLoading(false);
+    };
+
+    load();
+    const iv = setInterval(load, 1000);
+    return () => { active = false; clearInterval(iv); };
+  }, [partition]);
+
+  // build a map: floorName → rows[]
+  const floorMap = useMemo(() => {
+    const m = {};
+    // ensure every floor in liveCounts appears
+    Object.keys(liveCounts).forEach(f => { m[f] = [] });
+    details.forEach(r => {
+      const f = r.floor;
+      if (!m[f]) m[f] = [];
+      m[f].push(r);
+    });
+    return m;
+  }, [details, liveCounts]);
+
+  // filter & sort floors by search + descending headcount
+  const term = searchTerm.trim().toLowerCase();
+  const displayed = useMemo(() => {
+    return Object.entries(floorMap)
+      .filter(([floor, emps]) => {
+        if (!term) return true;
+        if (floor.toLowerCase().includes(term)) return true;
+        return emps.some(r =>
+          String(r.EmployeeID).toLowerCase().includes(term) ||
+          String(r.ObjectName1).toLowerCase().includes(term) ||
+          String(r.CardNumber).toLowerCase().includes(term)
+        );
+      })
+      .sort(([a],[b]) =>
+        (liveCounts[b]||0) - (liveCounts[a]||0)
+      );
+  }, [floorMap, liveCounts, term]);
+
+  const columns = [
+    { field: "EmployeeID",      headerName: "Emp ID" },
+    { field: "ObjectName1",     headerName: "Name" },
+    { field: "LocaleMessageTime", headerName: "Swipe Time" },
+    { field: "PersonnelType",   headerName: "Type" },
+    { field: "CardNumber",      headerName: "Card" },
+    { field: "Door",            headerName: "Door" },
+  ];
+
+  return (
+    <>
+      <Header />
+      <Box sx={{ pt:1, pb:1, background: 'rgba(0,0,0,0.6)' }}>
+        <Container disableGutters maxWidth={false}>
+          <Box display="flex" alignItems="center" mb={2} sx={{ px:2 }}>
+            <Button size="small" onClick={()=>navigate(-1)} sx={{ color:'#FFC107' }}>
+              ← Back to Overview
+            </Button>
+          </Box>
+          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px:2 }}>
+            <Typography variant="h6" sx={{ color:'#FFC107' }}>Floor Details</Typography>
+            <Typography variant="body2" sx={{ color:'#FFC107' }}>
+              Last updated: {lastUpdate}
+            </Typography>
+            <TextField
+              size="small" placeholder="Search…" value={searchTerm}
+              onChange={e=>setSearchTerm(e.target.value)}
+              sx={{
+                '& .MuiInputBase-input': { color:'#FFC107' },
+                '& .MuiOutlinedInput-root fieldset': { borderColor:'#FFC107' }
+              }}
+            />
+          </Box>
+          {loading
+            ? <Box sx={{ px:2, py:8 }}><LoadingSpinner/></Box>
+            : (
+              <>
+                <Box display="flex" flexWrap="wrap" width="100%" sx={{ px:2 }}>
+                  {displayed.map(([floor, emps]) => {
+                    const showAll = !!term;
+                    const preview = showAll
+                      ? emps.filter(r =>
+                          String(r.EmployeeID).toLowerCase().includes(term) ||
+                          String(r.ObjectName1).toLowerCase().includes(term) ||
+                          String(r.CardNumber).toLowerCase().includes(term)
+                        )
+                      : emps.slice(0,15);
+
+                    return (
+                      <Box key={floor} sx={{ width:'50%', p:2 }}>
+                        <Paper sx={{ border:'2px solid #FFC107', p:2, background:'rgba(0,0,0,0.4)' }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color:'#FFC107', mb:1 }}>
+                            {floor} (Total {liveCounts[floor]||0})
+                          </Typography>
+                          <TableContainer component={Paper} variant="outlined" sx={{ mb:1, background:'rgba(0,0,0,0.4)' }}>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow sx={{ bgcolor:'#000' }}>
+                                  {columns.map(c=>(
+                                    <TableCell key={c.field}
+                                      sx={{ color:'#FFC107', fontWeight:'bold', border:'1px solid #FFC107' }}
+                                    >
+                                      {c.headerName}
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {preview.map((r,i)=>(
+                                  <TableRow key={`${r.PersonGUID}-${i}`}
+                                    sx={showAll?{ background:'rgba(255,235,59,0.3)' }:{}}>
+                                    <TableCell sx={{ color:'#fff', border:'1px solid #FFC107' }}>{r.EmployeeID}</TableCell>
+                                    <TableCell sx={{ color:'#fff', border:'1px solid #FFC107' }}>{r.ObjectName1}</TableCell>
+                                    <TableCell sx={{ color:'#fff', border:'1px solid #FFC107' }}>
+                                      {new Date(r.LocaleMessageTime).toLocaleTimeString()}
+                                    </TableCell>
+                                    <TableCell sx={{ color:'#fff', border:'1px solid #FFC107' }}>{r.PersonnelType}</TableCell>
+                                    <TableCell sx={{ color:'#fff', border:'1px solid #FFC107' }}>{r.CardNumber}</TableCell>
+                                    <TableCell sx={{ color:'#fff', border:'1px solid #FFC107' }}>{r.Door}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                          <Button size="small" sx={{ color:'#FFC107' }}
+                            onClick={()=>setExpandedFloor(f=>f===floor?null:floor)}>
+                            {expandedFloor===floor?'Hide':'See more…'}
+                          </Button>
+                        </Paper>
+                      </Box>
+                    );
+                  })}
+                </Box>
+                {expandedFloor && (
+                  <Box sx={{ px:2, mt:2 }}>
+                    <Typography variant="h6" sx={{ color:'#FFC107' }} gutterBottom>
+                      {expandedFloor} — All Entries
+                    </Typography>
+                    <DataTable
+                      columns={columns}
+                      rows={(floorMap[expandedFloor]||[]).map(r=>({
+                        ...r,
+                        LocaleMessageTime: new Date(r.LocaleMessageTime).toLocaleTimeString()
+                      }))}
+                    />
+                  </Box>
+                )}
+              </>
+            )
+          }
+        </Container>
+      </Box>
+      <Footer />
+    </>
+  );
+}
+
+
