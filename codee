@@ -1,17 +1,50 @@
-// --- replace the previous "if (selectedCompany) { ... }" block inside detailRows useMemo with this ---
+// --- replace your existing detailRows useMemo with this ---
+const detailRows = useMemo(() => {
+  if (!data || !pickedDate) return [];
+  const ds = format(pickedDate, 'yyyy-MM-dd');
+
+  // a) all swipes that day for our partitions
+  const all = data.details.filter(r =>
+    filteredPartitionKeys.includes(r.PartitionName2) &&
+    r.LocaleMessageTime && r.LocaleMessageTime.startsWith(ds)
+  );
+
+  // b) oldest → newest
+  all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
+
+  // c) keep last swipe per person
+  const lastByPerson = {};
+  all.forEach(r => { lastByPerson[r.PersonGUID] = r; });
+
+  // d) values (final swipe entries) and only InDirection (still inside)
+  let rows = Object.values(lastByPerson).filter(r => r.Direction === 'InDirection');
+
+  // If a company row was clicked, filter by company name (case-insensitive, trimmed).
+  // selectedCompany has format "Country||City||Company" — we take the Company part.
+  if (selectedCompany) {
+    const parts = selectedCompany.split('||');
+    const selCompanyRaw = parts[2] || '';
+    const selCompanyNorm = String(selCompanyRaw).replace(/\s+/g, ' ').trim().toLowerCase();
+
+    rows = rows.filter(r => {
+      const rn = String(r.CompanyName || 'Unknown').replace(/\s+/g, ' ').trim().toLowerCase();
+      return rn === selCompanyNorm;
+    });
+  }
+
+  return rows;
+}, [data, pickedDate, filteredPartitionKeys, selectedCompany]);
+
+
 if (selectedCompany) {
-  // expected format: "Country||City||Company"
-  const parts = String(selectedCompany).split('||').map(p => (p || '').trim().toLowerCase());
-  const selCountry = parts[0] || '';
-  const selCity = parts[1] || '';
-  const selCompany = parts[2] || '';
+  const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
+  const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g,' ').trim().toLowerCase();
 
-  result = result.filter(r => {
-    const rowCountry = (partitionToDisplay[r.PartitionName2]?.country || 'Unknown').toString().trim().toLowerCase();
-    const rowCity = (partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || 'Unknown').toString().trim().toLowerCase();
-    const rowCompany = ((r.CompanyName || 'Unknown').toString().trim()).toLowerCase();
-
-    return rowCountry === selCountry && rowCity === selCity && rowCompany === selCompany;
+  rows = rows.filter(r => {
+    const rnCompany = String(r.CompanyName || 'Unknown').replace(/\s+/g,' ').trim().toLowerCase();
+    const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
+    const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+    return rnCompany === selCompanyNorm && rowCity === selCity && rowCountry === selCountry;
   });
 }
 
@@ -19,44 +52,19 @@ if (selectedCompany) {
 
 
 
-....4
+
+
+
+......
 
 
 
 
+{selectedCompany && (
+  <Box mb={1} sx={{ textAlign: 'center' }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+      Showing records for: {selectedCompany.split('||')[2]}
+    </Typography>
+  </Box>
+)}
 
-
-// inside companyRows.map((r, i) => { ... })
-// replace the part where you compute companyOnly and the onClick handler with this:
-
-const rowKey = `${r.country}||${r.city}||${r.company}`;
-const isSelected = selectedCompany === rowKey;
-
-return (
-  <TableRow
-    key={`${r.company}-${i}`}
-    onClick={() => {
-      if (selectedCompany === rowKey) {
-        setSelectedCompany(null);
-        setShowDetails(true);
-      } else {
-        setSelectedCompany(rowKey);
-        setShowDetails(true);
-      }
-    }}
-    sx={{
-      cursor: 'pointer',
-      '&:hover': { backgroundColor: '#474747' },
-      ...(isSelected ? { backgroundColor: '#474747' } : {})
-    }}
-    tabIndex={0}
-    role="button"
-  >
-    <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-    <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-    <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
-    <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-      {r.total}
-    </TableCell>
-  </TableRow>
-);
