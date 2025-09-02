@@ -1,3 +1,30 @@
+
+// Autosize columns (no unnecessary padding for short values)
+ws.columns.forEach((col, index) => {
+  let maxLen = col.header ? String(col.header).length : 1;
+
+  col.eachCell({ includeEmpty: true }, c => {
+    const v = c.value === null || c.value === undefined ? '' : String(c.value);
+    maxLen = Math.max(maxLen, v.trim().length);
+  });
+
+  // Remove extra padding, keep small cols tight
+  if (index === 0) {
+    // Sr column — force small width
+    col.width = 4;
+  } else {
+    col.width = Math.min(Math.max(maxLen, 6), 30);
+  }
+});
+
+// Fix alignment for small columns
+ws.getColumn(1).alignment = { horizontal: 'center' }; // Sr
+ws.getColumn(2).alignment = { horizontal: 'center' }; // Date
+ws.getColumn(3).alignment = { horizontal: 'center' }; // Time
+
+
+
+....
 one issue in the space in column 
 Sr	Date	Time	EmployeeID	CardNumber	Name	PersonnelType
 this getting more space
