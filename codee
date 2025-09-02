@@ -1,40 +1,23 @@
-    },
-    {
-      "LocaleMessageTime": "2025-09-01T00:15:57.000Z",
-      "ObjectName1": "Hernandez, Sofia",
-      "Door": "LACA CR E2 Main Lobby",
-      "EmployeeID": "W0022873",
-      "Text5": "Santa Ana - Parque Empresarial",
-      "PartitionName2": "CR.Costa Rica Partition",
-      "PersonGUID": "98DA6E7A-3EE1-47AA-B843-599EB1A6EF21",
-      "PersonnelType": "Contractor",
-      "CompanyName": "Administradora Zona Franca Genesis (HCT)",
-      "PrimaryLocation": "Santa Ana - Parque Empresarial",
-      "CardNumber": "612791",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "SwipeDate": "2025-09-01T00:00:00.000Z"
-    },
-time is displyed wrong 
-in frntedn dilsy this 03:19:34  and api show this  "LocaleMessageTime": "2025-09-01T00:15:57.000Z",
-1	2025-09-01	03:19:34 AM	W0022873	Hernandez, Sofia	Contractor	612791	LACA CR F4 Main Lobby Door	CR.Costa Rica Partition
-
-
+// Interpret the API ISO string as UTC text (no timezone conversion),
+// extract the HH:mm:ss and return 12-hour formatted "hh:mm:ss AM/PM".
 const formatApiTime12 = (iso) => {
-  if (!iso) return '';
-  return format(new Date(iso), 'hh:mm:ss a'); // 12-hour with AM/PM
+  if (!iso || typeof iso !== 'string') return '';
+
+  // Try to extract HH:mm:ss from ISO (handles "2025-09-01T00:15:57.000Z"
+  // and also a few other common variants).
+  const m = iso.match(/T?(\d{2}):(\d{2}):(\d{2})/);
+  if (!m) return '';
+
+  const hh = parseInt(m[1], 10);
+  const mm = m[2];
+  const ss = m[3];
+
+  if (Number.isNaN(hh)) return `${m[1]}:${mm}:${ss}`;
+
+  // convert to 12-hour
+  let h12 = hh % 12;
+  if (h12 === 0) h12 = 12;
+  const ampm = hh >= 12 ? 'PM' : 'AM';
+
+  return `${String(h12).padStart(2, '0')}:${mm}:${ss} ${ampm}`;
 };
-
-
-
-
-
-
-
-
- Time: formatApiTime12(r.LocaleMessageTime),
-
-
-
-{formatApiTime12(r.LocaleMessageTime)}
-
