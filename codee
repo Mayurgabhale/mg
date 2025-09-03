@@ -1,3 +1,17 @@
+// Replace existing canonicalizer with this pass-through version
+const getCanonicalCompany = (r) => {
+  // return raw CompanyName (trimmed) if present; otherwise fall back to PersonnelType or 'Unknown'
+  const raw = r && r.CompanyName ? String(r.CompanyName).trim() : '';
+  if (raw) return raw;
+  const pt = r && r.PersonnelType ? String(r.PersonnelType).trim() : '';
+  if (pt) return pt;
+  return 'Unknown';
+};
+
+
+
+....
+
 // NEW: company click/filter state (like EMEA)
   const [selectedCompany, setSelectedCompany] = useState(null);
 
