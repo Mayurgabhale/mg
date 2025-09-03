@@ -1,43 +1,14 @@
-  {
-    "id": 2097198977,
-    "EmpName": "., Ankit",
-    "EmployeeID": "320762",
-    "PersonnelType": "Terminated Personnel",
-    "Manager_Name": "Sharad Jadhav",
-    "Manager_WU_ID": "0",
-    "Profile_Disabled": true,
-    "Total_Cards": 0,
-    "Active_Cards": 1,
-    "Employee_Status": "Deactive",
-    "imageUrl": "/api/employees/2097198977/image",
-    "CompanyName": "WU Technology Engineering Services Private Limited",
-    "PrimaryLocation": "Pune - Business Bay"
-  },
+-import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaCheckCircle, FaClone } from 'react-icons/fa';
++import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaCheckCircle, FaClone, FaMapMarkerAlt } from 'react-icons/fa';
 
-add 
-CompanyName and PrimaryLocation with icon
- <table className="details-table" aria-label="employee details">
-          <tbody>
-            {/* Always visible */}
-            <tr>
-              <td className="label "><FaUser color='#FFDD00' /> Name</td>
-              <td className="value v-color">{emp.EmpName || '—'}</td>
-            </tr>
-            <tr>
-              <td className="label"><FaIdBadge color='#FFDD00' /> Employee ID</td>
-              <td className="value v-color">{emp.EmployeeID || '—'}</td>
-            </tr>
-            <tr>
-              <td className="label"><FaUserTie color='#FFDD00'/> Manager</td>
-              <td className="value v-color">{emp.Manager_Name || '—'}</td>
-            </tr>
-            <tr>
-              <td className="label"><FaIdCard /> Active Cards</td>
-              <td className="value v-color">{emp.Active_Cards ?? 0}</td>
-            </tr>
-            <tr>
-              <td colSpan="2" style={{ paddingTop: 1 }}>
-                <CurrentLocation empId={emp.id ?? emp.EmployeeID} showMore={showMore} />
-              </td>
 
-            </tr>
+....
+<tr>
+  <td className="label"><FaMapMarkerAlt color='#FFDD00' /> Company Name</td>
+  <td className="value v-color">{emp.CompanyName || '—'}</td>
+</tr>
+<tr>
+  <td className="label"><FaMapMarkerAlt color='#FFDD00' /> Primary Location</td>
+  <td className="value v-color">{emp.PrimaryLocation || '—'}</td>
+</tr>
+
