@@ -1,4 +1,16 @@
 Profile Details
+ Name	Diwate, Swapnil
+ Employee ID	W0024618
+ Manager	—
+ Active Cards	1
+Swipe Details
+ Company Name	Poona Security India Pvt. Ltd.
+ Primary Location	Pune - Business Bay
+ Location	Pune · Podium Floor
+ Zone	Yellow Zone
+this is show  Company Name and Primary Locatio, why he has is recent swipe 
+.........................
+Profile Details
  Name	Gaikwad, Neil
  Employee ID	90762427
  Manager	Lloyds Dass
@@ -12,6 +24,11 @@ not show
 Company Name	—
  Primary Location	—
 chekc carefully. 
+
+but this is not recent swipe,
+
+but we want not recent so that time alos show Company Name	—
+ Primary Location	—
 // ///////////////////////////////////
 
 
