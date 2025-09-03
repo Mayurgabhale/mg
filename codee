@@ -1,173 +1,220 @@
+-import {
+-  Container,
+-  Box,
+-  Button,
+-  Typography,
+-  Table,
+-  TableHead,
+-  TableBody,
+-  TableRow,
+-  TableCell,
+-  Paper,
+-  TextField
+-} from '@mui/material';
++import {
++  Container,
++  Box,
++  Button,
++  Typography,
++  Table,
++  TableHead,
++  TableBody,
++  TableRow,
++  TableCell,
++  TableContainer,
++  Paper,
++  TextField
++} from '@mui/material';
 
-            {/* Summary (left) + Company table (right) */}
-            <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-              {/* Left: Summary */}
-              <Box sx={{ flex: 1, minWidth: 320 }}>
-                <Paper elevation={3} sx={{ px: 1, py: 1, border: '3px solid #000', borderRadius: 2 }}>
-                  <Table sx={{ border: '2px solid #000' }} size='small'>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell colSpan={isCostaRica ? 6 : 5} align="center"
-                          sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#fff', border: '2px solid #000' }}>
-                          {format(pickedDate, 'EEEE, d MMMM, yyyy')}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow sx={{ bgcolor: '#FFC107' }}>
-                        {[
-                          'Country', 'City', 'Employee', 'Contractors',
-                          ...(isCostaRica ? ['Temp Badge'] : []),
-                          'Total'
-                        ].map(h => (
-                          <TableCell key={h}
-                            align={['Country', 'City'].includes(h) ? 'left' : 'right'}
-                            sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
-                          >{h}</TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {partitionRows.map((row, i) => (
-                        <TableRow key={i}>
-                          <TableCell sx={{ border: '2px solid #000' }}>{row.country}</TableCell>
-                          <TableCell sx={{ border: '2px solid #000' }}>{row.city}</TableCell>
-                          <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.employee}</TableCell>
-                          <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.contractor}</TableCell>
-                          {isCostaRica && (
-                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.tempBadge}</TableCell>
-                          )}
-                          <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-                            {row.total}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow sx={{ bgcolor: '#666' }}>
-                        <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                          Total
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                          {partitionRows.reduce((s, r) => s + r.employee, 0)}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                          {partitionRows.reduce((s, r) => s + r.contractor, 0)}
-                        </TableCell>
-                        {isCostaRica && (
-                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                            {partitionRows.reduce((s, r) => s + r.tempBadge, 0)}
-                          </TableCell>
-                        )}
-                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
-                          {partitionRows.reduce((s, r) => s + r.total, 0)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </Paper>
 
-                <Box display="flex" justifyContent="center" sx={{ mt: 1, gap: 2 }}>
-                  <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
-                    onClick={() => setShowDetails(v => !v)}>
-                    {showDetails ? 'Hide Details' : 'See Details'}
-                  </Button>
 
-                  {showDetails && (
-                    <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
-                      onClick={handleExport}>
-                      Export to Excel
-                    </Button>
+
+
+ .....
+
+
+{/* Summary (left) + Company table (right) */}
+<Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+  {/* shared max height for both tables */}
+  {/* adjust value (px) as needed to fit your layout */}
+  { /* NOTE: kept inline value so you don't need to add new variables */ }
+  <Box sx={{ display: 'flex', gap: 2, width: '100%', alignItems: 'stretch' }}>
+
+    {/* Left: Summary */}
+    <Box sx={{ flex: 1, minWidth: 320 }}>
+      <Paper elevation={3} sx={{ px: 1, py: 1, border: '3px solid #000', borderRadius: 2, height: '100%' }}>
+        <TableContainer sx={{ maxHeight: 440 }}>
+          <Table size="small" stickyHeader sx={{ border: '2px solid #000' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell colSpan={isCostaRica ? 6 : 5} align="center"
+                  sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#fff', border: '2px solid #000' }}>
+                  {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                </TableCell>
+              </TableRow>
+              <TableRow sx={{ bgcolor: '#FFC107' }}>
+                {[
+                  'Country', 'City', 'Employee', 'Contractors',
+                  ...(isCostaRica ? ['Temp Badge'] : []),
+                  'Total'
+                ].map(h => (
+                  <TableCell key={h}
+                    align={['Country', 'City'].includes(h) ? 'left' : 'right'}
+                    sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
+                  >{h}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {partitionRows.map((row, i) => (
+                <TableRow key={i}>
+                  <TableCell sx={{ border: '2px solid #000' }}>{row.country}</TableCell>
+                  <TableCell sx={{ border: '2px solid #000' }}>{row.city}</TableCell>
+                  <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.employee}</TableCell>
+                  <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.contractor}</TableCell>
+                  {isCostaRica && (
+                    <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.tempBadge}</TableCell>
                   )}
+                  <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                    {row.total}
+                  </TableCell>
+                </TableRow>
+              ))}
+              <TableRow sx={{ bgcolor: '#666' }}>
+                <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                  Total
+                </TableCell>
+                <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                  {partitionRows.reduce((s, r) => s + r.employee, 0)}
+                </TableCell>
+                <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                  {partitionRows.reduce((s, r) => s + r.contractor, 0)}
+                </TableCell>
+                {isCostaRica && (
+                  <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                    {partitionRows.reduce((s, r) => s + r.tempBadge, 0)}
+                  </TableCell>
+                )}
+                <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                  {partitionRows.reduce((s, r) => s + r.total, 0)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
-                  <Button variant="contained" sx={{ ml: 2, bgcolor: '#FFC107', color: '#000' }}
-                    onClick={handleExportSummary}
-                    disabled={!partitionRows.length}
+      <Box display="flex" justifyContent="center" sx={{ mt: 1, gap: 2 }}>
+        <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+          onClick={() => setShowDetails(v => !v)}>
+          {showDetails ? 'Hide Details' : 'See Details'}
+        </Button>
+
+        {showDetails && (
+          <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
+            onClick={handleExport}>
+            Export to Excel
+          </Button>
+        )}
+
+        <Button variant="contained" sx={{ ml: 2, bgcolor: '#FFC107', color: '#000' }}
+          onClick={handleExportSummary}
+          disabled={!partitionRows.length}
+        >
+          Export Summary to Excel
+        </Button>
+      </Box>
+    </Box>
+
+    {/* Right: Company-level table */}
+    <Box sx={{ flex: 1, minWidth: 320 }}>
+      <Paper elevation={3} sx={{ p: 1, border: '3px solid #000', borderRadius: 2, height: '100%' }}>
+        {/* Use a TableContainer with the same maxHeight; this will show a vertical scrollbar when content overflows */}
+        <TableContainer sx={{ maxHeight: 440, overflowY: 'auto' }}>
+          <Table size="small" stickyHeader sx={{ border: '2px solid #000' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell colSpan={4} align="center"
+                  sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                  {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                </TableCell>
+              </TableRow>
+              <TableRow sx={{ bgcolor: '#FFC107' }}>
+                {['Country', 'City', 'Company', 'Total'].map(h => (
+                  <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'center'}
+                    sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {companyRows.length > 0 ? companyRows.map((r, i) => {
+                const rowKey = `${r.country}||${r.city}||${r.company}`;
+                return (
+                  <TableRow
+                    key={`${r.company}-${i}`}
+                    onClick={() => {
+                      if (selectedCompany === rowKey) {
+                        setSelectedCompany(null);
+                        setShowDetails(true);
+                      } else {
+                        setSelectedCompany(rowKey);
+                        setShowDetails(true);
+                      }
+                    }}
+                    sx={{
+                      cursor: 'pointer',
+                      '&:hover': { backgroundColor: '#474747' },
+                      ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
+                    }}
+                    tabIndex={0}
+                    role="button"
                   >
-                    Export Summary to Excel
-                  </Button>
-                </Box>
-              </Box>
+                    <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                    <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                    <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
+                    <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                      {r.total}
+                    </TableCell>
+                  </TableRow>
+                );
+              }) : (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                    No records for this date.
+                  </TableCell>
+                </TableRow>
+              )}
 
-              {/* Right: Company-level table */}
-              <Box sx={{ flex: 1, minWidth: 320 }}>
-                <Paper elevation={3} sx={{ p: 1, border: '3px solid #000', borderRadius: 2 }}>
-                  <Table sx={{ border: '2px solid #000' }} size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell colSpan={4} align="center"
-                          sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
-                          {format(pickedDate, 'EEEE, d MMMM, yyyy')}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow sx={{ bgcolor: '#FFC107' }}>
-                        {['Country', 'City', 'Company', 'Total'].map(h => (
-                          <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'center'}
-                            sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
-                            {h}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {companyRows.length > 0 ? companyRows.map((r, i) => {
-                        const rowKey = `${r.country}||${r.city}||${r.company}`;
-                        return (
-                          <TableRow
-                            key={`${r.company}-${i}`}
-                            onClick={() => {
-                              if (selectedCompany === rowKey) {
-                                setSelectedCompany(null);
-                                setShowDetails(true);
-                              } else {
-                                setSelectedCompany(rowKey);
-                                setShowDetails(true);
-                              }
-                            }}
-                            sx={{
-                              cursor: 'pointer',
-                              '&:hover': { backgroundColor: '#474747' },
-                              ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
-                            }}
-                            tabIndex={0}
-                            role="button"
-                          >
-                            <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-                            <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-                            <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
-                            <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-                              {r.total}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }) : (
-                        <TableRow>
-                          <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                            No records for this date.
-                          </TableCell>
-                        </TableRow>
-                      )}
+              <TableRow sx={{ bgcolor: '#666' }}>
+                <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                  Total
+                </TableCell>
+                <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                  {/* empty */}
+                </TableCell>
+                <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                  {companyRows.reduce((s, r) => s + r.total, 0)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-                      <TableRow sx={{ bgcolor: '#666' }}>
-                        <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                          Total
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                          {/* empty */}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
-                          {companyRows.reduce((s, r) => s + r.total, 0)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+        <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: '#FFC107', color: '#000' }}
+            onClick={handleExportCompanies}
+            disabled={!companyRows.length}
+          >
+            Export Companies to Excel
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
 
-                  <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
-                    <Button
-                      variant="contained"
-                      sx={{ bgcolor: '#FFC107', color: '#000' }}
-                      onClick={handleExportCompanies}
-                      disabled={!companyRows.length}
-                    >
-                      Export Companies to Excel
-                    </Button>
-                  </Box>
-                </Paper>
-              </Box>
-            </Box>
+  </Box>
+</Box>
