@@ -1,3 +1,12 @@
+// inside empInfo .then (after setEmpInfo(res.data);)
+console.debug('empInfo for', empId, res.data);
+
+// inside loc .then (after setLoc(res.data);)
+console.debug('loc for', empId, res.data);
+
+
+
+....
 <tr>
   <td className="label"><FaMapMarkerAlt className="icon location" /> Company Name</td>
   <td className="value">
