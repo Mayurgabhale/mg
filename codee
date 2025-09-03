@@ -1,4 +1,198 @@
-import ExcelJS from 'exceljs'; // add this import at the top
+Uncaught runtime errors:
+×
+ERROR
+exceljs__WEBPACK_IMPORTED_MODULE_2___default(...).Workbook is not a constructor
+TypeError: exceljs__WEBPACK_IMPORTED_MODULE_2___default(...).Workbook is not a constructor
+    at handleExportSummary (http://localhost:3000/src_pages_History_jsx.c396a835066f64a65142.hot-update.js:801:16)
+    at executeDispatch (http://localhost:3000/static/js/bundle.js:22827:7)
+    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15569:68)
+    at processDispatchQueue (http://localhost:3000/static/js/bundle.js:22855:31)
+    at http://localhost:3000/static/js/bundle.js:23148:7
+    at batchedUpdates$1 (http://localhost:3000/static/js/bundle.js:16418:38)
+    at dispatchEventForPluginEventSystem (http://localhost:3000/static/js/bundle.js:22931:5)
+    at dispatchEvent (http://localhost:3000/static/js/bundle.js:25030:31)
+    at dispatchDiscreteEvent (http://localhost:3000/static/js/bundle.js:25012:58)
+
+// src/pages/History.jsx
+
+import React, { useEffect, useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  Container,
+  Box,
+  Button,
+  Typography,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Paper,
+  TextField
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import ExcelJS from 'exceljs';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { fetchHistory } from '../api/occupancy.service';
+
+export default function History() {
+  const { partition } = useParams();
+  const decodedPartition = partition ? decodeURIComponent(partition) : null;
+  const filterCode = decodedPartition?.split('.')[0] || null;
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [pickedDate, setPickedDate] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+
+  // 1) pick summary for the date
+  const summaryEntry = useMemo(() => {
+    if (!data || !pickedDate) return null;
+    const ds = format(pickedDate, 'yyyy-MM-dd');
+    return data.summaryByDate.find(r =>
+      r.date === ds || r.date.startsWith(ds)
+    ) || null;
+  }, [data, pickedDate]);
+
+  // 2) build partitionRows (unchanged)
+  const partitionRows = useMemo(() => {
+    if (!summaryEntry) return [];
+    const codeToCountry = {
+      AR: 'Argentina',
+      BR: 'Brazil',
+      CR: 'Costa Rica',
+      MX: 'Mexico',
+      PA: 'Panama',
+      PE: 'Peru'
+    };
+    return Object.entries(summaryEntry.partitions)
+      .filter(([key]) =>
+        !filterCode ? true : key.startsWith(filterCode + '.')
+      )
+      .map(([key, v]) => {
+        const [code, cityRaw] = key.split('.');
+        return {
+          country: codeToCountry[code] || code,
+          city: cityRaw.replace('Partition', '').trim(),
+          employee: v.Employee ?? v.EmployeeCount ?? 0,
+          contractor: v.Contractor ?? v.ContractorCount ?? 0,
+          tempBadge: v.TempBadge ?? 0,
+          total: v.total ?? 0,
+        };
+      });
+  }, [summaryEntry, filterCode]);
+
+  // 3) build detailRows exactly like APAC:
+  const detailRows = useMemo(() => {
+    if (!data || !pickedDate || !showDetails) return [];
+    const ds = format(pickedDate, 'yyyy-MM-dd');
+
+    // filter by date field (SwipeDate OR LocaleMessageTime) & partition
+    const filtered = data.details.filter(r => {
+
+      // const inDay = (r.SwipeDate && r.SwipeDate.startsWith(ds))
+      //   || format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd') === ds;
+
+
+      const inDay = (r.SwipeDate && r.SwipeDate.startsWith(ds))
+        || (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds); 
+
+      const inPartition = !filterCode
+        || r.PartitionName2.startsWith(filterCode + '.');
+      return inDay && inPartition;
+    });
+
+    // sort oldest → newest
+    // filtered.sort((a,b) =>
+    //   new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime)
+    // );
+
+
+
+    filtered.sort((a, b) =>
+      (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || '')
+    );
+
+
+
+    // dedupe by PersonGUID, keep first
+    const seen = new Set();
+    return filtered.filter(r => {
+      if (seen.has(r.PersonGUID)) return false;
+      seen.add(r.PersonGUID);
+      return true;
+    });
+  }, [data, pickedDate, showDetails, filterCode]);
+
+  // fetch on mount
+  useEffect(() => {
+    setLoading(true);
+    fetchHistory()
+      .then(json => setData(json))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoadingSpinner />;
+  if (!data) return null;
+
+  // Export
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      detailRows.map((r, i) => ({
+        Sr: i + 1,
+        // Date: format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
+         Date:
+        (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10)) ||
+        (r.SwipeDate && r.SwipeDate.slice(0, 10)) ||
+        '',
+        Time: formatApiTime12(r.LocaleMessageTime),
+        EmployeeID: r.EmployeeID,
+        Name: r.ObjectName1,
+        PersonnelType: r.PersonnelType,
+        CardNumber: r.CardNumber,
+        Door: r.Door,
+        Partition: r.PartitionName2
+      }))
+    );
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Details');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+  };
+
+  const isCostaRica = filterCode === 'CR';
+
+
+
+  // Interpret the API ISO string as UTC text (no timezone conversion),
+  // extract the HH:mm:ss and return 12-hour formatted "hh:mm:ss AM/PM".
+  const formatApiTime12 = (iso) => {
+    if (!iso || typeof iso !== 'string') return '';
+
+    // Try to extract HH:mm:ss from ISO (handles "2025-09-01T00:15:57.000Z"
+    // and also a few other common variants).
+    const m = iso.match(/T?(\d{2}):(\d{2}):(\d{2})/);
+    if (!m) return '';
+
+    const hh = parseInt(m[1], 10);
+    const mm = m[2];
+    const ss = m[3];
+
+    if (Number.isNaN(hh)) return `${m[1]}:${mm}:${ss}`;
+
+    // convert to 12-hour
+    let h12 = hh % 12;
+    if (h12 === 0) h12 = 12;
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+
+    return `${String(h12).padStart(2, '0')}:${mm}:${ss} ${ampm}`;
+  };
 
 
   const handleExportSummary = async () => {
@@ -95,16 +289,105 @@ import ExcelJS from 'exceljs'; // add this import at the top
 
 
 
-...
+  return (
+    <>
+      <Header />
+      <Container maxWidth={false} disableGutters sx={{ pt: 2, pb: 4 }}>
+        {pickedDate && summaryEntry ? (
+          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 1 }}>
+            {/* DatePicker */}
+            <Box sx={{ width: 200 }}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Select date"
+                  value={pickedDate}
+                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                  renderInput={params => <TextField fullWidth {...params} />}
+                />
+              </LocalizationProvider>
+            </Box>
+            {/* Summary */}
+            <Box sx={{ flex: 1, maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Paper elevation={3} sx={{ px: 4, py: 3, border: '3px solid #000', borderRadius: 2 }}>
+                <Table sx={{ border: '2px solid #000' }} size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell colSpan={isCostaRica ? 6 : 5} align="center"
+                        sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#fff', border: '2px solid #000' }}
+                      >
+                        {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow sx={{ bgcolor: '#FFC107' }}>
+                      {[
+                        'Country', 'City', 'Employee', 'Contractors',
+                        ...(isCostaRica ? ['Temp Badge'] : []),
+                        'Total'
+                      ].map(h => (
+                        <TableCell key={h}
+                          align={['Country', 'City'].includes(h) ? 'left' : 'right'}
+                          sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
+                        >{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {partitionRows.map((row, i) => (
+                      <TableRow key={i}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{row.country}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{row.city}</TableCell>
+                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.employee}</TableCell>
+                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.contractor}</TableCell>
+                        {isCostaRica && (
+                          <TableCell align="right" sx={{ border: '2px solid #000' }}>{row.tempBadge}</TableCell>
+                        )}
+                        <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                          {row.total}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow sx={{ bgcolor: '#666' }}>
+                      <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        Total
+                      </TableCell>
+                      <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.employee, 0)}
+                      </TableCell>
+                      <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.contractor, 0)}
+                      </TableCell>
+                      {isCostaRica && (
+                        <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                          {partitionRows.reduce((s, r) => s + r.tempBadge, 0)}
+                        </TableCell>
+                      )}
+                      <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                        {partitionRows.reduce((s, r) => s + r.total, 0)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Paper>
 
-
-<Box display="flex" justifyContent="center" sx={{ mt: 1, gap: 2 }}>
-                <Button variant="outlined" sx={{ borderColor: '#FFC107', color: '#FFC107' }}
-                  onClick={handleExportSummary}
-                  disabled={!partitionRows.length}
-                >
-                  Export Summary to Excel
+              {/* Details toggle & export */}
+              {/* <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
+                  onClick={() => setShowDetails(v => !v)}>
+                  {showDetails ? 'Hide Details' : 'See Details'}
                 </Button>
+                {showDetails && (
+                  <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
+                    onClick={handleExport}>
+                    Export to Excel
+                  </Button>
+                )}
+              </Box> */}
+
+
+
+              <Box display="flex" justifyContent="center" sx={{ mt: 1, gap: 2 }}>
+
+               
 
                 <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
                   onClick={() => setShowDetails(v => !v)}>
@@ -116,4 +399,92 @@ import ExcelJS from 'exceljs'; // add this import at the top
                     Export to Excel
                   </Button>
                 )}
+
+                 <Button variant="outlined" sx={{ borderColor: '#FFC107', color: '#000',bgcolor: '#FFC107' }}
+                  onClick={handleExportSummary}
+                  disabled={!partitionRows.length}
+                >
+                  Export Summary to Excel
+                </Button>
               </Box>
+
+
+
+            </Box>
+          </Box>
+        ) : (
+          <Box sx={{ px: 2, mb: 3 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Select date"
+                value={pickedDate}
+                onChange={d => { setPickedDate(d); setShowDetails(false); }}
+                renderInput={params => <TextField fullWidth {...params} />}
+              />
+            </LocalizationProvider>
+            {!pickedDate && (
+              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
+                Please pick a date to view region summary.
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        {/* Details table */}
+        {showDetails && (
+          <Box display="flex" justifyContent="center" mb={2} sx={{ width: '100%' }}>
+            <Paper elevation={1} sx={{ px: 4, py: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
+              {detailRows.length > 0 ? (
+                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#000' }}>
+                      {[
+                        'Sr', 'Date', 'Time',
+                        'Employee ID', 'Name', 'Personnel Type',
+                        'Card Number', 'Door', 'Partition'
+                      ].map(h => (
+                        <TableCell key={h} align="center"
+                          sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
+                        >{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {detailRows.map((r, i) => (
+                      <TableRow key={`${r.PersonGUID}-${i}`}>
+                        <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
+                        {/*                         
+                        <TableCell sx={{border:'2px solid #000'}}>
+                          {format(new Date(r.LocaleMessageTime),'yyyy-MM-dd')}
+                        </TableCell> */}
+
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {(r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10)) || (r.SwipeDate && r.SwipeDate.slice(0, 10)) || ''}
+                        </TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>
+                          {formatApiTime12(r.LocaleMessageTime)}
+                        </TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
+                        <TableCell sx={{ border: '2px solid #000' }}>{r.PartitionName2}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic' }}>
+                  No swipe records found for this date.
+                </Typography>
+              )}
+            </Paper>
+          </Box>
+        )}
+      </Container>
+      <Footer />
+    </>
+  );
+}
+
