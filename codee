@@ -1,234 +1,43 @@
-check all code each line carefuuly, why compnay name and primary locaton are not disly in card, 
-cheick the issue and correct it carefullly, 
-add this outsite the No recent swipe,
-becasue of this, issue si they show   compnay name and primary locaton  only swipe persona, card,
-but we want to all employe card show, even they not No recent swipe ok
-i hove you understand 
-like othe data is show Name	Gaikwad, Neil
- Employee ID	90762427
- Manager	Lloyds Dass
+  {
+    "id": 2097198977,
+    "EmpName": "., Ankit",
+    "EmployeeID": "320762",
+    "PersonnelType": "Terminated Personnel",
+    "Manager_Name": "Sharad Jadhav",
+    "Manager_WU_ID": "0",
+    "Profile_Disabled": true,
+    "Total_Cards": 0,
+    "Active_Cards": 1,
+    "Employee_Status": "Deactive",
+    "imageUrl": "/api/employees/2097198977/image",
+    "CompanyName": "WU Technology Engineering Services Private Limited",
+    "PrimaryLocation": "Pune - Business Bay"
+  },
 
-........
-Profile Details
- Name	Gaikwad, Neil
- Employee ID	90762427
- Manager	Lloyds Dass
- Active Cards	1
-Swipe Details
-No recent swipe
- Company Name	—
- Primary Location	—
- Total Cards	2
-Show Less
+add 
+CompanyName and PrimaryLocation with icon
+ <table className="details-table" aria-label="employee details">
+          <tbody>
+            {/* Always visible */}
+            <tr>
+              <td className="label "><FaUser color='#FFDD00' /> Name</td>
+              <td className="value v-color">{emp.EmpName || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaIdBadge color='#FFDD00' /> Employee ID</td>
+              <td className="value v-color">{emp.EmployeeID || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaUserTie color='#FFDD00'/> Manager</td>
+              <td className="value v-color">{emp.Manager_Name || '—'}</td>
+            </tr>
+            <tr>
+              <td className="label"><FaIdCard /> Active Cards</td>
+              <td className="value v-color">{emp.Active_Cards ?? 0}</td>
+            </tr>
+            <tr>
+              <td colSpan="2" style={{ paddingTop: 1 }}>
+                <CurrentLocation empId={emp.id ?? emp.EmployeeID} showMore={showMore} />
+              </td>
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
-import './EmployeeCard.css';
-export default function CurrentLocation({ empId, showMore }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-
-
-  // 1) Add near your other useState declarations
-  const [empInfo, setEmpInfo] = useState(null);
-
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
-
-
-    // 2) Inside the same useEffect, after setLoc(null);
-    setLoc(null);
-    setEmpInfo(null);
-
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}`)
-      .then((res) => {
-        if (cancelled) return;
-        setEmpInfo(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Employee load error', err?.message || err);
-        // intentionally do not change existing error state handling
-      });
-
-
-
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
-      .then((res) => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Location load error', err?.message || err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
-
-  if (!empId) return null;
-
-  return (
-    <div className="current-location-card" style={{ marginTop: 1 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color: '#f5a742' }}>Swipe Details</h4>
-
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
-      {/* {!loading && loc && ( */}
-      {!loading && (loc || empInfo) && (
-
-        <>
-          {!loc.found && <div style={{ color: '#2ced0e' }}>No recent swipe</div>}
-
-          <table className="swipe-details-table">
-            <tbody>
-
-              {/* <tr>
-                  <td className="label"><FaMapMarkerAlt className="icon location" /> Company Name</td>
-                  <td className="value">
-                    {empInfo?.CompanyName ?? empInfo?.companyName ?? loc?.CompanyName ?? '—'}
-                  </td>
-                </tr> */}
-
-             <tr>
-  <td className="label"><FaMapMarkerAlt className="icon location" /> Company Name</td>
-  <td className="value">
-    {
-      // Try many likely places where the backend might return company name
-      empInfo?.CompanyName
-      ?? empInfo?.companyName
-      ?? empInfo?.Employer
-      ?? empInfo?.EmployerName
-      ?? empInfo?.employerName
-      ?? empInfo?.company?.name
-      ?? empInfo?.company?.CompanyName
-      ?? empInfo?.companyDetails?.name
-      ?? empInfo?.organization
-      ?? empInfo?.orgName
-      ?? empInfo?.company_name
-      ?? loc?.CompanyName
-      ?? loc?.companyName
-      ?? loc?.employerName
-      ?? loc?.company?.name
-      ?? '—'
-    }
-  </td>
-</tr>
-              {/* 
-                <tr>
-                  <td className="label"><FaMapMarkerAlt className="icon location" /> Primary Location</td>
-                  <td className="value">
-                    {empInfo?.PrimaryLocation ?? empInfo?.primaryLocation ?? loc?.PrimaryLocation ?? '—'}
-                  </td>
-                </tr> */}
-
-
-              <tr>
-  <td className="label"><FaMapMarkerAlt className="icon location" /> Primary Location</td>
-  <td className="value">
-    {
-      empInfo?.PrimaryLocation
-      ?? empInfo?.primaryLocation
-      ?? empInfo?.primary_location
-      ?? empInfo?.officeLocation
-      ?? empInfo?.office_location
-      ?? empInfo?.workLocation
-      ?? empInfo?.location?.primary
-      ?? empInfo?.address?.city
-      ?? empInfo?.company?.primaryLocation
-      ?? loc?.PrimaryLocation
-      ?? loc?.primaryLocation
-      ?? loc?.officeLocation
-      ?? '—'
-    }
-  </td>
-</tr>
-
-              {/* The rest of the swipe details are shown only when a recent swipe was found */}
-              {loc.found && (
-                <>
-                  <tr>
-                    <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
-                    <td className="value">
-                      {loc.partition || '—'}
-                      {loc.floor ? ` · ${loc.floor}` : ''}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="label">
-                      <FaPalette className="icon zone" /> {loc.Zone ? 'Zone' : 'Floor'}
-                    </td>
-                    <td className="value">{loc.Zone || loc.floor || '—'}</td>
-                  </tr>
-
-                  {showMore && (
-                    <>
-                      <tr>
-                        <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
-                        <td className="value">
-                          {loc.timestampUTC
-                            ? loc.timestampUTC.split('T')[0]
-                            : '—'}
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="label"><FaClock className="icon time" /> Time</td>
-                        <td className="value">
-                          {loc.timestampUTC
-                            ? new Date(
-                              `1970-01-01T${loc.timestampUTC.split('T')[1].replace('Z', '')}Z`
-                            ).toLocaleTimeString([], {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true,
-                              timeZone: 'UTC'
-                            })
-                            : '—'}
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td className="label"><FaDoorClosed className="icon door" /> Door</td>
-                        <td className="value">{loc.door || '—'}</td>
-                      </tr>
-
-                      <tr>
-                        <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
-                        <td className="value">{loc.direction || '—'}</td>
-                      </tr>
-                    </>
-                  )}
-                </>
-              )}
-            </tbody>
-          </table>
-        </>
-      )}
-
-
-
-    </div>
-  );
-}
+            </tr>
