@@ -1,249 +1,232 @@
-// NEW: personnel header filter state (EMEA)
-const [selectedPersonnel, setSelectedPersonnel] = useState(null); // 'Employee' | 'Contractor' | null
-const [selectedSummaryPartition, setSelectedSummaryPartition] = useState(null); // e.g. 'Austria||Vienna'
+KNOW WE WORK ON backend ok...
+know using live querya nd historycal query,
+we want to add duration of employeee.
+first swpie and last swipte to calculate duration for each employee,
+read all code carefully, can add 
+
+http://localhost:3007/api/occupancy/history
+
+ {
+      "LocaleMessageTime": "2025-07-03T10:06:18.000Z",
+      "ObjectName1": "Bhogal, Ravindra",
+      "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR",
+      "EmployeeID": "",
+      "PersonnelType": "Property Management",
+      "PersonGUID": "2A7F14F9-0006-46D3-8B21-62FF813AAD06",
+      "CompanyName": "CBRE - CLR  Facility Services Pvt.Ltd.",
+      "PrimaryLocation": "Business Bay - Pune",
+      "PartitionNameFriendly": "Pune",
+      "CardNumber": "413841",
+      "Direction": "InDirection"
+      add this ok 
+    },
+
+read all code carefllym 
+listion dont chagne my privius code logic 
+//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\services\occupancy.service.js
+
+const { poolPromise, sql } = require('../config/db');
+
+const partitionList = [
+  'APAC.Default',
+  'JP.Tokyo',
+  'PH.Manila',
+  'MY.Kuala Lumpur',
+  'IN.Pune'
+];
+
+
+
+function quoteList(arr) {
+  return arr.map(p => `'${p.replace("'", "''")}'`).join(',');
+}
+
+/**
+ * Live occupancy (today) for APAC
+ */
+exports.fetchLiveOccupancy = async () => {
+  const pool = await poolPromise;
+  const parts = quoteList(partitionList);
+
+  const query = `
+
+    WITH CombinedEmployeeData AS (
+      SELECT
+        t1.ObjectName1,
+        t1.ObjectName2             AS Door,               -- include Door
+        CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+        t3.Name                    AS PersonnelType,
+        t1.ObjectIdentity1         AS PersonGUID,
+        -- extract CardNumber from XML or shred table
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                          AS CardNumber,
+        CASE
+          WHEN t1.ObjectName2 LIKE 'APAC_PI%' THEN 'Taguig City'
+          WHEN t1.ObjectName2 LIKE 'APAC_PH%' THEN 'Quezon City'
+          WHEN t1.ObjectName2 LIKE '%PUN%'   THEN 'Pune'
+          WHEN t1.ObjectName2 LIKE 'APAC_JPN%' THEN 'JP.Tokyo'
+          WHEN t1.ObjectName2 LIKE 'APAC_MY%'  THEN 'MY.Kuala Lumpur'
+          ELSE t1.PartitionName2
+        END                        AS PartitionName2,
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t5d.value                  AS Direction,
+        t2.Text4                   AS CompanyName,        -- ✅ added
+        t2.Text5                   AS PrimaryLocation     -- ✅ added
+      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+      JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
+      JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
+
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
+      ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 IN (${parts})
+        AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
+            = CONVERT(DATE, GETDATE())
+    ), Ranked AS (
+      SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY PersonGUID ORDER BY LocaleMessageTime DESC) AS rn
+      FROM CombinedEmployeeData
+      
+    )
+    SELECT
+      ObjectName1,
+      Door,                            -- door
+      PersonnelType,
+      EmployeeID,
+      CardNumber,                      -- now returned
+      PartitionName2,
+      LocaleMessageTime,
+      Direction,
+      PersonGUID,
+      CompanyName,                      -- ✅ added
+      PrimaryLocation                   -- ✅ added
+    FROM Ranked
+    WHERE rn = 1;
+  `;
+
+  const result = await pool.request().query(query);
+  return result.recordset;
+};
 
 
 
 
-......
+exports.fetchHistoricalOccupancy = async (location) =>
+  exports.fetchHistoricalData({ location: location || null });
 
-{/* Summary header (clickable Employees / Contractors) */}
-<TableRow sx={{ bgcolor: '#FFC107' }}>
-  {['Country','City','Employees','Contractors','Total'].map(h => {
-    if (h === 'Employees' || h === 'Contractors') {
-      const personnelType = h === 'Employees' ? 'Employee' : 'Contractor';
-      const isActive = selectedPersonnel === personnelType && !selectedSummaryPartition;
-      return (
-        <TableCell
-          key={h}
-          align="right"
-          onClick={() => {
-            if (isActive) {
-              setSelectedPersonnel(null);
-            } else {
-              setSelectedPersonnel(personnelType);
-              setSelectedSummaryPartition(null);
-              setSelectedCompany(null);
-              setShowDetails(true);
-            }
-          }}
-          sx={{
-            color: isActive ? '#fff' : '#000',
-            fontWeight: 'bold',
-            fontSize: 14,
-            border: '2px solid #000',
-            cursor: 'pointer',
-            textAlign: 'right',
-            bgcolor: isActive ? '#474747' : '#FFC107',
-            '&:hover': { backgroundColor: isActive ? '#5a5a5a' : '#f2f2f2' }
-          }}
-        >
-          {h}
-        </TableCell>
-      );
-    }
-    return (
-      <TableCell
-        key={h}
-        align={['Country','City'].includes(h) ? 'left' : 'right'}
-        sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
-      >
-        {h}
-      </TableCell>
-    );
-  })}
-</TableRow>
+exports.fetchHistoricalData = async ({ location = null }) => {
+  const pool = await poolPromise;
 
-{/* Summary rows (make Employee/Contractor cells clickable to filter that partition + personnel) */}
-{partitionRows.map((r, i) => {
-  const partitionKey = `${r.country}||${r.city}`;
-  return (
-    <TableRow key={i}>
-      <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-      <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+  // 1. Get all ACVSUJournal_* database names dynamically
+  const dbResult = await pool.request().query(`
+    SELECT name 
+    FROM sys.databases
+    WHERE name LIKE 'ACVSUJournal[_]%'
+    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
+  `);
 
-      {/* Employee count cell (click -> filter partition to Employees) */}
-      <TableCell
-        align="right"
-        sx={{
-          border: '2px solid #000',
-          cursor: 'pointer',
-          '&:hover': { backgroundColor: '#f2f2f2' },
-          bgcolor: selectedPersonnel === 'Employee' && selectedSummaryPartition === partitionKey ? '#474747' : undefined,
-          color: selectedPersonnel === 'Employee' && selectedSummaryPartition === partitionKey ? '#fff' : '#000'
-        }}
-        onClick={() => {
-          if (selectedPersonnel === 'Employee' && selectedSummaryPartition === partitionKey) {
-            setSelectedPersonnel(null);
-            setSelectedSummaryPartition(null);
-          } else {
-            setSelectedPersonnel('Employee');
-            setSelectedSummaryPartition(partitionKey);
-            setSelectedCompany(null);
-            setShowDetails(true);
-          }
-        }}
-      >
-        {r.employee}
-      </TableCell>
+  // Map DBs and pick last 2 only
+  const databases = dbResult.recordset.map(r => r.name);
+  const selectedDbs = databases.slice(-2); // newest and previous
 
-      {/* Contractor count cell (click -> filter partition to Contractors) */}
-      <TableCell
-        align="right"
-        sx={{
-          border: '2px solid #000',
-          cursor: 'pointer',
-          '&:hover': { backgroundColor: '#f2f2f2' },
-          bgcolor: selectedPersonnel === 'Contractor' && selectedSummaryPartition === partitionKey ? '#474747' : undefined,
-          color: selectedPersonnel === 'Contractor' && selectedSummaryPartition === partitionKey ? '#fff' : '#000'
-        }}
-        onClick={() => {
-          if (selectedPersonnel === 'Contractor' && selectedSummaryPartition === partitionKey) {
-            setSelectedPersonnel(null);
-            setSelectedSummaryPartition(null);
-          } else {
-            setSelectedPersonnel('Contractor');
-            setSelectedSummaryPartition(partitionKey);
-            setSelectedCompany(null);
-            setShowDetails(true);
-          }
-        }}
-      >
-        {r.contractor}
-      </TableCell>
-
-      <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-        {r.total}
-      </TableCell>
-    </TableRow>
-  );
-})}
-
-
-
-
-......
-
-
-const companyRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // filter details for this date and our partitions
-  const filtered = data.details.filter(r =>
-    r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds &&
-    filteredPartitionKeys.includes(r.PartitionName2)
-  );
-
-  // Apply personnel header filter and optional summary-partition filter before aggregating
-  const afterPersonnel = filtered.filter(r => {
-    // selectedSummaryPartition (partition-specific) filter
-    if (selectedSummaryPartition) {
-      const [selCountry, selCity] = selectedSummaryPartition.split('||');
-      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
-      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-      if (rowCity !== selCity || rowCountry !== selCountry) return false;
-    }
-
-    // personnel filter
-    if (selectedPersonnel) {
-      const pt = String(r.PersonnelType || '').toLowerCase();
-      if (selectedPersonnel === 'Employee') {
-        if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
-      } else if (selectedPersonnel === 'Contractor') {
-        if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
-      }
-    }
-    return true;
-  });
-
-  const map = new Map();
-  afterPersonnel.forEach(r => {
-    const city = partitionToDisplay[r.PartitionName2]?.city || (r.PartitionName2 || 'Unknown');
-    const country = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-    const company = getCanonicalCompany(r);
-    const key = `${country}||${city}||${company}`;
-    const existing = map.get(key);
-    if (existing) existing.total += 1;
-    else map.set(key, { country, city, company, total: 1 });
-  });
-
-  return Array.from(map.values()).sort((a, b) => {
-    if (a.country !== b.country) return a.country.localeCompare(b.country);
-    if (a.city !== b.city) return a.city.localeCompare(b.city);
-    return a.company.localeCompare(b.company);
-  });
-}, [data, pickedDate, filteredPartitionKeys, selectedPersonnel, selectedSummaryPartition]);
-
-
-
-
-
-
-......
-
-const detailRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // all rows for date & our partitions
-  const all = data.details.filter(r =>
-    filteredPartitionKeys.includes(r.PartitionName2) &&
-    getIsoDate(r) === ds
-  );
-
-  // sort last->newest then dedupe last swipe per person (your existing logic)
-  all.sort((a, b) => (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || ''));
-
-  const lastByKey = {};
-  all.forEach((r, idx) => {
-    const personKey = r.PersonGUID && String(r.PersonGUID).trim();
-    const fallbackKey = `${r.EmployeeID ?? ''}||${r.CardNumber ?? ''}||${String(r.ObjectName1 ?? '').trim()}`;
-    const key = personKey || fallbackKey || `row-${idx}`;
-    lastByKey[key] = r;
-  });
-
-  let rows = Object.values(lastByKey);
-
-  // attach canonical company (so company filtering is consistent)
-  rows = rows.map(r => ({ ...r, CompanyNameComputed: getCanonicalCompany ? getCanonicalCompany(r) : (r.CompanyName || '') }));
-
-  // apply selectedSummaryPartition filter (if set)
-  if (selectedSummaryPartition) {
-    const [selCountry, selCity] = selectedSummaryPartition.split('||');
-    rows = rows.filter(r => {
-      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
-      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-      return rowCity === selCity && rowCountry === selCountry;
-    });
+  if (selectedDbs.length === 0) {
+    throw new Error("No ACVSUJournal_* databases found.");
   }
 
-  // apply personnel header filter
-  if (selectedPersonnel) {
-    rows = rows.filter(r => {
-      const pt = String(r.PersonnelType || '').toLowerCase();
-      if (selectedPersonnel === 'Employee') {
-        return (pt.includes('employee') || pt.includes('staff') || pt === 'employee');
-      } else if (selectedPersonnel === 'Contractor') {
-        return (pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'));
-      }
-      return true;
-    });
+  // 2. Outer filter
+  const outerFilter = location
+    ? `WHERE PartitionNameFriendly = @location`
+    : `WHERE PartitionNameFriendly IN (${quoteList([
+        'Pune','Quezon City','JP.Tokyo','MY.Kuala Lumpur','Taguig City'
+      ])})`;
+
+  // 3. Build UNION ALL query across selected DBs only
+  const unionQueries = selectedDbs.map(db => `
+    SELECT
+      DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+      t1.ObjectName1,
+      t1.ObjectName2               AS Door,
+      CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+      t3.Name                      AS PersonnelType,
+      t1.ObjectIdentity1           AS PersonGUID,
+     t2.Text4                   AS CompanyName,   -- ✅ company
+     t2.Text5                   AS PrimaryLocation, -- ✅ location
+      COALESCE(
+        CASE
+          WHEN t1.ObjectName2 LIKE 'APAC_PI%'   THEN 'Taguig City'
+          WHEN t1.ObjectName2 LIKE 'APAC_PH%'   THEN 'Quezon City'
+          WHEN t1.ObjectName2 LIKE '%PUN%'      THEN 'Pune'
+          WHEN t1.ObjectName2 LIKE 'APAC_JPN%'  THEN 'JP.Tokyo'
+          WHEN t1.ObjectName2 LIKE 'APAC_MY%'   THEN 'MY.Kuala Lumpur'
+          ELSE t1.PartitionName2
+        END,
+        'APAC.Default'
+      ) AS PartitionNameFriendly,
+
+
+      
+      COALESCE(
+        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+        sc.value
+      ) AS CardNumber,
+      t5d.value AS Direction
+    FROM ${db}.dbo.ACVSUJournalLog t1
+    JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
+    JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
+
+    LEFT JOIN ${db}.dbo.ACVSUJournalLogxmlShred t5d
+      ON t1.XmlGUID = t5d.GUID 
+      AND t5d.Value IN ('InDirection','OutDirection')
+
+    LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
+      ON t1.XmlGUID = t_xml.GUID
+
+    LEFT JOIN (
+      SELECT GUID, value
+      FROM ${db}.dbo.ACVSUJournalLogxmlShred
+      WHERE Name IN ('Card','CHUID')
+    ) AS sc
+      ON t1.XmlGUID = sc.GUID
+    WHERE t1.MessageType = 'CardAdmitted'
+  `).join('\nUNION ALL\n');
+
+  // 4. Final query
+  const query = `
+    WITH Hist AS (
+      ${unionQueries}
+    )
+    SELECT *
+    FROM Hist
+    ${outerFilter}
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const req = pool.request();
+  if (location) {
+    req.input('location', sql.NVarChar, location);
   }
+  const result = await req.query(query);
+  return result.recordset;
+};
 
-  // If a company row was clicked, filter by that company (preserve your original behaviour)
-  if (selectedCompany) {
-    const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
-    const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g, ' ').trim().toLowerCase();
+// keep this for occupancy
+exports.fetchHistoricalOccupancy = async (location) =>
+  exports.fetchHistoricalData({ location: location || null });
 
-    rows = rows.filter(r => {
-      const rnCompany = String(r.CompanyNameComputed || 'Unknown').replace(/\s+/g, ' ').trim().toLowerCase();
-      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
-      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
-      return rnCompany === selCompanyNorm && rowCity === selCity && rowCountry === selCountry;
-    });
-  }
 
-  return rows.sort((a, b) => (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || ''));
-}, [data, pickedDate, filteredPartitionKeys, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
+
+
