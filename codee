@@ -34,6 +34,22 @@
       "DurationSeconds": 6417644,
       "duration": "06:40:44"
     },
+ {
+      "LocaleMessageTime": "2025-08-07T09:05:20.000Z",
+      "ObjectName1": "Diwate, Swapnil",
+      "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR",
+      "EmployeeID": "W0024618",
+      "PersonnelType": "Contractor",
+      "PersonGUID": "FCEDB0C8-993C-416C-8D3F-43F4B87BC572",
+      "CompanyName": "Poona Security India Pvt. Ltd.",
+      "PrimaryLocation": "Pune - Business Bay",
+      "PartitionNameFriendly": "Pune",
+      "CardNumber": "619957",
+      "Direction": "InDirection",
+      "FirstSwipe": "2025-06-22T07:36:55.000Z",
+      "LastSwipe": "2025-09-04T14:17:39.000Z",
+      "DurationSeconds": 6417644,
+      "duration": "06:40:44"
 this is wrong you calcuateion one day duratin and show all daise this is wonrgok
 
 
