@@ -1,3 +1,9 @@
+}, [data, pickedDate, showDetails, filterCode, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
+
+
+
+
+...
 <TableRow sx={{ bgcolor: '#FFC107' }}>
   {[
     'Country', 'City', 'Employee', 'Contractors',
