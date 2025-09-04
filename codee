@@ -1,58 +1,151 @@
-}, [data, pickedDate, showDetails, filterCode, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
 
 
+{/* Right: Company-level table */}
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+                {/* make Paper a column flex so TableContainer can fill and scroll */}
+                <Paper elevation={3} sx={{ p: 1, border: '3px solid #000', borderRadius: 2, display: 'flex', flexDirection: 'column' }}>
+                  {/* TableContainer with same maxHeight as left so heights match; overflowY will show scrollbar on right */}
+                  <TableContainer sx={{ maxHeight: 270, overflowY: 'auto' }}>
+                    <Table sx={{ border: '2px solid #000' }} size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={4} align="center"
+                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
+                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow sx={{ bgcolor: '#FFC107' }}>
+                          {['Country', 'City', 'Company', 'Total'].map(h => (
+                            <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'center'}
+                              sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {companyRows.length > 0 ? companyRows.map((r, i) => {
+                          const rowKey = `${r.country}||${r.city}||${r.company}`;
+                          return (
+                            <TableRow
+                              key={`${r.company}-${i}`}
+                              onClick={() => {
+                                if (selectedCompany === rowKey) {
+                                  setSelectedCompany(null);
+                                  setShowDetails(true);
+                                } else {
+                                  setSelectedCompany(rowKey);
+                                  setShowDetails(true);
+                                }
+                              }}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover': { backgroundColor: '#474747' },
+                                ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
+                              }}
+                              tabIndex={0}
+                              role="button"
+                            >
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
+                              <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
+                              <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
+                                {r.total}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }) : (
+                          <TableRow>
+                            <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
+                              No records for this date.
+                            </TableCell>
+                          </TableRow>
+                        )}
+
+                        <TableRow sx={{ bgcolor: '#666' }}>
+                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            Total
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
+                            {/* empty */}
+                          </TableCell>
+                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
+                            {companyRows.reduce((s, r) => s + r.total, 0)}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
+                    <Button
+                      variant="contained"
+                      sx={{ bgcolor: '#FFC107', color: '#000' }}
+                      onClick={handleExportCompanies}
+                      disabled={!companyRows.length}
+                    >
+                      Export Companies to Excel
+                    </Button>
+                  </Box>
+                </Paper>
+              </Box>
 
 
-...
-<TableRow sx={{ bgcolor: '#FFC107' }}>
-  {[
-    'Country', 'City', 'Employee', 'Contractors',
-    ...(isCostaRica ? ['Temp Badge'] : []),
-    'Total'
-  ].map(h => {
-    // clickable header for global personnel filter
-    if (h === 'Employee' || h === 'Contractors') {
-      const personnelType = h === 'Employee' ? 'Employee' : 'Contractor';
-      return (
-        <TableCell
-          key={h}
-          align="right"
-          onClick={() => {
-            // toggle on repeated click
-            if (selectedPersonnel === personnelType && !selectedSummaryPartition) {
-              setSelectedPersonnel(null);
-            } else {
-              setSelectedPersonnel(personnelType);
-              // ensure global (header) click — clear partition-specific selection
-              setSelectedSummaryPartition(null);
-              // clear company selection to avoid conflicting filters
-              setSelectedCompany(null);
-              setShowDetails(true);
-            }
-          }}
-          sx={{
-            color: '#000',
-            fontWeight: 'bold',
-            fontSize: 14,
-            border: '2px solid #000',
-            cursor: 'pointer',
-            '&:hover': { backgroundColor: '#f2f2f2' },
-            textAlign: 'right'
-          }}
-        >
-          {h}
-        </TableCell>
-      );
-    }
+see above code in this select row has color
 
-    // non-clickable headers (Country/City/Total/Temp Badge)
-    return (
-      <TableCell key={h}
-        align={['Country', 'City'].includes(h) ? 'left' : 'right'}
-        sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
-      >
-        {h}
-      </TableCell>
-    );
-  })}
-</TableRow>
+means in this if i selct Employee then focus on emplye headr wiht bg, means easy understnd which we select Employee or    Contractors, 
+(like above if i slect one compnay then bg color focus on thie row like that) for emeployee and contract 
+
+
+                        <TableRow sx={{ bgcolor: '#FFC107' }}>
+                          {[
+                            'Country', 'City', 'Employee', 'Contractors',
+                            ...(isCostaRica ? ['Temp Badge'] : []),
+                            'Total'
+                          ].map(h => {
+                            // clickable header for global personnel filter
+                            if (h === 'Employee' || h === 'Contractors') {
+                              const personnelType = h === 'Employee' ? 'Employee' : 'Contractor';
+                              return (
+                                <TableCell
+                                  key={h}
+                                  align="right"
+                                  onClick={() => {
+                                    // toggle on repeated click
+                                    if (selectedPersonnel === personnelType && !selectedSummaryPartition) {
+                                      setSelectedPersonnel(null);
+                                    } else {
+                                      setSelectedPersonnel(personnelType);
+                                      // ensure global (header) click — clear partition-specific selection
+                                      setSelectedSummaryPartition(null);
+                                      // clear company selection to avoid conflicting filters
+                                      setSelectedCompany(null);
+                                      setShowDetails(true);
+                                    }
+                                  }}
+                                  sx={{
+                                    color: '#000',
+                                    fontWeight: 'bold',
+                                    fontSize: 14,
+                                    border: '2px solid #000',
+                                    cursor: 'pointer',
+                                    '&:hover': { backgroundColor: '#f2f2f2' },
+                                    textAlign: 'right'
+                                  }}
+                                >
+                                  {h}
+                                </TableCell>
+                              );
+                            }
+
+                            // non-clickable headers (Country/City/Total/Temp Badge)
+                            return (
+                              <TableCell key={h}
+                                align={['Country', 'City'].includes(h) ? 'left' : 'right'}
+                                sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
+                              >
+                                {h}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
