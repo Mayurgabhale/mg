@@ -1,3 +1,13 @@
+// canonicalized company name
+const company = getCanonicalCompany(r);
+
+
+
+
+
+
+.....
+
 // --- Canonicalize company names for LACA (keeps your logic, just groups known variants) ---
 const getCanonicalCompany = (r) => {
   const raw = r && r.CompanyName ? String(r.CompanyName).trim() : '';
