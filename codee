@@ -118,3 +118,60 @@ const [selectedSummaryPartition, setSelectedSummaryPartition] = useState(null); 
     </TableRow>
   );
 })}
+
+
+
+
+......
+
+
+const companyRows = useMemo(() => {
+  if (!data || !pickedDate) return [];
+
+  const ds = format(pickedDate, 'yyyy-MM-dd');
+
+  // filter details for this date and our partitions
+  const filtered = data.details.filter(r =>
+    r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds &&
+    filteredPartitionKeys.includes(r.PartitionName2)
+  );
+
+  // Apply personnel header filter and optional summary-partition filter before aggregating
+  const afterPersonnel = filtered.filter(r => {
+    // selectedSummaryPartition (partition-specific) filter
+    if (selectedSummaryPartition) {
+      const [selCountry, selCity] = selectedSummaryPartition.split('||');
+      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
+      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+      if (rowCity !== selCity || rowCountry !== selCountry) return false;
+    }
+
+    // personnel filter
+    if (selectedPersonnel) {
+      const pt = String(r.PersonnelType || '').toLowerCase();
+      if (selectedPersonnel === 'Employee') {
+        if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
+      } else if (selectedPersonnel === 'Contractor') {
+        if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
+      }
+    }
+    return true;
+  });
+
+  const map = new Map();
+  afterPersonnel.forEach(r => {
+    const city = partitionToDisplay[r.PartitionName2]?.city || (r.PartitionName2 || 'Unknown');
+    const country = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+    const company = getCanonicalCompany(r);
+    const key = `${country}||${city}||${company}`;
+    const existing = map.get(key);
+    if (existing) existing.total += 1;
+    else map.set(key, { country, city, company, total: 1 });
+  });
+
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.country !== b.country) return a.country.localeCompare(b.country);
+    if (a.city !== b.city) return a.city.localeCompare(b.city);
+    return a.company.localeCompare(b.company);
+  });
+}, [data, pickedDate, filteredPartitionKeys, selectedPersonnel, selectedSummaryPartition]);
