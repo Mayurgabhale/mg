@@ -3,10 +3,50 @@
     'Country', 'City', 'Employee', 'Contractors',
     ...(isCostaRica ? ['Temp Badge'] : []),
     'Total'
-  ].map(h => (
-    <TableCell key={h}
-      align={['Country', 'City'].includes(h) ? 'left' : 'right'}
-      sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
-    >{h}</TableCell>
-  ))}
+  ].map(h => {
+    // clickable header for global personnel filter
+    if (h === 'Employee' || h === 'Contractors') {
+      const personnelType = h === 'Employee' ? 'Employee' : 'Contractor';
+      return (
+        <TableCell
+          key={h}
+          align="right"
+          onClick={() => {
+            // toggle on repeated click
+            if (selectedPersonnel === personnelType && !selectedSummaryPartition) {
+              setSelectedPersonnel(null);
+            } else {
+              setSelectedPersonnel(personnelType);
+              // ensure global (header) click — clear partition-specific selection
+              setSelectedSummaryPartition(null);
+              // clear company selection to avoid conflicting filters
+              setSelectedCompany(null);
+              setShowDetails(true);
+            }
+          }}
+          sx={{
+            color: '#000',
+            fontWeight: 'bold',
+            fontSize: 14,
+            border: '2px solid #000',
+            cursor: 'pointer',
+            '&:hover': { backgroundColor: '#f2f2f2' },
+            textAlign: 'right'
+          }}
+        >
+          {h}
+        </TableCell>
+      );
+    }
+
+    // non-clickable headers (Country/City/Total/Temp Badge)
+    return (
+      <TableCell key={h}
+        align={['Country', 'City'].includes(h) ? 'left' : 'right'}
+        sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
+      >
+        {h}
+      </TableCell>
+    );
+  })}
 </TableRow>
