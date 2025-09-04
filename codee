@@ -1,55 +1,52 @@
-const detailRows = useMemo(() => {
-  if (!data || !pickedDate || !showDetails) return [];
+const companyRows = useMemo(() => {
+  if (!data || !pickedDate) return [];
+
   const ds = format(pickedDate, 'yyyy-MM-dd');
 
-  return data.details
-    .filter(r => {
-      // match date
-      if (!r.LocaleMessageTime || r.LocaleMessageTime.slice(0, 10) !== ds) return false;
-
-      // partition (city) filter (backend / friendly)
-      if (backendFilterKey) {
-        const ok = r.PartitionNameFriendly === backendFilterKey ||
-          apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
-        if (!ok) return false;
+  // filter details for the date + optional partition filter
+  const filtered = data.details.filter(r => {
+    if (!r.LocaleMessageTime || r.LocaleMessageTime.slice(0, 10) !== ds) return false;
+    if (backendFilterKey) {
+      const ok = r.PartitionNameFriendly === backendFilterKey ||
+        apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
+      if (!ok) return false;
+    }
+    // apply personnel header filter here so companyCounts reflect the selected personnel type
+    if (selectedPersonnel) {
+      const pt = String(r.PersonnelType || '').toLowerCase();
+      if (selectedPersonnel === 'Employee') {
+        if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
+      } else if (selectedPersonnel === 'Contractor') {
+        if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
       }
+    }
+    return true;
+  });
 
-      // --- personnel header filter (Employees / Contractors) ---
-      if (selectedPersonnel) {
-        const pt = String(r.PersonnelType || '').toLowerCase();
-        if (selectedPersonnel === 'Employee') {
-          // conservative match for employees
-          if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
-        } else if (selectedPersonnel === 'Contractor') {
-          // conservative match for contractors
-          if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
-        }
-      }
+  // aggregate into map: key = country||city||normalizedCompany
+  const map = new Map();
 
-      // If a summary-partition (country||city) was selected (optional support),
-      // ensure detail row belongs to that partition.
-      if (selectedSummaryPartition) {
-        const [selCountry, selCity] = (selectedSummaryPartition || '').split('||');
-        const city = formatPartition(r.PartitionNameFriendly || '');
-        const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-        const country = disp?.country || 'Unknown';
-        if (country !== selCountry || city !== selCity) return false;
-      }
+  filtered.forEach(r => {
+    const city = formatPartition(r.PartitionNameFriendly || '');
+    const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
+    const country = disp?.country || 'Unknown';
 
-      // If a company is selected, only include rows for that company (unchanged behavior)
-      if (!selectedCompany) return true;
+    // use the shared canonical helper so companyRows and detail filtering match exactly
+    const company = getCanonicalCompany(r);
 
-      // compute country & city the same way companyRows does
-      const city = formatPartition(r.PartitionNameFriendly || '');
-      const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-      const country = disp?.country || 'Unknown';
+    const key = `${country}||${city}||${company}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.total += 1; // counting rows as "total" (same behaviour as before)
+    } else {
+      map.set(key, { country, city, company, total: 1 });
+    }
+  });
 
-      // canonical company name for this row
-      const canonical = getCanonicalCompany(r);
-
-      // build key and compare
-      const rowKey = makeCompanyKey(country, city, canonical);
-      return rowKey === selectedCompany;
-    })
-    .sort((a, b) => a.LocaleMessageTime.localeCompare(b.LocaleMessageTime));
-}, [data, pickedDate, showDetails, backendFilterKey, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
+  // return sorted list (optional: by country, city, company)
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.country !== b.country) return a.country.localeCompare(b.country);
+    if (a.city !== b.city) return a.city.localeCompare(b.city);
+    return a.company.localeCompare(b.company);
+  });
+}, [data, pickedDate, backendFilterKey, selectedPersonnel]);
