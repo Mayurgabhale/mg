@@ -175,3 +175,75 @@ const companyRows = useMemo(() => {
     return a.company.localeCompare(b.company);
   });
 }, [data, pickedDate, filteredPartitionKeys, selectedPersonnel, selectedSummaryPartition]);
+
+
+
+
+
+
+......
+
+const detailRows = useMemo(() => {
+  if (!data || !pickedDate) return [];
+  const ds = format(pickedDate, 'yyyy-MM-dd');
+
+  // all rows for date & our partitions
+  const all = data.details.filter(r =>
+    filteredPartitionKeys.includes(r.PartitionName2) &&
+    getIsoDate(r) === ds
+  );
+
+  // sort last->newest then dedupe last swipe per person (your existing logic)
+  all.sort((a, b) => (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || ''));
+
+  const lastByKey = {};
+  all.forEach((r, idx) => {
+    const personKey = r.PersonGUID && String(r.PersonGUID).trim();
+    const fallbackKey = `${r.EmployeeID ?? ''}||${r.CardNumber ?? ''}||${String(r.ObjectName1 ?? '').trim()}`;
+    const key = personKey || fallbackKey || `row-${idx}`;
+    lastByKey[key] = r;
+  });
+
+  let rows = Object.values(lastByKey);
+
+  // attach canonical company (so company filtering is consistent)
+  rows = rows.map(r => ({ ...r, CompanyNameComputed: getCanonicalCompany ? getCanonicalCompany(r) : (r.CompanyName || '') }));
+
+  // apply selectedSummaryPartition filter (if set)
+  if (selectedSummaryPartition) {
+    const [selCountry, selCity] = selectedSummaryPartition.split('||');
+    rows = rows.filter(r => {
+      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
+      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+      return rowCity === selCity && rowCountry === selCountry;
+    });
+  }
+
+  // apply personnel header filter
+  if (selectedPersonnel) {
+    rows = rows.filter(r => {
+      const pt = String(r.PersonnelType || '').toLowerCase();
+      if (selectedPersonnel === 'Employee') {
+        return (pt.includes('employee') || pt.includes('staff') || pt === 'employee');
+      } else if (selectedPersonnel === 'Contractor') {
+        return (pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'));
+      }
+      return true;
+    });
+  }
+
+  // If a company row was clicked, filter by that company (preserve your original behaviour)
+  if (selectedCompany) {
+    const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
+    const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    rows = rows.filter(r => {
+      const rnCompany = String(r.CompanyNameComputed || 'Unknown').replace(/\s+/g, ' ').trim().toLowerCase();
+      const rowCity = partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2 || '';
+      const rowCountry = partitionToDisplay[r.PartitionName2]?.country || 'Unknown';
+      return rnCompany === selCompanyNorm && rowCity === selCity && rowCountry === selCountry;
+    });
+  }
+
+  return rows.sort((a, b) => (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || ''));
+}, [data, pickedDate, filteredPartitionKeys, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
