@@ -1,4 +1,14 @@
-// canonicalized company name
+//
+
+// use canonical company for details as well
+const company = getCanonicalCompany(r);
+return { ...r, CompanyNameComputed: company, _rowCity: city, _rowCountry: country };
+
+
+
+
+...
+ canonicalized company name
 const company = getCanonicalCompany(r);
 
 
