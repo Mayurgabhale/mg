@@ -1,3 +1,19 @@
+
+const result = await req.query(query);
+
+return result.recordset.map(r => ({
+  ...r,
+  duration: r.DurationSeconds != null
+    ? new Date(r.DurationSeconds * 1000).toISOString().substr(11, 8) // HH:mm:ss
+    : null
+}));
+
+
+
+
+....
+
+
 // 4. Final query
 const query = `
     WITH Hist AS (
