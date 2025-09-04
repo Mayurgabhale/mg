@@ -1,54 +1,26 @@
-// 3) build detailRows exactly like APAC, but support selectedCompany filtering
-const detailRows = useMemo(() => {
-  if (!data || !pickedDate || !showDetails) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  // filter by date field (SwipeDate OR LocaleMessageTime) & partition
-  const filtered = data.details.filter(r => {
-    const inDay = (r.SwipeDate && r.SwipeDate.startsWith(ds))
-      || (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10) === ds);
-
-    const inPartition = !filterCode
-      || (r.PartitionName2 && r.PartitionName2.startsWith(filterCode + '.'));
-    return inDay && inPartition;
-  });
-
-  // sort oldest → newest
-  filtered.sort((a, b) =>
-    (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || '')
-  );
-
-  // dedupe by PersonGUID, keep first
-  const seen = new Set();
-  let rows = filtered.filter(r => {
-    if (seen.has(r.PersonGUID)) return false;
-    seen.add(r.PersonGUID);
-    return true;
-  });
-
-  // attach computed company + derived country/city (so UI and exports can use same values)
-  rows = rows.map(r => {
-    const company = (r.CompanyName && String(r.CompanyName).trim())
-      || (r.PersonnelType && String(r.PersonnelType).trim())
-      || 'Unknown';
-
-    const [code, cityRaw] = String(r.PartitionName2 || '').split('.');
-    const city = (cityRaw || r.PartitionName2 || 'Unknown').replace('Partition', '').trim();
-    const country = codeToCountry[code] || code || 'Unknown';
-
-    return { ...r, CompanyNameComputed: company, _rowCity: city, _rowCountry: country };
-  });
-
-  // If a company is selected (country||city||company) — filter details strictly to that selection
-  if (selectedCompany) {
-    const [selCountry, selCity, selCompanyRaw] = selectedCompany.split('||');
-    const selCompanyNorm = String(selCompanyRaw || '').replace(/\s+/g, ' ').trim().toLowerCase();
-
-    rows = rows.filter(r => {
-      const rnCompany = String(r.CompanyNameComputed || 'Unknown').replace(/\s+/g, ' ').trim().toLowerCase();
-      return rnCompany === selCompanyNorm && r._rowCity === selCity && r._rowCountry === selCountry;
-    });
-  }
-
-  return rows;
-}, [data, pickedDate, showDetails, filterCode, selectedCompany]);
+  // Export
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(
+      detailRows.map((r, i) => ({
+        Sr: i + 1,
+        // Date: format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd'),
+        Date:
+          (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10)) ||
+          (r.SwipeDate && r.SwipeDate.slice(0, 10)) ||
+          '',
+        Time: formatApiTime12(r.LocaleMessageTime),
+        EmployeeID: r.EmployeeID,
+        Name: r.ObjectName1,
+        PersonnelType: r.PersonnelType,
+        CompanyName:r.CompanyName,
+        PrimaryLocation:r.PrimaryLocation,
+        CardNumber: r.CardNumber,
+        Door: r.Door,
+        Partition: r.PartitionName2
+      }))
+    );
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Details');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
+  };
