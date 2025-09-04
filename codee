@@ -37,4 +37,5 @@ const query = `
   `;
 
 
-
+ const result = await req.query(query);
+  return result.recordset;
