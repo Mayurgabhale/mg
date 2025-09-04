@@ -12,7 +12,7 @@ Mexico	Mexico City	50	4	55
 Peru	Lima	58	5	63
 Total	1191	137	1329
 
-read all code carefully and writ ecorrect 
+read all code carefully and writ correct 
 // src/pages/History.jsx
 
 import React, { useEffect, useState, useMemo } from 'react';
