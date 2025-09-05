@@ -1,74 +1,341 @@
-const [showCenterUploads, setShowCenterUploads] = useState(false);
+ return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', bgcolor: 'background.default' }}>
+      {/* Header */}
+      <Box px={2} py={1} sx={{ backgroundColor: 'black', color: '#fff', borderBottom: '4px solid #FFD700', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <IconButton component={Link} to="/" sx={{ color: '#FFC72C' }}><HomeIcon fontSize="medium" /></IconButton>
+          <IconButton component={Link} to="/reports" sx={{ color: '#FFC72C', ml: 1 }}><DescriptionIcon fontSize="medium" /></IconButton>
+          <IconButton
+            component="a"
+            href="http://10.138.161.4:3000/dashboard/index.html"
+
+            rel="noopener noreferrer"
+            sx={{ color: '#FFC72C', ml: 1 }}
+          >
+            <i className="fa-solid fa-camera" style={{ fontSize: 20 }} />
+          </IconButton>
+
+          <IconButton
+            component="a"
+            href="http://10.199.22.57:3004/"
+            rel="noopener noreferrer"
+            sx={{ color: '#FFF', ml: 1 }}
+          >
+            <i className="bi bi-patch-check"></i>
+          </IconButton>
+
+          <IconButton
+            sx={{ color: '#FFF', ml: 1 }}
+            onClick={() => setShowCenterUploads(true)}
+          >
+            <i className="bi bi-cloud-arrow-up-fill"></i>
+          </IconButton>
 
 
 
+        </Box>
 
-....
+        <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box component="img" src="/wu-head-logo.png" alt="WU Logo" sx={{ height: { xs: 30, md: 55 }, mr: 2 }} />
+          <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>Global Headcount Dashboard</Typography>
+        </Box>
 
+        <Box sx={{ width: 120 }} />
+      </Box>
 
+      {/* Top row: Uploads | GLOBAL + Region Cards | Date selectors */}
+      <Box sx={{ display: 'flex', alignItems: 'center', p: 1, px: 1, gap: 1 }}>
+        {/* Left: fixed column with stacked upload/export buttons (aligned left) */}
+        <Box sx={{ width: 260, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <input type="file" accept=".xls,.xlsx,.csv" style={{ display: 'none' }} ref={fileInputEmpRef} onChange={onChooseEmployeeFile} />
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<UploadFileIcon />}
+            onClick={() => fileInputEmpRef.current && fileInputEmpRef.current.click()}
+            sx={{ width: '100%', height: 25, textTransform: 'none', fontWeight: 700 }}
+          >
+            Upload Active Employee Sheet
+          </Button>
 
-<IconButton
-  sx={{ color: '#FFF', ml: 1 }}
-  onClick={() => setShowCenterUploads(true)}
->
-  <i className="bi bi-cloud-arrow-up-fill"></i>
-</IconButton>
+          <input type="file" accept=".xls,.xlsx,.csv" style={{ display: 'none' }} ref={fileInputContrRef} onChange={onChooseContractorFile} />
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<UploadFileIcon />}
+            onClick={() => fileInputContrRef.current && fileInputContrRef.current.click()}
+            sx={{ width: '100%', height: 25, textTransform: 'none', fontWeight: 700 }}
+          >
+            Upload Active Contractor Sheet
+          </Button>
 
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<DescriptionIcon />}
+            onClick={exportUploadedSheets}
+            sx={{ width: '100%', height: 25, textTransform: 'none', fontWeight: 700 }}
+          >
+            Export Comparison → Report
+          </Button>
+        </Box>
 
+        {/* Center: flexible, keeps region cards exactly centered on screen */}
+        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { key: 'global', label: 'GLOBAL', count: globalCount, url: null },
+              { key: 'apac', label: 'APAC', count: counts.apac, url: 'http://10.199.22.57:3000/' },
+              { key: 'emea', label: 'EMEA', count: counts.emea, url: 'http://10.199.22.57:3001/' },
+              { key: 'laca', label: 'LACA', count: counts.laca, url: 'http://10.199.22.57:3003/' },
+              { key: 'namer', label: 'NAMER', count: counts.namer, url: 'http://10.199.22.57:3002/' },
+            ].map(region => (
+              <Box
+                key={region.key}
+                onClick={() => {
+                  if (region.key === 'global') {
+                    const el = document.querySelector('[data-global-left-panel]');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    setSelected('global');
+                    return;
+                  }
+                  if (region.url) window.location.href = region.url;
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  width: 200,
+                  height: 88,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  border: '4px solid rgba(255, 204, 0, 0.89)',
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  bgcolor: 'transparent',
+                  '&:hover': { opacity: 0.95 },
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#FFC72C', fontSize: { xs: '0.95rem', md: '1.2rem' } }}>
+                  {region.label}
+                </Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, fontSize: { xs: '1.2rem', md: '1.6rem' }, color: '#FFFFFF' }}>
+                  {region.count ?? 0}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
 
-....
+        {/* Right: fixed column for date selectors (aligned right) */}
+        <Box sx={{ width: 360, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-end' }}>
+          <Paper sx={{ p: 1, display: 'flex', gap: 1, alignItems: 'center', boxShadow: 1, width: '100%' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', width: 160 }}>
+              <Typography variant="caption" color="text.secondary">Select Start date</Typography>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{ width: '100%', height: 34, borderRadius: 4, border: '1px solid rgba(255,255,255,0.06)', padding: 4, background: 'transparent', color: 'inherit' }}
+              />
+            </Box>
 
+            <Box sx={{ display: 'flex', flexDirection: 'column', width: 160 }}>
+              <Typography variant="caption" color="text.secondary">Select End date</Typography>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ width: '100%', height: 34, borderRadius: 4, border: '1px solid rgba(255,255,255,0.06)', padding: 4, background: 'transparent', color: 'inherit' }}
+              />
+            </Box>
+          </Paper>
 
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start' }}>
+            <Button size="small" variant="contained" onClick={applyDateRange} sx={{ height: 36, textTransform: 'none', fontWeight: 700 }}>
+              Apply
+            </Button>
+          </Box>
+        </Box>
+      </Box>
 
-<Dialog
-  open={showCenterUploads}
-  onClose={() => setShowCenterUploads(false)}
-  maxWidth="xs"
-  fullWidth
-  PaperProps={{
-    sx: { bgcolor: 'black', borderRadius: 2, p: 1 }
-  }}
->
-  <DialogTitle
-    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#FFC72C' }}
-  >
-    Uploads & Export
-    <IconButton onClick={() => setShowCenterUploads(false)} sx={{ color: '#fff' }}>
-      <CloseIcon />
-    </IconButton>
-  </DialogTitle>
+      {/* Main: left summary | center map | right averages */}
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Left detail panel */}
+        <Box
+          data-global-left-panel
+          sx={{
+            width: { xs: 320, md: 360 },
+            minWidth: { md: 320 },
+            p: 2,
+            bgcolor: 'background.paper',
+            borderRight: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            ...hideScrollbarSx,
+            height: '100%',
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1, color: 'primary.main' }}>Live vs CCURE Summary</Typography>
 
-  <DialogContent sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={<UploadFileIcon />}
-        onClick={() => fileInputEmpRef.current?.click()}
-        sx={{ fontWeight: 700 }}
-      >
-        Upload Active Employee Sheet
-      </Button>
+          {loadingAverages ? (
+            <Box sx={{ py: 2 }}><LinearProgress /></Box>
+          ) : averagesError ? (
+            <Alert severity="error">Failed to load CCURE averages</Alert>
+          ) : averages ? (
+            <>
+              <Paper sx={{ p: 2, mb: 2, bgcolor: 'rgba(255,255,255,0.02)' }} elevation={0}>
+                <Typography variant="subtitle2" color="text.secondary">CCURE Active (reported)</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 800 }}>{ccureActiveEmployees ?? '—'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Active Employees</Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>{ccureActiveContractors ?? '—'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Active Contractors</Typography>
+                  </Box>
+                </Box>
+              </Paper>
 
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={<UploadFileIcon />}
-        onClick={() => fileInputContrRef.current?.click()}
-        sx={{ fontWeight: 700 }}
-      >
-        Upload Active Contractor Sheet
-      </Button>
+              <Paper sx={{ p: 2, mb: 2, bgcolor: 'rgba(255,255,255,0.02)' }} elevation={0}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="text.secondary">Live Today</Typography>
+                  <Typography variant="caption" color="text.secondary">{respDate ?? ''}</Typography>
+                </Box>
 
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={<DescriptionIcon />}
-        onClick={() => { exportUploadedSheets(); setShowCenterUploads(false); }}
-        sx={{ fontWeight: 700 }}
-      >
-        Export Comparison → Report
-      </Button>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>{headEmployee ?? liveEmp ?? '—'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Employee</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>{headContractor ?? liveContr ?? '—'}</Typography>
+                    <Typography variant="caption" color="text.secondary">Contractor</Typography>
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Totals</Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.75 }}>
+                    <Typography variant="body2">Attendance total (today)</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{headTotalVisited ?? '—'}</Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                    <Typography variant="body2">Live region total</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{liveCurrentTotal ?? '—'}</Typography>
+                  </Box>
+
+                  {safe('headcount_details.total_visited_today', null) != null && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                      <Typography variant="body2">Detail rows total</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{safe('headcount_details.total_visited_today', '—')}</Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
+
+              <Paper sx={{ p: 2, mb: 2, bgcolor: 'rgba(255,255,255,0.02)' }} elevation={0}>
+                <Typography variant="subtitle2" color="text.secondary">Percentages vs CCURE</Typography>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                  <Typography variant="body2">Employees</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{empPct != null ? `${empPct}%` : '—'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2">Contractors</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{conPct != null ? `${conPct}%` : '—'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                  <Typography variant="body2">Overall</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{overallPct != null ? `${overallPct}%` : '—'}</Typography>
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="caption" color="text.secondary">Averages</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                  <Typography variant="body2">7-day avg headcount</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{avg7 ?? '—'}</Typography>
+                </Box>
+              </Paper>
+
+              {averages.notes && (
+                <Paper sx={{ p: 2, mb: 2, bgcolor: 'rgba(255,255,255,0.01)' }}>
+                  <Typography variant="body2" sx={{ mt: 1 }}>{averages.notes}</Typography>
+                </Paper>
+              )}
+            </>
+          ) : (
+            <Typography variant="body2" color="text.secondary">No data</Typography>
+          )}
+        </Box>
+
+        {/* Center: map (flex) */}
+        <Box sx={{ flex: 1, minWidth: 0, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ flex: 1, minHeight: 0 }}>
+            <MapChart selected={selected} onClickSite={r => setSelected(r)} initialZoom={1.8} />
+          </Box>
+        </Box>
+
+        {/* Right side: Location averages panel */}
+        <Box
+          sx={{
+            width: { xs: 320, md: 360 },
+            minWidth: { md: 320 },
+            borderLeft: '1px solid rgba(255,255,255,0.06)',
+            bgcolor: 'background.paper',
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            ...hideScrollbarSx,
+            height: '100%',
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1, color: 'primary.main' }}>Location Averages</Typography>
+
+          {loadingAverages ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : averagesError ? (
+            <Alert severity="error">Failed to load location averages</Alert>
+          ) : locationAvgsList.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">No location averages available</Typography>
+          ) : (
+            <List dense disablePadding sx={{ flex: 1 }}>
+              {locationAvgsList.map(item => (
+                <ListItem key={item.location} sx={{ alignItems: 'flex-start', py: 1.25, borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography sx={{ fontWeight: 800 }}>{item.location}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 800 }}>
+                          {item.avg_overall_last_7_days != null ? Math.round(item.avg_overall_last_7_days) : '—'}
+                        </Typography>
+                      </Box>
+                    }
+                    secondary={
+                      <Box sx={{ display: 'flex', gap: 2, mt: 0.5, flexWrap: 'wrap' }}>
+                        <Typography variant="caption" color="text.secondary">Emp: <strong>{item.avg_employee_last_7_days != null ? Math.round(item.avg_employee_last_7_days) : '—'}</strong></Typography>
+                        <Typography variant="caption" color="text.secondary">Contr: <strong>{item.avg_contractor_last_7_days != null ? Math.round(item.avg_contractor_last_7_days) : '—'}</strong></Typography>
+                        {item.history_days_counted != null && <Typography variant="caption" color="text.secondary">Days: {item.history_days_counted}</Typography>}
+                      </Box>
+                    }
+                    primaryTypographyProps={{ component: 'div' }}
+                    secondaryTypographyProps={{ component: 'div' }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Box>
+      </Box>
+
+      <Snackbar open={snack.open} autoHideDuration={3500} onClose={() => setSnack(prev => ({ ...prev, open: false }))}>
+        <Alert severity={snack.severity} onClose={() => setSnack(prev => ({ ...prev, open: false }))}>{snack.message}</Alert>
+      </Snackbar>
     </Box>
-  </DialogContent>
-</Dialog>
+  );
