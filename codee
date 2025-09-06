@@ -1,153 +1,255 @@
-Compiled with problems:
-×
-ERROR in ./src/components/ERTOverview.jsx
-Module build failed (from ./node_modules/babel-loader/lib/index.js):
-SyntaxError: C:\Users\W0024618\Desktop\swipeData\client\src\components\ERTOverview.jsx: Invalid regular expression flag. (1415:327)
+// src/components/ERTOverview.jsx
+import React, { useState, useMemo } from 'react';
+import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
+import {
+  FaHome,
+  FaBuilding,
+  FaLayerGroup,
+  FaEnvelopeOpenText,
+  FaMobileAlt,
+  FaMapMarkerAlt,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers,
+  FaFilter,
+  FaEye,
+  FaEyeSlash
+} from 'react-icons/fa';
 
-  1413 | // Professional, modern redesign using react-bootstrap (single-file). // Place images under /photos/{slug}.png or provide member.photo.
-  1414 |
-> 1415 | const DEFAULT_PHOTO = '/photos/default.png'; const toSlug = (name = '') => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '').replace(/^+|_+$/g, ''); const getPhotoSrc = (member) => { if (!member) return DEFAULT_PHOTO; if (member.photo) return member.photo; const name = member.name || member.Name; if (name) return /photos/${toSlug(name)}.png; return DEFAULT_PHOTO; };
-       |                                                                                                                                                                                                                                                                                                                                        ^
-  1416 |
-  1417 | const firstColumnRoles = [ 'Site Head', 'BCM Team / Site Operations', 'HR', 'Incident Controller' ];
-  1418 |
-    at constructor (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:360:19)
-    at FlowParserMixin.raise (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:6613:19)
-    at FlowParserMixin.readRegexp (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:6378:14)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:11224:16)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:3555:18)
-    at FlowParserMixin.parseExpressionBase (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10698:23)
-    at C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10694:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12329:16)
-    at FlowParserMixin.parseExpression (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10694:17)
-    at FlowParserMixin.parseReturnStatement (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:13018:28)
-    at FlowParserMixin.parseStatementContent (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12675:21)
-    at FlowParserMixin.parseStatementLike (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12644:17)
-    at FlowParserMixin.parseStatementLike (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:2922:24)
-    at FlowParserMixin.parseStatementOrSloppyAnnexBFunctionDeclaration (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12634:17)
-    at FlowParserMixin.parseIfStatement (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:13006:28)
-    at FlowParserMixin.parseStatementContent (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12673:21)
-    at FlowParserMixin.parseStatementLike (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12644:17)
-    at FlowParserMixin.parseStatementLike (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:2922:24)
-    at FlowParserMixin.parseStatementListItem (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12624:17)
-    at FlowParserMixin.parseBlockOrModuleBlockBody (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:13192:61)
-    at FlowParserMixin.parseBlockBody (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:13185:10)
-    at FlowParserMixin.parseBlock (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:13173:10)
-    at FlowParserMixin.parseFunctionBody (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12018:24)
-    at C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:2896:63
-    at FlowParserMixin.forwardNoArrowParamsConversionAt (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:3072:16)
-    at FlowParserMixin.parseFunctionBody (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:2896:12)
-    at FlowParserMixin.parseArrowExpression (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:11993:10)
-    at FlowParserMixin.parseParenAndDistinguishExpression (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:11603:12)
-    at FlowParserMixin.parseParenAndDistinguishExpression (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:3597:18)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:11242:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:12329:16)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client\node_modules\@babel\parser\lib\index.js:10714:17)
-ERROR
-[eslint] 
-src\components\ERTOverview.jsx
-  Line 1415:327:  Parsing error: Invalid regular expression flag. (1415:327)
-import React, { useState, useMemo } from 'react'; import { Card, Row, Col, Badge, Button, InputGroup, FormControl } from 'react-bootstrap'; import { FaHome, FaBuilding, FaLayerGroup, FaEnvelopeOpenText, FaMobileAlt, FaMapMarkerAlt, FaUserTie, FaUserShield, FaUserNurse, FaUsers, FaFilter, FaEye, FaEyeSlash } from 'react-icons/fa';
+// Professional, modern redesign using react-bootstrap (single-file).
+// Place images under /photos/{slug}.png or provide member.photo.
 
-// Professional, modern redesign using react-bootstrap (single-file). // Place images under /photos/{slug}.png or provide member.photo.
+const DEFAULT_PHOTO = '/photos/default.png';
 
-const DEFAULT_PHOTO = '/photos/default.png'; const toSlug = (name = '') => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '').replace(/^+|_+$/g, ''); const getPhotoSrc = (member) => { if (!member) return DEFAULT_PHOTO; if (member.photo) return member.photo; const name = member.name || member.Name; if (name) return /photos/${toSlug(name)}.png; return DEFAULT_PHOTO; };
+const toSlug = (name = '') =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_') // non-alphanumerics -> underscore
+    .replace(/^_+|_+$/g, ''); // trim leading/trailing underscores
 
-const firstColumnRoles = [ 'Site Head', 'BCM Team / Site Operations', 'HR', 'Incident Controller' ];
+const getPhotoSrc = (member) => {
+  if (!member) return DEFAULT_PHOTO;
+  if (member.photo) return member.photo;
+  const name = member.name || member.Name;
+  if (name) return `/photos/${toSlug(name)}.png`; // <-- fixed: use template string
+  return DEFAULT_PHOTO;
+};
 
-const roleIcons = { 'Site Head': <FaUserTie />, 'BCM Team / Site Operations': <FaUserShield />, 'HR': <FaUserTie />, 'Incident Controller': <FaUserShield />, 'ERT Team Leader': <FaUserShield />, 'ERT Team Members': <FaUsers />, 'First Aid Team': <FaUserNurse /> };
+const firstColumnRoles = [
+  'Site Head',
+  'BCM Team / Site Operations',
+  'HR',
+  'Incident Controller'
+];
 
-const baseLocationByRole = { 'Site Head': 'Podium Floor – Red Zone', 'HR': 'Podium Floor – Red Zone', 'Incident Controller': 'Podium Floor – Red Zone', 'First Aid Team': 'Podium Floor – Green Zone', 'ERT Team Leader': 'Podium Floor – Green Zone', 'BCM Team / Site Operations': 'Podium Floor – Red Zone' };
+const roleIcons = {
+  'Site Head': <FaUserTie />,
+  'BCM Team / Site Operations': <FaUserShield />,
+  HR: <FaUserTie />,
+  'Incident Controller': <FaUserShield />,
+  'ERT Team Leader': <FaUserShield />,
+  'ERT Team Members': <FaUsers />,
+  'First Aid Team': <FaUserNurse />
+};
 
-export default function ERTOverviewPro({ ertStatus = {} }) { const [filterZone, setFilterZone] = useState(null); const [showAllMembers, setShowAllMembers] = useState(false); const [query, setQuery] = useState('');
+const baseLocationByRole = {
+  'Site Head': 'Podium Floor – Red Zone',
+  HR: 'Podium Floor – Red Zone',
+  'Incident Controller': 'Podium Floor – Red Zone',
+  'First Aid Team': 'Podium Floor – Green Zone',
+  'ERT Team Leader': 'Podium Floor – Green Zone',
+  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
+};
 
-const allMembers = useMemo(() => { const list = []; Object.entries(ertStatus || {}).forEach(([role, members]) => { (members || []).forEach((m) => list.push({ role, ...m })); }); return list; }, [ertStatus]);
+export default function ERTOverviewPro({ ertStatus = {} }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+  const [query, setQuery] = useState('');
 
-const floorCounts = useMemo(() => { const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 }; allMembers.forEach((m) => { if (!m.present) return; const z = (m.zone || '').toLowerCase(); if (z.includes('2nd')) counts['2nd Floor']++; else if (z.includes('tower b')) counts['Tower B']++; else counts['Podium Floor']++; }); return counts; }, [allMembers]);
+  const allMembers = useMemo(() => {
+    const list = [];
+    Object.entries(ertStatus || {}).forEach(([role, members]) => {
+      (members || []).forEach((m) => list.push({ role, ...m }));
+    });
+    return list;
+  }, [ertStatus]);
 
-const membersForRole = (role, limit = 9999) => { const raw = (ertStatus[role] || []).map((m) => ({ role, ...m })); const filtered = raw.filter((m) => { if (filterZone) { const zoneMatch = (m.zone || m.Floor || '').toLowerCase().includes((filterZone || '').toLowerCase()); const baseMatch = (baseLocationByRole[role] || '').toLowerCase().includes((filterZone || '').toLowerCase()); if (!zoneMatch && !baseMatch) return false; } if (query) { const text = ${m.name || m.Name || ''} ${m.email || m.Email || ''} ${m.phone || m.Phone || ''}.toLowerCase(); if (!text.includes(query.toLowerCase())) return false; } return true; }); filtered.sort((a, b) => (b.present ? 1 : 0) - (a.present ? 1 : 0)); return filtered.slice(0, limit); };
+  const floorCounts = useMemo(() => {
+    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+    allMembers.forEach((m) => {
+      if (!m.present) return;
+      const z = (m.zone || '').toLowerCase();
+      if (z.includes('2nd')) counts['2nd Floor']++;
+      else if (z.includes('tower b')) counts['Tower B']++;
+      else counts['Podium Floor']++;
+    });
+    return counts;
+  }, [allMembers]);
 
-const ertLeaders = membersForRole('ERT Team Leader'); const ertMembers = membersForRole('ERT Team Members', showAllMembers ? 9999 : 8);
+  const membersForRole = (role, limit = 9999) => {
+    const raw = (ertStatus[role] || []).map((m) => ({ role, ...m }));
+    const filtered = raw.filter((m) => {
+      if (filterZone) {
+        const zoneMatch = (m.zone || m.Floor || '')
+          .toLowerCase()
+          .includes((filterZone || '').toLowerCase());
+        const baseMatch = (baseLocationByRole[role] || '')
+          .toLowerCase()
+          .includes((filterZone || '').toLowerCase());
+        if (!zoneMatch && !baseMatch) return false;
+      }
+      if (query) {
+        const text = `${m.name || m.Name || ''} ${m.email || m.Email || ''} ${m.phone || m.Phone || ''}`.toLowerCase();
+        if (!text.includes(query.toLowerCase())) return false;
+      }
+      return true;
+    });
+    filtered.sort((a, b) => (b.present ? 1 : 0) - (a.present ? 1 : 0));
+    return filtered.slice(0, limit);
+  };
 
-// CSS scoped for this component (single-file). You can move to external CSS. const styles = .ert-shell { background: linear-gradient(180deg,#091024 0%, #0f172a 100%); min-height:100vh; padding:28px; } .card-modern { border-radius:12px; overflow:hidden; border:0; box-shadow: 0 6px 18px rgba(2,6,23,0.6); } .card-header-modern { background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-bottom:1px solid rgba(255,255,255,0.04); color:#e6eef8; font-weight:600; } .avatar { width:52px; height:52px; border-radius:50%; object-fit:cover; display:block; } .avatar-wrap { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(2,6,23,0.6); } .status-pill { font-size:0.72rem; padding:6px 8px; border-radius:999px; font-weight:600; } .status-available { background: linear-gradient(90deg,#16a34a 0%,#86efac 100%); color:#022c22; } .status-away { background: linear-gradient(90deg,#fb7185 0%,#fca5a5 100%); color:#3a0216; } .stat-card { border-radius:12px; padding:14px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); background:linear-gradient(180deg,#0b1220,#111827); color:#e6eef8; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; } .stat-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(2,6,23,0.7); } .member-row { padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03); } .member-row:last-child { border-bottom: none; } .search-box { background: rgba(255,255,255,0.02); border-radius:999px; padding:6px 10px; display:flex; align-items:center; gap:8px; } .search-box input{ background:transparent; border:0; color:#cfe8ff; } @media (max-width: 991px) { .container-fix { padding-left:8px; padding-right:8px; } };
+  const ertLeaders = membersForRole('ERT Team Leader');
+  const ertMembers = membersForRole('ERT Team Members', showAllMembers ? 9999 : 8);
 
-return ( <div className="ert-shell"> <style>{styles}</style> <div className="container-fluid container-fix"> <Row className="align-items-center mb-4"> <Col xs={12} md={6} className="mb-2"> <h2 style={{ color: '#e6eef8', margin: 0 }}>ERT — Live Roster</h2> <div style={{ color: '#98a8c7', fontSize: 14, marginTop: 6 }}>Modern, at-a-glance view of emergency teams and availability.</div> </Col> <Col xs={12} md={6} className="d-flex justify-content-md-end align-items-center gap-2"> <div className="search-box me-2" style={{ minWidth: 220 }}> <FaFilter style={{ color: '#9fbce9' }} /> <input placeholder="Search name, email or phone" value={query} onChange={(e) => setQuery(e.target.value)} /> </div> <Button variant="outline-light" size="sm" onClick={() => setShowAllMembers((s) => !s)}> {showAllMembers ? (<><FaEyeSlash style={{ marginRight: 6 }} /> Show Less</>) : (<><FaEye style={{ marginRight: 6 }} /> Show More</>)} </Button> </Col> </Row>
+  // Scoped styles (you can move to a CSS file)
+  const styles = `
+    .ert-shell { background: linear-gradient(180deg,#091024 0%, #0f172a 100%); min-height:100vh; padding:28px; }
+    .card-modern { border-radius:12px; overflow:hidden; border:0; box-shadow: 0 6px 18px rgba(2,6,23,0.6); }
+    .card-header-modern { background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-bottom:1px solid rgba(255,255,255,0.04); color:#e6eef8; font-weight:600; }
+    .avatar { width:52px; height:52px; border-radius:50%; object-fit:cover; display:block; }
+    .avatar-wrap { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(2,6,23,0.6); }
+    .status-pill { font-size:0.72rem; padding:6px 8px; border-radius:999px; font-weight:600; }
+    .status-available { background: linear-gradient(90deg,#16a34a 0%,#86efac 100%); color:#022c22; }
+    .status-away { background: linear-gradient(90deg,#fb7185 0%,#fca5a5 100%); color:#3a0216; }
+    .stat-card { border-radius:12px; padding:14px; box-shadow: 0 6px 18px rgba(2,6,23,0.6); background:linear-gradient(180deg,#0b1220,#111827); color:#e6eef8; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
+    .stat-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(2,6,23,0.7); }
+    .member-row { padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .member-row:last-child { border-bottom: none; }
+    .search-box { background: rgba(255,255,255,0.02); border-radius:999px; padding:6px 10px; display:flex; align-items:center; gap:8px; }
+    .search-box input{ background:transparent; border:0; color:#cfe8ff; }
+    @media (max-width: 991px) { .container-fix { padding-left:8px; padding-right:8px; } }
+  `;
 
-{/* Stats */}
-    <Row className="g-3 mb-4">
-      <Col xs={12} md={3}>
-        <div className="stat-card text-center">
-          <div style={{ fontSize: 12, color: '#9fbce9' }}>Total Active</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>{allMembers.filter(m => m.present).length}</div>
-        </div>
-      </Col>
-
-      {['Podium Floor', '2nd Floor', 'Tower B'].map((floor) => {
-        const count = floorCounts[floor] || 0;
-        const selected = filterZone === floor;
-        return (
-          <Col key={floor} xs={12} md={3}>
-            <div
-              className="stat-card text-center"
-              onClick={() => setFilterZone((p) => (p === floor ? null : floor))}
-              style={{ border: selected ? '1px solid rgba(96,165,250,0.18)' : '1px solid rgba(255,255,255,0.02)' }}
-            >
-              <div style={{ fontSize: 12, color: '#9fbce9' }}>{floor}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, marginTop: 6 }}>{count}</div>
+  return (
+    <div className="ert-shell">
+      <style>{styles}</style>
+      <div className="container-fluid container-fix">
+        <Row className="align-items-center mb-4">
+          <Col xs={12} md={6} className="mb-2">
+            <h2 style={{ color: '#e6eef8', margin: 0 }}>ERT — Live Roster</h2>
+            <div style={{ color: '#98a8c7', fontSize: 14, marginTop: 6 }}>
+              Modern, at-a-glance view of emergency teams and availability.
             </div>
           </Col>
-        );
-      })}
-    </Row>
 
-    <Row className="g-3">
-      {/* Left column */}
-      <Col xs={12} lg={4}>
-        {firstColumnRoles.map((role) => {
-          const members = (ertStatus[role] || []).filter((m) => {
-            if (!filterZone) return true;
-            if (!m.present) return false;
-            return (m.zone || '').includes(filterZone) || (baseLocationByRole[role] || '').includes(filterZone);
-          });
+          <Col xs={12} md={6} className="d-flex justify-content-md-end align-items-center gap-2">
+            <div className="search-box me-2" style={{ minWidth: 220 }}>
+              <FaFilter style={{ color: '#9fbce9' }} />
+              <input placeholder="Search name, email or phone" value={query} onChange={(e) => setQuery(e.target.value)} />
+            </div>
 
-          return (
-            <Card key={role} className="card-modern mb-3">
+            <Button variant="outline-light" size="sm" onClick={() => setShowAllMembers((s) => !s)}>
+              {showAllMembers ? (<><FaEyeSlash style={{ marginRight: 6 }} /> Show Less</>) : (<><FaEye style={{ marginRight: 6 }} /> Show More</>)}
+            </Button>
+          </Col>
+        </Row>
+
+        {/* Stats */}
+        <Row className="g-3 mb-4">
+          <Col xs={12} md={3}>
+            <div className="stat-card text-center">
+              <div style={{ fontSize: 12, color: '#9fbce9' }}>Total Active</div>
+              <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>{allMembers.filter(m => m.present).length}</div>
+            </div>
+          </Col>
+
+          {['Podium Floor', '2nd Floor', 'Tower B'].map((floor) => {
+            const count = floorCounts[floor] || 0;
+            const selected = filterZone === floor;
+            return (
+              <Col key={floor} xs={12} md={3}>
+                <div
+                  className="stat-card text-center"
+                  onClick={() => setFilterZone((p) => (p === floor ? null : floor))}
+                  style={{ border: selected ? '1px solid rgba(96,165,250,0.18)' : '1px solid rgba(255,255,255,0.02)' }}
+                >
+                  <div style={{ fontSize: 12, color: '#9fbce9' }}>{floor}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, marginTop: 6 }}>{count}</div>
+                </div>
+              </Col>
+            );
+          })}
+        </Row>
+
+        <Row className="g-3">
+          {/* Left column */}
+          <Col xs={12} lg={4}>
+            {firstColumnRoles.map((role) => {
+              const members = (ertStatus[role] || []).filter((m) => {
+                if (!filterZone) return true;
+                if (!m.present) return false;
+                return (m.zone || '').includes(filterZone) || (baseLocationByRole[role] || '').includes(filterZone);
+              });
+
+              return (
+                <Card key={role} className="card-modern mb-3">
+                  <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ fontSize: 18, color: '#9fbce9' }}>{roleIcons[role]}</div>
+                      <div style={{ fontWeight: 600 }}>{role}</div>
+                    </div>
+                    <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus[role] || []).length} assigned</div>
+                  </Card.Header>
+
+                  <Card.Body>
+                    {members.length ? members.map((m, idx) => (
+                      <div key={idx} className="member-row d-flex align-items-start justify-content-between">
+                        <div className="d-flex align-items-center">
+                          <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
+                            <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} />
+                          </div>
+                          <div>
+                            <div style={{ color: '#e6eef8', fontWeight: 600 }}>{m.name}</div>
+                            <div style={{ fontSize: 13, color: '#9fbce9' }}>{m.present ? (m.zone || 'Unknown Zone') : (baseLocationByRole[role] || '')}</div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className={`status-pill ${m.present ? 'status-available' : 'status-away'}`}>{m.present ? 'Available' : 'Away'}</div>
+                        </div>
+                      </div>
+                    )) : (
+                      <div style={{ color: '#98a8c7', padding: '12px 0', textAlign: 'center' }}>No members available</div>
+                    )}
+                  </Card.Body>
+                </Card>
+              );
+            })}
+          </Col>
+
+          {/* Middle column: Leaders */}
+          <Col xs={12} lg={4}>
+            <Card className="card-modern mb-3">
               <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 18, color: '#9fbce9' }}>{roleIcons[role]}</div>
-                  <div style={{ fontWeight: 600 }}>{role}</div>
+                  <div style={{ fontSize: 18, color: '#f87171' }}>{roleIcons['ERT Team Leader']}</div>
+                  <div style={{ fontWeight: 600 }}>ERT Team Leaders</div>
                 </div>
-                <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus[role] || []).length} assigned</div>
+                <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus['ERT Team Leader'] || []).length} total</div>
               </Card.Header>
 
               <Card.Body>
-                {members.length ? members.map((m, idx) => (
+                {ertLeaders.length ? ertLeaders.map((m, idx) => (
                   <div key={idx} className="member-row d-flex align-items-start justify-content-between">
                     <div className="d-flex align-items-center">
                       <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
-                        <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e)=>{e.currentTarget.onerror=null; e.currentTarget.src=DEFAULT_PHOTO}} />
+                        <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} />
                       </div>
                       <div>
                         <div style={{ color: '#e6eef8', fontWeight: 600 }}>{m.name}</div>
-                        <div style={{ fontSize: 13, color: '#9fbce9' }}>{m.present ? (m.zone || 'Unknown Zone') : (baseLocationByRole[role] || '')}</div>
+                        <div style={{ fontSize: 13, color: '#9fbce9' }}>{m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole['ERT Team Leader']}</div>
                       </div>
                     </div>
 
@@ -156,126 +258,93 @@ return ( <div className="ert-shell"> <style>{styles}</style> <div className="con
                     </div>
                   </div>
                 )) : (
-                  <div style={{ color: '#98a8c7', padding: '12px 0', textAlign: 'center' }}>No members available</div>
+                  <div style={{ color: '#98a8c7', padding: '12px 0', textAlign: 'center' }}>No Team Leaders</div>
                 )}
               </Card.Body>
             </Card>
-          );
-        })}
-      </Col>
 
-      {/* Middle column: Leaders */}
-      <Col xs={12} lg={4}>
-        <Card className="card-modern mb-3">
-          <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 18, color: '#f87171' }}>{roleIcons['ERT Team Leader']}</div>
-              <div style={{ fontWeight: 600 }}>ERT Team Leaders</div>
-            </div>
-            <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus['ERT Team Leader'] || []).length} total</div>
-          </Card.Header>
-          <Card.Body>
-            {ertLeaders.length ? ertLeaders.map((m, idx) => (
-              <div key={idx} className="member-row d-flex align-items-start justify-content-between">
-                <div className="d-flex align-items-center">
-                  <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
-                    <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e)=>{e.currentTarget.onerror=null; e.currentTarget.src=DEFAULT_PHOTO}} />
+            {/* Other roles compact */}
+            {Object.keys(ertStatus).filter(r => !firstColumnRoles.includes(r) && r !== 'ERT Team Leader' && r !== 'ERT Team Members').map((role) => (
+              <Card key={role} className="card-modern mb-3">
+                <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontSize: 18, color: '#9fbce9' }}>{roleIcons[role] || <FaUserTie />}</div>
+                    <div style={{ fontWeight: 600 }}>{role}</div>
                   </div>
-                  <div>
-                    <div style={{ color: '#e6eef8', fontWeight: 600 }}>{m.name}</div>
-                    <div style={{ fontSize: 13, color: '#9fbce9' }}>{m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole['ERT Team Leader']}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className={`status-pill ${m.present ? 'status-available' : 'status-away'}`}>{m.present ? 'Available' : 'Away'}</div>
-                </div>
-              </div>
-            )) : (
-              <div style={{ color: '#98a8c7', padding: '12px 0', textAlign: 'center' }}>No Team Leaders</div>
-            )}
-          </Card.Body>
-        </Card>
+                  <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus[role] || []).length} assigned</div>
+                </Card.Header>
 
-        {/* Other roles compact */}
-        {Object.keys(ertStatus).filter(r => !firstColumnRoles.includes(r) && r !== 'ERT Team Leader' && r !== 'ERT Team Members').map((role) => (
-          <Card key={role} className="card-modern mb-3">
-            <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 18, color: '#9fbce9' }}>{roleIcons[role] || <FaUserTie />}</div>
-                <div style={{ fontWeight: 600 }}>{role}</div>
-              </div>
-              <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus[role] || []).length} assigned</div>
-            </Card.Header>
-            <Card.Body>
-              {(ertStatus[role] || []).slice(0, 6).map((m, idx) => (
-                <div key={idx} className="d-flex align-items-center mb-2">
-                  <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
-                    <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e)=>{e.currentTarget.onerror=null; e.currentTarget.src=DEFAULT_PHOTO}} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, color: '#e6eef8' }}>{m.name}</div>
-                    <div style={{ fontSize: 12, color: '#9fbce9' }}>{m.present ? (m.zone || 'Unknown') : (baseLocationByRole[role] || '')}</div>
-                  </div>
-                </div>
-              ))}
-            </Card.Body>
-          </Card>
-        ))}
-      </Col>
+                <Card.Body>
+                  {(ertStatus[role] || []).slice(0, 6).map((m, idx) => (
+                    <div key={idx} className="d-flex align-items-center mb-2">
+                      <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
+                        <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#e6eef8' }}>{m.name}</div>
+                        <div style={{ fontSize: 12, color: '#9fbce9' }}>{m.present ? (m.zone || 'Unknown') : (baseLocationByRole[role] || '')}</div>
+                      </div>
+                    </div>
+                  ))}
+                </Card.Body>
+              </Card>
+            ))}
+          </Col>
 
-      {/* Right column: Members */}
-      <Col xs={12} lg={4}>
-        <Card className="card-modern mb-3">
-          <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 18, color: '#60a5fa' }}>{roleIcons['ERT Team Members']}</div>
-              <div style={{ fontWeight: 600 }}>ERT Team Members</div>
-            </div>
-            <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus['ERT Team Members'] || []).length} total</div>
-          </Card.Header>
-          <Card.Body style={{ maxHeight: 520, overflow: 'auto' }}>
-            {ertMembers.length ? ertMembers.map((m, idx) => (
-              <div key={idx} className="member-row d-flex align-items-start justify-content-between">
-                <div className="d-flex align-items-center">
-                  <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
-                    <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e)=>{e.currentTarget.onerror=null; e.currentTarget.src=DEFAULT_PHOTO}} />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ color: '#e6eef8', fontWeight: 600 }}>{m.name}</div>
-                    <div style={{ fontSize: 13, color: '#9fbce9' }}>{m.present ? (m.liveLocation || m.zone || 'Unknown Zone') : (m.baseLocation || '')}</div>
-                    <div style={{ marginTop: 6, fontSize: 13 }}>
-                      <a href={`mailto:${m.email || m.Email || ''}`} style={{ color: '#93c5fd', textDecoration: 'none', marginRight: 12 }}>{m.email || ''}</a>
-                      <span style={{ color: '#9ee7c2' }}>{m.phone || ''}</span>
+          {/* Right column: Members */}
+          <Col xs={12} lg={4}>
+            <Card className="card-modern mb-3">
+              <Card.Header className="card-header-modern d-flex justify-content-between align-items-center">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 18, color: '#60a5fa' }}>{roleIcons['ERT Team Members']}</div>
+                  <div style={{ fontWeight: 600 }}>ERT Team Members</div>
+                </div>
+                <div style={{ color: '#9fbce9', fontSize: 13 }}>{(ertStatus['ERT Team Members'] || []).length} total</div>
+              </Card.Header>
+
+              <Card.Body style={{ maxHeight: 520, overflow: 'auto' }}>
+                {ertMembers.length ? ertMembers.map((m, idx) => (
+                  <div key={idx} className="member-row d-flex align-items-start justify-content-between">
+                    <div className="d-flex align-items-center">
+                      <div className="avatar-wrap me-3" style={{ border: m.present ? '3px solid rgba(34,197,94,0.9)' : '2px solid rgba(71,85,105,0.9)' }}>
+                        <img src={getPhotoSrc(m)} alt={m.name} className="avatar" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ color: '#e6eef8', fontWeight: 600 }}>{m.name}</div>
+                        <div style={{ fontSize: 13, color: '#9fbce9' }}>{m.present ? (m.liveLocation || m.zone || 'Unknown Zone') : (m.baseLocation || '')}</div>
+                        <div style={{ marginTop: 6, fontSize: 13 }}>
+                          <a href={`mailto:${m.email || m.Email || ''}`} style={{ color: '#93c5fd', textDecoration: 'none', marginRight: 12 }}>{m.email || ''}</a>
+                          <span style={{ color: '#9ee7c2' }}>{m.phone || ''}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className={`status-pill ${m.present ? 'status-available' : 'status-away'}`}>{m.present ? 'Available' : 'Away'}</div>
                     </div>
                   </div>
+                )) : (
+                  <div style={{ color: '#98a8c7', padding: '12px 0', textAlign: 'center' }}>No members</div>
+                )}
+
+                <div className="text-center mt-3">
+                  <Button variant="outline-light" size="sm" onClick={() => setShowAllMembers((s) => !s)}>
+                    {showAllMembers ? (<><FaEyeSlash style={{ marginRight: 6 }} /> Show Less</>) : (<><FaEye style={{ marginRight: 6 }} /> Show More</>)}
+                  </Button>
                 </div>
-                <div>
-                  <div className={`status-pill ${m.present ? 'status-available' : 'status-away'}`}>{m.present ? 'Available' : 'Away'}</div>
-                </div>
+              </Card.Body>
+            </Card>
+
+            <div className="d-flex justify-content-between align-items-center mt-2">
+              <div style={{ color: '#9fbce9' }}><span style={{ display: 'inline-block', width: 10, height: 10, background: '#86efac', borderRadius: 6, marginRight: 8 }} />Available</div>
+              <div style={{ color: '#9fbce9' }}><span style={{ display: 'inline-block', width: 10, height: 10, background: '#fca5a5', borderRadius: 6, marginRight: 8 }} />Away</div>
+              <div>
+                <Button variant="light" size="sm" onClick={() => window.print()}>Print</Button>
               </div>
-            )) : (
-              <div style={{ color: '#98a8c7', padding: '12px 0', textAlign: 'center' }}>No members</div>
-            )}
-
-            <div className="text-center mt-3">
-              <Button variant="outline-light" size="sm" onClick={() => setShowAllMembers((s) => !s)}>
-                {showAllMembers ? (<><FaEyeSlash style={{ marginRight: 6 }} /> Show Less</>) : (<><FaEye style={{ marginRight: 6 }} /> Show More</>)}
-              </Button>
             </div>
-          </Card.Body>
-        </Card>
-
-        <div className="d-flex justify-content-between align-items-center mt-2">
-          <div style={{ color: '#9fbce9' }}><span style={{ display: 'inline-block', width: 10, height: 10, background: '#86efac', borderRadius: 6, marginRight: 8 }} />Available</div>
-          <div style={{ color: '#9fbce9' }}><span style={{ display: 'inline-block', width: 10, height: 10, background: '#fca5a5', borderRadius: 6, marginRight: 8 }} />Away</div>
-          <div>
-            <Button variant="light" size="sm" onClick={() => window.print()}>Print</Button>
-          </div>
-        </div>
-      </Col>
-    </Row>
-  </div>
-</div>
-
-); }
-
+          </Col>
+        </Row>
+      </div>
+    </div>
+  );
+}
