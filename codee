@@ -1,13 +1,4 @@
-thi chart i want to convert into infographics bar graph ok
-see above image like this image i want to create my below chart
-ok, i hove you undersntd better
-listion , dontch change my code logic. 
-
-// C:\Users\W0024618\Desktop\swipeData\client\src\components\FloorOccupancyChart.jsx
-
-
 // src/components/FloorOccupancyChart.jsx
-
 import React from 'react';
 import {
   BarChart,
@@ -19,7 +10,8 @@ import {
   CartesianGrid,
   Cell,
   LabelList,
-  Legend
+  Legend,
+  Customized
 } from 'recharts';
 import { Card } from 'react-bootstrap';
 import floorCapacities from '../constants/floorCapacities';
@@ -38,7 +30,10 @@ export default function FloorOccupancyChart({ data = [] }) {
     );
   }
 
-  // 1) Enrich each floor object with liveCount, capacity, usedPct, and breakdown
+  // -------------------------------
+  // YOUR LOGIC: enrichment, totals,
+  // sorting — left exactly as you had it
+  // -------------------------------
   const enriched = data.map((floorObj) => {
     const { floor, total: liveCount } = floorObj;
     const capacity = floorCapacities[floor] ?? 0;
@@ -46,7 +41,7 @@ export default function FloorOccupancyChart({ data = [] }) {
       ? ((liveCount / capacity) * 100).toFixed(1)
       : '0.0';
     return {
-      ...floorObj,           // includes breakdown fields: employees, contractors, etc.
+      ...floorObj,
       capacity,
       liveCount,
       usedPct: Number(usedPct),
@@ -54,7 +49,6 @@ export default function FloorOccupancyChart({ data = [] }) {
     };
   });
 
-  // 2) Compute “Pune Office Total” across all floors
   const totalLive = enriched.reduce((sum, f) => sum + f.liveCount, 0);
   const totalCap = enriched.reduce((sum, f) => sum + f.capacity, 0);
   const totalUsedPct = totalCap > 0
@@ -69,14 +63,12 @@ export default function FloorOccupancyChart({ data = [] }) {
     label: `${totalLive}/${totalCap}`
   };
 
-  // 3) Sort floors by liveCount descending, then prepend “Pune Office Total”
   const sortedFloors = [...enriched].sort((a, b) => b.liveCount - a.liveCount);
   const chartData = [totalEntry, ...sortedFloors];
 
-  // 4) Determine the maximum capacity to set Y-axis domain
   const maxCapacity = Math.max(...chartData.map(f => f.capacity)) || 0;
 
-  // 5) Custom tooltip to show raw counts, percentages, and breakdown
+  // Tooltip left unchanged except small style tweak
   const renderTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const floorObj = payload[0].payload;
@@ -125,6 +117,184 @@ export default function FloorOccupancyChart({ data = [] }) {
     );
   };
 
+  // -------------------------------
+  // CUSTOM SVG CYLINDER SHAPES
+  // - capacityCylinder: draws a larger cylinder (the background occupancy)
+  // - liveCylinder: draws a narrower cylinder (the live headcount) centered
+  // -------------------------------
+  const CapacityCylinder = (props) => {
+    const { x, y, width, height, fill = 'url(#capacity-gradient)', stroke = '#fff' } = props;
+    // width and height are provided by Recharts; top-left is (x,y)
+    const cx = x + width / 2;
+    const topRy = Math.max(6, width * 0.12);   // ellipse vertical radius (top highlight)
+    const bottomRy = Math.max(8, width * 0.14);
+    const bottomY = y + height;
+
+    // Slight inset for the rounded side shadow
+    return (
+      <g>
+        {/* subtle shadow under the cylinder */}
+        <ellipse
+          cx={cx}
+          cy={bottomY + bottomRy * 0.9}
+          rx={width * 0.6}
+          ry={bottomRy * 0.45}
+          fill="rgba(0,0,0,0.25)"
+        />
+        {/* cylinder body */}
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          rx={8}
+          ry={8}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={1}
+        />
+        {/* top ellipse */}
+        <ellipse
+          cx={cx}
+          cy={y}
+          rx={width / 2}
+          ry={topRy}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={1}
+        />
+        {/* bottom ellipse to create 3D effect */}
+        <ellipse
+          cx={cx}
+          cy={bottomY}
+          rx={width / 2}
+          ry={bottomRy}
+          fill="rgba(0,0,0,0.06)"
+        />
+      </g>
+    );
+  };
+
+  const LiveCylinder = (props) => {
+    const { x, y, width, height, fill = '#006400', stroke = '#fff' } = props;
+    // narrow the live cylinder so it sits in front of capacity
+    const innerWidth = Math.max(36, width * 0.62);
+    const offsetX = x + (width - innerWidth) / 2;
+    const cx = offsetX + innerWidth / 2;
+    const topRy = Math.max(5, innerWidth * 0.12);
+    const bottomRy = Math.max(6, innerWidth * 0.14);
+    const bottomY = y + height;
+
+    return (
+      <g>
+        {/* small shadow under the live cylinder */}
+        <ellipse
+          cx={cx}
+          cy={bottomY + bottomRy * 0.8}
+          rx={innerWidth * 0.5}
+          ry={bottomRy * 0.35}
+          fill="rgba(0,0,0,0.2)"
+        />
+        <rect
+          x={offsetX}
+          y={y}
+          width={innerWidth}
+          height={height}
+          rx={6}
+          ry={6}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={1}
+        />
+        <ellipse
+          cx={cx}
+          cy={y}
+          rx={innerWidth / 2}
+          ry={topRy}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={1}
+        />
+        <ellipse
+          cx={cx}
+          cy={bottomY}
+          rx={innerWidth / 2}
+          ry={bottomRy}
+          fill="rgba(0,0,0,0.06)"
+        />
+      </g>
+    );
+  };
+
+  // -------------------------------
+  // CUSTOMIZED: Decorative curved path above columns (infographic-style)
+  // We'll compute x positions by spacing points evenly across chart width.
+  // This is purely decorative and does not change your logic.
+  // -------------------------------
+  const InfographicCurve = ({ width, height }) => {
+    // small padding so curve sits above the bars
+    const paddingLeft = 40;
+    const paddingRight = 40;
+    const usableW = Math.max(200, width - paddingLeft - paddingRight);
+    const startX = paddingLeft;
+    const gap = usableW / Math.max(1, chartData.length - 1);
+
+    // sample y positions (we'll make a pleasing wave shaped by percentages)
+    // position heights above the chart area (not exact data points) to mimic the example
+    const heights = chartData.map((d, i) => {
+      // vary the heights to create a nice curve (higher for higher capacity)
+      // map usedPct to a vertical offset between 0..1
+      const pct = (d.capacity > 0) ? d.liveCount / d.capacity : 0;
+      // invert so higher capacity -> higher point on curve
+      return 0.2 + 0.6 * Math.min(1, pct);
+    });
+
+    // compute coordinates
+    const points = chartData.map((d, i) => {
+      const x = startX + gap * i;
+      // y scale to the upper quadrant of the height
+      const y = height * (0.18 - heights[i] * 0.12) + 12; // tweak constants for look
+      return { x, y, label: String.fromCharCode(65 + i) }; // A, B, C...
+    });
+
+    // build a smooth path using quadratic bezier segments
+    let path = '';
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i];
+      if (i === 0) {
+        path += `M ${p.x} ${p.y}`;
+      } else {
+        const prev = points[i - 1];
+        const cx = (prev.x + p.x) / 2;
+        const cy = (prev.y + p.y) / 2;
+        path += ` Q ${prev.x} ${prev.y} ${cx} ${cy}`;
+      }
+    }
+    // finish the last segment to the last point
+    if (points.length > 1) {
+      const last = points[points.length - 1];
+      path += ` T ${last.x} ${last.y}`;
+    }
+
+    return (
+      <g>
+        {/* thin light path */}
+        <path d={path} fill="none" stroke="#ddd" strokeWidth="2" strokeOpacity="0.65" />
+        {/* accent path (top glow) */}
+        <path d={path} fill="none" stroke="#FFD100" strokeWidth="3" strokeOpacity="0.85" strokeLinecap="round" strokeLinejoin="round" style={{ mixBlendMode: 'screen' }} />
+        {/* markers A,B,C... */}
+        {points.map((pt, idx) => (
+          <g key={`marker-${idx}`}>
+            <circle cx={pt.x} cy={pt.y} r={5} fill="#fff" opacity={0.95} />
+            <text x={pt.x} y={pt.y - 8} textAnchor="middle" fill="#333" fontWeight="700" style={{ fontSize: 12 }}>
+              {pt.label}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+  };
+
   return (
     <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
       <Card.Header className="bg-dark text-warning text-center fw-bold" style={{ borderBottom: '2px solid var(--wu-yellow)', fontSize: '1.2rem' }}>
@@ -135,16 +305,15 @@ export default function FloorOccupancyChart({ data = [] }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            margin={{ top: 20, right: 24, left: 0, bottom: 24 }}
+            margin={{ top: 40, right: 24, left: 0, bottom: 24 }}
             barCategoryGap="1%"
           >
-            {/* 6) Gradient for capacity bars (WU Yellow → WU Accent) */}
+            {/* gradients (kept your gradients, plus live ones per-column) */}
             <defs>
               <linearGradient id="capacity-gradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#FFD100" stopOpacity={1} />
                 <stop offset="100%" stopColor="#FFB800" stopOpacity={1} />
               </linearGradient>
-              {/* 7) Single gradient for “live” bars */}
               {chartData.map((_, idx) => {
                 const [darkColor, lightColor] =
                   FLOOR_COLOR_PALETTE[idx % FLOOR_COLOR_PALETTE.length];
@@ -164,7 +333,7 @@ export default function FloorOccupancyChart({ data = [] }) {
               })}
             </defs>
 
-            {/* 8) Grid and Axes */}
+            {/* grid and axes */}
             <CartesianGrid stroke="#444" strokeDasharray="3 3" />
             <XAxis
               dataKey="floor"
@@ -172,17 +341,16 @@ export default function FloorOccupancyChart({ data = [] }) {
               position
               textAnchor="end"
               interval={0}
-              height={50}
+              height={70}
             />
             <YAxis
               tick={{ fontSize: 15, fill: '#fff' }}
               domain={[0, Math.ceil(maxCapacity / 50) * 50]}
             />
 
-            {/* 9) Custom Tooltip */}
+            {/* tooltip & legend unchanged */}
             <Tooltip content={renderTooltip} />
 
-            {/* 10) Legend */}
             <Legend
               verticalAlign="top"
               align="center"
@@ -193,15 +361,16 @@ export default function FloorOccupancyChart({ data = [] }) {
               ]}
             />
 
-            {/* 11) Capacity bar – wider, WU Yellow gradient, white border */}
+            {/* Capacity: use custom cylinder shape. Keep barSize (visual width). */}
             <Bar
               dataKey="capacity"
               name="Occupancy"
               radius={[4, 4, 0, 0]}
-              barSize={70}
+              barSize={80}
               fill="url(#capacity-gradient)"
               stroke="#fff"
               strokeWidth={1}
+              shape={<CapacityCylinder />}
             >
               {chartData.map((_, idx) => (
                 <Cell key={`cap-cell-${idx}`} fill="url(#capacity-gradient)" />
@@ -210,18 +379,19 @@ export default function FloorOccupancyChart({ data = [] }) {
                 dataKey="capacity"
                 position="top"
                 formatter={(val) => val}
-                style={{ fill: '#fff', fontSize: 15, fontWeight: 'bold' }}
+                style={{ fill: '#fff', fontSize: 13, fontWeight: '700' }}
               />
             </Bar>
 
-            {/* 12) Live bar – narrower, multi-color gradient, white border */}
+            {/* Live headcount: narrower cylinder on top of capacity */}
             <Bar
               dataKey="liveCount"
               name="Live HeadCount"
               radius={[4, 4, 0, 0]}
-              barSize={70}
+              barSize={80}
               stroke="#fff"
               strokeWidth={1}
+              shape={<LiveCylinder />}
             >
               {chartData.map((_, idx) => (
                 <Cell
@@ -237,8 +407,8 @@ export default function FloorOccupancyChart({ data = [] }) {
                 formatter={(val) => val}
                 style={{
                   fill: '#fff',
-                  fontSize: 15,
-                  fontWeight: 'bold',
+                  fontSize: 13,
+                  fontWeight: '700',
                   backgroundColor: 'rgba(0,0,0,0.3)',
                   borderRadius: 2,
                   padding: '2px 4px'
@@ -250,9 +420,12 @@ export default function FloorOccupancyChart({ data = [] }) {
                 dataKey="usedPct"
                 position="center"
                 formatter={(val) => `${val}%`}
-                style={{ fill: '#fff', fontSize: 15, fontWeight: 'bold' }}
+                style={{ fill: '#fff', fontSize: 13, fontWeight: '700' }}
               />
             </Bar>
+
+            {/* Customized decorative overlay: curve & markers */}
+            <Customized component={({ width, height }) => <InfographicCurve width={width} height={height} />} />
           </BarChart>
         </ResponsiveContainer>
       </Card.Body>
