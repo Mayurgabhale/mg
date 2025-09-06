@@ -1,27 +1,261 @@
-<div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
+thi chart i want to convert into infographics bar graph ok
+see above image like this image i want to create my below chart
+ok, i hove you undersntd better
+listion , dontch change my code logic. 
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\FloorOccupancyChart.jsx
 
 
+// src/components/FloorOccupancyChart.jsx
 
+import React from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Legend
+} from 'recharts';
+import { Card } from 'react-bootstrap';
+import floorCapacities from '../constants/floorCapacities';
 
+// A single-color palette for “live headcount” bars
+const FLOOR_COLOR_PALETTE = [
+  ['#006400', '#CCFFCC']
+];
 
-.member-photo-container {
-  position: relative;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+export default function FloorOccupancyChart({ data = [] }) {
+  if (!data.length) {
+    return (
+      <Card body className="bg-dark text-white">
+        No floor data available
+      </Card>
+    );
+  }
+
+  // 1) Enrich each floor object with liveCount, capacity, usedPct, and breakdown
+  const enriched = data.map((floorObj) => {
+    const { floor, total: liveCount } = floorObj;
+    const capacity = floorCapacities[floor] ?? 0;
+    const usedPct = capacity > 0
+      ? ((liveCount / capacity) * 100).toFixed(1)
+      : '0.0';
+    return {
+      ...floorObj,           // includes breakdown fields: employees, contractors, etc.
+      capacity,
+      liveCount,
+      usedPct: Number(usedPct),
+      label: `${liveCount}/${capacity}`
+    };
+  });
+
+  // 2) Compute “Pune Office Total” across all floors
+  const totalLive = enriched.reduce((sum, f) => sum + f.liveCount, 0);
+  const totalCap = enriched.reduce((sum, f) => sum + f.capacity, 0);
+  const totalUsedPct = totalCap > 0
+    ? ((totalLive / totalCap) * 100).toFixed(1)
+    : '0.0';
+
+  const totalEntry = {
+    floor: 'Pune Office Total',
+    liveCount: totalLive,
+    capacity: totalCap,
+    usedPct: Number(totalUsedPct),
+    label: `${totalLive}/${totalCap}`
+  };
+
+  // 3) Sort floors by liveCount descending, then prepend “Pune Office Total”
+  const sortedFloors = [...enriched].sort((a, b) => b.liveCount - a.liveCount);
+  const chartData = [totalEntry, ...sortedFloors];
+
+  // 4) Determine the maximum capacity to set Y-axis domain
+  const maxCapacity = Math.max(...chartData.map(f => f.capacity)) || 0;
+
+  // 5) Custom tooltip to show raw counts, percentages, and breakdown
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const floorObj = payload[0].payload;
+    const { liveCount, capacity, usedPct } = floorObj;
+
+    const breakdownEntries = Object.entries(floorObj).filter(
+      ([key]) =>
+        !['floor', 'liveCount', 'capacity', 'usedPct', 'label'].includes(key)
+    );
+
+    return (
+      <div
+        style={{
+          backgroundColor: '#1a1a1a',
+          color: '#FFD100',
+          border: '1px solid var(--wu-yellow)',
+          borderRadius: 4,
+          padding: '0.75rem',
+          minWidth: 180
+        }}
+      >
+        <div style={{ marginBottom: 4, fontSize: '1rem' }}>
+          <strong>Floor: {floorObj.floor}</strong>
+        </div>
+        <div style={{ marginBottom: 6, fontWeight: 'bold', fontSize: '0.9rem' }}>
+          Live: {liveCount} / {capacity} ({usedPct}%)
+        </div>
+        {breakdownEntries.map(([type, value]) => (
+          <div
+            key={type}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: 2,
+              color: '#fff',
+              fontSize: '0.85rem'
+            }}
+          >
+            <span style={{ opacity: 0.8 }}>
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </span>
+            <span style={{ fontWeight: 'bold' }}>{value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+      <Card.Header className="bg-dark text-warning text-center fw-bold" style={{ borderBottom: '2px solid var(--wu-yellow)', fontSize: '1.2rem' }}>
+        Western Union-Pune Headcount against Occupancy
+      </Card.Header>
+
+      <Card.Body style={{ height: '50vh', padding: 0, backgroundColor: 'var(--wu-gray-dark)' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            margin={{ top: 20, right: 24, left: 0, bottom: 24 }}
+            barCategoryGap="1%"
+          >
+            {/* 6) Gradient for capacity bars (WU Yellow → WU Accent) */}
+            <defs>
+              <linearGradient id="capacity-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#FFD100" stopOpacity={1} />
+                <stop offset="100%" stopColor="#FFB800" stopOpacity={1} />
+              </linearGradient>
+              {/* 7) Single gradient for “live” bars */}
+              {chartData.map((_, idx) => {
+                const [darkColor, lightColor] =
+                  FLOOR_COLOR_PALETTE[idx % FLOOR_COLOR_PALETTE.length];
+                return (
+                  <linearGradient
+                    id={`live-grad-${idx}`}
+                    key={`live-grad-${idx}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor={darkColor} stopOpacity={1} />
+                    <stop offset="100%" stopColor={lightColor} stopOpacity={1} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+
+            {/* 8) Grid and Axes */}
+            <CartesianGrid stroke="#444" strokeDasharray="3 3" />
+            <XAxis
+              dataKey="floor"
+              tick={{ fontSize: 12, fill: '#fff' }}
+              position
+              textAnchor="end"
+              interval={0}
+              height={50}
+            />
+            <YAxis
+              tick={{ fontSize: 15, fill: '#fff' }}
+              domain={[0, Math.ceil(maxCapacity / 50) * 50]}
+            />
+
+            {/* 9) Custom Tooltip */}
+            <Tooltip content={renderTooltip} />
+
+            {/* 10) Legend */}
+            <Legend
+              verticalAlign="top"
+              align="center"
+              wrapperStyle={{ color: '#fff', paddingBottom: 8 }}
+              payload={[
+                { value: 'Occupancy', type: 'square', color: '#FFD100' },
+                { value: 'Live HeadCount', type: 'square', color: '#006400' }
+              ]}
+            />
+
+            {/* 11) Capacity bar – wider, WU Yellow gradient, white border */}
+            <Bar
+              dataKey="capacity"
+              name="Occupancy"
+              radius={[4, 4, 0, 0]}
+              barSize={70}
+              fill="url(#capacity-gradient)"
+              stroke="#fff"
+              strokeWidth={1}
+            >
+              {chartData.map((_, idx) => (
+                <Cell key={`cap-cell-${idx}`} fill="url(#capacity-gradient)" />
+              ))}
+              <LabelList
+                dataKey="capacity"
+                position="top"
+                formatter={(val) => val}
+                style={{ fill: '#fff', fontSize: 15, fontWeight: 'bold' }}
+              />
+            </Bar>
+
+            {/* 12) Live bar – narrower, multi-color gradient, white border */}
+            <Bar
+              dataKey="liveCount"
+              name="Live HeadCount"
+              radius={[4, 4, 0, 0]}
+              barSize={70}
+              stroke="#fff"
+              strokeWidth={1}
+            >
+              {chartData.map((_, idx) => (
+                <Cell
+                  key={`live-cell-${idx}`}
+                  fill={`url(#live-grad-${idx})`}
+                />
+              ))}
+
+              {/* Label on top: raw count */}
+              <LabelList
+                dataKey="liveCount"
+                position="top"
+                formatter={(val) => val}
+                style={{
+                  fill: '#fff',
+                  fontSize: 15,
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(0,0,0,0.3)',
+                  borderRadius: 2,
+                  padding: '2px 4px'
+                }}
+              />
+
+              {/* Label inside bar: percentage */}
+              <LabelList
+                dataKey="usedPct"
+                position="center"
+                formatter={(val) => `${val}%`}
+                style={{ fill: '#fff', fontSize: 15, fontWeight: 'bold' }}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  );
 }
-
-/* Available (green border) */
-.member-photo-container.present-border {
-  border: 2px solid #10b981; /* Tailwind's emerald-500 */
-}
-
-/* Away (white border) */
-.member-photo-container.away-border {
-  border: 2px solid #ffffff;
-}
-
-
