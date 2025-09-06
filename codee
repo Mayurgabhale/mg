@@ -1,6 +1,4 @@
-remove also a b c this and 
-23/1028 and this count i want in in center ok with big size and bold
-
+// REPLACE CylinderShape with this
 const CylinderShape = (props) => {
   const { x, y, width, height, payload } = props;
   const floorName = payload && payload.floor;
@@ -11,6 +9,9 @@ const CylinderShape = (props) => {
   const topRy = Math.max(8, width * 0.12);
   const bottomRy = Math.max(10, width * 0.14);
   const bottomY = y + height;
+
+  // centered label (live/cap) — large and bold
+  const centerLabel = payload && payload.label ? payload.label : '';
 
   return (
     <g>
@@ -56,16 +57,18 @@ const CylinderShape = (props) => {
         fill="rgba(255,255,255,0.03)"
       />
 
-      {/* optional small label inside the cylinder (live/cap). Remove if you don't want it */}
-      {payload && payload.label && (
+      {/* big centered count (live/cap) */}
+      {centerLabel && (
         <text
           x={cx}
-          y={y + height - (bottomRy * 0.6)}
+          // vertically center: use middle of cylinder body
+          y={y + height / 2 + 8} 
           textAnchor="middle"
-          fontSize="11"
-          fill="rgba(255,255,255,0.95)"
+          fontSize={Math.max(16, Math.round(width * 0.18))}
+          fontWeight="800"
+          fill="#ffffff"
         >
-          {payload.label}
+          {centerLabel}
         </text>
       )}
     </g>
