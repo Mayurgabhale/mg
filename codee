@@ -4,9 +4,9 @@ import React, { useMemo, useState } from 'react'; import { FaHome, FaBuilding, F
 
 const DEFAULT_PHOTO = '/photos/default.png';
 
-const roleIcons = { 'Site Head': <FaUserTie className="text-sky-400" />, 'BCM Team / Site Operations': <FaUserShield className="text-emerald-400" />, 'HR': <FaUserTie className="text-violet-400" />, 'Incident Controller': <FaUserShield className="text-amber-400" />, 'ERT Team Leader': <FaUserShield className="text-red-400" />, 'ERT Team Members': <FaUsers className="text-blue-400" />, 'First Aid Team': <FaUserNurse className="text-orange-400" /> };
+const roleIcons = { 'Site Head': <FaUserTie className="text-sky-400" />, 'BCM Team / Site Operations': <FaUserShield className="text-emerald-400" />, HR: <FaUserTie className="text-violet-400" />, 'Incident Controller': <FaUserShield className="text-amber-400" />, 'ERT Team Leader': <FaUserShield className="text-red-400" />, 'ERT Team Members': <FaUsers className="text-blue-400" />, 'First Aid Team': <FaUserNurse className="text-orange-400" /> };
 
-const baseLocationByRole = { 'Site Head': 'Podium Floor – Red Zone', 'HR': 'Podium Floor – Red Zone', 'Incident Controller': 'Podium Floor – Red Zone', 'First Aid Team': 'Podium Floor – Green Zone', 'ERT Team Leader': 'Podium Floor – Green Zone', 'BCM Team / Site Operations': 'Podium Floor – Red Zone' };
+const baseLocationByRole = { 'Site Head': 'Podium Floor – Red Zone', HR: 'Podium Floor – Red Zone', 'Incident Controller': 'Podium Floor – Red Zone', 'First Aid Team': 'Podium Floor – Green Zone', 'ERT Team Leader': 'Podium Floor – Green Zone', 'BCM Team / Site Operations': 'Podium Floor – Red Zone' };
 
 const toSlug = (name = '') => name .toLowerCase() .trim() .replace(/[^a-z0-9]+/g, '-') .replace(/^-+|-+$/g, '');
 
@@ -14,18 +14,22 @@ const getPhotoSrc = (member) => { if (!member) return DEFAULT_PHOTO; if (member.
 
 function PresenceDot({ present }) { return ( <span aria-hidden className={inline-block h-3 w-3 rounded-full mr-2 ${ present ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.25)]' : 'bg-rose-400' }} /> ); }
 
-function StatCard({ icon, label, value, onClick, selected }) { return ( <button onClick={onClick} className={flex flex-col items-center justify-center gap-1 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-500 ${ selected ? 'bg-sky-900/30 ring-1 ring-sky-500' : 'bg-slate-800/40' }} > <div className="text-2xl">{icon}</div> <div className={text-sm ${selected ? 'text-sky-300' : 'text-slate-300'}}>{label}</div> <div className="text-2xl font-semibold text-white">{value}</div> </button> ); }
+function StatCard({ icon, label, value, onClick, selected }) { return ( <button onClick={onClick} className={flex flex-col items-center justify-center gap-1 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-500 ${ selected ? 'bg-sky-900/30 ring-1 ring-sky-500' : 'bg-slate-800/40' }} > <div className="text-2xl">{icon}</div> <div className={text-sm ${selected ? 'text-sky-300' : 'text-slate-300'}} > {label} </div> <div className="text-2xl font-semibold text-white">{value}</div> </button> ); }
 
-function MemberRow({ member, role }) { const name = member.name || member.Name || '—'; const email = member.email || member.Email || ''; const phone = member.phone || member.Phone || ''; const present = !!member.present; const location = present ? (member.zone || member.liveLocation || 'Unknown Zone') : (baseLocationByRole[role] || 'Unknown');
+function MemberRow({ member, role }) { const name = member.name || member.Name || '—'; const email = member.email || member.Email || ''; const phone = member.phone || member.Phone || ''; const present = !!member.present; const location = present ? member.zone || member.liveLocation || 'Unknown Zone' : baseLocationByRole[role] || 'Unknown';
 
-return ( <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex items-start gap-3 py-3 border-b border-slate-700" > <div className="relative"> <img src={getPhotoSrc(member)} alt={name} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} className={h-12 w-12 rounded-full object-cover ring-2 ${present ? 'ring-emerald-400' : 'ring-slate-600'}} /> </div> <div className="flex-1"> <div className="flex items-center justify-between"> <div className="flex items-center gap-2"> <PresenceDot present={present} /> <div className="text-sm font-medium text-slate-100">{name}</div> <div className="text-xs px-2 py-1 bg-slate-700/40 rounded-full text-slate-300">{role}</div> </div> <div className="text-xs text-slate-400">{present ? 'Available' : 'Away'}</div> </div>
+return ( <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex items-start gap-3 py-3 border-b border-slate-700" > <div className="relative"> <img src={getPhotoSrc(member)} alt={name} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} className={h-12 w-12 rounded-full object-cover ring-2 ${ present ? 'ring-emerald-400' : 'ring-slate-600' }} /> </div> <div className="flex-1"> <div className="flex items-center justify-between"> <div className="flex items-center gap-2"> <PresenceDot present={present} /> <div className="text-sm font-medium text-slate-100">{name}</div> <div className="text-xs px-2 py-1 bg-slate-700/40 rounded-full text-slate-300"> {role} </div> </div> <div className="text-xs text-slate-400"> {present ? 'Available' : 'Away'} </div> </div>
 
 <div className="mt-2 text-xs text-slate-300 grid grid-cols-1 gap-1 sm:grid-cols-3">
       <div className="flex items-center gap-2">
         <FaEnvelopeOpenText />
         {email ? (
-          <a href={`mailto:${email}`} className="truncate text-sky-300">{email}</a>
-        ) : <span className="text-slate-400">—</span>}
+          <a href={`mailto:${email}`} className="truncate text-sky-300">
+            {email}
+          </a>
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <FaMobileAlt />
@@ -43,11 +47,11 @@ return ( <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1
 
 export default function ERTOverviewModern({ ertStatus = {} }) { const [filterZone, setFilterZone] = useState(null); const [q, setQ] = useState(''); const [showAllMembers, setShowAllMembers] = useState(false);
 
-// flattened members for searching and stats const allMembers = useMemo(() => { const list = []; Object.entries(ertStatus).forEach(([role, members]) => { (members || []).forEach(m => list.push({ role, ...m })); }); return list; }, [ertStatus]);
+// flattened members for searching and stats const allMembers = useMemo(() => { const list = []; Object.entries(ertStatus).forEach(([role, members]) => { (members || []).forEach((m) => list.push({ role, ...m })); }); return list; }, [ertStatus]);
 
-const floorCounts = useMemo(() => { const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 }; allMembers.forEach(m => { if (!m.present) return; const z = (m.zone || '').toLowerCase(); if (z.includes('2nd')) counts['2nd Floor']++; else if (z.includes('tower b')) counts['Tower B']++; else counts['Podium Floor']++; }); return counts; }, [allMembers]);
+const floorCounts = useMemo(() => { const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 }; allMembers.forEach((m) => { if (!m.present) return; const z = (m.zone || '').toLowerCase(); if (z.includes('2nd')) counts['2nd Floor']++; else if (z.includes('tower b')) counts['Tower B']++; else counts['Podium Floor']++; }); return counts; }, [allMembers]);
 
-// helper that filters and searches members by role const membersForRole = (role) => { const raw = (ertStatus[role] || []).map(m => ({ role, ...m })); const filtered = raw.filter(m => { if (filterZone) { const zoneMatch = (m.zone || m.Floor || '').toLowerCase().includes((filterZone || '').toLowerCase()); const baseMatch = (baseLocationByRole[role] || '').toLowerCase().includes((filterZone || '').toLowerCase()); if (!zoneMatch && !baseMatch) return false; } if (q) { const text = ${m.name || m.Name || ''} ${m.email || m.Email || ''} ${m.phone || m.Phone || ''}.toLowerCase(); if (!text.includes(q.toLowerCase())) return false; } return true; });
+// helper that filters and searches members by role const membersForRole = (role) => { const raw = (ertStatus[role] || []).map((m) => ({ role, ...m })); const filtered = raw.filter((m) => { if (filterZone) { const zoneMatch = (m.zone || m.Floor || '') .toLowerCase() .includes((filterZone || '').toLowerCase()); const baseMatch = (baseLocationByRole[role] || '') .toLowerCase() .includes((filterZone || '').toLowerCase()); if (!zoneMatch && !baseMatch) return false; } if (q) { const text = ${m.name || m.Name || ''} ${m.email || m.Email || ''} ${ m.phone || m.Phone || '' }.toLowerCase(); if (!text.includes(q.toLowerCase())) return false; } return true; });
 
 // sort present first
 filtered.sort((a, b) => (b.present ? 1 : 0) - (a.present ? 1 : 0));
@@ -57,9 +61,9 @@ return showAllMembers ? filtered : filtered.slice(0, 8);
 
 const floors = ['Podium Floor', '2nd Floor', 'Tower B']; const floorIcons = { 'Podium Floor': <FaHome />, '2nd Floor': <FaBuilding />, 'Tower B': <FaLayerGroup /> };
 
-// roles to show in left column and the others const firstColumnRoles = ['Site Head', 'BCM Team / Site Operations', 'HR', 'Incident Controller']; const otherRoles = Object.keys(ertStatus).filter(r => !firstColumnRoles.includes(r));
+// roles to show in left column and the others const firstColumnRoles = [ 'Site Head', 'BCM Team / Site Operations', 'HR', 'Incident Controller' ]; const otherRoles = Object.keys(ertStatus).filter( (r) => !firstColumnRoles.includes(r) );
 
-return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 p-6 text-slate-100"> <div className="mx-auto max-w-7xl"> <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"> <div> <h1 className="text-2xl font-extrabold tracking-tight">ERT — Live Roster</h1> <p className="text-sm text-slate-400 mt-1">Clear, quick view of emergency response teams and availability.</p> </div>
+return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 p-6 text-slate-100"> <div className="mx-auto max-w-7xl"> <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"> <div> <h1 className="text-2xl font-extrabold tracking-tight"> ERT — Live Roster </h1> <p className="text-sm text-slate-400 mt-1"> Clear, quick view of emergency response teams and availability. </p> </div>
 
 <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 bg-slate-800/50 rounded-full p-2">
@@ -75,10 +79,18 @@ return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-9
 
         <div className="hidden sm:flex items-center gap-2">
           <button
-            onClick={() => setShowAllMembers(prev => !prev)}
+            onClick={() => setShowAllMembers((prev) => !prev)}
             className="inline-flex items-center gap-2 rounded-lg bg-slate-800/40 px-3 py-2 text-sm hover:bg-slate-800/60"
           >
-            {showAllMembers ? <><FaEyeSlash /> Show Less</> : <><FaEye /> Show More</>}
+            {showAllMembers ? (
+              <>
+                <FaEyeSlash /> Show Less
+              </>
+            ) : (
+              <>
+                <FaEye /> Show More
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -89,17 +101,19 @@ return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-9
       <StatCard
         icon={<FaLayerGroup />}
         label="Total Active"
-        value={allMembers.filter(m => m.present).length}
+        value={allMembers.filter((m) => m.present).length}
         onClick={() => setFilterZone(null)}
         selected={!filterZone}
       />
-      {floors.map(f => (
+      {floors.map((f) => (
         <StatCard
           key={f}
           icon={floorIcons[f]}
           label={f}
           value={floorCounts[f] || 0}
-          onClick={() => setFilterZone(prev => prev === f ? null : f)}
+          onClick={() =>
+            setFilterZone((prev) => (prev === f ? null : f))
+          }
           selected={filterZone === f}
         />
       ))}
@@ -108,23 +122,35 @@ return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-9
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left column: fixed roles */}
       <div className="space-y-4">
-        {firstColumnRoles.map(role => (
+        {firstColumnRoles.map((role) => (
           <div key={role} className="bg-slate-800/40 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="text-xl">{roleIcons[role] || <FaUserTie />}</div>
+                <div className="text-xl">
+                  {roleIcons[role] || <FaUserTie />}
+                </div>
                 <div className="text-sm font-semibold">{role}</div>
               </div>
-              <div className="text-xs text-slate-400">{(ertStatus[role] || []).length} assigned</div>
+              <div className="text-xs text-slate-400">
+                {(ertStatus[role] || []).length} assigned
+              </div>
             </div>
 
             <div className="space-y-2 max-h-80 overflow-auto pr-2">
               <AnimatePresence initial={false}>
                 {membersForRole(role).map((m, i) => (
-                  <MemberRow key={`${role}-${m.name || i}`} member={m} role={role} />
+                  <MemberRow
+                    key={`${role}-${m.name || i}`}
+                    member={m}
+                    role={role}
+                  />
                 ))}
               </AnimatePresence>
-              {!(ertStatus[role] || []).length && <div className="text-sm text-center text-slate-400 py-6">No members assigned</div>}
+              {!(ertStatus[role] || []).length && (
+                <div className="text-sm text-center text-slate-400 py-6">
+                  No members assigned
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -134,32 +160,56 @@ return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-9
       <div className="space-y-4">
         <div className="bg-slate-800/40 rounded-2xl p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3"><div className="text-xl">{roleIcons['ERT Team Leader']}</div><div className="text-sm font-semibold">ERT Team Leaders</div></div>
-            <div className="text-xs text-slate-400">{(ertStatus['ERT Team Leader'] || []).length} total</div>
+            <div className="flex items-center gap-3">
+              <div className="text-xl">{roleIcons['ERT Team Leader']}</div>
+              <div className="text-sm font-semibold">ERT Team Leaders</div>
+            </div>
+            <div className="text-xs text-slate-400">
+              {(ertStatus['ERT Team Leader'] || []).length} total
+            </div>
           </div>
 
           <div className="flex-1 overflow-auto">
             <AnimatePresence>
               {(membersForRole('ERT Team Leader') || []).map((m, i) => (
-                <MemberRow key={`leader-${m.name || i}`} member={m} role={'ERT Team Leader'} />
+                <MemberRow
+                  key={`leader-${m.name || i}`}
+                  member={m}
+                  role={'ERT Team Leader'}
+                />
               ))}
             </AnimatePresence>
-            {!(ertStatus['ERT Team Leader'] || []).length && <div className="text-sm text-center text-slate-400 py-6">No leaders available</div>}
+            {!(ertStatus['ERT Team Leader'] || []).length && (
+              <div className="text-sm text-center text-slate-400 py-6">
+                No leaders available
+              </div>
+            )}
           </div>
         </div>
 
         {/* Other roles stacked */}
-        {otherRoles.map(role => (
+        {otherRoles.map((role) => (
           <div key={role} className="bg-slate-800/40 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3"><div className="text-xl">{roleIcons[role] || <FaUserTie />}</div><div className="text-sm font-semibold">{role}</div></div>
-              <div className="text-xs text-slate-400">{(ertStatus[role] || []).length} assigned</div>
+              <div className="flex items-center gap-3">
+                <div className="text-xl">
+                  {roleIcons[role] || <FaUserTie />}
+                </div>
+                <div className="text-sm font-semibold">{role}</div>
+              </div>
+              <div className="text-xs text-slate-400">
+                {(ertStatus[role] || []).length} assigned
+              </div>
             </div>
 
             <div className="space-y-2 max-h-52 overflow-auto pr-2">
               <AnimatePresence>
                 {(membersForRole(role) || []).map((m, i) => (
-                  <MemberRow key={`${role}-${m.name || i}`} member={m} role={role} />
+                  <MemberRow
+                    key={`${role}-${m.name || i}`}
+                    member={m}
+                    role={role}
+                  />
                 ))}
               </AnimatePresence>
             </div>
@@ -171,51 +221,12 @@ return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-9
       <div className="space-y-4">
         <div className="bg-gradient-to-b from-slate-800/30 to-slate-800/10 rounded-2xl p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3"><div className="text-xl">{roleIcons['ERT Team Members']}</div><div className="text-sm font-semibold">ERT Team Members</div></div>
-            <div className="text-xs text-slate-400">{(ertStatus['ERT Team Members'] || []).length} total</div>
-          </div>
-
-          <div className="flex-1 overflow-auto">
-            <div className="space-y-1">
-              <AnimatePresence>
-                {(membersForRole('ERT Team Members') || []).map((m, i) => (
-                  <MemberRow key={`member-${m.name || i}`} member={{ ...m, name: m.name || m.Name }} role={'ERT Team Members'} />
-                ))}
-              </AnimatePresence>
+            <div className="flex items-center gap-3">
+              <div className="text-xl">{roleIcons['ERT Team Members']}</div>
+              <div className="text-sm font-semibold">ERT Team Members</div>
             </div>
-
-            {!(ertStatus['ERT Team Members'] || []).length && <div className="text-sm text-center text-slate-400 py-6">No members</div>}
-          </div>
-
-          <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs text-slate-400">Showing {Math.min((ertStatus['ERT Team Members'] || []).length, showAllMembers ? (ertStatus['ERT Team Members'] || []).length : 8)} of {(ertStatus['ERT Team Members'] || []).length}</div>
-            <div>
-              <button
-                onClick={() => setShowAllMembers(prev => !prev)}
-                className="inline-flex items-center gap-2 rounded-lg bg-slate-800/50 px-3 py-2 text-sm hover:bg-slate-800/60"
-              >
-                {showAllMembers ? <><FaEyeSlash /> Show Less</> : <><FaEye /> Show More</>}
-              </button>
+            <div className="text-xs text-slate-400">
+              {(ertStatus['ERT Team Members'] || []).length} total
             </div>
-          </div>
-        </div>
-
-        {/* Quick legend / actions */}
-        <div className="bg-slate-800/30 rounded-2xl p-3 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-sm text-slate-300">
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full bg-emerald-400" /> Available</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-full bg-rose-400" /> Away</div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button onClick={() => window.print()} className="text-sm rounded-md px-3 py-2 bg-slate-800/50">Print</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-); }
+          </div
 
