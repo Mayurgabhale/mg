@@ -1,77 +1,71 @@
-  // -------------------------------
-  const CylinderShape = (props) => {
-    const { x, y, width, height, payload } = props;
-    const floorName = payload && payload.floor;
-    const idx = chartData.findIndex(d => d.floor === floorName);
-    const colorPair = CYLINDER_COLORS[idx % CYLINDER_COLORS.length];
-    const fill = `url(#cyl-grad-${idx})`;
+// Replace your current CylinderShape with this
+const CylinderShape = (props) => {
+  const { x, y, width, height, payload } = props;
+  const floorName = payload && payload.floor;
+  const idx = chartData.findIndex(d => d.floor === floorName);
+  const fill = `url(#cyl-grad-${idx})`;
 
-    const cx = x + width / 2;
-    const topRy = Math.max(8, width * 0.12);
-    const bottomRy = Math.max(10, width * 0.14);
-    const bottomY = y + height;
+  const cx = x + width / 2;
+  const topRy = Math.max(8, width * 0.12);
+  const bottomRy = Math.max(10, width * 0.14);
+  const bottomY = y + height;
 
-    // icon and two-digit number
-    const Icon = CYLINDER_ICONS[idx % CYLINDER_ICONS.length];
-    const displayNumber = String(idx + 1).padStart(2, '0');
+  return (
+    <g>
+      {/* shadow under the cylinder */}
+      <ellipse
+        cx={cx}
+        cy={bottomY + bottomRy * 0.9}
+        rx={width * 0.62}
+        ry={bottomRy * 0.45}
+        fill="rgba(0,0,0,0.25)"
+      />
 
-    return (
-      <g>
-        {/* shadow under the cylinder */}
-        <ellipse
-          cx={cx}
-          cy={bottomY + bottomRy * 0.9}
-          rx={width * 0.62}
-          ry={bottomRy * 0.45}
-          fill="rgba(0,0,0,0.25)"
-        />
-        {/* cylinder body */}
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          rx={12}
-          ry={12}
-          fill={fill}
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={1}
-        />
-        {/* top ellipse */}
-        <ellipse
-          cx={cx}
-          cy={y}
-          rx={width / 2}
-          ry={topRy}
-          fill={fill}
-          stroke="rgba(255,255,255,0.12)"
-          strokeWidth={1}
-        />
-        {/* bottom ellipse for 3D look */}
-        <ellipse
-          cx={cx}
-          cy={bottomY}
-          rx={width / 2}
-          ry={bottomRy}
-          fill="rgba(255,255,255,0.03)"
-        />
+      {/* cylinder body */}
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        rx={12}
+        ry={12}
+        fill={fill}
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth={1}
+      />
 
-        {/* Icon + number + percentage / label inside cylinder using SVG text */}
-        <g transform={`translate(${cx}, ${y + height * 0.36})`} textAnchor="middle" fill="#ffffff">
-          {Icon && (
-            <g transform="translate(-12, -6)">
-              <Icon />
-            </g>
-          )}
+      {/* top ellipse */}
+      <ellipse
+        cx={cx}
+        cy={y}
+        rx={width / 2}
+        ry={topRy}
+        fill={fill}
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth={1}
+      />
 
-          <text x="0" y="30" fontSize="20" fontWeight="700" fill="#fff">
-            {displayNumber}
-          </text>
+      {/* bottom ellipse for 3D look */}
+      <ellipse
+        cx={cx}
+        cy={bottomY}
+        rx={width / 2}
+        ry={bottomRy}
+        fill="rgba(255,255,255,0.03)"
+      />
 
-          <text x="0" y="52" fontSize="11" fill="rgba(255,255,255,0.9)">
-            {payload && payload.label ? payload.label : ''}
-          </text>
-        </g>
-      </g>
-    );
-  };
+      {/* optional small label inside the cylinder (live/cap). Remove if you don't want it */}
+      {payload && payload.label && (
+        <text
+          x={cx}
+          y={y + height - (bottomRy * 0.6)}
+          textAnchor="middle"
+          fontSize="11"
+          fill="rgba(255,255,255,0.95)"
+        >
+          {payload.label}
+        </text>
+      )}
+    </g>
+  );
+};
