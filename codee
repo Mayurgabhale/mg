@@ -1,3 +1,10 @@
+ok, good,
+but i am fillter displyed all three column
+i want to display not disply all column only 
+if i Podium Floor then disply onley memere ablave column not all ok
+
+
+
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
@@ -225,15 +232,7 @@ export default function ERTOverview({ ertStatus }) {
 
   return (
     <div className="ert-dashboard">
-      <div className="dashboard-header">
-        <Container fluid>
-          <div className="header-content">
-            <h1>Emergency Response Team Dashboard</h1>
-            <p>Monitor team availability and locations in real-time</p>
-          </div>
-        </Container>
-      </div>
-
+     
       <Container fluid className="py-4">
         {/* Stats Cards */}
         <Row className="mb-4">
@@ -281,40 +280,7 @@ export default function ERTOverview({ ertStatus }) {
           })}
         </Row>
 
-        {/* Filter Bar */}
-        <Card className="filter-bar mb-4">
-          <Card.Body className="p-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="filter-left">
-                <span className="me-3 filter-label">Filter by location:</span>
-                <Button 
-                  variant={filterZone ? "outline-primary" : "primary"} 
-                  size="sm"
-                  className="me-2"
-                  onClick={() => setFilterZone(null)}
-                >
-                  All Locations
-                </Button>
-                {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
-                  <Button 
-                    key={floor}
-                    variant={filterZone === floor ? "primary" : "outline-primary"} 
-                    size="sm"
-                    className="me-2"
-                    onClick={() => setFilterZone(floor)}
-                  >
-                    {floor}
-                  </Button>
-                ))}
-              </div>
-              <div className="filter-right">
-                <span className="filter-status">
-                  {filterZone ? `Showing: ${filterZone}` : 'Showing all locations'}
-                </span>
-              </div>
-            </div>
-          </Card.Body>
-        </Card>
+      
 
         {/* Three-column layout */}
         <Row className="align-items-stretch">
