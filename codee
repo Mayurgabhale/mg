@@ -1,3 +1,47 @@
+// REPLACE your existing CurveOverlay/InfographicCurve with this simplified version
+const CurveOverlay = ({ width, height, xAxisMap, yAxisMap }) => {
+  const xKey = Object.keys(xAxisMap || {})[0];
+  const yKey = Object.keys(yAxisMap || {})[0];
+
+  if (!xKey || !yKey) return null;
+
+  const xScale = xAxisMap[xKey].scale;
+  const yScale = yAxisMap[yKey].scale;
+
+  const points = chartData.map((d) => {
+    const x = xScale(d.floor) + (xScale.bandwidth ? xScale.bandwidth() / 2 : 0);
+    const y = yScale(d.liveCount);
+    return { x, y };
+  });
+
+  if (points.length < 2) return null;
+
+  // build smooth path
+  let path = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const cur = points[i];
+    const midX = (prev.x + cur.x) / 2;
+    const midY = (prev.y + cur.y) / 2;
+    path += ` Q ${prev.x} ${prev.y} ${midX} ${midY}`;
+  }
+  const last = points[points.length - 1];
+  path += ` T ${last.x} ${last.y}`;
+
+  return (
+    <g>
+      {/* faint grey helper line */}
+      <path d={path} fill="none" stroke="#cccccc" strokeWidth={2} strokeOpacity={0.6} />
+      {/* bright accent line on top */}
+      <path d={path} fill="none" stroke="#FFD100" strokeWidth={3} strokeOpacity={0.9} strokeLinecap="round" />
+    </g>
+  );
+};
+
+
+...
+
+
 // REPLACE CylinderShape with this
 const CylinderShape = (props) => {
   const { x, y, width, height, payload } = props;
