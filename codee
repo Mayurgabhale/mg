@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
@@ -227,8 +225,14 @@ export default function ERTOverview({ ertStatus }) {
 
   return (
     <div className="ert-dashboard">
-
-      
+      <div className="dashboard-header">
+        <Container fluid>
+          <div className="header-content">
+            <h1>Emergency Response Team Dashboard</h1>
+            <p>Monitor team availability and locations in real-time</p>
+          </div>
+        </Container>
+      </div>
 
       <Container fluid className="py-4">
         {/* Stats Cards */}
@@ -276,6 +280,41 @@ export default function ERTOverview({ ertStatus }) {
             );
           })}
         </Row>
+
+        {/* Filter Bar */}
+        <Card className="filter-bar mb-4">
+          <Card.Body className="p-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="filter-left">
+                <span className="me-3 filter-label">Filter by location:</span>
+                <Button 
+                  variant={filterZone ? "outline-primary" : "primary"} 
+                  size="sm"
+                  className="me-2"
+                  onClick={() => setFilterZone(null)}
+                >
+                  All Locations
+                </Button>
+                {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
+                  <Button 
+                    key={floor}
+                    variant={filterZone === floor ? "primary" : "outline-primary"} 
+                    size="sm"
+                    className="me-2"
+                    onClick={() => setFilterZone(floor)}
+                  >
+                    {floor}
+                  </Button>
+                ))}
+              </div>
+              <div className="filter-right">
+                <span className="filter-status">
+                  {filterZone ? `Showing: ${filterZone}` : 'Showing all locations'}
+                </span>
+              </div>
+            </div>
+          </Card.Body>
+        </Card>
 
         {/* Three-column layout */}
         <Row className="align-items-stretch">
@@ -440,97 +479,185 @@ export default function ERTOverview({ ertStatus }) {
         .ert-dashboard {
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
           min-height: 100vh;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         }
         
         .dashboard-header {
-          background: rgba(30, 41, 59, 0.8);
+          background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
           backdrop-filter: blur(10px);
-          border-bottom: 1px solid #334155;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 1.5rem 0;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .header-content {
+          text-align: center;
+        }
+        
+        .header-content h1 {
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          color: #f8fafc;
+          font-size: 2.2rem;
+          letter-spacing: -0.5px;
+        }
+        
+        .header-content p {
+          color: #94a3b8;
+          font-size: 1.1rem;
+          margin-bottom: 0;
         }
         
         .stats-card {
-          background: rgba(30, 41, 59, 0.7);
-          border: 1px solid #334155;
-          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
           transition: all 0.3s ease;
           cursor: pointer;
           height: 100%;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .stats-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        
+        .stats-card:hover::before {
+          opacity: 1;
         }
         
         .stats-card:hover, .location-card.active {
-          transform: translateY(-3px);
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-          border-color: #60a5fa;
+          transform: translateY(-5px);
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+          border-color: rgba(99, 102, 241, 0.4);
         }
         
         .location-card.active {
-          background: rgba(37, 99, 235, 0.15);
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(29, 40, 58, 0.95) 100%);
+          border-color: rgba(99, 102, 241, 0.6);
+        }
+        
+        .location-card.active::before {
+          opacity: 1;
         }
         
         .stats-icon {
-          width: 50px;
-          height: 50px;
-          border-radius: 12px;
+          width: 60px;
+          height: 60px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(96, 165, 250, 0.12);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .total-members .stats-icon {
+          background: rgba(139, 92, 246, 0.12);
         }
         
         .stats-label {
           color: #cbd5e1;
-          font-size: 0.85rem;
-          margin-bottom: 0.25rem;
+          font-size: 0.9rem;
+          margin-bottom: 0.4rem;
+          font-weight: 500;
+          letter-spacing: 0.5px;
         }
         
         .stats-value {
           color: #f8fafc;
           font-weight: 700;
+          font-size: 2rem;
+          letter-spacing: -0.5px;
+        }
+        
+        .filter-bar {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .filter-label {
+          color: #e2e8f0;
+          font-weight: 500;
+        }
+        
+        .filter-status {
+          color: #94a3b8;
+          font-size: 0.9rem;
         }
         
         .dashboard-card {
-          background: rgba(30, 41, 59, 0.7);
-          border: 1px solid #334155;
-          border-radius: 12px;
-          backdrop-filter: blur(10px);
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+        }
+        
+        .dashboard-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #3B82F6, #8B5CF6);
         }
         
         .dashboard-card-header {
-          background: rgba(30, 41, 59, 0.9);
-          border-bottom: 1px solid #334155;
+          background: rgba(30, 41, 59, 0.98);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           font-weight: 600;
-          padding: 1rem 1.25rem;
+          padding: 1.25rem 1.5rem;
           color: #e2e8f0;
-          border-top-left-radius: 12px !important;
-          border-top-right-radius: 12px !important;
+          backdrop-filter: blur(10px);
         }
         
         .role-icon {
-          font-size: 1.1rem;
+          font-size: 1.2rem;
         }
         
         .role-title {
           font-size: 1.1rem;
+          font-weight: 600;
         }
         
         .member-item {
           border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+          transition: all 0.3s ease;
+          padding: 1.25rem 1.5rem;
+          margin: 0 -1.5rem;
+        }
+        
+        .member-item:hover {
+          background: rgba(255, 255, 255, 0.03);
         }
         
         .member-item:last-child {
           border-bottom: none;
-          margin-bottom: 0;
-          padding-bottom: 0;
         }
         
         .member-photo-container {
           position: relative;
-          width: 55px;
-          height: 55px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           overflow: hidden;
           flex-shrink: 0;
-          border: 2px solid #334155;
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         
         .member-photo {
@@ -544,10 +671,11 @@ export default function ERTOverview({ ertStatus }) {
           position: absolute;
           bottom: 0;
           right: 0;
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           border: 2px solid #1e293b;
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
         }
         
         .status-indicator.present {
@@ -555,29 +683,32 @@ export default function ERTOverview({ ertStatus }) {
         }
         
         .status-indicator.away {
-          background-color: #6b7280;
+          background-color: #64748b;
         }
         
         .member-name {
           color: #f1f5f9;
-          font-weight: 500;
+          font-weight: 600;
+          font-size: 1.05rem;
         }
         
         .status-badge {
-          font-size: 0.7rem;
-          font-weight: 500;
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 0.35em 0.65em;
         }
         
         .member-contact-info {
-          padding-left: 10px;
-          border-left: 2px solid rgba(148, 163, 184, 0.2);
-          margin-left: 27px;
+          padding-left: 12px;
+          border-left: 2px solid rgba(96, 165, 250, 0.3);
+          margin-left: 30px;
+          margin-top: 0.75rem;
         }
         
         .contact-item {
           display: flex;
           align-items: center;
-          margin-bottom: 0.4rem;
+          margin-bottom: 0.5rem;
         }
         
         .contact-item:last-child {
@@ -586,13 +717,13 @@ export default function ERTOverview({ ertStatus }) {
         
         .contact-icon {
           width: 16px;
-          margin-right: 0.5rem;
+          margin-right: 0.75rem;
           flex-shrink: 0;
         }
         
         .contact-link, .contact-text {
-          font-size: 0.85rem;
-          color: #94a3b8;
+          font-size: 0.9rem;
+          color: #cbd5e1;
           text-decoration: none;
           transition: color 0.2s;
           word-break: break-word;
@@ -618,12 +749,12 @@ export default function ERTOverview({ ertStatus }) {
           .dashboard-card {
             margin-bottom: 1.5rem;
           }
+          
+          .header-content h1 {
+            font-size: 1.8rem;
+          }
         }
       `}</style>
     </div>
   );
 }
-
-
-
-
