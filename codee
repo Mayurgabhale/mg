@@ -1,3 +1,8 @@
+improve ment suggestion.
+1. Available add photo border in green, not Available white.
+2. all three COLUMN heiht i want same, in futuer, in wany COLUMN add new member then auto adjust height, menas all thre COLUMN hight i want same. 
+
+
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
@@ -78,18 +83,18 @@ function renderRoleCard(role, membersRaw, filterZone) {
   if (filterZone && members.length === 0) return null;
 
   return (
-    <Card className="dashboard-card mb-3" key={role}>
+    <Card className="dashboard-card mb-1" key={role}>
       <Card.Header className="dashboard-card-header d-flex align-items-center">
         <span className="role-icon me-2">{roleIcons[role] || <FaUserCog className="text-muted" />}</span>
         <span className="role-title">{role}</span>
         <Badge bg="outline-light" className="ms-2">{members.length}</Badge>
       </Card.Header>
-      <Card.Body className="p-3">
+      <Card.Body className="p-1">
         {members.length > 0 ? members.map((m, i) => {
           const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
           return (
-            <div key={i} className="member-item pb-3 mb-3">
-              <div className="d-flex justify-content-between align-items-start mb-2">
+            <div key={i} className="member-item pb-0 mb-1">
+              <div className="d-flex justify-content-between align-items-start mb-1">
                 <div className="d-flex align-items-center">
                   <div className="member-photo-container">
                     <img
@@ -272,15 +277,8 @@ export default function ERTOverview({ ertStatus }) {
 
   return (
     <div className="ert-dashboard">
-      <div className="dashboard-header">
-        <Container fluid>
-          <div className="header-content">
-            <h1>Emergency Response Team Dashboard</h1>
-            <p>Monitor team availability and locations in real-time</p>
-          </div>
-        </Container>
-      </div>
 
+    
       <Container fluid className="py-4">
         {/* Stats Cards */}
         <Row className="mb-4">
@@ -328,40 +326,7 @@ export default function ERTOverview({ ertStatus }) {
           })}
         </Row>
 
-        {/* Filter Bar */}
-        <Card className="filter-bar mb-4">
-          <Card.Body className="p-3">
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="filter-left">
-                <span className="me-3 filter-label">Filter by location:</span>
-                <Button 
-                  variant={filterZone ? "outline-primary" : "primary"} 
-                  size="sm"
-                  className="me-2"
-                  onClick={() => setFilterZone(null)}
-                >
-                  All Locations
-                </Button>
-                {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
-                  <Button 
-                    key={floor}
-                    variant={filterZone === floor ? "primary" : "outline-primary"} 
-                    size="sm"
-                    className="me-2"
-                    onClick={() => setFilterZone(floor)}
-                  >
-                    {floor}
-                  </Button>
-                ))}
-              </div>
-              <div className="filter-right">
-                <span className="filter-status">
-                  {filterZone ? `Showing: ${filterZone}` : 'Showing all locations'}
-                </span>
-              </div>
-            </div>
-          </Card.Body>
-        </Card>
+     
 
         {/* Three-column layout */}
         <Row className="align-items-stretch">
@@ -402,7 +367,7 @@ export default function ERTOverview({ ertStatus }) {
                             </div>
                             <div className="ms-3">
                               <h6 className="mb-0 member-name">{m.name}</h6>
-                              <small className="text-muted">Team Leader</small>
+                              {/* <small className="text-muted">Team Leader</small> */}
                             </div>
                           </div>
                           <Badge bg={m.present ? 'success' : 'secondary'} className="status-badge">
@@ -526,7 +491,7 @@ export default function ERTOverview({ ertStatus }) {
               </Card>
 
               {/* First Aid Team */}
-              {renderRoleCard('First Aid Team', ertStatus['First Aid Team'] || [], filterZone)}
+              {/* {renderRoleCard('First Aid Team', ertStatus['First Aid Team'] || [], filterZone)} */}
             </Col>
           )}
         </Row>
@@ -677,7 +642,7 @@ export default function ERTOverview({ ertStatus }) {
           background: rgba(30, 41, 59, 0.98);
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           font-weight: 600;
-          padding: 1.25rem 1.5rem;
+       
           color: #e2e8f0;
           backdrop-filter: blur(10px);
         }
@@ -694,7 +659,7 @@ export default function ERTOverview({ ertStatus }) {
         .member-item {
           border-bottom: 1px solid rgba(148, 163, 184, 0.1);
           transition: all 0.3s ease;
-          padding: 1.25rem 1.5rem;
+          padding: 0.2rem 1.5rem;
           margin: 0 -1.5rem;
         }
         
