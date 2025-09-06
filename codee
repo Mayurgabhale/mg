@@ -1,3 +1,32 @@
+Uncaught runtime errors:
+×
+ERROR
+Cannot read properties of null (reading 'isStepper')
+TypeError: Cannot read properties of null (reading 'isStepper')
+    at __WEBPACK_DEFAULT_EXPORT__ (http://localhost:3002/static/js/bundle.js:80100:19)
+    at Animate.runJSAnimation (http://localhost:3002/static/js/bundle.js:79241:85)
+    at Animate.runAnimation (http://localhost:3002/static/js/bundle.js:79304:14)
+    at Animate.componentDidMount (http://localhost:3002/static/js/bundle.js:79144:12)
+    at react-stack-bottom-frame (http://localhost:3002/static/js/bundle.js:46156:20)
+    at runWithFiberInDEV (http://localhost:3002/static/js/bundle.js:34116:68)
+    at commitLayoutEffectOnFiber (http://localhost:3002/static/js/bundle.js:39458:881)
+    at recursivelyTraverseLayoutEffects (http://localhost:3002/static/js/bundle.js:39921:103)
+    at commitLayoutEffectOnFiber (http://localhost:3002/static/js/bundle.js:39492:9)
+    at recursivelyTraverseLayoutEffects (http://localhost:3002/static/js/bundle.js:39921:103)
+ERROR
+Cannot read properties of null (reading 'isStepper')
+TypeError: Cannot read properties of null (reading 'isStepper')
+    at __WEBPACK_DEFAULT_EXPORT__ (http://localhost:3002/static/js/bundle.js:80100:19)
+    at Animate.runJSAnimation (http://localhost:3002/static/js/bundle.js:79241:85)
+    at Animate.runAnimation (http://localhost:3002/static/js/bundle.js:79304:14)
+    at Animate.componentDidMount (http://localhost:3002/static/js/bundle.js:79144:12)
+    at react-stack-bottom-frame (http://localhost:3002/static/js/bundle.js:46156:20)
+    at runWithFiberInDEV (http://localhost:3002/static/js/bundle.js:34116:68)
+    at reappearLayoutEffects (http://localhost:3002/static/js/bundle.js:39970:60)
+    at recursivelyTraverseReappearLayoutEffects (http://localhost:3002/static/js/bundle.js:40020:66)
+    at reappearLayoutEffects (http://localhost:3002/static/js/bundle.js:39987:9)
+    at recursivelyTraverseReappearLayoutEffects (http://localhost:3002/static/js/bundle.js:40020:66)
+
 // src/components/FloorOccupancyChart.jsx
 import React from 'react';
 import {
