@@ -1,3 +1,17 @@
+const getPhotoSrc = (member) => {
+  if (!member) return DEFAULT_PHOTO;
+  if (member.photo) return member.photo;
+
+  const name = member.name || member.Name;
+  if (name) return `/photos/${toSlug(name)}.png`;
+
+  return DEFAULT_PHOTO;
+};
+
+
+
+
+...
 Compiled with problems:
 ×
 ERROR in ./src/components/ERTOverview.jsx
