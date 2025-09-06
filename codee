@@ -1,4 +1,6 @@
-// Replace your current CylinderShape with this
+remove also a b c this and 
+23/1028 and this count i want in in center ok with big size and bold
+
 const CylinderShape = (props) => {
   const { x, y, width, height, payload } = props;
   const floorName = payload && payload.floor;
