@@ -1,232 +1,498 @@
-import React, { useMemo, useState } from 'react'; import { FaHome, FaBuilding, FaLayerGroup, FaEnvelopeOpenText, FaMobileAlt, FaMapMarkerAlt, FaUserTie, FaUserShield, FaUserNurse, FaUsers, FaEye, FaEyeSlash, FaFilter } from 'react-icons/fa'; import { motion, AnimatePresence } from 'framer-motion';
 
-// Modern, single-file React component using TailwindCSS for styling. // Usage: <ERTOverviewModern ertStatus={yourErtStatusObject} />
 
-const DEFAULT_PHOTO = '/photos/default.png';
+import React, { useState, useMemo } from 'react';
+import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
+import {
+  FaHome,
+  FaBuilding,
+  FaLayerGroup,
+  FaEnvelopeOpenText,
+  FaMobileAlt,
+  FaMapMarkerAlt,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers,
+  FaFilter,
+  FaEye,
+  FaEyeSlash
+} from 'react-icons/fa';
 
-const roleIcons = { 'Site Head': <FaUserTie className="text-sky-400" />, 'BCM Team / Site Operations': <FaUserShield className="text-emerald-400" />, HR: <FaUserTie className="text-violet-400" />, 'Incident Controller': <FaUserShield className="text-amber-400" />, 'ERT Team Leader': <FaUserShield className="text-red-400" />, 'ERT Team Members': <FaUsers className="text-blue-400" />, 'First Aid Team': <FaUserNurse className="text-orange-400" /> };
+const firstColumnRoles = [
+  'Site Head',
+  'BCM Team / Site Operations',
+  'HR',
+  'Incident Controller'
+];
 
-const baseLocationByRole = { 'Site Head': 'Podium Floor – Red Zone', HR: 'Podium Floor – Red Zone', 'Incident Controller': 'Podium Floor – Red Zone', 'First Aid Team': 'Podium Floor – Green Zone', 'ERT Team Leader': 'Podium Floor – Green Zone', 'BCM Team / Site Operations': 'Podium Floor – Red Zone' };
-
-const toSlug = (name = '') => name .toLowerCase() .trim() .replace(/[^a-z0-9]+/g, '-') .replace(/^-+|-+$/g, '');
-
-const getPhotoSrc = (member) => { if (!member) return DEFAULT_PHOTO; if (member.photo) return member.photo; const name = member.name || member.Name; if (name) return /photos/${toSlug(name)}.png; return DEFAULT_PHOTO; };
-
-function PresenceDot({ present }) { return ( <span aria-hidden className={inline-block h-3 w-3 rounded-full mr-2 ${ present ? 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.25)]' : 'bg-rose-400' }} /> ); }
-
-function StatCard({ icon, label, value, onClick, selected }) { return ( <button onClick={onClick} className={flex flex-col items-center justify-center gap-1 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-sky-500 ${ selected ? 'bg-sky-900/30 ring-1 ring-sky-500' : 'bg-slate-800/40' }} > <div className="text-2xl">{icon}</div> <div className={text-sm ${selected ? 'text-sky-300' : 'text-slate-300'}} > {label} </div> <div className="text-2xl font-semibold text-white">{value}</div> </button> ); }
-
-function MemberRow({ member, role }) { const name = member.name || member.Name || '—'; const email = member.email || member.Email || ''; const phone = member.phone || member.Phone || ''; const present = !!member.present; const location = present ? member.zone || member.liveLocation || 'Unknown Zone' : baseLocationByRole[role] || 'Unknown';
-
-return ( <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="flex items-start gap-3 py-3 border-b border-slate-700" > <div className="relative"> <img src={getPhotoSrc(member)} alt={name} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_PHOTO; }} className={h-12 w-12 rounded-full object-cover ring-2 ${ present ? 'ring-emerald-400' : 'ring-slate-600' }} /> </div> <div className="flex-1"> <div className="flex items-center justify-between"> <div className="flex items-center gap-2"> <PresenceDot present={present} /> <div className="text-sm font-medium text-slate-100">{name}</div> <div className="text-xs px-2 py-1 bg-slate-700/40 rounded-full text-slate-300"> {role} </div> </div> <div className="text-xs text-slate-400"> {present ? 'Available' : 'Away'} </div> </div>
-
-<div className="mt-2 text-xs text-slate-300 grid grid-cols-1 gap-1 sm:grid-cols-3">
-      <div className="flex items-center gap-2">
-        <FaEnvelopeOpenText />
-        {email ? (
-          <a href={`mailto:${email}`} className="truncate text-sky-300">
-            {email}
-          </a>
-        ) : (
-          <span className="text-slate-400">—</span>
-        )}
-      </div>
-      <div className="flex items-center gap-2">
-        <FaMobileAlt />
-        <span className="text-slate-300 truncate">{phone || '—'}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <FaMapMarkerAlt />
-        <span className="text-amber-300 truncate">{location}</span>
-      </div>
-    </div>
-  </div>
-</motion.div>
-
-); }
-
-export default function ERTOverviewModern({ ertStatus = {} }) { const [filterZone, setFilterZone] = useState(null); const [q, setQ] = useState(''); const [showAllMembers, setShowAllMembers] = useState(false);
-
-// flattened members for searching and stats const allMembers = useMemo(() => { const list = []; Object.entries(ertStatus).forEach(([role, members]) => { (members || []).forEach((m) => list.push({ role, ...m })); }); return list; }, [ertStatus]);
-
-const floorCounts = useMemo(() => { const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 }; allMembers.forEach((m) => { if (!m.present) return; const z = (m.zone || '').toLowerCase(); if (z.includes('2nd')) counts['2nd Floor']++; else if (z.includes('tower b')) counts['Tower B']++; else counts['Podium Floor']++; }); return counts; }, [allMembers]);
-
-// helper that filters and searches members by role const membersForRole = (role) => { const raw = (ertStatus[role] || []).map((m) => ({ role, ...m })); const filtered = raw.filter((m) => { if (filterZone) { const zoneMatch = (m.zone || m.Floor || '') .toLowerCase() .includes((filterZone || '').toLowerCase()); const baseMatch = (baseLocationByRole[role] || '') .toLowerCase() .includes((filterZone || '').toLowerCase()); if (!zoneMatch && !baseMatch) return false; } if (q) { const text = ${m.name || m.Name || ''} ${m.email || m.Email || ''} ${ m.phone || m.Phone || '' }.toLowerCase(); if (!text.includes(q.toLowerCase())) return false; } return true; });
-
-// sort present first
-filtered.sort((a, b) => (b.present ? 1 : 0) - (a.present ? 1 : 0));
-return showAllMembers ? filtered : filtered.slice(0, 8);
-
+const roleIcons = {
+  'Site Head': <FaUserTie style={{ color: '#4FC3F7' }} />,
+  'BCM Team / Site Operations': <FaUserShield style={{ color: '#4DB6AC' }} />,
+  'HR': <FaUserTie style={{ color: '#9575CD' }} />,
+  'Incident Controller': <FaUserShield style={{ color: '#FFB74D' }} />,
+  'ERT Team Leader': <FaUserShield style={{ color: '#E57373' }} />,
+  'ERT Team Members': <FaUsers style={{ color: '#64B5F6' }} />,
+  'First Aid Team': <FaUserNurse style={{ color: '#FF8A65' }} />
 };
 
-const floors = ['Podium Floor', '2nd Floor', 'Tower B']; const floorIcons = { 'Podium Floor': <FaHome />, '2nd Floor': <FaBuilding />, 'Tower B': <FaLayerGroup /> };
+const baseLocationByRole = {
+  'Site Head': 'Podium Floor – Red Zone',
+  'HR': 'Podium Floor – Red Zone',
+  'Incident Controller': 'Podium Floor – Red Zone',
+  'First Aid Team': 'Podium Floor – Green Zone',
+  'ERT Team Leader': 'Podium Floor – Green Zone',
+  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
+};
 
-// roles to show in left column and the others const firstColumnRoles = [ 'Site Head', 'BCM Team / Site Operations', 'HR', 'Incident Controller' ]; const otherRoles = Object.keys(ertStatus).filter( (r) => !firstColumnRoles.includes(r) );
+// ---- Photo helpers ----
+const DEFAULT_PHOTO = '/photos/default.png';
 
-return ( <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 p-6 text-slate-100"> <div className="mx-auto max-w-7xl"> <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"> <div> <h1 className="text-2xl font-extrabold tracking-tight"> ERT — Live Roster </h1> <p className="text-sm text-slate-400 mt-1"> Clear, quick view of emergency response teams and availability. </p> </div>
+// Fixed the regular expression in toSlug function
+const toSlug = (name = '') =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_') // non-alphanumerics -> underscore
+    .replace(/^_+|_+$/g, ''); // trim leading/trailing underscores
 
-<div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-slate-800/50 rounded-full p-2">
-          <FaFilter className="text-slate-300" />
-          <input
-            aria-label="Search people"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name, email or phone..."
-            className="bg-transparent px-2 text-sm placeholder:text-slate-500 focus:outline-none"
-          />
-        </div>
+const getPhotoSrc = (member) => {
+  if (!member) return DEFAULT_PHOTO;
 
-        <div className="hidden sm:flex items-center gap-2">
-          <button
-            onClick={() => setShowAllMembers((prev) => !prev)}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-800/40 px-3 py-2 text-sm hover:bg-slate-800/60"
-          >
-            {showAllMembers ? (
-              <>
-                <FaEyeSlash /> Show Less
-              </>
-            ) : (
-              <>
-                <FaEye /> Show More
-              </>
-            )}
-          </button>
-        </div>
+  // 1) explicit URL if present (e.g., from backend)
+  if (member.photo) return member.photo;
+
+  // 3) name-based file
+  const name = member.name || member.Name;
+  if (name) return `/photos/${toSlug(name)}.png`;
+
+  // 4) fallback
+  return DEFAULT_PHOTO;
+};
+
+function renderRoleCard(role, membersRaw, filterZone) {
+  const members = filterZone
+    ? membersRaw.filter(m =>
+      m.present && (
+        (m.zone && m.zone.includes(filterZone)) ||
+        baseLocationByRole[role].includes(filterZone)
+      )
+    )
+    : membersRaw;
+
+  return (
+    <Card className="shadow-sm mb-2" key={role} style={{ backgroundColor: '#1e293b', border: '1px solid rgb(198, 205, 214)', borderRadius: '0px' }}>
+      <Card.Header style={{
+        borderBottom: '1px solid #334155',
+        fontWeight: '600',
+        fontSize: '1.1rem',
+        backgroundColor: 'rgba(30, 41, 59, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        // padding: '1rem',
+        color: '#e2e8f0'
+      }}>
+        {roleIcons[role] || <FaUserTie style={{ color: '#94a3b8' }} />}
+        {role}
+      </Card.Header>
+      <Card.Body style={{ padding: '1rem' }}>
+        {members.length > 0 ? members.map((m, i) => {
+          const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
+          return (
+            <div key={i} className="mb-2 pb-0" style={{ borderBottom: i < members.length - 1 ? '1px solid #334155' : 'none' }}>
+
+
+              <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center">
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    marginRight: 12,
+                    // border: '3px solid #FFCC00',
+                    border: m.present ? '3px solid #0df705' : '2px solid rgb(227, 230, 235)',
+
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    <img
+                      src={getPhotoSrc(m)}
+                      alt={m.name || 'Member'}
+                      style={{
+                        width: '97%',
+                        height: '97%',
+                        objectFit: 'cover',
+                        objectPosition: 'center top' // This will focus on the face area
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_PHOTO;
+                      }}
+                    />
+                  </div>
+                  <span style={{ fontWeight: '500', color: '#f1f5f9' }}>{m.name}</span>
+                </div>
+                <Badge bg={m.present ? 'success' : 'danger'} pill style={{ fontSize: '0.7rem' }}>
+                  {m.present ? 'Available' : 'Away'}
+                </Badge>
+              </div>
+
+
+
+
+              <div className="mt-2" style={{ fontSize: '0.85rem' }}>
+                <div className="d-flex align-items-center mb-1">
+                  <FaEnvelopeOpenText className="me-2" style={{ color: '#60a5fa', minWidth: '16px' }} />
+                  <a href={`mailto:${m.email}`} style={{ color: '#93c5fd', textDecoration: 'none' }}>
+                    {m.email}
+                  </a>
+                </div>
+                <div className="d-flex align-items-center mb-1">
+                  <FaMobileAlt className="me-2" style={{ color: '#34d399', minWidth: '16px' }} />
+                  <span style={{ color: '#34d399' }}>{m.phone}</span>
+                </div>
+                <div className="d-flex align-items-center">
+                  <FaMapMarkerAlt className="me-2" style={{ color: '#f87171', minWidth: '16px' }} />
+                  <span style={{ color: '#f87171' }}>{location}</span>
+                </div>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="text-center py-2" style={{ color: '#94a3b8' }}>No members available</div>
+        )}
+      </Card.Body>
+    </Card>
+  );
+}
+
+export default function ERTOverview({ ertStatus }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+
+  const allMembers = useMemo(() => {
+    const list = [];
+    Object.entries(ertStatus).forEach(([role, members]) => {
+      members.forEach(m => list.push({ role, ...m }));
+    });
+    return list;
+  }, [ertStatus]);
+
+  const floorCounts = useMemo(() => {
+    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+    allMembers.forEach(m => {
+      if (!m.present) return;
+      const z = m.zone?.toLowerCase() || '';
+      if (z.includes('2nd')) counts['2nd Floor']++;
+      else if (z.includes('tower b')) counts['Tower B']++;
+      else counts['Podium Floor']++;
+    });
+    return counts;
+  }, [allMembers]);
+
+  const ertLeaders = useMemo(() => {
+    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
+    const filtered = filterZone
+      ? raw.filter(m =>
+        m.present && (
+          (m.zone && m.zone.includes(filterZone)) ||
+          baseLocationByRole['ERT Team Leader'].includes(filterZone)
+        )
+      )
+      : raw;
+
+    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
+    return filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+      if (ia !== -1 || ib !== -1) {
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [ertStatus, filterZone]);
+
+  const ertMembers = useMemo(() => {
+    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
+      role: 'ERT Team Members',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone,
+      liveLocation: m.zone,
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    const filtered = filterZone
+      ? members.filter(m =>
+        m.present && (
+          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
+          m.baseLocation.includes(filterZone)
+        )
+      )
+      : members;
+
+    filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return a.name.localeCompare(b.name);
+    });
+    return showAllMembers ? filtered : filtered.slice(0, 7);
+  }, [ertStatus, filterZone, showAllMembers]);
+
+  const floorIcons = {
+    'Podium Floor': <FaHome size={24} style={{ color: '#f87171' }} />,
+    '2nd Floor': <FaBuilding size={24} style={{ color: '#60a5fa' }} />,
+    'Tower B': <FaLayerGroup size={24} style={{ color: '#34d399' }} />
+  };
+
+  return (
+    <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', padding: '20px' }}>
+      <div className="container-fluid">
+       
+        {/* Stats Cards */}
+        <Row className="mb-4">
+          <Col xs={12} md={3} className="mb-3">
+            <Card className="text-center h-100 border-0" style={{ backgroundColor: '#1e293b' }}>
+              <Card.Body className="py-3">
+                <FaLayerGroup size={28} style={{ color: '#60a5fa' }} className="mb-2" />
+                <h5 className="mb-1" style={{ fontWeight: '500', color: '#cbd5e1' }}>Total Members</h5>
+                <h2 className="m-0" style={{ color: '#e2e8f0', fontWeight: '700' }}>
+                  {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
+                </h2>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
+            const count = floorCounts[floor] || 0;
+            const isSelected = filterZone === floor;
+            return (
+              <Col key={floor} xs={12} md={3} className="mb-3">
+                <Card
+                  className={`text-center h-100 ${isSelected ? 'border-primary' : 'border-0'}`}
+                  style={{
+                    cursor: 'pointer',
+                    backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.2)' : '#1e293b',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
+                >
+                  <Card.Body className="py-3">
+                    {floorIcons[floor]}
+                    <h5 className="mb-1 mt-2" style={{ fontWeight: '500', color: isSelected ? '#60a5fa' : '#cbd5e1' }}>
+                      {floor}
+                    </h5>
+                    <h2 className="m-0" style={{ color: isSelected ? '#e2e8f0' : '#e2e8f0', fontWeight: '700' }}>
+                      {count}
+                    </h2>
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+
+        {/* Three-column layout */}
+       <Row className="align-items-stretch">
+          {/* LEFT COLUMN: Fixed roles */}
+      
+          <Col xs={11} lg={4} className="mb-4 d-flex">
+            <div className="w-100">
+              {firstColumnRoles.map(role => renderRoleCard(role, ertStatus[role] || [], filterZone))}
+            </div>
+          </Col>
+
+          {/* MIDDLE COLUMN: ERT Team Leaders */}
+          <Col xs={12} lg={4} className="mb-4 d-flex">
+            <Card className="shadow-sm mb-3 w-100 h-100" style={{ backgroundColor: '#1e293b', border: '1px solid rgb(198, 205, 214)', borderRadius: '0px' }}>
+              <Card.Header style={{
+                borderBottom: '1px solid #334155',
+                fontWeight: '600',
+                fontSize: '1.1rem',
+                backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                // padding: '1rem',
+                color: '#e2e8f0'
+              }}>
+                {roleIcons['ERT Team Leader']}
+                ERT Team Leader
+              </Card.Header>
+              <Card.Body style={{ padding: '1rem' }}>
+                {ertLeaders.map((m, i) => {
+                  const location = m.present ? m.zone || 'Unknown Zone' : baseLocationByRole['ERT Team Leader'];
+                  return (
+                    <div key={i} className="mb-2 pb-3" style={{ borderBottom: i < ertLeaders.length - 1 ? '1px solid #334155' : 'none',paddingTop:'1rem' }}>
+
+
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center">
+                          <div style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            marginRight: 12,
+                            // border: '2px solid #475569',
+                            border: m.present ? '2px solid #0df705' : '2px solid rgb(227, 230, 235)',
+
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                          }}>
+                            <img
+                              src={getPhotoSrc(m)}
+                              alt={m.name || 'Member'}
+                              style={{
+                                width: '97%',
+                                height: '97%',
+                                objectFit: 'cover',
+                                objectPosition: 'center top' // This will focus on the face area
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = DEFAULT_PHOTO;
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontWeight: '500', color: '#f1f5f9' }}>{m.name}</span>
+                        </div>
+                        <Badge bg={m.present ? 'success' : 'danger'} pill style={{ fontSize: '0.7rem' }}>
+                          {m.present ? 'Available' : 'Away'}
+                        </Badge>
+                      </div>
+
+
+
+                      <div className="mt-2" style={{ fontSize: '0.85rem' }}>
+                        <div className="d-flex align-items-center mb-1">
+                          <FaEnvelopeOpenText className="me-2" style={{ color: '#60a5fa', minWidth: '16px' }} />
+                          <a href={`mailto:${m.email}`} style={{ color: '#93c5fd', textDecoration: 'none' }}>
+                            {m.email}
+                          </a>
+                        </div>
+                        <div className="d-flex align-items-center mb-1">
+                          <FaMobileAlt className="me-2" style={{ color: '#34d399', minWidth: '16px' }} />
+                          <span style={{ color: '#34d399' }}>{m.phone}</span>
+                        </div>
+                        <div className="d-flex align-items-center">
+                          <FaMapMarkerAlt className="me-2" style={{ color: '#f87171', minWidth: '16px' }} />
+                          <span style={{ color: '#f87171' }}>{location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!ertLeaders.length && <div className="text-center py-2" style={{ color: '#94a3b8' }}>No Team Leaders</div>}
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* RIGHT COLUMN: ERT Team Members */}
+         <Col xs={11} lg={4} className="mb-4 d-flex">
+            <Card className="shadow-sm w-100 h-100" style={{ backgroundColor: '#1e293b', border: '1px solid rgb(198, 205, 214)', borderRadius: '0px' }}>
+              <Card.Header style={{
+                borderBottom: '1px solid #334155',
+                fontWeight: '600',
+                fontSize: '1.1rem',
+                backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                // padding: '1rem',
+                color: '#e2e8f0'
+              }}>
+                {roleIcons['ERT Team Members']}
+                ERT Team Members
+              </Card.Header>
+              
+              <Card.Body style={{ padding: '1rem' }}>
+                {ertMembers.map((m, i) => {
+                  const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
+                  return (
+                    <div key={i} className="mb-2 pb-2" style={{ borderBottom: i < ertMembers.length - 1 ? '1px solid #334155' : 'none' }}>
+
+                    
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center">
+                          <div style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            marginRight: 12,
+                            // border: '2px solid #475569',
+                            border: m.present ? '3px solid #0df705' : '2px solid rgb(227, 230, 235)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                          }}>
+                            <img
+                              src={getPhotoSrc(m)}
+                              alt={m.name || 'Member'}
+                              style={{
+                                width: '96%',
+                                height: '96%',
+                                objectFit: 'cover',
+                                objectPosition: 'center top' // This will focus on the face area
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = DEFAULT_PHOTO;
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontWeight: '500', color: '#f1f5f9' }}>{m.name}</span>
+                        </div>
+                        <Badge bg={m.present ? 'success' : 'danger'} pill style={{ fontSize: '0.7rem' }}>
+                          {m.present ? 'Available' : 'Away'}
+                        </Badge>
+                      </div>
+
+
+                      <div className="mt-2" style={{ fontSize: '0.85rem' }}>
+                        <div className="d-flex align-items-center mb-1">
+                          <FaEnvelopeOpenText className="me-2" style={{ color: '#60a5fa', minWidth: '16px' }} />
+                          <a href={`mailto:${m.email}`} style={{ color: '#93c5fd', textDecoration: 'none' }}>
+                            {m.email}
+                          </a>
+                        </div>
+                        <div className="d-flex align-items-center mb-1">
+                          <FaMobileAlt className="me-2" style={{ color: '#34d399', minWidth: '16px' }} />
+                          <span style={{ color: '#34d399' }}>{m.phone}</span>
+                        </div>
+                        <div className="d-flex align-items-center">
+                          <FaMapMarkerAlt className="me-2" style={{ color: '#f87171', minWidth: '16px' }} />
+                          <span style={{ color: '#f87171' }}>{location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!ertMembers.length && <div className="text-center py-2" style={{ color: '#94a3b8' }}>No members</div>}
+                <div className="text-center mt-3">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => setShowAllMembers(prev => !prev)}
+                    style={{ minWidth: '120px' }}
+                  >
+                    {showAllMembers ? <><FaEyeSlash className="me-1" /> Show Less</> : <><FaEye className="me-1" /> Show More</>}
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
       </div>
-    </header>
-
-    {/* Stats row */}
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-      <StatCard
-        icon={<FaLayerGroup />}
-        label="Total Active"
-        value={allMembers.filter((m) => m.present).length}
-        onClick={() => setFilterZone(null)}
-        selected={!filterZone}
-      />
-      {floors.map((f) => (
-        <StatCard
-          key={f}
-          icon={floorIcons[f]}
-          label={f}
-          value={floorCounts[f] || 0}
-          onClick={() =>
-            setFilterZone((prev) => (prev === f ? null : f))
-          }
-          selected={filterZone === f}
-        />
-      ))}
     </div>
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left column: fixed roles */}
-      <div className="space-y-4">
-        {firstColumnRoles.map((role) => (
-          <div key={role} className="bg-slate-800/40 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="text-xl">
-                  {roleIcons[role] || <FaUserTie />}
-                </div>
-                <div className="text-sm font-semibold">{role}</div>
-              </div>
-              <div className="text-xs text-slate-400">
-                {(ertStatus[role] || []).length} assigned
-              </div>
-            </div>
-
-            <div className="space-y-2 max-h-80 overflow-auto pr-2">
-              <AnimatePresence initial={false}>
-                {membersForRole(role).map((m, i) => (
-                  <MemberRow
-                    key={`${role}-${m.name || i}`}
-                    member={m}
-                    role={role}
-                  />
-                ))}
-              </AnimatePresence>
-              {!(ertStatus[role] || []).length && (
-                <div className="text-sm text-center text-slate-400 py-6">
-                  No members assigned
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Middle column: leaders */}
-      <div className="space-y-4">
-        <div className="bg-slate-800/40 rounded-2xl p-4 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="text-xl">{roleIcons['ERT Team Leader']}</div>
-              <div className="text-sm font-semibold">ERT Team Leaders</div>
-            </div>
-            <div className="text-xs text-slate-400">
-              {(ertStatus['ERT Team Leader'] || []).length} total
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto">
-            <AnimatePresence>
-              {(membersForRole('ERT Team Leader') || []).map((m, i) => (
-                <MemberRow
-                  key={`leader-${m.name || i}`}
-                  member={m}
-                  role={'ERT Team Leader'}
-                />
-              ))}
-            </AnimatePresence>
-            {!(ertStatus['ERT Team Leader'] || []).length && (
-              <div className="text-sm text-center text-slate-400 py-6">
-                No leaders available
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Other roles stacked */}
-        {otherRoles.map((role) => (
-          <div key={role} className="bg-slate-800/40 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="text-xl">
-                  {roleIcons[role] || <FaUserTie />}
-                </div>
-                <div className="text-sm font-semibold">{role}</div>
-              </div>
-              <div className="text-xs text-slate-400">
-                {(ertStatus[role] || []).length} assigned
-              </div>
-            </div>
-
-            <div className="space-y-2 max-h-52 overflow-auto pr-2">
-              <AnimatePresence>
-                {(membersForRole(role) || []).map((m, i) => (
-                  <MemberRow
-                    key={`${role}-${m.name || i}`}
-                    member={m}
-                    role={role}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Right column: ERT Team Members (large list) */}
-      <div className="space-y-4">
-        <div className="bg-gradient-to-b from-slate-800/30 to-slate-800/10 rounded-2xl p-4 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="text-xl">{roleIcons['ERT Team Members']}</div>
-              <div className="text-sm font-semibold">ERT Team Members</div>
-            </div>
-            <div className="text-xs text-slate-400">
-              {(ertStatus['ERT Team Members'] || []).length} total
-            </div>
-          </div
-
+  );
+}
