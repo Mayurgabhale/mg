@@ -1,4 +1,3 @@
-
 // src/components/FloorOccupancyChart.jsx
 import React from 'react';
 import {
