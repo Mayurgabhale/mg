@@ -1,4 +1,4 @@
-
+if avalable  then add photo border green and away then white bordr for photo
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
