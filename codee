@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Row, Col, Badge, Button, Container, Form } from 'react-bootstrap';
+import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
   FaHome,
   FaBuilding,
@@ -11,16 +11,8 @@ import {
   FaUserShield,
   FaUserNurse,
   FaUsers,
-  FaFilter,
   FaEye,
-  FaEyeSlash,
-  FaSearch,
-  FaBell,
-  FaUserCircle,
-  FaCog,
-  FaSignOutAlt,
-  FaEllipsisV,
-  FaIdCard
+  FaEyeSlash
 } from 'react-icons/fa';
 
 const firstColumnRoles = [
@@ -47,41 +39,6 @@ const baseLocationByRole = {
   'First Aid Team': 'Podium Floor – Green Zone',
   'ERT Team Leader': 'Podium Floor – Green Zone',
   'BCM Team / Site Operations': 'Podium Floor – Red Zone'
-};
-
-// Sample data for demonstration
-const sampleData = {
-  'Site Head': [
-    { name: 'John Smith', email: 'john.smith@example.com', phone: '+1 (555) 123-4567', present: true, zone: 'Podium Floor – Red Zone' },
-    { name: 'Sarah Johnson', email: 'sarah.j@example.com', phone: '+1 (555) 987-6543', present: false, zone: 'Podium Floor – Red Zone' }
-  ],
-  'BCM Team / Site Operations': [
-    { name: 'Michael Brown', email: 'm.brown@example.com', phone: '+1 (555) 456-7890', present: true, zone: 'Podium Floor – Red Zone' },
-    { name: 'Emily Davis', email: 'emily.d@example.com', phone: '+1 (555) 234-5678', present: true, zone: 'Podium Floor – Red Zone' }
-  ],
-  'HR': [
-    { name: 'Robert Wilson', email: 'r.wilson@example.com', phone: '+1 (555) 345-6789', present: true, zone: 'Podium Floor – Red Zone' }
-  ],
-  'Incident Controller': [
-    { name: 'Jennifer Lee', email: 'j.lee@example.com', phone: '+1 (555) 567-8901', present: true, zone: 'Podium Floor – Red Zone' }
-  ],
-  'ERT Team Leader': [
-    { name: 'Vishal Chaudhari', email: 'vishal.c@example.com', phone: '+1 (555) 111-2222', present: true, zone: 'Podium Floor – Green Zone' },
-    { name: 'Vinit Kumar', email: 'vinit.k@example.com', phone: '+1 (555) 333-4444', present: true, zone: 'Podium Floor – Green Zone' }
-  ],
-  'ERT Team Members': [
-    { name: 'Alex Thompson', email: 'alex.t@example.com', phone: '+1 (555) 555-6666', present: true, zone: '2nd Floor – Blue Zone' },
-    { name: 'Lisa Garcia', email: 'lisa.g@example.com', phone: '+1 (555) 777-8888', present: true, zone: 'Tower B – Yellow Zone' },
-    { name: 'David Kim', email: 'david.k@example.com', phone: '+1 (555) 999-0000', present: false, zone: 'Podium Floor – Green Zone' },
-    { name: 'Maria Rodriguez', email: 'maria.r@example.com', phone: '+1 (555) 123-9876', present: true, zone: '2nd Floor – Blue Zone' },
-    { name: 'James Wilson', email: 'james.w@example.com', phone: '+1 (555) 456-1234', present: true, zone: 'Tower B – Yellow Zone' },
-    { name: 'Susan Chen', email: 'susan.c@example.com', phone: '+1 (555) 789-4561', present: true, zone: 'Podium Floor – Green Zone' },
-    { name: 'Thomas Moore', email: 'thomas.m@example.com', phone: '+1 (555) 321-6549', present: false, zone: '2nd Floor – Blue Zone' }
-  ],
-  'First Aid Team': [
-    { name: 'Emma Martinez', email: 'emma.m@example.com', phone: '+1 (555) 147-2580', present: true, zone: 'Podium Floor – Green Zone' },
-    { name: 'Daniel White', email: 'daniel.w@example.com', phone: '+1 (555) 369-2580', present: true, zone: 'Podium Floor – Green Zone' }
-  ]
 };
 
 const DEFAULT_PHOTO = 'https://via.placeholder.com/150/1e3a8a/ffffff?text=ERT';
@@ -117,9 +74,6 @@ function MemberCard({ member, role }) {
           <h5>{member.name}</h5>
           <Badge bg={member.present ? "success" : "secondary"}>{member.present ? "Available" : "Away"}</Badge>
         </div>
-        <Button variant="outline-light" size="sm" className="member-actions">
-          <FaEllipsisV />
-        </Button>
       </div>
       
       <div className="member-details">
@@ -135,11 +89,6 @@ function MemberCard({ member, role }) {
           <FaMapMarkerAlt className="text-danger" />
           <span>{location}</span>
         </div>
-      </div>
-      
-      <div className="member-footer">
-        <small>Last updated: 12 mins ago</small>
-        <Button size="sm" variant="outline-primary">Contact</Button>
       </div>
     </div>
   );
@@ -172,7 +121,6 @@ function RoleSection({ role, members, filterZone }) {
             ))
           ) : (
             <div className="no-members">
-              <FaIdCard size={32} />
               <p>No members available</p>
             </div>
           )}
@@ -182,11 +130,9 @@ function RoleSection({ role, members, filterZone }) {
   );
 }
 
-export default function ERTOverview() {
+export default function ERTOverview({ ertStatus }) {
   const [filterZone, setFilterZone] = useState(null);
   const [showAllMembers, setShowAllMembers] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [ertStatus] = useState(sampleData);
 
   const allMembers = useMemo(() => {
     const list = [];
@@ -216,41 +162,12 @@ export default function ERTOverview() {
 
   return (
     <div className="ert-dashboard">
-      {/* Header */}
-      <header className="dashboard-header">
-        <Container fluid>
-          <div className="header-content">
-            <div className="header-left">
-              <h1>ERT Overview</h1>
-              <p>Emergency Response Team Monitoring Dashboard</p>
-            </div>
-            <div className="header-right">
-              <Form.Group className="search-box">
-                <FaSearch className="search-icon" />
-                <Form.Control 
-                  type="text" 
-                  placeholder="Search team members..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </Form.Group>
-              <Button variant="outline-light" className="notif-btn">
-                <FaBell />
-                <span className="notif-badge">3</span>
-              </Button>
-              <div className="user-profile">
-                <img src="https://via.placeholder.com/40/1e3a8a/ffffff?text=U" alt="User" />
-                <div className="user-info">
-                  <span className="user-name">Admin User</span>
-                  <span className="user-role">Administrator</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </header>
-
       <Container fluid className="dashboard-content">
+        <div className="dashboard-header">
+          <h1>ERT Overview Dashboard</h1>
+          <p>Emergency Response Team Status</p>
+        </div>
+
         {/* Stats Overview */}
         <Row className="stats-row">
           <Col xl={3} lg={6} className="mb-4">
@@ -320,8 +237,8 @@ export default function ERTOverview() {
                 ))}
               </div>
               <div className="filter-right">
-                <span className="text-muted me-2">
-                  {filterZone ? `Showing results for: ${filterZone}` : 'Showing all locations'}
+                <span className="text-muted">
+                  {filterZone ? `Showing: ${filterZone}` : 'Showing all locations'}
                 </span>
               </div>
             </div>
@@ -392,124 +309,24 @@ export default function ERTOverview() {
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
           min-height: 100vh;
           color: #e2e8f0;
+          padding: 20px 0;
         }
         
         .dashboard-header {
-          background: rgba(15, 23, 42, 0.9);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid #334155;
-          padding: 1rem 0;
+          text-align: center;
+          margin-bottom: 2rem;
+          padding: 1rem;
         }
         
-        .header-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .header-left h1 {
+        .dashboard-header h1 {
           font-weight: 700;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.5rem;
           color: #f8fafc;
         }
         
-        .header-left p {
+        .dashboard-header p {
           color: #94a3b8;
-          margin-bottom: 0;
-        }
-        
-        .header-right {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-        
-        .search-box {
-          position: relative;
-          margin-bottom: 0;
-        }
-        
-        .search-icon {
-          position: absolute;
-          left: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #64748b;
-        }
-        
-        .search-box .form-control {
-          background: rgba(15, 23, 42, 0.7);
-          border: 1px solid #334155;
-          border-radius: 8px;
-          padding-left: 40px;
-          color: #e2e8f0;
-          min-width: 280px;
-        }
-        
-        .search-box .form-control:focus {
-          background: rgba(15, 23, 42, 0.9);
-          border-color: #60a5fa;
-          box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.25);
-          color: #e2e8f0;
-        }
-        
-        .notif-btn {
-          position: relative;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .notif-badge {
-          position: absolute;
-          top: -5px;
-          right: -5px;
-          background: #ef4444;
-          color: white;
-          border-radius: 50%;
-          width: 18px;
-          height: 18px;
-          font-size: 0.6rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .user-profile {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.5rem;
-          border-radius: 8px;
-          background: rgba(15, 23, 42, 0.5);
-        }
-        
-        .user-profile img {
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-        }
-        
-        .user-info {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .user-name {
-          font-weight: 600;
-          color: #f8fafc;
-        }
-        
-        .user-role {
-          font-size: 0.8rem;
-          color: #94a3b8;
-        }
-        
-        .dashboard-content {
-          padding: 2rem 0;
+          font-size: 1.1rem;
         }
         
         .stat-card {
@@ -520,6 +337,7 @@ export default function ERTOverview() {
           height: 100%;
           overflow: hidden;
           position: relative;
+          cursor: pointer;
         }
         
         .stat-card:hover {
@@ -574,15 +392,6 @@ export default function ERTOverview() {
           height: 0;
           border-top: 20px solid #3b82f6;
           border-left: 20px solid transparent;
-        }
-        
-        .active-indicator::after {
-          content: '✓';
-          position: absolute;
-          top: -18px;
-          right: 2px;
-          color: white;
-          font-size: 10px;
         }
         
         .filter-bar {
@@ -681,15 +490,8 @@ export default function ERTOverview() {
           color: #f8fafc;
         }
         
-        .member-actions {
-          padding: 0.25rem;
-          width: 30px;
-          height: 30px;
-          border-radius: 6px;
-        }
-        
         .member-details {
-          margin-bottom: 1rem;
+          margin-bottom: 0.5rem;
         }
         
         .detail-item {
@@ -714,62 +516,10 @@ export default function ERTOverview() {
           color: #60a5fa;
         }
         
-        .member-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top: 1px solid #334155;
-          padding-top: 0.75rem;
-        }
-        
-        .member-footer small {
-          color: #64748b;
-        }
-        
         .no-members {
           text-align: center;
           padding: 2rem;
           color: #64748b;
-        }
-        
-        .no-members svg {
-          margin-bottom: 0.5rem;
-          opacity: 0.5;
-        }
-        
-        @media (max-width: 1200px) {
-          .header-content {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-          }
-          
-          .header-right {
-            width: 100%;
-            justify-content: space-between;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .header-right {
-            flex-wrap: wrap;
-          }
-          
-          .search-box {
-            width: 100%;
-            order: 3;
-            margin-top: 1rem;
-          }
-          
-          .search-box .form-control {
-            min-width: auto;
-          }
-          
-          .filter-left {
-            overflow-x: auto;
-            white-space: nowrap;
-            padding-bottom: 0.5rem;
-          }
         }
       `}</style>
     </div>
