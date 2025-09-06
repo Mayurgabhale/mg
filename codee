@@ -1,18 +1,26 @@
+
+
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
   FaHome,
   FaBuilding,
   FaLayerGroup,
-  FaEnvelope,
-  FaPhone,
+  FaEnvelopeOpenText,
+  FaMobileAlt,
   FaMapMarkerAlt,
   FaUserTie,
   FaUserShield,
   FaUserNurse,
   FaUsers,
+  FaFilter,
   FaEye,
-  FaEyeSlash
+  FaEyeSlash,
+  FaUserCog,
+  FaIdCard,
+  FaPhone,
+  FaEnvelope,
+  FaLocationArrow
 } from 'react-icons/fa';
 
 const firstColumnRoles = [
@@ -24,7 +32,7 @@ const firstColumnRoles = [
 
 const roleIcons = {
   'Site Head': <FaUserTie className="text-info" />,
-  'BCM Team / Site Operations': <FaUserShield className="text-success" />,
+  'BCM Team / Site Operations': <FaUserShield className="text-teal" />,
   'HR': <FaUserTie className="text-purple" />,
   'Incident Controller': <FaUserShield className="text-warning" />,
   'ERT Team Leader': <FaUserShield className="text-danger" />,
@@ -41,7 +49,8 @@ const baseLocationByRole = {
   'BCM Team / Site Operations': 'Podium Floor – Red Zone'
 };
 
-const DEFAULT_PHOTO = 'https://via.placeholder.com/150/1e3a8a/ffffff?text=ERT';
+// ---- Photo helpers ----
+const DEFAULT_PHOTO = '/photos/default.png';
 
 const toSlug = (name = '') =>
   name
@@ -55,76 +64,79 @@ const getPhotoSrc = (member) => {
   if (member.photo) return member.photo;
   
   const name = member.name || member.Name;
-  if (name) return `https://via.placeholder.com/150/1e3a8a/ffffff?text=${name.charAt(0)}`;
+  if (name) return `/photos/${toSlug(name)}.png`;
   
   return DEFAULT_PHOTO;
 };
 
-function MemberCard({ member, role }) {
-  const location = member.present ? (member.zone || 'Unknown Zone') : baseLocationByRole[role];
-  
-  return (
-    <div className="member-card">
-      <div className="member-header">
-        <div className="member-image">
-          <img src={getPhotoSrc(member)} alt={member.name} />
-          <div className={`status-indicator ${member.present ? 'present' : 'away'}`}></div>
-        </div>
-        <div className="member-info">
-          <h5>{member.name}</h5>
-          <Badge bg={member.present ? "success" : "secondary"}>{member.present ? "Available" : "Away"}</Badge>
-        </div>
-      </div>
-      
-      <div className="member-details">
-        <div className="detail-item">
-          <FaEnvelope className="text-primary" />
-          <a href={`mailto:${member.email}`}>{member.email}</a>
-        </div>
-        <div className="detail-item">
-          <FaPhone className="text-success" />
-          <span>{member.phone}</span>
-        </div>
-        <div className="detail-item">
-          <FaMapMarkerAlt className="text-danger" />
-          <span>{location}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RoleSection({ role, members, filterZone }) {
-  const filteredMembers = filterZone
-    ? members.filter(m =>
-        m.present && (
-          (m.zone && m.zone.includes(filterZone)) ||
-          baseLocationByRole[role].includes(filterZone)
-        )
+function renderRoleCard(role, membersRaw, filterZone) {
+  const members = filterZone
+    ? membersRaw.filter(m =>
+      m.present && (
+        (m.zone && m.zone.includes(filterZone)) ||
+        baseLocationByRole[role].includes(filterZone)
       )
-    : members;
+    )
+    : membersRaw;
 
   return (
-    <Card className="role-section">
-      <Card.Header>
-        <div className="d-flex align-items-center">
-          <span className="role-icon">{roleIcons[role]}</span>
-          <h5 className="mb-0">{role}</h5>
-          <Badge bg="light" text="dark" className="ms-2">{filteredMembers.length}/{members.length}</Badge>
-        </div>
+    <Card className="dashboard-card mb-3" key={role}>
+      <Card.Header className="dashboard-card-header d-flex align-items-center">
+        <span className="role-icon me-2">{roleIcons[role] || <FaUserCog className="text-muted" />}</span>
+        <span className="role-title">{role}</span>
+        <Badge bg="outline-light" className="ms-2">{members.length}</Badge>
       </Card.Header>
-      <Card.Body>
-        <div className="members-grid">
-          {filteredMembers.length > 0 ? (
-            filteredMembers.map((member, index) => (
-              <MemberCard key={index} member={member} role={role} />
-            ))
-          ) : (
-            <div className="no-members">
-              <p>No members available</p>
+      <Card.Body className="p-3">
+        {members.length > 0 ? members.map((m, i) => {
+          const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
+          return (
+            <div key={i} className="member-item pb-3 mb-3">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <div className="d-flex align-items-center">
+                  <div className="member-photo-container">
+                    <img
+                      src={getPhotoSrc(m)}
+                      alt={m.name || 'Member'}
+                      className="member-photo"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_PHOTO;
+                      }}
+                    />
+                    <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+                  </div>
+                  <div className="ms-3">
+                    <h6 className="mb-0 member-name">{m.name}</h6>
+                    <small className="text-muted">{m.designation || m.role}</small>
+                  </div>
+                </div>
+                <Badge bg={m.present ? 'success' : 'secondary'} className="status-badge">
+                  {m.present ? 'Available' : 'Away'}
+                </Badge>
+              </div>
+
+              <div className="member-contact-info">
+                <div className="contact-item">
+                  <FaEnvelope className="contact-icon text-primary" />
+                  <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                </div>
+                <div className="contact-item">
+                  <FaPhone className="contact-icon text-success" />
+                  <span className="contact-text">{m.phone}</span>
+                </div>
+                <div className="contact-item">
+                  <FaLocationArrow className="contact-icon text-danger" />
+                  <span className="contact-text">{location}</span>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+          );
+        }) : (
+          <div className="text-center py-3 text-muted">
+            <FaIdCard size={24} className="mb-2" />
+            <p className="mb-0">No members available</p>
+          </div>
+        )}
       </Card.Body>
     </Card>
   );
@@ -154,6 +166,59 @@ export default function ERTOverview({ ertStatus }) {
     return counts;
   }, [allMembers]);
 
+  const ertLeaders = useMemo(() => {
+    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
+    const filtered = filterZone
+      ? raw.filter(m =>
+        m.present && (
+          (m.zone && m.zone.includes(filterZone)) ||
+          baseLocationByRole['ERT Team Leader'].includes(filterZone)
+        )
+      )
+      : raw;
+
+    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
+    return filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+      if (ia !== -1 || ib !== -1) {
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [ertStatus, filterZone]);
+
+  const ertMembers = useMemo(() => {
+    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
+      role: 'ERT Team Members',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone,
+      liveLocation: m.zone,
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    const filtered = filterZone
+      ? members.filter(m =>
+        m.present && (
+          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
+          m.baseLocation.includes(filterZone)
+        )
+      )
+      : members;
+
+    filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return a.name.localeCompare(b.name);
+    });
+    return showAllMembers ? filtered : filtered.slice(0, 7);
+  }, [ertStatus, filterZone, showAllMembers]);
+
   const floorIcons = {
     'Podium Floor': <FaHome className="text-danger" />,
     '2nd Floor': <FaBuilding className="text-info" />,
@@ -162,47 +227,49 @@ export default function ERTOverview({ ertStatus }) {
 
   return (
     <div className="ert-dashboard">
-      <Container fluid className="dashboard-content">
-        <div className="dashboard-header">
-          <h1>ERT Overview Dashboard</h1>
-          <p>Emergency Response Team Status</p>
-        </div>
 
-        {/* Stats Overview */}
-        <Row className="stats-row">
-          <Col xl={3} lg={6} className="mb-4">
-            <Card className="stat-card total-card">
-              <Card.Body>
-                <div className="stat-icon">
-                  <FaUsers />
-                </div>
-                <div className="stat-info">
-                  <h3>{Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}</h3>
-                  <p>Total Members</p>
+      
+
+      <Container fluid className="py-4">
+        {/* Stats Cards */}
+        <Row className="mb-4">
+          <Col xs={12} md={3} className="mb-3">
+            <Card className="stats-card total-members">
+              <Card.Body className="p-3">
+                <div className="d-flex align-items-center">
+                  <div className="stats-icon me-3">
+                    <FaUsers size={24} />
+                  </div>
+                  <div>
+                    <h6 className="stats-label">Total Members</h6>
+                    <h3 className="stats-value mb-0">
+                      {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
+                    </h3>
+                  </div>
                 </div>
               </Card.Body>
             </Card>
           </Col>
-          
+
           {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
             const count = floorCounts[floor] || 0;
             const isSelected = filterZone === floor;
-            
             return (
-              <Col xl={3} lg={6} key={floor} className="mb-4">
+              <Col key={floor} xs={12} md={3} className="mb-3">
                 <Card 
-                  className={`stat-card location-card ${isSelected ? 'active' : ''}`}
+                  className={`stats-card location-card ${isSelected ? 'active' : ''}`}
                   onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
                 >
-                  <Card.Body>
-                    <div className="stat-icon">
-                      {floorIcons[floor]}
+                  <Card.Body className="p-3">
+                    <div className="d-flex align-items-center">
+                      <div className="stats-icon me-3">
+                        {floorIcons[floor]}
+                      </div>
+                      <div>
+                        <h6 className="stats-label">{floor}</h6>
+                        <h3 className="stats-value mb-0">{count}</h3>
+                      </div>
                     </div>
-                    <div className="stat-info">
-                      <h3>{count}</h3>
-                      <p>{floor}</p>
-                    </div>
-                    {isSelected && <div className="active-indicator"></div>}
                   </Card.Body>
                 </Card>
               </Col>
@@ -210,96 +277,161 @@ export default function ERTOverview({ ertStatus }) {
           })}
         </Row>
 
-        {/* Filter Bar */}
-        <Card className="filter-bar mb-4">
-          <Card.Body>
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="filter-left">
-                <span className="me-3">Filter by:</span>
-                <Button 
-                  variant={filterZone ? "outline-primary" : "primary"} 
-                  size="sm"
-                  className="me-2"
-                  onClick={() => setFilterZone(null)}
-                >
-                  All Locations
-                </Button>
-                {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
-                  <Button 
-                    key={floor}
-                    variant={filterZone === floor ? "primary" : "outline-primary"} 
-                    size="sm"
-                    className="me-2"
-                    onClick={() => setFilterZone(floor)}
+        {/* Three-column layout */}
+        <Row className="align-items-stretch">
+          {/* LEFT COLUMN: Fixed roles */}
+          <Col xs={12} lg={4} className="mb-4">
+            {firstColumnRoles.map(role => renderRoleCard(role, ertStatus[role] || [], filterZone))}
+          </Col>
+
+          {/* MIDDLE COLUMN: ERT Team Leaders */}
+          <Col xs={12} lg={4} className="mb-4">
+            <Card className="dashboard-card h-100">
+              <Card.Header className="dashboard-card-header d-flex align-items-center">
+                <span className="role-icon me-2">{roleIcons['ERT Team Leader']}</span>
+                <span className="role-title">ERT Team Leader</span>
+                <Badge bg="outline-light" className="ms-2">{ertLeaders.length}</Badge>
+              </Card.Header>
+              <Card.Body className="p-3">
+                {ertLeaders.map((m, i) => {
+                  const location = m.present ? m.zone || 'Unknown Zone' : baseLocationByRole['ERT Team Leader'];
+                  return (
+                    <div key={i} className="member-item pb-3 mb-3">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div className="d-flex align-items-center">
+                          <div className="member-photo-container">
+                            <img
+                              src={getPhotoSrc(m)}
+                              alt={m.name || 'Member'}
+                              className="member-photo"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = DEFAULT_PHOTO;
+                              }}
+                            />
+                            <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+                          </div>
+                          <div className="ms-3">
+                            <h6 className="mb-0 member-name">{m.name}</h6>
+                            <small className="text-muted">Team Leader</small>
+                          </div>
+                        </div>
+                        <Badge bg={m.present ? 'success' : 'secondary'} className="status-badge">
+                          {m.present ? 'Available' : 'Away'}
+                        </Badge>
+                      </div>
+
+                      <div className="member-contact-info">
+                        <div className="contact-item">
+                          <FaEnvelope className="contact-icon text-primary" />
+                          <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                        </div>
+                        <div className="contact-item">
+                          <FaPhone className="contact-icon text-success" />
+                          <span className="contact-text">{m.phone}</span>
+                        </div>
+                        <div className="contact-item">
+                          <FaLocationArrow className="contact-icon text-danger" />
+                          <span className="contact-text">{location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!ertLeaders.length && 
+                  <div className="text-center py-4 text-muted">
+                    <FaUserShield size={28} className="mb-2" />
+                    <p className="mb-0">No Team Leaders Available</p>
+                  </div>
+                }
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* RIGHT COLUMN: ERT Team Members */}
+          <Col xs={12} lg={4} className="mb-4">
+            <Card className="dashboard-card h-100">
+              <Card.Header className="dashboard-card-header d-flex align-items-center">
+                <span className="role-icon me-2">{roleIcons['ERT Team Members']}</span>
+                <span className="role-title">ERT Team Members</span>
+                <Badge bg="outline-light" className="ms-2">{ertMembers.length}</Badge>
+              </Card.Header>
+              
+              <Card.Body className="p-3">
+                {ertMembers.map((m, i) => {
+                  const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
+                  return (
+                    <div key={i} className="member-item pb-3 mb-3">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div className="d-flex align-items-center">
+                          <div className="member-photo-container">
+                            <img
+                              src={getPhotoSrc(m)}
+                              alt={m.name || 'Member'}
+                              className="member-photo"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = DEFAULT_PHOTO;
+                              }}
+                            />
+                            <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+                          </div>
+                          <div className="ms-3">
+                            <h6 className="mb-0 member-name">{m.name}</h6>
+                            <small className="text-muted">Team Member</small>
+                          </div>
+                        </div>
+                        <Badge bg={m.present ? 'success' : 'secondary'} className="status-badge">
+                          {m.present ? 'Available' : 'Away'}
+                        </Badge>
+                      </div>
+
+                      <div className="member-contact-info">
+                        <div className="contact-item">
+                          <FaEnvelope className="contact-icon text-primary" />
+                          <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                        </div>
+                        <div className="contact-item">
+                          <FaPhone className="contact-icon text-success" />
+                          <span className="contact-text">{m.phone}</span>
+                        </div>
+                        <div className="contact-item">
+                          <FaLocationArrow className="contact-icon text-danger" />
+                          <span className="contact-text">{location}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {!ertMembers.length && 
+                  <div className="text-center py-4 text-muted">
+                    <FaUsers size={28} className="mb-2" />
+                    <p className="mb-0">No Team Members Available</p>
+                  </div>
+                }
+                
+                <div className="text-center mt-3">
+                  <Button
+                    variant="outline-primary"
+                    className="d-flex align-items-center mx-auto"
+                    onClick={() => setShowAllMembers(prev => !prev)}
                   >
-                    {floor}
+                    {showAllMembers ? (
+                      <>
+                        <FaEyeSlash className="me-2" />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <FaEye className="me-2" />
+                        Show More
+                      </>
+                    )}
                   </Button>
-                ))}
-              </div>
-              <div className="filter-right">
-                <span className="text-muted">
-                  {filterZone ? `Showing: ${filterZone}` : 'Showing all locations'}
-                </span>
-              </div>
-            </div>
-          </Card.Body>
-        </Card>
-
-        {/* Main Content */}
-        <Row>
-          {/* Left Column */}
-          <Col lg={4} className="mb-4">
-            {firstColumnRoles.map(role => (
-              <RoleSection 
-                key={role} 
-                role={role} 
-                members={ertStatus[role] || []} 
-                filterZone={filterZone} 
-              />
-            ))}
-          </Col>
-
-          {/* Middle Column */}
-          <Col lg={4} className="mb-4">
-            <RoleSection 
-              role="ERT Team Leader" 
-              members={ertStatus['ERT Team Leader'] || []} 
-              filterZone={filterZone} 
-            />
-          </Col>
-
-          {/* Right Column */}
-          <Col lg={4} className="mb-4">
-            <RoleSection 
-              role="ERT Team Members" 
-              members={showAllMembers ? (ertStatus['ERT Team Members'] || []) : (ertStatus['ERT Team Members'] || []).slice(0, 4)} 
-              filterZone={filterZone} 
-            />
-            
-            <div className="text-center mt-3">
-              <Button
-                variant="outline-primary"
-                onClick={() => setShowAllMembers(prev => !prev)}
-              >
-                {showAllMembers ? (
-                  <>
-                    <FaEyeSlash className="me-2" />
-                    Show Less
-                  </>
-                ) : (
-                  <>
-                    <FaEye className="me-2" />
-                    Show More
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <RoleSection 
-              role="First Aid Team" 
-              members={ertStatus['First Aid Team'] || []} 
-              filterZone={filterZone} 
-            />
+                </div>
+              </Card.Body>
+            </Card>
           </Col>
         </Row>
       </Container>
@@ -308,159 +440,104 @@ export default function ERTOverview({ ertStatus }) {
         .ert-dashboard {
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
           min-height: 100vh;
-          color: #e2e8f0;
-          padding: 20px 0;
         }
         
         .dashboard-header {
-          text-align: center;
-          margin-bottom: 2rem;
-          padding: 1rem;
+          background: rgba(30, 41, 59, 0.8);
+          backdrop-filter: blur(10px);
+          border-bottom: 1px solid #334155;
         }
         
-        .dashboard-header h1 {
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-          color: #f8fafc;
-        }
-        
-        .dashboard-header p {
-          color: #94a3b8;
-          font-size: 1.1rem;
-        }
-        
-        .stat-card {
-          background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-          border: 1px solid #475569;
+        .stats-card {
+          background: rgba(30, 41, 59, 0.7);
+          border: 1px solid #334155;
           border-radius: 12px;
           transition: all 0.3s ease;
-          height: 100%;
-          overflow: hidden;
-          position: relative;
           cursor: pointer;
+          height: 100%;
         }
         
-        .stat-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        .stats-card:hover, .location-card.active {
+          transform: translateY(-3px);
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          border-color: #60a5fa;
         }
         
-        .stat-card.active {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        .location-card.active {
+          background: rgba(37, 99, 235, 0.15);
         }
         
-        .stat-card .card-body {
-          display: flex;
-          align-items: center;
-          padding: 1.5rem;
-        }
-        
-        .stat-icon {
-          width: 60px;
-          height: 60px;
+        .stats-icon {
+          width: 50px;
+          height: 50px;
           border-radius: 12px;
-          background: rgba(96, 165, 250, 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-right: 1rem;
-          font-size: 1.5rem;
+          background: rgba(255, 255, 255, 0.1);
         }
         
-        .total-card .stat-icon {
-          background: rgba(96, 165, 250, 0.15);
-          color: #60a5fa;
-        }
-        
-        .stat-info h3 {
-          font-weight: 700;
+        .stats-label {
+          color: #cbd5e1;
+          font-size: 0.85rem;
           margin-bottom: 0.25rem;
+        }
+        
+        .stats-value {
           color: #f8fafc;
+          font-weight: 700;
         }
         
-        .stat-info p {
-          color: #94a3b8;
-          margin-bottom: 0;
-        }
-        
-        .active-indicator {
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 0;
-          height: 0;
-          border-top: 20px solid #3b82f6;
-          border-left: 20px solid transparent;
-        }
-        
-        .filter-bar {
+        .dashboard-card {
           background: rgba(30, 41, 59, 0.7);
-          border: 1px solid #475569;
+          border: 1px solid #334155;
           border-radius: 12px;
+          backdrop-filter: blur(10px);
         }
         
-        .filter-bar .card-body {
-          padding: 1rem 1.5rem;
-        }
-        
-        .role-section {
-          background: rgba(30, 41, 59, 0.7);
-          border: 1px solid #475569;
-          border-radius: 12px;
-          margin-bottom: 1.5rem;
-        }
-        
-        .role-section .card-header {
+        .dashboard-card-header {
           background: rgba(30, 41, 59, 0.9);
-          border-bottom: 1px solid #475569;
+          border-bottom: 1px solid #334155;
+          font-weight: 600;
           padding: 1rem 1.25rem;
+          color: #e2e8f0;
+          border-top-left-radius: 12px !important;
+          border-top-right-radius: 12px !important;
         }
         
         .role-icon {
-          font-size: 1.2rem;
-          margin-right: 0.75rem;
+          font-size: 1.1rem;
         }
         
-        .role-section .card-body {
-          padding: 1.25rem;
+        .role-title {
+          font-size: 1.1rem;
         }
         
-        .members-grid {
-          display: grid;
-          gap: 1rem;
+        .member-item {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.1);
         }
         
-        .member-card {
-          background: rgba(15, 23, 42, 0.5);
-          border: 1px solid #334155;
-          border-radius: 10px;
-          padding: 1.25rem;
-          transition: all 0.3s ease;
+        .member-item:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
         }
         
-        .member-card:hover {
-          background: rgba(15, 23, 42, 0.8);
-          transform: translateY(-3px);
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .member-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-        
-        .member-image {
+        .member-photo-container {
           position: relative;
-          margin-right: 1rem;
+          width: 55px;
+          height: 55px;
+          border-radius: 50%;
+          overflow: hidden;
+          flex-shrink: 0;
+          border: 2px solid #334155;
         }
         
-        .member-image img {
-          width: 50px;
-          height: 50px;
-          border-radius: 10px;
+        .member-photo {
+          width: 100%;
+          height: 100%;
           object-fit: cover;
+          object-position: center top;
         }
         
         .status-indicator {
@@ -478,50 +555,75 @@ export default function ERTOverview({ ertStatus }) {
         }
         
         .status-indicator.away {
-          background-color: #64748b;
+          background-color: #6b7280;
         }
         
-        .member-info {
-          flex: 1;
+        .member-name {
+          color: #f1f5f9;
+          font-weight: 500;
         }
         
-        .member-info h5 {
-          margin-bottom: 0.25rem;
-          color: #f8fafc;
+        .status-badge {
+          font-size: 0.7rem;
+          font-weight: 500;
         }
         
-        .member-details {
-          margin-bottom: 0.5rem;
+        .member-contact-info {
+          padding-left: 10px;
+          border-left: 2px solid rgba(148, 163, 184, 0.2);
+          margin-left: 27px;
         }
         
-        .detail-item {
+        .contact-item {
           display: flex;
           align-items: center;
-          margin-bottom: 0.5rem;
-          font-size: 0.9rem;
+          margin-bottom: 0.4rem;
         }
         
-        .detail-item svg {
+        .contact-item:last-child {
+          margin-bottom: 0;
+        }
+        
+        .contact-icon {
+          width: 16px;
           margin-right: 0.5rem;
           flex-shrink: 0;
         }
         
-        .detail-item a, .detail-item span {
-          color: #cbd5e1;
+        .contact-link, .contact-text {
+          font-size: 0.85rem;
+          color: #94a3b8;
           text-decoration: none;
+          transition: color 0.2s;
           word-break: break-word;
         }
         
-        .detail-item a:hover {
+        .contact-link:hover {
           color: #60a5fa;
         }
         
-        .no-members {
-          text-align: center;
-          padding: 2rem;
-          color: #64748b;
+        .text-teal {
+          color: #0d9488;
+        }
+        
+        .text-orange {
+          color: #f97316;
+        }
+        
+        .text-purple {
+          color: #a855f7;
+        }
+        
+        @media (max-width: 992px) {
+          .dashboard-card {
+            margin-bottom: 1.5rem;
+          }
         }
       `}</style>
     </div>
   );
 }
+
+
+
+
