@@ -1,142 +1,3 @@
-
-
-// // src/components/PersonnelDonutChart.jsx
-
-// import React from 'react';
-// import {
-//   PieChart,
-//   Pie,
-//   Cell,
-//   Tooltip,
-//   ResponsiveContainer,
-//   Legend,
-//   Label
-// } from 'recharts';
-// import { Card } from 'react-bootstrap';
-
-// // 7 colors (WU theme + accents)
-// const COLORS = [
-//   '#FFD100', // WU Yellow
-//   '#009E60', // WU Green
-//   '#88B04B', // Olive
-//   '#FF6F61', // Coral
-//   '#58595B', // WU Gray
-//   '#FFB800', // Accent Yellow
-//   '#6B5B95'  // Indigo
-// ];
-
-// const DarkTooltip = ({ active, payload }) => {
-//   if (!active || !payload?.length) return null;
-//   const { name, value } = payload[0];
-//   return (
-//     <div style={{
-//       backgroundColor: '#1a1a1a',
-//       color: '#FFD100',
-//       border: '1px solid var(--wu-yellow)',
-//       padding: '0.5rem',
-//       borderRadius: 4,
-//       fontSize: '0.9rem'
-//     }}>
-//       <div><strong>{name}</strong></div>
-//       <div>Count: {value}</div>
-//     </div>
-//   );
-// };
-
-// export default function PersonnelDonutChart({ data = [] }) {
-//   const total = data.reduce((sum, e) => sum + e.count, 0);
-//   if (!data.length || total === 0) {
-//     return <Card body className="bg-dark text-white">No personnel data</Card>;
-//   }
-
-//   const sorted = [...data].sort((a, b) => b.count - a.count);
-
-//   return (
-//     <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
-//       <Card.Header
-//         className="bg-dark text-warning text-center fw-bold"
-//         style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
-//       >
-//         Personnel Type Headcount
-//       </Card.Header>
-//       <Card.Body
-//         style={{
-//           height: '50vh',
-//           padding: '1rem',
-//           backgroundColor: '#1a1a1a'
-//         }}
-//       >
-//         <ResponsiveContainer>
-//           <PieChart>
-//             <Pie
-//               data={sorted}
-//               dataKey="count"
-//               nameKey="personnelType"
-//               cx="50%"
-//               cy="50%"
-//               innerRadius="45%"
-//               outerRadius="80%"
-//               paddingAngle={2}
-//               labelLine={false}
-//               label={({ percent, name }) => (
-//                 <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
-//                   {`${name}: ${(percent * 100).toFixed(0)}%`}
-//                 </tspan>
-//               )}
-//               stroke="#fff"
-//               strokeWidth={2}
-//             >
-//               {sorted.map((entry, idx) => (
-//                 <Cell
-//                   key={entry.personnelType}
-//                   fill={COLORS[idx % COLORS.length]}
-//                   stroke="#fff"
-//                   strokeWidth={1}
-//                 />
-//               ))}
-//               <Label
-//                 value={total}
-//                 position="center"
-//                 style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
-//               />
-//             </Pie>
-//             <Tooltip content={<DarkTooltip />} />
-//             <Legend
-//               verticalAlign="bottom"
-//               align="center"
-//               wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
-//               iconType="circle"
-//             />
-//           </PieChart>
-//         </ResponsiveContainer>
-//       </Card.Body>
-//     </Card>
-//   );
-// }
-
-
-
-// //////////  08-09- /////////// mayur 
-
-
-
-
-
-
-
-
-
-
-
-
-REad alos above code,
-in below code only in pie chart is center and and and in pie chart center disply all totoal count 703.
-i want to disply, anll persn type 
-employee, contracter, temp, visitrer etc ok 
-read above code then you undersntd what are you missing
-
-
-
 // src/components/PersonnelDonutChart.jsx
 
 import React from 'react';
@@ -147,7 +8,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Label
+  Label,
+  Customized
 } from 'recharts';
 import { Card } from 'react-bootstrap';
 
@@ -203,6 +65,59 @@ export default function PersonnelDonutChart({ data = [] }) {
   };
 
   const centerLabelStyle = { fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' };
+
+  // -------------------------
+  // Center multi-line renderer
+  // -------------------------
+  // Renders sorted personnelType: count lines inside the donut hole.
+  // Auto-scales text size based on the number of lines and available space.
+  const CenterList = ({ width, height }) => {
+    if (!width || !height) return null;
+
+    const cx = width / 2;
+    const cy = height / 2;
+
+    // lines to render: each "Name: count"
+    const lines = sorted.map((s) => `${s.personnelType}: ${s.count}`);
+
+    // Determine font size so text fits inside the hole.
+    // We aim to fit within ~60% of the smaller chart dimension.
+    const holeRadius = Math.min(width, height) * 0.35; // approximate inner hole real estate
+    const maxLineHeight = holeRadius * 2 / Math.max(1, lines.length); // vertical space per line
+    // choose font size slightly smaller than per-line height, clamp to sensible range
+    const fontSize = Math.max(10, Math.min(18, Math.floor(maxLineHeight * 0.5)));
+
+    // Vertical offset so multi-lines are vertically centered
+    // We use baseline adjustment with tspans' dy
+    const totalTextHeight = fontSize * lines.length;
+    const startY = cy - totalTextHeight / 2 + fontSize * 0.35; // tweak baseline
+
+    return (
+      <g>
+        <rect
+          x={cx - holeRadius}
+          y={cy - holeRadius}
+          width={holeRadius * 2}
+          height={holeRadius * 2}
+          rx={8}
+          ry={8}
+          fill="none"
+        />
+        <text x={cx} y={startY} textAnchor="middle" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
+          {lines.map((line, i) => (
+            <tspan
+              key={`center-line-${i}`}
+              x={cx}
+              dy={i === 0 ? 0 : fontSize}
+              style={{ fill: '#FFFFFF', fontSize: fontSize, fontWeight: 600 }}
+            >
+              {line}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    );
+  };
 
   return (
     <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
@@ -283,7 +198,7 @@ export default function PersonnelDonutChart({ data = [] }) {
                 startAngle={90}
                 endAngle={-270}
                 stroke="#ffffff"
-                strokeWidth={3}            // thicker separators for infographic look
+                strokeWidth={3}
                 strokeLinejoin="round"
                 isAnimationActive={true}
                 animationDuration={700}
@@ -320,18 +235,8 @@ export default function PersonnelDonutChart({ data = [] }) {
               </Pie>
             </g>
 
-            {/* center total unchanged */}
-            <Pie
-              data={[{ name: 'center', value: total }]}
-              dataKey="value"
-              cx="50%"
-              cy="50%"
-              outerRadius="35%"
-              innerRadius="0%"
-              isAnimationActive={false}
-            >
-              <Label value={total} position="center" style={centerLabelStyle} />
-            </Pie>
+            {/* CENTER: replace single total label with multi-line personnel type list */}
+            <Customized component={CenterList} />
 
             {/* tooltip & legend unchanged */}
             <Tooltip content={<DarkTooltip />} />
