@@ -1,114 +1,65 @@
+// src/components/PersonnelPeopleGrid.jsx
 
-
-// src/components/PersonnelDonutChart.jsx
-
-import React from 'react';
+import React from "react";
+import { Card } from "react-bootstrap";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  Label
-} from 'recharts';
-import { Card } from 'react-bootstrap';
+  FaUserTie,
+  FaUserShield,
+  FaUserCog,
+  FaUserClock,
+  FaUserFriends,
+} from "react-icons/fa";
+import "./PersonnelPeopleGrid.css"; // Custom 3D styles
 
-// 7 colors (WU theme + accents)
-const COLORS = [
-  '#FFD100', // WU Yellow
-  '#009E60', // WU Green
-  '#88B04B', // Olive
-  '#FF6F61', // Coral
-  '#58595B', // WU Gray
-  '#FFB800', // Accent Yellow
-  '#6B5B95'  // Indigo
-];
-
-const DarkTooltip = ({ active, payload }) => {
-  if (!active || !payload?.length) return null;
-  const { name, value } = payload[0];
-  return (
-    <div style={{
-      backgroundColor: '#1a1a1a',
-      color: '#FFD100',
-      border: '1px solid var(--wu-yellow)',
-      padding: '0.5rem',
-      borderRadius: 4,
-      fontSize: '0.9rem'
-    }}>
-      <div><strong>{name}</strong></div>
-      <div>Count: {value}</div>
-    </div>
-  );
+// Brand colors (vibrant, 3D friendly)
+const COLORS = {
+  Employee: "linear-gradient(135deg, #1E90FF, #0066CC)", // Blue
+  Visitor: "linear-gradient(135deg, #FF6F61, #CC3A30)", // Coral Red
+  Contractor: "linear-gradient(135deg, #32CD32, #228B22)", // Green
+  "Property Management": "linear-gradient(135deg, #FFD700, #E6AC00)", // Gold
+  "Temp Badge": "linear-gradient(135deg, #8A2BE2, #551A8B)", // Purple
 };
 
-export default function PersonnelDonutChart({ data = [] }) {
+// Icon mapping for each category
+const ICONS = {
+  Employee: <FaUserTie />,
+  Visitor: <FaUserFriends />,
+  Contractor: <FaUserCog />,
+  "Property Management": <FaUserShield />,
+  "Temp Badge": <FaUserClock />,
+};
+
+export default function PersonnelPeopleGrid({ data = [] }) {
   const total = data.reduce((sum, e) => sum + e.count, 0);
+
   if (!data.length || total === 0) {
-    return <Card body className="bg-dark text-white">No personnel data</Card>;
+    return (
+      <Card body className="bg-dark text-white p-4 text-center">
+        No personnel data available
+      </Card>
+    );
   }
 
-  const sorted = [...data].sort((a, b) => b.count - a.count);
-
   return (
-    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
-      <Card.Header
-        className="bg-dark text-warning text-center fw-bold"
-        style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
-      >
-        Personnel Type Headcount
+    <Card className="mb-4 shadow-lg border-0 personnel-card">
+      <Card.Header className="bg-dark text-warning text-center fw-bold">
+        <h5 className="mb-0">Personnel Overview</h5>
       </Card.Header>
       <Card.Body
-        style={{
-          height: '50vh',
-          padding: '1rem',
-          backgroundColor: '#1a1a1a'
-        }}
+        className="p-4 bg-dark d-flex flex-wrap justify-content-center"
+        style={{ gap: "1.5rem" }}
       >
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie
-              data={sorted}
-              dataKey="count"
-              nameKey="personnelType"
-              cx="50%"
-              cy="50%"
-              innerRadius="45%"
-              outerRadius="80%"
-              paddingAngle={2}
-              labelLine={false}
-              label={({ percent, name }) => (
-                <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
-                  {`${name}: ${(percent * 100).toFixed(0)}%`}
-                </tspan>
-              )}
-              stroke="#fff"
-              strokeWidth={2}
-            >
-              {sorted.map((entry, idx) => (
-                <Cell
-                  key={entry.personnelType}
-                  fill={COLORS[idx % COLORS.length]}
-                  stroke="#fff"
-                  strokeWidth={1}
-                />
-              ))}
-              <Label
-                value={total}
-                position="center"
-                style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
-              />
-            </Pie>
-            <Tooltip content={<DarkTooltip />} />
-            <Legend
-              verticalAlign="bottom"
-              align="center"
-              wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
-              iconType="circle"
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        {data.map((item) => (
+          <div
+            key={item.personnelType}
+            className="personnel-block"
+            style={{ background: COLORS[item.personnelType] }}
+          >
+            <div className="personnel-icon">{ICONS[item.personnelType]}</div>
+            <div className="personnel-type">{item.personnelType}</div>
+            <div className="personnel-count">{item.count}</div>
+          </div>
+        ))}
       </Card.Body>
     </Card>
   );
@@ -118,5 +69,47 @@ export default function PersonnelDonutChart({ data = [] }) {
 
 
 
+....
 
 
+
+.personnel-card {
+  border-radius: 1rem;
+}
+
+.personnel-block {
+  width: 180px;
+  height: 180px;
+  border-radius: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.personnel-block:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+.personnel-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
+}
+
+.personnel-type {
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+  text-shadow: 0px 1px 3px rgba(0,0,0,0.6);
+}
+
+.personnel-count {
+  font-size: 1.6rem;
+  font-weight: bold;
+  text-shadow: 0px 2px 6px rgba(0,0,0,0.7);
+}
