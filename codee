@@ -1,6 +1,3 @@
-i wan to disply all zone first thne 
-tower B and then 2nd floor 
-
 import React from "react";
 import {
   BarChart,
@@ -51,8 +48,29 @@ export default function SummaryChart({ summary = [] }) {
     return <Card body>No zone data available</Card>;
   }
 
-  // Sort zones by highest headcount
-  const sorted = [...summary].sort((a, b) => b.count - a.count);
+  // ----- Custom ordering:
+  // 1) all other zones (group 1) -> shown first
+  // 2) "Tower B" (group 2) -> shown second
+  // 3) any zone containing "2nd Floor" (group 3) -> shown last
+  const groupedAndSorted = (() => {
+    // defensive copy
+    const copy = Array.isArray(summary) ? [...summary] : [];
+    const orderRank = (zoneName = "") => {
+      if (zoneName === "Tower B") return 2;
+      if (zoneName && zoneName.toLowerCase().includes("2nd floor")) return 3;
+      return 1;
+    };
+
+    // sort by group rank first, then by count desc within group
+    copy.sort((a, b) => {
+      const ra = orderRank(a.zone);
+      const rb = orderRank(b.zone);
+      if (ra !== rb) return ra - rb;
+      return b.count - a.count; // count desc within same group
+    });
+
+    return copy;
+  })();
 
   // Custom tooltip
   const renderTooltip = ({ active, payload }) => {
@@ -96,7 +114,7 @@ export default function SummaryChart({ summary = [] }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             layout="vertical"
-            data={sorted.map((z) => ({
+            data={groupedAndSorted.map((z) => ({
               ...z,
               shortZone: shortenName(z.zone), // add short version
             }))}
@@ -111,9 +129,9 @@ export default function SummaryChart({ summary = [] }) {
             />
             <Tooltip content={renderTooltip} />
 
-            {/* only change: ensure very small values still render visibly */}
+            {/* only change earlier kept: ensure very small values still render visibly */}
             <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
-              {sorted.map((entry, idx) => {
+              {groupedAndSorted.map((entry, idx) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
                 const color = grad
                   ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
@@ -135,7 +153,7 @@ export default function SummaryChart({ summary = [] }) {
 
             {/* Gradient defs */}
             <defs>
-              {sorted.map((entry) => {
+              {groupedAndSorted.map((entry) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
                 if (!grad) return null;
                 return (
