@@ -1,3 +1,6 @@
+i wan to disply all zone first thne 
+tower B and then 2nd floor 
+
 import React from "react";
 import {
   BarChart,
