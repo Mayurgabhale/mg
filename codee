@@ -1,372 +1,112 @@
-Uncaught runtime errors:
-×
-ERROR
-Cannot read properties of null (reading 'isStepper')
-TypeError: Cannot read properties of null (reading 'isStepper')
-    at __WEBPACK_DEFAULT_EXPORT__ (http://localhost:3002/static/js/bundle.js:80100:19)
-    at Animate.runJSAnimation (http://localhost:3002/static/js/bundle.js:79241:85)
-    at Animate.runAnimation (http://localhost:3002/static/js/bundle.js:79304:14)
-    at Animate.componentDidMount (http://localhost:3002/static/js/bundle.js:79144:12)
-    at react-stack-bottom-frame (http://localhost:3002/static/js/bundle.js:46156:20)
-    at runWithFiberInDEV (http://localhost:3002/static/js/bundle.js:34116:68)
-    at commitLayoutEffectOnFiber (http://localhost:3002/static/js/bundle.js:39458:881)
-    at recursivelyTraverseLayoutEffects (http://localhost:3002/static/js/bundle.js:39921:103)
-    at commitLayoutEffectOnFiber (http://localhost:3002/static/js/bundle.js:39492:9)
-    at recursivelyTraverseLayoutEffects (http://localhost:3002/static/js/bundle.js:39921:103)
-ERROR
-Cannot read properties of null (reading 'isStepper')
-TypeError: Cannot read properties of null (reading 'isStepper')
-    at __WEBPACK_DEFAULT_EXPORT__ (http://localhost:3002/static/js/bundle.js:80100:19)
-    at Animate.runJSAnimation (http://localhost:3002/static/js/bundle.js:79241:85)
-    at Animate.runAnimation (http://localhost:3002/static/js/bundle.js:79304:14)
-    at Animate.componentDidMount (http://localhost:3002/static/js/bundle.js:79144:12)
-    at react-stack-bottom-frame (http://localhost:3002/static/js/bundle.js:46156:20)
-    at runWithFiberInDEV (http://localhost:3002/static/js/bundle.js:34116:68)
-    at reappearLayoutEffects (http://localhost:3002/static/js/bundle.js:39970:60)
-    at recursivelyTraverseReappearLayoutEffects (http://localhost:3002/static/js/bundle.js:40020:66)
-    at reappearLayoutEffects (http://localhost:3002/static/js/bundle.js:39987:9)
-    at recursivelyTraverseReappearLayoutEffects (http://localhost:3002/static/js/bundle.js:40020:66)
 
-// src/components/FloorOccupancyChart.jsx
+// src/components/PersonnelDonutChart.jsx
+
 import React from 'react';
 import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
+  PieChart,
+  Pie,
   Cell,
-  LabelList,
+  Tooltip,
+  ResponsiveContainer,
   Legend,
-  Customized
+  Label
 } from 'recharts';
 import { Card } from 'react-bootstrap';
-import floorCapacities from '../constants/floorCapacities';
 
-/* nicer, professional palette (pairs) */
-const CYLINDER_COLORS = [
-  ['#D7F6FF', '#3AB0FF'], // light -> blue
-  ['#2A5FB0', '#2F80ED'], // deep blue
-  ['#F9D2E0', '#EA4E8B'], // pink
-  ['#FFE2B5', '#FF8C1A'], // orange
-  ['#E7F8D9', '#39B54A']  // green
+// 7 colors (WU theme + accents)
+const COLORS = [
+  '#FFD100', // WU Yellow
+  '#009E60', // WU Green
+  '#88B04B', // Olive
+  '#FF6F61', // Coral
+  '#58595B', // WU Gray
+  '#FFB800', // Accent Yellow
+  '#6B5B95'  // Indigo
 ];
 
-export default function FloorOccupancyChart({ data = [] }) {
-  if (!data.length) {
-    return (
-      <Card body className="bg-dark text-white">
-        No floor data available
-      </Card>
-    );
+const DarkTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0];
+  return (
+    <div style={{
+      backgroundColor: '#1a1a1a',
+      color: '#FFD100',
+      border: '1px solid var(--wu-yellow)',
+      padding: '0.5rem',
+      borderRadius: 4,
+      fontSize: '0.9rem'
+    }}>
+      <div><strong>{name}</strong></div>
+      <div>Count: {value}</div>
+    </div>
+  );
+};
+
+export default function PersonnelDonutChart({ data = [] }) {
+  const total = data.reduce((sum, e) => sum + e.count, 0);
+  if (!data.length || total === 0) {
+    return <Card body className="bg-dark text-white">No personnel data</Card>;
   }
 
-  // -------------------- YOUR LOGIC (unchanged) --------------------
-  const enriched = data.map((floorObj) => {
-    const { floor, total: liveCount } = floorObj;
-    const capacity = floorCapacities[floor] ?? 0;
-    const usedPct = capacity > 0
-      ? ((liveCount / capacity) * 100).toFixed(1)
-      : '0.0';
-    return {
-      ...floorObj,
-      capacity,
-      liveCount,
-      usedPct: Number(usedPct),
-      label: `${liveCount}/${capacity}`
-    };
-  });
+  const sorted = [...data].sort((a, b) => b.count - a.count);
 
-  const totalLive = enriched.reduce((sum, f) => sum + f.liveCount, 0);
-  const totalCap = enriched.reduce((sum, f) => sum + f.capacity, 0);
-  const totalUsedPct = totalCap > 0
-    ? ((totalLive / totalCap) * 100).toFixed(1)
-    : '0.0';
-
-  const totalEntry = {
-    floor: 'Pune Office Total',
-    liveCount: totalLive,
-    capacity: totalCap,
-    usedPct: Number(totalUsedPct),
-    label: `${totalLive}/${totalCap}`
-  };
-
-  const sortedFloors = [...enriched].sort((a, b) => b.liveCount - a.liveCount);
-  const chartData = [totalEntry, ...sortedFloors];
-
-  const maxLive = Math.max(...chartData.map(f => f.liveCount)) || 0;
-  const yDomainMax = Math.ceil((maxLive * 1.18 || 50) / 10) * 10; // slightly above max live
-
-  // -------------------- tooltip (visual only) --------------------
-  const renderTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const floorObj = payload[0].payload;
-    const { liveCount, capacity, usedPct } = floorObj;
-
-    const breakdownEntries = Object.entries(floorObj).filter(
-      ([key]) =>
-        !['floor', 'liveCount', 'capacity', 'usedPct', 'label'].includes(key)
-    );
-
-    return (
-      <div style={{
-        background: 'linear-gradient(180deg,#0f1720,#141922)',
-        color: '#fff',
-        borderRadius: 8,
-        padding: '0.75rem 1rem',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.45)',
-        minWidth: 220
-      }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#FFD100' }}>
-          {floorObj.floor}
-        </div>
-        <div style={{ marginTop: 6, fontWeight: 700 }}>
-          {liveCount} / {capacity} &nbsp; <span style={{ color: '#9CA3AF', fontWeight: 600 }}>({usedPct}%)</span>
-        </div>
-
-        {breakdownEntries.length > 0 && (
-          <div style={{ marginTop: 8 }}>
-            {breakdownEntries.map(([k, v]) => (
-              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#E5E7EB', fontSize: 13 }}>
-                <span style={{ textTransform: 'capitalize', opacity: 0.9 }}>{k}</span>
-                <span style={{ fontWeight: 700 }}>{v}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // -------------------- Cylinder shape (visual upgrade) --------------------
-  const CylinderShape = (props) => {
-    const { x, y, width, height, payload } = props;
-    const floorName = payload && payload.floor;
-    const idx = chartData.findIndex(d => d.floor === floorName);
-    const fill = `url(#cyl-grad-${idx})`;
-
-    const cx = x + width / 2;
-    const topRy = Math.max(8, width * 0.12);
-    const bottomRy = Math.max(10, width * 0.14);
-    const bottomY = y + height;
-
-    // center label (live/cap) - big and bold
-    const centerLabel = payload && payload.label ? payload.label : '';
-
-    return (
-      <g>
-        {/* soft shadow using filter */}
-        <ellipse
-          cx={cx}
-          cy={bottomY + bottomRy * 0.95}
-          rx={width * 0.62}
-          ry={bottomRy * 0.5}
-          fill="rgba(18,22,28,0.45)"
-          filter="url(#softShadowLower)"
-        />
-
-        {/* main cylinder body */}
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          rx={12}
-          ry={12}
-          fill={fill}
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={1}
-          // add subtle drop shadow
-          filter="url(#softShadow)"
-        />
-
-        {/* glossy top ellipse */}
-        <ellipse
-          cx={cx}
-          cy={y}
-          rx={width / 2}
-          ry={topRy}
-          fill={fill}
-          stroke="rgba(255,255,255,0.12)"
-          strokeWidth={1}
-        />
-        {/* small glossy highlight (radial) */}
-        <ellipse
-          cx={cx - width * 0.12}
-          cy={y + topRy * 0.25}
-          rx={width * 0.28}
-          ry={topRy * 0.5}
-          fill="rgba(255,255,255,0.18)"
-        />
-
-        {/* subtle darker right rim to sell 3D depth — overlay shape using gradient (SVG rect clip) */}
-        <rect
-          x={x + width * 0.56}
-          y={y}
-          width={width * 0.18}
-          height={height}
-          rx={12}
-          ry={12}
-          fill="rgba(0,0,0,0.08)"
-          pointerEvents="none"
-        />
-
-        {/* bottom ellipse lightly glossy */}
-        <ellipse
-          cx={cx}
-          cy={bottomY}
-          rx={width / 2}
-          ry={bottomRy}
-          fill="rgba(255,255,255,0.02)"
-        />
-
-        {/* center big count label */}
-        {centerLabel && (
-          <text
-            x={cx}
-            y={y + height * 0.5 + 6}
-            textAnchor="middle"
-            fontSize={Math.max(16, Math.round(width * 0.18))}
-            fontWeight="800"
-            fill="#ffffff"
-            style={{ fontFamily: 'Inter, Arial, sans-serif' }}
-          >
-            {centerLabel}
-          </text>
-        )}
-      </g>
-    );
-  };
-
-  // -------------------- Curved overlay (clean) --------------------
-  const CurveOverlay = ({ width, height, xAxisMap, yAxisMap }) => {
-    const xKey = Object.keys(xAxisMap || {})[0];
-    const yKey = Object.keys(yAxisMap || {})[0];
-
-    if (!xKey || !yKey) return null;
-
-    const xScale = xAxisMap[xKey].scale;
-    const yScale = yAxisMap[yKey].scale;
-
-    const points = chartData.map((d) => {
-      const x = xScale(d.floor) + (xScale.bandwidth ? xScale.bandwidth() / 2 : 0);
-      const y = yScale(d.liveCount);
-      return { x, y };
-    });
-
-    if (points.length < 2) return null;
-
-    // smooth quadratic path
-    let path = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const cur = points[i];
-      const midX = (prev.x + cur.x) / 2;
-      const midY = (prev.y + cur.y) / 2;
-      path += ` Q ${prev.x} ${prev.y} ${midX} ${midY}`;
-    }
-    const last = points[points.length - 1];
-    path += ` T ${last.x} ${last.y}`;
-
-    return (
-      <g>
-        <path d={path} fill="none" stroke="#d6d6d6" strokeWidth={1.5} strokeOpacity={0.35} />
-        <path d={path} fill="none" stroke="#FFD100" strokeWidth={3} strokeOpacity={0.95} strokeLinecap="round" />
-      </g>
-    );
-  };
-
-  // -------------------- Render --------------------
   return (
-    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'transparent' }}>
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
       <Card.Header
-        className="bg-dark text-warning text-center fw-semibold"
-        style={{ borderBottom: '2px solid rgba(255,209,0,0.12)', fontSize: '1.15rem', letterSpacing: 0.3 }}
+        className="bg-dark text-warning text-center fw-bold"
+        style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
       >
-        Western Union — Pune Headcount vs Occupancy
+        Personnel Type Headcount
       </Card.Header>
-
-      <Card.Body style={{ height: '66vh', padding: 0, backgroundColor: '#0b0f13' }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 80, right: 28, left: 24, bottom: 36 }}
-            barCategoryGap="18%"
-          >
-            {/* professional defs: gradients + soft shadow */}
-            <defs>
-              {chartData.map((_, idx) => {
-                const [c1, c2] = CYLINDER_COLORS[idx % CYLINDER_COLORS.length];
-                return (
-                  <linearGradient id={`cyl-grad-${idx}`} key={idx} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={c1} stopOpacity={1} />
-                    <stop offset="100%" stopColor={c2} stopOpacity={1} />
-                  </linearGradient>
-                );
-              })}
-
-              {/* subtle drop shadow filter for cylinders */}
-              <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#000" floodOpacity="0.35" />
-              </filter>
-              <filter id="softShadowLower" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="6" result="blur" />
-                <feOffset dy="6" />
-                <feComponentTransfer>
-                  <feFuncA type="linear" slope="0.25" />
-                </feComponentTransfer>
-              </filter>
-            </defs>
-
-            {/* softened grid so cylinders pop */}
-            <CartesianGrid stroke="#1f2933" strokeDasharray="3 6" vertical={false} />
-
-            <XAxis
-              dataKey="floor"
-              tick={{ fontSize: 12, fill: '#e6eef8', fontWeight: 600 }}
-              interval={0}
-              height={64}
-            />
-
-            <YAxis
-              tick={{ fontSize: 12, fill: '#cfe8ff' }}
-              domain={[0, yDomainMax]}
-              axisLine={false}
-              tickLine={false}
-            />
-
-            <Tooltip content={renderTooltip} />
-
-            {/* remove heavy legend or keep minimal */}
-            <Legend
-              verticalAlign="top"
-              align="right"
-              wrapperStyle={{ color: '#cfe8ff', padding: 8, fontSize: 12 }}
-              payload={[{ value: 'Live HeadCount (Infographic)', type: 'square', color: '#4DB8FF' }]}
-            />
-
-            {/* single cylinder per datum */}
-            <Bar
-              dataKey="liveCount"
-              barSize={140}
-              shape={<CylinderShape />}
-              isAnimationActive={true}
-              animationDuration={900}
-              animationEasing="cubic-in-out"
+      <Card.Body
+        style={{
+          height: '50vh',
+          padding: '1rem',
+          backgroundColor: '#1a1a1a'
+        }}
+      >
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={sorted}
+              dataKey="count"
+              nameKey="personnelType"
+              cx="50%"
+              cy="50%"
+              innerRadius="45%"
+              outerRadius="80%"
+              paddingAngle={2}
+              labelLine={false}
+              label={({ percent, name }) => (
+                <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
+                  {`${name}: ${(percent * 100).toFixed(0)}%`}
+                </tspan>
+              )}
+              stroke="#fff"
+              strokeWidth={2}
             >
-              {chartData.map((d, idx) => (
-                <Cell key={`cyl-${idx}`} fill={`url(#cyl-grad-${idx})`} />
+              {sorted.map((entry, idx) => (
+                <Cell
+                  key={entry.personnelType}
+                  fill={COLORS[idx % COLORS.length]}
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
               ))}
-
-              {/* remove default top label duplication - if you want a tiny note on top, keep this but subtle */}
-              {/* <LabelList dataKey="liveCount" position="top" /> */}
-            </Bar>
-
-            {/* clean curve overlay */}
-            <Customized component={(props) => <CurveOverlay {...props} />} />
-          </BarChart>
+              <Label
+                value={total}
+                position="center"
+                style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
+              />
+            </Pie>
+            <Tooltip content={<DarkTooltip />} />
+            <Legend
+              verticalAlign="bottom"
+              align="center"
+              wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
+              iconType="circle"
+            />
+          </PieChart>
         </ResponsiveContainer>
       </Card.Body>
     </Card>
