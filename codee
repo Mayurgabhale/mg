@@ -1,3 +1,14 @@
+Compiled with problems:
+×
+ERROR
+[eslint] 
+src\components\PersonnelDonutChart.jsx
+  Line 337:18:  'cy' is not defined                                                                                                                                                                                  no-undef
+  Line 339:17:  'cy' is not defined                                                                                                                                                                                  no-undef
+  Line 390:41:  React Hook "React.useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?     react-hooks/rules-of-hooks
+  Line 392:22:  React Hook "React.useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+
+Search for the keywords to learn more about each error
 
 // src/components/PersonnelDonutChart.jsx
 
