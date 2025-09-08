@@ -1,3 +1,139 @@
+
+
+// // src/components/PersonnelDonutChart.jsx
+
+// import React from 'react';
+// import {
+//   PieChart,
+//   Pie,
+//   Cell,
+//   Tooltip,
+//   ResponsiveContainer,
+//   Legend,
+//   Label
+// } from 'recharts';
+// import { Card } from 'react-bootstrap';
+
+// // 7 colors (WU theme + accents)
+// const COLORS = [
+//   '#FFD100', // WU Yellow
+//   '#009E60', // WU Green
+//   '#88B04B', // Olive
+//   '#FF6F61', // Coral
+//   '#58595B', // WU Gray
+//   '#FFB800', // Accent Yellow
+//   '#6B5B95'  // Indigo
+// ];
+
+// const DarkTooltip = ({ active, payload }) => {
+//   if (!active || !payload?.length) return null;
+//   const { name, value } = payload[0];
+//   return (
+//     <div style={{
+//       backgroundColor: '#1a1a1a',
+//       color: '#FFD100',
+//       border: '1px solid var(--wu-yellow)',
+//       padding: '0.5rem',
+//       borderRadius: 4,
+//       fontSize: '0.9rem'
+//     }}>
+//       <div><strong>{name}</strong></div>
+//       <div>Count: {value}</div>
+//     </div>
+//   );
+// };
+
+// export default function PersonnelDonutChart({ data = [] }) {
+//   const total = data.reduce((sum, e) => sum + e.count, 0);
+//   if (!data.length || total === 0) {
+//     return <Card body className="bg-dark text-white">No personnel data</Card>;
+//   }
+
+//   const sorted = [...data].sort((a, b) => b.count - a.count);
+
+//   return (
+//     <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+//       <Card.Header
+//         className="bg-dark text-warning text-center fw-bold"
+//         style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
+//       >
+//         Personnel Type Headcount
+//       </Card.Header>
+//       <Card.Body
+//         style={{
+//           height: '50vh',
+//           padding: '1rem',
+//           backgroundColor: '#1a1a1a'
+//         }}
+//       >
+//         <ResponsiveContainer>
+//           <PieChart>
+//             <Pie
+//               data={sorted}
+//               dataKey="count"
+//               nameKey="personnelType"
+//               cx="50%"
+//               cy="50%"
+//               innerRadius="45%"
+//               outerRadius="80%"
+//               paddingAngle={2}
+//               labelLine={false}
+//               label={({ percent, name }) => (
+//                 <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
+//                   {`${name}: ${(percent * 100).toFixed(0)}%`}
+//                 </tspan>
+//               )}
+//               stroke="#fff"
+//               strokeWidth={2}
+//             >
+//               {sorted.map((entry, idx) => (
+//                 <Cell
+//                   key={entry.personnelType}
+//                   fill={COLORS[idx % COLORS.length]}
+//                   stroke="#fff"
+//                   strokeWidth={1}
+//                 />
+//               ))}
+//               <Label
+//                 value={total}
+//                 position="center"
+//                 style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
+//               />
+//             </Pie>
+//             <Tooltip content={<DarkTooltip />} />
+//             <Legend
+//               verticalAlign="bottom"
+//               align="center"
+//               wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
+//               iconType="circle"
+//             />
+//           </PieChart>
+//         </ResponsiveContainer>
+//       </Card.Body>
+//     </Card>
+//   );
+// }
+
+
+
+// //////////  08-09- /////////// mayur 
+
+
+
+check above commnet code,
+and check why pie chart is dont displat.
+read all code carefyyly, 
+and write creflly.
+
+
+
+
+
+
+
+
+
+
 // src/components/PersonnelDonutChart.jsx
 
 import React from 'react';
@@ -130,92 +266,3 @@ export default function PersonnelDonutChart({ data = [] }) {
   );
 }
 
-
-
-
-
-....
-
-
-
-/* PersonnelDonutChart.css */
-
-.personnel-card {
-  background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
-  border-radius: 15px;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-}
-
-.bg-gradient-dark {
-  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-  border-bottom: 3px solid #FFD100;
-}
-
-.header-underline {
-  width: 50px;
-  height: 3px;
-  background: linear-gradient(90deg, #FFD100, #FF9800);
-  margin: 0 auto;
-  border-radius: 2px;
-}
-
-.enhanced-pie {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-}
-
-.pie-label {
-  fill: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.percent-text {
-  fill: #FFD100;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.center-label {
-  fill: #FFD100 !important;
-  font-size: 2.8rem !important;
-  font-weight: 800 !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
-  dominant-baseline: middle !important;
-  text-anchor: middle !important;
-}
-
-.custom-tooltip {
-  background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
-  color: #FFD100;
-  border: 1px solid #FFD100;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  font-size: 0.95rem;
-  min-width: 120px;
-}
-
-.tooltip-title {
-  font-weight: bold;
-  margin-bottom: 4px;
-  color: #fff;
-}
-
-.tooltip-value,
-.tooltip-percent {
-  color: #ccc;
-  font-size: 0.9rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .pie-label {
-    font-size: 8px;
-  }
-  
-  .center-label {
-    font-size: 2rem !important;
-  }
-}
