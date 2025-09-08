@@ -1,7 +1,3 @@
-i want more atractive infographic 3d design ok.
-like above image
-
-
 // src/components/PersonnelDonutChart.jsx
 
 import React from 'react';
@@ -12,55 +8,115 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  LabelList
+  LabelList,
+  Sector
 } from 'recharts';
 import { Card } from 'react-bootstrap';
-import './PersonnelDonutChart.css'; // Custom CSS for enhanced styling
+import { FaUsers, FaUserTie, FaUserNurse, FaUserCog, FaUserShield, FaUserAstronaut, FaUserSecret } from 'react-icons/fa'; // Example icons for personnel types
+import './PersonnelDonutChart.css'; // Custom CSS for 3D-like styling
 
-// Solid colors for reliability (derived from original WU theme + accents)
-// Using start colors from gradients to avoid SVG defs issues
+// Enhanced colors with 3D gradient definitions (WU theme + accents)
 const COLORS = [
-  '#FFD100', // WU Yellow
-  '#009E60', // WU Green
-  '#88B04B', // Olive
-  '#FF6F61', // Coral
-  '#58595B', // WU Gray
-  '#FFB800', // Accent Yellow
-  '#6B5B95'  // Indigo
+  { start: '#FFD100', end: '#FFA000', light: '#FFF8E1' }, // WU Yellow
+  { start: '#009E60', end: '#006D3F', light: '#E8F5E8' }, // WU Green
+  { start: '#88B04B', end: '#5F7A2E', light: '#F0F7E8' }, // Olive
+  { start: '#FF6F61', end: '#D9453A', light: '#FFE8E6' }, // Coral
+  { start: '#58595B', end: '#3D3F42', light: '#E9EAEB' }, // WU Gray
+  { start: '#FFB800', end: '#CC9400', light: '#FFF3CD' }, // Accent Yellow
+  { start: '#6B5B95', end: '#4A3F6E', light: '#EDE7F6' }  // Indigo
 ];
 
-// Custom label renderer function that returns a positioned text element
-const renderCustomLabel = (entry) => {
-  const { name, percent } = entry;
-  const radian = Math.PI / 180;
-  const radius = 120; // Adjusted for outer radius + some offset for positioning
-  const x = (entry.cx + (entry.outerRadius + 20) * Math.cos(-entry.midAngle * radian)) || 0;
-  const y = (entry.cy + (entry.outerRadius + 20) * Math.sin(-entry.midAngle * radian)) || 0;
+// Map personnel types to icons (customize based on your data)
+const getIconForType = (type) => {
+  const iconMap = {
+    'Manager': <FaUserTie />,
+    'Engineer': <FaUserCog />,
+    'Nurse': <FaUserNurse />,
+    'Security': <FaUserShield />,
+    'Admin': <FaUsers />,
+    'Specialist': <FaUserAstronaut />,
+    'Analyst': <FaUserSecret />
+  };
+  return iconMap[type] || <FaUsers />;
+};
 
+// Custom active sector for hover 3D effect (lift on hover)
+const renderActiveShape = (props) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, percent } = props;
   return (
+    <g>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 5} // Slight expansion for 3D lift
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        stroke="#fff"
+        strokeWidth={3}
+        filter="url(#shadow)"
+      />
+      {/* Inner highlight for 3D bevel */}
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={innerRadius + 10}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={`linear-gradient(to bottom, ${COLORS[props.index % COLORS.length].light}, transparent)`}
+      />
+    </g>
+  );
+};
+
+// Custom label with icon and positioned text for infographic feel
+const renderCustomLabel = (entry) => {
+  const { name, percent, x, y, midAngle, cx, outerRadius } = entry;
+  const radian = Math.PI / 180;
+  const sin = Math.sin(-midAngle * radian);
+  const cos = Math.cos(-midAngle * radian);
+  const labelX = cx + (outerRadius + 40) * cos;
+  const labelY = cy + (outerRadius + 40) * sin;
+  const iconX = cx + (outerRadius + 25) * cos;
+  const iconY = cy + (outerRadius + 25) * sin;
+  const isLeft = midAngle > 90 && midAngle < 270;
+
+  return [
+    // Icon
+    <g key="icon" transform={`translate(${iconX}, ${iconY})`}>
+      <foreignObject x="-12" y="-12" width="24" height="24">
+        <div className="pie-icon" style={{ color: '#fff', fontSize: '16px' }}>
+          {getIconForType(name)}
+        </div>
+      </foreignObject>
+    </g>,
+    // Text label
     <text
-      x={x}
-      y={y}
+      key="text"
+      x={labelX}
+      y={labelY}
       fill="#fff"
-      textAnchor={x > entry.cx ? 'start' : 'end'}
-      dominantBaseline="central"
+      textAnchor={isLeft ? 'end' : 'start'}
+      dominantBaseline="middle"
       className="pie-label"
-      fontSize="11px"
-      fontWeight="500"
     >
-      <tspan dy="-10" x={x}>{name}</tspan>
-      <tspan x={x} className="percent-text" fontSize="12px" fontWeight="bold" dy="15">
+      <tspan dy="-8" x={labelX} fontSize="10px">{name}</tspan>
+      <tspan x={labelX} dy="16" className="percent-text" fontSize="11px" fontWeight="bold">
         {(percent * 100).toFixed(0)}%
       </tspan>
     </text>
-  );
+  ];
 };
 
 const DarkTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const { name, value, percent } = payload[0];
+  const icon = getIconForType(name);
   return (
     <div className="custom-tooltip">
+      <div className="tooltip-icon">{icon}</div>
       <div className="tooltip-title">{name}</div>
       <div className="tooltip-value">Count: {value}</div>
       <div className="tooltip-percent">({(percent * 100).toFixed(1)}%)</div>
@@ -75,66 +131,112 @@ export default function PersonnelDonutChart({ data = [] }) {
   }
 
   const sorted = [...data].sort((a, b) => b.count - a.count);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  const onPieEnter = React.useCallback((_, index) => {
+    setActiveIndex(index);
+  }, []);
 
   return (
-    <Card className="mb-4 personnel-card shadow-lg border-0">
-      <Card.Header className="bg-gradient-dark text-warning text-center fw-bold">
+    <Card className="mb-4 personnel-card shadow-2xl border-0">
+      <Card.Header className="bg-gradient-3d text-warning text-center fw-bold">
         <h5 className="mb-0">Personnel Type Headcount</h5>
         <div className="header-underline"></div>
       </Card.Header>
-      <Card.Body className="p-3 bg-dark position-relative">
-        <ResponsiveContainer width="100%" height={400}>
-          <PieChart className="enhanced-pie">
+      <Card.Body className="p-4 bg-dark position-relative">
+        <ResponsiveContainer width="100%" height={450}>
+          <PieChart className="enhanced-pie-3d">
+            {/* SVG defs for 3D effects */}
+            <defs>
+              <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000" floodOpacity="0.3" />
+              </filter>
+              {COLORS.map((color, idx) => (
+                <linearGradient key={idx} id={`grad-${idx}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={color.start} stopOpacity="1" />
+                  <stop offset="70%" stopColor={color.end} stopOpacity="0.8" />
+                  <stop offset="100%" stopColor={color.end} stopOpacity="0.5" />
+                </linearGradient>
+              ))}
+              {/* Center star-like background */}
+              <radialGradient id="center-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FFD100" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#FFD100" stopOpacity="0" />
+              </radialGradient>
+            </defs>
             <Pie
+              activeIndex={activeIndex}
+              activeShape={renderActiveShape}
               data={sorted}
               dataKey="count"
               nameKey="personnelType"
               cx="50%"
               cy="50%"
-              innerRadius={70} // Increased for better donut hole visibility
-              outerRadius={110} // Adjusted for container size
-              paddingAngle={4}
-              minAngle={15}
+              innerRadius={80}
+              outerRadius={120}
+              paddingAngle={5}
+              minAngle={20}
+              onMouseEnter={onPieEnter}
               stroke="#fff"
-              strokeWidth={3}
-              cornerRadius={5} // Slight rounding for modern look
+              strokeWidth={4}
+              cornerRadius={8}
             >
               {sorted.map((entry, idx) => (
                 <Cell
                   key={`cell-${idx}`}
-                  fill={COLORS[idx % COLORS.length]}
+                  fill={`url(#grad-${idx})`}
                   stroke="#fff"
-                  strokeWidth={2}
+                  strokeWidth={3}
                 />
               ))}
             </Pie>
             <LabelList data={sorted} content={renderCustomLabel} />
-            {/* Center label for total */}
-            <text
-              x="50%"
-              y="50%"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="center-label"
-              fill="#FFD100"
-              fontSize="2.5rem"
-              fontWeight="bold"
-            >
-              {total.toLocaleString()}
-            </text>
+            {/* Custom center with total and glow */}
+            <g transform="translate(50%, 50%)">
+              <circle cx="0" cy="0" r="60" fill="url(#center-glow)" />
+              <text
+                x="0"
+                y="-15"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="center-title"
+                fill="#fff"
+              >
+                Total
+              </text>
+              <text
+                x="0"
+                y="10"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="center-label"
+                fill="#FFD100"
+                fontSize="2.8rem"
+                fontWeight="bold"
+              >
+                {total.toLocaleString()}
+              </text>
+              {/* Simple star shape for infographic center */}
+              <polygon
+                points="0,-30 8,-10 25,0 8,10 0,30 -8,10 -25,0 -8,-10"
+                fill="#FFD100"
+                opacity="0.2"
+                transform="scale(0.8)"
+              />
+            </g>
             <Tooltip content={<DarkTooltip />} />
             <Legend
               verticalAlign="bottom"
               align="center"
               wrapperStyle={{
-                paddingTop: '20px',
+                paddingTop: '30px',
                 color: '#FFD100',
-                fontSize: '1rem',
-                fontWeight: '500'
+                fontSize: '1.1rem',
+                fontWeight: '600'
               }}
               iconType="circle"
-              iconSize={12}
-              formatter={(value) => <span style={{ color: '#FFD100' }}>{value}</span>}
+              iconSize={14}
+              formatter={(value) => <span>{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -145,84 +247,138 @@ export default function PersonnelDonutChart({ data = [] }) {
 
 
 
-/* PersonnelDonutChart.css */
+
+
+
+.....
+
+
+
+/* PersonnelDonutChart.css - Enhanced for 3D Infographic */
 
 .personnel-card {
   background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
-  border-radius: 15px;
+  border-radius: 20px;
   overflow: hidden;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 209, 0, 0.1);
 }
 
-.bg-gradient-dark {
-  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-  border-bottom: 3px solid #FFD100;
+.bg-gradient-3d {
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d, #0d0d0d);
+  border-bottom: 4px solid #FFD100;
+  box-shadow: inset 0 -2px 10px rgba(255, 209, 0, 0.2);
 }
 
 .header-underline {
-  width: 50px;
-  height: 3px;
-  background: linear-gradient(90deg, #FFD100, #FF9800);
-  margin: 0 auto;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #FFD100, #FF9800, #FFD100);
+  margin: 5px auto 0;
   border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(255, 209, 0, 0.3);
 }
 
-.enhanced-pie {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+.enhanced-pie-3d {
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)) brightness(1.05);
+  transform: perspective(500px) rotateX(5deg); /* Subtle 3D perspective */
+}
+
+.pie-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .pie-label {
   fill: #fff;
   font-size: 10px;
   font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9), 0 0 5px rgba(255, 255, 255, 0.5);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 .percent-text {
   fill: #FFD100;
   font-size: 12px;
   font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.center-title {
+  font-size: 1rem;
+  font-weight: 500;
+  fill: #ccc;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .center-label {
-  fill: #FFD100 !important;
-  font-size: 2.8rem !important;
-  font-weight: 800 !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
-  dominant-baseline: middle !important;
-  text-anchor: middle !important;
+  text-shadow: 0 0 10px #FFD100, 2px 2px 4px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 0 15px rgba(255, 209, 0, 0.5));
+  font-family: 'Arial Black', sans-serif;
 }
 
 .custom-tooltip {
   background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
   color: #FFD100;
-  border: 1px solid #FFD100;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  font-size: 0.95rem;
-  min-width: 120px;
+  border: 2px solid #FFD100;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+  min-width: 140px;
+  backdrop-filter: blur(10px);
+}
+
+.tooltip-icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  text-align: center;
+  color: #FFD100;
 }
 
 .tooltip-title {
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: #fff;
+  font-size: 1.1rem;
 }
 
 .tooltip-value,
 .tooltip-percent {
-  color: #ccc;
-  font-size: 0.9rem;
+  color: #ddd;
+  font-size: 0.95rem;
+  margin: 2px 0;
 }
 
-/* Responsive adjustments */
+/* Hover lift for entire chart */
+.personnel-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 209, 0, 0.2);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
+  .enhanced-pie-3d {
+    transform: none; /* Disable perspective on mobile */
+  }
+  
   .pie-label {
-    font-size: 8px;
+    font-size: 9px;
   }
   
   .center-label {
-    font-size: 2rem !important;
+    font-size: 2.2rem !important;
+  }
+  
+  .pie-icon {
+    font-size: 14px;
+    width: 20px;
+    height: 20px;
   }
 }
