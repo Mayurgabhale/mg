@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Row, Col } from 'react-bootstrap';
 import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
@@ -13,24 +11,12 @@ export default function SummaryCards({
   employeeCount,
   contractorCount
 }) {
-  // keep your existing border/accent colors here:
+  // border & icon palettes
   const BORDER_COLORS = [
-    '#FFC72C',
-    '#FFD666',
-    '#FFE599',
-    '#FFF2CC',
-    '#FFD666',
-    '#FFE599'
+    '#FFC72C', '#FFD666', '#FFE599', '#FFF2CC', '#FFD666', '#FFE599'
   ];
-
-  // a richer palette for the icons
   const ICON_COLORS = [
-    '#E57373', // soft red
-    '#81C784', // mint green
-    '#64B5F6', // sky blue
-    '#BA68C8', // orchid purple
-    '#FFB74D', // amber
-    '#4DB6AC'  // teal
+    '#E57373', '#81C784', '#64B5F6', '#BA68C8', '#FFB74D', '#4DB6AC'
   ];
 
   const cards = [
@@ -42,26 +28,25 @@ export default function SummaryCards({
     { key: 'contractorCount', title: 'Realtime Contractors Count',   value: contractorCount,      icon: <FaHardHat /> },
   ];
 
-  // ensure numeric values and compute max for relative bars
-  const sanitized = cards.map(c => ({ ...c, value: Number(c.value) || 0 }));
+  // sanitize numbers & compute max (for percent/progress)
+  const sanitized = useMemo(() => cards.map(c => ({ ...c, value: Number(c.value) || 0 })), [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
   const maxVal = Math.max(...sanitized.map(s => s.value), 1);
 
-  // animated counts (one state object)
-  const [animated, setAnimated] = useState(
+  // animated counts
+  const [animated, setAnimated] = useState(() =>
     sanitized.reduce((acc, c) => { acc[c.key] = 0; return acc; }, {})
   );
 
   useEffect(() => {
-    // animate all cards on mount / when values change
     let rafId;
-    const duration = 900; // ms
+    const duration = 900;
     const start = performance.now();
     const from = sanitized.reduce((acc, c) => { acc[c.key] = animated[c.key] || 0; return acc; }, {});
     const to = sanitized.reduce((acc, c) => { acc[c.key] = c.value; return acc; }, {});
 
     function step(now) {
       const t = Math.min(1, (now - start) / duration);
-      const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; // easeInOutQuad-ish
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
       const next = {};
       for (const k of Object.keys(to)) {
         next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
@@ -74,21 +59,19 @@ export default function SummaryCards({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
 
-  // small deterministic sparkline generator
-  const makeSparkline = (value, idx, width = 80, height = 24, points = 6) => {
-    const ratio = value / maxVal;
+  // deterministic decorative sparkline generator
+  const makeSparkline = (value, idx, width = 94, height = 30, points = 6) => {
+    const ratio = Math.max(0, Math.min(1, value / maxVal));
     const seed = idx + 1;
     const segment = width / (points - 1);
     const coords = new Array(points).fill(0).map((_, i) => {
-      // use sin-based deterministic curve, biased by ratio
-      const x = i * segment;
-      const amp = (0.35 + 0.6 * ratio) * height;
-      const y = height - (Math.sin((i + seed) * 0.9) * 0.5 + 0.5) * amp;
-      return [x, Math.round(y)];
+      const x = Math.round(i * segment);
+      const amp = (0.28 + 0.7 * ratio) * height;
+      const jitter = Math.sin((i + seed) * 0.85) * 0.35 + 0.65;
+      const y = Math.round(height - jitter * amp);
+      return [x, y];
     });
-
     const path = coords.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
-    // area fill path
     const lastX = coords[coords.length - 1][0];
     const baseY = height;
     const area = `${path} L ${lastX} ${baseY} L 0 ${baseY} Z`;
@@ -100,58 +83,69 @@ export default function SummaryCards({
       {sanitized.map((c, i) => {
         const percent = Math.round((c.value / maxVal) * 100);
         const spark = makeSparkline(c.value, i);
+
         return (
           <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
             <Card
-              className="summary-card"
+              className="summary-card pro"
               style={{
                 borderImage: `linear-gradient(90deg, ${BORDER_COLORS[i % BORDER_COLORS.length]}, rgba(255,255,255,0)) 1`,
               }}
               title={c.title}
             >
               <Card.Body className="d-flex flex-column align-items-center p-3">
+                {/* glossy 3D icon badge */}
                 <div
-                  className="icon-badge"
+                  className="icon-badge pro"
                   style={{
-                    background: `linear-gradient(135deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.08))`,
-                    boxShadow: '0 6px 18px rgba(0,0,0,0.45), inset 0 -6px 12px rgba(255,255,255,0.04)'
+                    background: `linear-gradient(135deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.06))`,
+                    boxShadow: '0 8px 20px rgba(2,6,23,0.55), inset 0 -6px 12px rgba(255,255,255,0.06)'
                   }}
+                  aria-hidden
                 >
-                  {c.icon}
+                  <div className="icon-wrap" style={{ color: '#071018' }}>
+                    {c.icon}
+                  </div>
                 </div>
 
-                <div className="card-title-text" title={c.title}>
+                {/* title */}
+                <div className="card-title-text pro" title={c.title}>
                   {c.title}
                 </div>
 
-                <div className="count-row">
-                  <div className="count-number" aria-label={`${c.title} value`}>
+                {/* big animated count + small percent chip */}
+                <div className="count-row pro">
+                  <div className="count-number pro" aria-label={`${c.title} value`}>
                     {animated[c.key].toLocaleString()}
                   </div>
-
-                  {/* small percentage bubble */}
-                  {/* <div className="count-pct" title={`${percent}% of largest`}>
+                  <div className="count-pct pro" title={`${percent}% of largest`}>
                     {percent}%
-                  </div> */}
+                  </div>
                 </div>
 
-                {/* sparkline */}
-                {/* <svg className="sparkline" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`}>
+                {/* sparkline (small, subtle) */}
+                <svg className="sparkline pro" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`} role="img" aria-hidden>
                   <defs>
                     <linearGradient id={`spark-grad-${i}`} x1="0" x2="1">
-                      <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
-                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.04" />
+                      <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+                      <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
                     </linearGradient>
                   </defs>
                   <path d={spark.area} fill={`url(#spark-grad-${i})`} />
-                  <path d={spark.path} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg> */}
+                  <path d={spark.path} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
 
-                {/* progress bar */}
-                {/* <div className="progress-holder" aria-hidden>
-                  <div className="progress-track" />
-                  <div className="progress-fill" style={{ width: `${percent}%`, background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})` }} />
-                </div> */}
+                {/* thin progress bar (frosted) */}
+                <div className="progress-holder pro" aria-hidden>
+                  <div className="progress-track pro" />
+                  <div
+                    className="progress-fill pro"
+                    style={{
+                      width: `${percent}%`,
+                      background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})`
+                    }}
+                  />
+                </div>
 
                 <div className="muted-note mt-2"> </div>
               </Card.Body>
@@ -162,3 +156,168 @@ export default function SummaryCards({
     </Row>
   );
 }
+
+
+
+
+....
+
+:root{
+  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+  --glass-border: rgba(255,255,255,0.04);
+  --muted: rgba(230,238,248,0.8);
+}
+
+/* Container spacing */
+.summary-cards-row { margin-top: 6px; }
+
+/* Card base - pro look */
+.summary-card.pro {
+  background: var(--card-bg);
+  border-radius: 12px;
+  min-height: 230px;
+  color: #fff;
+  overflow: hidden;
+  transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease;
+  border: 1px solid var(--glass-border);
+  position: relative;
+}
+
+/* animated gradient accent border on hover */
+.summary-card.pro::before{
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(90deg, rgba(255,199,44,0.8), rgba(255,255,255,0));
+  filter: blur(12px);
+  opacity: 0;
+  transition: opacity .28s ease;
+  border-radius: 14px;
+  z-index: 0;
+}
+.summary-card.pro:hover::before { opacity: 1; transform: translateY(-2px); }
+
+/* hover lift */
+.summary-card.pro:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 24px 60px rgba(2,6,23,0.75);
+}
+
+/* Card content sits above pseudo-element */
+.summary-card.pro .card-body { position: relative; z-index: 1; }
+
+/* Icon badge - glossy 3D */
+.icon-badge.pro {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.6rem;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  transform: translateZ(0);
+}
+
+/* small inner wrapper to give circular depth */
+.icon-badge.pro .icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72));
+  box-shadow: inset 0 -6px 10px rgba(0,0,0,0.12);
+  color: #071018; /* dark icon color */
+}
+
+/* Title - tight, uppercase feel */
+.card-title-text.pro {
+  font-size: 0.92rem;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.12;
+  width: 100%;
+  padding: 0 6px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Count row */
+.count-row.pro {
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* big number */
+.count-number.pro {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+/* percent chip */
+.count-pct.pro {
+  background: rgba(255,255,255,0.06);
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.25);
+}
+
+/* Sparkline */
+.sparkline.pro {
+  width: 94px;
+  height: 30px;
+  margin: 6px 0;
+}
+
+/* Progress bar */
+.progress-holder.pro {
+  width: 92%;
+  height: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-track.pro {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03));
+  border-radius: 8px;
+}
+
+.progress-fill.pro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  transition: width 900ms cubic-bezier(.2,.9,.2,1);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 -6px 10px rgba(255,255,255,0.04);
+}
+
+/* small muted note (reserved for extra info) */
+.muted-note { font-size: 0.75rem; color: rgba(255,255,255,0.06); }
+
+/* responsive */
+@media (max-width: 900px) {
+  .icon-badge.pro { width: 64px; height: 64px; font-size: 1.4rem; }
+  .icon-badge.pro .icon-wrap { width:50px;height:50px;border-radius:10px; }
+  .count-number.pro { font-size: 1.35rem; }
+  .summary-card.pro { min-height: 200px; }
+}
+
