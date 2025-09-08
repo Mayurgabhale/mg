@@ -1,15 +1,17 @@
+// replace your current matchesFilterZone with this (robust normalization & matching)
 const matchesFilterZone = (member, zone) => {
   if (!zone) return true;
-
-  // normalize: lowercase, replace all types of dashes with space, collapse spaces
-  const normalize = str =>
-    String(str || "")
+  // normalize: lowercase, convert any dash/en-dash to space, remove punctuation, collapse spaces
+  const normalize = (s) =>
+    String(s || '')
       .toLowerCase()
-      .replace(/[–—-]/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(/[–—−\-]/g, ' ')    // unify dashes to space
+      .replace(/[^a-z0-9\s]/g, ' ') // drop other punctuation
+      .replace(/\s+/g, ' ')
       .trim();
 
   const needle = normalize(zone);
+  if (!needle) return true;
 
   const candidates = [
     member.zone,
@@ -27,6 +29,36 @@ const matchesFilterZone = (member, zone) => {
     .filter(Boolean)
     .map(normalize);
 
-  // check partial match
+  // any candidate containing the needle is a match
   return candidates.some(c => c.includes(needle));
-};
+}
+
+
+
+....
+
+
+
+
+// replace your existing floorCounts useMemo with this
+const floorCounts = useMemo(() => {
+  const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+
+  allMembers.forEach(m => {
+    if (!m.present) return;
+
+    // check 2nd / Tower B first, then podium; this keeps precedence explicit
+    if (matchesFilterZone(m, '2nd Floor') || (m.zone && String(m.zone).toLowerCase().includes('2nd'))) {
+      counts['2nd Floor']++;
+    } else if (matchesFilterZone(m, 'Tower B') || (m.zone && String(m.zone).toLowerCase().includes('tower b'))) {
+      counts['Tower B']++;
+    } else if (matchesFilterZone(m, 'Podium Floor')) {
+      counts['Podium Floor']++;
+    } else {
+      // fallback to Podium so members with no location still show up somewhere
+      counts['Podium Floor']++;
+    }
+  });
+
+  return counts;
+}, [allMembers]);
