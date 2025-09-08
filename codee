@@ -1,3 +1,18 @@
+Compiled with problems:
+×
+ERROR
+[eslint] 
+src\components\PersonnelDonutChart.jsx
+  Line 337:18:  'cy' is not defined                                                                                                                                                                                  no-undef
+  Line 339:17:  'cy' is not defined                                                                                                                                                                                  no-undef
+  Line 390:41:  React Hook "React.useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?     react-hooks/rules-of-hooks
+  Line 392:22:  React Hook "React.useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+
+Search for the keywords to learn more about each error.
+
+
+
+
 // src/components/PersonnelDonutChart.jsx
 
 import React from 'react';
@@ -247,138 +262,3 @@ export default function PersonnelDonutChart({ data = [] }) {
 
 
 
-
-
-
-.....
-
-
-
-/* PersonnelDonutChart.css - Enhanced for 3D Infographic */
-
-.personnel-card {
-  background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
-  border-radius: 20px;
-  overflow: hidden;
-  backdrop-filter: blur(15px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 209, 0, 0.1);
-}
-
-.bg-gradient-3d {
-  background: linear-gradient(135deg, #1a1a1a, #2d2d2d, #0d0d0d);
-  border-bottom: 4px solid #FFD100;
-  box-shadow: inset 0 -2px 10px rgba(255, 209, 0, 0.2);
-}
-
-.header-underline {
-  width: 60px;
-  height: 4px;
-  background: linear-gradient(90deg, #FFD100, #FF9800, #FFD100);
-  margin: 5px auto 0;
-  border-radius: 2px;
-  box-shadow: 0 2px 5px rgba(255, 209, 0, 0.3);
-}
-
-.enhanced-pie-3d {
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)) brightness(1.05);
-  transform: perspective(500px) rotateX(5deg); /* Subtle 3D perspective */
-}
-
-.pie-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.pie-label {
-  fill: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9), 0 0 5px rgba(255, 255, 255, 0.5);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-}
-
-.percent-text {
-  fill: #FFD100;
-  font-size: 12px;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.center-title {
-  font-size: 1rem;
-  font-weight: 500;
-  fill: #ccc;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.center-label {
-  text-shadow: 0 0 10px #FFD100, 2px 2px 4px rgba(0, 0, 0, 0.9);
-  filter: drop-shadow(0 0 15px rgba(255, 209, 0, 0.5));
-  font-family: 'Arial Black', sans-serif;
-}
-
-.custom-tooltip {
-  background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
-  color: #FFD100;
-  border: 2px solid #FFD100;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  font-size: 1rem;
-  min-width: 140px;
-  backdrop-filter: blur(10px);
-}
-
-.tooltip-icon {
-  font-size: 1.5rem;
-  margin-bottom: 8px;
-  text-align: center;
-  color: #FFD100;
-}
-
-.tooltip-title {
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #fff;
-  font-size: 1.1rem;
-}
-
-.tooltip-value,
-.tooltip-percent {
-  color: #ddd;
-  font-size: 0.95rem;
-  margin: 2px 0;
-}
-
-/* Hover lift for entire chart */
-.personnel-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 209, 0, 0.2);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .enhanced-pie-3d {
-    transform: none; /* Disable perspective on mobile */
-  }
-  
-  .pie-label {
-    font-size: 9px;
-  }
-  
-  .center-label {
-    font-size: 2.2rem !important;
-  }
-  
-  .pie-icon {
-    font-size: 14px;
-    width: 20px;
-    height: 20px;
-  }
-}
