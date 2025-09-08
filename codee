@@ -1,3 +1,5 @@
+
+
 // src/components/PersonnelPeopleGrid.jsx
 
 import React from "react";
@@ -9,8 +11,7 @@ import {
   FaUserClock,
   FaUserFriends,
 } from "react-icons/fa";
-import "./PersonnelPeopleGrid.css"; // Custom 3D styles
-
+import "./PersonnelDonutChart.css"; // Custom 3D styles
 // Brand colors (vibrant, 3D friendly)
 const COLORS = {
   Employee: "linear-gradient(135deg, #1E90FF, #0066CC)", // Blue
@@ -29,7 +30,7 @@ const ICONS = {
   "Temp Badge": <FaUserClock />,
 };
 
-export default function PersonnelPeopleGrid({ data = [] }) {
+export default function PersonnelDonutChart({ data = [] }) {
   const total = data.reduce((sum, e) => sum + e.count, 0);
 
   if (!data.length || total === 0) {
@@ -63,53 +64,4 @@ export default function PersonnelPeopleGrid({ data = [] }) {
       </Card.Body>
     </Card>
   );
-}
-
-
-
-
-
-....
-
-
-
-.personnel-card {
-  border-radius: 1rem;
-}
-
-.personnel-block {
-  width: 180px;
-  height: 180px;
-  border-radius: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.personnel-block:hover {
-  transform: translateY(-8px) scale(1.05);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
-}
-
-.personnel-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
-}
-
-.personnel-type {
-  font-size: 1rem;
-  margin-bottom: 0.3rem;
-  text-shadow: 0px 1px 3px rgba(0,0,0,0.6);
-}
-
-.personnel-count {
-  font-size: 1.6rem;
-  font-weight: bold;
-  text-shadow: 0px 2px 6px rgba(0,0,0,0.7);
 }
