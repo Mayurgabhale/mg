@@ -1,13 +1,3 @@
-Compiled with problems:
-×
-ERROR
-[eslint] 
-src\components\PersonnelDonutChart.jsx
-  Line 312:18:  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
-  Line 315:41:  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
-
-Search for the keywords to learn more about each error.
-
 // src/components/PersonnelDonutChart.jsx
 import React, { useMemo, useState } from 'react';
 import {
@@ -53,16 +43,11 @@ const DarkTooltip = ({ active, payload }) => {
 };
 
 export default function PersonnelDonutChart({ data = [] }) {
-  // --- same logic: total + guard ---
+  // compute total first (pure JS, fine anywhere)
   const total = data.reduce((sum, e) => sum + e.count, 0);
-  if (!data.length || total === 0) {
-    return <Card body className="bg-dark text-white">No personnel data</Card>;
-  }
 
-  // stable sorted copy (logic unchanged)
+  // Hooks must be declared unconditionally, before any early return:
   const sorted = useMemo(() => [...data].sort((a, b) => b.count - a.count), [data]);
-
-  // state to track hovered slice for a subtle pop effect
   const [activeIndex, setActiveIndex] = useState(null);
 
   // helper to darken a color for the depth/extrusion layer
@@ -78,6 +63,11 @@ export default function PersonnelDonutChart({ data = [] }) {
     return `rgb(${r}, ${g}, ${b})`;
   };
 
+  // Guard: return early if there's no data or total is zero
+  if (!data.length || total === 0) {
+    return <Card body className="bg-dark text-white">No personnel data</Card>;
+  }
+
   // geometry: radii (tweak these to increase/decrease 3D effect)
   const innerRadius = '44%';
   const outerRadius = '80%';
@@ -85,6 +75,8 @@ export default function PersonnelDonutChart({ data = [] }) {
 
   // center label style
   const centerLabelStyle = { fill: '#ffffff', fontSize: 34, fontWeight: 700, fontFamily: 'Inter, Arial, sans-serif' };
+
+  // center label style variable must be defined before usage; kept above
 
   return (
     <Card className="mb-4 shadow-sm border" style={{ borderColor: 'transparent' }}>
@@ -165,8 +157,8 @@ export default function PersonnelDonutChart({ data = [] }) {
                 strokeWidth={1}
                 // Active slice index + outer radius expansion on hover
                 activeIndex={activeIndex}
-                activeShape={undefined} // we only use activeOuterRadius to pop
-                activeOuterRadius={outerRadius === '80%' ? '88%' : undefined}
+                activeShape={undefined}
+                // Note: Recharts expects event handlers with signature (data, index)
                 onMouseEnter={(_, idx) => setActiveIndex(idx)}
                 onMouseLeave={() => setActiveIndex(null)}
               >
