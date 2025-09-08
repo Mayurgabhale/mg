@@ -1,3 +1,4 @@
+// src/components/ZoneTowersChart.jsx
 import React from "react";
 import {
   BarChart,
@@ -12,8 +13,8 @@ import {
 } from "recharts";
 import { Card } from "react-bootstrap";
 
-// Gradient colors for "buildings"
-const ZONE_GRADIENTS = {
+// Custom tower gradients
+const ZONE_TOWERS = {
   "Red Zone": ["#FF4C4C", "#B22222"],
   "Yellow Zone": ["#FFD700", "#E6AC00"],
   "Orange Zone": ["#FFA500", "#CC7000"],
@@ -22,9 +23,9 @@ const ZONE_GRADIENTS = {
   "Purple Zone": ["#8A2BE2", "#4B0082"],
 };
 
-const DEFAULT_GRADIENT = ["#888888", "#444444"];
+const DEFAULT_GRADIENT = ["#AAAAAA", "#555555"];
 
-export default function CityZoneChart({ summary = [] }) {
+export default function ZoneTowersChart({ summary = [] }) {
   if (!summary.length) {
     return (
       <Card body className="bg-dark text-white text-center">
@@ -33,23 +34,19 @@ export default function CityZoneChart({ summary = [] }) {
     );
   }
 
-  // Sort descending for visual hierarchy
-  const sorted = [...summary].sort((a, b) => b.count - a.count);
-
   return (
     <Card className="mb-4 shadow-lg border-0">
       <Card.Header className="bg-dark text-warning text-center fw-bold">
-        <h5 className="mb-0">Pune Area-wise Zone Skyline</h5>
+        <h5 className="mb-0">Pune Area-wise Headcount Towers</h5>
       </Card.Header>
 
       <Card.Body style={{ height: "60vh", backgroundColor: "#1a1a1a", padding: "1rem" }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={sorted}
-            margin={{ top: 20, right: 20, left: 40, bottom: 20 }}
-            barCategoryGap={30}
+            data={summary}
+            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis
               dataKey="zone"
               tick={{ fill: "#FFD100", fontSize: 12 }}
@@ -59,53 +56,41 @@ export default function CityZoneChart({ summary = [] }) {
             />
             <YAxis tick={{ fill: "#FFD100" }} />
 
-            {/* Gradient defs for 3D effect */}
+            {/* Gradient defs for towers */}
             <defs>
-              {sorted.map((entry) => {
-                const grad = ZONE_GRADIENTS[entry.zone] || DEFAULT_GRADIENT;
+              {summary.map((entry) => {
+                const grad = ZONE_TOWERS[entry.zone] || DEFAULT_GRADIENT;
                 return (
                   <linearGradient
-                    key={entry.zone}
                     id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
+                    key={entry.zone}
                     x1="0"
                     y1="0"
                     x2="0"
                     y2="1"
                   >
                     <stop offset="0%" stopColor={grad[0]} />
-                    <stop offset="50%" stopColor={grad[1]} />
-                    <stop offset="100%" stopColor={grad[1]} stopOpacity={0.7} />
+                    <stop offset="100%" stopColor={grad[1]} />
                   </linearGradient>
                 );
               })}
             </defs>
 
-            <Bar
-              dataKey="count"
-              radius={[12, 12, 0, 0]} // Rounded tops for towers
-              stroke="#fff"
-              strokeWidth={1}
-            >
-              {sorted.map((entry, idx) => {
-                const fill = ZONE_GRADIENTS[entry.zone]
+            <Bar dataKey="count" radius={[8, 8, 0, 0]} stroke="#fff" strokeWidth={1}>
+              {summary.map((entry, idx) => {
+                const fill = ZONE_TOWERS[entry.zone]
                   ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
                   : `url(#grad-Default)`;
                 return <Cell key={`cell-${idx}`} fill={fill} />;
               })}
 
-              {/* Labels on top */}
               <LabelList
                 dataKey="count"
                 position="top"
-                style={{
-                  fill: "#FFD100",
-                  fontWeight: "bold",
-                  fontSize: "0.9rem",
-                }}
+                style={{ fill: "#FFD100", fontWeight: "bold" }}
               />
             </Bar>
 
-            {/* Tooltip */}
             <Tooltip
               cursor={{ fill: "rgba(255,255,255,0.1)" }}
               content={({ active, payload }) => {
@@ -119,7 +104,6 @@ export default function CityZoneChart({ summary = [] }) {
                       borderRadius: 4,
                       padding: "8px",
                       color: "#FFD100",
-                      fontSize: "0.9rem",
                     }}
                   >
                     <div><strong>{zone}</strong></div>
