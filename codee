@@ -20,5 +20,54 @@
     return candidates.some(c => c.includes(needle));
   };
 
+....
+const members = filterZone
+    ? membersRaw.filter(m => m.present && matchesFilterZone(m, filterZone))
+    : membersRaw;
 
 
+
+
+.....
+
+
+
+
+
+
+const filtered = filterZone
+      ? raw.filter(m => m.present && matchesFilterZone(m, filterZone))
+      : raw;
+
+
+
+
+
+....
+
+
+const filtered = filterZone
+      ? members.filter(m => m.present && matchesFilterZone(m, filterZone))
+      : members;
+
+
+
+...
+
+
+
+
+const filtered = filterZone
+      ? members.filter(m => m.present && matchesFilterZone(m, filterZone))
+      : members;
+
+
+
+...
+
+
+
+return firstColumnRoles.some(role => {
+      const members = ertStatus[role] || [];
+      return members.some(m => m.present && matchesFilterZone(m, filterZone));
+    });
