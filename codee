@@ -3,12 +3,10 @@ Compiled with problems:
 ERROR
 [eslint] 
 src\components\ERTOverview.jsx
-  Line 3146:38:  'matchesFilterZone' is not defined  no-undef
-  Line 3188:42:  'matchesFilterZone' is not defined  no-undef
-  Line 3220:42:  'matchesFilterZone' is not defined  no-undef
-  Line 3249:45:  'matchesFilterZone' is not defined  no-undef
+  Line 3012:43:  'matchesFilterZone' is not defined  no-undef
 
 Search for the keywords to learn more about each error.
+
 
 
 import React, { useState, useMemo } from 'react';
@@ -88,32 +86,13 @@ function renderRoleCard(role, membersRaw, filterZone) {
   //   : membersRaw;
 
 
-   // helper: match a member's live/current location fields against the filter zone (case-insensitive)
-  const matchesFilterZone = (member, zone) => {
-    if (!zone) return true;
-    const needle = String(zone).toLowerCase();
-
-    // only check live/current location fields — not baseLocationByRole
-    const candidates = [
-      member.zone,
-      member.Zone,
-      member.liveLocation,
-      member.location,
-      member.Location,
-      member.Floor,
-      member.floor,
-      member['Base Location']  // include only because in some payloads it represents current zone — still safe
-    ]
-      .filter(Boolean)
-      .map(v => String(v).toLowerCase());
-
-    return candidates.some(c => c.includes(needle));
-  };
-
-  
-  const members = filterZone
+ 
+const members = filterZone
     ? membersRaw.filter(m => m.present && matchesFilterZone(m, filterZone))
     : membersRaw;
+
+
+
 
   // Don't render the card if there are no members to show
   if (filterZone && members.length === 0) return null;
@@ -188,7 +167,27 @@ export default function ERTOverview({ ertStatus }) {
   const [filterZone, setFilterZone] = useState(null);
   const [showAllMembers, setShowAllMembers] = useState(false);
 
-  
+    // helper: match a member's live/current location fields against the filter zone (case-insensitive)
+  const matchesFilterZone = (member, zone) => {
+    if (!zone) return true;
+    const needle = String(zone).toLowerCase();
+
+    // only check live/current location fields — not baseLocationByRole
+    const candidates = [
+      member.zone,
+      member.Zone,
+      member.liveLocation,
+      member.location,
+      member.Location,
+      member.Floor,
+      member.floor,
+      member['Base Location']  // include only because in some payloads it represents current zone — still safe
+    ]
+      .filter(Boolean)
+      .map(v => String(v).toLowerCase());
+
+    return candidates.some(c => c.includes(needle));
+  };
 
   const allMembers = useMemo(() => {
     const list = [];
