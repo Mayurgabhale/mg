@@ -3,6 +3,9 @@ when  i filte Podium Floor then disply all member, this is wronog,
 i want to disply only Podium Floor in Podium Floor filte not all
 read all code carefully, and check what is the isseu
 carefully, 
+for example
+Rangare, Bhupendra Babu  is 2nd Floor but they alos disply in Podium Floor
+ Vishal Chaudhari this is at Tower B but this also disply in Podium Floor
 
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
