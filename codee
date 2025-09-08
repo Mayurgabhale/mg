@@ -9,7 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LabelList
+  LabelList,
+  Cell
 } from "recharts";
 import { Card } from "react-bootstrap";
 
@@ -98,7 +99,7 @@ export default function ZoneTowerChart({ data = [] }) {
               strokeWidth={1}
             >
               {data.map((entry, idx) => (
-                <cell
+                <Cell
                   key={`cell-${idx}`}
                   fill={COLORS[idx % COLORS.length]}
                 />
