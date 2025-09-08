@@ -1,4 +1,6 @@
-// src/components/SummaryChart.jsx
+
+
+
 import React from "react";
 import {
   BarChart,
@@ -8,10 +10,11 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
 } from "recharts";
 import { Card } from "react-bootstrap";
 
-/* ---------- configuration ---------- */
+// Gradients/solid colors for known zones
 const ZONE_GRADIENTS = {
   "Red Zone": ["#FF0000", "#D22B2B"],
   "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
@@ -35,111 +38,23 @@ const SOLID_COLORS = [
   "#C75D00",
 ];
 
+// 🔹 Helper: shorten long zone names
 const shortenName = (name) => {
-  if (!name) return "";
-  if (name.length > 20) return name.split(" ").slice(0, 2).join(" ") + "...";
+  if (name.length > 18) {
+    return name.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
+  }
   return name;
 };
 
-/* ---------- Custom bar shape ---------- */
-/* props passed by Recharts:
-   x, y, width, height, fill, payload (original data) */
-function CustomBarShape({ x, y, width, height, fill, payload, minPixelWidth = 48 }) {
-  // width is the computed width from the chart scale (in px)
-  // force a minimum visible width for tiny values
-  const displayWidth = Math.max(width, minPixelWidth);
-
-  // If the bar was expanded artificially, draw a subtle overlay showing the true scaled width
-  const showActualOverlay = width > 0 && width < minPixelWidth;
-
-  // label position
-  const labelX = x + displayWidth - 8; // right-aligned inside the bar
-  const labelY = y + height / 2 + 4; // vertically centered
-
-  return (
-    <g>
-      {/* main bar (rounded) */}
-      <rect
-        x={x}
-        y={y + 2} // small vertical offset for aesthetic
-        width={displayWidth}
-        height={height - 4}
-        rx={8}
-        ry={8}
-        fill={fill}
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth={0.8}
-      />
-
-      {/* show a small darker overlay for the actual scaled width (so user can infer proportion) */}
-      {showActualOverlay && (
-        <rect
-          x={x}
-          y={y + 2}
-          width={Math.max(1, width)} // width might be <1 — show at least 1px
-          height={height - 4}
-          rx={6}
-          ry={6}
-          fill="rgba(255,255,255,0.14)"
-        />
-      )}
-
-      {/* count label (actual) */}
-      <text
-        x={labelX}
-        y={labelY}
-        textAnchor="end"
-        fill="#ffffff"
-        fontSize="0.85rem"
-        fontWeight="700"
-        pointerEvents="none"
-      >
-        {payload.count}
-      </text>
-
-      {/* small "min" indicator when clipped (optional visual) */}
-      {showActualOverlay && (
-        <g>
-          <line
-            x1={x + width + 2}
-            y1={y + 4}
-            x2={x + width + 2}
-            y2={y + height - 4}
-            stroke="rgba(255,255,255,0.12)"
-            strokeDasharray="2 3"
-          />
-          <text
-            x={x + width + 6}
-            y={y + height / 2 + 4}
-            fill="rgba(255,255,255,0.6)"
-            fontSize="0.6rem"
-            alignmentBaseline="middle"
-          >
-            min
-          </text>
-        </g>
-      )}
-    </g>
-  );
-}
-
-/* ---------- Main component ---------- */
 export default function SummaryChart({ summary = [] }) {
-  if (!summary || !summary.length) {
+  if (!summary.length) {
     return <Card body>No zone data available</Card>;
   }
 
-  // sort desc so biggest zones are top
+  // Sort zones by highest headcount
   const sorted = [...summary].sort((a, b) => b.count - a.count);
 
-  // max for axis scaling
-  const maxCount = Math.max(...sorted.map((s) => (typeof s.count === "number" ? s.count : 0)));
-  // a little headroom on axis
-  const axisMax = Math.max(maxCount * 1.2, 6); // ensure axis range when counts are tiny
-
-  // map data to include a short label used for Y axis
-  const data = sorted.map((z) => ({ ...z, shortZone: shortenName(z.zone) }));
-
+  // Custom tooltip
   const renderTooltip = ({ active, payload }) => {
     if (!active || !payload || !payload.length) return null;
     const { zone, count } = payload[0].payload;
@@ -147,81 +62,96 @@ export default function SummaryChart({ summary = [] }) {
       <div
         style={{
           backgroundColor: "#000",
-          border: "1px solid #FFD100",
-          borderRadius: 6,
-          padding: 8,
+          border: "1px solid var(--wu-yellow)",
+          borderRadius: 4,
+          padding: "8px",
           color: "#FFD100",
-          fontSize: 13,
+          fontSize: "0.9rem",
         }}
       >
-        <div style={{ fontWeight: 700 }}>{zone}</div>
-        <div style={{ marginTop: 4 }}>Headcount: {count}</div>
+        <div>
+          <strong>{zone}</strong>
+        </div>
+        <div>Headcount: {count}</div>
       </div>
     );
   };
 
   return (
-    <Card className="mb-4 shadow-sm border" style={{ borderColor: "#FFD100" }}>
-      <Card.Header className="bg-dark text-warning text-center fw-bold" style={{ fontSize: "1.05rem", borderBottom: "2px solid #FFD100" }}>
+    <Card
+      className="mb-4 shadow-sm border"
+      style={{ borderColor: "var(--wu-yellow)" }}
+    >
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{
+          fontSize: "1.2rem",
+          borderBottom: "2px solid var(--wu-yellow)",
+        }}
+      >
         Western Union - Pune Area-wise Headcount
       </Card.Header>
 
-      <Card.Body style={{ height: "52vh", backgroundColor: "#111", padding: 0 }}>
+      <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             layout="vertical"
-            data={data}
-            margin={{ top: 18, right: 24, left: 66, bottom: 18 }}
-            barCategoryGap="16%"
+            data={sorted.map((z) => ({
+              ...z,
+              shortZone: shortenName(z.zone), // add short version
+            }))}
+            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
           >
-            {/* X axis controls numeric scale (horizontal length of bars) */}
-            <XAxis
-              type="number"
-              domain={[0, axisMax]}
-              tick={{ fill: "#FFD100" }}
-              axisLine={false}
-              tickLine={false}
-            />
-
+            <XAxis type="number" tick={{ fill: "#FFD100" }} />
             <YAxis
               dataKey="shortZone"
               type="category"
-              width={160}
-              tick={{ fill: "#FFD100", fontWeight: 700 }}
-              axisLine={false}
-              tickLine={false}
+              tick={{ fill: "#FFD100", fontWeight: "bold" }}
+              width={150}
             />
-
             <Tooltip content={renderTooltip} />
 
-            {/* Gradients for zones */}
+            <Bar dataKey="count" radius={[8, 8, 8, 8]}>
+              {sorted.map((entry, idx) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                const color = grad
+                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
+                  : SOLID_COLORS[idx % SOLID_COLORS.length];
+                return <Cell key={`cell-${idx}`} fill={color} />;
+              })}
+
+              {/* 🔹 Show count inside bar */}
+              <LabelList
+                dataKey="count"
+                position="inside"
+                style={{
+                  fill: "#fff",
+                  fontWeight: "bold",
+                  fontSize: "0.9rem",
+                }}
+              />
+            </Bar>
+
+            {/* Gradient defs */}
             <defs>
-              {data.map((d, idx) => {
-                const grad = ZONE_GRADIENTS[d.zone];
+              {sorted.map((entry) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
                 if (!grad) return null;
-                const id = `grad-${d.zone.replace(/\s+/g, "-")}`;
                 return (
-                  <linearGradient id={id} key={id} x1="0" y1="0" x2="1" y2="0">
+                  <linearGradient
+                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
+                    key={entry.zone}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="0"
+                  >
                     <stop offset="0%" stopColor={grad[0]} />
                     <stop offset="100%" stopColor={grad[1]} />
                   </linearGradient>
                 );
               })}
             </defs>
-
-            {/* Use a custom shape to guarantee minimum pixel width */}
-            <Bar
-              dataKey="count"
-              // pass a React element (it will be cloned per bar with props)
-              shape={<CustomBarShape minPixelWidth={48} />}
-              isAnimationActive={false}
-            >
-              {data.map((entry, idx) => {
-                const grad = ZONE_GRADIENTS[entry.zone];
-                const fill = grad ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})` : SOLID_COLORS[idx % SOLID_COLORS.length];
-                return <Cell key={`cell-${idx}`} fill={fill} />;
-              })}
-            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </Card.Body>
