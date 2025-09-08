@@ -1,4 +1,134 @@
 
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { Card, Row, Col } from 'react-bootstrap';
+import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
+import './SummaryCards.css';
+
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount
+}) {
+  // keep your existing border/accent colors here:
+  const BORDER_COLORS = [
+    '#FFC72C',
+    '#FFD666',
+    '#FFE599',
+    '#FFF2CC',
+    '#FFD666',
+    '#FFE599'
+  ];
+
+  // a richer palette for the icons
+  const ICON_COLORS = [
+    '#E57373', // soft red
+    '#81C784', // mint green
+    '#64B5F6', // sky blue
+    '#BA68C8', // orchid purple
+    '#FFB74D', // amber
+    '#4DB6AC'  // teal
+  ];
+
+  const cards = [
+    { key: 'totalVisitedToday', title: "Today's Total Headcount",     value: totalVisitedToday,    icon: <FaUsers /> },
+    { key: 'employeesVisitedToday', title: "Today's Employees Count",  value: employeesVisitedToday,icon: <FaUserTie /> },
+    { key: 'contractorsVisitedToday', title: "Today's Contractors Count", value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { key: 'totalOccupancy', title: 'Realtime Headcount',            value: totalOccupancy,       icon: <FaUsers /> },
+    { key: 'employeeCount', title: 'Realtime Employees Count',       value: employeeCount,        icon: <FaUserTie /> },
+    { key: 'contractorCount', title: 'Realtime Contractors Count',   value: contractorCount,      icon: <FaHardHat /> },
+  ];
+
+  // ensure numeric values and compute max for relative bars
+  const sanitized = cards.map(c => ({ ...c, value: Number(c.value) || 0 }));
+  const maxVal = Math.max(...sanitized.map(s => s.value), 1);
+
+  // animated counts (one state object)
+  const [animated, setAnimated] = useState(
+    sanitized.reduce((acc, c) => { acc[c.key] = 0; return acc; }, {})
+  );
+
+  useEffect(() => {
+    // animate all cards on mount / when values change
+    let rafId;
+    const duration = 900; // ms
+    const start = performance.now();
+    const from = sanitized.reduce((acc, c) => { acc[c.key] = animated[c.key] || 0; return acc; }, {});
+    const to = sanitized.reduce((acc, c) => { acc[c.key] = c.value; return acc; }, {});
+
+    function step(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; // easeInOutQuad-ish
+      const next = {};
+      for (const k of Object.keys(to)) {
+        next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
+      }
+      setAnimated(next);
+      if (t < 1) rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
+
+  // small deterministic sparkline generator
+  const makeSparkline = (value, idx, width = 80, height = 24, points = 6) => {
+    const ratio = value / maxVal;
+    const seed = idx + 1;
+    const segment = width / (points - 1);
+    const coords = new Array(points).fill(0).map((_, i) => {
+      // use sin-based deterministic curve, biased by ratio
+      const x = i * segment;
+      const amp = (0.35 + 0.6 * ratio) * height;
+      const y = height - (Math.sin((i + seed) * 0.9) * 0.5 + 0.5) * amp;
+      return [x, Math.round(y)];
+    });
+
+    const path = coords.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
+    // area fill path
+    const lastX = coords[coords.length - 1][0];
+    const baseY = height;
+    const area = `${path} L ${lastX} ${baseY} L 0 ${baseY} Z`;
+    return { path, area, w: width, h: height };
+  };
+
+  return (
+    <Row className="mb-3 summary-cards-row">
+      {sanitized.map((c, i) => {
+        const percent = Math.round((c.value / maxVal) * 100);
+        const spark = makeSparkline(c.value, i);
+        return (
+          <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
+            <Card
+              className="summary-card"
+              style={{
+                borderImage: `linear-gradient(90deg, ${BORDER_COLORS[i % BORDER_COLORS.length]}, rgba(255,255,255,0)) 1`,
+              }}
+              title={c.title}
+            >
+              <Card.Body className="d-flex flex-column align-items-center p-3">
+                <div
+                  className="icon-badge"
+                  style={{
+                    background: `linear-gradient(135deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.08))`,
+                    boxShadow: '0 6px 18px rgba(0,0,0,0.45), inset 0 -6px 12px rgba(255,255,255,0.04)'
+                  }}
+                >
+                  {c.icon}
+                </div>
+
+                <div className="card-title-text" title={c.title}>
+                  {c.title}
+                </div>
+
+                <div className="count-row">
+                  <div className="count-number" aria-label={`${c.title} value`}>
+                    {animated[c.key].toLocaleString()}
+                  </div>
+
                   {/* small percentage bubble */}
                   {/* <div className="count-pct" title={`${percent}% of largest`}>
                     {percent}%
@@ -6,7 +136,7 @@
                 </div>
 
                 {/* sparkline */}
-                <svg className="sparkline" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`}>
+                {/* <svg className="sparkline" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`}>
                   <defs>
                     <linearGradient id={`spark-grad-${i}`} x1="0" x2="1">
                       <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
@@ -15,10 +145,20 @@
                   </defs>
                   <path d={spark.area} fill={`url(#spark-grad-${i})`} />
                   <path d={spark.path} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                </svg> */}
 
                 {/* progress bar */}
-                <div className="progress-holder" aria-hidden>
+                {/* <div className="progress-holder" aria-hidden>
                   <div className="progress-track" />
                   <div className="progress-fill" style={{ width: `${percent}%`, background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})` }} />
-                </div>
+                </div> */}
+
+                <div className="muted-note mt-2"> </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        );
+      })}
+    </Row>
+  );
+}
