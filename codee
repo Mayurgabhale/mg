@@ -51,6 +51,9 @@ export default function SummaryChart({ summary = [] }) {
   // Sort zones by highest headcount
   const sorted = [...summary].sort((a, b) => b.count - a.count);
 
+  // Get max count to adjust axis scale
+  const maxCount = Math.max(...sorted.map((z) => z.count));
+
   // Custom tooltip
   const renderTooltip = ({ active, payload }) => {
     if (!active || !payload || !payload.length) return null;
@@ -99,7 +102,12 @@ export default function SummaryChart({ summary = [] }) {
             }))}
             margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
           >
-            <XAxis type="number" tick={{ fill: "#FFD100" }} />
+            {/* 🔹 Force X axis to start from 0 but give enough width so small values show */}
+            <XAxis
+              type="number"
+              domain={[0, Math.max(maxCount, 10)]} // ensure minimum visible range
+              tick={{ fill: "#FFD100" }}
+            />
             <YAxis
               dataKey="shortZone"
               type="category"
@@ -108,7 +116,7 @@ export default function SummaryChart({ summary = [] }) {
             />
             <Tooltip content={renderTooltip} />
 
-            <Bar dataKey="count" radius={[8, 8, 8, 8]}>
+            <Bar dataKey="count" radius={[8, 8, 8, 8]} barSize={25}>
               {sorted.map((entry, idx) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
                 const color = grad
@@ -120,7 +128,7 @@ export default function SummaryChart({ summary = [] }) {
               {/* 🔹 Show count inside bar */}
               <LabelList
                 dataKey="count"
-                position="inside"
+                position="insideRight"
                 style={{
                   fill: "#fff",
                   fontWeight: "bold",
