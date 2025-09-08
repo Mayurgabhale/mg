@@ -1,71 +1,114 @@
-// Replace the existing Overlay with this
-const Overlay = ({ width, height }) => {
-  if (!width || !height) return null;
 
-  const cx = width / 2;
-  const cy = height / 2;
+// src/components/PersonnelDonutChart.jsx
 
-  // pixel radii approximations that match your donut's inner/outer % sizes
-  const radiusOuter = Math.min(width, height) * 0.38;
-  const radiusInner = Math.min(width, height) * 0.21;
+import React from 'react';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  Label
+} from 'recharts';
+import { Card } from 'react-bootstrap';
 
-  const startAngle = 90;
-  const points = [];
+// 7 colors (WU theme + accents)
+const COLORS = [
+  '#FFD100', // WU Yellow
+  '#009E60', // WU Green
+  '#88B04B', // Olive
+  '#FF6F61', // Coral
+  '#58595B', // WU Gray
+  '#FFB800', // Accent Yellow
+  '#6B5B95'  // Indigo
+];
 
-  // compute mid-angle for each slice
-  let angleCursor = 0;
-  for (let i = 0; i < sorted.length; i++) {
-    const value = sorted[i].count;
-    const angle = (value / total) * 360;
-    const midAngle = startAngle - (angleCursor + angle / 2);
-    points.push({ midAngle, idx: i });
-    angleCursor += angle;
-  }
-
-  // star path for center cutout (kept as before)
-  const starPath = (() => {
-    const spikes = 5;
-    const outerR = Math.min(width, height) * 0.12;
-    const innerR = outerR * 0.48;
-    let rot = Math.PI / 2 * 3;
-    let path = '';
-    let step = Math.PI / spikes;
-
-    for (let i = 0; i < spikes; i++) {
-      const ox = cx + Math.cos(rot) * outerR;
-      const oy = cy + Math.sin(rot) * outerR;
-      if (i === 0) path += `M ${ox} ${oy}`;
-      else path += ` L ${ox} ${oy}`;
-      rot += step;
-
-      const ix = cx + Math.cos(rot) * innerR;
-      const iy = cy + Math.sin(rot) * innerR;
-      path += ` L ${ix} ${iy}`;
-      rot += step;
-    }
-    path += ' Z';
-    return path;
-  })();
-
+const DarkTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0];
   return (
-    <g>
-      {/* plain grey circles (no icons/text) */}
-      {points.map((p) => {
-        const rad = (p.midAngle * Math.PI) / 180;
-        const rMid = (radiusInner + radiusOuter) / 2;
-        const x = cx + Math.cos(rad) * rMid;
-        const y = cy - Math.sin(rad) * rMid;
-
-        return (
-          <g key={`dot-${p.idx}`} transform={`translate(${x}, ${y})`}>
-            {/* single grey circle — adjust r and fill if you want different size/color */}
-            <circle r={14} fill="#D1D5DB" opacity={0.9} />
-          </g>
-        );
-      })}
-
-      {/* star cutout in center (keeps the reference look) */}
-      <path d={starPath} fill="#071018" stroke="rgba(255,255,255,0.06)" strokeWidth={2} />
-    </g>
+    <div style={{
+      backgroundColor: '#1a1a1a',
+      color: '#FFD100',
+      border: '1px solid var(--wu-yellow)',
+      padding: '0.5rem',
+      borderRadius: 4,
+      fontSize: '0.9rem'
+    }}>
+      <div><strong>{name}</strong></div>
+      <div>Count: {value}</div>
+    </div>
   );
 };
+
+export default function PersonnelDonutChart({ data = [] }) {
+  const total = data.reduce((sum, e) => sum + e.count, 0);
+  if (!data.length || total === 0) {
+    return <Card body className="bg-dark text-white">No personnel data</Card>;
+  }
+
+  const sorted = [...data].sort((a, b) => b.count - a.count);
+
+  return (
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
+      >
+        Personnel Type Headcount
+      </Card.Header>
+      <Card.Body
+        style={{
+          height: '50vh',
+          padding: '1rem',
+          backgroundColor: '#1a1a1a'
+        }}
+      >
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={sorted}
+              dataKey="count"
+              nameKey="personnelType"
+              cx="50%"
+              cy="50%"
+              innerRadius="45%"
+              outerRadius="80%"
+              paddingAngle={2}
+              labelLine={false}
+              label={({ percent, name }) => (
+                <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
+                  {`${name}: ${(percent * 100).toFixed(0)}%`}
+                </tspan>
+              )}
+              stroke="#fff"
+              strokeWidth={2}
+            >
+              {sorted.map((entry, idx) => (
+                <Cell
+                  key={entry.personnelType}
+                  fill={COLORS[idx % COLORS.length]}
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
+              ))}
+              <Label
+                value={total}
+                position="center"
+                style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
+              />
+            </Pie>
+            <Tooltip content={<DarkTooltip />} />
+            <Legend
+              verticalAlign="bottom"
+              align="center"
+              wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
+              iconType="circle"
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  );
+}
