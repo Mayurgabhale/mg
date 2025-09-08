@@ -1,69 +1,269 @@
-// src/components/PersonnelPeopleGrid.jsx
 
-import React from "react";
-import { Card } from "react-bootstrap";
+
+
+// src/components/SummaryChart.jsx
+
+import React, { useMemo } from 'react';
 import {
-  FaUserTie,
-  FaUserShield,
-  FaUserCog,
-  FaUserClock,
-  FaUserFriends,
-} from "react-icons/fa";
-import "./PersonnelDonutChart.css"; // Custom 3D styles
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
+import { Card } from 'react-bootstrap';
 
-// Brand colors (vibrant, 3D friendly)
-const COLORS = {
-  Employee: "linear-gradient(135deg, #1E90FF, #0066CC)", // Blue
-  Visitor: "linear-gradient(135deg, #FF6F61, #CC3A30)", // Coral Red
-  Contractor: "linear-gradient(135deg, #32CD32, #228B22)", // Green
-  "Property Management": "linear-gradient(135deg, #FFD700, #E6AC00)", // Gold
-  "Temp Badge": "linear-gradient(135deg, #8A2BE2, #551A8B)", // Purple
+// Gradients/solid colors for known zones
+const ZONE_GRADIENTS = {
+  'Red Zone': ['#FF0000', '#D22B2B'],
+  'Red Zone - Outer Area': ['#FF0000', '#D22B2B'],
+  'Yellow Zone': ['#FFDE21', '#FFBF00'],
+  'Yellow Zone - Outer Area': ['#FFDE21', '#FFBF00'],
+  '2nd Floor, Pune': ['#FF6F61', '#FFA28F'],
+  'Orange Zone': ['#E3963E', '#FFC966'],
+  'Orange Zone - Outer Area': ['#E3963E', '#FFC966'],
+  'Green Zone': ['#009E60', '#50C878'],
+  'Reception Area': ['#E0CCFF', '#F4E6FF'],
+  'Assembly Area': ['#FE6F5E', '#A366FF'],
+  'Tower B': ['#E68FAC', '#99BBFF']
 };
 
-// Icon mapping for each category
-const ICONS = {
-  Employee: <FaUserTie />,
-  Visitor: <FaUserFriends />,
-  Contractor: <FaUserCog />,
-  "Property Management": <FaUserShield />,
-  "Temp Badge": <FaUserClock />,
-};
+const DEFAULT_GRADIENT = ['#3B4CCA', '#D0D8FF'];
+const SOLID_COLORS = ['#FFD100', '#009E60', '#FF6F61', '#58595B', '#FFB800', '#C75D00'];
 
-export default function PersonnelPeopleGrid({ data = [] }) {
-  const total = data.reduce((sum, e) => sum + e.count, 0);
+export default function SummaryChart({ summary = [] }) {
+  // 1) Build pieData with equal slice widths but carry actual counts
+  const pieData = useMemo(
+    () =>
+      summary.map((z) => ({
+        name: z.zone,
+        value: 1,
+        count: z.count
+      })),
+    [summary]
+  );
 
-  if (!data.length || total === 0) {
-    return (
-      <Card body className="bg-dark text-white p-4 text-center">
-        No personnel data available
-      </Card>
-    );
+  // 2) Build a zoneLegendItems array
+  const zoneLegendItems = useMemo(() => {
+    return pieData.map((entry, idx) => {
+      const grad = ZONE_GRADIENTS[entry.name];
+      const color = grad ? grad[0] : SOLID_COLORS[idx % SOLID_COLORS.length];
+      return {
+        value: entry.name,
+        type: 'circle',
+        color
+      };
+    });
+  }, [pieData]);
+
+  if (!summary.length) {
+    return <Card body>No zone data available</Card>;
   }
 
-  // ✅ Sort data by count descending
-  const sorted = [...data].sort((a, b) => b.count - a.count);
+  // 3) Custom tooltip to display the actual count
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+    const { name, count } = payload[0].payload;
+    return (
+      <div
+        style={{
+          backgroundColor: '#000',
+          border: '1px solid var(--wu-yellow)',
+          borderRadius: 4,
+          padding: '8px',
+          color: '#FFD100',
+          fontSize: '0.9rem'
+        }}
+      >
+        <div><strong>Zone:</strong> {name}</div>
+        <div style={{ marginTop: 4 }}><strong>Count:</strong> {count}</div>
+      </div>
+    );
+  };
+
+  // 4) Helper: get fill & stroke for a given zone
+  const getColorsForZone = (zoneName, idx) => {
+    const grad = ZONE_GRADIENTS[zoneName];
+    if (grad) {
+      return {
+        fill: `url(#grad-${zoneName.replace(/\s+/g, '-')})`,
+        stroke: grad[0]
+      };
+    } else {
+      const solid = SOLID_COLORS[idx % SOLID_COLORS.length];
+      return { fill: solid, stroke: solid };
+    }
+  };
 
   return (
-    <Card className="mb-4 shadow-lg border-0 personnel-card">
-      <Card.Header className="bg-dark text-warning text-center fw-bold">
-        <h5 className="mb-0">Personnel Overview</h5>
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+      <Card.Header className="bg-dark text-warning text-center fw-bold" style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}>
+        Western Union-Pune Area-wise Headcount
       </Card.Header>
-      <Card.Body
-        className="p-4 bg-dark d-flex flex-wrap justify-content-center"
-        style={{ gap: "1.5rem" }}
-      >
-        {sorted.map((item) => (
-          <div
-            key={item.personnelType}
-            className="personnel-block"
-            style={{ background: COLORS[item.personnelType] }}
-          >
-            <div className="personnel-icon">{ICONS[item.personnelType]}</div>
-            <div className="personnel-type">{item.personnelType}</div>
-            <div className="personnel-count">{item.count}</div>
-          </div>
-        ))}
+
+      <Card.Body style={{ height: '50vh', padding: 0 }}>
+        <div
+          style={{
+            position: 'relative',
+            height: '100%',
+            backgroundColor: 'var(--wu-gray-dark)',
+            border: '1px solid var(--wu-yellow)',
+            borderRadius: 4,
+            overflow: 'hidden'
+          }}
+        >
+          {/* Pie Chart with legend below */}
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              {/* Gradient definitions for each slice */}
+              <defs>
+                {pieData.map((entry) => {
+                  const key = entry.name.replace(/\s+/g, '-');
+                  const grad = ZONE_GRADIENTS[entry.name] || DEFAULT_GRADIENT;
+                  return (
+                    <linearGradient
+                      id={`grad-${key}`}
+                      key={key}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor={grad[0]} stopOpacity={1} />
+                      <stop offset="100%" stopColor={grad[1]} stopOpacity={1} />
+                    </linearGradient>
+                  );
+                })}
+              </defs>
+
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="45%"
+                innerRadius="40%"
+                outerRadius="80%"
+                paddingAngle={2}
+                labelLine={false}
+                isAnimationActive={false}
+
+                label={({ cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = innerRadius + (outerRadius - innerRadius) * 0.4; // Shift inward
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                  const zoneName = pieData[index].name;
+                  const count = pieData[index].count;
+
+                  // Split long zone names into two lines manually
+                  const splitIndex = zoneName.length > 18 ? zoneName.lastIndexOf(' ', Math.floor(zoneName.length / 2)) : -1;
+                  const line1 = splitIndex > 0 ? zoneName.slice(0, splitIndex) : zoneName;
+                  const line2 = splitIndex > 0 ? zoneName.slice(splitIndex + 1) : null;
+
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      {line2 ? (
+                        <>
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#000"
+                            fontSize="0.7rem"
+                            fontWeight="750"
+                            dy={-15}
+                          >
+                            {line1}
+                          </text>
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#000"
+                            fontSize="0.7rem"
+                            fontWeight="750"
+                            dy={2}
+                          >
+                            {line2}
+                          </text>
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#000"
+                            fontSize="0.90rem"
+                            fontWeight="750"
+                            dy={14}
+                          >
+                            {count}
+                          </text>
+                        </>
+                      ) : (
+                        <>
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#000"
+                            fontSize="0.7rem"
+                            fontWeight="750"
+                            dy={-8}
+                          >
+                            {zoneName}
+                          </text>
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="#000"
+                            fontSize="0.90rem"
+                            dy={8}
+                            fontWeight="750"
+                          >
+                            {count}
+                          </text>
+                        </>
+                      )}
+                    </g>
+                  );
+                }}
+
+
+
+              >
+                {pieData.map((entry, idx) => {
+                  const { fill, stroke } = getColorsForZone(entry.name, idx);
+                  return (
+                    <Cell
+                      key={`slice-${idx}`}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={2}
+                    />
+                  );
+                })}
+              </Pie>
+
+              <Tooltip content={renderTooltip} />
+
+              {/* Legend positioned below */}
+              {/* <Legend
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="center"
+                iconType="circle"
+                wrapperStyle={{
+                  marginTop: -30,
+                  padding: 0,
+                  paddingBottom: 0,
+                  color: '#FFD100',
+                  fontSize: '0.9rem'
+                }}
+                payload={zoneLegendItems}
+              /> */}
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </Card.Body>
     </Card>
   );
 }
+
