@@ -1,5 +1,5 @@
-
-
+dont change any thing just add widh count is 1
+becasue count is 1 then bard disply very small, so not lookin better ok. 
 
 import React from "react";
 import {
