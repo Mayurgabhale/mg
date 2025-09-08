@@ -1,31 +1,40 @@
-// src/components/ZoneTowersChart.jsx
 import React from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from "recharts";
-import { Card } from "react-bootstrap";
+import { Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 
-// Custom tower gradients
-const ZONE_TOWERS = {
-  "Red Zone": ["#FF4C4C", "#B22222"],
-  "Yellow Zone": ["#FFD700", "#E6AC00"],
-  "Orange Zone": ["#FFA500", "#CC7000"],
-  "Green Zone": ["#32CD32", "#228B22"],
-  "Blue Zone": ["#1E90FF", "#0047AB"],
-  "Purple Zone": ["#8A2BE2", "#4B0082"],
+// Layout of zones (x, y, width, depth)
+const ZONE_LAYOUT = [
+  { zone: "Red Zone", x: 5, y: 5, w: 15, d: 10 },
+  { zone: "Yellow Zone", x: 25, y: 5, w: 20, d: 10 },
+  { zone: "Orange Zone", x: 5, y: 20, w: 15, d: 15 },
+  { zone: "Green Zone", x: 25, y: 20, w: 20, d: 15 },
+  { zone: "Blue Zone", x: 50, y: 5, w: 25, d: 30 },
+];
+
+const ZONE_COLORS = {
+  "Red Zone": "#FF4C4C",
+  "Yellow Zone": "#FFD700",
+  "Orange Zone": "#FFA500",
+  "Green Zone": "#32CD32",
+  "Blue Zone": "#1E90FF",
+  "Purple Zone": "#8A2BE2",
 };
 
-const DEFAULT_GRADIENT = ["#AAAAAA", "#555555"];
+// Helper to create 3D polygon points
+const get3DPoints = (x, y, w, d, h) => {
+  // Top rectangle points
+  const top = [
+    [x, y],
+    [x + w, y],
+    [x + w, y + d],
+    [x, y + d],
+  ];
+  // Shift for height
+  const shift = h * 0.5; // perspective factor
+  const top3D = top.map(([px, py]) => [px, py - shift]);
+  return top3D;
+};
 
-export default function ZoneTowersChart({ summary = [] }) {
+export default function CityFloorPlan({ summary = [] }) {
   if (!summary.length) {
     return (
       <Card body className="bg-dark text-white text-center">
@@ -34,86 +43,67 @@ export default function ZoneTowersChart({ summary = [] }) {
     );
   }
 
+  const maxCount = Math.max(...summary.map((z) => z.count));
+
+  // Map counts for lookup
+  const zoneCounts = summary.reduce((acc, cur) => {
+    acc[cur.zone] = cur.count;
+    return acc;
+  }, {});
+
   return (
     <Card className="mb-4 shadow-lg border-0">
       <Card.Header className="bg-dark text-warning text-center fw-bold">
-        <h5 className="mb-0">Pune Area-wise Headcount Towers</h5>
+        <h5 className="mb-0">3D Building Area Zones</h5>
       </Card.Header>
 
       <Card.Body style={{ height: "60vh", backgroundColor: "#1a1a1a", padding: "1rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={summary}
-            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis
-              dataKey="zone"
-              tick={{ fill: "#FFD100", fontSize: 12 }}
-              interval={0}
-              angle={-20}
-              textAnchor="end"
-            />
-            <YAxis tick={{ fill: "#FFD100" }} />
+        <svg width="100%" height="100%" viewBox="0 0 100 60">
+          {ZONE_LAYOUT.map((zone) => {
+            const count = zoneCounts[zone.zone] || 0;
+            const height = (count / maxCount) * 20 + 2; // scale height
 
-            {/* Gradient defs for towers */}
-            <defs>
-              {summary.map((entry) => {
-                const grad = ZONE_TOWERS[entry.zone] || DEFAULT_GRADIENT;
-                return (
-                  <linearGradient
-                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
-                    key={entry.zone}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="0%" stopColor={grad[0]} />
-                    <stop offset="100%" stopColor={grad[1]} />
-                  </linearGradient>
-                );
-              })}
-            </defs>
+            // 3D effect polygon points
+            const topPoints = get3DPoints(zone.x, zone.y, zone.w, zone.d, height)
+              .map(([px, py]) => `${px},${py}`)
+              .join(" ");
 
-            <Bar dataKey="count" radius={[8, 8, 0, 0]} stroke="#fff" strokeWidth={1}>
-              {summary.map((entry, idx) => {
-                const fill = ZONE_TOWERS[entry.zone]
-                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
-                  : `url(#grad-Default)`;
-                return <Cell key={`cell-${idx}`} fill={fill} />;
-              })}
-
-              <LabelList
-                dataKey="count"
-                position="top"
-                style={{ fill: "#FFD100", fontWeight: "bold" }}
-              />
-            </Bar>
-
-            <Tooltip
-              cursor={{ fill: "rgba(255,255,255,0.1)" }}
-              content={({ active, payload }) => {
-                if (!active || !payload || !payload.length) return null;
-                const { zone, count } = payload[0].payload;
-                return (
-                  <div
-                    style={{
-                      backgroundColor: "#000",
-                      border: "1px solid #FFD100",
-                      borderRadius: 4,
-                      padding: "8px",
-                      color: "#FFD100",
-                    }}
-                  >
-                    <div><strong>{zone}</strong></div>
+            return (
+              <OverlayTrigger
+                key={zone.zone}
+                placement="top"
+                overlay={
+                  <Tooltip>
+                    <strong>{zone.zone}</strong>
                     <div>Headcount: {count}</div>
-                  </div>
-                );
-              }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+                  </Tooltip>
+                }
+              >
+                <g>
+                  {/* Front face */}
+                  <polygon
+                    points={`${zone.x},${zone.y + zone.d} ${zone.x + zone.w},${zone.y + zone.d} ${zone.x + zone.w},${zone.y + zone.d - height} ${zone.x},${zone.y + zone.d - height}`}
+                    fill={ZONE_COLORS[zone.zone] || "#888"}
+                    stroke="#fff"
+                    strokeWidth={0.3}
+                  />
+                  {/* Top face */}
+                  <polygon
+                    points={topPoints}
+                    fill={ZONE_COLORS[zone.zone] ? `${ZONE_COLORS[zone.zone]}AA` : "#888AA"}
+                    stroke="#fff"
+                    strokeWidth={0.3}
+                  />
+                  {/* Side face */}
+                  <polygon
+                    points={`${zone.x + zone.w},${zone.y + zone.d} ${zone.x + zone.w},${zone.y + zone.d} ${zone.x + zone.w},${zone.y + zone.d - height} ${zone.x + zone.w},${zone.y + zone.d - height}`}
+                    fill={ZONE_COLORS[zone.zone] ? `${ZONE_COLORS[zone.zone]}88` : "#666"}
+                  />
+                </g>
+              </OverlayTrigger>
+            );
+          })}
+        </svg>
       </Card.Body>
     </Card>
   );
