@@ -1,6 +1,3 @@
-dont change any thing just add widh count is 1
-becasue count is 1 then bard disply very small, so not lookin better ok. 
-
 import React from "react";
 import {
   BarChart,
@@ -111,7 +108,8 @@ export default function SummaryChart({ summary = [] }) {
             />
             <Tooltip content={renderTooltip} />
 
-            <Bar dataKey="count" radius={[8, 8, 8, 8]}>
+            {/* only change: ensure very small values still render visibly */}
+            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
               {sorted.map((entry, idx) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
                 const color = grad
