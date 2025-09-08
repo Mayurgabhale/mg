@@ -1,8 +1,8 @@
-https://share.google/images/ZBXN7PZV8rAEh86LG
 
 
 // src/components/PersonnelDonutChart.jsx
-import React, { useMemo, useState } from 'react';
+
+import React from 'react';
 import {
   PieChart,
   Pie,
@@ -25,195 +25,86 @@ const COLORS = [
   '#6B5B95'  // Indigo
 ];
 
-/* Dark tooltip (keeps your style) */
 const DarkTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
     <div style={{
-      backgroundColor: '#0f1720',
+      backgroundColor: '#1a1a1a',
       color: '#FFD100',
-      border: '1px solid rgba(255,209,0,0.12)',
-      padding: '0.5rem 0.75rem',
-      borderRadius: 6,
-      fontSize: '0.9rem',
-      boxShadow: '0 8px 24px rgba(2,6,23,0.6)'
+      border: '1px solid var(--wu-yellow)',
+      padding: '0.5rem',
+      borderRadius: 4,
+      fontSize: '0.9rem'
     }}>
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>{name}</div>
-      <div style={{ fontSize: 13 }}>Count: <strong>{value}</strong></div>
+      <div><strong>{name}</strong></div>
+      <div>Count: {value}</div>
     </div>
   );
 };
 
 export default function PersonnelDonutChart({ data = [] }) {
-  // compute total first (pure JS, fine anywhere)
   const total = data.reduce((sum, e) => sum + e.count, 0);
-
-  // Hooks must be declared unconditionally, before any early return:
-  const sorted = useMemo(() => [...data].sort((a, b) => b.count - a.count), [data]);
-  const [activeIndex, setActiveIndex] = useState(null);
-
-  // helper to darken a color for the depth/extrusion layer
-  const darken = (hex, amount = 0.22) => {
-    const c = hex.replace('#', '');
-    const num = parseInt(c, 16);
-    let r = (num >> 16) & 0xff;
-    let g = (num >> 8) & 0xff;
-    let b = num & 0xff;
-    r = Math.max(0, Math.floor(r * (1 - amount)));
-    g = Math.max(0, Math.floor(g * (1 - amount)));
-    b = Math.max(0, Math.floor(b * (1 - amount)));
-    return `rgb(${r}, ${g}, ${b})`;
-  };
-
-  // Guard: return early if there's no data or total is zero
   if (!data.length || total === 0) {
     return <Card body className="bg-dark text-white">No personnel data</Card>;
   }
 
-  // geometry: radii (tweak these to increase/decrease 3D effect)
-  const innerRadius = '44%';
-  const outerRadius = '80%';
-  const depthOffset = 8; // px down for the depth layer
-
-  // center label style
-  const centerLabelStyle = { fill: '#ffffff', fontSize: 34, fontWeight: 700, fontFamily: 'Inter, Arial, sans-serif' };
-
-  // center label style variable must be defined before usage; kept above
+  const sorted = [...data].sort((a, b) => b.count - a.count);
 
   return (
-    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'transparent' }}>
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
       <Card.Header
         className="bg-dark text-warning text-center fw-bold"
-        style={{ fontSize: '1.12rem', borderBottom: '2px solid rgba(255,209,0,0.08)' }}
+        style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
       >
         Personnel Type Headcount
       </Card.Header>
-
-      <Card.Body style={{ height: '52vh', padding: '1rem', background: '#071018' }}>
+      <Card.Body
+        style={{
+          height: '50vh',
+          padding: '1rem',
+          backgroundColor: '#1a1a1a'
+        }}
+      >
         <ResponsiveContainer>
           <PieChart>
-            {/* SVG defs: per-slice gradients and soft shadow */}
-            <defs>
-              {sorted.map((_, idx) => {
-                const c = COLORS[idx % COLORS.length];
-                const darker = darken(c, 0.18);
-                return (
-                  <linearGradient id={`slice-grad-${idx}`} key={`slice-grad-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={c} stopOpacity={1} />
-                    <stop offset="70%" stopColor={c} stopOpacity={0.95} />
-                    <stop offset="100%" stopColor={darker} stopOpacity={1} />
-                  </linearGradient>
-                );
-              })}
-
-              <radialGradient id="center-gloss" cx="40%" cy="35%">
-                <stop offset="0%" stopColor="#fff" stopOpacity="0.16" />
-                <stop offset="40%" stopColor="#fff" stopOpacity="0.06" />
-                <stop offset="100%" stopColor="#000" stopOpacity="0" />
-              </radialGradient>
-
-              <filter id="pieShadow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="#000" floodOpacity="0.45" />
-              </filter>
-            </defs>
-
-            {/* DEPTH / extrusion layer: draw the pie slightly lower + darker fills */}
-            <g transform={`translate(0, ${depthOffset})`}>
-              <Pie
-                data={sorted}
-                dataKey="count"
-                nameKey="personnelType"
-                cx="50%"
-                cy="50%"
-                innerRadius={innerRadius}
-                outerRadius={outerRadius}
-                paddingAngle={2}
-                startAngle={90}
-                endAngle={-270}
-                isAnimationActive={false}
-              >
-                {sorted.map((entry, idx) => (
-                  <Cell
-                    key={`depth-${entry.personnelType}`}
-                    fill={darken(COLORS[idx % COLORS.length], 0.26)}
-                    stroke="rgba(0,0,0,0)"
-                  />
-                ))}
-              </Pie>
-            </g>
-
-            {/* MAIN glossy donut (slightly squashed vertically for perspective) */}
-            <g transform="translate(0, -4) scale(1, 0.98)">
-              <Pie
-                data={sorted}
-                dataKey="count"
-                nameKey="personnelType"
-                cx="50%"
-                cy="50%"
-                innerRadius={innerRadius}
-                outerRadius={outerRadius}
-                paddingAngle={2}
-                startAngle={90}
-                endAngle={-270}
-                stroke="rgba(255,255,255,0.06)"
-                strokeWidth={1}
-                // Active slice index + outer radius expansion on hover
-                activeIndex={activeIndex}
-                activeShape={undefined}
-                // Note: Recharts expects event handlers with signature (data, index)
-                onMouseEnter={(_, idx) => setActiveIndex(idx)}
-                onMouseLeave={() => setActiveIndex(null)}
-              >
-                {sorted.map((entry, idx) => (
-                  <Cell
-                    key={`slice-${entry.personnelType}`}
-                    fill={`url(#slice-grad-${idx})`}
-                    stroke="#081016"
-                    strokeWidth={1}
-                  />
-                ))}
-              </Pie>
-
-              {/* glossy radial highlight on top */}
-              <Pie
-                data={[{ name: 'gloss', value: 1 }]}
-                dataKey="value"
-                startAngle={90}
-                endAngle={-270}
-                cx="50%"
-                cy="50%"
-                innerRadius="0%"
-                outerRadius={outerRadius}
-                isAnimationActive={false}
-              >
-                <Cell fill="url(#center-gloss)" />
-              </Pie>
-            </g>
-
-            {/* CENTER: big total */}
             <Pie
-              data={[{ name: 'center', value: total }]}
-              dataKey="value"
+              data={sorted}
+              dataKey="count"
+              nameKey="personnelType"
               cx="50%"
               cy="50%"
-              outerRadius="35%"
-              innerRadius="0%"
-              isAnimationActive={false}
+              innerRadius="45%"
+              outerRadius="80%"
+              paddingAngle={2}
+              labelLine={false}
+              label={({ percent, name }) => (
+                <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
+                  {`${name}: ${(percent * 100).toFixed(0)}%`}
+                </tspan>
+              )}
+              stroke="#fff"
+              strokeWidth={2}
             >
+              {sorted.map((entry, idx) => (
+                <Cell
+                  key={entry.personnelType}
+                  fill={COLORS[idx % COLORS.length]}
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
+              ))}
               <Label
                 value={total}
                 position="center"
-                style={centerLabelStyle}
+                style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
               />
             </Pie>
-
-            {/* Tooltip and legend (kept clean) */}
             <Tooltip content={<DarkTooltip />} />
             <Legend
               verticalAlign="bottom"
               align="center"
-              wrapperStyle={{ paddingTop: 8, color: '#E6EEF8', fontSize: 13 }}
+              wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
               iconType="circle"
             />
           </PieChart>
