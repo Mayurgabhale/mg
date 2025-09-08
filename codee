@@ -1,3 +1,5 @@
+
+
 // src/components/PersonnelDonutChart.jsx
 
 import React from 'react';
@@ -8,13 +10,11 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  LabelList
+  Label
 } from 'recharts';
 import { Card } from 'react-bootstrap';
-import './PersonnelDonutChart.css'; // Custom CSS for enhanced styling
 
-// Solid colors for reliability (derived from original WU theme + accents)
-// Using start colors from gradients to avoid SVG defs issues
+// 7 colors (WU theme + accents)
 const COLORS = [
   '#FFD100', // WU Yellow
   '#009E60', // WU Green
@@ -25,41 +25,20 @@ const COLORS = [
   '#6B5B95'  // Indigo
 ];
 
-// Custom label renderer function that returns a positioned text element
-const renderCustomLabel = (entry) => {
-  const { name, percent } = entry;
-  const radian = Math.PI / 180;
-  const radius = 120; // Adjusted for outer radius + some offset for positioning
-  const x = (entry.cx + (entry.outerRadius + 20) * Math.cos(-entry.midAngle * radian)) || 0;
-  const y = (entry.cy + (entry.outerRadius + 20) * Math.sin(-entry.midAngle * radian)) || 0;
-
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="#fff"
-      textAnchor={x > entry.cx ? 'start' : 'end'}
-      dominantBaseline="central"
-      className="pie-label"
-      fontSize="11px"
-      fontWeight="500"
-    >
-      <tspan dy="-10" x={x}>{name}</tspan>
-      <tspan x={x} className="percent-text" fontSize="12px" fontWeight="bold" dy="15">
-        {(percent * 100).toFixed(0)}%
-      </tspan>
-    </text>
-  );
-};
-
 const DarkTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
-  const { name, value, percent } = payload[0];
+  const { name, value } = payload[0];
   return (
-    <div className="custom-tooltip">
-      <div className="tooltip-title">{name}</div>
-      <div className="tooltip-value">Count: {value}</div>
-      <div className="tooltip-percent">({(percent * 100).toFixed(1)}%)</div>
+    <div style={{
+      backgroundColor: '#1a1a1a',
+      color: '#FFD100',
+      border: '1px solid var(--wu-yellow)',
+      padding: '0.5rem',
+      borderRadius: 4,
+      fontSize: '0.9rem'
+    }}>
+      <div><strong>{name}</strong></div>
+      <div>Count: {value}</div>
     </div>
   );
 };
@@ -67,70 +46,66 @@ const DarkTooltip = ({ active, payload }) => {
 export default function PersonnelDonutChart({ data = [] }) {
   const total = data.reduce((sum, e) => sum + e.count, 0);
   if (!data.length || total === 0) {
-    return <Card body className="bg-dark text-white p-4 text-center">No personnel data available</Card>;
+    return <Card body className="bg-dark text-white">No personnel data</Card>;
   }
 
   const sorted = [...data].sort((a, b) => b.count - a.count);
 
   return (
-    <Card className="mb-4 personnel-card shadow-lg border-0">
-      <Card.Header className="bg-gradient-dark text-warning text-center fw-bold">
-        <h5 className="mb-0">Personnel Type Headcount</h5>
-        <div className="header-underline"></div>
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
+      >
+        Personnel Type Headcount
       </Card.Header>
-      <Card.Body className="p-3 bg-dark position-relative">
-        <ResponsiveContainer width="100%" height={400}>
-          <PieChart className="enhanced-pie">
+      <Card.Body
+        style={{
+          height: '50vh',
+          padding: '1rem',
+          backgroundColor: '#1a1a1a'
+        }}
+      >
+        <ResponsiveContainer>
+          <PieChart>
             <Pie
               data={sorted}
               dataKey="count"
               nameKey="personnelType"
               cx="50%"
               cy="50%"
-              innerRadius={70} // Increased for better donut hole visibility
-              outerRadius={110} // Adjusted for container size
-              paddingAngle={4}
-              minAngle={15}
+              innerRadius="45%"
+              outerRadius="80%"
+              paddingAngle={2}
+              labelLine={false}
+              label={({ percent, name }) => (
+                <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
+                  {`${name}: ${(percent * 100).toFixed(0)}%`}
+                </tspan>
+              )}
               stroke="#fff"
-              strokeWidth={3}
-              cornerRadius={5} // Slight rounding for modern look
+              strokeWidth={2}
             >
               {sorted.map((entry, idx) => (
                 <Cell
-                  key={`cell-${idx}`}
+                  key={entry.personnelType}
                   fill={COLORS[idx % COLORS.length]}
                   stroke="#fff"
-                  strokeWidth={2}
+                  strokeWidth={1}
                 />
               ))}
+              <Label
+                value={total}
+                position="center"
+                style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
+              />
             </Pie>
-            <LabelList data={sorted} content={renderCustomLabel} />
-            {/* Center label for total */}
-            <text
-              x="50%"
-              y="50%"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="center-label"
-              fill="#FFD100"
-              fontSize="2.5rem"
-              fontWeight="bold"
-            >
-              {total.toLocaleString()}
-            </text>
             <Tooltip content={<DarkTooltip />} />
             <Legend
               verticalAlign="bottom"
               align="center"
-              wrapperStyle={{
-                paddingTop: '20px',
-                color: '#FFD100',
-                fontSize: '1rem',
-                fontWeight: '500'
-              }}
+              wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
               iconType="circle"
-              iconSize={12}
-              formatter={(value) => <span style={{ color: '#FFD100' }}>{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -138,3 +113,10 @@ export default function PersonnelDonutChart({ data = [] }) {
     </Card>
   );
 }
+
+
+
+
+
+
+
