@@ -1,179 +1,87 @@
-import React from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from "recharts";
-import { Card } from "react-bootstrap";
+create this more atractive. 
 
-// Gradients/solid colors for known zones
-const ZONE_GRADIENTS = {
-  "Red Zone": ["#FF0000", "#D22B2B"],
-  "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
-  "Yellow Zone": ["#FFDE21", "#FFBF00"],
-  "Yellow Zone - Outer Area": ["#FFDE21", "#FFBF00"],
-  "2nd Floor, Pune": ["#FF6F61", "#FFA28F"],
-  "Orange Zone": ["#E3963E", "#FFC966"],
-  "Orange Zone - Outer Area": ["#E3963E", "#FFC966"],
-  "Green Zone": ["#009E60", "#50C878"],
-  "Reception Area": ["#E0CCFF", "#F4E6FF"],
-  "Assembly Area": ["#FE6F5E", "#A366FF"],
-  "Tower B": ["#E68FAC", "#99BBFF"],
-};
 
-const SOLID_COLORS = [
-  "#FFD100",
-  "#009E60",
-  "#FF6F61",
-  "#58595B",
-  "#FFB800",
-  "#C75D00",
-];
+// src/components/SummaryCards.jsx
 
-// 🔹 Helper: shorten long zone names
-const shortenName = (name) => {
-  if (name.length > 18) {
-    return name.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
-  }
-  return name;
-};
+import React from 'react';
+import { Card, Row, Col } from 'react-bootstrap';
+import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
 
-export default function SummaryChart({ summary = [] }) {
-  if (!summary.length) {
-    return <Card body>No zone data available</Card>;
-  }
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount
+}) {
+  // keep your existing border/accent colors here:
+  const BORDER_COLORS = [
+    '#FFC72C',
+    '#FFD666',
+    '#FFE599',
+    '#FFF2CC',
+    '#FFD666',
+    '#FFE599'
+  ];
 
-  // ----- Custom ordering:
-  // 1) all other zones (group 1) -> shown first
-  // 2) "Tower B" (group 2) -> shown second
-  // 3) any zone containing "2nd Floor" (group 3) -> shown last
-  const groupedAndSorted = (() => {
-    // defensive copy
-    const copy = Array.isArray(summary) ? [...summary] : [];
-    const orderRank = (zoneName = "") => {
-      if (zoneName === "Tower B") return 2;
-      if (zoneName && zoneName.toLowerCase().includes("2nd floor")) return 3;
-      return 1;
-    };
+  // a richer palette for the icons
+  const ICON_COLORS = [
+    '#E57373', // soft red
+    '#81C784', // mint green
+    '#64B5F6', // sky blue
+    '#BA68C8', // orchid purple
+    '#FFB74D', // amber
+    '#4DB6AC'  // teal
+  ];
 
-    // sort by group rank first, then by count desc within group
-    copy.sort((a, b) => {
-      const ra = orderRank(a.zone);
-      const rb = orderRank(b.zone);
-      if (ra !== rb) return ra - rb;
-      return b.count - a.count; // count desc within same group
-    });
-
-    return copy;
-  })();
-
-  // Custom tooltip
-  const renderTooltip = ({ active, payload }) => {
-    if (!active || !payload || !payload.length) return null;
-    const { zone, count } = payload[0].payload;
-    return (
-      <div
-        style={{
-          backgroundColor: "#000",
-          border: "1px solid var(--wu-yellow)",
-          borderRadius: 4,
-          padding: "8px",
-          color: "#FFD100",
-          fontSize: "0.9rem",
-        }}
-      >
-        <div>
-          <strong>{zone}</strong>
-        </div>
-        <div>Headcount: {count}</div>
-      </div>
-    );
-  };
+  const cards = [
+    { title: 'Todays Total Headcount',     value: totalVisitedToday,    icon: <FaUsers /> },
+    { title: 'Todays Employees Count',      value: employeesVisitedToday,icon: <FaUserTie /> },
+    { title: 'Todays Contractors Count',    value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { title: 'Realtime Headcount',     value: totalOccupancy,       icon: <FaUsers /> },
+    { title: 'Realtime Employees Count',     value: employeeCount,        icon: <FaUserTie /> },
+    { title: 'Realtime Contractors Count',   value: contractorCount,      icon: <FaHardHat /> },
+  ];
 
   return (
-    <Card
-      className="mb-4 shadow-sm border"
-      style={{ borderColor: "var(--wu-yellow)" }}
-    >
-      <Card.Header
-        className="bg-dark text-warning text-center fw-bold"
-        style={{
-          fontSize: "1.2rem",
-          borderBottom: "2px solid var(--wu-yellow)",
-        }}
-      >
-        Western Union - Pune Area-wise Headcount
-      </Card.Header>
-
-      <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            layout="vertical"
-            data={groupedAndSorted.map((z) => ({
-              ...z,
-              shortZone: shortenName(z.zone), // add short version
-            }))}
-            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
+    <Row className="mb-1">
+      {cards.map((c, i) => (
+        <Col key={i} sm={2} md={2} lg={2} className="mb-4">
+          <Card
+            className="shadow-sm"
+            style={{
+              background: '#2f2f2f',
+              border: `2px solid ${BORDER_COLORS[i % BORDER_COLORS.length]}`,
+              borderRadius: '8px'
+            }}
           >
-            <XAxis type="number" tick={{ fill: "#FFD100" }} />
-            <YAxis
-              dataKey="shortZone"
-              type="category"
-              tick={{ fill: "#FFD100", fontWeight: "bold" }}
-              width={150}
-            />
-            <Tooltip content={renderTooltip} />
-
-            {/* only change earlier kept: ensure very small values still render visibly */}
-            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
-              {groupedAndSorted.map((entry, idx) => {
-                const grad = ZONE_GRADIENTS[entry.zone];
-                const color = grad
-                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
-                  : SOLID_COLORS[idx % SOLID_COLORS.length];
-                return <Cell key={`cell-${idx}`} fill={color} />;
-              })}
-
-              {/* 🔹 Show count inside bar */}
-              <LabelList
-                dataKey="count"
-                position="inside"
+            <Card.Body className="text-center">
+              <div
                 style={{
-                  fill: "#fff",
-                  fontWeight: "bold",
-                  fontSize: "0.9rem",
+                  color: ICON_COLORS[i % ICON_COLORS.length],
+                  fontSize: '1.5rem'
                 }}
-              />
-            </Bar>
-
-            {/* Gradient defs */}
-            <defs>
-              {groupedAndSorted.map((entry) => {
-                const grad = ZONE_GRADIENTS[entry.zone];
-                if (!grad) return null;
-                return (
-                  <linearGradient
-                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
-                    key={entry.zone}
-                    x1="0"
-                    y1="0"
-                    x2="1"
-                    y2="0"
-                  >
-                    <stop offset="0%" stopColor={grad[0]} />
-                    <stop offset="100%" stopColor={grad[1]} />
-                  </linearGradient>
-                );
-              })}
-            </defs>
-          </BarChart>
-        </ResponsiveContainer>
-      </Card.Body>
-    </Card>
+                className="mb-2"
+              >
+                {c.icon}
+              </div>
+              <Card.Title style={{ color: '#fff' }}>{c.title}</Card.Title>
+              <Card.Text
+                style={{
+                  fontSize: '1.6rem',
+                  fontWeight: 'bold',
+                  color: '#fff'
+                }}
+              >
+                {c.value}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+      ))}
+    </Row>
   );
 }
+
+
