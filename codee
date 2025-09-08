@@ -1,8 +1,4 @@
-
-
-
 // src/components/PersonnelDonutChart.jsx
-
 import React from 'react';
 import {
   PieChart,
@@ -11,11 +7,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Label
+  Label,
+  Customized
 } from 'recharts';
 import { Card } from 'react-bootstrap';
 
-// 7 colors (WU theme + accents)
+// Enhanced WU theme colors with gradients
 const COLORS = [
   '#FFD100', // WU Yellow
   '#009E60', // WU Green
@@ -28,18 +25,31 @@ const COLORS = [
 
 const DarkTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
-  const { name, value } = payload[0];
+  const { name, value, payload: data } = payload[0];
+  const percent = ((value / data.total) * 100).toFixed(1);
+  
   return (
     <div style={{
       backgroundColor: '#1a1a1a',
       color: '#FFD100',
       border: '1px solid var(--wu-yellow)',
-      padding: '0.5rem',
-      borderRadius: 4,
-      fontSize: '0.9rem'
+      padding: '0.8rem',
+      borderRadius: '8px',
+      fontSize: '0.9rem',
+      boxShadow: '0 4px 12px rgba(255, 209, 0, 0.2)'
     }}>
-      <div><strong>{name}</strong></div>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.4rem' }}>
+        <div style={{
+          width: '12px',
+          height: '12px',
+          backgroundColor: data.fill,
+          borderRadius: '2px',
+          marginRight: '0.5rem'
+        }}></div>
+        <strong>{name}</strong>
+      </div>
       <div>Count: {value}</div>
+      <div>Percentage: {percent}%</div>
     </div>
   );
 };
@@ -51,63 +61,296 @@ export default function PersonnelDonutChart({ data = [] }) {
   }
 
   const sorted = [...data].sort((a, b) => b.count - a.count);
+  const dataWithPercent = sorted.map(item => ({
+    ...item,
+    percent: ((item.count / total) * 100).toFixed(1)
+  }));
+
+  // helper: darken a hex color
+  const darken = (hex, amount = 0.18) => {
+    const c = hex.replace('#', '');
+    const num = parseInt(c, 16);
+    let r = (num >> 16) & 0xff;
+    let g = (num >> 8) & 0xff;
+    let b = num & 0xff;
+    r = Math.max(0, Math.floor(r * (1 - amount)));
+    g = Math.max(0, Math.floor(g * (1 - amount)));
+    b = Math.max(0, Math.floor(b * (1 - amount)));
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  // helper: lighten a hex color
+  const lighten = (hex, amount = 0.18) => {
+    const c = hex.replace('#', '');
+    const num = parseInt(c, 16);
+    let r = (num >> 16) & 0xff;
+    let g = (num >> 8) & 0xff;
+    let b = num & 0xff;
+    r = Math.min(255, Math.floor(r + (255 - r) * amount));
+    g = Math.min(255, Math.floor(g + (255 - g) * amount));
+    b = Math.min(255, Math.floor(b + (255 - b) * amount));
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  // Custom center label with 3D effect
+  const CenterLabel = ({ viewBox, total }) => {
+    const { cx, cy } = viewBox;
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={70} fill="#0b1114" stroke="#FFD100" strokeWidth="2" />
+        <text
+          x={cx}
+          y={cy - 10}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#FFD100"
+          style={{ fontSize: '28px', fontWeight: 'bold' }}
+        >
+          {total}
+        </text>
+        <text
+          x={cx}
+          y={cy + 20}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#FFFFFF"
+          style={{ fontSize: '14px' }}
+        >
+          Total
+        </text>
+      </g>
+    );
+  };
+
+  // Custom legend with improved styling
+  const renderLegend = (props) => {
+    const { payload } = props;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        justifyContent: 'center', 
+        padding: '10px 0',
+        gap: '10px'
+      }}>
+        {payload.map((entry, index) => (
+          <div key={`legend-${index}`} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            margin: '0 8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            padding: '4px 8px',
+            borderRadius: '6px'
+          }}>
+            <div style={{
+              width: '14px',
+              height: '14px',
+              backgroundColor: entry.color,
+              marginRight: '6px',
+              borderRadius: '2px'
+            }} />
+            <span style={{ color: '#FFD100', fontSize: '0.9rem' }}>
+              {entry.value} ({dataWithPercent.find(d => d.personnelType === entry.value)?.percent}%)
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <Card className="mb-4 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+    <Card className="mb-4 shadow-lg border-0" style={{ 
+      background: 'linear-gradient(145deg, #0b1114 0%, #1a2229 100%)',
+      overflow: 'hidden'
+    }}>
       <Card.Header
-        className="bg-dark text-warning text-center fw-bold"
-        style={{ fontSize: '1.2rem', borderBottom: '2px solid var(--wu-yellow)' }}
+        className="text-warning text-center fw-bold border-0"
+        style={{ 
+          fontSize: '1.4rem', 
+          background: 'linear-gradient(90deg, rgba(255,209,0,0.1) 0%, rgba(255,209,0,0.2) 100%)',
+          padding: '1rem'
+        }}
       >
         Personnel Type Headcount
       </Card.Header>
+
       <Card.Body
         style={{
-          height: '50vh',
-          padding: '1rem',
-          backgroundColor: '#1a1a1a'
+          height: '60vh',
+          padding: '1.5rem',
+          background: 'radial-gradient(circle at center, #0f171e 0%, #0b1114 100%)',
+          position: 'relative'
         }}
       >
+        {/* Decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 20% 30%, rgba(255, 209, 0, 0.03) 0%, transparent 60%)',
+          pointerEvents: 'none'
+        }}></div>
+        
         <ResponsiveContainer>
           <PieChart>
+            <defs>
+              {/* Enhanced gradients for 3D effect */}
+              {sorted.map((_, idx) => {
+                const c = COLORS[idx % COLORS.length];
+                const darker = darken(c, 0.3);
+                const lighter = lighten(c, 0.1);
+                
+                return (
+                  <React.Fragment key={`gradients-${idx}`}>
+                    <linearGradient id={`slice-grad-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={lighter} />
+                      <stop offset="60%" stopColor={c} />
+                      <stop offset="100%" stopColor={darker} />
+                    </linearGradient>
+                    
+                    <filter id={`shadow-${idx}`} x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur in="SourceAlpha" stdDeviation="4" />
+                      <feOffset dx="2" dy="4" result="offsetblur"/>
+                      <feFlood floodColor="#000000" floodOpacity="0.5"/>
+                      <feComposite in2="offsetblur" operator="in"/>
+                      <feMerge>
+                        <feMergeNode/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </React.Fragment>
+                );
+              })}
+
+              {/* Glossy overlay gradient */}
+              <radialGradient id="donut-gloss" cx="50%" cy="45%">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0.2" />
+                <stop offset="40%" stopColor="#fff" stopOpacity="0.1" />
+                <stop offset="80%" stopColor="#fff" stopOpacity="0.05" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* Depth layer with enhanced 3D effect */}
+            <g transform="translate(0, 12) scale(1, 0.94)">
+              <Pie
+                data={sorted}
+                dataKey="count"
+                nameKey="personnelType"
+                cx="50%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="85%"
+                paddingAngle={1}
+                startAngle={90}
+                endAngle={-270}
+                isAnimationActive={false}
+              >
+                {sorted.map((entry, idx) => (
+                  <Cell
+                    key={`depth-${entry.personnelType}`}
+                    fill={darken(COLORS[idx % COLORS.length], 0.4)}
+                    stroke="rgba(0,0,0,0)"
+                    strokeWidth={0}
+                  />
+                ))}
+              </Pie>
+            </g>
+
+            {/* Main donut with enhanced 3D styling */}
+            <g transform="translate(0, -6) scale(1, 0.96)">
+              <Pie
+                data={sorted}
+                dataKey="count"
+                nameKey="personnelType"
+                cx="50%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="85%"
+                paddingAngle={2}
+                startAngle={90}
+                endAngle={-270}
+                stroke="#0b1114"
+                strokeWidth={3}
+                strokeLinejoin="round"
+                isAnimationActive={true}
+                animationDuration={800}
+                animationEasing="ease-out"
+                labelLine={false}
+                label={false}
+              >
+                {sorted.map((entry, idx) => (
+                  <Cell
+                    key={`slice-${entry.personnelType}`}
+                    fill={`url(#slice-grad-${idx})`}
+                    stroke="#0b1114"
+                    strokeWidth={2}
+                    filter={`url(#shadow-${idx})`}
+                  />
+                ))}
+                
+                {/* Label lines and text */}
+                {sorted.map((entry, index) => {
+                  // Calculate position for labels
+                  const RADIAN = Math.PI / 180;
+                  const radius = 85 + 20; // Outer radius + label offset
+                  const totalAngle = 360; // Total angle of the pie
+                  const startAngle = 90; // Starting angle (12 o'clock)
+                  const midAngle = startAngle - (entry.count / total) * totalAngle + (entry.count / total) * totalAngle / 2;
+                  
+                  const x = 50 + radius * Math.cos(-midAngle * RADIAN);
+                  const y = 50 + radius * Math.sin(-midAngle * RADIAN);
+                  
+                  return (
+                    <text
+                      key={`label-${index}`}
+                      x={`${x}%`}
+                      y={`${y}%`}
+                      textAnchor={x > 50 ? 'start' : 'end'}
+                      dominantBaseline="central"
+                      fill="#FFFFFF"
+                      style={{ fontSize: '12px', fontWeight: '500' }}
+                    >
+                      {entry.personnelType}: {entry.count}
+                    </text>
+                  );
+                })}
+              </Pie>
+
+              {/* Glossy overlay */}
+              <Pie
+                data={[{ name: 'gloss', value: 1 }]}
+                dataKey="value"
+                startAngle={90}
+                endAngle={-270}
+                cx="50%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="85%"
+                isAnimationActive={false}
+              >
+                <Cell fill="url(#donut-gloss)" stroke="none" />
+              </Pie>
+            </g>
+
+            {/* Center total label */}
             <Pie
-              data={sorted}
-              dataKey="count"
-              nameKey="personnelType"
+              data={[{ value: 1 }]}
+              dataKey="value"
               cx="50%"
               cy="50%"
-              innerRadius="45%"
-              outerRadius="80%"
-              paddingAngle={2}
-              labelLine={false}
-              label={({ percent, name }) => (
-                <tspan style={{ fill: '#fff', fontSize: '0.9rem' }}>
-                  {`${name}: ${(percent * 100).toFixed(0)}%`}
-                </tspan>
-              )}
-              stroke="#fff"
-              strokeWidth={2}
+              innerRadius="0%"
+              outerRadius="45%"
+              isAnimationActive={false}
+              fill="#0b1114"
             >
-              {sorted.map((entry, idx) => (
-                <Cell
-                  key={entry.personnelType}
-                  fill={COLORS[idx % COLORS.length]}
-                  stroke="#fff"
-                  strokeWidth={1}
-                />
-              ))}
-              <Label
-                value={total}
-                position="center"
-                style={{ fill: '#fff', fontSize: '2.5rem', fontWeight: 'bold' }}
-              />
+              <Label content={<CenterLabel total={total} />} />
             </Pie>
+
             <Tooltip content={<DarkTooltip />} />
-            <Legend
-              verticalAlign="bottom"
-              align="center"
-              wrapperStyle={{ paddingTop: 10, color: '#FFD100', fontSize: '1.1rem' }}
-              iconType="circle"
-            />
+            <Legend content={renderLegend} />
           </PieChart>
         </ResponsiveContainer>
       </Card.Body>
