@@ -1,26 +1,810 @@
-- (m.zone && m.zone.includes(filterZone)) ||
-- baseLocationByRole[role].includes(filterZone)
-+ (m.zone && m.zone.toLowerCase() === filterZone.toLowerCase()) ||
-+ (baseLocationByRole[role] && baseLocationByRole[role].toLowerCase() === filterZone.toLowerCase())
+ERT Team Leader
+2
+Sonu Pandey
+Sonu Pandey
+Available
+Sonu.Pandey@westernunion.com
+xxx-xxx-xxxx
+Green Zone
+
+Bhoyane, Satish Pandurang
+Bhoyane, Satish Pandurang
+Available
+satishpandurang.bhoyane@westernunion.com
+xxx-xxx-xxxx
+Tower B  this tower b but show in Podium Floor alos 
 
 
 
 
-....
+
+import React, { useState, useMemo } from 'react';
+import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
+import {
+  FaHome,
+  FaBuilding,
+  FaLayerGroup,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers,
+  FaEye,
+  FaEyeSlash,
+  FaUserCog,
+  FaIdCard,
+  FaLocationArrow
+} from 'react-icons/fa';
+
+const firstColumnRoles = [
+  'Site Head',
+  'BCM Team / Site Operations',
+  'HR',
+  'Incident Controller'
+];
+
+const roleIcons = {
+  'Site Head': <FaUserTie className="text-info" />,
+  'BCM Team / Site Operations': <FaUserShield className="text-teal" />,
+  'HR': <FaUserTie className="text-purple" />,
+  'Incident Controller': <FaUserShield className="text-warning" />,
+  'ERT Team Leader': <FaUserShield className="text-danger" />,
+  'ERT Team Members': <FaUsers className="text-primary" />,
+  'First Aid Team': <FaUserNurse className="text-orange" />
+};
+
+const baseLocationByRole = {
+  'Site Head': 'Podium Floor – Red Zone',
+  'HR': 'Podium Floor – Red Zone',
+  'Incident Controller': 'Podium Floor – Red Zone',
+  'First Aid Team': 'Podium Floor – Green Zone',
+  'ERT Team Leader': 'Podium Floor – Green Zone',
+  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
+};
 
 
 
-const members = filterZone
-- ? membersRaw.filter(m =>
--     m.present && (
--       (m.zone && m.zone.includes(filterZone)) ||
--       baseLocationByRole[role].includes(filterZone)
--     )
--   )
-+ ? membersRaw.filter(m =>
-+     m.present && (
-+       (m.zone && m.zone.toLowerCase() === filterZone.toLowerCase()) ||
-+       (baseLocationByRole[role] && baseLocationByRole[role].toLowerCase() === filterZone.toLowerCase())
-+     )
-+   )
-   : membersRaw;
+
+// ---- Photo helpers ----
+const DEFAULT_PHOTO = '/photos/default.png';
+
+const toSlug = (name = '') =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+const getPhotoSrc = (member) => {
+  if (!member) return DEFAULT_PHOTO;
+  if (member.photo) return member.photo;
+
+  const name = member.name || member.Name;
+  if (name) return `/photos/${toSlug(name)}.png`;
+
+  return DEFAULT_PHOTO;
+};
+
+function renderRoleCard(role, membersRaw, filterZone) {
+  const members = filterZone
+
+    // ? membersRaw.filter(m =>
+    //   m.present && (
+    //     (m.zone && m.zone.includes(filterZone)) ||
+    //     baseLocationByRole[role].includes(filterZone)
+    //   )
+    // )
+
+
+
+     ? membersRaw.filter(m =>
+     m.present && (
+       (m.zone && m.zone.toLowerCase() === filterZone.toLowerCase()) ||
+       (baseLocationByRole[role] && baseLocationByRole[role].toLowerCase() === filterZone.toLowerCase())
+     )
+   )
+
+    : membersRaw;
+
+  // Don't render the card if there are no members to show
+  if (filterZone && members.length === 0) return null;
+
+  return (
+    <Card className="dashboard-card mb-1" key={role}>
+      <Card.Header className="dashboard-card-header d-flex align-items-center">
+        <span className="role-icon me-2">{roleIcons[role] || <FaUserCog className="text-muted" />}</span>
+        <span className="role-title">{role}</span>
+        <Badge bg="outline-light" className="ms-2">{members.length}</Badge>
+      </Card.Header>
+      <Card.Body className="p-1">
+        {members.length > 0 ? members.map((m, i) => {
+          const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
+          return (
+            <div key={i} className="member-item pb-0 mb-1">
+              <div className="d-flex justify-content-between align-items-start mb-1">
+                <div className="d-flex align-items-center">
+                  <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
+                    <img
+                      src={getPhotoSrc(m)}
+                      alt={m.name || 'Member'}
+                      className="member-photo"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_PHOTO;
+                      }}
+                    />
+                    <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+                  </div>
+                  <div className="ms-3">
+                    <h6 className="mb-0 member-name">{m.name}</h6>
+                    <small className="text-muted">{m.designation || m.role}</small>
+                  </div>
+                </div>
+                <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
+                  {m.present ? 'Available' : 'Away'}
+                </Badge>
+              </div>
+
+              <div className="member-contact-info">
+                <div className="contact-item">
+                  <FaEnvelope className="contact-icon text-primary" />
+                  <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                </div>
+                <div className="contact-item">
+                  <FaPhone className="contact-icon text-success" />
+                  <span className="contact-text">{m.phone}</span>
+                </div>
+                <div className="contact-item">
+                  <FaLocationArrow className="contact-icon text-danger" />
+                  <span className="contact-text">{location}</span>
+                </div>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="text-center py-3 text-muted">
+            <FaIdCard size={24} className="mb-2" />
+            <p className="mb-0">No members available</p>
+          </div>
+        )}
+      </Card.Body>
+    </Card>
+  );
+}
+
+export default function ERTOverview({ ertStatus }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+
+  const allMembers = useMemo(() => {
+    const list = [];
+    Object.entries(ertStatus).forEach(([role, members]) => {
+      members.forEach(m => list.push({ role, ...m }));
+    });
+    return list;
+  }, [ertStatus]);
+
+  const floorCounts = useMemo(() => {
+    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+    allMembers.forEach(m => {
+      if (!m.present) return;
+      const z = m.zone?.toLowerCase() || '';
+      if (z.includes('2nd')) counts['2nd Floor']++;
+      else if (z.includes('tower b')) counts['Tower B']++;
+      else counts['Podium Floor']++;
+    });
+    return counts;
+  }, [allMembers]);
+
+  const ertLeaders = useMemo(() => {
+    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
+    const filtered = filterZone
+      ? raw.filter(m =>
+        m.present && (
+          (m.zone && m.zone.includes(filterZone)) ||
+          baseLocationByRole['ERT Team Leader'].includes(filterZone)
+        )
+      )
+      : raw;
+
+    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
+    return filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+      if (ia !== -1 || ib !== -1) {
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [ertStatus, filterZone]);
+
+  const ertMembers = useMemo(() => {
+    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
+      role: 'ERT Team Members',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone,
+      liveLocation: m.zone,
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    const filtered = filterZone
+      ? members.filter(m =>
+        m.present && (
+          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
+          m.baseLocation.includes(filterZone)
+        )
+      )
+      : members;
+
+    filtered.sort((a, b) => {
+      const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return a.name.localeCompare(b.name);
+    });
+    return showAllMembers ? filtered : filtered.slice(0, 6);
+  }, [ertStatus, filterZone, showAllMembers]);
+
+  const firstAidMembers = useMemo(() => {
+    const members = (ertStatus['First Aid Team'] || []).map(m => ({
+      role: 'First Aid Team',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone,
+      liveLocation: m.zone,
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    const filtered = filterZone
+      ? members.filter(m =>
+        m.present && (
+          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
+          baseLocationByRole['First Aid Team'].includes(filterZone)
+        )
+      )
+      : members;
+
+    return filtered;
+  }, [ertStatus, filterZone]);
+
+  const floorIcons = {
+    'Podium Floor': <FaHome className="text-danger" />,
+    '2nd Floor': <FaBuilding className="text-info" />,
+    'Tower B': <FaLayerGroup className="text-success" />
+  };
+
+  // Check if columns have members to display when filtered
+  const leftColumnHasMembers = useMemo(() => {
+    if (!filterZone) return true;
+    return firstColumnRoles.some(role => {
+      const members = ertStatus[role] || [];
+      return members.some(m =>
+        m.present && (
+          // (m.zone && m.zone.includes(filterZone)) ||
+          // baseLocationByRole[role].includes(filterZone)
+
+           (m.zone && m.zone.toLowerCase() === filterZone.toLowerCase()) ||
+(baseLocationByRole[role] && baseLocationByRole[role].toLowerCase() === filterZone.toLowerCase())
+
+        )
+      );
+    });
+  }, [ertStatus, filterZone]);
+
+  const middleColumnHasMembers = useMemo(() => {
+    if (!filterZone) return true;
+    return ertLeaders.length > 0;
+  }, [ertLeaders, filterZone]);
+
+  const rightColumnHasMembers = useMemo(() => {
+    if (!filterZone) return true;
+    return ertMembers.length > 0 || firstAidMembers.length > 0;
+  }, [ertMembers, firstAidMembers, filterZone]);
+
+  return (
+    <div className="ert-dashboard">
+
+
+      <Container fluid className="py-4">
+        {/* Stats Cards */}
+        <Row className="mb-4">
+          <Col xs={12} md={3} className="mb-3">
+            <Card className="stats-card total-members">
+              <Card.Body className="p-3">
+                <div className="d-flex align-items-center">
+                  <div className="stats-icon me-3">
+                    <FaUsers size={24} />
+                  </div>
+                  <div>
+                    <h6 className="stats-label">Total Members</h6>
+                    <h3 className="stats-value mb-0">
+                      {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
+                    </h3>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
+            const count = floorCounts[floor] || 0;
+            const isSelected = filterZone === floor;
+            return (
+              <Col key={floor} xs={12} md={3} className="mb-3">
+                <Card
+                  className={`stats-card location-card ${isSelected ? 'active' : ''}`}
+                  onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
+                >
+                  <Card.Body className="p-3">
+                    <div className="d-flex align-items-center">
+                      <div className="stats-icon me-3">
+                        {floorIcons[floor]}
+                      </div>
+                      <div>
+                        <h6 className="stats-label">{floor}</h6>
+                        <h3 className="stats-value mb-0">{count}</h3>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+
+
+
+        {/* Three-column layout */}
+        <Row className="align-items-stretch">
+          {/* LEFT COLUMN: Fixed roles - only show if has members when filtered */}
+          {(filterZone ? leftColumnHasMembers : true) && (
+            <Col xs={12} lg={4} className="mb-4">
+              {firstColumnRoles.map(role => renderRoleCard(role, ertStatus[role] || [], filterZone))}
+            </Col>
+          )}
+
+          {/* MIDDLE COLUMN: ERT Team Leaders - only show if has members when filtered */}
+          {(filterZone ? middleColumnHasMembers : true) && (
+            <Col xs={12} lg={4} className="mb-4">
+              <Card className="dashboard-card h-100">
+                <Card.Header className="dashboard-card-header d-flex align-items-center">
+                  <span className="role-icon me-2">{roleIcons['ERT Team Leader']}</span>
+                  <span className="role-title">ERT Team Leader</span>
+                  <Badge bg="outline-light" className="ms-2">{ertLeaders.length}</Badge>
+                </Card.Header>
+                <Card.Body className="p-3">
+                  {ertLeaders.map((m, i) => {
+                    const location = m.present ? m.zone || 'Unknown Zone' : baseLocationByRole['ERT Team Leader'];
+                    return (
+                      <div key={i} className="member-item pb-1 mb-1">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div className="d-flex align-items-center">
+                            <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
+                              <img
+                                src={getPhotoSrc(m)}
+                                alt={m.name || 'Member'}
+                                className="member-photo"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = DEFAULT_PHOTO;
+                                }}
+                              />
+                              <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+                            </div>
+                            <div className="ms-3">
+                              <h6 className="mb-0 member-name">{m.name}</h6>
+                              {/* <small className="text-muted">Team Leader</small> */}
+                            </div>
+                          </div>
+                          <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
+                            {m.present ? 'Available' : 'Away'}
+                          </Badge>
+                        </div>
+
+                        <div className="member-contact-info">
+                          <div className="contact-item">
+                            <FaEnvelope className="contact-icon text-primary" />
+                            <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                          </div>
+                          <div className="contact-item">
+                            <FaPhone className="contact-icon text-success" />
+                            <span className="contact-text">{m.phone}</span>
+                          </div>
+                          <div className="contact-item">
+                            <FaLocationArrow className="contact-icon text-danger" />
+                            <span className="contact-text">{location}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!ertLeaders.length &&
+                    <div className="text-center py-4 text-muted">
+                      <FaUserShield size={28} className="mb-2" />
+                      <p className="mb-0">No Team Leaders Available</p>
+                    </div>
+                  }
+                </Card.Body>
+              </Card>
+            </Col>
+          )}
+
+          {/* RIGHT COLUMN: ERT Team Members and First Aid Team - only show if has members when filtered */}
+          {(filterZone ? rightColumnHasMembers : true) && (
+            <Col xs={12} lg={4} className="mb-4">
+              {/* ERT Team Members */}
+              <Card className="dashboard-card h-100 mb-0">
+                <Card.Header className="dashboard-card-header d-flex align-items-center">
+                  <span className="role-icon me-2">{roleIcons['ERT Team Members']}</span>
+                  <span className="role-title">ERT Team Members</span>
+                  <Badge bg="outline-light" className="ms-2">{ertMembers.length}</Badge>
+                </Card.Header>
+
+                <Card.Body className="p-3">
+                  {ertMembers.map((m, i) => {
+                    const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
+                    return (
+                      <div key={i} className="member-item pb-1 mb-1">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div className="d-flex align-items-center">
+                            <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
+                              <img
+                                src={getPhotoSrc(m)}
+                                alt={m.name || 'Member'}
+                                className="member-photo"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = DEFAULT_PHOTO;
+                                }}
+                              />
+                              <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+                            </div>
+                            <div className="ms-3">
+                              <h6 className="mb-0 member-name">{m.name}</h6>
+                              {/* <small className="text-muted">Team Member</small> */}
+                            </div>
+                          </div>
+                          <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
+                            {m.present ? 'Available' : 'Away'}
+                          </Badge>
+                        </div>
+
+                        <div className="member-contact-info">
+                          <div className="contact-item">
+                            <FaEnvelope className="contact-icon text-primary" />
+                            <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                          </div>
+                          <div className="contact-item">
+                            <FaPhone className="contact-icon text-success" />
+                            <span className="contact-text">{m.phone}</span>
+                          </div>
+                          <div className="contact-item">
+                            <FaLocationArrow className="contact-icon text-danger" />
+                            <span className="contact-text">{location}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {!ertMembers.length &&
+                    <div className="text-center py-4 text-muted">
+                      <FaUsers size={28} className="mb-2" />
+                      <p className="mb-0">No Team Members Available</p>
+                    </div>
+                  }
+
+                  <div className="text-center mt-3">
+                    <Button
+                      variant="outline-primary"
+                      className="d-flex align-items-center mx-auto"
+                      onClick={() => setShowAllMembers(prev => !prev)}
+                    >
+                      {showAllMembers ? (
+                        <>
+                          <FaEyeSlash className="me-2" />
+                          Show Less
+                        </>
+                      ) : (
+                        <>
+                          <FaEye className="me-2" />
+                          Show More
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                </Card.Body>
+              </Card>
+
+              {/* First Aid Team */}
+              {/* {renderRoleCard('First Aid Team', ertStatus['First Aid Team'] || [], filterZone)} */}
+            </Col>
+          )}
+        </Row>
+      </Container>
+
+      <style jsx>{`
+        .ert-dashboard {
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          min-height: 100vh;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        .dashboard-header {
+          background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+          backdrop-filter: blur(10px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 1.5rem 0;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-content {
+          text-align: center;
+        }
+
+        .header-content h1 {
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          color: #f8fafc;
+          font-size: 2.2rem;
+          letter-spacing: -0.5px;
+        }
+
+        .header-content p {
+          color: #94a3b8;
+          font-size: 1.1rem;
+          margin-bottom: 0;
+        }
+
+        .stats-card {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          height: 100%;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+          position: relative;
+        }
+
+        .stats-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .stats-card:hover::before {
+          opacity: 1;
+        }
+
+        .stats-card:hover, .location-card.active {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+          border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .location-card.active {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(29, 40, 58, 0.95) 100%);
+          border-color: rgba(99, 102, 241, 0.6);
+        }
+
+        .location-card.active::before {
+          opacity: 1;
+        }
+
+        .stats-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(96, 165, 250, 0.12);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .total-members .stats-icon {
+          background: rgba(139, 92, 246, 0.12);
+        }
+
+        .stats-label {
+          color: #cbd5e1;
+          font-size: 0.9rem;
+          margin-bottom: 0.4rem;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+        }
+
+        .stats-value {
+          color: #f8fafc;
+          font-weight: 700;
+          font-size: 2rem;
+          letter-spacing: -0.5px;
+        }
+
+        .filter-bar {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-label {
+          color: #e2e8f0;
+          font-weight: 500;
+        }
+
+        .filter-status {
+          color: #94a3b8;
+          font-size: 0.9rem;
+        }
+
+        .dashboard-card {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+        }
+
+        .dashboard-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+        }
+
+        .dashboard-card-header {
+          background: rgba(30, 41, 59, 0.98);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          font-weight: 600;
+
+          color: #e2e8f0;
+          backdrop-filter: blur(10px);
+        }
+
+        .role-icon {
+          font-size: 1.2rem;
+        }
+
+        .role-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+
+        .member-item {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+          transition: all 0.3s ease;
+          padding: 0.2rem 1.5rem;
+          margin: 0 -1.5rem;
+        }
+
+        .member-item:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        .member-item:last-child {
+          border-bottom: none;
+        }
+
+              
+      .member-photo-container {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Available (green border) */
+      .member-photo-container.present-border {
+        border: 2px solid #10b981; /* Tailwind's emerald-500 */
+      }
+
+      /* Away (white border) */
+      .member-photo-container.away-border {
+        border: 2px solid #ffffff;
+      }
+
+        .member-photo {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top;
+        }
+
+        
+
+
+        .member-name {
+          color: #f1f5f9;
+          font-weight: 600;
+          font-size: 1.05rem;
+        }
+
+        .status-badge {
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 0.35em 0.65em;
+        }
+
+        .member-contact-info {
+          padding-left: 12px;
+          border-left: 2px solid rgba(96, 165, 250, 0.3);
+          margin-left: 30px;
+          margin-top: 0.75rem;
+        }
+
+        .contact-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 0.5rem;
+        }
+
+        .contact-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .contact-icon {
+          width: 16px;
+          margin-right: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .contact-link, .contact-text {
+          font-size: 0.9rem;
+          color: #cbd5e1;
+          text-decoration: none;
+          transition: color 0.2s;
+          word-break: break-word;
+        }
+
+        .contact-link:hover {
+          color: #60a5fa;
+        }
+
+        .text-teal {
+          color: #0d9488;
+        }
+
+        .text-orange {
+          color: #f97316;
+        }
+
+        .text-purple {
+          color: #a855f7;
+        }
+
+        @media (max-width: 992px) {
+          .dashboard-card {
+            margin-bottom: 1.5rem;
+          }
+
+          .header-content h1 {
+            font-size: 1.8rem;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
