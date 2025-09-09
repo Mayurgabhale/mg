@@ -1,4 +1,19 @@
-
+the member is away that time onlye show ther base location. 
+and the member is available then show there currant location. 
+the problme is getting on when i filte the floor Total Members
+18
+Podium Floor
+13
+2nd Floor
+1
+Tower B
+4
+this then got issue. 
+for example when i filte Podium Floor then also disoly Tower B and 2nd Floor member is when filte Podium Floor.
+the disply in both this is the issue. they only show in ther current locatin if Tower B then only Tower B  not in Podium Floor ok.
+i hope you undrstnad what is say.
+read all code carefuuly. and dont change my code logic. jsut  write correct code. 
+carefully. 
 
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
