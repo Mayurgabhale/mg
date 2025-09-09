@@ -1,3 +1,4 @@
+ok. but know when i click on Podium Floor then not disply anything, not show any member. 
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
@@ -490,15 +491,6 @@ export default function ERTOverview({ ertStatus }) {
           )}
         </Row>
       </Container>
-
-      <style jsx>{`
-        /* your existing styles unchanged */
-        .ert-dashboard {
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-          min-height: 100vh;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        }
-      `}</style>
     </div>
   );
 }
