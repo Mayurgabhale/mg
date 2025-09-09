@@ -1,82 +1,103 @@
-create this summary card more atractive desing. new something new desin, lookin like professnla 
+import React, { useEffect, useMemo, useState } from "react";
+import { Card, Row, Col } from "react-bootstrap";
+import { FaUsers, FaUserTie, FaHardHat } from "react-icons/fa";
+import "./SummaryCards.css";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
-import './SummaryCards.css';
+/**
+ * Props:
+ *  totalVisitedToday,
+ *  employeesVisitedToday,
+ *  contractorsVisitedToday,
+ *  totalOccupancy,
+ *  employeeCount,
+ *  contractorCount
+ */
+export default function SummaryCards(props) {
+  const {
+    totalVisitedToday,
+    employeesVisitedToday,
+    contractorsVisitedToday,
+    totalOccupancy,
+    employeeCount,
+    contractorCount,
+  } = props;
 
-export default function SummaryCards({
-  totalVisitedToday,
-  employeesVisitedToday,
-  contractorsVisitedToday,
-  totalOccupancy,
-  employeeCount,
-  contractorCount
-}) {
-  // border & icon palettes
-  const BORDER_COLORS = [
-    '#FFC72C', '#FFD666', '#FFE599', '#FFF2CC', '#FFD666', '#FFE599'
-  ];
-  const ICON_COLORS = [
-    '#E57373', '#81C784', '#64B5F6', '#BA68C8', '#FFB74D', '#4DB6AC'
-  ];
+  const BORDER_COLORS = ["#FFC72C", "#4DB6AC", "#81C784", "#64B5F6", "#BA68C8", "#FFB74D"];
+  const ICON_COLORS = ["#FFB74D", "#4DB6AC", "#81C784", "#64B5F6", "#BA68C8", "#FFD54F"];
 
   const cards = [
-    { key: 'totalVisitedToday', title: "Today's Total Headcount",     value: totalVisitedToday,    icon: <FaUsers /> },
-    { key: 'employeesVisitedToday', title: "Today's Employees Count",  value: employeesVisitedToday,icon: <FaUserTie /> },
-    { key: 'contractorsVisitedToday', title: "Today's Contractors Count", value: contractorsVisitedToday, icon: <FaHardHat /> },
-    { key: 'totalOccupancy', title: 'Realtime Headcount',            value: totalOccupancy,       icon: <FaUsers /> },
-    { key: 'employeeCount', title: 'Realtime Employees Count',       value: employeeCount,        icon: <FaUserTie /> },
-    { key: 'contractorCount', title: 'Realtime Contractors Count',   value: contractorCount,      icon: <FaHardHat /> },
+    { key: "totalVisitedToday", title: "Today's Total Headcount", value: totalVisitedToday, icon: <FaUsers /> },
+    { key: "employeesVisitedToday", title: "Employees Today", value: employeesVisitedToday, icon: <FaUserTie /> },
+    { key: "contractorsVisitedToday", title: "Contractors Today", value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { key: "totalOccupancy", title: "Realtime Headcount", value: totalOccupancy, icon: <FaUsers /> },
+    { key: "employeeCount", title: "Realtime Employees", value: employeeCount, icon: <FaUserTie /> },
+    { key: "contractorCount", title: "Realtime Contractors", value: contractorCount, icon: <FaHardHat /> },
   ];
 
-  // sanitize numbers & compute max (for percent/progress)
-  const sanitized = useMemo(() => cards.map(c => ({ ...c, value: Number(c.value) || 0 })), [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
-  const maxVal = Math.max(...sanitized.map(s => s.value), 1);
+  // sanitized values
+  const sanitized = useMemo(
+    () => cards.map((c) => ({ ...c, value: Number(c.value) || 0 })),
+    [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]
+  );
 
-  // animated counts
+  const maxVal = Math.max(...sanitized.map((s) => s.value), 1);
+
+  // animated counters
   const [animated, setAnimated] = useState(() =>
-    sanitized.reduce((acc, c) => { acc[c.key] = 0; return acc; }, {})
+    sanitized.reduce((acc, c) => {
+      acc[c.key] = 0;
+      return acc;
+    }, {})
   );
 
   useEffect(() => {
-    let rafId;
+    let raf = null;
     const duration = 900;
     const start = performance.now();
-    const from = sanitized.reduce((acc, c) => { acc[c.key] = animated[c.key] || 0; return acc; }, {});
-    const to = sanitized.reduce((acc, c) => { acc[c.key] = c.value; return acc; }, {});
+    const from = sanitized.reduce((acc, c) => {
+      acc[c.key] = animated[c.key] || 0;
+      return acc;
+    }, {});
+    const to = sanitized.reduce((acc, c) => {
+      acc[c.key] = c.value;
+      return acc;
+    }, {});
+
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
     function step(now) {
       const t = Math.min(1, (now - start) / duration);
-      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      const ease = easeOutCubic(t);
       const next = {};
       for (const k of Object.keys(to)) {
         next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
       }
       setAnimated(next);
-      if (t < 1) rafId = requestAnimationFrame(step);
+      if (t < 1) raf = requestAnimationFrame(step);
     }
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
+
+    raf = requestAnimationFrame(step);
+    return () => raf && cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
 
-  // deterministic decorative sparkline generator
-  const makeSparkline = (value, idx, width = 94, height = 30, points = 6) => {
+  // deterministic small sparkline generator (returns path + area)
+  const makeSparkline = (value, idx, width = 120, height = 36, points = 6) => {
     const ratio = Math.max(0, Math.min(1, value / maxVal));
-    const seed = idx + 1;
-    const segment = width / (points - 1);
+    const seed = idx + 3;
+    const step = width / (points - 1);
     const coords = new Array(points).fill(0).map((_, i) => {
-      const x = Math.round(i * segment);
-      const amp = (0.28 + 0.7 * ratio) * height;
-      const jitter = Math.sin((i + seed) * 0.85) * 0.35 + 0.65;
-      const y = Math.round(height - jitter * amp);
+      const x = Math.round(i * step);
+      // produce a curve that scales with ratio but keeps some variety
+      const base = Math.sin((i + seed) * 0.8) * 0.35 + 0.65;
+      const amp = 0.65 * (0.3 + 0.9 * ratio) * height;
+      const y = Math.round(height - base * amp);
       return [x, y];
     });
-    const path = coords.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
+
+    const path = coords.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
     const lastX = coords[coords.length - 1][0];
-    const baseY = height;
-    const area = `${path} L ${lastX} ${baseY} L 0 ${baseY} Z`;
+    const area = `${path} L ${lastX} ${height} L 0 ${height} Z`;
     return { path, area, w: width, h: height };
   };
 
@@ -89,67 +110,68 @@ export default function SummaryCards({
         return (
           <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
             <Card
-              className="summary-card pro"
+              className="summary-card pro modern"
               style={{
                 borderImage: `linear-gradient(90deg, ${BORDER_COLORS[i % BORDER_COLORS.length]}, rgba(255,255,255,0)) 1`,
               }}
               title={c.title}
             >
-              <Card.Body className="d-flex flex-column align-items-center p-3">
-                {/* glossy 3D icon badge */}
-                <div
-                  className="icon-badge pro"
-                  style={{
-                    background: `linear-gradient(135deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.06))`,
-                    boxShadow: '0 8px 20px rgba(2,6,23,0.55), inset 0 -6px 12px rgba(255,255,255,0.06)'
-                  }}
-                  aria-hidden
-                >
-                  <div className="icon-wrap" style={{ color: '#071018' }}>
-                    {c.icon}
+              <Card.Body className="d-flex flex-column align-items-stretch p-3">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div className="icon-badge modern" style={{ background: `linear-gradient(180deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.06))` }}>
+                    <div className="icon-wrap-modern">{c.icon}</div>
+                  </div>
+
+                  <div className="meta-right text-end">
+                    <div className="tiny-label">Top</div>
+                    <div className="pct-chip" title={`${percent}% of largest`}>{percent}%</div>
                   </div>
                 </div>
 
-                {/* title */}
-                <div className="card-title-text pro" title={c.title}>
+                <div className="card-title-text pro mb-1" title={c.title}>
                   {c.title}
                 </div>
 
-                {/* big animated count + small percent chip */}
-                <div className="count-row pro">
-                  <div className="count-number pro" aria-label={`${c.title} value`}>
-                    {animated[c.key].toLocaleString()}
-                  </div>
-                  {/* <div className="count-pct pro" title={`${percent}% of largest`}>
-                    {percent}%
-                  </div> */}
+                <div className="d-flex align-items-baseline justify-content-between mb-2">
+                  <div className="count-number pro" aria-label={`${c.title} value`}>{animated[c.key].toLocaleString()}</div>
+                  <div className="muted-sub"> <small>people</small> </div>
                 </div>
 
-                {/* sparkline (small, subtle) */}
-                {/* <svg className="sparkline pro" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`} role="img" aria-hidden>
-                  <defs>
-                    <linearGradient id={`spark-grad-${i}`} x1="0" x2="1">
-                      <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
-                      <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
-                    </linearGradient>
-                  </defs>
-                  <path d={spark.area} fill={`url(#spark-grad-${i})`} />
-                  <path d={spark.path} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg> */}
+                {/* sparkline */}
+                <div className="sparkline-wrap mb-2">
+                  <svg className="sparkline modern" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`} aria-hidden>
+                    <defs>
+                      <linearGradient id={`spark-grad-${i}`} x1="0" x2="1">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.14)" />
+                        <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                      </linearGradient>
+                      <linearGradient id={`line-grad-${i}`} x1="0" x2="1">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+                        <stop offset="100%" stopColor="rgba(255,255,255,0.75)" />
+                      </linearGradient>
+                    </defs>
 
-                {/* thin progress bar (frosted) */}
-                <div className="progress-holder pro" aria-hidden>
-                  <div className="progress-track pro" />
+                    <path d={spark.area} fill={`url(#spark-grad-${i})`} opacity="0.12" />
+                    <path d={spark.path} fill="none" stroke={`url(#line-grad-${i})`} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+
+                {/* progress bar */}
+                <div className="progress-holder modern" aria-hidden>
+                  <div className="progress-track modern" />
                   <div
-                    className="progress-fill pro"
+                    className="progress-fill modern"
                     style={{
                       width: `${percent}%`,
-                      background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})`
+                      background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})`,
                     }}
                   />
                 </div>
 
-                <div className="muted-note mt-2"> </div>
+                <div className="d-flex justify-content-between align-items-center mt-2">
+                  <div className="small-note">Compared to peak</div>
+                  <div className="tiny-muted">{c.value ? `${c.value} now` : "—"}</div>
+                </div>
               </Card.Body>
             </Card>
           </Col>
@@ -158,162 +180,10 @@ export default function SummaryCards({
     </Row>
   );
 }
-:root{
-  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-  --glass-border: rgba(255,255,255,0.04);
-  --muted: rgba(230,238,248,0.8);
-}
 
-/* Container spacing */
-.summary-cards-row { margin-top: 6px; }
 
-/* Card base - pro look */
-.summary-card.pro {
-  background: var(--card-bg);
-  border-radius: 12px;
-  min-height: 230px;
-  color: #fff;
-  overflow: hidden;
-  transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease;
-  border: 1px solid var(--glass-border);
-  position: relative;
-}
 
-/* animated gradient accent border on hover */
-.summary-card.pro::before{
-  content: "";
-  position: absolute;
-  inset: -2px;
-  background: linear-gradient(90deg, rgba(83, 75, 50, 0.8), rgba(113, 112, 112, 0));
-  filter: blur(12px);
-  opacity: 0;
-  transition: opacity .28s ease;
-  border-radius: 14px;
-  z-index: 0;
-}
-.summary-card.pro:hover::before { opacity: 1; transform: translateY(-2px); }
 
-/* hover lift */
-.summary-card.pro:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 24px 60px rgba(2,6,23,0.75);
-}
 
-/* Card content sits above pseudo-element */
-.summary-card.pro .card-body { position: relative; z-index: 1; }
-
-/* Icon badge - glossy 3D */
-.icon-badge.pro {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:1.6rem;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255,255,255,0.06);
-  transform: translateZ(0);
-}
-
-/* small inner wrapper to give circular depth */
-.icon-badge.pro .icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72));
-  box-shadow: inset 0 -6px 10px rgba(0,0,0,0.12);
-  color: #071018; /* dark icon color */
-}
-
-/* Title - tight, uppercase feel */
-.card-title-text.pro {
-  font-size: 0.92rem;
-  color: var(--muted);
-  text-align: center;
-  font-weight: 700;
-  margin-bottom: 8px;
-  line-height: 1.12;
-  width: 100%;
-  padding: 0 6px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-/* Count row */
-.count-row.pro {
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-/* big number */
-.count-number.pro {
-  font-size: 1.65rem;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 8px 24px rgba(0,0,0,0.6);
-}
-
-/* percent chip */
-.count-pct.pro {
-  background: rgba(255,255,255,0.06);
-  padding: 6px 9px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  color: #fff;
-  font-weight: 700;
-  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.25);
-}
-
-/* Sparkline */
-.sparkline.pro {
-  width: 94px;
-  height: 30px;
-  margin: 6px 0;
-}
-
-/* Progress bar */
-.progress-holder.pro {
-  width: 92%;
-  height: 8px;
-  border-radius: 8px;
-  margin-top: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-track.pro {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03));
-  border-radius: 8px;
-}
-
-.progress-fill.pro {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0%;
-  transition: width 900ms cubic-bezier(.2,.9,.2,1);
-  border-radius: 8px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 -6px 10px rgba(255,255,255,0.04);
-}
-
-/* small muted note (reserved for extra info) */
-.muted-note { font-size: 0.75rem; color: rgba(255,255,255,0.06); }
-
-/* responsive */
-@media (max-width: 900px) {
-  .icon-badge.pro { width: 64px; height: 64px; font-size: 1.4rem; }
-  .icon-badge.pro .icon-wrap { width:50px;height:50px;border-radius:10px; }
-  .count-number.pro { font-size: 1.35rem; }
-  .summary-card.pro { min-height: 200px; }
-}
+....
 
