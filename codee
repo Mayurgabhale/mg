@@ -1,5 +1,19 @@
 
 
+
+{/* Circular progress (now always full) */}
+<div
+  className="progress-circle"
+  style={{
+    background: `conic-gradient(var(--accent-${i}), var(--accent-${i}))`
+  }}
+>
+  <div className="circle-inner">
+    <div className="icon-wrap">{c.icon}</div>
+  </div>
+</div>
+
+
 import React, { useEffect, useMemo, useState } from "react";
 import { Card, Row, Col } from "react-bootstrap";
 import { FaUsers, FaUserTie, FaHardHat } from "react-icons/fa";
