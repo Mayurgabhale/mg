@@ -1,44 +1,95 @@
-const ertLeaders = useMemo(() => {
-  const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({
-    role: 'ERT Team Leader',
-    ...m
-  }));
 
-  const filtered = filterZone
-    ? raw.filter(m =>
-        m.present &&
-        matchesFilterZone(m.zone || m.liveLocation || m['Base Location'] || '', filterZone)
-      )
-    : raw;
+          {/* RIGHT COLUMN */}
+          <Col xs={12} lg={4} className="mb-4">
+            {/* ERT Team Members */}
+            <Card className="dashboard-card h-100 mb-0">
+              <Card.Header className="dashboard-card-header d-flex align-items-center">
+                <span className="role-icon me-2">{roleIcons['ERT Team Members']}</span>
+                <span className="role-title">ERT Team Members</span>
+                <Badge bg="outline-light" className="ms-2">{ertMembers.length}</Badge>
+              </Card.Header>
+              <Card.Body className="p-3">
+                {ertMembers.map((m, i) => {
+                  const location = m.present ? (m.liveLocation || 'Unknown Zone') : m.baseLocation;
+                  return (
+                    <div key={i} className="member-item pb-1 mb-1">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div className="d-flex align-items-center">
+                          <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
+                            <img src={getPhotoSrc(m)} alt={m.name} className="member-photo" />
+                            <div className={`status-indicator ${m.present ? 'present' : 'away'}`} />
+                          </div>
+                          <div className="ms-3">
+                            <h6 className="mb-0 member-name">{m.name}</h6>
+                          </div>
+                        </div>
+                        <Badge bg={m.present ? 'success' : 'danger'}>{m.present ? 'Available' : 'Away'}</Badge>
+                      </div>
+{/* 
+                      <div className="member-contact-info">
+                        <div className="contact-item">
+                          <FaEnvelope className="contact-icon text-primary" />
+                          <a href={`mailto:${m.email}`}>{m.email}</a>
+                        </div>
+                        <div className="contact-item">
+                          <FaPhone className="contact-icon text-success" />
+                          <span>{m.phone}</span>
+                        </div>
+                        <div className="contact-item">
+                          <FaLocationArrow className="contact-icon text-danger" />
+                          <span>{location}</span>
+                        </div>
+                      </div> */}
 
-  // 🔑 Custom order
-  const order = [
-    'Vishal Chaudhari',
-    'Vinit Kumar',
-    'Sonu Pandey',
-    'Sagar Jamdade',
-    'Rangare, Bhupendra Babu',
-    'Bhoyane, Satish Pandurang'
-  ];
 
-  return filtered.sort((a, b) => {
-    const pa = a.present ? 1 : 0;
-    const pb = b.present ? 1 : 0;
 
-    // Present members first
-    if (pa !== pb) return pb - pa;
+                       <div className="member-contact-info">
+                        <div className="contact-item">
+                          <FaEnvelope className="contact-icon text-primary" />
+                          <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+                        </div>
+                        <div className="contact-item">
+                          <FaPhone className="contact-icon text-success" />
+                          <span className="contact-text">{m.phone}</span>
+                        </div>
+                        <div className="contact-item">
+                          <FaLocationArrow className="contact-icon text-danger" />
+                          <span className="contact-text">{location}</span>
+                        </div>
+                      </div>
+                      
 
-    const ia = order.indexOf(a.name);
-    const ib = order.indexOf(b.name);
+                    </div>
+                  );
+                })}
 
-    // Respect manual order if found
-    if (ia !== -1 || ib !== -1) {
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    }
+                {!ertMembers.length &&
+                  <div className="text-center py-4 text-muted">
+                    <FaUsers size={28} className="mb-2" />
+                    <p className="mb-0">No Team Members Available</p>
+                  </div>
+                }
 
-    // Fallback alphabetical
-    return a.name.localeCompare(b.name);
-  });
-}, [ertStatus, filterZone]);
+                <div className="text-center mt-3">
+                  <Button
+                    variant="outline-primary"
+                    className="d-flex align-items-center mx-auto"
+                    onClick={() => setShowAllMembers(prev => !prev)}
+                  >
+                    {showAllMembers ? (
+                      <>
+                        <FaEyeSlash className="me-2" /> Show Less
+                      </>
+                    ) : (
+                      <>
+                        <FaEye className="me-2" /> Show More
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+
+            {/* First Aid Team */}
+            {/* {renderRoleCard('First Aid Team', ertStatus['First Aid Team'] || [], filterZone)} */}
+          </Col>
