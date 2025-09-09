@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
 import {
@@ -46,8 +44,19 @@ const baseLocationByRole = {
   'BCM Team / Site Operations': 'Podium Floor – Red Zone'
 };
 
+// small normalization helper used for matching zones reliably
+const normalize = (s = '') =>
+  s
+    .toString()
+    .toLowerCase()
+    .replace(/[–—−]/g, '-')   // unify dash characters
+    .replace(/\s+/g, ' ')
+    .trim();
 
-
+const includesZone = (haystack = '', needle = '') => {
+  if (!haystack || !needle) return false;
+  return normalize(haystack).includes(normalize(needle));
+};
 
 // ---- Photo helpers ----
 const DEFAULT_PHOTO = '/photos/default.png';
@@ -70,13 +79,13 @@ const getPhotoSrc = (member) => {
 };
 
 function renderRoleCard(role, membersRaw, filterZone) {
+  // When filterZone is active: show ONLY available members (m.present) whose current location matches filterZone
+  // When no filter: show membersRaw unchanged (your original behavior)
   const members = filterZone
     ? membersRaw.filter(m =>
-      m.present && (
-        (m.zone && m.zone.includes(filterZone)) ||
-        baseLocationByRole[role].includes(filterZone)
+        m.present && // only available when filtering
+        ((m.zone && includesZone(m.zone, filterZone)) || (m.liveLocation && includesZone(m.liveLocation, filterZone)))
       )
-    )
     : membersRaw;
 
   // Don't render the card if there are no members to show
@@ -91,7 +100,11 @@ function renderRoleCard(role, membersRaw, filterZone) {
       </Card.Header>
       <Card.Body className="p-1">
         {members.length > 0 ? members.map((m, i) => {
-          const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole[role];
+          // display: if present show current zone; if away show member base or role base
+          const location = m.present
+            ? (m.zone || m.liveLocation || 'Unknown Zone')
+            : (m['Base Location'] || m.Floor || baseLocationByRole[role] || 'Unknown Zone');
+
           return (
             <div key={i} className="member-item pb-0 mb-1">
               <div className="d-flex justify-content-between align-items-start mb-1">
@@ -157,11 +170,12 @@ export default function ERTOverview({ ertStatus }) {
     return list;
   }, [ertStatus]);
 
+  // floorCounts: keep your original logic (count only present members)
   const floorCounts = useMemo(() => {
     const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
     allMembers.forEach(m => {
       if (!m.present) return;
-      const z = m.zone?.toLowerCase() || '';
+      const z = (m.zone || '').toLowerCase();
       if (z.includes('2nd')) counts['2nd Floor']++;
       else if (z.includes('tower b')) counts['Tower B']++;
       else counts['Podium Floor']++;
@@ -169,15 +183,11 @@ export default function ERTOverview({ ertStatus }) {
     return counts;
   }, [allMembers]);
 
+  // ERT Team Leaders: when filtered only show present with current zone match
   const ertLeaders = useMemo(() => {
     const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
     const filtered = filterZone
-      ? raw.filter(m =>
-        m.present && (
-          (m.zone && m.zone.includes(filterZone)) ||
-          baseLocationByRole['ERT Team Leader'].includes(filterZone)
-        )
-      )
+      ? raw.filter(m => m.present && ((m.zone && includesZone(m.zone, filterZone)) || (m.liveLocation && includesZone(m.liveLocation, filterZone))))
       : raw;
 
     const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
@@ -194,24 +204,20 @@ export default function ERTOverview({ ertStatus }) {
     });
   }, [ertStatus, filterZone]);
 
+  // ERT Team Members: when filtered only show present with liveLocation match
   const ertMembers = useMemo(() => {
     const members = (ertStatus['ERT Team Members'] || []).map(m => ({
       role: 'ERT Team Members',
       name: m.Name || m.name,
-      baseLocation: m['Base Location'] || m.Floor || m.zone,
-      liveLocation: m.zone,
+      baseLocation: m['Base Location'] || m.Floor || m.zone || '',
+      liveLocation: m.zone || m.liveLocation || '',
       email: m.Email || m.email,
       phone: m.Phone || m.phone,
       present: m.present
     }));
 
     const filtered = filterZone
-      ? members.filter(m =>
-        m.present && (
-          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
-          m.baseLocation.includes(filterZone)
-        )
-      )
+      ? members.filter(m => m.present && includesZone(m.liveLocation || '', filterZone))
       : members;
 
     filtered.sort((a, b) => {
@@ -222,24 +228,20 @@ export default function ERTOverview({ ertStatus }) {
     return showAllMembers ? filtered : filtered.slice(0, 6);
   }, [ertStatus, filterZone, showAllMembers]);
 
+  // First Aid Team: when filtered only show present with liveLocation match
   const firstAidMembers = useMemo(() => {
     const members = (ertStatus['First Aid Team'] || []).map(m => ({
       role: 'First Aid Team',
       name: m.Name || m.name,
-      baseLocation: m['Base Location'] || m.Floor || m.zone,
-      liveLocation: m.zone,
+      baseLocation: m['Base Location'] || m.Floor || m.zone || '',
+      liveLocation: m.zone || m.liveLocation || '',
       email: m.Email || m.email,
       phone: m.Phone || m.phone,
       present: m.present
     }));
 
     const filtered = filterZone
-      ? members.filter(m =>
-        m.present && (
-          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
-          baseLocationByRole['First Aid Team'].includes(filterZone)
-        )
-      )
+      ? members.filter(m => m.present && includesZone(m.liveLocation || '', filterZone))
       : members;
 
     return filtered;
@@ -257,10 +259,7 @@ export default function ERTOverview({ ertStatus }) {
     return firstColumnRoles.some(role => {
       const members = ertStatus[role] || [];
       return members.some(m =>
-        m.present && (
-          (m.zone && m.zone.includes(filterZone)) ||
-          baseLocationByRole[role].includes(filterZone)
-        )
+        m.present && ((m.zone && includesZone(m.zone, filterZone)) || (m.liveLocation && includesZone(m.liveLocation, filterZone)))
       );
     });
   }, [ertStatus, filterZone]);
@@ -277,8 +276,6 @@ export default function ERTOverview({ ertStatus }) {
 
   return (
     <div className="ert-dashboard">
-
-
       <Container fluid className="py-4">
         {/* Stats Cards */}
         <Row className="mb-4">
@@ -326,8 +323,6 @@ export default function ERTOverview({ ertStatus }) {
           })}
         </Row>
 
-
-
         {/* Three-column layout */}
         <Row className="align-items-stretch">
           {/* LEFT COLUMN: Fixed roles - only show if has members when filtered */}
@@ -348,7 +343,7 @@ export default function ERTOverview({ ertStatus }) {
                 </Card.Header>
                 <Card.Body className="p-3">
                   {ertLeaders.map((m, i) => {
-                    const location = m.present ? m.zone || 'Unknown Zone' : baseLocationByRole['ERT Team Leader'];
+                    const location = m.present ? (m.zone || 'Unknown Zone') : baseLocationByRole['ERT Team Leader'];
                     return (
                       <div key={i} className="member-item pb-1 mb-1">
                         <div className="d-flex justify-content-between align-items-start mb-2">
@@ -367,7 +362,6 @@ export default function ERTOverview({ ertStatus }) {
                             </div>
                             <div className="ms-3">
                               <h6 className="mb-0 member-name">{m.name}</h6>
-                              {/* <small className="text-muted">Team Leader</small> */}
                             </div>
                           </div>
                           <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
@@ -416,7 +410,7 @@ export default function ERTOverview({ ertStatus }) {
 
                 <Card.Body className="p-3">
                   {ertMembers.map((m, i) => {
-                    const location = m.present ? m.liveLocation || 'Unknown Zone' : m.baseLocation;
+                    const location = m.present ? (m.liveLocation || 'Unknown Zone') : (m.baseLocation || '');
                     return (
                       <div key={i} className="member-item pb-1 mb-1">
                         <div className="d-flex justify-content-between align-items-start mb-2">
@@ -435,7 +429,6 @@ export default function ERTOverview({ ertStatus }) {
                             </div>
                             <div className="ms-3">
                               <h6 className="mb-0 member-name">{m.name}</h6>
-                              {/* <small className="text-muted">Team Member</small> */}
                             </div>
                           </div>
                           <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
@@ -497,8 +490,15 @@ export default function ERTOverview({ ertStatus }) {
           )}
         </Row>
       </Container>
+
+      <style jsx>{`
+        /* your existing styles unchanged */
+        .ert-dashboard {
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          min-height: 100vh;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+      `}</style>
     </div>
   );
 }
-
-
