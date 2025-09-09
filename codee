@@ -1,19 +1,29 @@
- // ---- ERT Members ----
-  const ertMembers = useMemo(() => {
-    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
-      role: 'ERT Team Members',
-      name: m.Name || m.name,
-      baseLocation: m['Base Location'] || m.Floor || '',
-      liveLocation: m.zone || m.liveLocation || '',
-      email: m.Email || m.email,
-      phone: m.Phone || m.phone,
-      present: m.present
-    }));
+// ---- ERT Members ----
+const ertMembers = useMemo(() => {
+  const members = (ertStatus['ERT Team Members'] || []).map(m => ({
+    role: 'ERT Team Members',
+    name: m.Name || m.name,
+    baseLocation: m['Base Location'] || m.Floor || '',
+    liveLocation: m.zone || m.liveLocation || '',
+    email: m.Email || m.email,
+    phone: m.Phone || m.phone,
+    present: m.present
+  }));
 
-    const filtered = filterZone
-      ? members.filter(m => m.present && matchesFilterZone(m.liveLocation || m.baseLocation, filterZone))
-      : members;
+  const filtered = filterZone
+    ? members.filter(m =>
+        m.present &&
+        matchesFilterZone(m.liveLocation || m.baseLocation, filterZone)
+      )
+    : members;
 
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
-    return showAllMembers ? filtered : filtered.slice(0, 6);
-  }, [ertStatus, filterZone, showAllMembers]);
+  // ✅ Available first, then Away; alphabetical within each group
+  filtered.sort((a, b) => {
+    const pa = a.present ? 1 : 0;
+    const pb = b.present ? 1 : 0;
+    if (pa !== pb) return pb - pa; // put available on top
+    return a.name.localeCompare(b.name);
+  });
+
+  return showAllMembers ? filtered : filtered.slice(0, 6);
+}, [ertStatus, filterZone, showAllMembers]);
