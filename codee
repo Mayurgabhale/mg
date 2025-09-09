@@ -1,3 +1,15 @@
+<div
+  className="progress-circle"
+  style={{
+    background: `var(--accent-${i})`
+  }}
+>
+  <div className="circle-inner">
+    <div className="icon-wrap" style={{ color: `var(--accent-${i})` }}>
+      {c.icon}
+    </div>
+  </div>
+</div>
 
 
 
