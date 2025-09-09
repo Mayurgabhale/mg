@@ -56,3 +56,25 @@ const filtered = filterZone
       return false;
     })
   : members;
+
+
+const floorCounts = useMemo(() => {
+  const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+  allMembers.forEach(m => {
+    if (!m.present) return;
+    // prefer member live/location properties, then base location fallback
+    const loc = (m.zone || m['Base Location'] || m.Floor || m.baseLocation || '').toString().toLowerCase();
+    if (loc.includes('2nd')) counts['2nd Floor']++;
+    else if (loc.includes('tower b')) counts['Tower B']++;
+    else if (loc.includes('podium')) counts['Podium Floor']++;
+    else {
+      // optional: if nothing matches, categorize by role-level fallback
+      const roleBase = baseLocationByRole[m.role] || '';
+      const r = roleBase.toLowerCase();
+      if (r.includes('tower b')) counts['Tower B']++;
+      else if (r.includes('2nd')) counts['2nd Floor']++;
+      else counts['Podium Floor']++;
+    }
+  });
+  return counts;
+}, [allMembers]);
