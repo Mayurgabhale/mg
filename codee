@@ -10,3 +10,9 @@ Realtime Employees
 645
 Realtime Contractors
 95
+ {/* Circular progress */}
+                <div className="progress-circle" style={{ background: `conic-gradient(var(--accent-${i}) ${percent}%, rgba(255,255,255,0.08) ${percent}%)` }}>
+                  <div className="circle-inner">
+                    <div className="icon-wrap">{c.icon}</div>
+                  </div>
+                </div>
