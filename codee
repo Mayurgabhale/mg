@@ -1,155 +1,319 @@
-import React from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from "recharts";
-import { Card } from "react-bootstrap";
+create this summary card more atractive desing. new something new desin, lookin like professnla 
 
-// Gradients/solid colors for known zones
-const ZONE_GRADIENTS = {
-  "Red Zone": ["#FF0000", "#D22B2B"],
-  "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
-  "Yellow Zone": ["#FFDE21", "#FFBF00"],
-  "Yellow Zone - Outer Area": ["#FFDE21", "#FFBF00"],
-  "Orange Zone": ["#E3963E", "#FFC966"],
-  "Orange Zone - Outer Area": ["#E3963E", "#FFC966"],
-  "Green Zone": ["#009E60", "#50C878"],
-  "Reception Area": ["#E0CCFF", "#F4E6FF"],
-  "Assembly Area": ["#FE6F5E", "#A366FF"],
-  "Tower B": ["#E68FAC", "#99BBFF"],
-  "2nd Floor, Pune": ["#FF6F61", "#FFA28F"],
-};
+import React, { useEffect, useMemo, useState } from 'react';
+import { Card, Row, Col } from 'react-bootstrap';
+import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
+import './SummaryCards.css';
 
-const SOLID_COLORS = [
-  "#FFD100",
-  "#009E60",
-  "#FF6F61",
-  "#58595B",
-  "#FFB800",
-  "#C75D00",
-];
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount
+}) {
+  // border & icon palettes
+  const BORDER_COLORS = [
+    '#FFC72C', '#FFD666', '#FFE599', '#FFF2CC', '#FFD666', '#FFE599'
+  ];
+  const ICON_COLORS = [
+    '#E57373', '#81C784', '#64B5F6', '#BA68C8', '#FFB74D', '#4DB6AC'
+  ];
 
-// 🔹 Helper: shorten long zone names
-const shortenName = (name) => {
-  if (name.length > 18) {
-    return name.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
-  }
-  return name;
-};
+  const cards = [
+    { key: 'totalVisitedToday', title: "Today's Total Headcount",     value: totalVisitedToday,    icon: <FaUsers /> },
+    { key: 'employeesVisitedToday', title: "Today's Employees Count",  value: employeesVisitedToday,icon: <FaUserTie /> },
+    { key: 'contractorsVisitedToday', title: "Today's Contractors Count", value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { key: 'totalOccupancy', title: 'Realtime Headcount',            value: totalOccupancy,       icon: <FaUsers /> },
+    { key: 'employeeCount', title: 'Realtime Employees Count',       value: employeeCount,        icon: <FaUserTie /> },
+    { key: 'contractorCount', title: 'Realtime Contractors Count',   value: contractorCount,      icon: <FaHardHat /> },
+  ];
 
-export default function SummaryChart({ summary = [] }) {
-  if (!summary.length) {
-    return <Card body>No zone data available</Card>;
-  }
+  // sanitize numbers & compute max (for percent/progress)
+  const sanitized = useMemo(() => cards.map(c => ({ ...c, value: Number(c.value) || 0 })), [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
+  const maxVal = Math.max(...sanitized.map(s => s.value), 1);
 
-  // 🔹 Sort zones by headcount (descending)
-  const sortedData = [...summary].sort((a, b) => b.count - a.count);
+  // animated counts
+  const [animated, setAnimated] = useState(() =>
+    sanitized.reduce((acc, c) => { acc[c.key] = 0; return acc; }, {})
+  );
 
-  // Custom tooltip
-  const renderTooltip = ({ active, payload }) => {
-    if (!active || !payload || !payload.length) return null;
-    const { zone, count } = payload[0].payload;
-    return (
-      <div
-        style={{
-          backgroundColor: "#000",
-          border: "1px solid var(--wu-yellow)",
-          borderRadius: 4,
-          padding: "8px",
-          color: "#FFD100",
-          fontSize: "0.9rem",
-        }}
-      >
-        <div>
-          <strong>{zone}</strong>
-        </div>
-        <div>Headcount: {count}</div>
-      </div>
-    );
+  useEffect(() => {
+    let rafId;
+    const duration = 900;
+    const start = performance.now();
+    const from = sanitized.reduce((acc, c) => { acc[c.key] = animated[c.key] || 0; return acc; }, {});
+    const to = sanitized.reduce((acc, c) => { acc[c.key] = c.value; return acc; }, {});
+
+    function step(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      const next = {};
+      for (const k of Object.keys(to)) {
+        next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
+      }
+      setAnimated(next);
+      if (t < 1) rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
+
+  // deterministic decorative sparkline generator
+  const makeSparkline = (value, idx, width = 94, height = 30, points = 6) => {
+    const ratio = Math.max(0, Math.min(1, value / maxVal));
+    const seed = idx + 1;
+    const segment = width / (points - 1);
+    const coords = new Array(points).fill(0).map((_, i) => {
+      const x = Math.round(i * segment);
+      const amp = (0.28 + 0.7 * ratio) * height;
+      const jitter = Math.sin((i + seed) * 0.85) * 0.35 + 0.65;
+      const y = Math.round(height - jitter * amp);
+      return [x, y];
+    });
+    const path = coords.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ');
+    const lastX = coords[coords.length - 1][0];
+    const baseY = height;
+    const area = `${path} L ${lastX} ${baseY} L 0 ${baseY} Z`;
+    return { path, area, w: width, h: height };
   };
 
   return (
-    <Card
-      className="mb-4 shadow-sm border"
-      style={{ borderColor: "var(--wu-yellow)" }}
-    >
-      <Card.Header
-        className="bg-dark text-warning text-center fw-bold"
-        style={{
-          fontSize: "1.2rem",
-          borderBottom: "2px solid var(--wu-yellow)",
-        }}
-      >
-        Western Union - Pune Area-wise Headcount
-      </Card.Header>
+    <Row className="mb-3 summary-cards-row">
+      {sanitized.map((c, i) => {
+        const percent = Math.round((c.value / maxVal) * 100);
+        const spark = makeSparkline(c.value, i);
 
-      <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            layout="vertical"
-            data={sortedData.map((z) => ({
-              ...z,
-              shortZone: shortenName(z.zone),
-            }))}
-            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
-          >
-            <XAxis type="number" tick={{ fill: "#FFD100" }} />
-            <YAxis
-              dataKey="shortZone"
-              type="category"
-              tick={{ fill: "#FFD100", fontWeight: "bold" }}
-              width={150}
-            />
-            <Tooltip content={renderTooltip} />
+        return (
+          <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
+            <Card
+              className="summary-card pro"
+              style={{
+                borderImage: `linear-gradient(90deg, ${BORDER_COLORS[i % BORDER_COLORS.length]}, rgba(255,255,255,0)) 1`,
+              }}
+              title={c.title}
+            >
+              <Card.Body className="d-flex flex-column align-items-center p-3">
+                {/* glossy 3D icon badge */}
+                <div
+                  className="icon-badge pro"
+                  style={{
+                    background: `linear-gradient(135deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.06))`,
+                    boxShadow: '0 8px 20px rgba(2,6,23,0.55), inset 0 -6px 12px rgba(255,255,255,0.06)'
+                  }}
+                  aria-hidden
+                >
+                  <div className="icon-wrap" style={{ color: '#071018' }}>
+                    {c.icon}
+                  </div>
+                </div>
 
-            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
-              {sortedData.map((entry, idx) => {
-                const grad = ZONE_GRADIENTS[entry.zone];
-                const color = grad
-                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
-                  : SOLID_COLORS[idx % SOLID_COLORS.length];
-                return <Cell key={`cell-${idx}`} fill={color} />;
-              })}
+                {/* title */}
+                <div className="card-title-text pro" title={c.title}>
+                  {c.title}
+                </div>
 
-              <LabelList
-                dataKey="count"
-                position="inside"
-                style={{
-                  fill: "#fff",
-                  fontWeight: "bold",
-                  fontSize: "0.9rem",
-                }}
-              />
-            </Bar>
+                {/* big animated count + small percent chip */}
+                <div className="count-row pro">
+                  <div className="count-number pro" aria-label={`${c.title} value`}>
+                    {animated[c.key].toLocaleString()}
+                  </div>
+                  {/* <div className="count-pct pro" title={`${percent}% of largest`}>
+                    {percent}%
+                  </div> */}
+                </div>
 
-            <defs>
-              {sortedData.map((entry) => {
-                const grad = ZONE_GRADIENTS[entry.zone];
-                if (!grad) return null;
-                return (
-                  <linearGradient
-                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
-                    key={entry.zone}
-                    x1="0"
-                    y1="0"
-                    x2="1"
-                    y2="0"
-                  >
-                    <stop offset="0%" stopColor={grad[0]} />
-                    <stop offset="100%" stopColor={grad[1]} />
-                  </linearGradient>
-                );
-              })}
-            </defs>
-          </BarChart>
-        </ResponsiveContainer>
-      </Card.Body>
-    </Card>
+                {/* sparkline (small, subtle) */}
+                {/* <svg className="sparkline pro" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`} role="img" aria-hidden>
+                  <defs>
+                    <linearGradient id={`spark-grad-${i}`} x1="0" x2="1">
+                      <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+                      <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
+                    </linearGradient>
+                  </defs>
+                  <path d={spark.area} fill={`url(#spark-grad-${i})`} />
+                  <path d={spark.path} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg> */}
+
+                {/* thin progress bar (frosted) */}
+                <div className="progress-holder pro" aria-hidden>
+                  <div className="progress-track pro" />
+                  <div
+                    className="progress-fill pro"
+                    style={{
+                      width: `${percent}%`,
+                      background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})`
+                    }}
+                  />
+                </div>
+
+                <div className="muted-note mt-2"> </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        );
+      })}
+    </Row>
   );
 }
+:root{
+  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+  --glass-border: rgba(255,255,255,0.04);
+  --muted: rgba(230,238,248,0.8);
+}
+
+/* Container spacing */
+.summary-cards-row { margin-top: 6px; }
+
+/* Card base - pro look */
+.summary-card.pro {
+  background: var(--card-bg);
+  border-radius: 12px;
+  min-height: 230px;
+  color: #fff;
+  overflow: hidden;
+  transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease;
+  border: 1px solid var(--glass-border);
+  position: relative;
+}
+
+/* animated gradient accent border on hover */
+.summary-card.pro::before{
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(90deg, rgba(83, 75, 50, 0.8), rgba(113, 112, 112, 0));
+  filter: blur(12px);
+  opacity: 0;
+  transition: opacity .28s ease;
+  border-radius: 14px;
+  z-index: 0;
+}
+.summary-card.pro:hover::before { opacity: 1; transform: translateY(-2px); }
+
+/* hover lift */
+.summary-card.pro:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 24px 60px rgba(2,6,23,0.75);
+}
+
+/* Card content sits above pseudo-element */
+.summary-card.pro .card-body { position: relative; z-index: 1; }
+
+/* Icon badge - glossy 3D */
+.icon-badge.pro {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.6rem;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  transform: translateZ(0);
+}
+
+/* small inner wrapper to give circular depth */
+.icon-badge.pro .icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72));
+  box-shadow: inset 0 -6px 10px rgba(0,0,0,0.12);
+  color: #071018; /* dark icon color */
+}
+
+/* Title - tight, uppercase feel */
+.card-title-text.pro {
+  font-size: 0.92rem;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.12;
+  width: 100%;
+  padding: 0 6px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Count row */
+.count-row.pro {
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* big number */
+.count-number.pro {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+/* percent chip */
+.count-pct.pro {
+  background: rgba(255,255,255,0.06);
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.25);
+}
+
+/* Sparkline */
+.sparkline.pro {
+  width: 94px;
+  height: 30px;
+  margin: 6px 0;
+}
+
+/* Progress bar */
+.progress-holder.pro {
+  width: 92%;
+  height: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-track.pro {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03));
+  border-radius: 8px;
+}
+
+.progress-fill.pro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  transition: width 900ms cubic-bezier(.2,.9,.2,1);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45), inset 0 -6px 10px rgba(255,255,255,0.04);
+}
+
+/* small muted note (reserved for extra info) */
+.muted-note { font-size: 0.75rem; color: rgba(255,255,255,0.06); }
+
+/* responsive */
+@media (max-width: 900px) {
+  .icon-badge.pro { width: 64px; height: 64px; font-size: 1.4rem; }
+  .icon-badge.pro .icon-wrap { width:50px;height:50px;border-radius:10px; }
+  .count-number.pro { font-size: 1.35rem; }
+  .summary-card.pro { min-height: 200px; }
+}
+
