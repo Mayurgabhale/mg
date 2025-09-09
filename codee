@@ -1,5 +1,73 @@
+const CylinderShape = (props) => {
+  const { x, y, width, height, payload } = props;
+  const idx = chartData.findIndex(c => c.floor === payload.floor);
+  const [c1, c2] = CYLINDER_PALETTES[idx % CYLINDER_PALETTES.length];
+
+  const cx = x + width / 2;
+  const topRy = Math.max(6, width * 0.12);
+  const bottomRy = Math.max(10, width * 0.14);
+  const bottomY = y + height;
+  const gradId = `cgrad-${idx}`;
+
+  return (
+    <g>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={c1} stopOpacity="1" />
+          <stop offset="100%" stopColor={c2} stopOpacity="1" />
+        </linearGradient>
+        <linearGradient id={`gloss-${idx}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.45)" />
+          <stop offset="35%" stopColor="rgba(255,255,255,0.08)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
+        </linearGradient>
+      </defs>
+
+      {/* soft shadow */}
+      <ellipse cx={cx} cy={bottomY + bottomRy * 0.9} rx={width * 0.6} ry={bottomRy * 0.45} fill="rgba(0,0,0,0.22)" />
+
+      {/* main body */}
+      <rect x={x} y={y} width={width} height={height} rx={12} ry={12} fill={`url(#${gradId})`} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+
+      {/* top oval */}
+      <ellipse cx={cx} cy={y + topRy * 0.24} rx={width / 2} ry={topRy * 0.9} fill={`url(#${gradId})`} opacity={0.92} />
+
+      {/* gloss */}
+      <rect x={x} y={y} width={width} height={height * 0.45} rx={12} ry={12} fill={`url(#gloss-${idx})`} opacity={0.65} />
+
+      {/* bottom ellipse */}
+      <ellipse cx={cx} cy={bottomY} rx={width / 2} ry={bottomRy} fill="rgba(255,255,255,0.03)" />
+
+      {/* percentage inside */}
+      <text
+        x={cx}
+        y={y + height / 2 - 4}
+        textAnchor="middle"
+        fontSize={Math.max(14, Math.round(width * 0.18))}
+        fontWeight="700"
+        fill="#ffffff"
+      >
+        {payload.usedPct}%
+      </text>
+
+      {/* live/cap below percentage */}
+      <text
+        x={cx}
+        y={y + height / 2 + 16}
+        textAnchor="middle"
+        fontSize={Math.max(11, Math.round(width * 0.14))}
+        fontWeight="600"
+        fill="#0c1220"
+      >
+        {payload.label}
+      </text>
+    </g>
+  );
+};
 
 
+
+....
 // src/components/FloorOccupancyChart.jsx
 import React, { useMemo } from 'react';
 import {
