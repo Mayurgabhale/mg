@@ -17,3 +17,22 @@ const zoneMatches = (value = '', filterZone = '') => {
 ....
 
 
+const members = filterZone
+  ? membersRaw.filter(m => {
+      // only include present members per your existing rule
+      if (!m.present) return false;
+
+      // member-level locations (support different property names)
+      const memberLoc = m.zone || m['Base Location'] || m.Floor || m.baseLocation || '';
+      // 1) match if member has a live/member location that matches
+      if (zoneMatches(memberLoc, filterZone)) return true;
+
+      // 2) only if member has NO location info at all, fall back to role-level base
+      const hasMemberLocation = !!(m.zone || m['Base Location'] || m.Floor || m.baseLocation);
+      if (!hasMemberLocation && baseLocationByRole[role] && zoneMatches(baseLocationByRole[role], filterZone)) {
+        return true;
+      }
+
+      return false;
+    })
+  : membersRaw;
