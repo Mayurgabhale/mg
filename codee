@@ -36,3 +36,23 @@ const members = filterZone
       return false;
     })
   : membersRaw;
+
+
+
+
+...
+
+
+const filtered = filterZone
+  ? members.filter(m => {
+      if (!m.present) return false;
+      const memberLoc = m.liveLocation || m.baseLocation || '';
+      if (zoneMatches(memberLoc, filterZone)) return true;
+      // only use role-level fallback if member has no location properties
+      const hasMemberLocation = !!(m.liveLocation || m.baseLocation);
+      if (!hasMemberLocation && baseLocationByRole['ERT Team Members'] && zoneMatches(baseLocationByRole['ERT Team Members'], filterZone)) {
+        return true;
+      }
+      return false;
+    })
+  : members;
