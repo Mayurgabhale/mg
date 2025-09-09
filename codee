@@ -3,46 +3,31 @@ import { Card, Row, Col } from "react-bootstrap";
 import { FaUsers, FaUserTie, FaHardHat } from "react-icons/fa";
 import "./SummaryCards.css";
 
-/**
- * Props:
- *  totalVisitedToday,
- *  employeesVisitedToday,
- *  contractorsVisitedToday,
- *  totalOccupancy,
- *  employeeCount,
- *  contractorCount
- */
-export default function SummaryCards(props) {
-  const {
-    totalVisitedToday,
-    employeesVisitedToday,
-    contractorsVisitedToday,
-    totalOccupancy,
-    employeeCount,
-    contractorCount,
-  } = props;
-
-  const BORDER_COLORS = ["#FFC72C", "#4DB6AC", "#81C784", "#64B5F6", "#BA68C8", "#FFB74D"];
-  const ICON_COLORS = ["#FFB74D", "#4DB6AC", "#81C784", "#64B5F6", "#BA68C8", "#FFD54F"];
-
-  const cards = [
-    { key: "totalVisitedToday", title: "Today's Total Headcount", value: totalVisitedToday, icon: <FaUsers /> },
-    { key: "employeesVisitedToday", title: "Employees Today", value: employeesVisitedToday, icon: <FaUserTie /> },
-    { key: "contractorsVisitedToday", title: "Contractors Today", value: contractorsVisitedToday, icon: <FaHardHat /> },
-    { key: "totalOccupancy", title: "Realtime Headcount", value: totalOccupancy, icon: <FaUsers /> },
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount,
+}) {
+  const ICONS = [
+    { key: "totalVisitedToday", title: "Today's Total", value: totalVisitedToday, icon: <FaUsers /> },
+    { key: "employeesVisitedToday", title: "Today's Employees", value: employeesVisitedToday, icon: <FaUserTie /> },
+    { key: "contractorsVisitedToday", title: "Today's Contractors", value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { key: "totalOccupancy", title: "Realtime Total", value: totalOccupancy, icon: <FaUsers /> },
     { key: "employeeCount", title: "Realtime Employees", value: employeeCount, icon: <FaUserTie /> },
     { key: "contractorCount", title: "Realtime Contractors", value: contractorCount, icon: <FaHardHat /> },
   ];
 
-  // sanitized values
+  // Convert to numbers safely
   const sanitized = useMemo(
-    () => cards.map((c) => ({ ...c, value: Number(c.value) || 0 })),
+    () => ICONS.map((c) => ({ ...c, value: Number(c.value) || 0 })),
     [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]
   );
-
   const maxVal = Math.max(...sanitized.map((s) => s.value), 1);
 
-  // animated counters
+  // Animate numbers
   const [animated, setAnimated] = useState(() =>
     sanitized.reduce((acc, c) => {
       acc[c.key] = 0;
@@ -51,8 +36,8 @@ export default function SummaryCards(props) {
   );
 
   useEffect(() => {
-    let raf = null;
-    const duration = 900;
+    let rafId;
+    const duration = 1000;
     const start = performance.now();
     const from = sanitized.reduce((acc, c) => {
       acc[c.key] = animated[c.key] || 0;
@@ -63,115 +48,41 @@ export default function SummaryCards(props) {
       return acc;
     }, {});
 
-    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-
     function step(now) {
       const t = Math.min(1, (now - start) / duration);
-      const ease = easeOutCubic(t);
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
       const next = {};
       for (const k of Object.keys(to)) {
         next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
       }
       setAnimated(next);
-      if (t < 1) raf = requestAnimationFrame(step);
+      if (t < 1) rafId = requestAnimationFrame(step);
     }
-
-    raf = requestAnimationFrame(step);
-    return () => raf && cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]);
-
-  // deterministic small sparkline generator (returns path + area)
-  const makeSparkline = (value, idx, width = 120, height = 36, points = 6) => {
-    const ratio = Math.max(0, Math.min(1, value / maxVal));
-    const seed = idx + 3;
-    const step = width / (points - 1);
-    const coords = new Array(points).fill(0).map((_, i) => {
-      const x = Math.round(i * step);
-      // produce a curve that scales with ratio but keeps some variety
-      const base = Math.sin((i + seed) * 0.8) * 0.35 + 0.65;
-      const amp = 0.65 * (0.3 + 0.9 * ratio) * height;
-      const y = Math.round(height - base * amp);
-      return [x, y];
-    });
-
-    const path = coords.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
-    const lastX = coords[coords.length - 1][0];
-    const area = `${path} L ${lastX} ${height} L 0 ${height} Z`;
-    return { path, area, w: width, h: height };
-  };
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [sanitized]);
 
   return (
-    <Row className="mb-3 summary-cards-row">
+    <Row className="summary-cards-new">
       {sanitized.map((c, i) => {
         const percent = Math.round((c.value / maxVal) * 100);
-        const spark = makeSparkline(c.value, i);
 
         return (
           <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
-            <Card
-              className="summary-card pro modern"
-              style={{
-                borderImage: `linear-gradient(90deg, ${BORDER_COLORS[i % BORDER_COLORS.length]}, rgba(255,255,255,0)) 1`,
-              }}
-              title={c.title}
-            >
-              <Card.Body className="d-flex flex-column align-items-stretch p-3">
-                <div className="d-flex align-items-center justify-content-between mb-2">
-                  <div className="icon-badge modern" style={{ background: `linear-gradient(180deg, ${ICON_COLORS[i % ICON_COLORS.length]}, rgba(0,0,0,0.06))` }}>
-                    <div className="icon-wrap-modern">{c.icon}</div>
-                  </div>
-
-                  <div className="meta-right text-end">
-                    <div className="tiny-label">Top</div>
-                    <div className="pct-chip" title={`${percent}% of largest`}>{percent}%</div>
+            <Card className="summary-card-new">
+              <Card.Body className="d-flex flex-column align-items-center">
+                {/* Circular progress */}
+                <div className="progress-circle" style={{ background: `conic-gradient(var(--accent-${i}) ${percent}%, rgba(255,255,255,0.08) ${percent}%)` }}>
+                  <div className="circle-inner">
+                    <div className="icon-wrap">{c.icon}</div>
                   </div>
                 </div>
 
-                <div className="card-title-text pro mb-1" title={c.title}>
-                  {c.title}
-                </div>
+                {/* Title */}
+                <div className="title-text">{c.title}</div>
 
-                <div className="d-flex align-items-baseline justify-content-between mb-2">
-                  <div className="count-number pro" aria-label={`${c.title} value`}>{animated[c.key].toLocaleString()}</div>
-                  <div className="muted-sub"> <small>people</small> </div>
-                </div>
-
-                {/* sparkline */}
-                <div className="sparkline-wrap mb-2">
-                  <svg className="sparkline modern" width={spark.w} height={spark.h} viewBox={`0 0 ${spark.w} ${spark.h}`} aria-hidden>
-                    <defs>
-                      <linearGradient id={`spark-grad-${i}`} x1="0" x2="1">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.14)" />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0.04)" />
-                      </linearGradient>
-                      <linearGradient id={`line-grad-${i}`} x1="0" x2="1">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0.75)" />
-                      </linearGradient>
-                    </defs>
-
-                    <path d={spark.area} fill={`url(#spark-grad-${i})`} opacity="0.12" />
-                    <path d={spark.path} fill="none" stroke={`url(#line-grad-${i})`} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-
-                {/* progress bar */}
-                <div className="progress-holder modern" aria-hidden>
-                  <div className="progress-track modern" />
-                  <div
-                    className="progress-fill modern"
-                    style={{
-                      width: `${percent}%`,
-                      background: `linear-gradient(90deg, ${ICON_COLORS[i % ICON_COLORS.length]}, ${BORDER_COLORS[i % BORDER_COLORS.length]})`,
-                    }}
-                  />
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center mt-2">
-                  <div className="small-note">Compared to peak</div>
-                  <div className="tiny-muted">{c.value ? `${c.value} now` : "—"}</div>
-                </div>
+                {/* Number */}
+                <div className="count-text">{animated[c.key].toLocaleString()}</div>
               </Card.Body>
             </Card>
           </Col>
@@ -183,152 +94,68 @@ export default function SummaryCards(props) {
 
 
 
+.....
 
-
-....
-
-
-
-:root{
-  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-  --glass-border: rgba(255,255,255,0.06);
-  --muted: rgba(230,238,248,0.78);
-  --accent: rgba(255,199,44,0.95);
+:root {
+  --accent-0: #ffb84d;
+  --accent-1: #4db6ac;
+  --accent-2: #64b5f6;
+  --accent-3: #ba68c8;
+  --accent-4: #81c784;
+  --accent-5: #e57373;
 }
 
-/* container */
-.summary-cards-row { margin-top: 6px; }
-
-/* Modern card */
-.summary-card.pro.modern {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(6,10,14,0.16));
-  border-radius: 14px;
-  min-height: 220px;
-  color: #fff;
-  overflow: hidden;
-  transition: transform 260ms cubic-bezier(.2,.9,.2,1), box-shadow 260ms ease;
-  border: 1px solid var(--glass-border);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-}
-
-/* soft halo on hover */
-.summary-card.pro.modern::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
+.summary-card-new {
+  background: rgba(15, 18, 28, 0.7);
   border-radius: 16px;
-  background: radial-gradient(700px 120px at 10% 0%, rgba(255,199,44,0.06), transparent 12%),
-              radial-gradient(600px 120px at 90% 100%, rgba(77,182,172,0.03), transparent 10%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .28s ease, transform .28s ease;
-}
-.summary-card.pro.modern:hover { transform: translateY(-8px); box-shadow: 0 24px 60px rgba(2,6,23,0.7); }
-.summary-card.pro.modern:hover::after { opacity: 1; transform: translateY(-4px); }
-
-/* body z-index */
-.summary-card.pro.modern .card-body { position: relative; z-index: 2; }
-
-/* icon badge modern */
-.icon-badge.modern {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:1.25rem;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 10px 20px rgba(2,6,23,0.55), inset 0 -4px 8px rgba(255,255,255,0.02);
-}
-.icon-badge.modern .icon-wrap-modern {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(255,255,255,0.96);
-  color: #071018;
-  box-shadow: inset 0 -6px 12px rgba(255,255,255,0.92);
-}
-
-/* top-right meta */
-.meta-right .tiny-label {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.6);
-  font-weight: 700;
-  letter-spacing: 0.6px;
-}
-.pct-chip {
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  padding: 6px 8px;
-  border-radius: 999px;
-  font-weight: 800;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+  padding: 1rem;
   color: #fff;
-  font-size: 0.78rem;
-  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.35);
+}
+.summary-card-new:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6),
+              0 0 20px rgba(255, 215, 0, 0.3);
 }
 
-/* title */
-.card-title-text.pro {
-  font-size: 0.92rem;
-  color: var(--muted);
-  font-weight: 800;
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* number */
-.count-number.pro {
-  font-size: 1.6rem;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 8px 18px rgba(0,0,0,0.6);
-}
-
-/* sparkline wrapper */
-.sparkline-wrap { width: 100%; display:flex; justify-content:flex-start; align-items:center; }
-
-/* sparkline svg */
-.sparkline.modern { display:block; }
-
-/* progress tracker */
-.progress-holder.modern {
-  width: 100%;
-  height: 10px;
-  border-radius: 10px;
-  margin-top: 6px;
+/* Circular progress */
+.progress-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
   position: relative;
-  overflow: hidden;
 }
-.progress-track.modern {
-  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
-  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
-  border-radius: 10px;
+.circle-inner {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.progress-fill.modern {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 0%;
-  transition: width 900ms cubic-bezier(.2,.9,.2,1);
-  border-radius: 10px;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.5), inset 0 -6px 8px rgba(255,255,255,0.03);
-}
-
-/* small footers */
-.small-note { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
-.tiny-muted { color: rgba(255,255,255,0.5); font-size: 0.78rem; }
-
-/* responsiveness */
-@media (max-width: 900px) {
-  .icon-badge.modern { width: 56px; height: 56px; }
-  .icon-badge.modern .icon-wrap-modern { width: 44px; height: 44px; }
-  .count-number.pro { font-size: 1.3rem; }
-  .summary-card.pro.modern { min-height: 200px; }
+.icon-wrap {
+  font-size: 1.6rem;
+  color: #fff;
 }
 
+/* Text */
+.title-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 6px;
+}
+.count-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
