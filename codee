@@ -187,3 +187,148 @@ export default function SummaryCards(props) {
 
 ....
 
+
+
+:root{
+  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+  --glass-border: rgba(255,255,255,0.06);
+  --muted: rgba(230,238,248,0.78);
+  --accent: rgba(255,199,44,0.95);
+}
+
+/* container */
+.summary-cards-row { margin-top: 6px; }
+
+/* Modern card */
+.summary-card.pro.modern {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(6,10,14,0.16));
+  border-radius: 14px;
+  min-height: 220px;
+  color: #fff;
+  overflow: hidden;
+  transition: transform 260ms cubic-bezier(.2,.9,.2,1), box-shadow 260ms ease;
+  border: 1px solid var(--glass-border);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+}
+
+/* soft halo on hover */
+.summary-card.pro.modern::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 16px;
+  background: radial-gradient(700px 120px at 10% 0%, rgba(255,199,44,0.06), transparent 12%),
+              radial-gradient(600px 120px at 90% 100%, rgba(77,182,172,0.03), transparent 10%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .28s ease, transform .28s ease;
+}
+.summary-card.pro.modern:hover { transform: translateY(-8px); box-shadow: 0 24px 60px rgba(2,6,23,0.7); }
+.summary-card.pro.modern:hover::after { opacity: 1; transform: translateY(-4px); }
+
+/* body z-index */
+.summary-card.pro.modern .card-body { position: relative; z-index: 2; }
+
+/* icon badge modern */
+.icon-badge.modern {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.25rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 20px rgba(2,6,23,0.55), inset 0 -4px 8px rgba(255,255,255,0.02);
+}
+.icon-badge.modern .icon-wrap-modern {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,0.96);
+  color: #071018;
+  box-shadow: inset 0 -6px 12px rgba(255,255,255,0.92);
+}
+
+/* top-right meta */
+.meta-right .tiny-label {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.6);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+.pct-chip {
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+  color: #fff;
+  font-size: 0.78rem;
+  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.35);
+}
+
+/* title */
+.card-title-text.pro {
+  font-size: 0.92rem;
+  color: var(--muted);
+  font-weight: 800;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* number */
+.count-number.pro {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 8px 18px rgba(0,0,0,0.6);
+}
+
+/* sparkline wrapper */
+.sparkline-wrap { width: 100%; display:flex; justify-content:flex-start; align-items:center; }
+
+/* sparkline svg */
+.sparkline.modern { display:block; }
+
+/* progress tracker */
+.progress-holder.modern {
+  width: 100%;
+  height: 10px;
+  border-radius: 10px;
+  margin-top: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.progress-track.modern {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
+  border-radius: 10px;
+}
+.progress-fill.modern {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0%;
+  transition: width 900ms cubic-bezier(.2,.9,.2,1);
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.5), inset 0 -6px 8px rgba(255,255,255,0.03);
+}
+
+/* small footers */
+.small-note { font-size: 0.78rem; color: rgba(255,255,255,0.6); }
+.tiny-muted { color: rgba(255,255,255,0.5); font-size: 0.78rem; }
+
+/* responsiveness */
+@media (max-width: 900px) {
+  .icon-badge.modern { width: 56px; height: 56px; }
+  .icon-badge.modern .icon-wrap-modern { width: 44px; height: 44px; }
+  .count-number.pro { font-size: 1.3rem; }
+  .summary-card.pro.modern { min-height: 200px; }
+}
+
