@@ -1,85 +1,3 @@
-not work. when i filter 
-Podium Floor
-13
-i got this
-ERT Team Leader
-6
-Vishal Chaudhari
-Vishal Chaudhari
-Available
-Vishal.Chaudhary@wu.com
-xxx-xxx-xxxx
-Orange Zone
-Vinit Kumar
-Vinit Kumar
-Available
-Vinit.Kumar@wu.com
-xxx-xxx-xxxx
-Green Zone
-Sagar Jamdade
-Sagar Jamdade
-Available
-sagar.jamdade@wu.com
-xxx-xxx-xxxx
-Yellow Zone
-Rangare, Bhupendra Babu
-Rangare, Bhupendra Babu
-Available
-bhupendra.rangare@wu.com
-xxx-xxx-xxxx
-Red Zone
-Bhoyane, Satish Pandurang
-Bhoyane, Satish Pandurang
-Available
-satishpandurang.bhoyane@westernunion.com
-xxx-xxx-xxxx
-Yellow Zone
-Mohanakrishnan, Kannan
-Mohanakrishnan, Kannan
-Available
-bhupendra.rangare@wu.com
-xxx-xxx-xxxx
-Tower B  < this is wrong.  
-read all code carefully and find the issue,
-
-only show this. other membr is not disply 
-Site Head
-1
-Rajeev Mago
-Rajeev Mago
-Available
-rajeev.mago@wu.com
-xxx-xxx-xxxx
-Yellow Zone
-BCM Team / Site Operations
-1
-Rohit Singla
-Rohit Singla
-Available
-rohit.singla@wu.com
-xxx-xxx-xxxx
-Yellow Zone
-
-Incident Controller
-3
-Sameer Kanade
-Sameer Kanade
-Available
-Sameer.Kanade@wu.com
-xxx-xxx-xxxx
-Green Zone
-Lloyds Dass
-Lloyds Dass
-Available
-Lloyds.Dass@wu.com
-xxx-xxx-xxxx
-Green Zone
-Singh, Uday Prakash
-Singh, Uday Prakash
-Available
-Uday.Singh@westernunion.com
-xxx-xxx-xxxx
-Yellow Zone
 
 
 import React, { useState, useMemo } from 'react';
@@ -90,6 +8,7 @@ import {
   FaLayerGroup,
   FaEnvelope,
   FaPhone,
+  FaMapMarkerAlt,
   FaUserTie,
   FaUserShield,
   FaUserNurse,
@@ -128,18 +47,6 @@ const baseLocationByRole = {
 };
 
 
-// normalize & cheap-match helper
-const normalizeZone = (s = '') =>
-  s.toString().toLowerCase().replace(/[–—-]/g, '-').replace(/\s+/g, ' ').trim();
-
-const zoneMatches = (value = '', filterZone = '') => {
-  if (!value || !filterZone) return false;
-  // compare only the floor/area text, not zone color suffixes
-  const v = normalizeZone(value);
-  const f = normalizeZone(filterZone);
-  // make 'podium floor - red zone' match 'podium floor'
-  return v.includes(f);
-};
 
 
 // ---- Photo helpers ----
@@ -163,34 +70,13 @@ const getPhotoSrc = (member) => {
 };
 
 function renderRoleCard(role, membersRaw, filterZone) {
-  // const members = filterZone
-  //   ? membersRaw.filter(m =>
-  //     m.present && (
-  //       (m.zone && m.zone.includes(filterZone)) ||
-  //       baseLocationByRole[role].includes(filterZone)
-  //     )
-  //   )
-  //   : membersRaw;
-
-
   const members = filterZone
-    ? membersRaw.filter(m => {
-      // only include present members per your existing rule
-      if (!m.present) return false;
-
-      // member-level locations (support different property names)
-      const memberLoc = m.zone || m['Base Location'] || m.Floor || m.baseLocation || '';
-      // 1) match if member has a live/member location that matches
-      if (zoneMatches(memberLoc, filterZone)) return true;
-
-      // 2) only if member has NO location info at all, fall back to role-level base
-      const hasMemberLocation = !!(m.zone || m['Base Location'] || m.Floor || m.baseLocation);
-      if (!hasMemberLocation && baseLocationByRole[role] && zoneMatches(baseLocationByRole[role], filterZone)) {
-        return true;
-      }
-
-      return false;
-    })
+    ? membersRaw.filter(m =>
+      m.present && (
+        (m.zone && m.zone.includes(filterZone)) ||
+        baseLocationByRole[role].includes(filterZone)
+      )
+    )
     : membersRaw;
 
   // Don't render the card if there are no members to show
@@ -271,37 +157,14 @@ export default function ERTOverview({ ertStatus }) {
     return list;
   }, [ertStatus]);
 
-
-  // const floorCounts = useMemo(() => {
-  //   const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
-  //   allMembers.forEach(m => {
-  //     if (!m.present) return;
-  //     const z = m.zone?.toLowerCase() || '';
-  //     if (z.includes('2nd')) counts['2nd Floor']++;
-  //     else if (z.includes('tower b')) counts['Tower B']++;
-  //     else counts['Podium Floor']++;
-  //   });
-  //   return counts;
-  // }, [allMembers]);
-
-
   const floorCounts = useMemo(() => {
     const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
     allMembers.forEach(m => {
       if (!m.present) return;
-      // prefer member live/location properties, then base location fallback
-      const loc = (m.zone || m['Base Location'] || m.Floor || m.baseLocation || '').toString().toLowerCase();
-      if (loc.includes('2nd')) counts['2nd Floor']++;
-      else if (loc.includes('tower b')) counts['Tower B']++;
-      else if (loc.includes('podium')) counts['Podium Floor']++;
-      else {
-        // optional: if nothing matches, categorize by role-level fallback
-        const roleBase = baseLocationByRole[m.role] || '';
-        const r = roleBase.toLowerCase();
-        if (r.includes('tower b')) counts['Tower B']++;
-        else if (r.includes('2nd')) counts['2nd Floor']++;
-        else counts['Podium Floor']++;
-      }
+      const z = m.zone?.toLowerCase() || '';
+      if (z.includes('2nd')) counts['2nd Floor']++;
+      else if (z.includes('tower b')) counts['Tower B']++;
+      else counts['Podium Floor']++;
     });
     return counts;
   }, [allMembers]);
@@ -342,28 +205,13 @@ export default function ERTOverview({ ertStatus }) {
       present: m.present
     }));
 
-    // const filtered = filterZone
-    //   ? members.filter(m =>
-    //     m.present && (
-    //       (m.liveLocation && m.liveLocation.includes(filterZone)) ||
-    //       m.baseLocation.includes(filterZone)
-    //     )
-    //   )
-    //   : members;
-
-
     const filtered = filterZone
-      ? members.filter(m => {
-        if (!m.present) return false;
-        const memberLoc = m.liveLocation || m.baseLocation || '';
-        if (zoneMatches(memberLoc, filterZone)) return true;
-        // only use role-level fallback if member has no location properties
-        const hasMemberLocation = !!(m.liveLocation || m.baseLocation);
-        if (!hasMemberLocation && baseLocationByRole['ERT Team Members'] && zoneMatches(baseLocationByRole['ERT Team Members'], filterZone)) {
-          return true;
-        }
-        return false;
-      })
+      ? members.filter(m =>
+        m.present && (
+          (m.liveLocation && m.liveLocation.includes(filterZone)) ||
+          m.baseLocation.includes(filterZone)
+        )
+      )
       : members;
 
     filtered.sort((a, b) => {
@@ -649,7 +497,281 @@ export default function ERTOverview({ ertStatus }) {
           )}
         </Row>
       </Container>
+
+      <style jsx>{`
+        .ert-dashboard {
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          min-height: 100vh;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        .dashboard-header {
+          background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+          backdrop-filter: blur(10px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 1.5rem 0;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-content {
+          text-align: center;
+        }
+
+        .header-content h1 {
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          color: #f8fafc;
+          font-size: 2.2rem;
+          letter-spacing: -0.5px;
+        }
+
+        .header-content p {
+          color: #94a3b8;
+          font-size: 1.1rem;
+          margin-bottom: 0;
+        }
+
+        .stats-card {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          height: 100%;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+          position: relative;
+        }
+
+        .stats-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .stats-card:hover::before {
+          opacity: 1;
+        }
+
+        .stats-card:hover, .location-card.active {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+          border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .location-card.active {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(29, 40, 58, 0.95) 100%);
+          border-color: rgba(99, 102, 241, 0.6);
+        }
+
+        .location-card.active::before {
+          opacity: 1;
+        }
+
+        .stats-icon {
+          width: 60px;
+          height: 60px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(96, 165, 250, 0.12);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .total-members .stats-icon {
+          background: rgba(139, 92, 246, 0.12);
+        }
+
+        .stats-label {
+          color: #cbd5e1;
+          font-size: 0.9rem;
+          margin-bottom: 0.4rem;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+        }
+
+        .stats-value {
+          color: #f8fafc;
+          font-weight: 700;
+          font-size: 2rem;
+          letter-spacing: -0.5px;
+        }
+
+        .filter-bar {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-label {
+          color: #e2e8f0;
+          font-weight: 500;
+        }
+
+        .filter-status {
+          color: #94a3b8;
+          font-size: 0.9rem;
+        }
+
+        .dashboard-card {
+          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          overflow: hidden;
+        }
+
+        .dashboard-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+        }
+
+        .dashboard-card-header {
+          background: rgba(30, 41, 59, 0.98);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          font-weight: 600;
+
+          color: #e2e8f0;
+          backdrop-filter: blur(10px);
+        }
+
+        .role-icon {
+          font-size: 1.2rem;
+        }
+
+        .role-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+
+        .member-item {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+          transition: all 0.3s ease;
+          padding: 0.2rem 1.5rem;
+          margin: 0 -1.5rem;
+        }
+
+        .member-item:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        .member-item:last-child {
+          border-bottom: none;
+        }
+
+              
+      .member-photo-container {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Available (green border) */
+      .member-photo-container.present-border {
+        border: 2px solid #10b981; /* Tailwind's emerald-500 */
+      }
+
+      /* Away (white border) */
+      .member-photo-container.away-border {
+        border: 2px solid #ffffff;
+      }
+
+        .member-photo {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top;
+        }
+
+        
+
+
+        .member-name {
+          color: #f1f5f9;
+          font-weight: 600;
+          font-size: 1.05rem;
+        }
+
+        .status-badge {
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 0.35em 0.65em;
+        }
+
+        .member-contact-info {
+          padding-left: 12px;
+          border-left: 2px solid rgba(96, 165, 250, 0.3);
+          margin-left: 30px;
+          margin-top: 0.75rem;
+        }
+
+        .contact-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 0.5rem;
+        }
+
+        .contact-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .contact-icon {
+          width: 16px;
+          margin-right: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        .contact-link, .contact-text {
+          font-size: 0.9rem;
+          color: #cbd5e1;
+          text-decoration: none;
+          transition: color 0.2s;
+          word-break: break-word;
+        }
+
+        .contact-link:hover {
+          color: #60a5fa;
+        }
+
+        .text-teal {
+          color: #0d9488;
+        }
+
+        .text-orange {
+          color: #f97316;
+        }
+
+        .text-purple {
+          color: #a855f7;
+        }
+
+        @media (max-width: 992px) {
+          .dashboard-card {
+            margin-bottom: 1.5rem;
+          }
+
+          .header-content h1 {
+            font-size: 1.8rem;
+          }
+        }
+      `}</style>
     </div>
   );
 }
-
