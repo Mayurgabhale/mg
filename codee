@@ -1,13 +1,3 @@
-Compiled with problems:
-×
-ERROR
-[eslint] 
-src\components\FloorOccupancyChart.jsx
-  Line 712:20:  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
-
-Search for the keywords to learn more about each error.
-
-
 // src/components/FloorOccupancyChart.jsx
 import React, { useMemo } from 'react';
 import {
@@ -22,7 +12,7 @@ import {
   Legend,
   Customized
 } from 'recharts';
-import { Card, Row, Col, Badge } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import { FaUsers } from 'react-icons/fa';
 import './FloorOccupancyChart.css';
 import floorCapacities from '../constants/floorCapacities';
@@ -37,16 +27,10 @@ const CYLINDER_PALETTES = [
 ];
 
 export default function FloorOccupancyChart({ data = [] }) {
-  if (!data || !data.length) {
-    return (
-      <Card body className="bg-dark text-white no-data-card">
-        No floor data available
-      </Card>
-    );
-  }
-
-  // enrich with capacity, usedPct, label, and breakdown fields preserved
+  // ---- call hooks unconditionally ----
+  // enriched will be an empty array when there's no data
   const enriched = useMemo(() => {
+    if (!data || !data.length) return [];
     return data.map(item => {
       const floor = item.floor;
       const liveCount = Number(item.total || item.liveCount || 0);
@@ -63,13 +47,22 @@ export default function FloorOccupancyChart({ data = [] }) {
     });
   }, [data]);
 
+  // early return (after hook calls) if no enriched data
+  if (!enriched.length) {
+    return (
+      <Card body className="bg-dark text-white no-data-card">
+        No floor data available
+      </Card>
+    );
+  }
+
   // compute totals and sorted data
   const totalLive = enriched.reduce((s, f) => s + f.liveCount, 0);
   const totalCap = enriched.reduce((s, f) => s + f.capacity, 0);
   const totalPct = totalCap > 0 ? Number(((totalLive / totalCap) * 100).toFixed(1)) : 0;
 
   const sorted = [...enriched].sort((a, b) => b.liveCount - a.liveCount);
-  const chartData = [{ floor: 'Pune Office Total', liveCount: totalLive, capacity: totalCap, usedPct: totalPct, label: `${totalLive}/${totalCap}`, ...{} }, ...sorted];
+  const chartData = [{ floor: 'Pune Office Total', liveCount: totalLive, capacity: totalCap, usedPct: totalPct, label: `${totalLive}/${totalCap}` }, ...sorted];
 
   // axis max — scale using max live count for nicer visuals
   const maxLive = Math.max(...chartData.map(d => d.liveCount), ...chartData.map(d => d.capacity)) || 10;
@@ -243,8 +236,3 @@ export default function FloorOccupancyChart({ data = [] }) {
     </Card>
   );
 }
-
-
-
-
-
