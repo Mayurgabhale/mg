@@ -1,35 +1,44 @@
+const ertLeaders = useMemo(() => {
+  const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({
+    role: 'ERT Team Leader',
+    ...m
+  }));
 
-//   // ERT Team Leaders: when filtered only show present with current zone match
-//   const ertLeaders = useMemo(() => {
-//     const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
-//     const filtered = filterZone
-//       ? raw.filter(m => m.present && ((m.zone && includesZone(m.zone, filterZone)) || (m.liveLocation && includesZone(m.liveLocation, filterZone))))
-//       : raw;
+  const filtered = filterZone
+    ? raw.filter(m =>
+        m.present &&
+        matchesFilterZone(m.zone || m.liveLocation || m['Base Location'] || '', filterZone)
+      )
+    : raw;
 
-//     const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Bhoyane, Satish Pandurang'];
-//     return filtered.sort((a, b) => {
-//       const pa = a.present ? 1 : 0, pb = b.present ? 1 : 0;
-//       if (pa !== pb) return pb - pa;
-//       const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
-//       if (ia !== -1 || ib !== -1) {
-//         if (ia === -1) return 1;
-//         if (ib === -1) return -1;
-//         return ia - ib;
-//       }
-//       return a.name.localeCompare(b.name);
-//     });
-//   }, [ertStatus, filterZone]);
+  // 🔑 Custom order
+  const order = [
+    'Vishal Chaudhari',
+    'Vinit Kumar',
+    'Sonu Pandey',
+    'Sagar Jamdade',
+    'Rangare, Bhupendra Babu',
+    'Bhoyane, Satish Pandurang'
+  ];
 
+  return filtered.sort((a, b) => {
+    const pa = a.present ? 1 : 0;
+    const pb = b.present ? 1 : 0;
 
+    // Present members first
+    if (pa !== pb) return pb - pa;
 
-in below add  //     const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Bhoyane, Satish Pandurang'];
-order. 
-  const ertLeaders = useMemo(() => {
-    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
-    const filtered = filterZone
-      ? raw.filter(m => m.present && matchesFilterZone(m.zone || m.liveLocation || m['Base Location'] || '', filterZone))
-      : raw;
+    const ia = order.indexOf(a.name);
+    const ib = order.indexOf(b.name);
 
-    return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [ertStatus, filterZone]);
+    // Respect manual order if found
+    if (ia !== -1 || ib !== -1) {
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    }
 
+    // Fallback alphabetical
+    return a.name.localeCompare(b.name);
+  });
+}, [ertStatus, filterZone]);
