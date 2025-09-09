@@ -1,41 +1,46 @@
- {/* Three-column layout */}
-        <Row className="align-items-stretch">
-          <Col xs={12} lg={4} className="mb-4">
-            {firstColumnRoles.map(role => renderRoleCard(role, ertStatus[role] || [], filterZone))}
-          </Col>
+{/* Three-column layout */}
+<Row className="align-items-stretch">
+  {/* First column */}
+  <Col xs={12} lg={4} className="mb-3 h-100 d-flex flex-column">
+    <div className="flex-grow-1 d-flex flex-column">
+      {firstColumnRoles.map(role =>
+        renderRoleCard(role, ertStatus[role] || [], filterZone)
+      )}
+    </div>
+  </Col>
 
+  {/* Leaders */}
+  <Col xs={12} lg={4} className="mb-3 h-100 d-flex flex-column">
+    <div className="flex-grow-1 d-flex flex-column">
+      {renderRoleCard('ERT Team Leader', ertLeaders, filterZone)}
+    </div>
+  </Col>
 
+  {/* Members */}
+  <Col xs={12} lg={4} className="mb-3 h-100 d-flex flex-column">
+    <div className="flex-grow-1 d-flex flex-column">
+      {renderRoleCard('ERT Team Members', ertMembers, filterZone)}
 
+      <div className="text-center mt-auto pt-3">
+        <Button
+          variant="outline-primary"
+          className="d-flex align-items-center mx-auto"
+          onClick={() => setShowAllMembers(prev => !prev)}
+        >
+          {showAllMembers ? (
+            <>
+              <FaEyeSlash className="me-2" /> Show Less
+            </>
+          ) : (
+            <>
+              <FaEye className="me-2" /> Show More
+            </>
+          )}
+        </Button>
+      </div>
 
-
-          {/* Leaders */}
-          <Col xs={12} lg={4} className="mb-4">
-            {renderRoleCard('ERT Team Leader', ertLeaders, filterZone)}
-          </Col>
-
-          {/* Members */}
-          <Col xs={12} lg={4} className="mb-4">
-            {renderRoleCard('ERT Team Members', ertMembers, filterZone)}
-
-            <div className="text-center mt-3">
-              <Button
-                variant="outline-primary"
-                className="d-flex align-items-center mx-auto"
-                onClick={() => setShowAllMembers(prev => !prev)}
-              >
-                {showAllMembers ? (
-                  <>
-                    <FaEyeSlash className="me-2" /> Show Less
-                  </>
-                ) : (
-                  <>
-                    <FaEye className="me-2" /> Show More
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* First Aid Team */}
-            {/* {renderRoleCard('First Aid Team', firstAidMembers, filterZone)} */}
-          </Col>
-        </Row>
+      {/* First Aid Team */}
+      {/* {renderRoleCard('First Aid Team', firstAidMembers, filterZone)} */}
+    </div>
+  </Col>
+</Row>
