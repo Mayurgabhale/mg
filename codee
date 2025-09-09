@@ -1,18 +1,95 @@
-Today's Total
-990
-Today's Employees
-855
-Today's Contractors
-135
-Realtime Total
-740
-Realtime Employees
-645
-Realtime Contractors
-95
- {/* Circular progress */}
+
+
+import React, { useEffect, useMemo, useState } from "react";
+import { Card, Row, Col } from "react-bootstrap";
+import { FaUsers, FaUserTie, FaHardHat } from "react-icons/fa";
+import "./SummaryCards.css";
+
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount,
+}) {
+  const ICONS = [
+    { key: "totalVisitedToday", title: "Today's Total", value: totalVisitedToday, icon: <FaUsers /> },
+    { key: "employeesVisitedToday", title: "Today's Employees", value: employeesVisitedToday, icon: <FaUserTie /> },
+    { key: "contractorsVisitedToday", title: "Today's Contractors", value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { key: "totalOccupancy", title: "Realtime Total", value: totalOccupancy, icon: <FaUsers /> },
+    { key: "employeeCount", title: "Realtime Employees", value: employeeCount, icon: <FaUserTie /> },
+    { key: "contractorCount", title: "Realtime Contractors", value: contractorCount, icon: <FaHardHat /> },
+  ];
+
+  // Convert to numbers safely
+  const sanitized = useMemo(
+    () => ICONS.map((c) => ({ ...c, value: Number(c.value) || 0 })),
+    [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]
+  );
+  const maxVal = Math.max(...sanitized.map((s) => s.value), 1);
+
+  // Animate numbers
+  const [animated, setAnimated] = useState(() =>
+    sanitized.reduce((acc, c) => {
+      acc[c.key] = 0;
+      return acc;
+    }, {})
+  );
+
+  useEffect(() => {
+    let rafId;
+    const duration = 1000;
+    const start = performance.now();
+    const from = sanitized.reduce((acc, c) => {
+      acc[c.key] = animated[c.key] || 0;
+      return acc;
+    }, {});
+    const to = sanitized.reduce((acc, c) => {
+      acc[c.key] = c.value;
+      return acc;
+    }, {});
+
+    function step(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      const next = {};
+      for (const k of Object.keys(to)) {
+        next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
+      }
+      setAnimated(next);
+      if (t < 1) rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [sanitized]);
+
+  return (
+    <Row className="summary-cards-new">
+      {sanitized.map((c, i) => {
+        const percent = Math.round((c.value / maxVal) * 100);
+
+        return (
+          <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
+            <Card className="summary-card-new">
+              <Card.Body className="d-flex flex-column align-items-center">
+                {/* Circular progress */}
                 <div className="progress-circle" style={{ background: `conic-gradient(var(--accent-${i}) ${percent}%, rgba(255,255,255,0.08) ${percent}%)` }}>
                   <div className="circle-inner">
                     <div className="icon-wrap">{c.icon}</div>
                   </div>
                 </div>
+
+                {/* Title */}
+                <div className="title-text">{c.title}</div>
+
+                {/* Number */}
+                <div className="count-text">{animated[c.key].toLocaleString()}</div>
+              </Card.Body>
+            </Card>
+          </Col>
+        );
+      })}
+    </Row>
+  );
+}
