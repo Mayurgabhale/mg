@@ -1,108 +1,106 @@
-// fetch all events for the IST calendar date that contains `atDate`
-async function fetchEventsForDate(atDate) {
-  const pool = await getPool();
-  const req  = pool.request();
+To fix the issue where you're getting previous day's data (2025-09-09) instead of only the requested date (2025-09-10), we need to modify the SQL query in `fetchEventsForDate` to filter by the specific date in local time (Asia/Kolkata). Here's the corrected code:
 
-  // snap to IST calendar day
-  const dayOnly = DateTime.fromJSDate(atDate, { zone: 'utc' })
-    .setZone('Asia/Kolkata')
-    .toFormat('yyyy-LL-dd');
+```javascript:controllers/liveOccupancyController.js
+// ... existing code ...
 
-  const startLocal = DateTime.fromISO(dayOnly, { zone: 'Asia/Kolkata' }).startOf('day');
-  const endLocal   = startLocal.plus({ days: 1 });
+async function fetchEventsForDate(localDate) {
+    const pool = await getPool();
+    const req = pool.request();
+    req.input('localDate', sql.Date, localDate);
 
-  const startUTC = startLocal.toUTC().toJSDate();
-  const endUTC   = endLocal.toUTC().toJSDate();
+    const { recordset } = await req.query(`
+        WITH CombinedQuery AS (
+            SELECT
+                DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+                t1.ObjectName1,
+                CASE WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+                t1.ObjectIdentity1 AS PersonGUID,
+                t3.Name AS PersonnelType,
+                COALESCE(
+                    TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+                    TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+                    sc.value
+                ) AS CardNumber,
+                t5a.value AS AdmitCode,
+                t5d.value AS Direction,
+                t1.ObjectName2 AS Door
+            FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+            LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
+            LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+            LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+            LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+            LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml ON t1.XmlGUID = t_xml.GUID
+            LEFT JOIN (
+                SELECT GUID, value
+                FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+                WHERE Name IN ('Card','CHUID')
+            ) sc ON t1.XmlGUID = sc.GUID
+            WHERE t1.MessageType = 'CardAdmitted'
+                AND t1.PartitionName2 = 'APAC.Default'
+                AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) = @localDate
+        )
+        SELECT
+            LocaleMessageTime,
+            CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+            CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
+            EmployeeID,
+            PersonGUID,
+            ObjectName1,
+            PersonnelType,
+            CardNumber,
+            AdmitCode,
+            Direction,
+            Door
+        FROM CombinedQuery
+        ORDER BY LocaleMessageTime ASC;
+    `);
 
-  req.input('start', sql.DateTime2, startUTC);
-  req.input('end',   sql.DateTime2, endUTC);
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType     = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) >= @start
-        AND DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) <  @end
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
+    return recordset;
 }
 
-
-
-....
-
-// GET /api/occupancy-at?at=...
+// Handler: GET /api/occupancy-at?at=
 exports.getSnapshotAt = async (req, res) => {
-  try {
-    const atRaw = req.query.at;
-    if (!atRaw) return res.status(400).json({ error: 'missing "at"' });
+    try {
+        const atRaw = req.query.at;
+        if (!atRaw) return res.status(400).json({ error: 'missing "at" query parameter (ISO timestamp required)' });
 
-    const atDate = new Date(atRaw);
-    if (Number.isNaN(atDate.getTime())) {
-      return res.status(400).json({ error: 'invalid "at" timestamp' });
+        const atDate = new Date(atRaw);
+        if (Number.isNaN(atDate.getTime())) {
+            return res.status(400).json({ error: 'invalid "at" timestamp' });
+        }
+
+        // Convert to Asia/Kolkata local date
+        const localDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
+            .setZone('Asia/Kolkata')
+            .toFormat('yyyy-LL-dd');
+
+        // Fetch events for the specific local date
+        const events = await fetchEventsForDate(localDate);
+        const occupancy = await buildOccupancy(events);
+        const visitedStats = buildVisitedForDate(events, atDate);
+
+        occupancy.totalVisitedToday = visitedStats.total;
+        occupancy.visitedToday = {
+            employees: visitedStats.employees,
+            contractors: visitedStats.contractors,
+            total: visitedStats.total
+        };
+        occupancy.asOf = atDate.toISOString();
+
+        return res.json(occupancy);
+    } catch (err) {
+        console.error('getSnapshotAt error:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
-
-    // 🔑 use date-based fetcher instead of 24h rolling window
-    const events = await fetchEventsForDate(atDate);
-
-    const occupancy   = await buildOccupancy(events);
-    const visitedStats = buildVisitedForDate(events, atDate);
-
-    occupancy.totalVisitedToday = visitedStats.total;
-    occupancy.visitedToday = visitedStats;
-    occupancy.asOf = atDate.toISOString();
-
-    return res.json(occupancy);
-  } catch (err) {
-    console.error('getSnapshotAt error:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
 };
+
+// ... rest of the code remains the same ...
+```
+
+Key changes made:
+1. Created a new function `fetchEventsForDate` that takes a local date parameter
+2. Modified the SQL query to filter by `CONVERT(DATE, ...) = @localDate` to get only events from the specific date
+3. Updated `getSnapshotAt` to convert the input timestamp to Asia/Kolkata local date
+4. Use the new function to fetch events only for the requested date
+
+This ensures that only events from 2025-09-10 (in Asia/Kolkata time) will be returned when requesting data for `at=2025-09-10T06:20:00.000Z`.
