@@ -1,23 +1,9 @@
-i select this time
 http://localhost:5000/api/occupancy-at?at=2025-09-10T11:00:00.000Z
-but we got this employee. how it is? 
-this is wrong. 
-  ],
-    "Reception Area": [
-      {
-        "Dateonly": "2025-09-09",
-        "Swipe_Time": "16:57:44",
-        "EmployeeID": "0",
-        "ObjectName1": "Pune, VIS_PUN_174",
-        "CardNumber": "419259",
-        "PersonnelType": "Visitor",
-        "zone": "Reception Area",
-        "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
-        "Direction": "OutDirection"
-      },
-"Orange Zone": [
-      {
-        "Dateonly": "2025-09-09",
+i search 2025-09-10 date but we got in this 2025-09-09 so this is wrong. i want only 2025-09-10 date =, not for this date 2025-09-09
+i hove you undrstand what is say
+
+ {
+        "Dateonly": "2025-09-09", <<<
         "Swipe_Time": "22:19:50",
         "EmployeeID": "323562",
         "ObjectName1": "KADAM, NIMISH JAYKAR",
@@ -27,10 +13,11 @@ this is wrong.
         "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
         "Direction": "InDirection"
       },
-"Tower B": [
-      {
-        "Dateonly": "2025-09-09", <-------
-        "Swipe_Time": "21:01:18",    < ------
+
+
+  {
+        "Dateonly": "2025-09-09",
+        "Swipe_Time": "21:01:18",
         "EmployeeID": "318502",
         "ObjectName1": "Nene, Nikhil",
         "CardNumber": "411134",
@@ -40,7 +27,8 @@ this is wrong.
         "Direction": "OutDirection"
       },
 
- {
+,
+      {
         "Dateonly": "2025-09-09",
         "Swipe_Time": "18:45:01",
         "EmployeeID": "319936",
@@ -51,20 +39,8 @@ this is wrong.
         "door": "APAC_IN_PUN_TOWER B_MAIN RECEPTION DOOR",
         "Direction": "InDirection"
       },
-  {
-        "Dateonly": "2025-09-09",
-        "Swipe_Time": "17:09:14",
-        "EmployeeID": "325902",
-        "ObjectName1": "Pawar, Neha",
-        "CardNumber": "609865",
-        "PersonnelType": "Employee",
-        "zone": "2nd Floor, Pune",
-        "door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
-        "Direction": "InDirection"
-      },
-
-
-
+ok.
+read all code carefully. and write correct. 
 
 
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
@@ -275,47 +251,6 @@ if (Direction === 'OutDirection') {
   }
   continue;
 }
-
-
-// if (Direction === 'OutDirection') {
-//   // true Out-of-office → full eviction (already checked earlier too)
-//   if (zone === 'out of office') {
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//     continue;
-//   }
-
-//   // Allowlist of OutDirection zones that should be kept (not evicted).
-//   // Add any other special OutDirection zones here as they are discovered.
-//   const allowedOutZones = new Set([
-//     'Assembly Area',
-//     'Reception Area'
-//   ]);
-
-//   // Preserve if it's an "Outer Area" OR explicitly allowed OutDirection zone.
-//   if (zoneRaw.endsWith('Outer Area') || allowedOutZones.has(zoneRaw)) {
-//     uniquePeople.set(dedupKey, PersonnelType);
-//     current[dedupKey] = {
-//       Dateonly, Swipe_Time,
-//       EmployeeID, ObjectName1, CardNumber,
-//       PersonnelType,
-//       zone: zoneRaw,
-//       door: Door,
-//       Direction
-//     };
-//   } else {
-//     // Any other OutDirection (TURNSTILE, lobby exits, etc.) = full eviction
-//     if (!warnedKeys.has(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`)) {
-//       console.log(`ℹ️ Evicting OutDirection for ${normalizePersonName(ObjectName1)} at zone ${zoneRaw}`);
-//       warnedKeys.add(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`);
-//     }
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//   }
-//   continue;
-// }
-
-
 
     // 3) InDirection → normal check-in
     if (Direction === 'InDirection') {
@@ -706,6 +641,3 @@ exports.getLiveOccupancy = async (req, res) => {
     }
   }
 };
-
-
-
