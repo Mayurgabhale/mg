@@ -1,3 +1,20 @@
+// routes/liveOccupancyRoutes.js
+const express = require('express');
+const router  = express.Router();
+const {
+  getLiveOccupancy,
+  getSnapshotAt,
+  getCurrentOccupancy
+} = require('../controllers/liveOccupancyController');
+
+router.get('/live-occupancy', getLiveOccupancy);
+router.get('/occupancy-at', getSnapshotAt);         // GET /api/occupancy-at?at=...
+router.get('/current-occupancy', getCurrentOccupancy); // GET /api/current-occupancy
+
+module.exports = router;
+
+..
+
 // controllers/liveOccupancyController.js
 // ------------------- add/ensure these are at top-level (not inside another function) -------------------
 
