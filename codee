@@ -1,73 +1,4 @@
-see this issue carefully, and sloved it. 
-Failed to load snapshot. See console for details.
-Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
-App.js:452 Failed to fetch snapshot Error: Server returned 404
-    at fetchSnapshot (App.js:436:1)
-
-//C:\Users\W0024618\Desktop\swipeData\client\src\components\TimeTravelControl.jsx
-import React, { useState } from 'react';
-import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
-
-/**
- * TimeTravelControl
- * - local UI to pick a datetime (uses <input type="datetime-local">)
- * - calls onApply(isoTimestamp) when user applies a timestamp
- * - calls onLive() when user wants to return to live mode
- *
- * Note: the parent is responsible for converting to backend format (we pass ISO UTC).
- */
-export default function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
-  // store local value as datetime-local string (no timezone)
-  const [local, setLocal] = useState(currentTimestamp ? isoToLocalDatetimeInput(currentTimestamp) : '');
-
-  function handleApply() {
-    if (!local) return;
-    // Convert local datetime (browser local) to an ISO UTC string
-    const iso = new Date(local).toISOString();
-    onApply(iso);
-  }
-
-  function handleLive() {
-    setLocal('');
-    onLive();
-  }
-
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
-      <InputGroup>
-        <FormControl
-          type="datetime-local"
-          value={local}
-          onChange={(e) => setLocal(e.target.value)}
-          placeholder="Select date & time"
-        />
-      </InputGroup>
-
-      <div style={{ display: 'flex', gap: 6 }}>
-        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
-          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
-        </Button>
-        <Button variant="warning" onClick={handleLive} disabled={loading}>
-          Live
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** helpers **/
-function isoToLocalDatetimeInput(iso) {
-  // iso -> "YYYY-MM-DDTHH:mm" suitable for <input type=datetime-local>
-  if (!iso) return '';
-  const d = new Date(iso);
-  // offset to obtain local equivalent
-  const tzOffsetMs = d.getTimezoneOffset() * 60000;
-  const localDate = new Date(d.getTime() - tzOffsetMs);
-  return localDate.toISOString().slice(0, 16);
-}
-...
-
-// Paste/replace the App() component in src/App.js with this version
+// src/App.js  (replace the App component with this version)
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Navbar, Nav } from 'react-bootstrap';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -80,7 +11,6 @@ import './App.css';
 
 function ZoneDetailsPage({ detailsData }) {
   const [searchTerm, setSearchTerm] = useState('');
-
   return (
     <>
       <div
@@ -108,9 +38,14 @@ function App() {
     : 'Live Occupancy — Western Union Pune';
 
   // ---------- CONFIG: API base URL ----------
-  // Use REACT_APP_API_BASE_URL if provided, otherwise default to localhost:5000 for dev.
-  // In production set REACT_APP_API_BASE_URL to your real API origin.
-  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+  // Priority:
+  // 1) REACT_APP_API_BASE_URL environment variable (set in .env or build env)
+  // 2) If in development, default to http://localhost:5000 (most dev setups)
+  // 3) In production, use same origin (window.location.origin)
+  const API_BASE = (process.env.REACT_APP_API_BASE_URL)
+    || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : window.location.origin);
+  // normalize (no trailing slash)
+  const API_ORIGIN = API_BASE.replace(/\/$/, '');
   // ------------------------------------------
 
   const [liveData, setLiveData] = useState({
@@ -135,17 +70,18 @@ function App() {
   useEffect(() => {
     if (timeTravelMode) {
       if (esRef.current) {
-        try { esRef.current.close(); } catch (e) {}
+        try { esRef.current.close(); } catch (e) { /* ignore */ }
         esRef.current = null;
       }
       return;
     }
 
-    // Use API_BASE for SSE too
-    const esUrl = `${API_BASE.replace(/\/$/, '')}/api/live-occupancy`;
+    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
+    console.debug('[SSE] connecting to', esUrl);
     const es = new EventSource(esUrl);
     esRef.current = es;
 
+    es.onopen = () => console.debug('[SSE] open', esUrl);
     es.onmessage = (e) => {
       try {
         const p = JSON.parse(e.data);
@@ -161,12 +97,12 @@ function App() {
           ertStatus: p.ertStatus || {}
         });
       } catch (err) {
-        console.error('SSE parse error', err);
+        console.error('[SSE] parse error', err, e.data);
       }
     };
 
     es.onerror = (err) => {
-      console.error('SSE error', err);
+      console.error('[SSE] error', err);
       try { es.close(); } catch (e) {}
       esRef.current = null;
     };
@@ -175,32 +111,51 @@ function App() {
       try { es.close(); } catch (e) {}
       esRef.current = null;
     };
-  }, [timeTravelMode, API_BASE]);
+  }, [timeTravelMode, API_ORIGIN]);
+
+  // Helper: unify payload set
+  function setPayload(p) {
+    setLiveData({
+      summary: Array.isArray(p.summary) ? p.summary : [],
+      details: p.details || {},
+      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+      totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+      visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+      ertStatus: p.ertStatus || {}
+    });
+  }
 
   // Fetch a historical snapshot
   async function fetchSnapshot(isoTimestamp) {
     setTimeTravelLoading(true);
+    const url = `${API_ORIGIN}/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`;
+    console.debug('[TimeTravel] fetching', url);
     try {
-      const url = `${API_BASE.replace(/\/$/, '')}/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`;
       const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-      if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+      if (!resp.ok) {
+        // give a better message for 404 vs other errors and include body if present
+        const body = await resp.text().catch(() => '');
+        console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
+        if (resp.status === 404) {
+          window.alert(`Snapshot not found for ${isoTimestamp} (404). Check server logs or the 'at' parameter.`);
+        } else {
+          window.alert(`Failed to load snapshot: server returned ${resp.status}. See console for details.`);
+        }
+        throw new Error(`Server returned ${resp.status}`);
+      }
       const p = await resp.json();
-      setLiveData({
-        summary: Array.isArray(p.summary) ? p.summary : [],
-        details: p.details || {},
-        floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-        zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-        personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-        totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-        personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-        visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-        ertStatus: p.ertStatus || {}
-      });
+      setPayload(p);
       setTimeTravelMode(true);
       setTimeTravelTimestamp(isoTimestamp);
     } catch (err) {
       console.error('Failed to fetch snapshot', err);
-      window.alert('Failed to load snapshot. See console for details.');
+      // (UI already alerted above for non-2xx)
+      if (!err.message.includes('Server returned')) {
+        window.alert('Failed to load snapshot. See console for details.');
+      }
     } finally {
       setTimeTravelLoading(false);
     }
@@ -212,26 +167,18 @@ function App() {
     try {
       setTimeTravelMode(false);
       setTimeTravelTimestamp(null);
-      // best-effort refresh (optional)
+      // optional immediate refresh
       try {
-        const url = `${API_BASE.replace(/\/$/, '')}/api/current-occupancy`;
+        const url = `${API_ORIGIN}/api/current-occupancy`;
         const resp = await fetch(url, { headers: { Accept: 'application/json' } });
         if (resp.ok) {
           const p = await resp.json();
-          setLiveData({
-            summary: Array.isArray(p.summary) ? p.summary : [],
-            details: p.details || {},
-            floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-            zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-            personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-            totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-            personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-            visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-            ertStatus: p.ertStatus || {}
-          });
+          setPayload(p);
+        } else {
+          console.debug('[TimeTravel] current-occupancy not available', resp.status);
         }
       } catch (e) {
-        // ignore; SSE will supply updates
+        console.debug('[TimeTravel] current-occupancy fetch failed (ignored)', e);
       }
     } finally {
       setTimeTravelLoading(false);
