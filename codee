@@ -1,102 +1,4 @@
-we got this consol errror 
-chekc this carefuuly, and write correct code 
-App.js:436 
- GET http://localhost:3000/api/occupancy-at?at=2025-09-10T04%3A00%3A00.000Z 404 (Not Found)
-fetchSnapshot	@	App.js:436
-onApply	@	App.js:508
-handleApply	@	TimeTravelControl.jsx:21
-executeDispatch	@	react-dom-client.development.js:16368
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-processDispatchQueue	@	react-dom-client.development.js:16417
-(anonymous)	@	react-dom-client.development.js:17016
-batchedUpdates$1	@	react-dom-client.development.js:3262
-dispatchEventForPluginEventSystem	@	react-dom-client.development.js:16572
-dispatchEvent	@	react-dom-client.development.js:20657
-dispatchDiscreteEvent	@	react-dom-client.development.js:20625
-
-App.js:460 Failed to fetch snapshot Error: Server returned 404
-    at fetchSnapshot (App.js:441:1)
-fetchSnapshot	@	App.js:460
-await in fetchSnapshot		
-onApply	@	App.js:508
-handleApply	@	TimeTravelControl.jsx:21
-executeDispatch	@	react-dom-client.development.js:16368
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-processDispatchQueue	@	react-dom-client.development.js:16417
-(anonymous)	@	react-dom-client.development.js:17016
-batchedUpdates$1	@	react-dom-client.development.js:3262
-dispatchEventForPluginEventSystem	@	react-dom-client.development.js:16572
-dispatchEvent	@	react-dom-client.development.js:20657
-dispatchDiscreteEvent	@	react-dom-client.development.js:20625
-﻿
-
-...
-
-// src/components/TimeTravelControl.jsx
-import React, { useState } from 'react';
-import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
-
-/**
- * TimeTravelControl
- * - local UI to pick a datetime (uses <input type="datetime-local">)
- * - calls onApply(isoTimestamp) when user applies a timestamp
- * - calls onLive() when user wants to return to live mode
- *
- * Note: the parent is responsible for converting to backend format (we pass ISO UTC).
- */
-export default function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
-  // store local value as datetime-local string (no timezone)
-  const [local, setLocal] = useState(currentTimestamp ? isoToLocalDatetimeInput(currentTimestamp) : '');
-
-  function handleApply() {
-    if (!local) return;
-    // Convert local datetime (browser local) to an ISO UTC string
-    const iso = new Date(local).toISOString();
-    onApply(iso);
-  }
-
-  function handleLive() {
-    setLocal('');
-    onLive();
-  }
-
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
-      <InputGroup>
-        <FormControl
-          type="datetime-local"
-          value={local}
-          onChange={(e) => setLocal(e.target.value)}
-          placeholder="Select date & time"
-        />
-      </InputGroup>
-
-      <div style={{ display: 'flex', gap: 6 }}>
-        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
-          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
-        </Button>
-        <Button variant="warning" onClick={handleLive} disabled={loading}>
-          Live
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** helpers **/
-function isoToLocalDatetimeInput(iso) {
-  // iso -> "YYYY-MM-DDTHH:mm" suitable for <input type=datetime-local>
-  if (!iso) return '';
-  const d = new Date(iso);
-  // offset to obtain local equivalent
-  const tzOffsetMs = d.getTimezoneOffset() * 60000;
-  const localDate = new Date(d.getTime() - tzOffsetMs);
-  return localDate.toISOString().slice(0, 16);
-}
-
-
-.....
-// src/App.js  (only the App() component part is replaced/updated)
+// Paste/replace the App() component in src/App.js with this version
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Navbar, Nav } from 'react-bootstrap';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -108,7 +10,6 @@ import TimeTravelControl from './components/TimeTravelControl';
 import './App.css';
 
 function ZoneDetailsPage({ detailsData }) {
-  // ... same as before (no changes)
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
@@ -137,6 +38,12 @@ function App() {
     ? 'Emergency Response Team — Western Union Pune'
     : 'Live Occupancy — Western Union Pune';
 
+  // ---------- CONFIG: API base URL ----------
+  // Use REACT_APP_API_BASE_URL if provided, otherwise default to localhost:5000 for dev.
+  // In production set REACT_APP_API_BASE_URL to your real API origin.
+  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+  // ------------------------------------------
+
   const [liveData, setLiveData] = useState({
     summary: [],
     details: {},
@@ -149,27 +56,25 @@ function App() {
     ertStatus: {}
   });
 
-  // Time-travel states
-  const [timeTravelMode, setTimeTravelMode] = useState(false); // true when viewing historical snapshot
-  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null); // ISO string of snapshot
+  const [timeTravelMode, setTimeTravelMode] = useState(false);
+  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
   const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
-  // Keep a ref to current ES instance so we can close it when entering time-travel
   const esRef = useRef(null);
 
-  // SSE: runs only when NOT in timeTravelMode
+  // SSE: runs only when NOT time-traveling
   useEffect(() => {
-    // If we are time-traveling, don't open SSE
     if (timeTravelMode) {
-      // ensure any existing ES is closed
       if (esRef.current) {
-        esRef.current.close();
+        try { esRef.current.close(); } catch (e) {}
         esRef.current = null;
       }
       return;
     }
 
-    const es = new EventSource('http://localhost:5000/api/live-occupancy');
+    // Use API_BASE for SSE too
+    const esUrl = `${API_BASE.replace(/\/$/, '')}/api/live-occupancy`;
+    const es = new EventSource(esUrl);
     esRef.current = es;
 
     es.onmessage = (e) => {
@@ -186,14 +91,13 @@ function App() {
           visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
           ertStatus: p.ertStatus || {}
         });
-      } catch {
-        console.error('SSE parse error');
+      } catch (err) {
+        console.error('SSE parse error', err);
       }
     };
 
     es.onerror = (err) => {
       console.error('SSE error', err);
-      // close on error; effect will not attempt to reconnect until timeTravelMode changes
       try { es.close(); } catch (e) {}
       esRef.current = null;
     };
@@ -202,23 +106,16 @@ function App() {
       try { es.close(); } catch (e) {}
       esRef.current = null;
     };
-  }, [timeTravelMode]); // re-run when timeTravelMode toggles
+  }, [timeTravelMode, API_BASE]);
 
-  // Fetch a historical snapshot from backend for a given ISO timestamp
+  // Fetch a historical snapshot
   async function fetchSnapshot(isoTimestamp) {
     setTimeTravelLoading(true);
     try {
-      // Backend endpoint expected: GET /api/occupancy-at?at=<ISO8601>
-      // Response should be the same payload structure as SSE messages (p)
-      const resp = await fetch(`/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!resp.ok) {
-        throw new Error(`Server returned ${resp.status}`);
-      }
+      const url = `${API_BASE.replace(/\/$/, '')}/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`;
+      const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
       const p = await resp.json();
-      // Replace liveData with snapshot payload (same shape)
       setLiveData({
         summary: Array.isArray(p.summary) ? p.summary : [],
         details: p.details || {},
@@ -230,7 +127,6 @@ function App() {
         visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
         ertStatus: p.ertStatus || {}
       });
-      // activate time travel mode
       setTimeTravelMode(true);
       setTimeTravelTimestamp(isoTimestamp);
     } catch (err) {
@@ -241,15 +137,16 @@ function App() {
     }
   }
 
-  // Return to live mode (re-enable SSE)
+  // Return to live mode
   async function clearTimeTravel() {
     setTimeTravelLoading(true);
     try {
       setTimeTravelMode(false);
       setTimeTravelTimestamp(null);
-      // best-effort: fetch immediate current state (if API exists)
+      // best-effort refresh (optional)
       try {
-        const resp = await fetch('/api/current-occupancy', { headers: { Accept: 'application/json' } });
+        const url = `${API_BASE.replace(/\/$/, '')}/api/current-occupancy`;
+        const resp = await fetch(url, { headers: { Accept: 'application/json' } });
         if (resp.ok) {
           const p = await resp.json();
           setLiveData({
@@ -265,7 +162,7 @@ function App() {
           });
         }
       } catch (e) {
-        // ignore — SSE will supply updates shortly
+        // ignore; SSE will supply updates
       }
     } finally {
       setTimeTravelLoading(false);
@@ -276,9 +173,7 @@ function App() {
     <>
       <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
         <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
-
         <Nav className="ms-auto align-items-center">
-          {/* Insert TimeTravelControl into the navbar area */}
           <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
             <TimeTravelControl
               currentTimestamp={timeTravelTimestamp}
@@ -297,7 +192,6 @@ function App() {
       </Navbar>
 
       <Container fluid className="mt-2">
-        {/* Small banner to indicate time-travel is active */}
         {timeTravelMode && (
           <div style={{
             background: '#2b2b2b',
@@ -355,9 +249,3 @@ export default function WrappedApp() {
     </BrowserRouter>
   );
 }
-
-
-......
-
-
-
