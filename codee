@@ -1,3 +1,6 @@
+FORMAT(LocaleMessageTime, 'hh:mm tt') AS Swipe_Time,
+
+
  {
         "Dateonly": "2025-09-10",
         "Swipe_Time": "09:48:48",
