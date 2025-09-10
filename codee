@@ -1,3 +1,33 @@
+http://localhost:5000/api/occupancy-at?at=2025-09-10T11:00:00.000Z
+
+i select this data 2025-09-10 but we got on this 2025-09-09 data also. this is wrong. 
+read all carefully, and find the issue, carefuuly, 
+
+],
+    "Tower B": [
+      {
+        "Dateonly": "2025-09-09",
+        "Swipe_Time": "18:45:01",
+        "EmployeeID": "319936",
+        "ObjectName1": "Singh, Vineet",
+        "CardNumber": "608366",
+        "PersonnelType": "Employee",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_MAIN RECEPTION DOOR",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-09",
+        "Swipe_Time": "21:01:18",
+        "EmployeeID": "318502",
+        "ObjectName1": "Nene, Nikhil",
+        "CardNumber": "411134",
+        "PersonnelType": "Employee",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR",
+        "Direction": "OutDirection"
+      },
+
 
 
 
@@ -512,7 +542,6 @@ exports.getSnapshotAt = async (req, res) => {
     }
 
     // fetch events in the 24h window ending at atDate
-    // const events = await fetchEventsWindow(atDate);
     const events = await fetchEventsForDate(atDate);
 
     const occupancy = await buildOccupancy(events);
@@ -537,7 +566,7 @@ exports.getSnapshotAt = async (req, res) => {
 exports.getCurrentOccupancy = async (req, res) => {
   try {
     const until = new Date();
-    const events = await fetchEventsWindow(until);
+    const events = await fetchEventsForDate(until);
     const occupancy = await buildOccupancy(events);
     const visitedStats = buildVisitedForDate(events, until);
 
@@ -652,5 +681,6 @@ exports.getLiveOccupancy = async (req, res) => {
     }
   }
 };
+
 
 
