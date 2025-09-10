@@ -275,44 +275,6 @@ if (Direction === 'OutDirection') {
 }
 
 
-// if (Direction === 'OutDirection') {
-//   // true Out-of-office → full eviction (already checked earlier too)
-//   if (zone === 'out of office') {
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//     continue;
-//   }
-
-//   // Allowlist of OutDirection zones that should be kept (not evicted).
-//   // Add any other special OutDirection zones here as they are discovered.
-//   const allowedOutZones = new Set([
-//     'Assembly Area',
-//     'Reception Area'
-//   ]);
-
-//   // Preserve if it's an "Outer Area" OR explicitly allowed OutDirection zone.
-//   if (zoneRaw.endsWith('Outer Area') || allowedOutZones.has(zoneRaw)) {
-//     uniquePeople.set(dedupKey, PersonnelType);
-//     current[dedupKey] = {
-//       Dateonly, Swipe_Time,
-//       EmployeeID, ObjectName1, CardNumber,
-//       PersonnelType,
-//       zone: zoneRaw,
-//       door: Door,
-//       Direction
-//     };
-//   } else {
-//     // Any other OutDirection (TURNSTILE, lobby exits, etc.) = full eviction
-//     if (!warnedKeys.has(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`)) {
-//       console.log(`ℹ️ Evicting OutDirection for ${normalizePersonName(ObjectName1)} at zone ${zoneRaw}`);
-//       warnedKeys.add(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`);
-//     }
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//   }
-//   continue;
-// }
-
 
 
     // 3) InDirection → normal check-in
