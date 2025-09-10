@@ -1,5 +1,3 @@
-
-
 // src/components/FloorOccupancyChart.jsx
 import React from 'react';
 import {
@@ -9,49 +7,27 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
   Cell,
   LabelList,
   Legend,
-  Customized
+  Customized,
+  CartesianGrid
 } from 'recharts';
 import { Card } from 'react-bootstrap';
-import {
-  FaSearch,
-  FaStar,
-  FaEnvelope,
-  FaChartBar,
-  FaUsers
-} from 'react-icons/fa';
+import { FaUsers } from 'react-icons/fa';
 import floorCapacities from '../constants/floorCapacities';
 
-/*
-  COLOR PALETTE: distinct gradient pairs for each cylinder (repeats if more floors)
-*/
+/* Color pairs for the bars (repeats if more floors) */
 const CYLINDER_COLORS = [
-  ['#BEE9FF', '#4DB8FF'], // light -> mid blue
-  ['#0B4F8C', '#2F80ED'], // dark -> lighter blue
-  ['#F27FA6', '#B93F72'], // pink shades
-  ['#FFB84D', '#F26B00'], // orange shades
-  ['#C6F28B', '#4DB646']  // green shades
+  ['#BEE9FF', '#4DB8FF'],
+  ['#DDEBFF', '#2F80ED'],
+  ['#FFDEE1', '#E74C7C'],
+  ['#FFF1D6', '#FF9A3D'],
+  ['#E6FCD7', '#46C853']
 ];
 
-
-// const CYLINDER_COLORS = [
-//   ['#516dad85', '#516dad'], // light -> mid blue
-//   ['#73a4ae', '#73a4ae'], // dark -> lighter blue
-//   ['#a67981', '#a67981'], // pink shades
-//   ['#4dfff9', '#54b0ad'], // orange shades
-//   ['#9b43de', '#753234']  // green shades
-// ];
-
-/*
-  ICONS: map icons per cylinder (repeats if more floors)
-*/
-const CYLINDER_ICONS = [FaUsers, FaStar, FaEnvelope, FaChartBar, FaSearch];
-
 export default function FloorOccupancyChart({ data = [] }) {
-  if (!data.length) {
+  if (!data || !data.length) {
     return (
       <Card body className="bg-dark text-white">
         No floor data available
@@ -59,243 +35,210 @@ export default function FloorOccupancyChart({ data = [] }) {
     );
   }
 
-  // -------------------------------
-  // YOUR LOGIC: enrichment, totals,
-  // sorting — left exactly as you had it
-  // -------------------------------
+  // enrich with capacity, usedPct, label, and preserve breakdown
   const enriched = data.map((floorObj) => {
-    const { floor, total: liveCount } = floorObj;
+    const { floor, total: liveCount = 0 } = floorObj;
     const capacity = floorCapacities[floor] ?? 0;
-    const usedPct = capacity > 0
-      ? ((liveCount / capacity) * 100).toFixed(1)
-      : '0.0';
+    const usedPct = capacity > 0 ? Number(((liveCount / capacity) * 100).toFixed(1)) : 0;
     return {
-      ...floorObj,           // includes breakdown fields: employees, contractors, etc.
+      ...floorObj,
       capacity,
       liveCount,
-      usedPct: Number(usedPct),
+      usedPct,
       label: `${liveCount}/${capacity}`
     };
   });
 
-  // 2) Compute “Pune Office Total” across all floors
-  const totalLive = enriched.reduce((sum, f) => sum + f.liveCount, 0);
-  const totalCap = enriched.reduce((sum, f) => sum + f.capacity, 0);
-  const totalUsedPct = totalCap > 0
-    ? ((totalLive / totalCap) * 100).toFixed(1)
-    : '0.0';
+  // totals and chart data
+  const totalLive = enriched.reduce((s, f) => s + f.liveCount, 0);
+  const totalCap = enriched.reduce((s, f) => s + f.capacity, 0);
+  const totalUsedPct = totalCap > 0 ? Number(((totalLive / totalCap) * 100).toFixed(1)) : 0;
 
   const totalEntry = {
     floor: 'Pune Office Total',
     liveCount: totalLive,
     capacity: totalCap,
-    usedPct: Number(totalUsedPct),
+    usedPct: totalUsedPct,
     label: `${totalLive}/${totalCap}`
   };
 
-  // 3) Sort floors by liveCount descending, then prepend “Pune Office Total”
   const sortedFloors = [...enriched].sort((a, b) => b.liveCount - a.liveCount);
   const chartData = [totalEntry, ...sortedFloors];
 
-  // 4) Determine the maximum capacity to set Y-axis domain
-  const maxCapacity = Math.max(...chartData.map(f => f.capacity)) || 0;
-  // NEW: determine maximum live count (used to scale the Y axis so bars appear taller)
-  const maxLive = Math.max(...chartData.map(f => f.liveCount)) || 0;
-  // compute a display max slightly above maxLive for breathing room and round to nearest 10
-  const yDomainMax = Math.ceil((maxLive * 1.15 || maxCapacity) / 10) * 10;
+  // Y domain logic (so bars look nice)
+  const maxLive = Math.max(...chartData.map(f => f.liveCount), ...chartData.map(f => f.capacity)) || 10;
+  const yDomainMax = Math.ceil((maxLive * 1.15) / 10) * 10;
 
-  // 5) Custom tooltip to show raw counts, percentages, and breakdown (left intact)
+  // Tooltip
   const renderTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const floorObj = payload[0].payload;
     const { liveCount, capacity, usedPct } = floorObj;
-
     const breakdownEntries = Object.entries(floorObj).filter(
-      ([key]) =>
-        !['floor', 'liveCount', 'capacity', 'usedPct', 'label'].includes(key)
+      ([key]) => !['floor', 'liveCount', 'capacity', 'usedPct', 'label'].includes(key)
     );
 
     return (
-      <div
-        style={{
-          backgroundColor: '#1a1a1a',
-          color: '#FFD100',
-          border: '1px solid var(--wu-yellow)',
-          borderRadius: 4,
-          padding: '0.75rem',
-          minWidth: 200
-        }}
-      >
-        <div style={{ marginBottom: 4, fontSize: '1rem' }}>
-          <strong>Floor: {floorObj.floor}</strong>
+      <div style={{
+        backgroundColor: '#0f1724',
+        color: '#FFD100',
+        border: '1px solid rgba(255,209,0,0.18)',
+        borderRadius: 8,
+        padding: '10px',
+        minWidth: 220
+      }}>
+        <div style={{ fontSize: 14, marginBottom: 6, fontWeight: 700 }}>{floorObj.floor}</div>
+        <div style={{ fontSize: 13, marginBottom: 6 }}>
+          <strong style={{ color: '#fff' }}>{liveCount}</strong> / {capacity} &nbsp;
+          <span style={{ color: '#FFD100' }}>({usedPct}%)</span>
         </div>
-        <div style={{ marginBottom: 6, fontWeight: 'bold', fontSize: '0.9rem' }}>
-          Live: {liveCount} / {capacity} ({usedPct}%)
-        </div>
-        {breakdownEntries.map(([type, value]) => (
-          <div
-            key={type}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginTop: 2,
-              color: '#fff',
-              fontSize: '0.85rem'
-            }}
-          >
-            <span style={{ opacity: 0.8 }}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </span>
-            <span style={{ fontWeight: 'bold' }}>{value}</span>
+        {breakdownEntries.map(([k, v]) => (
+          <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: '#E6EEF8', fontSize: 13 }}>
+            <div style={{ opacity: 0.85 }}>{k.charAt(0).toUpperCase() + k.slice(1)}</div>
+            <div style={{ fontWeight: 700 }}>{v}</div>
           </div>
         ))}
       </div>
     );
   };
 
-  // -------------------------------
-  // Cylinder shape (single cylinder per floor)
-  // Recharts calls this with props: x, y, width, height, payload, etc.
-  // We derive the index by matching payload.floor in chartData.
-  // -------------------------------
-// REPLACE CylinderShape with this
-const CylinderShape = (props) => {
-  const { x, y, width, height, payload } = props;
-  const floorName = payload && payload.floor;
-  const idx = chartData.findIndex(d => d.floor === floorName);
-  const fill = `url(#cyl-grad-${idx})`;
+  // -----------------------
+  // Flat, modern bar shape
+  // -----------------------
+  // Draws a rounded rectangle with gradient, then centers the usedPct inside,
+  // and shows the live/cap label below the percent (inside the bar).
+  const FlatBarShape = (props) => {
+    const { x, y, width, height, payload } = props;
+    const floorName = payload && payload.floor;
+    const idx = chartData.findIndex(d => d.floor === floorName);
+    const [c1, c2] = CYLINDER_COLORS[idx % CYLINDER_COLORS.length];
+    const gradId = `grad-${idx}`;
 
-  const cx = x + width / 2;
-  const topRy = Math.max(8, width * 0.12);
-  const bottomRy = Math.max(10, width * 0.14);
-  const bottomY = y + height;
+    const cx = x + width / 2;
+    const percentText = `${payload.usedPct}%`;
+    const labelText = payload.label || '';
 
-  // centered label (live/cap) — large and bold
-  const centerLabel = payload && payload.label ? payload.label : '';
+    // If height is too small, nudge vertical positions to avoid overlap
+    const pctY = height > 36 ? y + height * 0.45 : y + Math.max(10, height - 8);
+    const labelY = pctY + 16;
 
-  return (
-    <g>
-      {/* shadow under the cylinder */}
-      <ellipse
-        cx={cx}
-        cy={bottomY + bottomRy * 0.9}
-        rx={width * 0.62}
-        ry={bottomRy * 0.45}
-        fill="rgba(0,0,0,0.25)"
-      />
+    return (
+      <g>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={c1} stopOpacity={1} />
+            <stop offset="100%" stopColor={c2} stopOpacity={1} />
+          </linearGradient>
+          {/* subtle inner highlight to give modern flat depth */}
+          <linearGradient id={`hi-${idx}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.06)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
+          </linearGradient>
+        </defs>
 
-      {/* cylinder body */}
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        rx={12}
-        ry={12}
-        fill={fill}
-        stroke="rgba(255,255,255,0.06)"
-        strokeWidth={1}
-      />
+        {/* background rounded rect (same color but with low opacity to give track feel) */}
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          rx={10}
+          ry={10}
+          fill={`url(#${gradId})`}
+          stroke="rgba(0,0,0,0.12)"
+          strokeWidth={1}
+        />
 
-      {/* top ellipse */}
-      {/* <ellipse
-        cx={cx}
-        cy={y}
-        rx={width / 2}
-        ry={topRy}
-        fill={fill}
-        stroke="rgba(255,255,255,0.12)"
-        strokeWidth={1}
-      /> */}
+        {/* subtle overlay highlight for sophistication */}
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height * 0.5}
+          rx={10}
+          ry={10}
+          fill={`url(#hi-${idx})`}
+          opacity={0.55}
+        />
 
-      {/* bottom ellipse for 3D look */}
-      <ellipse
-        cx={cx}
-        cy={bottomY}
-        rx={width / 2}
-        ry={bottomRy}
-        fill="rgba(255,255,255,0.03)"
-      />
-
-      {/* big centered count (live/cap) */}
-      {centerLabel && (
+        {/* centered percentage */}
         <text
           x={cx}
-          // vertically center: use middle of cylinder body
-          y={y + height / 2 + 8} 
+          y={pctY}
           textAnchor="middle"
-          fontSize={Math.max(12, Math.round(width * 0.18))}
-          fontWeight="600"
+          fontSize={Math.max(12, Math.round(width * 0.14))}
+          fontWeight="700"
           fill="#ffffff"
         >
-          {centerLabel}
+          {percentText}
         </text>
-      )}
-    </g>
-  );
-};
-  // -------------------------------
-  // Curve overlay that passes exactly through the top centers of the bars
-  // Customized component receives xAxisMap and yAxisMap we can use for exact pixel coords
-  // -------------------------------
- // REPLACE your existing CurveOverlay/InfographicCurve with this simplified version
-const CurveOverlay = ({ width, height, xAxisMap, yAxisMap }) => {
-  const xKey = Object.keys(xAxisMap || {})[0];
-  const yKey = Object.keys(yAxisMap || {})[0];
 
-  if (!xKey || !yKey) return null;
+        {/* small live/cap label under percentage (contrast for readability) */}
+        <text
+          x={cx}
+          y={labelY}
+          textAnchor="middle"
+          fontSize={Math.max(10, Math.round(width * 0.11))}
+          fontWeight="600"
+          fill="rgba(255,255,255,0.88)"
+        >
+          {labelText}
+        </text>
+      </g>
+    );
+  };
 
-  const xScale = xAxisMap[xKey].scale;
-  const yScale = yAxisMap[yKey].scale;
+  // Curve overlay (keeps the line that ties the bars visually)
+  const CurveOverlay = (props) => {
+    const { xAxisMap, yAxisMap } = props;
+    if (!xAxisMap || !yAxisMap) return null;
+    const xKey = Object.keys(xAxisMap)[0];
+    const yKey = Object.keys(yAxisMap)[0];
+    const xScale = xAxisMap[xKey].scale;
+    const yScale = yAxisMap[yKey].scale;
+    if (!xScale || !yScale) return null;
 
-  const points = chartData.map((d) => {
-    const x = xScale(d.floor) + (xScale.bandwidth ? xScale.bandwidth() / 2 : 0);
-    const y = yScale(d.liveCount);
-    return { x, y };
-  });
+    const points = chartData.map(d => {
+      const x = xScale(d.floor) + (xScale.bandwidth ? xScale.bandwidth() / 2 : 0);
+      const y = yScale(d.liveCount);
+      return { x, y };
+    });
+    if (points.length < 2) return null;
 
-  if (points.length < 2) return null;
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const cur = points[i];
+      const midX = (prev.x + cur.x) / 2;
+      const midY = (prev.y + cur.y) / 2;
+      path += ` Q ${prev.x} ${prev.y} ${midX} ${midY}`;
+    }
+    const last = points[points.length - 1];
+    path += ` T ${last.x} ${last.y}`;
 
-  // build smooth path
-  let path = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const cur = points[i];
-    const midX = (prev.x + cur.x) / 2;
-    const midY = (prev.y + cur.y) / 2;
-    path += ` Q ${prev.x} ${prev.y} ${midX} ${midY}`;
-  }
-  const last = points[points.length - 1];
-  path += ` T ${last.x} ${last.y}`;
+    return (
+      <g>
+        <path d={path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={3} strokeOpacity={0.5} />
+        <path d={path} fill="none" stroke="#FFD100" strokeWidth={2.5} strokeOpacity={0.95} strokeLinecap="round" />
+      </g>
+    );
+  };
 
   return (
-    <g>
-      {/* faint grey helper line */}
-      <path d={path} fill="none" stroke="#cccccc" strokeWidth={2} strokeOpacity={0.6} />
-      {/* bright accent line on top */}
-      <path d={path} fill="none" stroke="#FFD100" strokeWidth={3} strokeOpacity={0.9} strokeLinecap="round" />
-    </g>
-  );
-};
-
-
-  return (
-    <Card className="mb- shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
-      <Card.Header className="bg-dark text-warning text-center fw-bold" style={{ borderBottom: '2px solid var(--wu-yellow)', fontSize: '1.2rem' }}>
-        Western Union-Pune Headcount against Occupancy
+    <Card className="mb-3 shadow-sm border" style={{ borderColor: 'var(--wu-yellow)' }}>
+      <Card.Header className="bg-dark text-warning text-center fw-bold" style={{ borderBottom: '2px solid var(--wu-yellow)', fontSize: '1.08rem' }}>
+        Western Union - Pune Headcount vs Occupancy
       </Card.Header>
 
-      {/* NEW: increase chart container height so cylinders can be taller */}
       <Card.Body style={{ height: '50vh', padding: 0, backgroundColor: 'var(--wu-gray-dark)' }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            // NEW: more top margin so the curve + markers have space
-            margin={{ top: 10, right: 24, left: 20, bottom: 40 }}
-            // keep category gap but you can tweak to control cylinder spacing
-            barCategoryGap="18%"
+            margin={{ top: 18, right: 20, left: 20, bottom: 36 }}
+            barCategoryGap="22%"
           >
-            {/* define per-cylinder gradients */}
+            {/* per-bar gradients */}
             <defs>
               {chartData.map((_, idx) => {
                 const [c1, c2] = CYLINDER_COLORS[idx % CYLINDER_COLORS.length];
@@ -308,47 +251,35 @@ const CurveOverlay = ({ width, height, xAxisMap, yAxisMap }) => {
               })}
             </defs>
 
-            {/* <CartesianGrid stroke="#444" strokeDasharray="3 3" /> */}
+            {/* light grid for reference */}
+            <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} strokeDasharray="3 3" />
+
             <XAxis
               dataKey="floor"
-              tick={{ fontSize: 12, fill: '#fff' }}
+              tick={{ fontSize: 12, fill: '#E8EEF8' }}
               interval={0}
-              height={80}
+              height={64}
             />
-            {/* NEW: use yDomainMax (derived from maxLive) to make bars visually larger */}
             <YAxis
-              tick={{ fontSize: 13, fill: '#fff' }}
+              tick={{ fontSize: 12, fill: '#E8EEF8' }}
               domain={[0, yDomainMax]}
+              width={56}
             />
 
             <Tooltip content={renderTooltip} />
 
-            <Legend
-              verticalAlign="top"
-              align="center"
-              wrapperStyle={{ color: '#fff', paddingBottom: 8 }}
-              payload={[
-                { value: 'Live HeadCount', type: 'square', color: '#4DB8FF' }
-              ]}
-            />
+            <Legend verticalAlign="top" align="center" wrapperStyle={{ color: '#fff', paddingBottom: 6 }} payload={[{ value: 'Live Headcount', type: 'square', color: CYLINDER_COLORS[0][1] }]} />
 
-            {/*
-              SINGLE BAR: each datum -> one cylinder drawn by CylinderShape
-              increase barSize a bit so cylinders are visually prominent
-            */}
-            <Bar dataKey="liveCount" barSize={140} shape={<CylinderShape />}>
+            {/* use the custom flat bar shape */}
+            <Bar dataKey="liveCount" barSize={80} shape={<FlatBarShape />}>
               {chartData.map((d, idx) => (
                 <Cell key={`cyl-cell-${idx}`} fill={`url(#cyl-grad-${idx})`} />
               ))}
-              <LabelList
-                dataKey="liveCount"
-                position="top"
-                formatter={(val) => val}
-                style={{ fill: '#fff', fontSize: 15, fontWeight: '800' }}
-              />
+              {/* small numeric label on top */}
+              <LabelList dataKey="liveCount" position="top" formatter={(v) => v} style={{ fill: '#fff', fontSize: 13, fontWeight: 700 }} />
             </Bar>
 
-            {/* overlay: curve passing through top-centers */}
+            {/* curve overlay */}
             <Customized component={(props) => <CurveOverlay {...props} />} />
           </BarChart>
         </ResponsiveContainer>
@@ -356,5 +287,3 @@ const CurveOverlay = ({ width, height, xAxisMap, yAxisMap }) => {
     </Card>
   );
 }
-
-
