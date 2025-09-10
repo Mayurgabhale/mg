@@ -1,3 +1,37 @@
+we got this consol errror 
+chekc this carefuuly, and write correct code 
+App.js:436 
+ GET http://localhost:3000/api/occupancy-at?at=2025-09-10T04%3A00%3A00.000Z 404 (Not Found)
+fetchSnapshot	@	App.js:436
+onApply	@	App.js:508
+handleApply	@	TimeTravelControl.jsx:21
+executeDispatch	@	react-dom-client.development.js:16368
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+processDispatchQueue	@	react-dom-client.development.js:16417
+(anonymous)	@	react-dom-client.development.js:17016
+batchedUpdates$1	@	react-dom-client.development.js:3262
+dispatchEventForPluginEventSystem	@	react-dom-client.development.js:16572
+dispatchEvent	@	react-dom-client.development.js:20657
+dispatchDiscreteEvent	@	react-dom-client.development.js:20625
+
+App.js:460 Failed to fetch snapshot Error: Server returned 404
+    at fetchSnapshot (App.js:441:1)
+fetchSnapshot	@	App.js:460
+await in fetchSnapshot		
+onApply	@	App.js:508
+handleApply	@	TimeTravelControl.jsx:21
+executeDispatch	@	react-dom-client.development.js:16368
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+processDispatchQueue	@	react-dom-client.development.js:16417
+(anonymous)	@	react-dom-client.development.js:17016
+batchedUpdates$1	@	react-dom-client.development.js:3262
+dispatchEventForPluginEventSystem	@	react-dom-client.development.js:16572
+dispatchEvent	@	react-dom-client.development.js:20657
+dispatchDiscreteEvent	@	react-dom-client.development.js:20625
+﻿
+
+...
+
 // src/components/TimeTravelControl.jsx
 import React, { useState } from 'react';
 import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
