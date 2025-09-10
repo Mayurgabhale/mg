@@ -1,3 +1,12 @@
+const p = await resp.json();
+setPayload(p);
+setTimeTravelMode(true);
+// prefer server-provided timestamp (p.asOf) if backend returns it; fallback to requested isoTimestamp
+setTimeTravelTimestamp(p?.asOf || isoTimestamp);
+
+
+
+..
 import React, { useEffect, useState } from 'react';
 import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
 
