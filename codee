@@ -1,92 +1,30 @@
-// Replace existing buildVisitedToday(...) with this:
-function buildVisitedToday(allEvents) {
-  // “Today” in Asia/Kolkata, formatted as “yyyy-MM-dd”
-  const today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-
-  // Use evt.Dateonly (already normalized in fetch*) to pick out today's InDirection swipes
-  const todayIns = allEvents.filter(evt => evt.Direction === 'InDirection' && evt.Dateonly === today);
-
-  // Dedupe by robust dedupKey (PersonGUID || EmployeeID || CardNumber || ObjectName1)
-  const dedup = new Map();
-  for (const e of todayIns) {
-    // build stable string key (avoid undefined collisions)
-    const keyParts = [
-      e.PersonGUID || '',
-      e.EmployeeID || '',
-      e.CardNumber || '',
-      (e.ObjectName1 || '').trim()
-    ];
-    const key = keyParts.join('|');
-
-    // Normalize event timestamp to numeric millis for reliable comparison
-    // Some rows already have JS Date; others may be strings. Use parseRowUtcDateTime helper.
-    const dt = parseRowUtcDateTime(e.LocaleMessageTime);
-    const ts = dt && dt.isValid ? dt.toMillis() : (e.LocaleMessageTime instanceof Date ? e.LocaleMessageTime.getTime() : NaN);
-
-    const prev = dedup.get(key);
-    if (!prev) {
-      dedup.set(key, { e, ts });
-    } else if (!isNaN(ts) && (isNaN(prev.ts) || ts > prev.ts)) {
-      dedup.set(key, { e, ts });
-    }
-  }
-
-  const finalList = Array.from(dedup.values()).map(v => v.e);
-
-  // Separate employees vs contractors
-  const employees = finalList.filter(e =>
-    !['Contractor', 'Terminated Contractor', 'Temp Badge', 'Visitor', 'Property Management']
-      .includes(e.PersonnelType)
-  ).length;
-  const contractors = finalList.length - employees;
-
-  return { employees, contractors, total: finalList.length };
-}
-
-// Replace existing buildVisitedForDate(...) with this:
 function buildVisitedForDate(allEvents, atDate) {
-  // asOfLocalDate: the IST calendar date corresponding to atDate
   const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
     .setZone('Asia/Kolkata')
     .toFormat('yyyy-LL-dd');
 
-  const todayIns = allEvents.filter(evt => evt.Direction === 'InDirection' && evt.Dateonly === asOfLocalDate);
+  const todayIns = allEvents.filter(evt =>
+    evt.Direction === 'InDirection' && evt.Dateonly === asOfLocalDate
+  );
 
-  // Use same robust dedup as above
+  // temp debugging: counts of missing identifiers
+  const missing = todayIns.filter(
+    e => !e.PersonGUID && !e.EmployeeID && !e.CardNumber
+  ).length;
+  console.log(
+    'DEBUG visited: totalRows=',
+    todayIns.length,
+    'rowsMissingAllIds=',
+    missing
+  );
+
   const dedup = new Map();
   for (const e of todayIns) {
-    const keyParts = [
-      e.PersonGUID || '',
-      e.EmployeeID || '',
-      e.CardNumber || '',
-      (e.ObjectName1 || '').trim()
-    ];
-    const key = keyParts.join('|');
-
-    const dt = parseRowUtcDateTime(e.LocaleMessageTime);
-    const ts = dt && dt.isValid ? dt.toMillis() : (e.LocaleMessageTime instanceof Date ? e.LocaleMessageTime.getTime() : NaN);
-
+    const key = e.PersonGUID;
     const prev = dedup.get(key);
-    if (!prev) {
-      dedup.set(key, { e, ts });
-    } else if (!isNaN(ts) && (isNaN(prev.ts) || ts > prev.ts)) {
-      dedup.set(key, { e, ts });
+    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) {
+      dedup.set(key, e);
     }
   }
-
-  const finalList = Array.from(dedup.values()).map(v => v.e);
-
-  const employees = finalList.filter(e =>
-    !['Contractor', 'Terminated Contractor', 'Temp Badge', 'Visitor', 'Property Management']
-      .includes(e.PersonnelType)
-  ).length;
-  const contractors = finalList.length - employees;
-  return { employees, contractors, total: finalList.length };
+  // ...
 }
-
-
-
-
-// temp debugging: counts of missing identifiers
-const missing = todayIns.filter(e => !e.PersonGUID && !e.EmployeeID && !e.CardNumber).length;
-console.log('DEBUG visited: totalRows=', todayIns.length, 'rowsMissingAllIds=', missing);
