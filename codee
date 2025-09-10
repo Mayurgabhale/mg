@@ -1,3 +1,20 @@
+<strong>{timeTravelTimestamp}</strong>
+...
+
+
+{timeTravelMode && (
+  <div ...>
+    <div>
+      Viewing historical snapshot for:&nbsp;
+      <strong>{new Date(timeTravelTimestamp).toLocaleString()}</strong>
+    </div>
+    ...
+  </div>
+)}
+
+
+...
+...
 // src/components/TimeTravelControl.jsx
 import React, { useEffect, useState } from 'react';
 import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
