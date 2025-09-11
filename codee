@@ -1,49 +1,50 @@
-// before
-const atDate = new Date(atRaw);
-
-// after
-const atDate = DateTime.fromISO(atRaw, { zone: 'utc' }).toJSDate();
-console.log('[getSnapshotAt] atRaw:', atRaw, 'atDate (ISO):', atDate.toISOString());
 
 
 
-
-http://localhost:5000/api/occupancy-at?at=2025-09-10T18:29:00.000Z
-on this time we got this this countn 
-
-  "asOf": "2025-09-10T18:29:00.000Z",
+http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z
+all is ok,
+but "totalVisitedToday": 0,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 0,
+    "total": 0
+  }
+}
+in this count not disply . 
+chekc this only one
+  "asOf": "2025-09-10T18:30:00.000Z",
   "summary": [
     {
       "zone": "Red Zone",
-      "count": 48
+      "count": 49
     },
     {
       "zone": "Tower B",
       "count": 56
     },
     {
-      "zone": "Reception Area",
-      "count": 34
+      "zone": "Orange Zone",
+      "count": 41
     },
     {
-      "zone": "Orange Zone",
-      "count": 40
+      "zone": "Reception Area",
+      "count": 35
     },
     {
       "zone": "Yellow Zone",
-      "count": 46
+      "count": 47
     },
     {
       "zone": "Yellow Zone - Outer Area",
-      "count": 13
+      "count": 12
     },
     {
       "zone": "Green Zone",
-      "count": 21
+      "count": 22
     },
     {
       "zone": "Red Zone - Outer Area",
-      "count": 5
+      "count": 3
     },
     {
       "zone": "Assembly Area",
@@ -58,20 +59,55 @@ on this time we got this this countn
       "count": 31
     }
   ],
-
- },
-  "personnelBreakdown": [
+ "personnelBreakdown": [
     {
       "personnelType": "Property Management",
       "count": 14
+    },
+    {
+      "personnelType": "Employee",
+      "count": 234
     },
     {
       "personnelType": "Visitor",
       "count": 42
     },
     {
+      "personnelType": "Temp Badge",
+      "count": 7
+    },
+    {
+      "personnelType": "Contractor",
+      "count": 8
+    },
+    {
+      "personnelType": "Terminated Personnel",
+      "count": 1
+    }
+  ],
+  "totalVisitedToday": 0,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 0,
+    "total": 0
+  }
+}
+
+
+http://localhost:5000/api/occupancy-at?at=2025-09-10T18:29:00.000Z
+},
+  "personnelBreakdown": [
+    {
+      "personnelType": "Property Management",
+      "count": 14
+    },
+    {
       "personnelType": "Employee",
-      "count": 232
+      "count": 234
+    },
+    {
+      "personnelType": "Visitor",
+      "count": 42
     },
     {
       "personnelType": "Temp Badge",
@@ -93,34 +129,6 @@ on this time we got this this countn
     "total": 1010
   }
 }
-
-++++ check carefully, ++++++++
-emplty 0 count 
-http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z
-
-{
-  "asOf": "2025-09-10T18:30:00.000Z",
-  "summary": [],
-  "zoneBreakdown": [],
-  "floorBreakdown": [],
-
-},
-  "personnelBreakdown": [],
-  "totalVisitedToday": 0,
-  "visitedToday": {
-    "employees": 0,
-    "contractors": 0,
-    "total": 0
-  }
-}
-
-chekc the all code carefully, and find out the issue.
-
-
-
-
-// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
-
 
 const { DateTime }   = require('luxon');
 // const { poolConnect, pool, sql } = require('../config/db');
@@ -568,7 +576,12 @@ exports.getSnapshotAt = async (req, res) => {
     const atRaw = req.query.at;
     if (!atRaw) return res.status(400).json({ error: 'missing "at" query parameter (ISO timestamp required)' });
 
-    const atDate = new Date(atRaw);
+    // const atDate = new Date(atRaw);
+    // after
+const atDate = DateTime.fromISO(atRaw, { zone: 'utc' }).toJSDate();
+console.log('[getSnapshotAt] atRaw:', atRaw, 'atDate (ISO):', atDate.toISOString());
+
+
     if (Number.isNaN(atDate.getTime())) {
       return res.status(400).json({ error: 'invalid "at" timestamp' });
     }
@@ -694,4 +707,4 @@ exports.getLiveOccupancy = async (req, res) => {
 };
 
 
-
+read alll code carefully
