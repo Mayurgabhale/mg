@@ -1,50 +1,44 @@
-function buildVisitedForDate(allEvents, atDate) {
-  // atDate is a JS Date representing the snapshot time in UTC (your code already passes it as UTC)
-  // Compute start-of-local-day in Asia/Kolkata for that atDate
-  const atDtLocal = DateTime.fromJSDate(atDate, { zone: 'utc' }).setZone('Asia/Kolkata');
-  const startOfLocalDay = atDtLocal.startOf('day'); // DateTime in Asia/Kolkata
-  const startOfLocalDayUtc = startOfLocalDay.setZone('utc'); // convert back to UTC for easy compare with evt.LocaleMessageTime
 
-  // We'll compare the event's LocaleMessageTime (which you already return from SQL)
-  // by normalizing each event to UTC (driver likely gives you a JS Date) then check range:
-  // startOfLocalDayUtc <= evt.LocaleMessageTime <= atDate (both in UTC)
-  const startJs = startOfLocalDayUtc.toJSDate(); // UTC Date at local midnight
-  const endJs   = atDate; // already a JS Date in UTC
 
-  // Filter IN swipes that occurred on the same local day and not after the snapshot time
-  const todayIns = allEvents.filter(evt => {
-    if (evt.Direction !== 'InDirection') return false;
-    if (!evt.LocaleMessageTime) return false;
-    const evtTs = new Date(evt.LocaleMessageTime); // driver-provided Date
-    return evtTs >= startJs && evtTs <= endJs;
-  });
+exports.getSnapshotAt = async (req, res) => {
+  try {
+    const atRaw = req.query.at;
+    if (!atRaw) return res.status(400).json({ error: 'missing "at" query parameter (ISO timestamp required)' });
 
-  // Dedupe by the stable dedup key (PersonGUID || EmployeeID || CardNumber || ObjectName1)
-  const dedup = new Map();
-  for (const e of todayIns) {
-    const key = e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1;
-    if (!key) continue;
-    const evtTs = new Date(e.LocaleMessageTime);
-    const prev = dedup.get(key);
-    if (!prev || evtTs > new Date(prev.LocaleMessageTime)) {
-      dedup.set(key, e);
+    // const atDate = new Date(atRaw);
+    // after
+const atDate = DateTime.fromISO(atRaw, { zone: 'utc' }).toJSDate();
+console.log('[getSnapshotAt] atRaw:', atRaw, 'atDate (ISO):', atDate.toISOString());
+
+
+    if (Number.isNaN(atDate.getTime())) {
+      return res.status(400).json({ error: 'invalid "at" timestamp' });
     }
+
+    // fetch events in the 24h window ending at atDate
+    const events = await fetchEventsWindow(atDate);
+
+    const occupancy = await buildOccupancy(events);
+    const visitedStats = buildVisitedForDate(events, atDate);
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = {
+      employees: visitedStats.employees,
+      contractors: visitedStats.contractors,
+      total: visitedStats.total
+    };
+    occupancy.asOf = atDate.toISOString();
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('getSnapshotAt error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  const finalList = Array.from(dedup.values());
-  const employees = finalList.filter(e =>
-    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
-      .includes(e.PersonnelType)
-  ).length;
-  const contractors = finalList.length - employees;
-
-  return { employees, contractors, total: finalList.length };
-}
+};
 
 
 
-
-
+in this 
 ....
 please find out the issue
 http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z to  http://localhost:5000/api/occupancy-at?at=2025-09-10T23:59:00.000Z in this between 
