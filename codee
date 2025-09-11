@@ -1,3 +1,517 @@
+after you add this overall is gettin g wonrg
+see this
+ "totalVisitedToday": 264,
+  "visitedToday": {
+    "employees": 213,
+    "contractors": 51,
+    "total": 264
+  }
+}
+
+this is wrong on this this time it is not possible that much count so you write wrong code. 
+
+{
+  "asOf": "2025-09-11T06:00:00.000Z",
+  "summary": [
+    {
+      "zone": "Red Zone - Outer Area",
+      "count": 1
+    },
+    {
+      "zone": "Reception Area",
+      "count": 14
+    },
+    {
+      "zone": "2nd Floor, Pune",
+      "count": 5
+    },
+    {
+      "zone": "Orange Zone",
+      "count": 5
+    },
+    {
+      "zone": "Tower B",
+      "count": 4
+    },
+    {
+      "zone": "Assembly Area",
+      "count": 1
+    },
+    {
+      "zone": "Yellow Zone",
+      "count": 2
+    }
+  ],
+  "zoneBreakdown": [
+    {
+      "zone": "Red Zone - Outer Area",
+      "Property Management": 1,
+      "total": 1
+    },
+    {
+      "zone": "Reception Area",
+      "Visitor": 10,
+      "Employee": 3,
+      "Property Management": 1,
+      "total": 14
+    },
+    {
+      "zone": "2nd Floor, Pune",
+      "Employee": 3,
+      "Contractor": 1,
+      "Property Management": 1,
+      "total": 5
+    },
+    {
+      "zone": "Orange Zone",
+      "Temp Badge": 1,
+      "Visitor": 4,
+      "total": 5
+    },
+    {
+      "zone": "Tower B",
+      "Employee": 2,
+      "Property Management": 2,
+      "total": 4
+    },
+    {
+      "zone": "Assembly Area",
+      "Employee": 1,
+      "total": 1
+    },
+    {
+      "zone": "Yellow Zone",
+      "Contractor": 2,
+      "total": 2
+    }
+  ],
+  "floorBreakdown": [
+    {
+      "floor": "Podium Floor",
+      "Property Management": 2,
+      "Visitor": 14,
+      "Employee": 4,
+      "Temp Badge": 1,
+      "Contractor": 2,
+      "total": 23
+    },
+    {
+      "floor": "2nd Floor",
+      "Employee": 3,
+      "Contractor": 1,
+      "Property Management": 1,
+      "total": 5
+    },
+    {
+      "floor": "Tower B",
+      "Employee": 2,
+      "Property Management": 2,
+      "total": 4
+    }
+  ],
+  "details": {
+    "Red Zone - Outer Area": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:22:49",
+        "EmployeeID": "0",
+        "ObjectName1": "Patil, Shivanand (Teapoint)",
+        "CardNumber": "413971",
+        "PersonnelType": "Property Management",
+        "zone": "Red Zone - Outer Area",
+        "door": "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)",
+        "Direction": "OutDirection"
+      }
+    ],
+    "Reception Area": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "01:40:52",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_178",
+        "CardNumber": "418974",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:08:07",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_144",
+        "CardNumber": "414054",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "01:02:58",
+        "EmployeeID": "323996",
+        "ObjectName1": "Patil, Dhiraj Ravindra",
+        "CardNumber": "411121",
+        "PersonnelType": "Employee",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:34:00",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_236",
+        "CardNumber": "413952",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:33:55",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_172",
+        "CardNumber": "419261",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:19:50",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_229",
+        "CardNumber": "409886",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:21:30",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_146",
+        "CardNumber": "418954",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:31:13",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_180",
+        "CardNumber": "419255",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:33:58",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_240",
+        "CardNumber": "413850",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:48:39",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_173",
+        "CardNumber": "419260",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:48:43",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_177",
+        "CardNumber": "419253",
+        "PersonnelType": "Visitor",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "02:41:50",
+        "EmployeeID": "312609",
+        "ObjectName1": "Mundra, Robin",
+        "CardNumber": "619958",
+        "PersonnelType": "Employee",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "03:30:21",
+        "EmployeeID": "325804",
+        "ObjectName1": "Gaddam, John Pascal",
+        "CardNumber": "410362",
+        "PersonnelType": "Employee",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "11:23:58",
+        "EmployeeID": "0",
+        "ObjectName1": "Singh, Harvinder",
+        "CardNumber": "410333",
+        "PersonnelType": "Property Management",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR",
+        "Direction": "OutDirection"
+      }
+    ],
+    "2nd Floor, Pune": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:17:49",
+        "EmployeeID": "325935",
+        "ObjectName1": "Patidar, Nisha",
+        "CardNumber": "615884",
+        "PersonnelType": "Employee",
+        "zone": "2nd Floor, Pune",
+        "door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:34:59",
+        "EmployeeID": "W0026467",
+        "ObjectName1": "Khamkar, Shraddha",
+        "CardNumber": "620046",
+        "PersonnelType": "Contractor",
+        "zone": "2nd Floor, Pune",
+        "door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "02:05:00",
+        "EmployeeID": "323991",
+        "ObjectName1": "Pundir, Saurabh",
+        "CardNumber": "612213",
+        "PersonnelType": "Employee",
+        "zone": "2nd Floor, Pune",
+        "door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "11:29:44",
+        "EmployeeID": "0",
+        "ObjectName1": "Karajagi, Riyaz",
+        "CardNumber": "411160",
+        "PersonnelType": "Property Management",
+        "zone": "2nd Floor, Pune",
+        "door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "11:29:24",
+        "EmployeeID": "328504",
+        "ObjectName1": "P, Sai Poojith",
+        "CardNumber": "619975",
+        "PersonnelType": "Employee",
+        "zone": "2nd Floor, Pune",
+        "door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+        "Direction": "InDirection"
+      }
+    ],
+    "Orange Zone": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "04:25:13",
+        "EmployeeID": "0",
+        "ObjectName1": "India, TEMP_PUN_022",
+        "CardNumber": "411122",
+        "PersonnelType": "Temp Badge",
+        "zone": "Orange Zone",
+        "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "04:28:06",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_174",
+        "CardNumber": "419259",
+        "PersonnelType": "Visitor",
+        "zone": "Orange Zone",
+        "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "04:28:53",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_218",
+        "CardNumber": "409817",
+        "PersonnelType": "Visitor",
+        "zone": "Orange Zone",
+        "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "04:29:32",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_248",
+        "CardNumber": "409889",
+        "PersonnelType": "Visitor",
+        "zone": "Orange Zone",
+        "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "04:30:13",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_223",
+        "CardNumber": "410413",
+        "PersonnelType": "Visitor",
+        "zone": "Orange Zone",
+        "door": "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR",
+        "Direction": "InDirection"
+      }
+    ],
+    "Tower B": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "01:34:01",
+        "EmployeeID": "321630",
+        "ObjectName1": "Jathar, Prasad Narayan",
+        "CardNumber": "608449",
+        "PersonnelType": "Employee",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "02:36:54",
+        "EmployeeID": "318502",
+        "ObjectName1": "Nene, Nikhil",
+        "CardNumber": "411132",
+        "PersonnelType": "Employee",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "11:22:51",
+        "EmployeeID": "0",
+        "ObjectName1": "Phukan, Nilmani",
+        "CardNumber": "410372",
+        "PersonnelType": "Property Management",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR",
+        "Direction": "OutDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "10:08:35",
+        "EmployeeID": "0",
+        "ObjectName1": "Shaikh, Sharif",
+        "CardNumber": "410334",
+        "PersonnelType": "Property Management",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR",
+        "Direction": "OutDirection"
+      }
+    ],
+    "Assembly Area": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "00:59:56",
+        "EmployeeID": "328809",
+        "ObjectName1": "Shrivastava, Akrati",
+        "CardNumber": "620035",
+        "PersonnelType": "Employee",
+        "zone": "Assembly Area",
+        "door": "APAC_IN_PUN_PODIUM_MAIN PODIUM LEFT ENTRY-DOOR NEW",
+        "Direction": "OutDirection"
+      }
+    ],
+    "Yellow Zone": [
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "09:54:54",
+        "EmployeeID": "W0024619",
+        "ObjectName1": "Choudhari, Manisha",
+        "CardNumber": "615828",
+        "PersonnelType": "Contractor",
+        "zone": "Yellow Zone",
+        "door": "APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door",
+        "Direction": "InDirection"
+      },
+      {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "09:44:38",
+        "EmployeeID": "W0025526",
+        "ObjectName1": "More, Omkar",
+        "CardNumber": "619961",
+        "PersonnelType": "Contractor",
+        "zone": "Yellow Zone",
+        "door": "APAC_IN_PUN_PODIUM_YELLOW_REPRO STORE-DOOR Restricted door",
+        "Direction": "InDirection"
+      }
+    ]
+  },
+  "personnelSummary": {
+    "employees": 9,
+    "contractors": 23
+  },
+  },
+  "personnelBreakdown": [
+    {
+      "personnelType": "Property Management",
+      "count": 5
+    },
+    {
+      "personnelType": "Visitor",
+      "count": 14
+    },
+    {
+      "personnelType": "Employee",
+      "count": 9
+    },
+    {
+      "personnelType": "Temp Badge",
+      "count": 1
+    },
+    {
+      "personnelType": "Contractor",
+      "count": 3
+    }
+  ],
+  "totalVisitedToday": 264,
+  "visitedToday": {
+    "employees": 213,
+    "contractors": 51,
+    "total": 264
+  }
+}
+
 // Add this function (directly above or below your other fetch helpers)
 async function fetchEventsForDate(atDate) {
   // atDate is a JS Date representing the requested instant (UTC ISO string from the client)
