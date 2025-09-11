@@ -1,3 +1,14 @@
+// new — interpret the input as local browser time, convert to UTC ISO
+const iso = new Date(`${local}:00`).toISOString(); // browser treats "YYYY-MM-DDTHH:mm:00" as local
+onApply(iso);
+
+
+
+
+
+
+.....
+
 09/09/2025 06:30 PM to0 9/10/2025 11:..  PM
 
 Viewing historical snapshot for: 2025-09-09T18:30:00.000Z
