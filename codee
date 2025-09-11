@@ -1,3 +1,16 @@
+function isoToInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso); // this is a UTC instant
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+...
+
 know time is select correct all things are correct 
 
 Viewing historical snapshot for: 10/09/2025, 11:00 pm (IST) this is correct
