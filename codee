@@ -1,3 +1,112 @@
+http://localhost:5000/api/occupancy-at?at=2025-09-10T18:29:00.000Z
+on this time we got this this countn 
+
+  "asOf": "2025-09-10T18:29:00.000Z",
+  "summary": [
+    {
+      "zone": "Red Zone",
+      "count": 48
+    },
+    {
+      "zone": "Tower B",
+      "count": 56
+    },
+    {
+      "zone": "Reception Area",
+      "count": 34
+    },
+    {
+      "zone": "Orange Zone",
+      "count": 40
+    },
+    {
+      "zone": "Yellow Zone",
+      "count": 46
+    },
+    {
+      "zone": "Yellow Zone - Outer Area",
+      "count": 13
+    },
+    {
+      "zone": "Green Zone",
+      "count": 21
+    },
+    {
+      "zone": "Red Zone - Outer Area",
+      "count": 5
+    },
+    {
+      "zone": "Assembly Area",
+      "count": 4
+    },
+    {
+      "zone": "Tower B GYM",
+      "count": 6
+    },
+    {
+      "zone": "2nd Floor, Pune",
+      "count": 31
+    }
+  ],
+
+ },
+  "personnelBreakdown": [
+    {
+      "personnelType": "Property Management",
+      "count": 14
+    },
+    {
+      "personnelType": "Visitor",
+      "count": 42
+    },
+    {
+      "personnelType": "Employee",
+      "count": 232
+    },
+    {
+      "personnelType": "Temp Badge",
+      "count": 7
+    },
+    {
+      "personnelType": "Contractor",
+      "count": 8
+    },
+    {
+      "personnelType": "Terminated Personnel",
+      "count": 1
+    }
+  ],
+  "totalVisitedToday": 1010,
+  "visitedToday": {
+    "employees": 868,
+    "contractors": 142,
+    "total": 1010
+  }
+}
+
+++++ check carefully, ++++++++
+emplty 0 count 
+http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z
+
+{
+  "asOf": "2025-09-10T18:30:00.000Z",
+  "summary": [],
+  "zoneBreakdown": [],
+  "floorBreakdown": [],
+
+},
+  "personnelBreakdown": [],
+  "totalVisitedToday": 0,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 0,
+    "total": 0
+  }
+}
+
+chekc the all code carefully, and find out the issue.
+
+
 
 
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
@@ -573,5 +682,6 @@ exports.getLiveOccupancy = async (req, res) => {
     }
   }
 };
+
 
 
