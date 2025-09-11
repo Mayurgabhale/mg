@@ -1,3 +1,8 @@
+const iso = new Date(`${local}:00`).toISOString();
+onApply(iso);
+...
+
+
 {timeTravelMode && (
   <div style={{
     background: '#3b403e',
