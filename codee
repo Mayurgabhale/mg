@@ -1,471 +1,17 @@
-Realtime Total
-65
-Realtime Employees
-15
-Realtime Contractors
-50
-this not updae where comes this count 
-
-// C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryCards.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import { Card, Row, Col } from "react-bootstrap";
-import { FaUsers, FaUserTie, FaHardHat } from "react-icons/fa";
-import "./SummaryCards.css";
-
-export default function SummaryCards({
-  totalVisitedToday,
-  employeesVisitedToday,
-  contractorsVisitedToday,
-  totalOccupancy,
-  employeeCount,
-  contractorCount,
-}) {
-  const ICONS = [
-    { key: "totalVisitedToday", title: "Today's Total", value: totalVisitedToday, icon: <FaUsers /> },
-    { key: "employeesVisitedToday", title: "Today's Employees", value: employeesVisitedToday, icon: <FaUserTie /> },
-    { key: "contractorsVisitedToday", title: "Today's Contractors", value: contractorsVisitedToday, icon: <FaHardHat /> },
-    { key: "totalOccupancy", title: "Realtime Total", value: totalOccupancy, icon: <FaUsers /> },
-    { key: "employeeCount", title: "Realtime Employees", value: employeeCount, icon: <FaUserTie /> },
-    { key: "contractorCount", title: "Realtime Contractors", value: contractorCount, icon: <FaHardHat /> },
-  ];
-
-  // Convert to numbers safely
-  const sanitized = useMemo(
-    () => ICONS.map((c) => ({ ...c, value: Number(c.value) || 0 })),
-    [totalVisitedToday, employeesVisitedToday, contractorsVisitedToday, totalOccupancy, employeeCount, contractorCount]
-  );
-  const maxVal = Math.max(...sanitized.map((s) => s.value), 1);
-
-  // Animate numbers
-  const [animated, setAnimated] = useState(() =>
-    sanitized.reduce((acc, c) => {
-      acc[c.key] = 0;
-      return acc;
-    }, {})
-  );
-
-  useEffect(() => {
-    let rafId;
-    const duration = 1000;
-    const start = performance.now();
-    const from = sanitized.reduce((acc, c) => {
-      acc[c.key] = animated[c.key] || 0;
-      return acc;
-    }, {});
-    const to = sanitized.reduce((acc, c) => {
-      acc[c.key] = c.value;
-      return acc;
-    }, {});
-
-    function step(now) {
-      const t = Math.min(1, (now - start) / duration);
-      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-      const next = {};
-      for (const k of Object.keys(to)) {
-        next[k] = Math.round(from[k] + (to[k] - from[k]) * ease);
-      }
-      setAnimated(next);
-      if (t < 1) rafId = requestAnimationFrame(step);
-    }
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
-  }, [sanitized]);
-
-  return (
-    <Row className="summary-cards-new">
-      {sanitized.map((c, i) => {
-        const percent = Math.round((c.value / maxVal) * 100);
-
-        return (
-          <Col key={c.key} xs={12} sm={6} md={4} lg={2} className="mb-4">
-            <Card className="summary-card-new">
-              <Card.Body className="d-flex flex-column align-items-center">
-                {/* Circular progress */}
-
-                {/* Circular progress (now always full) */}
-                <div
-                  className="progress-circle"
-                  style={{
-                    background: `var(--accent-${i})`
-                  }}
-                >
-                  <div className="circle-inner">
-                    <div className="icon-wrap" style={{ color: `var(--accent-${i})` }}>
-                      {c.icon}
-                    </div>
-                  </div>
-                </div>
-
-
-                {/* Title */}
-                <div className="title-text">{c.title}</div>
-
-                {/* Number */}
-                <div className="count-text">{animated[c.key].toLocaleString()}</div>
-              </Card.Body>
-            </Card>
-          </Col>
-        );
-      })}
-    </Row>
-  );
-}
-
-// C:\Users\W0024618\Desktop\swipeData\client\src\pages\DashboardHome.jsx
-
-import React, { useMemo } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
-
-import SummaryCards        from '../components/SummaryCards';
-import FloorOccupancyChart from '../components/FloorOccupancyChart';
-import SummaryChart        from '../components/SummaryChart';
-import PersonnelDonutChart from '../components/PersonnelDonutChart';
-
-function DashboardHome({
-  summaryData,
-  detailsData,
-  floorData,
-  zoneBreakdown,
-  personnelBreakdown,
-  totalVisitedToday,
-  personnelSummary,
-  visitedToday,
-  ertStatus
-}) {
-  const employees      = personnelSummary?.employees   ?? 0;
-  const contractors    = personnelSummary?.contractors ?? 0;
-  const totalOccupancy = employees + contractors;
-
-  // Memoize donut-chart data so it only recalculates when personnelBreakdown changes
-  const chartData = useMemo(() =>
-    (personnelBreakdown || []).map(({ personnelType, count }) => ({ personnelType, count })),
-    [personnelBreakdown]
-  );
-
-  return (
-    <Container fluid className="py-4">
-      <SummaryCards
-        totalOccupancy={totalOccupancy}
-        employeeCount={employees}
-        contractorCount={contractors}
-        totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees   ?? 0}
-        contractorsVisitedToday={visitedToday?.contractors ?? 0}
-      />
-
-      <Row className="g-4">
-        <Col md={4}>
-          <FloorOccupancyChart data={floorData} />
-        </Col>
-
-        <Col md={4}>
-          <SummaryChart summary={summaryData} />
-        </Col>
-
-        <Col md={4}>
-          <PersonnelDonutChart data={chartData} />
-        </Col>
-      </Row>
-
-      <footer style={{
-        backgroundColor: '#000',
-        color: '#FFC72C',
-        padding: '1.5rem 0',
-        textAlign: 'center',
-        marginTop: '0rem',
-        borderTop: '2px solid #FFC72C',
-        fontSize: '0.95rem',
-        lineHeight: '1.6'
-      }}>
-        <div><strong>Global Security Operations Center</strong><br/>
-          Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
-        </div>
-        <div style={{ marginTop: '0.75rem' }}>
-          Contact us:&nbsp;
-          <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-             style={{ color: '#FFC72C', textDecoration: 'underline' }}>
-            GSOC Mail
-          </a>&nbsp;|&nbsp;
-          Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-        </div>
-      </footer>
-    </Container>
-  );
-}
-
-// Memoize whole page so it only re-renders when its props actually change
-export default React.memo(DashboardHome);
-
-
-
-
-
-// src/App.js  (replace the App component with this version)
-import React, { useEffect, useState, useRef } from 'react';
-import { Container, Navbar, Nav } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-import ZoneDetailsTable from './components/ZoneDetailsTable';
-import DashboardHome    from './pages/DashboardHome';
-import ErtPage          from './pages/ErtPage';
-import TimeTravelControl from './components/TimeTravelControl';
-import './App.css';
-
-function ZoneDetailsPage({ detailsData }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  return (
-    <>
-      <div
-        className="d-flex justify-content-between align-items-center mb-2"
-        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
-      >
-        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
-        <input
-          type="text"
-          placeholder="Search employee..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
-        />
-      </div>
-      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
-    </>
-  );
-}
-
-function App() {
-  const location = useLocation();
-  const headerText = location.pathname === '/ert'
-    ? 'Emergency Response Team — Western Union Pune'
-    : 'Live Occupancy — Western Union Pune';
-
-  // ---------- CONFIG: API base URL ----------
-  // Priority:
-  // 1) REACT_APP_API_BASE_URL environment variable (set in .env or build env)
-  // 2) If in development, default to http://localhost:5000 (most dev setups)
-  // 3) In production, use same origin (window.location.origin)
-  const API_BASE = (process.env.REACT_APP_API_BASE_URL)
-    || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : window.location.origin);
-  // normalize (no trailing slash)
-  const API_ORIGIN = API_BASE.replace(/\/$/, '');
-  // ------------------------------------------
-
-  const [liveData, setLiveData] = useState({
-    summary: [],
-    details: {},
-    floorBreakdown: [],
-    zoneBreakdown: [],
-    personnelBreakdown: [],
-    totalVisitedToday: 0,
-    personnelSummary: { employees: 0, contractors: 0 },
-    visitedToday: { employees: 0, contractors: 0, total: 0 },
-    ertStatus: {}
-  });
-
-  const [timeTravelMode, setTimeTravelMode] = useState(false);
-  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
-  const [timeTravelLoading, setTimeTravelLoading] = useState(false);
-
-  const esRef = useRef(null);
-
-  // SSE: runs only when NOT time-traveling
-  useEffect(() => {
-    if (timeTravelMode) {
-      if (esRef.current) {
-        try { esRef.current.close(); } catch (e) { /* ignore */ }
-        esRef.current = null;
-      }
-      return;
-    }
-
-    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
-    console.debug('[SSE] connecting to', esUrl);
-    const es = new EventSource(esUrl);
-    esRef.current = es;
-
-    es.onopen = () => console.debug('[SSE] open', esUrl);
-    es.onmessage = (e) => {
-      try {
-        const p = JSON.parse(e.data);
-        setLiveData({
-          summary: Array.isArray(p.summary) ? p.summary : [],
-          details: p.details || {},
-          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-          ertStatus: p.ertStatus || {}
-        });
-      } catch (err) {
-        console.error('[SSE] parse error', err, e.data);
-      }
-    };
-
-    es.onerror = (err) => {
-      console.error('[SSE] error', err);
-      try { es.close(); } catch (e) {}
-      esRef.current = null;
-    };
-
-    return () => {
-      try { es.close(); } catch (e) {}
-      esRef.current = null;
-    };
-  }, [timeTravelMode, API_ORIGIN]);
-
-  // Helper: unify payload set
-  function setPayload(p) {
-    setLiveData({
-      summary: Array.isArray(p.summary) ? p.summary : [],
-      details: p.details || {},
-      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-      totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-      visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-      ertStatus: p.ertStatus || {}
-    });
-  }
-
-  // Fetch a historical snapshot
-//   async function fetchSnapshot(isoTimestamp) {
-//     setTimeTravelLoading(true);
-//     const url = `${API_ORIGIN}/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`;
-//     console.debug('[TimeTravel] fetching', url);
-//     try {
-//       const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-//       if (!resp.ok) {
-//         // give a better message for 404 vs other errors and include body if present
-//         const body = await resp.text().catch(() => '');
-//         console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
-//         if (resp.status === 404) {
-//           window.alert(`Snapshot not found for ${isoTimestamp} (404). Check server logs or the 'at' parameter.`);
-//         } else {
-//           window.alert(`Failed to load snapshot: server returned ${resp.status}. See console for details.`);
-//         }
-//         throw new Error(`Server returned ${resp.status}`);
-//       }
-
-//       // const p = await resp.json();
-//       // setPayload(p);
-//       // setTimeTravelMode(true);
-//       // setTimeTravelTimestamp(isoTimestamp);
-
-//       const p = await resp.json();
-// setPayload(p);
-// setTimeTravelMode(true);
-// // prefer server-provided timestamp (p.asOf) if backend returns it; fallback to requested isoTimestamp
-// setTimeTravelTimestamp(p?.asOf || isoTimestamp);
-
-
-//     } catch (err) {
-//       console.error('Failed to fetch snapshot', err);
-//       // (UI already alerted above for non-2xx)
-//       if (!err.message.includes('Server returned')) {
-//         window.alert('Failed to load snapshot. See console for details.');
-//       }
-//     } finally {
-//       setTimeTravelLoading(false);
-//     }
-//   }
-
-
-
-/** ---------- helper: filter server payload to only include items whose UTC date matches requested date ---------- */
-
-/**
- * Return YYYY-MM-DD for a Date (UTC).
- */
-function toUTCDateString(dateObj) {
-  const y = dateObj.getUTCFullYear();
-  const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(dateObj.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-/**
- * Try to parse a value as a Date and return its UTC YYYY-MM-DD, or null if cannot parse.
- * Accepts typical ISO strings or timestamps.
- */
-function parseValueToUTCDateString(v) {
-  if (!v) return null;
-  // Only process primitives
-  if (typeof v === 'string' || typeof v === 'number') {
-    const n = typeof v === 'number' ? v : Date.parse(v);
-    if (!Number.isNaN(n)) {
-      try {
-        return toUTCDateString(new Date(n));
-      } catch (e) { /* fallthrough */ }
-    }
-  }
-  return null;
-}
-
-/**
- * Recursively check an object/array for any string/number value that parses to targetDate (UTC YYYY-MM-DD).
- * Returns true if any property matches the targetDate.
- */
-function objectContainsUTCDate(obj, targetDate) {
-  if (obj == null) return false;
-  if (Array.isArray(obj)) {
-    for (const it of obj) {
-      if (objectContainsUTCDate(it, targetDate)) return true;
-    }
-    return false;
-  }
-  if (typeof obj === 'object') {
-    for (const key of Object.keys(obj)) {
-      const val = obj[key];
-      // quick common-case checks
-      if (val == null) continue;
-      if (typeof val === 'string' || typeof val === 'number') {
-        const ds = parseValueToUTCDateString(val);
-        if (ds === targetDate) return true;
-      }
-      // recurse
-      if (typeof val === 'object' && objectContainsUTCDate(val, targetDate)) return true;
-    }
-    return false;
-  }
-  // primitives already handled; no match otherwise
-  return false;
-}
-
-/**
- * Filter an array of items (likely objects) keeping only those that contain a date matching targetDate.
- * If the array items are primitive strings that parse to dates, those are checked too.
- */
-function filterArrayByUTCDate(arr, targetDate) {
-  if (!Array.isArray(arr)) return arr;
-  return arr.filter(item => {
-    // if primitive that parse as date
-    if (typeof item === 'string' || typeof item === 'number') {
-      const ds = parseValueToUTCDateString(item);
-      return ds === targetDate;
-    }
-    // object -> recursively search for any date-like field that matches
-    return objectContainsUTCDate(item, targetDate);
-  });
-}
-
 /**
  * Given the server payload `p` and an ISO timestamp string `isoRequested` (like "2025-09-11T00:00:00.000Z"),
  * produce a filtered copy of `p` where:
  *  - p.summary (if array) is filtered to items containing the requested UTC date
  *  - p.details (if object mapping -> arrays) has each array filtered by date
  *  - totalVisitedToday and visitedToday.total are recomputed from filtered details (sum of lengths)
+ *  - personnelSummary (employees/contractors) is recomputed by scanning filtered details
  *
- * NOTE: We do NOT change other server-provided fields (floorBreakdown, zoneBreakdown, personnelBreakdown, ertStatus)
- * except where explicitly recomputed above (totalVisitedToday / visitedToday.total), to keep logic consistent.
+ * The personnel-type detection is heuristic: it looks for common field names and values
+ * (personnelType, type, category, role, isContractor, contractor, employee, etc).
  */
 function filterPayloadByDate(p, isoRequested) {
   if (!p || !isoRequested) return p;
-  // Extract target YYYY-MM-DD (UTC) from requested ISO
   const targetDate = isoRequested.slice(0, 10); // "YYYY-MM-DD"
-
   const newP = { ...p };
 
   // Filter summary if array
@@ -474,14 +20,13 @@ function filterPayloadByDate(p, isoRequested) {
   }
 
   // Filter details: object with zone -> array
+  let newDetails = {};
   if (p.details && typeof p.details === 'object' && !Array.isArray(p.details)) {
-    const newDetails = {};
     for (const key of Object.keys(p.details)) {
       const arr = p.details[key];
       if (Array.isArray(arr)) {
         newDetails[key] = filterArrayByUTCDate(arr, targetDate);
       } else {
-        // preserve if unexpected shape
         newDetails[key] = arr;
       }
     }
@@ -503,158 +48,105 @@ function filterPayloadByDate(p, isoRequested) {
   newP.totalVisitedToday = recomputedTotal;
   newP.visitedToday = { ...(p.visitedToday || {}), total: recomputedTotal };
 
+  // --------------------
+  // Recompute personnelSummary (employees / contractors)
+  // --------------------
+  let employees = 0;
+  let contractors = 0;
+
+  // helper: try to infer personnel type from a single record
+  function inferPersonnelType(record) {
+    if (!record || typeof record !== 'object') return null;
+
+    // boolean-style flags
+    if (record.isContractor === true || record.contractor === true || record.is_contractor === true) return 'contractor';
+    if (record.isEmployee === true || record.employee === true || record.is_employee === true) return 'employee';
+
+    // numeric flags (1/0)
+    if (record.contractor === 1 || record.isContractor === 1) return 'contractor';
+    if (record.employee === 1 || record.isEmployee === 1) return 'employee';
+
+    // common string fields: personnelType, type, category, role, personType, badgeType
+    const keysToCheck = ['personnelType','personnel_type','personnelCategory','type','category','role','personType','badgeType','jobType','jobRole'];
+    for (const k of keysToCheck) {
+      if (k in record && record[k] != null) {
+        const v = String(record[k]).toLowerCase();
+        if (v.includes('contract')) return 'contractor';
+        if (v.includes('employee') || v.includes('emp')) return 'employee';
+        // sometimes labels like "C" or "E"
+        if (v === 'c') return 'contractor';
+        if (v === 'e') return 'employee';
+      }
+    }
+
+    // fallback: look for any field value that contains the words
+    for (const key of Object.keys(record)) {
+      const val = record[key];
+      if (val == null) continue;
+      if (typeof val === 'string') {
+        const vs = val.toLowerCase();
+        if (vs.includes('contract')) return 'contractor';
+        if (vs.includes('employee') || vs.includes('emp')) return 'employee';
+      }
+    }
+
+    return null;
+  }
+
+  // count across filtered details arrays
+  if (newP.details && typeof newP.details === 'object') {
+    for (const k of Object.keys(newP.details)) {
+      const arr = newP.details[k];
+      if (!Array.isArray(arr)) continue;
+      for (const rec of arr) {
+        const t = inferPersonnelType(rec);
+        if (t === 'employee') employees += 1;
+        else if (t === 'contractor') contractors += 1;
+        // unknown -> we do not count toward either bucket (keeps it conservative)
+      }
+    }
+  }
+
+  // If no explicit types were found but we have a recomputedTotal, attempt a fallback:
+  if (employees === 0 && contractors === 0 && recomputedTotal > 0) {
+    // Try to use visitedToday from payload if it had employees/contractors numbers
+    const visited = p.visitedToday || {};
+    const vEmp = typeof visited.employees === 'number' ? visited.employees : 0;
+    const vCont = typeof visited.contractors === 'number' ? visited.contractors : 0;
+    if (vEmp + vCont > 0) {
+      // scale down proportionally to the filtered total if original visitedToday.total differs
+      const originalTotal = (p.visitedToday && p.visitedToday.total) || (vEmp + vCont);
+      if (originalTotal > 0) {
+        const scale = recomputedTotal / originalTotal;
+        employees = Math.round(vEmp * scale);
+        contractors = Math.round(vCont * scale);
+        // adjust rounding edge
+        const diff = recomputedTotal - (employees + contractors);
+        if (diff > 0) employees += diff;
+      } else {
+        // just put everything into employees as a last resort (conservative)
+        employees = recomputedTotal;
+        contractors = 0;
+      }
+    } else {
+      // last resort: assign all to employees so UI shows something consistent
+      employees = recomputedTotal;
+      contractors = 0;
+    }
+  }
+
+  newP.personnelSummary = { employees, contractors };
+
+  // Also ensure personnelBreakdown is at least defined (optional)
+  if (!Array.isArray(newP.personnelBreakdown)) {
+    newP.personnelBreakdown = [
+      { personnelType: 'Employees', count: employees },
+      { personnelType: 'Contractors', count: contractors }
+    ];
+  } else {
+    // if backend provided a breakdown, leave it alone (we set personnelSummary which is the source for the cards)
+  }
+
+  // Done
   return newP;
-}
-
-
-
-
-
-// Fetch a historical snapshot
-  async function fetchSnapshot(isoTimestamp) {
-    setTimeTravelLoading(true);
-    const url = `${API_ORIGIN}/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`;
-    console.debug('[TimeTravel] fetching', url);
-    try {
-      const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-      if (!resp.ok) {
-        // give a better message for 404 vs other errors and include body if present
-        const body = await resp.text().catch(() => '');
-        console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
-        if (resp.status === 404) {
-          window.alert(`Snapshot not found for ${isoTimestamp} (404). Check server logs or the 'at' parameter.`);
-        } else {
-          window.alert(`Failed to load snapshot: server returned ${resp.status}. See console for details.`);
-        }
-        throw new Error(`Server returned ${resp.status}`);
-      }
-
-      const p = await resp.json();
-
-      // --- NEW: filter payload so only items whose UTC date matches the requested date are kept ---
-      // The UI's datetime-local input is treated literally as UTC (your existing behavior).
-      // If the user selected "2025-09-11T00:00" we want only items from 2025-09-11 (UTC).
-      const filtered = filterPayloadByDate(p, isoTimestamp);
-
-      // Apply filtered payload
-      setPayload(filtered);
-      setTimeTravelMode(true);
-      // prefer server-provided timestamp (p.asOf) if backend returns it; fallback to requested isoTimestamp
-      setTimeTravelTimestamp(p?.asOf || isoTimestamp);
-
-    } catch (err) {
-      console.error('Failed to fetch snapshot', err);
-      // (UI already alerted above for non-2xx)
-      if (!err.message.includes('Server returned')) {
-        window.alert('Failed to load snapshot. See console for details.');
-      }
-    } finally {
-      setTimeTravelLoading(false);
-    }
-  }
-
-  // Return to live mode
-  async function clearTimeTravel() {
-    setTimeTravelLoading(true);
-    try {
-      setTimeTravelMode(false);
-      setTimeTravelTimestamp(null);
-      // optional immediate refresh
-      try {
-        const url = `${API_ORIGIN}/api/current-occupancy`;
-        const resp = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (resp.ok) {
-          const p = await resp.json();
-          setPayload(p);
-        } else {
-          console.debug('[TimeTravel] current-occupancy not available', resp.status);
-        }
-      } catch (e) {
-        console.debug('[TimeTravel] current-occupancy fetch failed (ignored)', e);
-      }
-    } finally {
-      setTimeTravelLoading(false);
-    }
-  }
-
-  return (
-    <>
-      <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
-        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
-        <Nav className="ms-auto align-items-center">
-          <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
-            <TimeTravelControl
-              currentTimestamp={timeTravelTimestamp}
-              onApply={(iso) => fetchSnapshot(iso)}
-              onLive={() => clearTimeTravel()}
-              loading={timeTravelLoading}
-            />
-          </div>
-
-          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
-          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history"  className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
-          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
-          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
-          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun/></Nav.Link>
-        </Nav>
-      </Navbar>
-
-      <Container fluid className="mt-2">
-        {timeTravelMode && (
-          <div style={{
-            background: '#2b2b2b',
-            color: '#FFD100',
-            padding: '8px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderLeft: '4px solid #FFD100',
-            marginBottom: 8
-          }}>
-            <div>
-              Viewing historical snapshot for:&nbsp;
-              {/* <strong>{new Date(timeTravelTimestamp).toLocaleString()}</strong> */}
-              <strong>{timeTravelTimestamp}</strong>
-            </div>
-            <div>
-              <button className="btn btn-sm btn-outline-warning" onClick={() => clearTimeTravel()} disabled={timeTravelLoading}>
-                Return to Live
-              </button>
-            </div>
-          </div>
-        )}
-
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <DashboardHome
-                summaryData={liveData.summary}
-                detailsData={liveData.details}
-                floorData={liveData.floorBreakdown}
-                zoneBreakdown={liveData.zoneBreakdown}
-                personnelBreakdown={liveData.personnelBreakdown}
-                totalVisitedToday={liveData.totalVisitedToday}
-                personnelSummary={liveData.personnelSummary}
-                visitedToday={liveData.visitedToday}
-                ertStatus={liveData.ertStatus}
-              />
-            }
-          />
-          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-          <Route path="/ert"     element={<ErtPage ertStatus={liveData.ertStatus} />} />
-        </Routes>
-      </Container>
-    </>
-  );
-}
-
-export default function WrappedApp() {
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <App />
-      </div>
-    </BrowserRouter>
-  );
 }
