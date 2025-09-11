@@ -1,3 +1,50 @@
+function buildVisitedForDate(allEvents, atDate) {
+  const snapshot = (atDate instanceof Date) ? atDate : new Date(atDate);
+
+  // Local calendar day for the snapshot in Asia/Kolkata
+  const asOfLocalDate = DateTime.fromJSDate(snapshot, { zone: 'utc' })
+    .setZone('Asia/Kolkata')
+    .toFormat('yyyy-LL-dd');
+
+  const todayIns = allEvents.filter(evt => {
+    const evtTs = new Date(evt.LocaleMessageTime);
+    const evtLocalDate = DateTime.fromJSDate(evtTs, { zone: 'utc' })
+      .setZone('Asia/Kolkata')
+      .toFormat('yyyy-LL-dd');
+
+    return (
+      evt.Direction === 'InDirection' &&
+      evtLocalDate === asOfLocalDate &&   // use local date, not evt.Dateonly
+      evtTs <= snapshot
+    );
+  });
+
+  // Dedupe by composite key
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1;
+    if (!key) continue;
+    const evtTs = new Date(e.LocaleMessageTime);
+    const prev = dedup.get(key);
+    if (!prev || evtTs > new Date(prev.LocaleMessageTime)) {
+      dedup.set(key, e);
+    }
+  }
+
+  const finalList = Array.from(dedup.values());
+
+  const employees = finalList.filter(e =>
+    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
+      .includes(e.PersonnelType)
+  ).length;
+  const contractors = finalList.length - employees;
+
+  return { employees, contractors, total: finalList.length };
+}
+
+
+.....
+
 please find out the issu
 http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z to  http://localhost:5000/api/occupancy-at?at=2025-09-10T23:59:00.000Z in this between 
 "totalVisitedToday": 0,
