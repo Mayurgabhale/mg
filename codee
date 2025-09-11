@@ -1,3 +1,13 @@
+// before
+const atDate = new Date(atRaw);
+
+// after
+const atDate = DateTime.fromISO(atRaw, { zone: 'utc' }).toJSDate();
+console.log('[getSnapshotAt] atRaw:', atRaw, 'atDate (ISO):', atDate.toISOString());
+
+
+
+
 http://localhost:5000/api/occupancy-at?at=2025-09-10T18:29:00.000Z
 on this time we got this this countn 
 
