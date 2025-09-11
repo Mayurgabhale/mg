@@ -1,4 +1,71 @@
-// Handler: GET /api/occupancy-at?at=<ISO-8601>
+{timeTravelMode && (
+  <div style={{
+    background: '#3b403e',
+    color: '#FFF',
+    padding: '8px 16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderLeft: '4px solid #00ff40',
+    marginBottom: 8
+  }}>
+    <div>
+      Viewing historical snapshot for:&nbsp;
+      <strong>
+        {timeTravelTimestamp
+          ? (new Date(timeTravelTimestamp)).toLocaleString('en-GB', {
+              timeZone: 'Asia/Kolkata',
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', hour12: true
+            }) + ' (IST)'
+          : ''}
+      </strong>
+    </div>
+    <div>
+      <button className="btn btn-sm btn-outline-warning" onClick={() => clearTimeTravel()} disabled={timeTravelLoading}>
+        Return to Live
+      </button>
+    </div>
+  </div>
+)}
+
+
+
+
+
+
+....
+
+// Handler: GET /api/occupancy-at?{timeTravelMode && (
+  <div style={{
+    background: '#3b403e',
+    color: '#FFF',
+    padding: '8px 16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderLeft: '4px solid #00ff40',
+    marginBottom: 8
+  }}>
+    <div>
+      Viewing historical snapshot for:&nbsp;
+      <strong>
+        {timeTravelTimestamp
+          ? (new Date(timeTravelTimestamp)).toLocaleString('en-GB', {
+              timeZone: 'Asia/Kolkata',
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', hour12: true
+            }) + ' (IST)'
+          : ''}
+      </strong>
+    </div>
+    <div>
+      <button className="btn btn-sm btn-outline-warning" onClick={() => clearTimeTravel()} disabled={timeTravelLoading}>
+        Return to Live
+      </button>
+    </div>
+  </div>
+)}at=<ISO-8601>
 exports.getSnapshotAt = async (req, res) => {
   try {
     const atRaw = req.query.at;
