@@ -1,3 +1,85 @@
+exports.getOccupancyAtTime = async (req, res) => {
+  try {
+    // parse incoming date/time
+    const { datetime, date, time } = req.query;
+
+    let dt; // Luxon DateTime in Asia/Kolkata
+    if (datetime) {
+      // try parse as ISO first; if no zone provided, assume Asia/Kolkata
+      dt = DateTime.fromISO(datetime, { zone: 'Asia/Kolkata' });
+      if (!dt.isValid) {
+        // try RFC or generic parse as fallback
+        dt = DateTime.fromRFC2822(datetime, { zone: 'Asia/Kolkata' });
+      }
+    } else {
+      // build from date + time (with sensible defaults)
+      const theDate = date || getTodayString(); // already returns yyyy-LL-dd in Asia/Kolkata
+      const theTime = time || '00:00';
+      // try multiple time formats
+      const tryFormats = [
+        'yyyy-LL-dd h:mm a',
+        'yyyy-LL-dd hh:mm a',
+        'yyyy-LL-dd H:mm',
+        'yyyy-LL-dd HH:mm',
+        'yyyy-LL-dd h:mm',
+        'yyyy-LL-dd hh:mm'
+      ];
+      for (const fmt of tryFormats) {
+        const cand = DateTime.fromFormat(`${theDate} ${theTime}`, fmt, { zone: 'Asia/Kolkata' });
+        if (cand.isValid) { dt = cand; break; }
+      }
+      // as last resort, try ISO combine
+      if (!dt) {
+        const isoStr = `${theDate}T${theTime}`;
+        dt = DateTime.fromISO(isoStr, { zone: 'Asia/Kolkata' });
+      }
+    }
+
+    if (!dt || !dt.isValid) {
+      return res.status(400).json({
+        error: 'Invalid/Unparseable datetime. Use datetime=ISO or date=yyyy-LL-dd & time="10:00 PM" or "22:00".'
+      });
+    }
+
+    // Convert to JS Date (UTC instant) to pass into SQL parameter
+    const untilJSDate = dt.toJSDate();
+
+    // Fetch all events up to that instant (inclusive)
+    const eventsAll = await fetchEventsUntil(untilJSDate);
+
+    // === IMPORTANT CHANGE: keep only events from the requested local date (Asia/Kolkata) ===
+    const requestedDateStr = dt.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    const events = eventsAll.filter(evt => String(evt.Dateonly) === requestedDateStr);
+
+    // buildOccupancy expects the events array with same shape; it will compute the headcount
+    const occupancy = await buildOccupancy(events);
+
+    // Adjust the asOf to the requested (local) timestamp instead of "now"
+    occupancy.asOf = dt.setZone('Asia/Kolkata').toISO();
+
+    // Also provide visited counts for that local date (uses same-day events)
+    const visited = buildVisitedForDate(events, requestedDateStr);
+    occupancy.totalVisitedOnDate = visited.total;
+    occupancy.visitedOnDate = {
+      employees: visited.employees,
+      contractors: visited.contractors,
+      total: visited.total,
+      date: requestedDateStr
+    };
+
+    return res.json(occupancy);
+
+  } catch (err) {
+    console.error('Error in getOccupancyAtTime:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
+
+
+.....
 thank. 
 know, the on problme is
 http://localhost:5000/api/occupancy-at?datetime=2025-09-11T18:30:00
