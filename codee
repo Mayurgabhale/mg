@@ -1,73 +1,38 @@
-// src/components/TimeTravelControl.jsx
-import React, { useEffect, useState } from 'react';
-import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
-
-/**
- * TimeTravelControl
- * - shows a "YYYY-MM-DDTHH:mm" input that is treated literally as UTC
- * - when Apply clicked -> sends "<local-value>:00.000Z" (no timezone conversion)
- * - keeps input in sync with parent-provided currentTimestamp (ISO)
- */
-export default function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
-  // store local value as "YYYY-MM-DDTHH:mm" (no timezone)
-  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
-
-  // sync when parent changes currentTimestamp
-  useEffect(() => {
-    if (currentTimestamp) setLocal(isoToInput(currentTimestamp));
-    else setLocal('');
-  }, [currentTimestamp]);
-
-  function handleApply() {
-    if (!local) return;
-    // Build ISO exactly corresponding to displayed value:
-    const iso = `${local}:00.000Z`;
-    onApply(iso);
-  }
-
-  function handleLive() {
-    setLocal('');
-    onLive();
-  }
-
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
-      <InputGroup>
-        <FormControl
-          type="datetime-local"
-          value={local}
-          onChange={(e) => setLocal(e.target.value)}
-          placeholder="Select date & time"
-        />
-      </InputGroup>
-
-      <div style={{ display: 'flex', gap: 6 }}>
-        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
-          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
-        </Button>
-        <Button variant="warning" onClick={handleLive} disabled={loading}>
-          Live
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** helpers **/
-
-function pad(n) { return String(n).padStart(2, '0'); }
-
-/**
- * Convert an ISO timestamp into a "YYYY-MM-DDTHH:mm" string for the input.
- * Uses UTC getters so the text shown matches the ISO exactly (no timezone shift).
- */
-function isoToInput(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const year = d.getUTCFullYear();
-  const month = pad(d.getUTCMonth() + 1);
-  const day = pad(d.getUTCDate());
-  const hours = pad(d.getUTCHours());
-  const minutes = pad(d.getUTCMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
+-  useEffect(() => {
+-    const es = new EventSource('http://localhost:5000/api/live-occupancy');
+-    ...
+-    return () => es.close();
+-  }, []);
++  useEffect(() => {
++    // If we're time-traveling, do not connect SSE
++    if (timeTravelMode) return;
++
++    const es = new EventSource('http://localhost:5000/api/live-occupancy');
++    es.onmessage = (e) => {
++      try {
++        const p = JSON.parse(e.data);
++        setLiveData({
++          summary: Array.isArray(p.summary) ? p.summary : [],
++          details: p.details || {},
++          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
++          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
++          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
++          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
++          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
++          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
++          ertStatus: p.ertStatus || {}
++        });
++      } catch {
++        console.error('SSE parse error');
++      }
++    };
++
++    es.onerror = (err) => {
++      console.error('SSE error', err);
++      try { es.close(); } catch (e) {}
++    };
++
++    return () => {
++      try { es.close(); } catch (e) {}
++    };
++  }, [timeTravelMode]);
