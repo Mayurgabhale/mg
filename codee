@@ -1,67 +1,36 @@
-this is my Live Occupancy  dashboard in this we got live headcount 
-, but in this i want ot sow today, on this particular time how much count, how to do this
-for example  today 12 September 2025 7:43 am or 1:43 pm
-how much count so to do this. 
-
-// C:\Users\W0024618\Desktop\swipeData\client\src\App.js
-
+// App.js (only the changed/added parts shown)
 import React, { useEffect, useState } from 'react';
-import { Container, Navbar, Nav } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-import ZoneDetailsTable from './components/ZoneDetailsTable';
-import DashboardHome    from './pages/DashboardHome';
-import ErtPage          from './pages/ErtPage';
-import './App.css';
-
-function ZoneDetailsPage({ detailsData }) {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  return (
-    <>
-      <div
-        className="d-flex justify-content-between align-items-center mb-2"
-        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
-      >
-        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
-        <input
-          type="text"
-          placeholder="Search employee..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
-        />
-      </div>
-      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
-    </>
-  );
-}
+/* ... other imports ... */
+import TimeLookupPanel from './components/TimeLookupPanel'; // new component
 
 function App() {
-  const location = useLocation();
-  const headerText = location.pathname === '/ert'
-    ? 'Emergency Response Team — Western Union Pune'
-    : 'Live Occupancy — Western Union Pune';
+  // existing liveData state...
+  const [liveData, setLiveData] = useState({ /* same as before */ });
 
-  // Single state object for the entire payload
-  const [liveData, setLiveData] = useState({
-    summary: [],
-    details: {},
-    floorBreakdown: [],
-    zoneBreakdown: [],
-    personnelBreakdown: [],
-    totalVisitedToday: 0,
-    personnelSummary: { employees: 0, contractors: 0 },
-    visitedToday: { employees: 0, contractors: 0, total: 0 },
-    ertStatus: {}
-  });
+  // add a history buffer (timestamped snapshots)
+  const [history, setHistory] = useState([]); // each item: { ts: ISOString, total: number, payload: ... }
 
   useEffect(() => {
     const es = new EventSource('http://localhost:5000/api/live-occupancy');
     es.onmessage = (e) => {
       try {
         const p = JSON.parse(e.data);
-        // Batch-update entire payload in one setState
+
+        // compute a sensible "current total" from the incoming payload
+        const computeTotalFromPayload = (payload) => {
+          // try to derive total from payload.summary (fallbacks included)
+          if (Array.isArray(payload.summary) && payload.summary.length) {
+            return payload.summary.reduce((s, it) => s + (typeof it.count === 'number' ? it.count : 0), 0);
+          }
+          if (typeof payload.currentTotal === 'number') return payload.currentTotal; // if backend provides
+          // fallback: visitedToday.total is cumulative visits so NOT live count; return 0 if unknown
+          return 0;
+        };
+
+        const currentTotal = computeTotalFromPayload(p);
+        const nowIso = new Date().toISOString();
+
+        // update combined liveData as before
         setLiveData({
           summary: Array.isArray(p.summary) ? p.summary : [],
           details: p.details || {},
@@ -72,6 +41,15 @@ function App() {
           personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
           visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
           ertStatus: p.ertStatus || {}
+        });
+
+        // append to history (keep capped size to avoid memory growth)
+        setHistory(prev => {
+          const entry = { ts: nowIso, total: currentTotal, payload: p };
+          const MAX = 24 * 60 * 2; // example cap: 2 days of 1-minute-ish samples (adjust as needed)
+          const next = [...prev, entry];
+          if (next.length > MAX) next.splice(0, next.length - MAX);
+          return next;
         });
       } catch {
         console.error('SSE parse error');
@@ -88,17 +66,7 @@ function App() {
 
   return (
     <>
-      <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
-        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
-        <Nav className="ms-auto align-items-center">
-          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i class="bi bi-house"></i></Nav.Link>
-          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history"  className="nav-item-infographic"><i class="bi bi-clock-history"></i></Nav.Link>
-          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i class="fa-solid fa-calendar-day"></i></Nav.Link>
-          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
-          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun/></Nav.Link>
-        </Nav>
-      </Navbar>
-
+      {/* Navbar unchanged */}
       <Container fluid className="mt-2">
         <Routes>
           <Route
@@ -114,27 +82,121 @@ function App() {
                 personnelSummary={liveData.personnelSummary}
                 visitedToday={liveData.visitedToday}
                 ertStatus={liveData.ertStatus}
+                history={history}            // <-- pass history to the page
+                currentTotal={history.length ? history[history.length - 1].total : 0} // latest total
               />
             }
           />
-          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-          <Route path="/ert"     element={<ErtPage ertStatus={liveData.ertStatus} />} />
+          {/* other routes unchanged */}
         </Routes>
       </Container>
     </>
   );
 }
 
-export default function WrappedApp() {
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <App />
-      </div>
-    </BrowserRouter>
-  );
+
+
+......
+
+
+
+
+// src/components/TimeLookupPanel.jsx
+import React, { useState, useMemo } from 'react';
+
+function findCountAt(history, targetDate) {
+  if (!history || history.length === 0) return { count: null, foundAt: null, note: 'no data' };
+  // binary search for latest entry with ts <= targetDate
+  let lo = 0, hi = history.length - 1, idx = -1;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const midDate = new Date(history[mid].ts);
+    if (midDate <= targetDate) { idx = mid; lo = mid + 1; }
+    else { hi = mid - 1; }
+  }
+  if (idx === -1) {
+    // no earlier sample: return first sample as "earliest"
+    return { count: null, foundAt: history[0].ts, note: 'no sample at-or-before requested time' };
+  }
+  return { count: history[idx].total, foundAt: history[idx].ts, note: 'found' };
 }
 
+export default function TimeLookupPanel({ history = [] }) {
+  // datetime-local expects "yyyy-MM-ddTHH:mm" (no timezone). The browser will treat it as local time.
+  const [datetimeLocal, setDatetimeLocal] = useState('');
+  const [result, setResult] = useState(null);
+
+  // quick helper to format ISO in Asia/Kolkata (user's zone). Adjust locale as needed.
+  const fmt = (iso) => {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const onLookup = () => {
+    if (!datetimeLocal) {
+      setResult({ error: 'Pick a date & time' });
+      return;
+    }
+    // create Date from the local datetime string — this is in the browser's local timezone
+    const target = new Date(datetimeLocal);
+    const r = findCountAt(history, target);
+    setResult(r);
+  };
+
+  // convenience: show nearest sample / now
+  const onNow = () => {
+    const last = history.length ? history[history.length - 1] : null;
+    if (!last) { setResult({ error: 'No data yet' }); return; }
+    setResult({ count: last.total, foundAt: last.ts, note: 'now' });
+  };
+
+  return (
+    <div className="card p-3 mb-3">
+      <h5>Lookup headcount for a specific time</h5>
+
+      <div className="d-flex align-items-center gap-2" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+        <input
+          type="datetime-local"
+          value={datetimeLocal}
+          onChange={(e) => setDatetimeLocal(e.target.value)}
+          style={{ padding: '0.4rem', minWidth: 220 }}
+        />
+        <button className="btn btn-primary" onClick={onLookup}>Find count</button>
+        <button className="btn btn-outline-secondary" onClick={onNow}>Show current</button>
+      </div>
+
+      <div className="mt-3">
+        {result && result.error && <div className="text-danger">{result.error}</div>}
+
+        {result && !result.error && (
+          <>
+            <div>
+              <strong>Count:</strong>{' '}
+              {result.count === null ? <em>no sample found</em> : result.count}
+            </div>
+            <div>
+              <strong>Sample time:</strong>{' '}
+              {result.foundAt ? fmt(result.foundAt) + ` (ISO: ${result.foundAt})` : '—'}
+            </div>
+            <div className="text-muted small mt-1">
+              Note: result returns the latest recorded sample **at or before** the requested time.
+            </div>
+          </>
+        )}
+
+        {!result && <div className="text-muted">Pick a date/time and click "Find count".</div>}
+      </div>
+    </div>
+  );
+}
 
 
 
