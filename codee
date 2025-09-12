@@ -14,8 +14,7 @@ const {
 
 router.get('/live-occupancy', getLiveOccupancy);
 router.get('/occupancy-at', getSnapshotAt);  // GET /api/occupancy-at?at=...
-router.get('/getCurrent', getCurrentOccupancy);  // GET /api/occupancy-at?at=...
-
+router.get('/getCurrent', getCurrentOccupancy);  
 
 module.exports = router;
 
