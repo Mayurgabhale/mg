@@ -1,102 +1,177 @@
-// Fetch a historical snapshot (datetimeISO should be an ISO string)
-  async function fetchSnapshot(datetimeISO) {
-    setTimeTravelLoading(true);
-    try {
-      // backend expects `datetime=` param
-      const url = `http://localhost:5000/api/occupancy-at?datetime=${encodeURIComponent(datetimeISO)}`;
-      console.debug('[TimeTravel] fetching', url);
-      const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-      if (!resp.ok) {
-        const body = await resp.text().catch(() => '');
-        console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
-        window.alert(`Failed to load snapshot: server returned ${resp.status}. See console for details.`);
-        return;
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\App.js
+
+import React, { useEffect, useState } from 'react';
+import { Container, Navbar, Nav } from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
+import ZoneDetailsTable from './components/ZoneDetailsTable';
+import DashboardHome    from './pages/DashboardHome';
+import ErtPage          from './pages/ErtPage';
+import './App.css';
+
+function ZoneDetailsPage({ detailsData }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  return (
+    <>
+      <div
+        className="d-flex justify-content-between align-items-center mb-2"
+        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
+      >
+        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+      </div>
+      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+    </>
+  );
+}
+
+function App() {
+  const location = useLocation();
+  const headerText = location.pathname === '/ert'
+    ? 'Emergency Response Team — Western Union Pune'
+    : 'Live Occupancy — Western Union Pune';
+
+  // Single state object for the entire payload
+  const [liveData, setLiveData] = useState({
+    summary: [],
+    details: {},
+    floorBreakdown: [],
+    zoneBreakdown: [],
+    personnelBreakdown: [],
+    totalVisitedToday: 0,
+    personnelSummary: { employees: 0, contractors: 0 },
+    visitedToday: { employees: 0, contractors: 0, total: 0 },
+    ertStatus: {}
+  });
+
+  // useEffect(() => {
+  //   const es = new EventSource('http://localhost:5000/api/live-occupancy');
+  //   es.onmessage = (e) => {
+  //     try {
+  //       const p = JSON.parse(e.data);
+  //       // Batch-update entire payload in one setState
+  //       setLiveData({
+  //         summary: Array.isArray(p.summary) ? p.summary : [],
+  //         details: p.details || {},
+  //         floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+  //         zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+  //         personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+  //         totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+  //         personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+  //         visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+  //         ertStatus: p.ertStatus || {}
+  //       });
+  //     } catch {
+  //       console.error('SSE parse error');
+  //     }
+  //   };
+
+  //   es.onerror = (err) => {
+  //     console.error('SSE error', err);
+  //     es.close();
+  //   };
+
+  //   return () => es.close();
+  // }, []);
+
+
+
+
+
+
+
+    useEffect(() => {
+   // If we're time-traveling, do not connect SSE
+    if (timeTravelMode) return;
+
+    const es = new EventSource('http://localhost:5000/api/live-occupancy');
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        setLiveData({
+          summary: Array.isArray(p.summary) ? p.summary : [],
+          details: p.details || {},
+          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+          ertStatus: p.ertStatus || {}
+        });
+      } catch {
+        console.error('SSE parse error');
       }
-      const p = await resp.json();
+    };
 
-      // update the exact same liveData object so all UI pieces update
-      setLiveData({
-        summary: Array.isArray(p.summary) ? p.summary : [],
-        details: p.details || {},
-        floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-        zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-        personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-        totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-        personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-        visitedToday: p.visitedOnDate ? { employees: p.visitedOnDate.employees, contractors: p.visitedOnDate.contractors, total: p.visitedOnDate.total } : (p.visitedToday || { employees: 0, contractors: 0, total: 0 }),
-        ertStatus: p.ertStatus || {}
-      });
+    es.onerror = (err) => {
+      console.error('SSE error', err);
+      try { es.close(); } catch (e) {}
+    };
 
-      // enable time-travel mode (this pauses SSE via the effect above)
-      setTimeTravelMode(true);
-      // prefer server-provided timestamp for display (p.asOf) else the requested ISO
-      setTimeTravelTimestamp(p?.asOf || datetimeISO);
-    } catch (err) {
-      console.error('Failed to fetch snapshot', err);
-      window.alert('Failed to load snapshot. See console for details.');
-    } finally {
-      setTimeTravelLoading(false);
-    }
-  }
-
-  // Return to live mode: re-enable SSE and clear time travel UI
-  function clearTimeTravel() {
-    setTimeTravelLoading(true);
-    try {
-      setTimeTravelMode(false);
-      setTimeTravelTimestamp(null);
-      // SSE effect will reconnect automatically (timeTravelMode changed).
-      // Optionally you can fetch an immediate fresh snapshot from the SSE-backed current state,
-      // but SSE will push soon after reconnect — we keep it simple.
-    } finally {
-      setTimeTravelLoading(false);
-    }
-  }
+    return () => {
+      try { es.close(); } catch (e) {}
+    };
+  }, [timeTravelMode]);
 
 
+  return (
+    <>
+      <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
+        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
+        <Nav className="ms-auto align-items-center">
+          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i class="bi bi-house"></i></Nav.Link>
+          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history"  className="nav-item-infographic"><i class="bi bi-clock-history"></i></Nav.Link>
+          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i class="fa-solid fa-calendar-day"></i></Nav.Link>
+          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
+          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun/></Nav.Link>
+        </Nav>
+      </Navbar>
+
+      <Container fluid className="mt-2">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <DashboardHome
+                summaryData={liveData.summary}
+                detailsData={liveData.details}
+                floorData={liveData.floorBreakdown}
+                zoneBreakdown={liveData.zoneBreakdown}
+                personnelBreakdown={liveData.personnelBreakdown}
+                totalVisitedToday={liveData.totalVisitedToday}
+                personnelSummary={liveData.personnelSummary}
+                visitedToday={liveData.visitedToday}
+                ertStatus={liveData.ertStatus}
+              />
+            }
+          />
+          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+          <Route path="/ert"     element={<ErtPage ertStatus={liveData.ertStatus} />} />
+        </Routes>
+      </Container>
+    </>
+  );
+}
+
+export default function WrappedApp() {
+  return (
+    <BrowserRouter>
+      <div className="dark-theme">
+        <App />
+      </div>
+    </BrowserRouter>
+  );
+}
 
 
-
-
-
-
-
-
-.......-  useEffect(() => {
--    const es = new EventSource('http://localhost:5000/api/live-occupancy');
--    ...
--    return () => es.close();
--  }, []);
-+  useEffect(() => {
-+    // If we're time-traveling, do not connect SSE
-+    if (timeTravelMode) return;
-+
-+    const es = new EventSource('http://localhost:5000/api/live-occupancy');
-+    es.onmessage = (e) => {
-+      try {
-+        const p = JSON.parse(e.data);
-+        setLiveData({
-+          summary: Array.isArray(p.summary) ? p.summary : [],
-+          details: p.details || {},
-+          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-+          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-+          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-+          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-+          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-+          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-+          ertStatus: p.ertStatus || {}
-+        });
-+      } catch {
-+        console.error('SSE parse error');
-+      }
-+    };
-+
-+    es.onerror = (err) => {
-+      console.error('SSE error', err);
-+      try { es.close(); } catch (e) {}
-+    };
-+
-+    return () => {
-+      try { es.close(); } catch (e) {}
-+    };
-+  }, [timeTravelMode]);
