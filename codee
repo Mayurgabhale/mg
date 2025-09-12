@@ -1,3 +1,32 @@
+
+knwo all code is rewrit but alos count show 0
+  }
+  ],
+  "totalVisitedToday": 0,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 0,
+    "total": 0
+  }
+}
+
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\liveOccupancyRoutes.js
+const express = require('express');
+const router  = express.Router();
+const {
+  getLiveOccupancy,
+  getSnapshotAt,
+  getCurrentOccupancy
+} = require('../controllers/liveOccupancyController');
+
+router.get('/live-occupancy', getLiveOccupancy);
+router.get('/occupancy-at', getSnapshotAt);         // GET /api/occupancy-at?at=...
+router.get('/current-occupancy', getCurrentOccupancy); // GET /api/current-occupancy
+
+module.exports = router;
+
+
+
 GET http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z
 
 ...
