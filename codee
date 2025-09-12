@@ -1,31 +1,5 @@
-// Instead of interpreting atRaw as UTC...
-const atDate = DateTime.fromISO(atRaw, { zone: 'Asia/Kolkata' }).toJSDate();
 
-
-....
-..
-const tz = req.query.tz || 'utc';
-const atDate = DateTime.fromISO(atRaw, { zone: tz }).toJSDate();
-
-
-
-...
-function buildVisitedForDate(allEvents, atDate) {
-  // Get the local day of "atDate" in Asia/Kolkata
-  const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
-    .setZone('Asia/Kolkata')
-    .toFormat('yyyy-LL-dd');
-
-  const todayIns = allEvents.filter(evt => {
-    // Calculate event's local date in IST
-    const eventLocalDate = DateTime.fromJSDate(evt.LocaleMessageTime, { zone: 'utc' })
-      .setZone('Asia/Kolkata')
-      .toFormat('yyyy-LL-dd');
-      
-    return evt.Direction === 'InDirection' &&
-           eventLocalDate === asOfLocalDate &&
-           evt.LocaleMessageTime <= atDate;
-  });
-
-  // ... rest of the function remains the same
-}
+Server running at http://localhost:5000
+✅ MSSQL pool connected
+✅ Denver MSSQL pool connected
+[getSnapshotAt] atRaw: 2025-09-10T18:30:00.000Z atDate (ISO): 2025-09-10T18:30:00.000Z
