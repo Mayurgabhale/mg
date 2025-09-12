@@ -1,4 +1,14 @@
+// interpret atRaw in Asia/Kolkata instead of UTC
+const atDate = DateTime.fromISO(atRaw, { zone: 'Asia/Kolkata' }).toJSDate();
 
+console.log(
+  '[getSnapshotAt] atRaw:',
+  atRaw,
+  'atDate (IST ISO):',
+  DateTime.fromJSDate(atDate, { zone: 'Asia/Kolkata' }).toISO()
+);
+
+...
 Server running at http://localhost:5000
 ✅ MSSQL pool connected
 ✅ Denver MSSQL pool connected
