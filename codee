@@ -1,282 +1,135 @@
-exports.getOccupancyAtTime = async (req, res) => {
-  try {
-    // parse incoming date/time
-    const { datetime, date, time } = req.query;
-
-    let dt; // Luxon DateTime in Asia/Kolkata
-    if (datetime) {
-      // try parse as ISO first; if no zone provided, assume Asia/Kolkata
-      dt = DateTime.fromISO(datetime, { zone: 'Asia/Kolkata' });
-      if (!dt.isValid) {
-        // try RFC or generic parse as fallback
-        dt = DateTime.fromRFC2822(datetime, { zone: 'Asia/Kolkata' });
-      }
-    } else {
-      // build from date + time (with sensible defaults)
-      const theDate = date || getTodayString(); // already returns yyyy-LL-dd in Asia/Kolkata
-      const theTime = time || '00:00';
-      // try multiple time formats
-      const tryFormats = [
-        'yyyy-LL-dd h:mm a',
-        'yyyy-LL-dd hh:mm a',
-        'yyyy-LL-dd H:mm',
-        'yyyy-LL-dd HH:mm',
-        'yyyy-LL-dd h:mm',
-        'yyyy-LL-dd hh:mm'
-      ];
-      for (const fmt of tryFormats) {
-        const cand = DateTime.fromFormat(`${theDate} ${theTime}`, fmt, { zone: 'Asia/Kolkata' });
-        if (cand.isValid) { dt = cand; break; }
-      }
-      // as last resort, try ISO combine
-      if (!dt) {
-        const isoStr = `${theDate}T${theTime}`;
-        dt = DateTime.fromISO(isoStr, { zone: 'Asia/Kolkata' });
-      }
-    }
-
-    if (!dt || !dt.isValid) {
-      return res.status(400).json({
-        error: 'Invalid/Unparseable datetime. Use datetime=ISO or date=yyyy-LL-dd & time="10:00 PM" or "22:00".'
-      });
-    }
-
-    // Convert to JS Date (UTC instant) to pass into SQL parameter
-    const untilJSDate = dt.toJSDate();
-
-    // Fetch all events up to that instant (inclusive)
-    const eventsAll = await fetchEventsUntil(untilJSDate);
-
-    // === IMPORTANT CHANGE: keep only events from the requested local date (Asia/Kolkata) ===
-    const requestedDateStr = dt.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-    const events = eventsAll.filter(evt => String(evt.Dateonly) === requestedDateStr);
-
-    // buildOccupancy expects the events array with same shape; it will compute the headcount
-    const occupancy = await buildOccupancy(events);
-
-    // Adjust the asOf to the requested (local) timestamp instead of "now"
-    occupancy.asOf = dt.setZone('Asia/Kolkata').toISO();
-
-    // Also provide visited counts for that local date (uses same-day events)
-    const visited = buildVisitedForDate(events, requestedDateStr);
-    occupancy.totalVisitedOnDate = visited.total;
-    occupancy.visitedOnDate = {
-      employees: visited.employees,
-      contractors: visited.contractors,
-      total: visited.total,
-      date: requestedDateStr
-    };
-
-    return res.json(occupancy);
-
-  } catch (err) {
-    console.error('Error in getOccupancyAtTime:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
 
 
+// C:\Users\W0024618\Desktop\swipeData\client\src\App.js
 
+import React, { useEffect, useState } from 'react';
+import { Container, Navbar, Nav } from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
+import ZoneDetailsTable from './components/ZoneDetailsTable';
+import DashboardHome    from './pages/DashboardHome';
+import ErtPage          from './pages/ErtPage';
+import './App.css';
 
+function ZoneDetailsPage({ detailsData }) {
+  const [searchTerm, setSearchTerm] = useState('');
 
-.....
-thank. 
-know, the on problme is
-http://localhost:5000/api/occupancy-at?datetime=2025-09-11T18:30:00
-i search 2025-09-11 this date. but in this date privius date, count alos disply,
-but i want to get only search date count, not other date 2025-09-11 only this date, 
-not othe date, ok 
-
-// *****************************************
-// /////////////////////////////////////////  start
-
-
-// ---------- NEW: fetchEventsUntil / helpers / controller for occupancy-at ----------
-async function fetchEventsUntil(until) {
-  // until: a JS Date object (UTC instant) — same style as fetchNewEvents uses
-  const pool = await getPool();
-  const req  = pool.request();
-  req.input('until', sql.DateTime2, until);
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType     = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) <= @until
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
+  return (
+    <>
+      <div
+        className="d-flex justify-content-between align-items-center mb-2"
+        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
+      >
+        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+      </div>
+      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+    </>
+  );
 }
 
-/**
- * Build visited counts for a specific local date (yyyy-LL-dd in Asia/Kolkata)
- * Re-implements the same "dedupe last swipe for the day" logic as buildVisitedToday but for any date.
- */
-function buildVisitedForDate(allEvents, dateStr) {
-  // dateStr expected 'yyyy-LL-dd' (Asia/Kolkata local date)
-  const dateOnly = dateStr;
+function App() {
+  const location = useLocation();
+  const headerText = location.pathname === '/ert'
+    ? 'Emergency Response Team — Western Union Pune'
+    : 'Live Occupancy — Western Union Pune';
 
-  const ins = allEvents.filter(evt => {
-    return evt.Direction === 'InDirection' && evt.Dateonly === dateOnly;
+  // Single state object for the entire payload
+  const [liveData, setLiveData] = useState({
+    summary: [],
+    details: {},
+    floorBreakdown: [],
+    zoneBreakdown: [],
+    personnelBreakdown: [],
+    totalVisitedToday: 0,
+    personnelSummary: { employees: 0, contractors: 0 },
+    visitedToday: { employees: 0, contractors: 0, total: 0 },
+    ertStatus: {}
   });
 
-  // dedupe by PersonGUID keeping the latest LocaleMessageTime
-  const dedup = new Map();
-  for (const e of ins) {
-    const key = e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1;
-    const prev = dedup.get(key);
-    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) {
-      dedup.set(key, e);
-    }
-  }
-
-  const finalList = Array.from(dedup.values());
-
-  const employees = finalList.filter(e =>
-    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
-      .includes(e.PersonnelType)
-  ).length;
-  const contractors = finalList.length - employees;
-
-  return { employees, contractors, total: finalList.length };
-}
-
-/**
- * Controller: GET /occupancy-at
- * query params:
- *  - datetime (ISO, or any ISO-ish string) OR
- *  - date=yyyy-LL-dd  and time="10:00 PM" or "22:00" or "6:00"
- *
- * Returns same occupancy shape as buildOccupancy but as of the requested timestamp.
- */
-exports.getOccupancyAtTime = async (req, res) => {
-  try {
-    // parse incoming date/time
-    const { datetime, date, time } = req.query;
-
-    let dt; // Luxon DateTime in Asia/Kolkata
-    if (datetime) {
-      // try parse as ISO first; if no zone provided, assume Asia/Kolkata
-      dt = DateTime.fromISO(datetime, { zone: 'Asia/Kolkata' });
-      if (!dt.isValid) {
-        // try RFC or generic parse as fallback
-        dt = DateTime.fromRFC2822(datetime, { zone: 'Asia/Kolkata' });
+  useEffect(() => {
+    const es = new EventSource('http://localhost:5000/api/live-occupancy');
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        // Batch-update entire payload in one setState
+        setLiveData({
+          summary: Array.isArray(p.summary) ? p.summary : [],
+          details: p.details || {},
+          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+          ertStatus: p.ertStatus || {}
+        });
+      } catch {
+        console.error('SSE parse error');
       }
-    } else {
-      // build from date + time (with sensible defaults)
-      const theDate = date || getTodayString(); // already returns yyyy-LL-dd in Asia/Kolkata
-      const theTime = time || '00:00';
-      // try multiple time formats
-      const tryFormats = [
-        'yyyy-LL-dd h:mm a',
-        'yyyy-LL-dd hh:mm a',
-        'yyyy-LL-dd H:mm',
-        'yyyy-LL-dd HH:mm',
-        'yyyy-LL-dd h:mm',
-        'yyyy-LL-dd hh:mm'
-      ];
-      for (const fmt of tryFormats) {
-        const cand = DateTime.fromFormat(`${theDate} ${theTime}`, fmt, { zone: 'Asia/Kolkata' });
-        if (cand.isValid) { dt = cand; break; }
-      }
-      // as last resort, try ISO combine
-      if (!dt) {
-        const isoStr = `${theDate}T${theTime}`;
-        dt = DateTime.fromISO(isoStr, { zone: 'Asia/Kolkata' });
-      }
-    }
-
-    if (!dt || !dt.isValid) {
-      return res.status(400).json({
-        error: 'Invalid/Unparseable datetime. Use datetime=ISO or date=yyyy-LL-dd & time="10:00 PM" or "22:00".'
-      });
-    }
-
-    // Convert to JS Date (UTC instant) to pass into SQL parameter
-    const untilJSDate = dt.toJSDate();
-
-    // Fetch all events up to that instant (inclusive) and build occupancy from them
-    const events = await fetchEventsUntil(untilJSDate);
-
-    // buildOccupancy expects the events array with same shape; it will compute the headcount
-    const occupancy = await buildOccupancy(events);
-
-    // Adjust the asOf to the requested (local) timestamp instead of "now"
-    occupancy.asOf = dt.setZone('Asia/Kolkata').toISO();
-
-    // Also provide visited counts for that local date
-    const requestedDateStr = dt.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-    const visited = buildVisitedForDate(events, requestedDateStr);
-    occupancy.totalVisitedOnDate = visited.total;
-    occupancy.visitedOnDate = {
-      employees: visited.employees,
-      contractors: visited.contractors,
-      total: visited.total,
-      date: requestedDateStr
     };
 
-    return res.json(occupancy);
+    es.onerror = (err) => {
+      console.error('SSE error', err);
+      es.close();
+    };
 
-  } catch (err) {
-    console.error('Error in getOccupancyAtTime:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
+    return () => es.close();
+  }, []);
 
+  return (
+    <>
+      <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
+        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
+        <Nav className="ms-auto align-items-center">
+          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i class="bi bi-house"></i></Nav.Link>
+          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history"  className="nav-item-infographic"><i class="bi bi-clock-history"></i></Nav.Link>
+          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i class="fa-solid fa-calendar-day"></i></Nav.Link>
+          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
+          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun/></Nav.Link>
+        </Nav>
+      </Navbar>
 
+      <Container fluid className="mt-2">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <DashboardHome
+                summaryData={liveData.summary}
+                detailsData={liveData.details}
+                floorData={liveData.floorBreakdown}
+                zoneBreakdown={liveData.zoneBreakdown}
+                personnelBreakdown={liveData.personnelBreakdown}
+                totalVisitedToday={liveData.totalVisitedToday}
+                personnelSummary={liveData.personnelSummary}
+                visitedToday={liveData.visitedToday}
+                ertStatus={liveData.ertStatus}
+              />
+            }
+          />
+          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+          <Route path="/ert"     element={<ErtPage ertStatus={liveData.ertStatus} />} />
+        </Routes>
+      </Container>
+    </>
+  );
+}
 
+export default function WrappedApp() {
+  return (
+    <BrowserRouter>
+      <div className="dark-theme">
+        <App />
+      </div>
+    </BrowserRouter>
+  );
+}
 
-
-
-
-
-// *****************************************
-// ///////////////////////////////////////// end
 
