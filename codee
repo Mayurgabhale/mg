@@ -1,3 +1,7 @@
+GET http://localhost:5000/api/occupancy-at?at=2025-09-10T18:30:00.000Z
+
+...
+
 // controllers/liveOccupancyController.js
 'use strict';
 
