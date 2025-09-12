@@ -1,3 +1,247 @@
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\App.js
+
+import React, { useEffect, useState, useRef } from 'react';
+import { Container, Navbar, Nav } from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
+import ZoneDetailsTable from './components/ZoneDetailsTable';
+import DashboardHome    from './pages/DashboardHome';
+import ErtPage          from './pages/ErtPage';
+import TimeTravelControl from './components/TimeTravelControl'; // <-- NEW import
+import './App.css';
+
+function ZoneDetailsPage({ detailsData }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  return (
+    <>
+      <div
+        className="d-flex justify-content-between align-items-center mb-2"
+        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
+      >
+        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+      </div>
+      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+    </>
+  );
+}
+
+function App() {
+  const location = useLocation();
+  const headerText = location.pathname === '/ert'
+    ? 'Emergency Response Team — Western Union Pune'
+    : 'Live Occupancy — Western Union Pune';
+
+  // Single state object for the entire payload
+  const [liveData, setLiveData] = useState({
+    summary: [],
+    details: {},
+    floorBreakdown: [],
+    zoneBreakdown: [],
+    personnelBreakdown: [],
+    totalVisitedToday: 0,
+    personnelSummary: { employees: 0, contractors: 0 },
+    visitedToday: { employees: 0, contractors: 0, total: 0 },
+    ertStatus: {}
+  });
+
+  // ---------- Time-travel state ----------
+  const [isLive, setIsLive] = useState(true); // when false, we are showing a historical snapshot
+  const [datetimeLocal, setDatetimeLocal] = useState(''); // value for <input type="datetime-local">
+  // keep a ref to the current EventSource so we can close it
+  const esRef = useRef(null);
+
+  // helper to map backend snapshot -> our liveData shape
+  function applySnapshotPayload(p) {
+    // Backend shape may use slightly different names for visited counts
+    setLiveData({
+      summary: Array.isArray(p.summary) ? p.summary : [],
+      details: p.details || {},
+      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+      totalVisitedToday: typeof p.totalVisitedToday === 'number'
+        ? p.totalVisitedToday
+        : (typeof p.totalVisitedOnDate === 'number' ? p.totalVisitedOnDate : 0),
+      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+      visitedToday: p.visitedToday || p.visitedOnDate || { employees: 0, contractors: 0, total: 0 },
+      ertStatus: p.ertStatus || (p.ertStatus === undefined ? {} : p.ertStatus),
+      // preserve asOf if present so UI can show snapshot timestamp
+      asOf: p.asOf || p.asOf // optional
+    });
+  }
+
+  // Fetch occupancy at selected date/time (calls backend /occupancy-at)
+  async function fetchOccupancyAt({ date, time }) {
+    try {
+      // Build query params. Use date + time to ensure server interprets Asia/Kolkata correctly.
+      const params = new URLSearchParams();
+      if (date) params.set('date', date);
+      if (time) params.set('time', time);
+      const url = `/api/occupancy-at?${params.toString()}`;
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error('occupancy-at error', res.status, txt);
+        return;
+      }
+      const p = await res.json();
+      applySnapshotPayload(p);
+    } catch (err) {
+      console.error('Error fetching occupancy-at:', err);
+    }
+  }
+
+  // handle Apply click from the TimeTravelControl
+  function onApplyTimeTravel() {
+    if (!datetimeLocal) return;
+    // datetimeLocal is like "2025-09-12T22:00"
+    const [date, timePart] = datetimeLocal.split('T');
+    const time = timePart ? timePart.slice(0,5) : '00:00'; // HH:MM
+    // turn off live SSE
+    setIsLive(false);
+    // close existing EventSource if open
+    if (esRef.current) {
+      try { esRef.current.close(); } catch (e) {}
+      esRef.current = null;
+    }
+    // fetch snapshot
+    fetchOccupancyAt({ date, time });
+  }
+
+  // Return to live streaming
+  function onReturnToLive() {
+    setIsLive(true);
+    // live SSE effect will (re)open EventSource
+  }
+
+  // ------------------ SSE / live stream effect ------------------
+  useEffect(() => {
+    // If not live, do not (re)open SSE
+    if (!isLive) {
+      // If SSE is open, close it
+      if (esRef.current) {
+        try { esRef.current.close(); } catch (e) {}
+        esRef.current = null;
+      }
+      return;
+    }
+
+    // open SSE
+    const es = new EventSource('http://localhost:5000/api/live-occupancy');
+    esRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        // Batch-update entire payload in one setState
+        setLiveData({
+          summary: Array.isArray(p.summary) ? p.summary : [],
+          details: p.details || {},
+          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+          ertStatus: p.ertStatus || {}
+        });
+      } catch {
+        console.error('SSE parse error');
+      }
+    };
+
+    es.onerror = (err) => {
+      console.error('SSE error', err);
+      // close & cleanup
+      try { es.close(); } catch (e) {}
+      esRef.current = null;
+    };
+
+    return () => {
+      try { es.close(); } catch (e) {}
+      if (esRef.current === es) esRef.current = null;
+    };
+  }, [isLive]); // re-run when toggling live/time-travel
+
+  // ------------------ Render ------------------
+  return (
+    <>
+      <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
+        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
+        <Nav className="ms-auto align-items-center" style={{ gap: '0.5rem' }}>
+          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
+          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history"  className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
+          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
+          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
+
+          {/* Time travel control (new): */}
+          <TimeTravelControl
+            datetimeValue={datetimeLocal}
+            onChange={(e) => setDatetimeLocal(e.target.value)}
+            onApply={onApplyTimeTravel}
+            onClear={onReturnToLive}
+            isLive={isLive}
+          />
+
+          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun/></Nav.Link>
+        </Nav>
+      </Navbar>
+
+      <Container fluid className="mt-2">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <DashboardHome
+                summaryData={liveData.summary}
+                detailsData={liveData.details}
+                floorData={liveData.floorBreakdown}
+                zoneBreakdown={liveData.zoneBreakdown}
+                personnelBreakdown={liveData.personnelBreakdown}
+                totalVisitedToday={liveData.totalVisitedToday}
+                personnelSummary={liveData.personnelSummary}
+                visitedToday={liveData.visitedToday}
+                ertStatus={liveData.ertStatus}
+              />
+            }
+          />
+          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+          <Route path="/ert"     element={<ErtPage ertStatus={liveData.ertStatus} />} />
+        </Routes>
+      </Container>
+    </>
+  );
+}
+
+export default function WrappedApp() {
+  return (
+    <BrowserRouter>
+      <div className="dark-theme">
+        <App />
+      </div>
+    </BrowserRouter>
+  );
+}
+
+
+
+
+
+....
+...
+
+..
+
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\TimeTravelControl.jsx
 import React from 'react';
 
