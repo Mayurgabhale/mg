@@ -1,3 +1,9 @@
+curl "http://localhost:5000/api/occupancy-at?datetime=2025-09-12T00:10:00+05:30" | jq
+
+
+
+
+
 // Fetch events between two JS Date instants (inclusive)
 async function fetchEventsBetween(from, to) {
   const pool = await getPool();
