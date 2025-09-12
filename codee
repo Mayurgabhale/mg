@@ -1,33 +1,12 @@
-curl "http://localhost:3000/occupancy-at?datetime=2025-09-12T22:00:00+05:30"
-...
-curl -s "http://localhost:3000/occupancy-at?datetime=2025-09-12T22:00:00"
+thank. 
+know, the on problme is
+http://localhost:5000/api/occupancy-at?datetime=2025-09-11T18:30:00
+i search 2025-09-11 this date. but in this date privius date, count alos disply,
+but i want to get only search date count, not other date 2025-09-11 only this date, 
+not othe date, ok 
 
-
-
-....const express = require('express');
-const router  = express.Router();
-const { getLiveOccupancy, getOccupancyAtTime } = require('../controllers/liveOccupancyController');
-
-router.get('/live-occupancy', getLiveOccupancy);
-
-// new endpoint: GET /occupancy-at
-// query params accepted:
-//  - datetime=2025-09-12T22:00:00  (ISO, interpreted in Asia/Kolkata unless offset provided)
-//  - OR date=yyyy-LL-dd  & time=like "10:00 PM" or "22:00"
-router.get('/occupancy-at', getOccupancyAtTime);
-
-module.exports = router;
-
-
-
-
-
-
-......
-
-
-
-....
+// *****************************************
+// /////////////////////////////////////////  start
 
 
 // ---------- NEW: fetchEventsUntil / helpers / controller for occupancy-at ----------
@@ -208,3 +187,14 @@ exports.getOccupancyAtTime = async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+
+
+
+
+
+
+
+// *****************************************
+// ///////////////////////////////////////// end
+
