@@ -1,3 +1,15 @@
+// Instead of interpreting atRaw as UTC...
+const atDate = DateTime.fromISO(atRaw, { zone: 'Asia/Kolkata' }).toJSDate();
+
+
+....
+..
+const tz = req.query.tz || 'utc';
+const atDate = DateTime.fromISO(atRaw, { zone: tz }).toJSDate();
+
+
+
+...
 function buildVisitedForDate(allEvents, atDate) {
   // Get the local day of "atDate" in Asia/Kolkata
   const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
