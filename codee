@@ -1,4 +1,16 @@
-ipdate this code, as per this new future. 
+- const url = `${API_ORIGIN}/api/occupancy-at?at=${encodeURIComponent(isoTimestamp)}`;
++ const url = `${API_ORIGIN}/api/occupancy-at?datetime=${encodeURIComponent(isoTimestamp)}`;
+
+
+...
+<strong>{new Date(timeTravelTimestamp).toLocaleString()}</strong>
+
+
+ ...
+
+
+
+..ipdate this code, as per this new future. 
 we have privisus cod just update, correct. 
 ...
 // src/components/TimeTravelControl.jsx
