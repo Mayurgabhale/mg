@@ -1,4 +1,68 @@
--  useEffect(() => {
+// Fetch a historical snapshot (datetimeISO should be an ISO string)
+  async function fetchSnapshot(datetimeISO) {
+    setTimeTravelLoading(true);
+    try {
+      // backend expects `datetime=` param
+      const url = `http://localhost:5000/api/occupancy-at?datetime=${encodeURIComponent(datetimeISO)}`;
+      console.debug('[TimeTravel] fetching', url);
+      const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
+        window.alert(`Failed to load snapshot: server returned ${resp.status}. See console for details.`);
+        return;
+      }
+      const p = await resp.json();
+
+      // update the exact same liveData object so all UI pieces update
+      setLiveData({
+        summary: Array.isArray(p.summary) ? p.summary : [],
+        details: p.details || {},
+        floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+        zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+        personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+        totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+        personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+        visitedToday: p.visitedOnDate ? { employees: p.visitedOnDate.employees, contractors: p.visitedOnDate.contractors, total: p.visitedOnDate.total } : (p.visitedToday || { employees: 0, contractors: 0, total: 0 }),
+        ertStatus: p.ertStatus || {}
+      });
+
+      // enable time-travel mode (this pauses SSE via the effect above)
+      setTimeTravelMode(true);
+      // prefer server-provided timestamp for display (p.asOf) else the requested ISO
+      setTimeTravelTimestamp(p?.asOf || datetimeISO);
+    } catch (err) {
+      console.error('Failed to fetch snapshot', err);
+      window.alert('Failed to load snapshot. See console for details.');
+    } finally {
+      setTimeTravelLoading(false);
+    }
+  }
+
+  // Return to live mode: re-enable SSE and clear time travel UI
+  function clearTimeTravel() {
+    setTimeTravelLoading(true);
+    try {
+      setTimeTravelMode(false);
+      setTimeTravelTimestamp(null);
+      // SSE effect will reconnect automatically (timeTravelMode changed).
+      // Optionally you can fetch an immediate fresh snapshot from the SSE-backed current state,
+      // but SSE will push soon after reconnect — we keep it simple.
+    } finally {
+      setTimeTravelLoading(false);
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+.......-  useEffect(() => {
 -    const es = new EventSource('http://localhost:5000/api/live-occupancy');
 -    ...
 -    return () => es.close();
