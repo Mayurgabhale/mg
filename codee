@@ -1,60 +1,17 @@
-http://localhost:5000/api/occupancy-at?ts=2025-09-12T09:15:00+05:30
-{"error":"Invalid ISO timestamp in `ts`."}
-
-curl "http://localhost:5000/api/occupancy-at?ts=2025-09-12T09:15:00+05:30"
-curl "http://localhost:5000/api/occupancy-at?ts=2025-09-12T12:30:00+05:30"
-curl "http://localhost:5000/api/occupancy-at?ts=2025-09-12T18:45:00+05:30"
-
-
-
-...
-exports.getOccupancyAtTime = async (req, res) => {
-  try {
-    const ts = req.query.ts;
-    if (!ts) {
-      return res.status(400).json({ error: "Missing `ts` query param. Provide ISO timestamp (e.g. 2025-09-12T07:43:00+05:30) or browser datetime converted to ISO." });
-    }
-
-    // Parse requested instant (preserve offset if present)
-    const requested = DateTime.fromISO(ts, { setZone: true });
-    if (!requested.isValid) {
-      return res.status(400).json({ error: "Invalid ISO timestamp in `ts`." });
-    }
-
-    // Represent the *same instant* in Asia/Kolkata wall clock
-    const requestedLocal = requested.setZone('Asia/Kolkata');
-
-    // Build full-day bounds in Asia/Kolkata for that date
-    const startOfDayLocal = requestedLocal.startOf('day');           // 00:00:00 Asia/Kolkata
-    const endOfDayLocal   = requestedLocal.endOf('day');             // 23:59:59.999 Asia/Kolkata
-
-    // Convert the day bounds to UTC JS Date objects for the SQL query
-    const startUtcJsDate = startOfDayLocal.setZone('utc').toJSDate();
-    const endUtcJsDate   = endOfDayLocal.setZone('utc').toJSDate();
-
-    // Fetch all events for the whole Kolkata day (bounded query)
-    const allEvents = await fetchEventsForDateRange(startUtcJsDate, endUtcJsDate);
-
-    // Convert requested instant to UTC JS Date for comparison
-    const requestedUtcJsDate = requestedLocal.setZone('utc').toJSDate();
-
-    // Filter in Node to only keep events <= requested instant (inclusive)
-    const filtered = allEvents.filter(evt => {
-      // evt.LocaleMessageTime should be a JS Date from the mssql driver (UTC instant)
-      if (!evt.LocaleMessageTime) return false;
-      return evt.LocaleMessageTime.getTime() <= requestedUtcJsDate.getTime();
-    });
-
-    // Compute occupancy using your existing function
-    const snapshot = await buildOccupancy(filtered);
-
-    return res.json({
-      requestedAt: requestedLocal.toISO(),
-      dateOnly:    requestedLocal.toFormat('yyyy-LL-dd'),
-      snapshot
-    });
-  } catch (err) {
-    console.error('Error in occupancy-at:', err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-};
+http://localhost:5000/api/occupancy-at?ts=2025-09-12T00:30:00
+i search this 
+but got this 
+{
+  "requestedAt": "2025-09-12T00:30:00.000+05:30",
+  "dateOnly": "2025-09-12",
+  "snapshot": {
+    "asOf": "2025-09-12T12:34:45.605Z",
+    "summary": [
+      {
+        "zone": "Yellow Zone",
+        "count": 13
+      },
+      {
+        "zone": "Tower B",
+        "count": 11
+      },
