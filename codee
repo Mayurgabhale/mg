@@ -1,47 +1,45 @@
-function buildVisitedForDate(events, asOfLocalDate, atDate) {
--  const visited = events.filter(
--    (evt) =>
--      evt.Dateonly === asOfLocalDate &&
--      evt.LocaleMessageTime <= atDate &&
--      evt.Entered === 1
--  );
-+  const visited = events.filter((evt) => {
-+    const evtLocalDate = DateTime.fromJSDate(evt.LocaleMessageTime, {
-+      zone: "utc",
-+    })
-+      .setZone("Asia/Kolkata")
-+      .toFormat("yyyy-LL-dd");
-+
-+    return (
-+      evtLocalDate === asOfLocalDate &&
-+      evt.LocaleMessageTime <= atDate &&
-+      evt.Entered === 1
-+    );
-+  });
+function buildVisitedForDate(allEvents, atDate) {
+  // Get the local day of "atDate" in Asia/Kolkata
+  const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
+    .setZone('Asia/Kolkata')
+    .toFormat('yyyy-LL-dd');
 
+  // Keep only IN swipes for that local date, but allow ANY time from 00:00 until atDate
+  const todayIns = allEvents.filter(evt => {
+    if (evt.Direction !== 'InDirection') return false;
 
+    // Compute event's local date robustly from its LocaleMessageTime (treat LocaleMessageTime as UTC)
+    // Ensure evt.LocaleMessageTime exists and is a Date/string that can be parsed
+    const evtTs = evt.LocaleMessageTime ? new Date(evt.LocaleMessageTime) : null;
+    if (!evtTs || Number.isNaN(evtTs.getTime())) return false;
 
-......
-..
+    const evtLocalDate = DateTime.fromJSDate(evtTs, { zone: 'utc' })
+      .setZone('Asia/Kolkata')
+      .toFormat('yyyy-LL-dd');
 
+    // keep events that are from the same local day and not later than the snapshot time
+    return evtLocalDate === asOfLocalDate && evtTs <= atDate;
+  });
 
-function buildVisitedToday(events, asOfLocalDate, atDate) {
--  const visited = events.filter(
--    (evt) =>
--      evt.Dateonly === asOfLocalDate &&
--      evt.LocaleMessageTime <= atDate &&
--      evt.Entered === 1
--  );
-+  const visited = events.filter((evt) => {
-+    const evtLocalDate = DateTime.fromJSDate(evt.LocaleMessageTime, {
-+      zone: "utc",
-+    })
-+      .setZone("Asia/Kolkata")
-+      .toFormat("yyyy-LL-dd");
-+
-+    return (
-+      evtLocalDate === asOfLocalDate &&
-+      evt.LocaleMessageTime <= atDate &&
-+      evt.Entered === 1
-+    );
-+  });
+  // Dedupe by best available identifier: PersonGUID || EmployeeID || CardNumber || ObjectName1
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1;
+    if (!key) continue; // skip unidentifiable rows
+    const evtTs = new Date(e.LocaleMessageTime);
+    const prev = dedup.get(key);
+    if (!prev || evtTs > new Date(prev.LocaleMessageTime)) {
+      dedup.set(key, e);
+    }
+  }
+
+  const finalList = Array.from(dedup.values());
+
+  const employees = finalList.filter(e =>
+    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
+      .includes(e.PersonnelType)
+  ).length;
+  const contractors = finalList.length - employees;
+
+  return { employees, contractors, total: finalList.length };
+}
