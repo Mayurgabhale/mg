@@ -1,3 +1,11 @@
+in this we got live but i want to sow today means on 24 in houres on partiqular time how much count, 
+add time on particular time how much count, privius time to curront time how much count. 
+we can check only today 12:00 am to curront time. ok 
+we got already live count ok so only if i want  to chech privius count on this particuql time. 6:00 am or 10:00 am or 12:00 pm or 2:00 pm 3:30 pm or 11:00 pm like that 
+so how to do this.
+read all code carefully, and add this
+and listin dont change my privisu code logic. ok 
+
 // src/pages/DashboardHome.jsx
 
 import React from 'react';
