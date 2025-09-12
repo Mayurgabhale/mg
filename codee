@@ -1,3 +1,16 @@
+const express = require('express');
+const router  = express.Router();
+const { getLiveOccupancy, getOccupancyAtTime } = require('../controllers/liveOccupancyController');
+
+// Keep endpoints relative to the router
+router.get('/occupancy-at', getOccupancyAtTime);
+router.get('/live-occupancy', getLiveOccupancy);
+
+module.exports = router;
+
+
+..
+
 PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> npm start
 
 > employee-ai-insights@1.0.0 start
