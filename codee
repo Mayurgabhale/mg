@@ -1,3 +1,8 @@
+curl 'http://localhost:5000/api/occupancy-at?at=2025-09-12T07:30:00Z'
+
+
+.....
+
 // ---- Fix normalizeZoneKey (was using wrong template syntax) ----
 function normalizeZoneKey(rawDoor, rawDir) {
   // 1) Ensure it’s a string and trim whitespace
