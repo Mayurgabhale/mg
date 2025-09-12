@@ -1,3 +1,60 @@
+
+// ---------- helpers ----------
+  async function fetchSnapshot(datetimeISO) {
+    setTimeTravelLoading(true);
+    try {
+      const url = `http://localhost:5000/api/occupancy-at?datetime=${encodeURIComponent(datetimeISO)}`;
+      console.debug('[TimeTravel] fetching', url);
+      const resp = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!resp.ok) {
+        window.alert(`Snapshot request failed (${resp.status})`);
+        return;
+      }
+      const p = await resp.json();
+
+      // map snapshot fields -> the same liveData shape your UI expects
+      setLiveData({
+        summary: Array.isArray(p.summary) ? p.summary : [],
+        details: p.details || {},
+        floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+        zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+        personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+        // snapshots use totalVisitedOnDate; fall back to totalVisitedToday for live payloads
+        totalVisitedToday: typeof p.totalVisitedOnDate === 'number'
+          ? p.totalVisitedOnDate
+          : (typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0),
+        personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+        // snapshots use visitedOnDate { employees, contractors, total }
+        visitedToday: p.visitedOnDate
+          ? {
+              employees: p.visitedOnDate.employees || 0,
+              contractors: p.visitedOnDate.contractors || 0,
+              total: p.visitedOnDate.total || 0
+            }
+          : (p.visitedToday || { employees: 0, contractors: 0, total: 0 }),
+        ertStatus: p.ertStatus || {}
+      });
+
+      setTimeTravelMode(true);
+      setTimeTravelTimestamp(p?.asOf || datetimeISO);
+    } catch (err) {
+      console.error('Failed to fetch snapshot', err);
+      window.alert('Failed to fetch snapshot');
+    } finally {
+      setTimeTravelLoading(false);
+    }
+  }
+
+
+
+
+
+
+
+
+
+ ......
+
 in frontedn this count is not disply 
 Today's Total
 0
