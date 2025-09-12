@@ -28,3 +28,60 @@ function normalizePersonName(raw) {
 
 ....
 
+
+
+// Handler: GET /api/occupancy-at?at=
+exports.getSnapshotAt = async (req, res) => {
+  try {
+    const atRaw = req.query.at;
+
+    // If no 'at' provided, default to "now" in Asia/Kolkata
+    let atDate;
+    if (!atRaw) {
+      atDate = DateTime.now().setZone('Asia/Kolkata').toJSDate();
+    } else {
+      // Try to parse ISO first (accept timezone), then accept date-only (yyyy-MM-dd) in Asia/Kolkata
+      let dt = DateTime.fromISO(atRaw, { zone: 'utc' });
+      if (!dt.isValid) {
+        // try date-only format in Asia/Kolkata
+        dt = DateTime.fromFormat(atRaw, 'yyyy-LL-dd', { zone: 'Asia/Kolkata' });
+      }
+      if (!dt.isValid) {
+        // fallback to native Date as last resort and validate
+        const native = new Date(atRaw);
+        if (Number.isNaN(native.getTime())) {
+          return res.status(400).json({
+            error: 'invalid "at" timestamp (provide ISO 8601 or yyyy-MM-dd).'
+          });
+        }
+        atDate = native;
+      } else {
+        atDate = dt.toJSDate();
+      }
+    }
+
+    // fetch events in the 24h window ending at atDate
+    const events = await fetchEventsWindow(atDate);
+
+    const occupancy = await buildOccupancy(events);
+    const visitedStats = buildVisitedForDate(events, atDate);
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = {
+      employees: visitedStats.employees,
+      contractors: visitedStats.contractors,
+      total: visitedStats.total
+    };
+    occupancy.asOf = atDate.toISOString();
+
+    return res.json(occupancy);
+
+  } catch (err) {
+    console.error('getSnapshotAt error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
+...
