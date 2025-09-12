@@ -24,7 +24,9 @@ how ot run this 3 route. they are different different
 //
 
 
-in this router.get('/occupancy-at', getSnapshotAt);   we got issu (all work good0
+in this router.get('/occupancy-at', getSnapshotAt);   we got issue
+http://localhost:5000/api/occupancy-at?at=2025-09-10T11:30:00.000Z
+(all work good0
 but when is search date fromt 18:30:00 time to 23:590:59 in this between only 
 only one error are in this count not disply 
 "totalVisitedToday": 0,
