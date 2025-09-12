@@ -1,20 +1,28 @@
-http://localhost:5000/api/occupancy-at?ts=2025-09-12T00:30:00
-i search this 
-but got this 
-{
-  "requestedAt": "2025-09-12T00:30:00.000+05:30",
-  "dateOnly": "2025-09-12",
-  "snapshot": {
-    "asOf": "2025-09-12T12:34:45.605Z",
-    "summary": [
-      {
-        "zone": "Yellow Zone",
-        "count": 13
-      },
-      {
-        "zone": "Tower B",
-        "count": 11
-      },
+http://localhost:5000/api/occupancy-at
+{"error":"missing \"at\" query parameter (ISO timestamp required)"}
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\liveOccupancyRoutes.js
+const express = require('express');
+const router  = express.Router();
+const {
+  getLiveOccupancy,
+  getSnapshotAt,
+  getCurrentOccupancy
+} = require('../controllers/liveOccupancyController');
+
+router.get('/live-occupancy', getLiveOccupancy);
+router.get('/occupancy-at', getSnapshotAt);  // GET /api/occupancy-at?at=...
+router.get('/getCurrent', getCurrentOccupancy);  // GET /api/occupancy-at?at=...
+
+
+module.exports = router;
+
+
+
+
+
 
 
 
@@ -167,135 +175,6 @@ async function fetchNewEvents(since) {
 
 
 
-////////////////////////////////////
-// **********************************
-
-// --- replace the old fetchEventsForDate(...) with this:
-async function fetchEventsForDateRange(startUtcJsDate, endUtcJsDate) {
-  // startUtcJsDate / endUtcJsDate are JS Date objects in UTC
-  const pool = await getPool();
-  const req  = pool.request();
-  req.input('startUtc', sql.DateTime2, startUtcJsDate);
-  req.input('endUtc',   sql.DateTime2, endUtcJsDate);
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      -- IMPORTANT: compare the computed LocaleMessageTime against UTC bounds
-      WHERE
-        t1.MessageType     = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) BETWEEN @startUtc AND @endUtc
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
-}
-
-
-
-// GET /api/occupancy-at?ts=<ISO timestamp>
-exports.getOccupancyAtTime = async (req, res) => {
-  try {
-    const ts = req.query.ts;
-    if (!ts) {
-      return res.status(400).json({ error: "Missing `ts` query param. Provide ISO timestamp (e.g. 2025-09-12T07:43:00+05:30) or browser datetime converted to ISO." });
-    }
-
-    // Parse requested instant (preserve offset if present)
-    const requested = DateTime.fromISO(ts, { setZone: true });
-    if (!requested.isValid) {
-      return res.status(400).json({ error: "Invalid ISO timestamp in `ts`." });
-    }
-
-    // Represent the *same instant* in Asia/Kolkata wall clock
-    const requestedLocal = requested.setZone('Asia/Kolkata');
-
-    // Build full-day bounds in Asia/Kolkata for that date
-    const startOfDayLocal = requestedLocal.startOf('day');           // 00:00:00 Asia/Kolkata
-    const endOfDayLocal   = requestedLocal.endOf('day');             // 23:59:59.999 Asia/Kolkata
-
-    // Convert the day bounds to UTC JS Date objects for the SQL query
-    const startUtcJsDate = startOfDayLocal.setZone('utc').toJSDate();
-    const endUtcJsDate   = endOfDayLocal.setZone('utc').toJSDate();
-
-    // Fetch all events for the whole Kolkata day (bounded query)
-    const allEvents = await fetchEventsForDateRange(startUtcJsDate, endUtcJsDate);
-
-    // Convert requested instant to UTC JS Date for comparison
-    const requestedUtcJsDate = requestedLocal.setZone('utc').toJSDate();
-
-    // Filter in Node to only keep events <= requested instant (inclusive)
-    const filtered = allEvents.filter(evt => {
-      // evt.LocaleMessageTime should be a JS Date from the mssql driver (UTC instant)
-      if (!evt.LocaleMessageTime) return false;
-      return evt.LocaleMessageTime.getTime() <= requestedUtcJsDate.getTime();
-    });
-
-    // Compute occupancy using your existing function
-    const snapshot = await buildOccupancy(filtered);
-
-    return res.json({
-      requestedAt: requestedLocal.toISO(),
-      dateOnly:    requestedLocal.toFormat('yyyy-LL-dd'),
-      snapshot
-    });
-  } catch (err) {
-    console.error('Error in occupancy-at:', err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-////////////////////////////////////
-// **********************************
-
-
-
-
 async function buildOccupancy(allEvents) {
   const current      = {};
   const uniquePeople = new Map();
@@ -356,44 +235,6 @@ if (Direction === 'OutDirection') {
   continue;
 }
 
-
-// if (Direction === 'OutDirection') {
-//   // true Out-of-office → full eviction (already checked earlier too)
-//   if (zone === 'out of office') {
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//     continue;
-//   }
-
-//   // Allowlist of OutDirection zones that should be kept (not evicted).
-//   // Add any other special OutDirection zones here as they are discovered.
-//   const allowedOutZones = new Set([
-//     'Assembly Area',
-//     'Reception Area'
-//   ]);
-
-//   // Preserve if it's an "Outer Area" OR explicitly allowed OutDirection zone.
-//   if (zoneRaw.endsWith('Outer Area') || allowedOutZones.has(zoneRaw)) {
-//     uniquePeople.set(dedupKey, PersonnelType);
-//     current[dedupKey] = {
-//       Dateonly, Swipe_Time,
-//       EmployeeID, ObjectName1, CardNumber,
-//       PersonnelType,
-//       zone: zoneRaw,
-//       door: Door,
-//       Direction
-//     };
-//   } else {
-//     // Any other OutDirection (TURNSTILE, lobby exits, etc.) = full eviction
-//     if (!warnedKeys.has(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`)) {
-//       console.log(`ℹ️ Evicting OutDirection for ${normalizePersonName(ObjectName1)} at zone ${zoneRaw}`);
-//       warnedKeys.add(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`);
-//     }
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//   }
-//   continue;
-// }
 
 
 
@@ -546,10 +387,156 @@ function buildVisitedToday(allEvents) {
 }
 
 
+  // *******************
+  
+// Helper: fetch events in the 24h window ending at `until` (inclusive)
+async function fetchEventsWindow(until) {
+  const pool = await getPool();
+  const req  = pool.request();
+  req.input('until', sql.DateTime2, until);
+
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType     = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) <= @until
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) > DATEADD(HOUR, -24, @until)
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      PersonnelType,
+      CardNumber,
+      AdmitCode,
+      Direction,
+      Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  return recordset;
+}
+
+function buildVisitedForDate(allEvents, atDate) {
+  const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
+    .setZone('Asia/Kolkata')
+    .toFormat('yyyy-LL-dd');
+
+  const todayIns = allEvents.filter(evt => evt.Direction === 'InDirection' && evt.Dateonly === asOfLocalDate);
+
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID;
+    const prev = dedup.get(key);
+    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) {
+      dedup.set(key, e);
+    }
+  }
+  const finalList = Array.from(dedup.values());
+  const employees = finalList.filter(e =>
+    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management'].includes(e.PersonnelType)
+  ).length;
+  const contractors = finalList.length - employees;
+  return { employees, contractors, total: finalList.length };
+}
+
+// Handler: GET /api/occupancy-at?at=<ISO-8601>
+exports.getSnapshotAt = async (req, res) => {
+  try {
+    const atRaw = req.query.at;
+    if (!atRaw) return res.status(400).json({ error: 'missing "at" query parameter (ISO timestamp required)' });
+
+    const atDate = new Date(atRaw);
+    if (Number.isNaN(atDate.getTime())) {
+      return res.status(400).json({ error: 'invalid "at" timestamp' });
+    }
+
+    // fetch events in the 24h window ending at atDate
+    const events = await fetchEventsWindow(atDate);
+
+    const occupancy = await buildOccupancy(events);
+    const visitedStats = buildVisitedForDate(events, atDate);
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = {
+      employees: visitedStats.employees,
+      contractors: visitedStats.contractors,
+      total: visitedStats.total
+    };
+    occupancy.asOf = atDate.toISOString();
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('getSnapshotAt error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// Handler: GET /api/current-occupancy
+exports.getCurrentOccupancy = async (req, res) => {
+  try {
+    const until = new Date();
+    const events = await fetchEventsWindow(until);
+    const occupancy = await buildOccupancy(events);
+    const visitedStats = buildVisitedForDate(events, until);
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = {
+      employees: visitedStats.employees,
+      contractors: visitedStats.contractors,
+      total: visitedStats.total
+    };
+    occupancy.asOf = until.toISOString();
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('getCurrentOccupancy error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+  // *******************
+
 
 /** Server‐Sent‐Events endpoint */
 exports.getLiveOccupancy = async (req, res) => {
  
+
 
   try {
     // wait for the shared pool to be ready
@@ -640,3 +627,4 @@ exports.getLiveOccupancy = async (req, res) => {
     }
   }
 };
+
