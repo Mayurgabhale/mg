@@ -1,4 +1,57 @@
 
+
+function buildVisitedForDate(allEvents, atDate) {
+  // Compute the local day-of "atDate" in Asia/Kolkata (using the UTC instant of atDate)
+  const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
+    .setZone('Asia/Kolkata')
+    .toFormat('yyyy-LL-dd');
+
+  // Keep only IN swipes for that local date, and only those that occurred <= atDate (the snapshot time)
+  const todayIns = allEvents.filter(evt => {
+    if (!evt || !evt.LocaleMessageTime) return false;
+
+    // ensure evtTime is a Date object
+    const evtTs = (evt.LocaleMessageTime instanceof Date)
+      ? evt.LocaleMessageTime
+      : new Date(evt.LocaleMessageTime);
+
+    if (Number.isNaN(evtTs.getTime())) return false;
+
+    const evtLocalDate = DateTime.fromJSDate(evtTs, { zone: 'utc' })
+      .setZone('Asia/Kolkata')
+      .toFormat('yyyy-LL-dd');
+
+    // Direction must be InDirection, local date must match the "asOf" local date,
+    // and this swipe must be at-or-before the snapshot instant.
+    return evt.Direction === 'InDirection' && evtLocalDate === asOfLocalDate && evtTs <= atDate;
+  });
+
+  // Dedupe by robust key (same approach as buildVisitedToday/buildOccupancy)
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1;
+    if (!key) continue;
+    const evtTs = (e.LocaleMessageTime instanceof Date) ? e.LocaleMessageTime : new Date(e.LocaleMessageTime);
+    const prev = dedup.get(key);
+    if (!prev || evtTs > ((prev.LocaleMessageTime instanceof Date) ? prev.LocaleMessageTime : new Date(prev.LocaleMessageTime))) {
+      dedup.set(key, e);
+    }
+  }
+
+  const finalList = Array.from(dedup.values());
+
+  const employees = finalList.filter(e =>
+    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
+      .includes(e.PersonnelType)
+  ).length;
+  const contractors = finalList.length - employees;
+
+  return { employees, contractors, total: finalList.length };
+}
+
+
+
+....
 Debug all code each line 
 
 
