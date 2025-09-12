@@ -1,0 +1,1417 @@
+// // controllers/denverLiveOccupancyController.js
+
+// const { DateTime }       = require('luxon');
+// // const { denver }         = require('../config/siteConfig');
+// const { denver } = require('../config/siteConfig');
+// const doorFloorMap       = require('../data/denverDoorFloorMap');
+// const { monitoredDoors } = require('../data/strictDoorList');
+// const sql                = require('mssql');
+// const normalizeKey = require('../data/normalizeKey');
+
+// const warnedKeys = new Set();
+
+
+// // build a Set of normalized door___direction keys
+// const normalizedMonitoredKeys = new Set(
+//   Object.entries(monitoredDoors).map(
+//     ([door, dir]) => normalizeKey(door, dir)
+//   )
+// );
+
+// /** Determine floor label, fallback to “HQ. N.” parsing **/
+// function mapDoorToFloor(rawDoor, rawDir) {
+//   const key = normalizeKey(rawDoor, rawDir);
+//   if (doorFloorMap[key]) return doorFloorMap[key];
+//   const m = rawDoor.match(/HQ\.\s*(\d{1,2})\b/);
+//   if (m) return `Floor ${m[1]}`;
+//   if (!warnedKeys.has(key)) {
+//     console.warn(`⛔ Unmapped door-floor key: "${key}"`);
+//     warnedKeys.add(key);
+//   }
+//   return 'Unknown Floor';
+// }
+
+// /** Strip any trailing “_HH:MM:SS” from a door name **/
+// function stripTimeSuffix(doorRaw) {
+//   return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
+// }
+
+
+
+//   async function fetchNewEvents(since) {
+//   // await the Denver poolPromise instead of .connect()
+//   const pool = await denver.poolPromise;
+//   const req  = pool.request();
+//   req.input('since', sql.DateTime2, since);
+
+
+//   const { recordset } = await req.query(`
+//     WITH CombinedQuery AS (
+//       SELECT
+//           DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,    
+//         t1.ObjectName1,
+//         CASE
+//           WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+//           ELSE CAST(t2.Int1 AS NVARCHAR)
+//         END AS EmployeeID,
+//         t1.ObjectIdentity1 AS PersonGUID,
+//         t3.Name AS PersonnelType,
+//         COALESCE(
+//           TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
+//           sc.value
+//         ) AS CardNumber,
+//         t5a.value AS AdmitCode,
+//         t5d.value AS Direction,
+//         t1.ObjectName2 AS Door
+//       FROM ACVSUJournal_00010027.dbo.ACVSUJournalLog t1
+//       LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
+//       LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+//       LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred t5a
+//         ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+//       LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred t5d
+//         ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+//       LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxml t_xml
+//         ON t1.XmlGUID = t_xml.GUID
+//       LEFT JOIN (
+//         SELECT GUID, value
+//         FROM ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred
+//         WHERE Name IN ('Card','CHUID')
+//       ) sc ON t1.XmlGUID = sc.GUID
+//       WHERE
+//         t1.MessageType   = 'CardAdmitted'
+//         AND t1.ObjectName2 LIKE '%HQ%'
+//         AND DATEADD(MINUTE, t1.MessageLocaleOffset, t1.MessageUTC) >= @since
+//     )
+//     SELECT
+//       LocaleMessageTime,
+//       CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+//       CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
+//       EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+//       CardNumber, AdmitCode, Direction, Door
+//     FROM CombinedQuery
+//     ORDER BY LocaleMessageTime ASC;
+//   `);
+
+//   return recordset;
+// }
+
+// function isTodayInDenver(dateOnly) {
+//   const swipeDate = DateTime.fromISO(dateOnly, { zone: 'America/Denver' })
+//     .toFormat('yyyy-LL-dd');
+//   const today = DateTime.now().setZone('America/Denver').toFormat('yyyy-LL-dd');
+//   return swipeDate === today;
+// }
+
+// /**
+//  * Build live occupancy + swipe summaries.
+//  * @param {Array} allEvents   – cumulative events (for occupancy)
+//  * @param {Array} freshEvents – just-fetched events (for swipeStats & floorInOut)
+//  */
+
+
+// function computeVisitedToday(allEvents) {
+//   const seen = new Map(); // key -> PersonnelType
+//   allEvents.forEach(evt => {
+//     if (evt.Direction === 'InDirection' && isTodayInDenver(evt.Dateonly)) {
+//       const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+//       if (!seen.has(key)) {
+//         seen.set(key, evt.PersonnelType);
+//       }
+//     }
+//   });
+//   let emp = 0, ctr = 0;
+//   seen.forEach(type => {
+//     if (type === 'Employee' || type === 'Terminated Personnel') emp++;
+//     else ctr++;
+//   });
+//   return { total: seen.size, employees: emp, contractors: ctr };
+// }
+
+
+
+// function buildOccupancyForToday(allEvents, freshEvents) {
+//   // ─── A) Evict “Out of office” ───────────────────────────────────
+//   const evicted = new Set();
+//   const lastByPerson = new Map();
+//   allEvents.forEach(evt => {
+//     if (!isTodayInDenver(evt.Dateonly)) return;
+//     const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+//     const prev = lastByPerson.get(key);
+//     if (!prev || evt.LocaleMessageTime > prev.LocaleMessageTime) {
+//       lastByPerson.set(key, evt);
+//     }
+//   });
+//   lastByPerson.forEach(evt => {
+//     if (
+//       evt.Direction === 'OutDirection'
+//       && mapDoorToFloor(evt.Door, evt.Direction) === 'Out of office'
+//     ) {
+//       evicted.add(evt.PersonGUID || evt.EmployeeID || evt.CardNumber);
+//     }
+//   });
+//   const activeEvents = allEvents.filter(evt => {
+//     const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+//     return !evicted.has(key);
+//   });
+
+
+
+//   // ─── 1) Live occupancy dedupe by last InDirection ───────────────
+//   const todayIn = activeEvents.filter(e =>
+//     e.Direction === 'InDirection' && isTodayInDenver(e.Dateonly)
+//   );
+//   const latestByPerson = new Map();
+//   todayIn.forEach(e => {
+//     const prev = latestByPerson.get(e.PersonGUID);
+//     const tcur = DateTime.fromFormat(e.Swipe_Time, 'HH:mm:ss');
+//     if (!prev || tcur > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
+//       latestByPerson.set(e.PersonGUID, e);
+//     }
+//   });
+//   const finalList = Array.from(latestByPerson.values());
+
+
+//  // ─── 2) Floor breakdown & personnel counts (live) ───────────────
+//   let employees = 0, contractors = 0;
+//   const floorMap = {};
+//   finalList.forEach(e => {
+//     // const floor = mapDoorToFloor(evt.Door, evt.Direction);
+//     const fl = mapDoorToFloor(e.Door, e.Direction);
+//     floorMap[fl] = floorMap[fl] || [];
+//     floorMap[fl].push(e);
+//     if (e.PersonnelType === 'Employee' || e.PersonnelType === 'Terminated Personnel') {
+//       employees++;
+//     } else {
+//       contractors++;
+//     }
+//   });
+
+
+
+// const floorBreakdown = Object.entries(floorMap).map(([floor, occ]) => {
+//   // Initialize counters
+//   let empCount    = 0;
+//   let contractorCount = 0;
+//   let tempBadgeCount  = 0;
+//   let otherCount      = 0;
+
+//   occ.forEach(e => {
+//     switch (e.PersonnelType) {
+//       case 'Employee':
+//       case 'Terminated Personnel':
+//         empCount++;
+//         break;
+//       case 'Contractor':
+//       case 'Terminated Contractor':
+//         contractorCount++;
+//         break;
+//       case 'Temp Badge':
+//         tempBadgeCount++;
+//         break;
+//       default:
+//         otherCount++;
+//     }
+//   });
+
+//   return {
+//     floor,
+//     total:       occ.length,
+//     employees:   empCount,
+//     contractors: contractorCount,
+//     tempBadge:   tempBadgeCount,
+//     others:      otherCount,   // optional, in case you have Visitors etc.
+//     occupants:   occ
+//   };
+// });
+
+
+
+//   // ─── 3) Personnel breakdown ───────────────────────────────────────
+//   const personnelBreakdown = Array.from(
+//     finalList.reduce((m, e) => {
+//       m.set(e.PersonnelType, (m.get(e.PersonnelType) || 0) + 1);
+//       return m;
+//     }, new Map()),
+//     ([personnelType, count]) => ({ personnelType, count })
+//   );
+
+
+
+//   // ─── 4) Swipe stats (fresh only) ─────────────────────────────────
+//   const totalInSwipes  = freshEvents.filter(e =>
+//     e.Direction === 'InDirection' && isTodayInDenver(e.Dateonly)
+//   ).length;
+//   const totalOutSwipes = freshEvents.filter(e =>
+//     e.Direction === 'OutDirection' && isTodayInDenver(e.Dateonly)
+//   ).length;
+
+
+
+
+// // ─── 5) Floor In/Out summary (strict doors only) ───────────────
+// const validEvents = allEvents
+//   .filter(e => isTodayInDenver(e.Dateonly))
+//   .filter(evt => {
+//     // 1) strip any "_HH:MM:SS" suffix
+//     const doorNoTime = stripTimeSuffix(evt.Door.trim());
+//     // 2) normalize to KEY___IN or KEY___OUT
+//     const key = normalizeKey(doorNoTime, evt.Direction.trim());
+//     // 3) only keep if it’s exactly in your strict list
+//     return normalizedMonitoredKeys.has(key);
+//   });
+
+// // Dedupe per person+floor+direction
+// const deduped = new Map();
+// validEvents.forEach(evt => {
+//   // Determine floor by regex (not via doorFloorMap, to avoid "Out of office")
+//   const rawNoTime = stripTimeSuffix(evt.Door);
+//   const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
+//   const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
+
+//   const mapKey = `${evt.PersonGUID || evt.EmployeeID}___${floor}___${evt.Direction}`;
+//   const prev   = deduped.get(mapKey);
+//   const now    = DateTime.fromFormat(evt.Swipe_Time, 'HH:mm:ss');
+//   if (!prev || now > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
+//     deduped.set(mapKey, evt);
+//   }
+// });
+
+// // Aggregate inSwipes/outSwipes per floor
+// const floorMapIO = {};
+// for (const evt of deduped.values()) {
+//   const rawNoTime = stripTimeSuffix(evt.Door);
+//   const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
+//   const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
+
+//   if (!floorMapIO[floor]) {
+//     floorMapIO[floor] = {
+//       inSwipes:  0,
+//       outSwipes: 0,
+//       inSet:     new Set(),
+//       outSet:    new Set()
+//     };
+//   }
+
+//   const id = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+//   if (evt.Direction === 'InDirection') {
+//     floorMapIO[floor].inSwipes++;
+//     floorMapIO[floor].inSet.add(id);
+//   } else {
+//     floorMapIO[floor].outSwipes++;
+//     floorMapIO[floor].outSet.add(id);
+//   }
+// }
+
+// // Build your final summary
+// const floorInOutSummary = Object.entries(floorMapIO).map(([floor, stats]) => {
+//   const inOnly = [...stats.inSet].filter(id => !stats.outSet.has(id));
+//   return {
+//     floor,
+//     inSwipes:      stats.inSwipes,
+//     outSwipes:     stats.outSwipes,
+//     inOnlyCount:   inOnly.length,
+//     inOnlyPersons: inOnly
+//   };
+// });
+
+
+
+
+
+//     // ─── 6) Visited today breakdown ─────────────────────────────────
+//   const visited = computeVisitedToday(allEvents);
+
+//   return {
+//     asOf:               new Date().toISOString(),
+//     currentCount:       finalList.length,
+//     floorBreakdown,
+//     personnelSummary:   { employees, contractors },
+//     personnelBreakdown,
+//     totalVisitedToday:  visited.total,
+//     visitedToday:       {
+//       employees:   visited.employees,
+//       contractors: visited.contractors,
+//       total:       visited.total
+//     },
+//     swipeStats:         { totalInSwipes, totalOutSwipes },
+//     floorInOutSummary   // unchanged
+//   };
+// }
+
+
+// exports.getDenverLiveOccupancy = async (req, res) => {
+//   // await denver.pool.connect();
+
+//    await denver.poolPromise;
+
+//   res.writeHead(200, {
+//     'Content-Type':  'text/event-stream',
+//     'Cache-Control': 'no-cache',
+//     'Connection':    'keep-alive'
+//   });
+//   res.write('\n');
+
+//   let lastSeen = new Date(Date.now() - 24 * 60 * 60 * 1000);
+//   const events = [];
+
+//   const push = async () => {
+//     const fresh = await fetchNewEvents(lastSeen);
+//     if (fresh.length) {
+//       lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
+//       events.push(...fresh);
+//     }
+//     const payload = buildOccupancyForToday(events, fresh);
+//     res.write(`data: ${JSON.stringify(payload)}\n\n`);
+//   };
+
+//   await push();
+//   const timer = setInterval(push, 1000);
+//   req.on('close', () => clearInterval(timer));
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// controllers/denverLiveOccupancyController.js
+
+const { DateTime }       = require('luxon');
+// const { denver }         = require('../config/siteConfig');
+const { denver } = require('../config/siteConfig');
+const doorFloorMap       = require('../data/denverDoorFloorMap');
+const { monitoredDoors } = require('../data/strictDoorList');
+const sql                = require('mssql');
+const normalizeKey = require('../data/normalizeKey');
+
+const warnedKeys = new Set();
+
+
+// build a Set of normalized door___direction keys
+const normalizedMonitoredKeys = new Set(
+  Object.entries(monitoredDoors).map(
+    ([door, dir]) => normalizeKey(door, dir)
+  )
+);
+
+/** Determine floor label, fallback to “HQ. N.” parsing **/
+function mapDoorToFloor(rawDoor, rawDir) {
+  const key = normalizeKey(rawDoor, rawDir);
+  if (doorFloorMap[key]) return doorFloorMap[key];
+  const m = rawDoor.match(/HQ\.\s*(\d{1,2})\b/);
+  if (m) return `Floor ${m[1]}`;
+  if (!warnedKeys.has(key)) {
+    console.warn(`⛔ Unmapped door-floor key: "${key}"`);
+    warnedKeys.add(key);
+  }
+  return 'Unknown Floor';
+}
+
+/** Strip any trailing “_HH:MM:SS” from a door name **/
+function stripTimeSuffix(doorRaw) {
+  return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
+}
+
+
+async function fetchNewEvents(since) {
+  // 1) Acquire the pool. If it fails, we’ll catch below.
+  let pool;
+  try {
+    pool = await denver.poolPromise;
+  } catch (err) {
+    console.error('❌ Failed to get Denver pool in fetchNewEvents():', err);
+    return [];
+  }
+  if (!pool) {
+    // If poolPromise ultimately returned null, just bail out with an empty array.
+    return [];
+  }
+
+ const req = pool.request();
+  req.input('since', sql.DateTime2, since);
+
+
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,    
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType   = 'CardAdmitted'
+        AND t1.ObjectName2 LIKE '%HQ%'
+        AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >=@since
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+      CardNumber, AdmitCode, Direction, Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  return recordset;
+}
+
+function isTodayInDenver(dateOnly) {
+  const swipeDate = DateTime.fromISO(dateOnly, { zone: 'America/Denver' })
+    .toFormat('yyyy-LL-dd');
+  const today = DateTime.now().setZone('America/Denver').toFormat('yyyy-LL-dd');
+  return swipeDate === today;
+}
+
+/**
+ * Build live occupancy + swipe summaries.
+ * @param {Array} allEvents   – cumulative events (for occupancy)
+ * @param {Array} freshEvents – just-fetched events (for swipeStats & floorInOut)
+ */
+
+
+function computeVisitedToday(allEvents) {
+  const seen = new Map(); // key -> PersonnelType
+  allEvents.forEach(evt => {
+    if (evt.Direction === 'InDirection' && isTodayInDenver(evt.Dateonly)) {
+      const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+      if (!seen.has(key)) {
+        seen.set(key, evt.PersonnelType);
+      }
+    }
+  });
+  let emp = 0, ctr = 0;
+  seen.forEach(type => {
+    if (type === 'Employee' || type === 'Terminated Personnel') emp++;
+    else ctr++;
+  });
+  return { total: seen.size, employees: emp, contractors: ctr };
+}
+
+
+
+function buildOccupancyForToday(allEvents, freshEvents) {
+  // ─── A) Evict “Out of office” ───────────────────────────────────
+  const evicted = new Set();
+  const lastByPerson = new Map();
+  allEvents.forEach(evt => {
+    if (!isTodayInDenver(evt.Dateonly)) return;
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    const prev = lastByPerson.get(key);
+    if (!prev || evt.LocaleMessageTime > prev.LocaleMessageTime) {
+      lastByPerson.set(key, evt);
+    }
+  });
+  lastByPerson.forEach(evt => {
+    if (
+      evt.Direction === 'OutDirection'
+      && mapDoorToFloor(evt.Door, evt.Direction) === 'Out of office'
+    ) {
+      evicted.add(evt.PersonGUID || evt.EmployeeID || evt.CardNumber);
+    }
+  });
+  const activeEvents = allEvents.filter(evt => {
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    return !evicted.has(key);
+  });
+
+
+
+  // ─── 1) Live occupancy dedupe by last InDirection ───────────────
+  const todayIn = activeEvents.filter(e =>
+    e.Direction === 'InDirection' && isTodayInDenver(e.Dateonly)
+  );
+  const latestByPerson = new Map();
+  todayIn.forEach(e => {
+    const prev = latestByPerson.get(e.PersonGUID);
+    const tcur = DateTime.fromFormat(e.Swipe_Time, 'HH:mm:ss');
+    if (!prev || tcur > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
+      latestByPerson.set(e.PersonGUID, e);
+    }
+  });
+  const finalList = Array.from(latestByPerson.values());
+
+
+ // ─── 2) Floor breakdown & personnel counts (live) ───────────────
+  let employees = 0, contractors = 0;
+  const floorMap = {};
+  finalList.forEach(e => {
+    // const floor = mapDoorToFloor(evt.Door, evt.Direction);
+    const fl = mapDoorToFloor(e.Door, e.Direction);
+    floorMap[fl] = floorMap[fl] || [];
+    floorMap[fl].push(e);
+    if (e.PersonnelType === 'Employee' || e.PersonnelType === 'Terminated Personnel') {
+      employees++;
+    } else {
+      contractors++;
+    }
+  });
+
+
+
+const floorBreakdown = Object.entries(floorMap).map(([floor, occ]) => {
+  // Initialize counters
+  let empCount    = 0;
+  let contractorCount = 0;
+  let tempBadgeCount  = 0;
+  let otherCount      = 0;
+
+  occ.forEach(e => {
+    switch (e.PersonnelType) {
+      case 'Employee':
+      case 'Terminated Personnel':
+        empCount++;
+        break;
+      case 'Contractor':
+      case 'Terminated Contractor':
+        contractorCount++;
+        break;
+      case 'Temp Badge':
+        tempBadgeCount++;
+        break;
+      default:
+        otherCount++;
+    }
+  });
+
+  return {
+    floor,
+    total:       occ.length,
+    employees:   empCount,
+    contractors: contractorCount,
+    tempBadge:   tempBadgeCount,
+    others:      otherCount,   // optional, in case you have Visitors etc.
+    occupants:   occ
+  };
+});
+
+
+
+  // ─── 3) Personnel breakdown ───────────────────────────────────────
+  const personnelBreakdown = Array.from(
+    finalList.reduce((m, e) => {
+      m.set(e.PersonnelType, (m.get(e.PersonnelType) || 0) + 1);
+      return m;
+    }, new Map()),
+    ([personnelType, count]) => ({ personnelType, count })
+  );
+
+
+
+  // ─── 4) Swipe stats (fresh only) ─────────────────────────────────
+  const totalInSwipes  = freshEvents.filter(e =>
+    e.Direction === 'InDirection' && isTodayInDenver(e.Dateonly)
+  ).length;
+  const totalOutSwipes = freshEvents.filter(e =>
+    e.Direction === 'OutDirection' && isTodayInDenver(e.Dateonly)
+  ).length;
+
+
+
+
+// ─── 5) Floor In/Out summary (strict doors only) ───────────────
+const validEvents = allEvents
+  .filter(e => isTodayInDenver(e.Dateonly))
+  .filter(evt => {
+    // 1) strip any "_HH:MM:SS" suffix
+    const doorNoTime = stripTimeSuffix(evt.Door.trim());
+    // 2) normalize to KEY___IN or KEY___OUT
+    const key = normalizeKey(doorNoTime, evt.Direction.trim());
+    // 3) only keep if it’s exactly in your strict list
+    return normalizedMonitoredKeys.has(key);
+  });
+
+// Dedupe per person+floor+direction
+const deduped = new Map();
+validEvents.forEach(evt => {
+  // Determine floor by regex (not via doorFloorMap, to avoid "Out of office")
+  const rawNoTime = stripTimeSuffix(evt.Door);
+  const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
+  const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
+
+  const mapKey = `${evt.PersonGUID || evt.EmployeeID}___${floor}___${evt.Direction}`;
+  const prev   = deduped.get(mapKey);
+  const now    = DateTime.fromFormat(evt.Swipe_Time, 'HH:mm:ss');
+  if (!prev || now > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
+    deduped.set(mapKey, evt);
+  }
+});
+
+// Aggregate inSwipes/outSwipes per floor
+const floorMapIO = {};
+for (const evt of deduped.values()) {
+  const rawNoTime = stripTimeSuffix(evt.Door);
+  const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
+  const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
+
+  if (!floorMapIO[floor]) {
+    floorMapIO[floor] = {
+      inSwipes:  0,
+      outSwipes: 0,
+      inSet:     new Set(),
+      outSet:    new Set()
+    };
+  }
+
+  const id = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+  if (evt.Direction === 'InDirection') {
+    floorMapIO[floor].inSwipes++;
+    floorMapIO[floor].inSet.add(id);
+  } else {
+    floorMapIO[floor].outSwipes++;
+    floorMapIO[floor].outSet.add(id);
+  }
+}
+
+// Build your final summary
+const floorInOutSummary = Object.entries(floorMapIO).map(([floor, stats]) => {
+  const inOnly = [...stats.inSet].filter(id => !stats.outSet.has(id));
+  return {
+    floor,
+    inSwipes:      stats.inSwipes,
+    outSwipes:     stats.outSwipes,
+    inOnlyCount:   inOnly.length,
+    inOnlyPersons: inOnly
+  };
+});
+
+
+
+
+
+    // ─── 6) Visited today breakdown ─────────────────────────────────
+  const visited = computeVisitedToday(allEvents);
+
+  return {
+    asOf:               new Date().toISOString(),
+    currentCount:       finalList.length,
+    floorBreakdown,
+    personnelSummary:   { employees, contractors },
+    personnelBreakdown,
+    totalVisitedToday:  visited.total,
+    visitedToday:       {
+      employees:   visited.employees,
+      contractors: visited.contractors,
+      total:       visited.total
+    },
+    swipeStats:         { totalInSwipes, totalOutSwipes },
+    floorInOutSummary   // unchanged
+  };
+}
+
+
+exports.getDenverLiveOccupancy = async (req, res) => {
+
+ try {
+    await denver.poolPromise;
+  } catch (err) {
+    console.error('❌ Failed to initialize Denver pool in SSE endpoint:', err);
+    // If we can’t even get a pool, return 500 and abort.
+    return res.status(500).end();
+  }
+
+
+  //  await denver.poolPromise;
+
+  res.writeHead(200, {
+    'Content-Type':  'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection':    'keep-alive'
+  });
+  res.write('\n');
+
+  let lastSeen = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const events = [];
+
+
+
+const push = async () => {
+    let fresh;
+    try {
+      fresh = await fetchNewEvents(lastSeen);
+    } catch (err) {
+      console.error('❌ Error in fetchNewEvents():', err);
+      fresh = [];
+    }
+
+    if (Array.isArray(fresh) && fresh.length) {
+      lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
+      events.push(...fresh);
+    }
+
+    let payload;
+    try {
+      payload = buildOccupancyForToday(events, fresh);
+    } catch (err) {
+      console.error('❌ Error building Denver occupancy payload:', err);
+      payload = {
+        asOf: new Date().toISOString(),
+        currentCount: 0,
+        floorBreakdown: [],
+        personnelSummary: { employees: 0, contractors: 0 },
+        personnelBreakdown: [],
+        totalVisitedToday: 0,
+        visitedToday: { employees: 0, contractors: 0, total: 0 },
+        swipeStats: { totalInSwipes: 0, totalOutSwipes: 0 },
+        floorInOutSummary: []
+      };
+    }
+
+    // res.write(`data: ${JSON.stringify(payload)}\n\n`);
+
+    // tag with a unique id and flush right away
+    const sid = Date.now();
+    res.write(`id: ${sid}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    if (typeof res.flush === 'function') {
+      res.flush();
+    }
+
+
+  };
+
+  await push();
+  const timer = setInterval(push, 1000);
+  req.on('close', () => clearInterval(timer));
+};
+
+
+
+
+
+// ********************************************************
+// ********************************************************
+// ********************************************************
+
+
+
+// routes/occupancyDenverRoutes.js
+const express = require('express');
+const router = express.Router();
+const { getDenverLiveOccupancy } = require('../controllers/denverLiveOccupancyController');
+const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+
+// Denver live occupancy
+router.get('/live-occupancy-denver', getDenverLiveOccupancy);
+
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
+
+module.exports = router;
+
+// ************************************************************
+// ************************************************************
+// ************************************************************
+// ************************************************************
+
+
+
+
+// controllers/denverInOutInconsistencyController.js
+
+const { DateTime }       = require('luxon');
+const { denver }         = require('../config/siteConfig');
+const sql                = require('mssql');
+const normalizeKey       = require('../data/normalizeKey');
+const doorFloorMap       = require('../data/denverDoorFloorMap');
+const { monitoredDoors } = require('../data/strictDoorList');
+
+const warnedKeys = new Set();
+
+// Build a Set of normalized door___direction keys (strict doors only)
+const normalizedMonitoredKeys = new Set(
+  Object.entries(monitoredDoors).map(
+    ([door, dir]) => normalizeKey(door, dir)
+  )
+);
+
+/** Strip any trailing “_HH:MM:SS” from a door name **/
+function stripTimeSuffix(doorRaw) {
+  return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '').trim();
+}
+
+/**
+ * Determine floor label by regex.
+ * Falls back to doorFloorMap if necessary.
+ */
+function extractFloor(rawDoor) {
+  const noTime = stripTimeSuffix(rawDoor);
+  const m = noTime.match(/HQ\.\s*(\d{1,2})\b/);
+  if (m) {
+    return `Floor ${m[1]}`;
+  }
+  // fallback: attempt to map via doorFloorMap
+  const keyIn  = normalizeKey(noTime, 'InDirection');
+  const keyOut = normalizeKey(noTime, 'OutDirection');
+  if (doorFloorMap[keyIn])  return doorFloorMap[keyIn];
+  if (doorFloorMap[keyOut]) return doorFloorMap[keyOut];
+  if (!warnedKeys.has(noTime)) {
+    console.warn(`⛔ Unmapped door for floor extraction: "${noTime}"`);
+    warnedKeys.add(noTime);
+  }
+  return 'Unknown Floor';
+}
+
+/**
+  Fetch all swipe events from Jan 1, 2025 up to now.
+ * Returns an array of records with fields:
+ *   LocaleMessageTime (Date),
+ *   Dateonly (YYYY-MM-DD string),
+ *   Swipe_Time (HH:mm:ss string),
+ *   EmployeeID (string),
+ *   PersonGUID (string),
+ *   ObjectName1 (employee name),
+ *   PersonnelType (string),
+ *   CardNumber (string),
+ *   AdmitCode (string),
+ *   Direction ('InDirection' or 'OutDirection'),
+ *   Door (string).
+ */
+async function fetchHistoricalEvents() {
+  const pool = await denver.poolPromise;
+  const req  = pool.request();
+
+  // Start from January 1, 2025 at midnight (America/Denver)
+  const since = DateTime.fromObject(
+    { year: 2025, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
+    { zone: 'America/Denver' }
+  ).toJSDate();
+
+
+    // Up to (but not including) today at midnight (America/Denver)
+  const until = DateTime.now()
+    .setZone('America/Denver')
+    .startOf('day')
+    .toJSDate();
+
+
+  req.input('since', sql.DateTime2, since);
+  req.input('until', sql.DateTime2, until);
+
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM ACVSUJournal_00010027.dbo.ACVSUJournalLog t1
+      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+      LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+      LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxml t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType   = 'CardAdmitted'
+        AND t1.ObjectName2 LIKE '%HQ%'
+        AND DATEADD(MINUTE, t1.MessageLocaleOffset, t1.MessageUTC) >= @since
+          AND DATEADD(MINUTE, t1.MessageLocaleOffset, t1.MessageUTC) <  @until
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+      CardNumber, AdmitCode, Direction, Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  return recordset;
+}
+
+/**
+ * Compute in/out inconsistency metrics, adding:
+ *   - dailyFloorStats: [
+ *       {
+ *         date,
+ *         month,
+ *         floor,
+ *         inCount,
+ *         outCount,
+ *         totalPersons,
+ *         inconsistentCount,
+ *         inconsistencyPercentage,
+ *         instances: [
+ *           { employeeId, name, personnelType }
+ *         ]
+ *       }
+ *     ]
+ *   - floorInconsistency: [
+ *       { floor, totalPersonDays, inconsistentPersonDays, inconsistencyPercentage }
+ *     ]
+ *   - employeeInconsistency: [
+ *       { employeeId, totalDays, inconsistentDays, inconsistencyPercentage }
+ *     ]
+ *
+ * Only strict‐door events (per monitoredDoors) are considered.
+ */
+function computeInOutInconsistency(events) {
+  // STEP A: Build per‐person‐day‐floor buckets
+  // Key: `${personId}__${date}__${floor}`
+  const bucketMap = new Map();
+
+  events.forEach(evt => {
+    const dateOnly   = evt.Dateonly;           // 'YYYY-MM-DD'
+    const direction  = evt.Direction.trim();    // 'InDirection' or 'OutDirection'
+    const rawDoor    = evt.Door.trim();
+    const doorNoTime = stripTimeSuffix(rawDoor);
+    const normKey    = normalizeKey(doorNoTime, direction);
+
+    if (!normalizedMonitoredKeys.has(normKey)) return;
+
+    const personId = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    if (!personId) return;
+
+    const name          = evt.ObjectName1 || null;
+    const personnelType = evt.PersonnelType || null;
+    const floor         = extractFloor(doorNoTime);
+    const groupKey      = `${personId}__${dateOnly}__${floor}`;
+
+    if (!bucketMap.has(groupKey)) {
+      bucketMap.set(groupKey, {
+        personId,
+        name,
+        personnelType,
+        dateOnly,
+        floor,
+        firstInTime: null,
+        lastOutTime: null
+      });
+    }
+
+    const bucket    = bucketMap.get(groupKey);
+    const swipeTime = DateTime.fromFormat(evt.Swipe_Time, 'HH:mm:ss');
+
+    if (direction === 'InDirection') {
+      if (!bucket.firstInTime || swipeTime < bucket.firstInTime) {
+        bucket.firstInTime = swipeTime;
+      }
+    } else if (direction === 'OutDirection') {
+      if (!bucket.lastOutTime || swipeTime > bucket.lastOutTime) {
+        bucket.lastOutTime = swipeTime;
+      }
+    }
+  });
+
+  // STEP B: Aggregate per date‐floor for dailyFloorStats
+  // Key: `${dateOnly}__${floor}`
+  const dateFloorMap = new Map();
+
+  bucketMap.forEach(bucket => {
+    const { personId, name, personnelType, dateOnly, floor, firstInTime, lastOutTime } = bucket;
+    const dfKey = `${dateOnly}__${floor}`;
+
+    if (!dateFloorMap.has(dfKey)) {
+      dateFloorMap.set(dfKey, {
+        date: dateOnly,
+        month: DateTime.fromISO(dateOnly).toFormat('LLLL'),
+        floor,
+        totalPersons: 0,
+        inCount: 0,
+        outCount: 0,
+        inconsistentCount: 0,
+        instances: []
+      });
+    }
+
+    const stats = dateFloorMap.get(dfKey);
+    stats.totalPersons += 1;
+
+    const hasIn  = Boolean(firstInTime);
+    const hasOut = Boolean(lastOutTime);
+    if (hasIn)  stats.inCount += 1;
+    if (hasOut) stats.outCount += 1;
+
+    if (!(hasIn && hasOut)) {
+      stats.inconsistentCount += 1;
+      stats.instances.push({
+        employeeId: personId,
+        name,
+        personnelType
+      });
+    }
+  });
+
+  // After populating, compute inconsistencyPercentage for each date‐floor
+  const dailyFloorStats = [];
+  dateFloorMap.forEach(stats => {
+    const { totalPersons, inconsistentCount } = stats;
+    const pct = totalPersons > 0 ? (inconsistentCount / totalPersons) * 100 : 0;
+    dailyFloorStats.push({
+      date: stats.date,
+      month: stats.month,
+      floor: stats.floor,
+      inCount: stats.inCount,
+      outCount: stats.outCount,
+      totalPersons: stats.totalPersons,
+      inconsistentCount: stats.inconsistentCount,
+      inconsistencyPercentage: parseFloat(pct.toFixed(2)),
+      instances: stats.instances
+    });
+  });
+
+  // STEP C: Floor‐level aggregated over entire period
+  const floorAgg = new Map();
+  bucketMap.forEach(bucket => {
+    const { dateOnly, floor, firstInTime, lastOutTime } = bucket;
+    const isInconsistent = !(firstInTime && lastOutTime);
+
+    if (!floorAgg.has(floor)) {
+      floorAgg.set(floor, {
+        totalPersonDays: 0,
+        inconsistentPersonDays: 0
+      });
+    }
+    const fAgg = floorAgg.get(floor);
+    fAgg.totalPersonDays += 1;
+    if (isInconsistent) {
+      fAgg.inconsistentPersonDays += 1;
+    }
+  });
+
+  const floorInconsistency = [];
+  floorAgg.forEach((vals, floor) => {
+    const { totalPersonDays, inconsistentPersonDays } = vals;
+    const pct =
+      totalPersonDays > 0
+        ? (inconsistentPersonDays / totalPersonDays) * 100
+        : 0;
+    floorInconsistency.push({
+      floor,
+      totalPersonDays,
+      inconsistentPersonDays,
+      inconsistencyPercentage: parseFloat(pct.toFixed(2))
+    });
+  });
+
+  // STEP D: Employee‐level aggregated over entire period
+  const empAgg = new Map();
+  bucketMap.forEach(bucket => {
+    const { personId, dateOnly, firstInTime, lastOutTime } = bucket;
+    const isInconsistent = !(firstInTime && lastOutTime);
+
+    if (!empAgg.has(personId)) {
+      empAgg.set(personId, {
+        totalDaysSet: new Set(),
+        inconsistentDaysSet: new Set()
+      });
+    }
+    const eAgg = empAgg.get(personId);
+    eAgg.totalDaysSet.add(dateOnly);
+    if (isInconsistent) {
+      eAgg.inconsistentDaysSet.add(dateOnly);
+    }
+  });
+
+  const employeeInconsistency = [];
+  empAgg.forEach((vals, personId) => {
+    const totalDays = vals.totalDaysSet.size;
+    const inconsistentDays = vals.inconsistentDaysSet.size;
+    const pct =
+      totalDays > 0 ? (inconsistentDays / totalDays) * 100 : 0;
+    employeeInconsistency.push({
+      employeeId: personId,
+      totalDays,
+      inconsistentDays,
+      inconsistencyPercentage: parseFloat(pct.toFixed(2))
+    });
+  });
+
+  return {
+    asOf: new Date().toISOString(),
+    dailyFloorStats,
+    floorInconsistency,
+    employeeInconsistency
+  };
+}
+
+/**
+ * Controller endpoint: GET /api/denver/inout-inconsistency
+ *
+ * Fetches all strict-door swipe events from Jan 1, 2025 to now,
+ * computes:
+ *   1. dailyFloorStats (by date + floor)
+ *   2. floorInconsistency (overall per floor)
+ *   3. employeeInconsistency (overall per employee)
+ * and returns a JSON payload.
+ */
+
+
+async function withRetry(fn, retries = 2) {
+  let lastErr;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if ((err.code === 'ECONNRESET' || err.code === 'ESOCKET') && i < retries) {
+        console.warn(`🔁 Retrying due to ${err.code} (${i + 1}/${retries})`);
+        await new Promise(res => setTimeout(res, 1000));
+        continue;
+      }
+      break;
+    }
+  }
+  throw lastErr;
+}
+
+exports.getDenverInOutInconsistency = async (req, res) => {
+  try {
+    const events = await withRetry(fetchHistoricalEvents, 3);
+    const result = computeInOutInconsistency(events);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('❌ Error computing in/out inconsistency:', err);
+    res.status(500).json({
+      error: 'Failed to compute in/out inconsistency'
+    });
+  }
+};
+
+
+
+
+// ?????????????????????????????????????????????????????
+// ?????????????????????????????????????????????????????
+// ?????????????????????????????????????????????????????
+// ?????????????????????????????????????????????????????
+// ?????????????????????????????????????????????????????
+// ?????????????????????????????????????????????????????
+
+
+
+
+
+
+
+
+
+
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\client-denver\src\App.js
+
+import React, { useEffect, useState } from 'react';
+import { Container, Navbar, Nav } from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
+
+import DashboardHome from './pages/DashboardHome';
+import FloorDetailsPage from './pages/FloorDetailsPage';
+import DenverInOutInconsistencyPage from './pages/DenverInOutInconsistency'; // ← NEW
+
+import './App.css';
+
+export default function App() {
+  // live data states
+  const [floorData, setFloorData] = useState([]);
+  const [personnelBreakdown, setPersonnelBreakdown] = useState([]);
+  const [totalVisitedToday, setTotalVisitedToday] = useState(0);
+  const [personnelSummary, setPersonnelSummary] = useState({ employees: 0, contractors: 0 });
+  const [visitedToday, setVisitedToday] = useState({ employees: 0, contractors: 0, total: 0 });
+  const [floorInOutSummary, setFloorInOutSummary] = useState([]); // ← NEW
+
+  // new: in/out inconsistency data
+  const [inOutData, setInOutData] = useState(null);
+  const [loadingInOut, setLoadingInOut] = useState(true);
+  const [inOutError, setInOutError] = useState(null);
+
+  useEffect(() => {
+    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
+    es.onmessage = e => {
+      try {
+        const p = JSON.parse(e.data);
+        setFloorData(p.floorBreakdown || []);
+        setPersonnelBreakdown(p.personnelBreakdown || []);
+        setTotalVisitedToday(p.totalVisitedToday || 0);
+        setPersonnelSummary(p.personnelSummary || { employees: 0, contractors: 0 });
+        setVisitedToday(p.visitedToday || { employees: 0, contractors: 0, total: 0 });
+        setFloorInOutSummary(p.floorInOutSummary || []); // ← NEW
+      } catch (err) {
+        console.error('SSE parse error:', err);
+      }
+    };
+    es.onerror = err => {
+      console.error('SSE error:', err);
+      es.close();
+    };
+    return () => es.close();
+  }, []);
+
+
+
+  // Fetch once: in/out inconsistency JSON
+  useEffect(() => {
+  fetch('http://localhost:5000/api/inout-inconsistency-denver')
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+      return res.json();
+    })
+    .then(data => {  
+  setInOutData(data.floorInconsistency || []); // ✅ Store only the array we want
+  setLoadingInOut(false);
+})
+    .catch(err => {
+      console.error('Failed to load in/out inconsistency:', err);
+      setInOutError(err.message);
+      setLoadingInOut(false);
+    });
+}, []);
+
+
+
+
+  return (
+    <BrowserRouter>
+      <div className="dark-theme">
+        <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
+          <Navbar.Brand as={Link} to="/" className="wu-brand">
+            Live Occupancy — Western Union Denver
+          </Navbar.Brand>
+          <Nav className="ms-auto align-items-center">
+            <Nav.Link as={Link} to="/" className="nav-item-infographic">
+              Dashboard
+            </Nav.Link>
+            <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
+              History
+            </Nav.Link>
+            <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
+              Floor Details
+            </Nav.Link>
+            <Nav.Link as={Link} to="/inout-inconsistency-denver" className="nav-item-infographic">
+              In/Out Inconsistency
+            </Nav.Link>
+            <Nav.Link className="theme-toggle-icon" title="Dark mode only">
+              <FaSun color="#FFC72C" />
+            </Nav.Link>
+          </Nav>
+        </Navbar>
+
+        <Container fluid className="mt-4">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <DashboardHome
+                  personnelSummary={personnelSummary}
+                  totalVisitedToday={totalVisitedToday}
+                  visitedToday={visitedToday}
+                  floorData={floorData}
+                  personnelBreakdown={personnelBreakdown}
+                  floorInOutSummary={floorInOutSummary}
+                />
+              }
+            />
+
+            <Route
+              path="/floor-details"
+              element={
+                <FloorDetailsPage
+                  floorData={floorData}
+                  floorInOutSummary={floorInOutSummary}
+                />
+              }
+            />
+
+            <Route
+              path="/inout-inconsistency-denver"
+              element={
+                <DenverInOutInconsistencyPage
+                  data={inOutData}
+                  loading={loadingInOut}
+                  error={inOutError}
+                />
+              }
+            />
+          </Routes>
+        </Container>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+
+
+
+
+
