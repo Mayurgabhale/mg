@@ -1,6 +1,3 @@
-
-
-
 // C:\Users\W0024618\Desktop\swipeData\client\src\App.js
 
 import React, { useEffect, useState } from 'react';
@@ -10,6 +7,7 @@ import { FaSun } from 'react-icons/fa';
 import ZoneDetailsTable from './components/ZoneDetailsTable';
 import DashboardHome    from './pages/DashboardHome';
 import ErtPage          from './pages/ErtPage';
+import TimeTravelControl from './components/TimeTravelControl';   // 🔹 NEW
 import './App.css';
 
 function ZoneDetailsPage({ detailsData }) {
@@ -41,7 +39,7 @@ function App() {
     ? 'Emergency Response Team — Western Union Pune'
     : 'Live Occupancy — Western Union Pune';
 
-  // Single state object for the entire payload
+  // ---------- data state ----------
   const [liveData, setLiveData] = useState({
     summary: [],
     details: {},
@@ -54,45 +52,14 @@ function App() {
     ertStatus: {}
   });
 
-  // useEffect(() => {
-  //   const es = new EventSource('http://localhost:5000/api/live-occupancy');
-  //   es.onmessage = (e) => {
-  //     try {
-  //       const p = JSON.parse(e.data);
-  //       // Batch-update entire payload in one setState
-  //       setLiveData({
-  //         summary: Array.isArray(p.summary) ? p.summary : [],
-  //         details: p.details || {},
-  //         floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-  //         zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-  //         personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-  //         totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-  //         personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-  //         visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-  //         ertStatus: p.ertStatus || {}
-  //       });
-  //     } catch {
-  //       console.error('SSE parse error');
-  //     }
-  //   };
+  // ---------- time travel state ----------
+  const [timeTravelMode, setTimeTravelMode] = useState(false);
+  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
+  const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
-  //   es.onerror = (err) => {
-  //     console.error('SSE error', err);
-  //     es.close();
-  //   };
-
-  //   return () => es.close();
-  // }, []);
-
-
-
-
-
-
-
-    useEffect(() => {
-   // If we're time-traveling, do not connect SSE
-    if (timeTravelMode) return;
+  // ---------- live SSE ----------
+  useEffect(() => {
+    if (timeTravelMode) return; // pause SSE when in history mode
 
     const es = new EventSource('http://localhost:5000/api/live-occupancy');
     es.onmessage = (e) => {
@@ -124,21 +91,92 @@ function App() {
     };
   }, [timeTravelMode]);
 
+  // ---------- helpers ----------
+  async function fetchSnapshot(datetimeISO) {
+    setTimeTravelLoading(true);
+    try {
+      const url = `http://localhost:5000/api/occupancy-at?datetime=${encodeURIComponent(datetimeISO)}`;
+      console.debug('[TimeTravel] fetching', url);
+      const resp = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!resp.ok) {
+        window.alert(`Snapshot request failed (${resp.status})`);
+        return;
+      }
+      const p = await resp.json();
+      setLiveData({
+        summary: Array.isArray(p.summary) ? p.summary : [],
+        details: p.details || {},
+        floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+        zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+        personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+        totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+        personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+        visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+        ertStatus: p.ertStatus || {}
+      });
+      setTimeTravelMode(true);
+      setTimeTravelTimestamp(p?.asOf || datetimeISO);
+    } catch (err) {
+      console.error('Failed to fetch snapshot', err);
+      window.alert('Failed to fetch snapshot');
+    } finally {
+      setTimeTravelLoading(false);
+    }
+  }
 
+  function clearTimeTravel() {
+    setTimeTravelLoading(true);
+    setTimeTravelMode(false);
+    setTimeTravelTimestamp(null);
+    setTimeTravelLoading(false);
+  }
+
+  // ---------- render ----------
   return (
     <>
       <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
         <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
         <Nav className="ms-auto align-items-center">
-          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i class="bi bi-house"></i></Nav.Link>
-          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history"  className="nav-item-infographic"><i class="bi bi-clock-history"></i></Nav.Link>
-          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i class="fa-solid fa-calendar-day"></i></Nav.Link>
+          <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
+            <TimeTravelControl
+              currentTimestamp={timeTravelTimestamp}
+              onApply={(iso) => fetchSnapshot(iso)}
+              onLive={() => clearTimeTravel()}
+              loading={timeTravelLoading}
+            />
+          </div>
+          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
+          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
+          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
           <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
           <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun/></Nav.Link>
         </Nav>
       </Navbar>
 
       <Container fluid className="mt-2">
+        {timeTravelMode && (
+          <div style={{
+            background: '#2b2b2b',
+            color: '#FFD100',
+            padding: '8px 16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderLeft: '4px solid #FFD100',
+            marginBottom: 8
+          }}>
+            <div>
+              Viewing historical snapshot:&nbsp;
+              <strong>{timeTravelTimestamp}</strong>
+            </div>
+            <div>
+              <button className="btn btn-sm btn-outline-warning" onClick={() => clearTimeTravel()} disabled={timeTravelLoading}>
+                Return to Live
+              </button>
+            </div>
+          </div>
+        )}
+
         <Routes>
           <Route
             path="/"
@@ -157,7 +195,7 @@ function App() {
             }
           />
           <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-          <Route path="/ert"     element={<ErtPage ertStatus={liveData.ertStatus} />} />
+          <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
         </Routes>
       </Container>
     </>
@@ -173,5 +211,3 @@ export default function WrappedApp() {
     </BrowserRouter>
   );
 }
-
-
