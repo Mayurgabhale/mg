@@ -56,3 +56,18 @@ exports.getSnapshotAt = async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+
+
+....
+
+
+
+..
+
+const todayIns = allEvents.filter(evt => {
+  if (evt.Direction !== 'InDirection' || evt.Dateonly !== asOfLocalDate) return false;
+  const evtTs = evt.LocaleMessageTime ? new Date(evt.LocaleMessageTime) : null;
+  if (!evtTs) return false;
+  return evtTs <= atDate;
+});
