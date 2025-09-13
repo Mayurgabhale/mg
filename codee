@@ -1,3 +1,211 @@
+wrti correct format documantion.
+getting ero    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7432:39)
+    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3373:24)
+    at FlowParserMixin.parseBindingElement (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7416:23)
+    at FlowParserMixin.parseBindingList (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7385:24)
+    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:13333:24)
+    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3477:11)
+    at FlowParserMixin.parseMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11961:10)
+    at FlowParserMixin.parseObjectMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11862:19)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:23)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
+    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
+    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
+    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
+    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
+    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
+    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
+    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
+    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
+    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12334:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+    at FlowParserMixin.parseObjectProperty (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11868:83)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:100)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
+    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
+    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
+    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
+    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
+    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
+    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
+    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
+    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
+    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12329:16)
+    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+
+ERROR in [eslint]
+src\pages\DashboardHome.jsx
+  Line 195:14:  Parsing error: Unexpected token (195:14)
+
+webpack compiled with 2 errors
+Compiling...
+Failed to compile.
+
+SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
+  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
+  194 |
+> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4"> {/* Header area /} 
+      |               ^
+  196 |
+  197 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
+  198 |
+ERROR in ./src/pages/DashboardHome.jsx
+Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
+
+  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
+  194 |
+> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4"> {/* Header area /}
+      |               ^
+  196 |
+  197 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
+  198 |
+    at constructor (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:360:19)
+    at FlowParserMixin.raise (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6613:19)
+    at FlowParserMixin.unexpected (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6633:16)
+    at FlowParserMixin.parseIdentifierName (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12116:12)
+    at FlowParserMixin.parseIdentifier (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12099:23)
+    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7349:17)
+    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3469:22)
+    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7432:39)
+    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3373:24)
+    at FlowParserMixin.parseBindingElement (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7416:23)
+    at FlowParserMixin.parseBindingList (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7385:24)
+    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:13333:24)
+    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3477:11)
+    at FlowParserMixin.parseMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11961:10)
+    at FlowParserMixin.parseObjectMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11862:19)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:23)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
+    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
+    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
+    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
+    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
+    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
+    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
+    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
+    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
+    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12334:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+    at FlowParserMixin.parseObjectProperty (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11868:83)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:100)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
+    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
+    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
+    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
+    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
+    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
+    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
+    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
+    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
+    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12329:16)
+    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+
+ERROR in [eslint]
+src\pages\DashboardHome.jsx
+  Line 195:14:  Parsing error: Unexpected token (195:14)
+
+webpack compiled with 2 errors
+Compiling...
+Failed to compile.
+
+SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
+  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
+  194 |
+> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4"> 
+      |               ^
+  196 |       {/* Header area /} 
+  197 |
+  198 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
+ERROR in ./src/pages/DashboardHome.jsx
+Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
+
+  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
+  194 |
+> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4">
+      |               ^
+  196 |       {/* Header area /}
+  197 |
+  198 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
+    at constructor (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:360:19)
+    at FlowParserMixin.raise (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6613:19)
+    at FlowParserMixin.unexpected (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6633:16)
+    at FlowParserMixin.parseIdentifierName (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12116:12)
+    at FlowParserMixin.parseIdentifier (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12099:23)
+    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7349:17)
+    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3469:22)
+    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7432:39)
+    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3373:24)
+    at FlowParserMixin.parseBindingElement (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7416:23)
+    at FlowParserMixin.parseBindingList (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7385:24)
+    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:13333:24)
+    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3477:11)
+    at FlowParserMixin.parseMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11961:10)
+    at FlowParserMixin.parseObjectMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11862:19)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:23)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
+    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
+    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
+    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
+    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
+    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
+    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
+    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
+    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
+    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12334:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+    at FlowParserMixin.parseObjectProperty (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11868:83)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:100)
+    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
+    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
+    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
+    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
+    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
+    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
+    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
+    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
+    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
+    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
+    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
+    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12329:16)
+    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+
+ERROR in [eslint]
+src\pages\DashboardHome.jsx
+  Line 195:14:  Parsing error: Unexpected token (195:14)
+
+webpack compiled with 2 errors
+
+
 import React from 'react'; import { Container, Row, Col } from 'react-bootstrap';
 
 import SummaryCards from '../components/SummaryCards'; import FloorOccupancyChart from '../components/FloorOccupancyChart'; import PersonnelDonutChart from '../components/PersonnelDonutChart'; import FloorInOutTable from '../components/FloorInOutTable';
