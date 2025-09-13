@@ -1,6 +1,71 @@
+// --- snapshot endpoint ---
+exports.getDenverOccupancyAtTime = async (req, res) => {
+  try {
+    await denver.poolPromise;
+
+    const timeParam = (req.query.time || '').trim();
+    if (!timeParam) {
+      return res.status(400).json({ error: 'missing required query parameter "time" (format HH:mm or HH:mm:ss)' });
+    }
+
+    // Parse the incoming time string (Denver zone)
+    let parsed = DateTime.fromFormat(timeParam, 'HH:mm:ss', { zone: 'America/Denver' });
+    if (!parsed.isValid) {
+      parsed = DateTime.fromFormat(timeParam, 'HH:mm', { zone: 'America/Denver' });
+    }
+    if (!parsed.isValid) {
+      return res.status(400).json({ error: 'time must be in format HH:mm or HH:mm:ss' });
+    }
+
+    // Build target DateTime for *today* in Denver
+    const todayStart = DateTime.now().setZone('America/Denver').startOf('day');
+    const target = todayStart.plus({
+      hours: parsed.hour,
+      minutes: parsed.minute,
+      seconds: parsed.second || 0,
+    });
+
+    const nowDenver = DateTime.now().setZone('America/Denver');
+    if (!target.hasSame(nowDenver, 'day')) {
+      return res.status(400).json({ error: 'only the current Denver day is supported' });
+    }
+
+    // ✅ Use Denver-local midnight when fetching
+    const since = todayStart.toJSDate();
+    let events = await fetchNewEvents(since);
+    if (!Array.isArray(events)) events = [];
+
+    // Normalize LocaleMessageTime → Date object
+    events = events.map(evt => {
+      const copy = { ...evt };
+      if (copy.LocaleMessageTime && !(copy.LocaleMessageTime instanceof Date)) {
+        copy.LocaleMessageTime = new Date(copy.LocaleMessageTime);
+      }
+      return copy;
+    }).filter(e => e && e.LocaleMessageTime);
+
+    events.sort((a, b) => a.LocaleMessageTime - b.LocaleMessageTime);
+
+    const targetJs = target.toJSDate();
+    const upToTarget = events.filter(evt => evt.LocaleMessageTime <= targetJs);
+
+    let payload = buildOccupancyForToday(upToTarget, upToTarget);
+    payload.asOf = target.toISO();
+
+    return res.json(payload);
+
+  } catch (err) {
+    console.error('❌ getDenverOccupancyAtTime error:', err);
+    return res.status(500).json({ error: 'internal server error' });
+  }
+};
+
+// --- debug route (temporary) ---
 exports.debugFetchCount = async (req, res) => {
   try {
     await denver.poolPromise;
+
+    // ✅ Use Denver-local midnight
     const denverStart = DateTime.now()
       .setZone('America/Denver')
       .startOf('day')
@@ -13,15 +78,7 @@ exports.debugFetchCount = async (req, res) => {
       sample: (rows || []).slice(0, 5),
     });
   } catch (err) {
+    console.error('❌ debugFetchCount error:', err);
     return res.status(500).json({ error: err.message });
   }
 };
-
-
-
-
-
-
-const todayStart = DateTime.now().setZone('America/Denver').startOf('day');
-const since = todayStart.toJSDate();
-let events = await fetchNewEvents(since);
