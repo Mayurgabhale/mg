@@ -1,3 +1,6 @@
+http://localhost:5000/api/occupancy-at-time-denver?at=2025-09-11T01:30:00
+{
+  "error": "missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]"
 // --- NEW: Snapshot endpoint for Denver with date + time ---
 // GET /api/occupancy-at-date-time-denver?date=YYYY-MM-DD&time=HH:MM[:SS]
 exports.getDenverSnapshotAtDateTime = async (req, res) => {
