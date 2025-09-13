@@ -1,1 +1,84 @@
-GET /api/occupancy-at-time-denver?time=09:30
+
+// src/components/SummaryCards.jsx
+
+import React from 'react';
+import { Card, Row, Col } from 'react-bootstrap';
+import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
+
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount
+}) {
+  // keep your existing border/accent colors here:
+  const BORDER_COLORS = [
+    '#FFC72C',
+    '#FFD666',
+    '#FFE599',
+    '#FFF2CC',
+    '#FFD666',
+    '#FFE599'
+  ];
+
+  // a richer palette for the icons
+  const ICON_COLORS = [
+    '#E57373', // soft red
+    '#81C784', // mint green
+    '#64B5F6', // sky blue
+    '#BA68C8', // orchid purple
+    '#FFB74D', // amber
+    '#4DB6AC'  // teal
+  ];
+
+  const cards = [
+    { title: 'Todays Total Headcount',     value: totalVisitedToday,    icon: <FaUsers /> },
+    { title: 'Todays Employees Count',      value: employeesVisitedToday,icon: <FaUserTie /> },
+    { title: 'Todays Contractors Count',    value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { title: 'Realtime Headcount',     value: totalOccupancy,       icon: <FaUsers /> },
+    { title: 'Realtime Employees Count',     value: employeeCount,        icon: <FaUserTie /> },
+    { title: 'Realtime Contractors Count',   value: contractorCount,      icon: <FaHardHat /> },
+  ];
+
+  return (
+    <Row className="mb-4">
+      {cards.map((c, i) => (
+        <Col key={i} sm={6} md={4} lg={2} className="mb-3">
+          <Card
+            className="shadow-sm"
+            style={{
+              background: '#2f2f2f',
+              border: `2px solid ${BORDER_COLORS[i % BORDER_COLORS.length]}`,
+              borderRadius: '8px'
+            }}
+          >
+            <Card.Body className="text-center">
+              <div
+                style={{
+                  color: ICON_COLORS[i % ICON_COLORS.length],
+                  fontSize: '1.5rem'
+                }}
+                className="mb-2"
+              >
+                {c.icon}
+              </div>
+              <Card.Title style={{ color: '#fff' }}>{c.title}</Card.Title>
+              <Card.Text
+                style={{
+                  fontSize: '1.6rem',
+                  fontWeight: 'bold',
+                  color: '#fff'
+                }}
+              >
+                {c.value}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+      ))}
+    </Row>
+  );
+}
+
