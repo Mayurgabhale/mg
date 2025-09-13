@@ -1,639 +1,91 @@
-write this code correct 
-
-
-  // //////////////////////////////////// start
+// //////////////////////////////////// start
   // ************************************
 
+  // ---- Fix normalizeZoneKey (was using wrong template syntax) ----
+  function normalizeZoneKey(rawDoor, rawDir) {
+    // 1) Ensure it’s a string and trim whitespace
+    let door = String(rawDoor || '').trim();
 
-// ---- Fix normalizeZoneKey (was using wrong template syntax) ----
-function normalizeZoneKey(rawDoor, rawDir) {
-  // 1) Ensure it’s a string and trim whitespace
-  let door = String(rawDoor || '').trim();
+    // 2) Strip any "_HH:MM:SS" or "HH:MM:SS" suffix (times or hex-like suffixes at end)
+    door = door.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
+    door = door.replace(/[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
 
-  // 2) Strip any "_HH:MM:SS" or "XX:XX:XX" suffix (hex codes or times at end)
-  door = door.replace(/[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
+    // 3) Collapse multiple spaces into one, then uppercase
+    door = door.replace(/\s+/g, ' ').toUpperCase();
 
-  // 3) Collapse multiple spaces into one, then uppercase
-  door = door.replace(/\s+/g, ' ').toUpperCase();
+    // 4) Pick the direction token exactly as doorZoneMap expects
+    const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
 
-  // 4) Pick the direction token exactly as doorZoneMap expects
-  const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
-
-  return `${door}___${dir}`;
-}
-
-// ---- Fix normalizePersonName (was using wrong template syntax) ----
-function normalizePersonName(raw) {
-  let n = String(raw || '').trim();
-  if (n.includes(',')) {
-    const [last, rest] = n.split(',', 2);
-    n = `${rest.trim()} ${last.trim()}`;
+    return `${door}___${dir}`;
   }
-  return n.toLowerCase();
-}
 
-
-
-
-
-
-
-
-
-
-// Handler: GET /api/occupancy-at?at=
-exports.getSnapshotAt = async (req, res) => {
-  try {
-    const atRaw = req.query.at;
-
-    // If no 'at' provided, default to "now" in Asia/Kolkata
-    let atDate;
-    if (!atRaw) {
-      atDate = DateTime.now().setZone('Asia/Kolkata').toJSDate();
-    } else {
-      // Try to parse ISO first (accept timezone), then accept date-only (yyyy-MM-dd) in Asia/Kolkata
-      let dt = DateTime.fromISO(atRaw, { zone: 'utc' });
-      if (!dt.isValid) {
-        // try date-only format in Asia/Kolkata
-        dt = DateTime.fromFormat(atRaw, 'yyyy-LL-dd', { zone: 'Asia/Kolkata' });
-      }
-      if (!dt.isValid) {
-        // fallback to native Date as last resort and validate
-        const native = new Date(atRaw);
-        if (Number.isNaN(native.getTime())) {
-          return res.status(400).json({
-            error: 'invalid "at" timestamp (provide ISO 8601 or yyyy-MM-dd).'
-          });
-        }
-        atDate = native;
-      } else {
-        atDate = dt.toJSDate();
-      }
+  // ---- Fix normalizePersonName (was using wrong template syntax) ----
+  function normalizePersonName(raw) {
+    let n = String(raw || '').trim();
+    if (n.includes(',')) {
+      const [last, rest] = n.split(',', 2);
+      n = `${rest.trim()} ${last.trim()}`;
     }
-
-    // fetch events in the 24h window ending at atDate
-    const events = await fetchEventsWindow(atDate);
-
-    const occupancy = await buildOccupancy(events);
-    const visitedStats = buildVisitedForDate(events, atDate);
-
-    occupancy.totalVisitedToday = visitedStats.total;
-    occupancy.visitedToday = {
-      employees: visitedStats.employees,
-      contractors: visitedStats.contractors,
-      total: visitedStats.total
-    };
-    occupancy.asOf = atDate.toISOString();
-
-    return res.json(occupancy);
-
-  } catch (err) {
-    console.error('getSnapshotAt error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return n.toLowerCase();
   }
-};
 
+  // Handler: GET /api/occupancy-at?at=
+  exports.getSnapshotAt = async (req, res) => {
+    try {
+      const atRaw = req.query.at;
 
+      // If no 'at' provided, default to "now" in Asia/Kolkata
+      let atDate;
+      if (!atRaw) {
+        atDate = DateTime.now().setZone('Asia/Kolkata').toJSDate();
+      } else {
+        // 1) Try to parse full ISO (respecting any timezone/offset in the string)
+        let dt = DateTime.fromISO(atRaw, { setZone: true });
 
+        // 2) If not ISO, try date-only format 'yyyy-MM-dd' and interpret as the end of that day
+        if (!dt.isValid) {
+          dt = DateTime.fromFormat(atRaw, 'yyyy-LL-dd', { zone: 'Asia/Kolkata' });
+          if (dt.isValid) {
+            // interpret date-only as end of that local day (23:59:59.999 in Asia/Kolkata)
+            dt = dt.endOf('day');
+          }
+        }
 
+        // 3) Final fallback to native Date parsing
+        if (!dt.isValid) {
+          const native = new Date(atRaw);
+          if (Number.isNaN(native.getTime())) {
+            return res.status(400).json({
+              error: 'invalid "at" timestamp (provide ISO 8601 or yyyy-MM-dd).'
+            });
+          }
+          atDate = native;
+        } else {
+          atDate = dt.toJSDate();
+        }
+      }
 
+      // fetch events in the 24h window ending at atDate
+      const events = await fetchEventsWindow(atDate);
+
+      const occupancy = await buildOccupancy(events);
+      const visitedStats = buildVisitedForDate(events, atDate);
+
+      occupancy.totalVisitedToday = visitedStats.total;
+      occupancy.visitedToday = {
+        employees: visitedStats.employees,
+        contractors: visitedStats.contractors,
+        total: visitedStats.total
+      };
+      occupancy.asOf = atDate.toISOString();
+
+      return res.json(occupancy);
+
+    } catch (err) {
+      console.error('getSnapshotAt error:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  };
 
   // //////////////////////////////////// end
   // ************************************
-
-
-
-
-
-// controllers/denverLiveOccupancyController.js
-
-const { DateTime }       = require('luxon');
-// const { denver }         = require('../config/siteConfig');
-const { denver } = require('../config/siteConfig');
-const doorFloorMap       = require('../data/denverDoorFloorMap');
-const { monitoredDoors } = require('../data/strictDoorList');
-const sql                = require('mssql');
-const normalizeKey = require('../data/normalizeKey');
-
-const warnedKeys = new Set();
-
-
-// build a Set of normalized door___direction keys
-const normalizedMonitoredKeys = new Set(
-  Object.entries(monitoredDoors).map(
-    ([door, dir]) => normalizeKey(door, dir)
-  )
-);
-
-/** Determine floor label, fallback to “HQ. N.” parsing **/
-function mapDoorToFloor(rawDoor, rawDir) {
-  const key = normalizeKey(rawDoor, rawDir);
-  if (doorFloorMap[key]) return doorFloorMap[key];
-  const m = rawDoor.match(/HQ\.\s*(\d{1,2})\b/);
-  if (m) return `Floor ${m[1]}`;
-  if (!warnedKeys.has(key)) {
-    console.warn(`⛔ Unmapped door-floor key: "${key}"`);
-    warnedKeys.add(key);
-  }
-  return 'Unknown Floor';
-}
-
-/** Strip any trailing “_HH:MM:SS” from a door name **/
-function stripTimeSuffix(doorRaw) {
-  return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
-}
-
-
-async function fetchNewEvents(since) {
-  // 1) Acquire the pool. If it fails, we’ll catch below.
-  let pool;
-  try {
-    pool = await denver.poolPromise;
-  } catch (err) {
-    console.error('❌ Failed to get Denver pool in fetchNewEvents():', err);
-    return [];
-  }
-  if (!pool) {
-    // If poolPromise ultimately returned null, just bail out with an empty array.
-    return [];
-  }
-
- const req = pool.request();
-  req.input('since', sql.DateTime2, since);
-
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,    
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType   = 'CardAdmitted'
-        AND t1.ObjectName2 LIKE '%HQ%'
-        AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >=@since
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
-      CardNumber, AdmitCode, Direction, Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
-}
-
-function isTodayInDenver(dateOnly) {
-  const swipeDate = DateTime.fromISO(dateOnly, { zone: 'America/Denver' })
-    .toFormat('yyyy-LL-dd');
-  const today = DateTime.now().setZone('America/Denver').toFormat('yyyy-LL-dd');
-  return swipeDate === today;
-}
-
-/**
- * Build live occupancy + swipe summaries.
- * @param {Array} allEvents   – cumulative events (for occupancy)
- * @param {Array} freshEvents – just-fetched events (for swipeStats & floorInOut)
- */
-
-
-function computeVisitedToday(allEvents) {
-  const seen = new Map(); // key -> PersonnelType
-  allEvents.forEach(evt => {
-    if (evt.Direction === 'InDirection' && isTodayInDenver(evt.Dateonly)) {
-      const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
-      if (!seen.has(key)) {
-        seen.set(key, evt.PersonnelType);
-      }
-    }
-  });
-  let emp = 0, ctr = 0;
-  seen.forEach(type => {
-    if (type === 'Employee' || type === 'Terminated Personnel') emp++;
-    else ctr++;
-  });
-  return { total: seen.size, employees: emp, contractors: ctr };
-}
-
-
-
-function buildOccupancyForToday(allEvents, freshEvents) {
-  // ─── A) Evict “Out of office” ───────────────────────────────────
-  const evicted = new Set();
-  const lastByPerson = new Map();
-  allEvents.forEach(evt => {
-    if (!isTodayInDenver(evt.Dateonly)) return;
-    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
-    const prev = lastByPerson.get(key);
-    if (!prev || evt.LocaleMessageTime > prev.LocaleMessageTime) {
-      lastByPerson.set(key, evt);
-    }
-  });
-  lastByPerson.forEach(evt => {
-    if (
-      evt.Direction === 'OutDirection'
-      && mapDoorToFloor(evt.Door, evt.Direction) === 'Out of office'
-    ) {
-      evicted.add(evt.PersonGUID || evt.EmployeeID || evt.CardNumber);
-    }
-  });
-  const activeEvents = allEvents.filter(evt => {
-    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
-    return !evicted.has(key);
-  });
-
-
-
-  // ////////////////////////////////////
-  // ************************************
-
-
-// ---- Fix normalizeZoneKey (was using wrong template syntax) ----
-function normalizeZoneKey(rawDoor, rawDir) {
-  // 1) Ensure it’s a string and trim whitespace
-  let door = String(rawDoor || '').trim();
-
-  // 2) Strip any "_HH:MM:SS" or "XX:XX:XX" suffix (hex codes or times at end)
-  door = door.replace(/[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
-
-  // 3) Collapse multiple spaces into one, then uppercase
-  door = door.replace(/\s+/g, ' ').toUpperCase();
-
-  // 4) Pick the direction token exactly as doorZoneMap expects
-  const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
-
-  return `${door}___${dir}`;
-}
-
-// ---- Fix normalizePersonName (was using wrong template syntax) ----
-function normalizePersonName(raw) {
-  let n = String(raw || '').trim();
-  if (n.includes(',')) {
-    const [last, rest] = n.split(',', 2);
-    n = `${rest.trim()} ${last.trim()}`;
-  }
-  return n.toLowerCase();
-}
-
-
-
-
-
-
-
-
-
-
-// Handler: GET /api/occupancy-at?at=
-exports.getSnapshotAt = async (req, res) => {
-  try {
-    const atRaw = req.query.at;
-
-    // If no 'at' provided, default to "now" in Asia/Kolkata
-    let atDate;
-    if (!atRaw) {
-      atDate = DateTime.now().setZone('Asia/Kolkata').toJSDate();
-    } else {
-      // Try to parse ISO first (accept timezone), then accept date-only (yyyy-MM-dd) in Asia/Kolkata
-      let dt = DateTime.fromISO(atRaw, { zone: 'utc' });
-      if (!dt.isValid) {
-        // try date-only format in Asia/Kolkata
-        dt = DateTime.fromFormat(atRaw, 'yyyy-LL-dd', { zone: 'Asia/Kolkata' });
-      }
-      if (!dt.isValid) {
-        // fallback to native Date as last resort and validate
-        const native = new Date(atRaw);
-        if (Number.isNaN(native.getTime())) {
-          return res.status(400).json({
-            error: 'invalid "at" timestamp (provide ISO 8601 or yyyy-MM-dd).'
-          });
-        }
-        atDate = native;
-      } else {
-        atDate = dt.toJSDate();
-      }
-    }
-
-    // fetch events in the 24h window ending at atDate
-    const events = await fetchEventsWindow(atDate);
-
-    const occupancy = await buildOccupancy(events);
-    const visitedStats = buildVisitedForDate(events, atDate);
-
-    occupancy.totalVisitedToday = visitedStats.total;
-    occupancy.visitedToday = {
-      employees: visitedStats.employees,
-      contractors: visitedStats.contractors,
-      total: visitedStats.total
-    };
-    occupancy.asOf = atDate.toISOString();
-
-    return res.json(occupancy);
-
-  } catch (err) {
-    console.error('getSnapshotAt error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-
-
-
-
-
-  // ////////////////////////////////////
-  // ************************************
-
-
-
-  // ─── 1) Live occupancy dedupe by last InDirection ───────────────
-  const todayIn = activeEvents.filter(e =>
-    e.Direction === 'InDirection' && isTodayInDenver(e.Dateonly)
-  );
-  const latestByPerson = new Map();
-  todayIn.forEach(e => {
-    const prev = latestByPerson.get(e.PersonGUID);
-    const tcur = DateTime.fromFormat(e.Swipe_Time, 'HH:mm:ss');
-    if (!prev || tcur > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
-      latestByPerson.set(e.PersonGUID, e);
-    }
-  });
-  const finalList = Array.from(latestByPerson.values());
-
-
- // ─── 2) Floor breakdown & personnel counts (live) ───────────────
-  let employees = 0, contractors = 0;
-  const floorMap = {};
-  finalList.forEach(e => {
-    // const floor = mapDoorToFloor(evt.Door, evt.Direction);
-    const fl = mapDoorToFloor(e.Door, e.Direction);
-    floorMap[fl] = floorMap[fl] || [];
-    floorMap[fl].push(e);
-    if (e.PersonnelType === 'Employee' || e.PersonnelType === 'Terminated Personnel') {
-      employees++;
-    } else {
-      contractors++;
-    }
-  });
-
-
-
-const floorBreakdown = Object.entries(floorMap).map(([floor, occ]) => {
-  // Initialize counters
-  let empCount    = 0;
-  let contractorCount = 0;
-  let tempBadgeCount  = 0;
-  let otherCount      = 0;
-
-  occ.forEach(e => {
-    switch (e.PersonnelType) {
-      case 'Employee':
-      case 'Terminated Personnel':
-        empCount++;
-        break;
-      case 'Contractor':
-      case 'Terminated Contractor':
-        contractorCount++;
-        break;
-      case 'Temp Badge':
-        tempBadgeCount++;
-        break;
-      default:
-        otherCount++;
-    }
-  });
-
-  return {
-    floor,
-    total:       occ.length,
-    employees:   empCount,
-    contractors: contractorCount,
-    tempBadge:   tempBadgeCount,
-    others:      otherCount,   // optional, in case you have Visitors etc.
-    occupants:   occ
-  };
-});
-
-
-
-  // ─── 3) Personnel breakdown ───────────────────────────────────────
-  const personnelBreakdown = Array.from(
-    finalList.reduce((m, e) => {
-      m.set(e.PersonnelType, (m.get(e.PersonnelType) || 0) + 1);
-      return m;
-    }, new Map()),
-    ([personnelType, count]) => ({ personnelType, count })
-  );
-
-
-
-  // ─── 4) Swipe stats (fresh only) ─────────────────────────────────
-  const totalInSwipes  = freshEvents.filter(e =>
-    e.Direction === 'InDirection' && isTodayInDenver(e.Dateonly)
-  ).length;
-  const totalOutSwipes = freshEvents.filter(e =>
-    e.Direction === 'OutDirection' && isTodayInDenver(e.Dateonly)
-  ).length;
-
-
-
-
-// ─── 5) Floor In/Out summary (strict doors only) ───────────────
-const validEvents = allEvents
-  .filter(e => isTodayInDenver(e.Dateonly))
-  .filter(evt => {
-    // 1) strip any "_HH:MM:SS" suffix
-    const doorNoTime = stripTimeSuffix(evt.Door.trim());
-    // 2) normalize to KEY___IN or KEY___OUT
-    const key = normalizeKey(doorNoTime, evt.Direction.trim());
-    // 3) only keep if it’s exactly in your strict list
-    return normalizedMonitoredKeys.has(key);
-  });
-
-// Dedupe per person+floor+direction
-const deduped = new Map();
-validEvents.forEach(evt => {
-  // Determine floor by regex (not via doorFloorMap, to avoid "Out of office")
-  const rawNoTime = stripTimeSuffix(evt.Door);
-  const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
-  const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
-
-  const mapKey = `${evt.PersonGUID || evt.EmployeeID}___${floor}___${evt.Direction}`;
-  const prev   = deduped.get(mapKey);
-  const now    = DateTime.fromFormat(evt.Swipe_Time, 'HH:mm:ss');
-  if (!prev || now > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
-    deduped.set(mapKey, evt);
-  }
-});
-
-// Aggregate inSwipes/outSwipes per floor
-const floorMapIO = {};
-for (const evt of deduped.values()) {
-  const rawNoTime = stripTimeSuffix(evt.Door);
-  const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
-  const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
-
-  if (!floorMapIO[floor]) {
-    floorMapIO[floor] = {
-      inSwipes:  0,
-      outSwipes: 0,
-      inSet:     new Set(),
-      outSet:    new Set()
-    };
-  }
-
-  const id = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
-  if (evt.Direction === 'InDirection') {
-    floorMapIO[floor].inSwipes++;
-    floorMapIO[floor].inSet.add(id);
-  } else {
-    floorMapIO[floor].outSwipes++;
-    floorMapIO[floor].outSet.add(id);
-  }
-}
-
-// Build your final summary
-const floorInOutSummary = Object.entries(floorMapIO).map(([floor, stats]) => {
-  const inOnly = [...stats.inSet].filter(id => !stats.outSet.has(id));
-  return {
-    floor,
-    inSwipes:      stats.inSwipes,
-    outSwipes:     stats.outSwipes,
-    inOnlyCount:   inOnly.length,
-    inOnlyPersons: inOnly
-  };
-});
-
-
-
-
-
-    // ─── 6) Visited today breakdown ─────────────────────────────────
-  const visited = computeVisitedToday(allEvents);
-
-  return {
-    asOf:               new Date().toISOString(),
-    currentCount:       finalList.length,
-    floorBreakdown,
-    personnelSummary:   { employees, contractors },
-    personnelBreakdown,
-    totalVisitedToday:  visited.total,
-    visitedToday:       {
-      employees:   visited.employees,
-      contractors: visited.contractors,
-      total:       visited.total
-    },
-    swipeStats:         { totalInSwipes, totalOutSwipes },
-    floorInOutSummary   // unchanged
-  };
-}
-
-
-exports.getDenverLiveOccupancy = async (req, res) => {
-
- try {
-    await denver.poolPromise;
-  } catch (err) {
-    console.error('❌ Failed to initialize Denver pool in SSE endpoint:', err);
-    // If we can’t even get a pool, return 500 and abort.
-    return res.status(500).end();
-  }
-
-
-  //  await denver.poolPromise;
-
-  res.writeHead(200, {
-    'Content-Type':  'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection':    'keep-alive'
-  });
-  res.write('\n');
-
-  let lastSeen = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const events = [];
-
-
-
-const push = async () => {
-    let fresh;
-    try {
-      fresh = await fetchNewEvents(lastSeen);
-    } catch (err) {
-      console.error('❌ Error in fetchNewEvents():', err);
-      fresh = [];
-    }
-
-    if (Array.isArray(fresh) && fresh.length) {
-      lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
-      events.push(...fresh);
-    }
-
-    let payload;
-    try {
-      payload = buildOccupancyForToday(events, fresh);
-    } catch (err) {
-      console.error('❌ Error building Denver occupancy payload:', err);
-      payload = {
-        asOf: new Date().toISOString(),
-        currentCount: 0,
-        floorBreakdown: [],
-        personnelSummary: { employees: 0, contractors: 0 },
-        personnelBreakdown: [],
-        totalVisitedToday: 0,
-        visitedToday: { employees: 0, contractors: 0, total: 0 },
-        swipeStats: { totalInSwipes: 0, totalOutSwipes: 0 },
-        floorInOutSummary: []
-      };
-    }
-
-    // res.write(`data: ${JSON.stringify(payload)}\n\n`);
-
-    // tag with a unique id and flush right away
-    const sid = Date.now();
-    res.write(`id: ${sid}\n`);
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
-    if (typeof res.flush === 'function') {
-      res.flush();
-    }
-
-
-  };
-
-  await push();
-  const timer = setInterval(push, 1000);
-  req.on('close', () => clearInterval(timer));
-};
-
-
-
-
-
