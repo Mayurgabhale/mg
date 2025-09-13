@@ -1,6 +1,4 @@
-i want high count table first theen other 
-total 10 is frist then 7 then 3 
-like and i wan this dark and yellow golden theme not white 
+// src/components/FloorDetailsPage.jsx
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Table, Form } from 'react-bootstrap';
 
@@ -11,44 +9,22 @@ export default function FloorDetailsPage({ floorData = [] }) {
     return <p className="text-center mt-4 text-white">No floor details available.</p>;
   }
 
+  // Sort floors descending by total occupants
+  const sortedFloorData = [...floorData].sort((a, b) => b.total - a.total);
+
   return (
     <Container fluid className="py-4">
-      {/* 🔧 Scoped placeholder style */}
       <style>{`
-        .search-input::placeholder {
-          color: #ffffff !important;
-          opacity: 0.6;
-        }
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-          background-color: #444;
-        }
-        ::-webkit-scrollbar-track {
-          background-color: #1c1c1c;
-        }
-
-        .dark-row-even {
-          background-color: #2a2a2a !important;
-          color: #ffffff !important;
-        }
-        .dark-row-odd {
-          background-color: #3a3a3a !important;
-          color: #ffffff !important;
-        }
-
-
-
-        tbody td {
-        background-color: #000;
-        }
-
-
-
+        .search-input::placeholder { color: #ffffff !important; opacity: 0.6; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background-color: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background-color: #1c1c1c; }
+        .dark-row-even { background-color: #2a2a2a !important; color: #fff !important; }
+        .dark-row-odd  { background-color: #1c1c1c !important; color: #fff !important; }
+        th, td { border: 1px solid #444 !important; }
       `}</style>
 
-      {/* 🔍 Search Input */}
+      {/* Search Input */}
       <Form.Group className="mb-3" controlId="search" style={{ maxWidth: 300 }}>
         <Form.Control
           type="text"
@@ -56,87 +32,74 @@ export default function FloorDetailsPage({ floorData = [] }) {
           value={search}
           onChange={(e) => setSearch(e.target.value.toLowerCase())}
           className="search-input"
-          style={{
-            backgroundColor: '#1c1c1c',
-            color: '#ffffff',
-            border: '1px solid #ffffff',
-          }}
+          style={{ backgroundColor: '#1c1c1c', color: '#fff', border: '1px solid #FFC72C' }}
         />
       </Form.Group>
 
       <Row xs={1} md={2} lg={3} className="g-4">
-        {floorData
-          .map(({ floor, total, occupants }) => {
-            const filtered = occupants.filter(
-              (emp) =>
-                emp.ObjectName1?.toLowerCase().includes(search) ||
-                emp.EmployeeID?.toString().includes(search)
-            );
+        {sortedFloorData.map(({ floor, total, occupants }) => {
+          const filtered = occupants.filter(
+            (emp) =>
+              emp.ObjectName1?.toLowerCase().includes(search) ||
+              emp.EmployeeID?.toString().includes(search)
+          );
 
-            // Show only matching floor if search is active
-            if (search && filtered.length === 0) return null;
+          if (search && filtered.length === 0) return null;
 
-            return (
-              <Col key={floor}>
-                <Card className="h-100 border-warning">
-                  <Card.Header className="bg-warning text-dark">
-                    <strong>{floor}</strong> — Total: {filtered.length}
-                  </Card.Header>
-                  <Card.Body
-                    style={{
-                      overflowY: 'auto',
-                      maxHeight: 600,
-                      backgroundColor: '#000',
-                      padding: 0,
-                    }}
+          return (
+            <Col key={floor}>
+              <Card className="h-100 shadow-sm" style={{ border: '2px solid #FFC72C' }}>
+                <Card.Header
+                  className="fw-bold"
+                  style={{ backgroundColor: '#FFC72C', color: '#1c1c1c' }}
+                >
+                  {floor} — Total: {filtered.length}
+                </Card.Header>
+                <Card.Body
+                  style={{
+                    overflowY: 'auto',
+                    maxHeight: 600,
+                    backgroundColor: '#1c1c1c',
+                    padding: 0
+                  }}
+                >
+                  <Table
+                    size="sm"
+                    className="mb-0"
+                    striped
+                    hover
+                    responsive
+                    style={{ color: '#fff' }}
                   >
-                    <Table
-                      size="sm"
-                      className="mb-0"
-                      style={{
-                        backgroundColor: '#1c1c1c',
-                        color: '#f0f0f0',
-                        width: '100%',
-                      }}
-                      bordered
-                      hover
-                      responsive
-                    >
-                      <thead style={{ backgroundColor: '#2c2c2c', color: '#ffffff' }}>
-                        <tr>
-                          <th style={{ border: '1px solid #444' }}>Name</th>
-                          <th style={{ border: '1px solid #444' }}>Swipe Time</th>
-                          <th style={{ border: '1px solid #444' }}>Date</th>
-                          <th style={{ border: '1px solid #444' }}>Type</th>
-                          <th style={{ border: '1px solid #444' }}>Door Name</th>
+                    <thead style={{ backgroundColor: '#2a2a2a', color: '#FFC72C' }}>
+                      <tr>
+                        <th>Name</th>
+                        <th>Swipe Time</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Door Name</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((emp, idx) => (
+                        <tr
+                          key={`${emp.EmployeeID}-${idx}`}
+                          className={idx % 2 === 0 ? 'dark-row-even' : 'dark-row-odd'}
+                        >
+                          <td>{emp.ObjectName1}</td>
+                          <td>{emp.Swipe_Time}</td>
+                          <td>{emp.Dateonly}</td>
+                          <td>{emp.PersonnelType}</td>
+                          <td>{emp.Door}</td>
                         </tr>
-                      </thead>
-                      <tbody style={{ backgroundColor: '#000', color: '#ffffff' }}>
-                        {filtered.map((emp, idx) => (
-                          <tr
-                            key={`${emp.EmployeeID}-${idx}`}
-                            style={{
-                              // backgroundColor: idx % 2 === 0 ? '#2a2a2a' : '#3a3a3a',
-                              // color: '#ffffff',
-                              backgroundColor: '#000'
-                            }}
-
-                            className={idx % 2 === 0 ? 'dark-row-even' : 'dark-row-odd'}
-                          >
-                            <td style={{ border: '1px solid #444' }}>{emp.ObjectName1}</td>
-                            <td style={{ border: '1px solid #444' }}>{emp.Swipe_Time}</td>
-                            <td style={{ border: '1px solid #444' }}>{emp.Dateonly}</td>
-                            <td style={{ border: '1px solid #444' }}>{emp.PersonnelType}</td>
-                            <td style={{ border: '1px solid #444' }}>{emp.Door}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
+                      ))}
+                    </tbody>
+                  </Table>
+                </Card.Body>
+              </Card>
+            </Col>
+          );
+        })}
       </Row>
     </Container>
   );
