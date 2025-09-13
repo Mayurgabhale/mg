@@ -1,10 +1,4 @@
-ok good, 
-know in frontedn update add this updae ok . 
-this is my fornte update this 
-http://localhost:5000/api/occupancy-at-time-denver?date=2025-09-13&time=01:30:00
-
-// C:\Users\W0024618\Desktop\swipeData\client-denver\src\App.js
-
+// src/App.js
 import React, { useEffect, useState } from 'react';
 import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
@@ -31,9 +25,21 @@ export default function App() {
   const [inOutError, setInOutError] = useState(null);
 
   // --- Snapshot/time selection states ---
-  // snapshotMode = whether dashboard is showing a user-selected snapshot (instead of live)
   const [snapshotMode, setSnapshotMode] = useState(false);
-  const [snapshotTime, setSnapshotTime] = useState(''); // "HH:MM" or "HH:MM:SS" from the input
+  const [snapshotTime, setSnapshotTime] = useState(''); // "HH:MM" or "HH:MM:SS"
+  const [snapshotDate, setSnapshotDate] = useState(() => {
+    // default to today's date in America/Denver in YYYY-MM-DD (en-CA format)
+    try {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+    } catch (e) {
+      // fallback to local date if running in environment without timeZone support
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  });
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [snapshotError, setSnapshotError] = useState(null);
   const [snapshotData, setSnapshotData] = useState(null); // will hold the payload returned by the new API
@@ -85,26 +91,35 @@ export default function App() {
     setSnapshotError(null);
   };
 
+  const handleSnapshotDateChange = (e) => {
+    setSnapshotDate(e.target.value);
+    setSnapshotError(null);
+  };
+
   const applySnapshot = async () => {
     if (!snapshotTime) {
       setSnapshotError('Select a time first.');
       return;
     }
+    if (!snapshotDate) {
+      setSnapshotError('Select a date first.');
+      return;
+    }
 
-    // HTML time input typically returns "HH:MM". Append ":00" for seconds.
+    // Ensure time has seconds (append :00 if only HH:MM)
     const timeForApi = snapshotTime.length === 5 ? `${snapshotTime}:00` : snapshotTime;
 
     setSnapshotLoading(true);
     setSnapshotError(null);
 
     try {
-      const resp = await fetch(`http://localhost:5000/api/occupancy-at-time-denver?time=${encodeURIComponent(timeForApi)}`);
+      const url = `http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`;
+      const resp = await fetch(url);
       if (!resp.ok) {
         const txt = await resp.text();
         throw new Error(`${resp.status} ${resp.statusText} - ${txt}`);
       }
       const json = await resp.json();
-      // store snapshot payload (same shape as SSE payload)
       setSnapshotData(json);
       setSnapshotMode(true);
     } catch (err) {
@@ -123,6 +138,7 @@ export default function App() {
     setSnapshotTime('');
     setSnapshotError(null);
     setSnapshotLoading(false);
+    // keep snapshotDate (so user doesn't need to reselect date)
   };
 
   // --- Decide which data to pass into child components: snapshotData (if active) or live data ---
@@ -134,7 +150,18 @@ export default function App() {
   const activeFloorInOutSummary = snapshotMode && snapshotData ? (snapshotData.floorInOutSummary || []) : floorInOutSummary;
 
   // Helper text to be shown in navbar / header when snapshot is active
-  const snapshotLabel = snapshotMode && snapshotData ? `Snapshot: ${snapshotData.asOf || snapshotTime}` : null;
+  let snapshotLabel = null;
+  if (snapshotMode && snapshotData) {
+    const asOfLocal = snapshotData.asOfLocal || snapshotData.asOf || snapshotData.asOfUTC;
+    try {
+      // If asOfLocal exists, show it formatted for Denver
+      const d = asOfLocal ? new Date(asOfLocal) : null;
+      const formatted = d ? d.toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${snapshotDate} ${snapshotTime}`;
+      snapshotLabel = `Snapshot: ${formatted} (Denver)`;
+    } catch (e) {
+      snapshotLabel = `Snapshot: ${snapshotDate} ${snapshotTime}`;
+    }
+  }
 
   return (
     <BrowserRouter>
@@ -158,15 +185,23 @@ export default function App() {
               In/Out Inconsistency
             </Nav.Link>
 
-            {/* Snapshot time picker UI */}
+            {/* Snapshot time + date picker UI */}
             <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
               <InputGroup>
+                <Form.Control
+                  type="date"
+                  value={snapshotDate}
+                  onChange={handleSnapshotDateChange}
+                  title="Select date (Denver)"
+                  style={{ maxWidth: 150 }}
+                />
                 <Form.Control
                   type="time"
                   step="1"              // allow seconds in browsers that support it
                   value={snapshotTime}
                   onChange={handleSnapshotTimeChange}
-                  title="Select time (today only, Denver time)"
+                  title="Select time (Denver)"
+                  style={{ maxWidth: 120 }}
                 />
                 <Button variant="outline-light" onClick={applySnapshot} disabled={snapshotLoading}>
                   {snapshotLoading ? 'Loading…' : 'Apply'}
@@ -187,7 +222,7 @@ export default function App() {
           {/* If snapshot active, show small label */}
           {snapshotLabel && (
             <div style={{ color: '#FFC72C', marginBottom: 8 }}>
-              {snapshotLabel} (Denver)
+              {snapshotLabel}
               {snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{snapshotError}</span>}
             </div>
           )}
