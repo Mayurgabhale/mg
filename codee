@@ -1,4 +1,25 @@
+// routes/occupancyDenverRoutes.js
+const express = require('express');
+const router = express.Router();
 
+// import the whole controller module (avoid destructuring surprises)
+const denverController = require('../controllers/denverLiveOccupancyController');
+const denverInOut = require('../controllers/denverInOutInconsistencyController');
+
+// Denver live occupancy (SSE)
+router.get('/live-occupancy-denver', denverController.getDenverLiveOccupancy);
+
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', denverInOut.getDenverInOutInconsistency);
+
+// Denver snapshot at (optional ?at=)
+router.get('/denver-occupancy-at', denverController.getSnapshotAt);
+
+module.exports = router;
+
+
+
+...
 Node.js v22.17.0
 PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> npm start
 
