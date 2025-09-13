@@ -1,111 +1,192 @@
-i dont like this, creat clean and more atractive. 
-
-
 // src/components/PersonnelSummaryCards.jsx
 import React from 'react';
-import { Card, Row, Col, Badge } from 'react-bootstrap';
+import { Card, Row, Col } from 'react-bootstrap';
 import { FaUserTie, FaHardHat, FaUsers } from 'react-icons/fa';
 
-const COLORS = ['#FFC72C', '#4CAF50', '#FF6F61', '#2196F3', '#9C27B0'];
+const ACCENT = '#FFC72C';
+const CARD_BG = '#0f1720';
+const CARD_PANEL = '#111418';
+const TEXT = '#E6E6E6';
+const MUTED = '#9AA4A6';
 
 export default function PersonnelSummaryCards({ data = [] }) {
-  // sort data by highest count first
-  const sortedData = [...data].sort((a, b) => b.count - a.count);
-  const total = sortedData.reduce((sum, e) => sum + e.count, 0);
+  // defensive: ensure numeric counts
+  const normalized = (data || []).map(d => ({
+    personnelType: String(d.personnelType || 'Unknown'),
+    count: Number(d.count || 0)
+  }));
 
-  if (!sortedData.length || total === 0) {
+  // sort highest count first
+  const sorted = normalized.sort((a, b) => b.count - a.count);
+
+  const total = sorted.reduce((s, e) => s + e.count, 0);
+
+  // small helper to pick icon
+  const pickIcon = (type) => {
+    const t = String(type || '').toLowerCase();
+    if (t.includes('employee')) return <FaUserTie />;
+    if (t.includes('contractor')) return <FaHardHat />;
+    return <FaUsers />;
+  };
+
+  // If nothing to show
+  if (!sorted.length || total === 0) {
     return (
-      <Card body className="bg-dark text-warning text-center shadow-lg" style={{ borderRadius: 12 }}>
-        No personnel data
+      <Card
+        className="mb-4"
+        style={{
+          background: CARD_BG,
+          border: `1px solid rgba(255,199,44,0.08)`,
+          color: TEXT,
+          borderRadius: 12,
+          boxShadow: '0 6px 18px rgba(2,6,23,0.6)'
+        }}
+      >
+        <Card.Body style={{ padding: '1.5rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '1.05rem', color: MUTED }}>No personnel data available</div>
+        </Card.Body>
       </Card>
     );
   }
 
   return (
     <Card
-      className="mb-4 shadow-lg"
+      className="mb-4"
       style={{
-        background: 'linear-gradient(145deg, #111, #1f1f1f)',
-        borderRadius: 16,
+        background: CARD_BG,
         border: 'none',
-        boxShadow: '0 10px 20px rgba(0,0,0,0.6), inset 0 2px 6px rgba(255,255,255,0.05)',
+        color: TEXT,
+        borderRadius: 12,
+        boxShadow: '0 10px 30px rgba(2,6,23,0.65)'
       }}
     >
       <Card.Header
-        className="text-center fw-bold"
         style={{
-          background: 'linear-gradient(to right, #FFC72C, #FF9800)',
-          color: '#000',
-          borderRadius: '12px 12px 0 0',
-          fontSize: '1.2rem',
-          textShadow: '0 1px 2px rgba(255,255,255,0.5)',
+          background: 'transparent',
+          borderBottom: 'none',
+          padding: '1rem 1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}
       >
-        Personnel Type Occupancy
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontWeight: 700, color: ACCENT, fontSize: '1.05rem' }}>
+            Personnel Type Occupancy
+          </div>
+          <small style={{ color: MUTED, marginTop: 4 }}>
+            Sorted by highest count — total: <strong style={{ color: TEXT }}>{total}</strong>
+          </small>
+        </div>
+
+        <div
+          style={{
+            background: `linear-gradient(180deg, ${ACCENT}22, ${ACCENT}11)`,
+            border: `1px solid ${ACCENT}`,
+            color: '#000',
+            padding: '6px 12px',
+            borderRadius: 999,
+            fontWeight: 700,
+            minWidth: 88,
+            textAlign: 'center',
+            boxShadow: `0 4px 12px ${ACCENT}22`
+          }}
+        >
+          <span style={{ color: ACCENT }}>{total}</span>
+        </div>
       </Card.Header>
 
-      <Card.Body
-        style={{
-          height: 450,
-          padding: '1.5rem',
-          overflowY: 'auto',
-        }}
-      >
-        <Row>
-          {sortedData.map((entry, index) => {
-            let icon;
-            if (entry.personnelType.toLowerCase().includes('employee')) icon = <FaUserTie />;
-            else if (entry.personnelType.toLowerCase().includes('contractor')) icon = <FaHardHat />;
-            else icon = <FaUsers />;
-
-            const color = COLORS[index % COLORS.length];
-
+      <Card.Body style={{ padding: '1rem 1rem 1.25rem', maxHeight: 420, overflowY: 'auto' }}>
+        <Row className="g-3">
+          {sorted.map((entry, idx) => {
+            const icon = pickIcon(entry.personnelType);
+            // subtle color ramp based on index
+            const bandAlpha = 0.06 + Math.min(idx, 6) * 0.02;
             return (
-              <Col key={entry.personnelType} xs={12} md={6} lg={4} className="mb-4">
+              <Col key={entry.personnelType + idx} xs={12} md={6} lg={4}>
                 <div
-                  className="p-3 text-center h-100"
+                  className="personnel-panel"
                   style={{
-                    background: `linear-gradient(145deg, #2a2a2a, #1c1c1c)`,
-                    borderRadius: 14,
-                    border: `1px solid ${color}`,
-                    boxShadow: `0 6px 12px rgba(0,0,0,0.7), inset 0 1px 4px rgba(255,255,255,0.1)`,
-                    transform: 'translateY(0)',
-                    transition: 'all 0.25s ease-in-out',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '14px',
+                    borderRadius: 10,
+                    background: `linear-gradient(180deg, ${CARD_PANEL}, ${CARD_BG})`,
+                    border: `1px solid rgba(255,199,44,${0.06 + (Math.min(idx, 4) * 0.02)})`,
+                    boxShadow: '0 6px 16px rgba(2,6,23,0.6)',
+                    transition: 'transform 180ms ease, box-shadow 180ms ease',
+                    cursor: 'default'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)';
-                    e.currentTarget.style.boxShadow = `0 12px 20px rgba(0,0,0,0.9), 0 0 12px ${color}55`;
+                    e.currentTarget.style.transform = 'translateY(-6px)';
+                    e.currentTarget.style.boxShadow = `0 18px 30px rgba(2,6,23,0.75), 0 6px 18px rgba(255,199,44,0.06)`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = `0 6px 12px rgba(0,0,0,0.7), inset 0 1px 4px rgba(255,255,255,0.1)`;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(2,6,23,0.6)';
                   }}
                 >
-                  <div style={{ fontSize: '2.5rem', color }} className="mb-3">
-                    {icon}
-                  </div>
-                  <h5 style={{ color: '#fff', marginBottom: '0.75rem' }}>{entry.personnelType}</h5>
-                  <Badge
-                    bg="secondary"
+                  {/* icon block */}
+                  <div
                     style={{
-                      fontSize: '1.4rem',
-                      fontWeight: 'bold',
-                      padding: '0.6rem 1.4rem',
-                      backgroundColor: color,
-                      boxShadow: `0 0 15px ${color}aa, inset 0 0 8px rgba(0,0,0,0.5)`,
-                      borderRadius: '12px',
+                      width: 56,
+                      height: 56,
+                      borderRadius: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 22,
+                      color: '#000',
+                      background: `linear-gradient(135deg, ${ACCENT}, rgba(255,199,44,0.85))`,
+                      boxShadow: `0 6px 14px rgba(0,0,0,0.45)`,
+                      flexShrink: 0
                     }}
                   >
-                    {entry.count}
-                  </Badge>
+                    {icon}
+                  </div>
+
+                  {/* text block */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontWeight: 700, color: TEXT, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.personnelType}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: ACCENT }}>
+                          {entry.count}
+                        </div>
+                        <div style={{ fontSize: 11, color: MUTED }}>
+                          {total > 0 ? `${Math.round((entry.count / total) * 100)}%` : '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 8, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${total ? (entry.count / total) * 100 : 0}%`,
+                          background: `linear-gradient(90deg, ${ACCENT}, rgba(255,199,44,0.85))`,
+                          boxShadow: `0 3px 8px ${ACCENT}22`,
+                          transition: 'width 400ms ease'
+                        }}
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
                 </div>
               </Col>
             );
           })}
         </Row>
-
-      
       </Card.Body>
+
+      {/* small scoped styles for accessibility / scrollbar */}
+      <style>{`
+        .personnel-panel::-webkit-scrollbar { height: 8px; width: 8px; }
+        .personnel-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
+      `}</style>
     </Card>
   );
 }
