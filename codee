@@ -1,28 +1,31 @@
-// --- new handler: GET /api/occupancy-at-time-denver?time=HH:MM[:SS]
+// --- existing time-of-day handler (HH:MM[:SS])
 exports.getDenverSnapshotAtTime = async (req, res) => {
   try {
     const timeRaw = req.query.time; // expect HH:MM or HH:MM:SS (Denver local)
-    if (!timeRaw) return res.status(400).json({ error: 'missing "time" query parameter (expected HH:MM or HH:MM:SS)' });
+    if (!timeRaw) {
+      return res.status(400).json({
+        error: 'missing "time" query parameter (expected HH:MM or HH:MM:SS)'
+      });
+    }
 
-    // Validate basic format
     const m = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(timeRaw);
-    if (!m) return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+    if (!m) {
+      return res.status(400).json({
+        error: 'invalid "time" format; expected HH:MM or HH:MM:SS'
+      });
+    }
 
     const hour = Number(m[1]);
     const minute = Number(m[2]);
     const second = m[3] ? Number(m[3]) : 0;
 
-    // Build the "until" instant as today in America/Denver with the provided time
-    const untilDt = DateTime.now().setZone('America/Denver').set({ hour, minute, second, millisecond: 0 });
+    const untilDt = DateTime.now()
+      .setZone('America/Denver')
+      .set({ hour, minute, second, millisecond: 0 });
     const untilJsDate = untilDt.toJSDate();
 
-    // fetch events in 24h window ending at until
     const events = await fetchEventsWindowUntil(untilJsDate);
-
-    // Build occupancy payload using existing builder
     const payload = buildOccupancyForToday(events, []);
-
-    // adjust asOf to the requested snapshot instant (ISO)
     payload.asOf = untilDt.toUTC().toISO();
 
     return res.json(payload);
@@ -31,3 +34,37 @@ exports.getDenverSnapshotAtTime = async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+// --- new handler: GET /api/occupancy-at-denver?at=YYYY-MM-DDTHH:mm:ss
+exports.getDenverSnapshotAt = async (req, res) => {
+  try {
+    const atRaw = req.query.at;
+    if (!atRaw) {
+      return res.status(400).json({
+        error: 'missing "at" query parameter (expected ISO date-time string)'
+      });
+    }
+
+    const atDt = DateTime.fromISO(atRaw, { zone: 'America/Denver' });
+    if (!atDt.isValid) {
+      return res.status(400).json({ error: 'invalid "at" timestamp' });
+    }
+
+    const untilJsDate = atDt.toJSDate();
+
+    const events = await fetchEventsWindowUntil(untilJsDate);
+    const payload = buildOccupancyForToday(events, []);
+    payload.asOf = atDt.toUTC().toISO();
+
+    return res.json(payload);
+  } catch (err) {
+    console.error('getDenverSnapshotAt error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
+
+...
+GET /api/occupancy-at-denver?at=2025-09-13T14:30:00
