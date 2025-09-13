@@ -1,3 +1,6 @@
+curl 'http://localhost:5000/api/occupancy-at-time-denver?time=12:00:00'
+
+
 // REPLACE the previous getDenverOccupancyAtTime with this version
 exports.getDenverOccupancyAtTime = async (req, res) => {
   try {
