@@ -21,6 +21,10 @@ exports.debugFetchCount = async (req, res) => {
 
 
 
-
 http://localhost:5000/api/debug-fetch-count
-{"fetched":0,"sample":[]}
+{
+  "denverStart": "2025-09-13T00:00:00.000-06:00",
+  "utcStart": "2025-09-13T06:00:00.000Z",
+  "fetched": 0,
+  "sample": []
+}
