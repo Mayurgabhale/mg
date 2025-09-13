@@ -1,34 +1,11 @@
-
-
-
-// src/components/PersonnelDonutChart.jsx
-
+// src/components/PersonnelSummaryCards.jsx
 import React from 'react';
-import {
-  PieChart, Pie, Cell, Tooltip,
-  ResponsiveContainer, Legend, Label
-} from 'recharts';
-import { Card } from 'react-bootstrap';
+import { Card, Row, Col, Badge } from 'react-bootstrap';
+import { FaUserTie, FaHardHat, FaUsers } from 'react-icons/fa';
 
-// Expanded Western Union–style palette for up to 10 categories
-const SLICE_COLORS = [
-  '#FFC72C', // yellow
-  '#228B22', // forest green
-  '#EEA0F1',
-  '#E18E30',
-  '#B5B21A',
-  '#FFE680', // light yellow
-  '#FFD11A', // gold
-  '#FFEB99', // pale gold
-  '#C9A9A6', // muted rose
-  '#96DED1', // teal
-  '#FF8C00', // dark orange
-  '#8B0000', // dark red
-  '#4B0082'  // indigo
-];
+const COLORS = ['#FFC72C', '#228B22', '#EEA0F1', '#E18E30', '#B5B21A'];
 
-export default function PersonnelDonutChart({ data = [] }) {
-  // Sum all counts across every category in `data`
+export default function PersonnelSummaryCards({ data = [] }) {
   const total = data.reduce((sum, e) => sum + e.count, 0);
 
   if (!data.length || total === 0) {
@@ -39,68 +16,57 @@ export default function PersonnelDonutChart({ data = [] }) {
     );
   }
 
-  // Sort descending by count so largest slice is first
-  const sorted = [...data].sort((a, b) => b.count - a.count);
-
   return (
-    <Card
-      className="mb-4 shadow-sm"
-      style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}
-    >
+    <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
       <Card.Header
         className="text-center fw-bold"
         style={{ background: '#000', color: '#FFC72C' }}
       >
         Personnel Type Occupancy
       </Card.Header>
-      <Card.Body style={{ height: 450, padding: '1rem' }}>
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie
-              data={sorted}
-              dataKey="count"
-              nameKey="personnelType"
-              cx="50%" cy="50%"
-              innerRadius={70} outerRadius={140}
-              paddingAngle={4}
-              labelLine={false}
-              label={({ percent, name }) => (
-                <tspan fill="#fff">
-                  {`${name}: ${(percent * 100).toFixed(0)}%`}
-                </tspan>
-              )}
-              stroke="#333"
-              strokeWidth={1.5}
-            >
-              {sorted.map((entry, idx) => (
-                <Cell
-                  key={entry.personnelType}
-                  fill={SLICE_COLORS[idx % SLICE_COLORS.length]}
-                />
-              ))}
-              <Label
-                value={total}
-                position="center"
-                style={{ fill: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}
-              />
-            </Pie>
-            <Tooltip
-              wrapperStyle={{
-                backgroundColor: '#2f2f2f',
-                border: '1px solid #444',
-                borderRadius: '4px',
-                color: '#fff'
-              }}
-              formatter={(value, name) => [`${value}`, `${name}`]}
-            />
-            <Legend
-              verticalAlign="bottom"
-              wrapperStyle={{ color: '#fff', paddingTop: 10 }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      <Card.Body>
+        <Row>
+          {data.map((entry, index) => {
+            let icon;
+            if (entry.personnelType.toLowerCase().includes('employee')) icon = <FaUserTie />;
+            else if (entry.personnelType.toLowerCase().includes('contractor')) icon = <FaHardHat />;
+            else icon = <FaUsers />;
+
+            return (
+              <Col key={entry.personnelType} xs={12} md={6} lg={4} className="mb-3">
+                <Card
+                  className="text-center shadow-sm"
+                  style={{
+                    background: '#2f2f2f',
+                    borderLeft: `5px solid ${COLORS[index % COLORS.length]}`,
+                    borderRadius: '6px',
+                    padding: '1rem'
+                  }}
+                >
+                  <div style={{ fontSize: '2rem', color: COLORS[index % COLORS.length] }} className="mb-2">
+                    {icon}
+                  </div>
+                  <h5 style={{ color: '#fff', marginBottom: '0.5rem' }}>{entry.personnelType}</h5>
+                  <Badge
+                    bg="secondary"
+                    style={{
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      padding: '0.5rem 1rem',
+                      backgroundColor: COLORS[index % COLORS.length]
+                    }}
+                  >
+                    {entry.count}
+                  </Badge>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+        <div className="text-end mt-3" style={{ color: '#fff', fontWeight: '600' }}>
+          Total Personnel: {total}
+        </div>
       </Card.Body>
     </Card>
   );
 }
-
