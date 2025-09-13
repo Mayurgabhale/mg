@@ -1,94 +1,87 @@
-// src/components/PersonnelSummaryCards.jsx
+i want to redisng this dahsborad ok; right know this isin dark theme. 
+but i want to this light theme ok. 
+first i give this page then i will give all, ok 
+so stat create more profesal and clean and atractive desing,. 
+know only chene desng not logic of a code. 
+so more carefully. ok 
+
+
+// src/pages/DashboardHome.jsx
+
 import React from 'react';
-import { Card, Row, Col, Badge } from 'react-bootstrap';
-import { FaUserTie, FaHardHat, FaUsers, FaChartPie } from 'react-icons/fa';
+import { Container, Row, Col } from 'react-bootstrap';
 
-const COLORS = ['#FFC72C', '#228B22', '#3A86FF', '#E18E30', '#8338EC', '#FB5607', '#8AC926'];
+import SummaryCards from '../components/SummaryCards';
+import FloorOccupancyChart from '../components/FloorOccupancyChart';
+import PersonnelDonutChart from '../components/PersonnelDonutChart';
+import FloorInOutTable from '../components/FloorInOutTable';
 
-export default function PersonnelSummaryCards({ data = [] }) {
-  const total = data.reduce((sum, e) => sum + e.count, 0);
+export default function DashboardHome({
+  personnelSummary,
+  totalVisitedToday,
+  visitedToday,
+  floorData,
+  personnelBreakdown,
+  floorInOutSummary
+}) {
+  const employees = personnelSummary?.employees ?? 0;
+  const contractors = personnelSummary?.contractors ?? 0;
+  const totalOccupancy = employees + contractors;
 
-  if (!data.length || total === 0) {
-    return (
-      <Card className="mb-4 personnel-summary-card">
-        <Card.Header className="personnel-card-header">
-          <FaChartPie className="me-2" /> Personnel Type Occupancy
-        </Card.Header>
-        <Card.Body className="d-flex align-items-center justify-content-center" style={{ minHeight: '200px' }}>
-          <div className="text-center text-muted">
-            <FaUsers size="2.5rem" className="mb-2" />
-            <p>No personnel data available</p>
-          </div>
-        </Card.Body>
-      </Card>
-    );
-  }
+  const chartData = personnelBreakdown.map(({ personnelType, count }) => ({
+    personnelType,
+    count
+  }));
 
   return (
-    <Card className="mb-4 personnel-summary-card">
-      <Card.Header className="personnel-card-header">
-        <FaChartPie className="me-2" /> Personnel Type Occupancy
-      </Card.Header>
-      <Card.Body className="personnel-card-body">
-        <Row className="g-3">
-          {data.map((entry, index) => {
-            const percentage = Math.round((entry.count / total) * 100);
-            let icon;
-            if (entry.personnelType.toLowerCase().includes('employee')) icon = <FaUserTie />;
-            else if (entry.personnelType.toLowerCase().includes('contractor')) icon = <FaHardHat />;
-            else icon = <FaUsers />;
+    <Container fluid className="py-4">
+      <SummaryCards
+        totalOccupancy={totalOccupancy}
+        employeeCount={employees}
+        contractorCount={contractors}
+        totalVisitedToday={totalVisitedToday}
+        employeesVisitedToday={visitedToday?.employees ?? 0}
+        contractorsVisitedToday={visitedToday?.contractors ?? 0}
+      />
 
-            return (
-              <Col key={entry.personnelType} xs={12} md={6} lg={4} className="mb-2">
-                <Card className="personnel-type-card h-100">
-                  <Card.Body className="d-flex flex-column justify-content-between p-3">
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                      <div className="personnel-icon" style={{ color: COLORS[index % COLORS.length] }}>
-                        {icon}
-                      </div>
-                      <Badge className="percentage-badge" bg="light" text="dark">
-                        {percentage}%
-                      </Badge>
-                    </div>
-                    
-                    <h6 className="personnel-type-title">{entry.personnelType}</h6>
-                    
-                    <div className="mt-2">
-                      <div className="d-flex justify-content-between align-items-center mb-1">
-                        <span className="personnel-count" style={{ color: COLORS[index % COLORS.length] }}>
-                          {entry.count}
-                        </span>
-                        <span className="text-muted small">of {total}</span>
-                      </div>
-                      <div className="progress" style={{ height: '6px' }}>
-                        <div 
-                          className="progress-bar" 
-                          role="progressbar" 
-                          style={{ 
-                            width: `${percentage}%`, 
-                            backgroundColor: COLORS[index % COLORS.length] 
-                          }} 
-                          aria-valuenow={percentage} 
-                          aria-valuemin="0" 
-                          aria-valuemax="100"
-                        ></div>
-                      </div>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
-        </Row>
-      </Card.Body>
-      <Card.Footer className="personnel-card-footer">
-        <div className="d-flex justify-content-between align-items-center">
-          <span className="text-muted">Total Personnel</span>
-          <Badge bg="warning" text="dark" className="total-badge">
-            {total}
-          </Badge>
+      {/* Dashboard Charts + In/Out Table in one row */}
+      <Row className="g-4">
+        <Col md={4}>
+          <FloorOccupancyChart data={floorData} />
+        </Col>
+        <Col md={4}>
+          <PersonnelDonutChart data={chartData} />
+        </Col>
+
+         {/* <Row className="g-4"> */}
+        <Col md={4}>
+          <FloorInOutTable data={floorInOutSummary} />
+        </Col>
+      </Row>
+
+      {/* Footer */}
+      <footer
+        style={{
+          backgroundColor: '#000',
+          color: '#FFC72C',
+          padding: '1.5rem 0',
+          textAlign: 'center',
+          marginTop: '2rem',
+          borderTop: '2px solid #FFC72C',
+          fontSize: '0.95rem',
+          lineHeight: '1.6'
+        }}
+      >
+        <div>
+          <strong>Global Security Operations Center (GSOC)</strong><br />
+          Live Occupancy dashboard for Western Union Denver — Real-time occupancy, floor activity, and personnel insights.
         </div>
-      </Card.Footer>
-    </Card>
+        <div style={{ marginTop: '0.75rem' }}>
+          Contact us: <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com" style={{ color: '#FFC72C', textDecoration: 'underline' }}>gsoc@westernunion.com</a> |
+          Landline: <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
+    </Container>
   );
 }
+
