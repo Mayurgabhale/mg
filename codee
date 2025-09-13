@@ -1,192 +1,78 @@
+
+
 // src/components/PersonnelSummaryCards.jsx
 import React from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
+import { Card, Row, Col, Badge } from 'react-bootstrap';
 import { FaUserTie, FaHardHat, FaUsers } from 'react-icons/fa';
 
-const ACCENT = '#FFC72C';
-const CARD_BG = '#0f1720';
-const CARD_PANEL = '#111418';
-const TEXT = '#E6E6E6';
-const MUTED = '#9AA4A6';
+const COLORS = ['#FFC72C', '#228B22', '#EEA0F1', '#E18E30', '#B5B21A'];
 
 export default function PersonnelSummaryCards({ data = [] }) {
-  // defensive: ensure numeric counts
-  const normalized = (data || []).map(d => ({
-    personnelType: String(d.personnelType || 'Unknown'),
-    count: Number(d.count || 0)
-  }));
+  const total = data.reduce((sum, e) => sum + e.count, 0);
 
-  // sort highest count first
-  const sorted = normalized.sort((a, b) => b.count - a.count);
-
-  const total = sorted.reduce((s, e) => s + e.count, 0);
-
-  // small helper to pick icon
-  const pickIcon = (type) => {
-    const t = String(type || '').toLowerCase();
-    if (t.includes('employee')) return <FaUserTie />;
-    if (t.includes('contractor')) return <FaHardHat />;
-    return <FaUsers />;
-  };
-
-  // If nothing to show
-  if (!sorted.length || total === 0) {
+  if (!data.length || total === 0) {
     return (
-      <Card
-        className="mb-4"
-        style={{
-          background: CARD_BG,
-          border: `1px solid rgba(255,199,44,0.08)`,
-          color: TEXT,
-          borderRadius: 12,
-          boxShadow: '0 6px 18px rgba(2,6,23,0.6)'
-        }}
-      >
-        <Card.Body style={{ padding: '1.5rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '1.05rem', color: MUTED }}>No personnel data available</div>
-        </Card.Body>
+      <Card body className="bg-dark text-warning">
+        No personnel data
       </Card>
     );
   }
 
   return (
-    <Card
-      className="mb-4"
-      style={{
-        background: CARD_BG,
-        border: 'none',
-        color: TEXT,
-        borderRadius: 12,
-        boxShadow: '0 10px 30px rgba(2,6,23,0.65)'
-      }}
-    >
+    <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
       <Card.Header
-        style={{
-          background: 'transparent',
-          borderBottom: 'none',
-          padding: '1rem 1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}
+        className="text-center fw-bold"
+        style={{ background: '#000', color: '#FFC72C' }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontWeight: 700, color: ACCENT, fontSize: '1.05rem' }}>
-            Personnel Type Occupancy
-          </div>
-          <small style={{ color: MUTED, marginTop: 4 }}>
-            Sorted by highest count — total: <strong style={{ color: TEXT }}>{total}</strong>
-          </small>
-        </div>
-
-        <div
-          style={{
-            background: `linear-gradient(180deg, ${ACCENT}22, ${ACCENT}11)`,
-            border: `1px solid ${ACCENT}`,
-            color: '#000',
-            padding: '6px 12px',
-            borderRadius: 999,
-            fontWeight: 700,
-            minWidth: 88,
-            textAlign: 'center',
-            boxShadow: `0 4px 12px ${ACCENT}22`
-          }}
-        >
-          <span style={{ color: ACCENT }}>{total}</span>
-        </div>
+        Personnel Type Occupancy
       </Card.Header>
+      <Card.Body style={{
+          height: 450,
+          padding: '1rem',
+          overflowY: 'auto'
+        }}>
+        <Row>
+          {data.map((entry, index) => {
+            let icon;
+            if (entry.personnelType.toLowerCase().includes('employee')) icon = <FaUserTie />;
+            else if (entry.personnelType.toLowerCase().includes('contractor')) icon = <FaHardHat />;
+            else icon = <FaUsers />;
 
-      <Card.Body style={{ padding: '1rem 1rem 1.25rem', maxHeight: 420, overflowY: 'auto' }}>
-        <Row className="g-3">
-          {sorted.map((entry, idx) => {
-            const icon = pickIcon(entry.personnelType);
-            // subtle color ramp based on index
-            const bandAlpha = 0.06 + Math.min(idx, 6) * 0.02;
             return (
-              <Col key={entry.personnelType + idx} xs={12} md={6} lg={4}>
-                <div
-                  className="personnel-panel"
+              <Col key={entry.personnelType} xs={12} md={6} lg={4} className="mb-3">
+                <Card
+                  className="text-center shadow-sm"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '14px',
-                    borderRadius: 10,
-                    background: `linear-gradient(180deg, ${CARD_PANEL}, ${CARD_BG})`,
-                    border: `1px solid rgba(255,199,44,${0.06 + (Math.min(idx, 4) * 0.02)})`,
-                    boxShadow: '0 6px 16px rgba(2,6,23,0.6)',
-                    transition: 'transform 180ms ease, box-shadow 180ms ease',
-                    cursor: 'default'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px)';
-                    e.currentTarget.style.boxShadow = `0 18px 30px rgba(2,6,23,0.75), 0 6px 18px rgba(255,199,44,0.06)`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(2,6,23,0.6)';
+                    background: '#2f2f2f',
+                    borderLeft: `5px solid ${COLORS[index % COLORS.length]}`,
+                    borderRadius: '6px',
+                    padding: '1rem'
                   }}
                 >
-                  {/* icon block */}
-                  <div
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 12,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 22,
-                      color: '#000',
-                      background: `linear-gradient(135deg, ${ACCENT}, rgba(255,199,44,0.85))`,
-                      boxShadow: `0 6px 14px rgba(0,0,0,0.45)`,
-                      flexShrink: 0
-                    }}
-                  >
+                  <div style={{ fontSize: '2rem', color: COLORS[index % COLORS.length] }} className="mb-2">
                     {icon}
                   </div>
-
-                  {/* text block */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontWeight: 700, color: TEXT, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {entry.personnelType}
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: ACCENT }}>
-                          {entry.count}
-                        </div>
-                        <div style={{ fontSize: 11, color: MUTED }}>
-                          {total > 0 ? `${Math.round((entry.count / total) * 100)}%` : '—'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: 8, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          height: '100%',
-                          width: `${total ? (entry.count / total) * 100 : 0}%`,
-                          background: `linear-gradient(90deg, ${ACCENT}, rgba(255,199,44,0.85))`,
-                          boxShadow: `0 3px 8px ${ACCENT}22`,
-                          transition: 'width 400ms ease'
-                        }}
-                        aria-hidden
-                      />
-                    </div>
-                  </div>
-                </div>
+                  <h5 style={{ color: '#fff', marginBottom: '0.5rem' }}>{entry.personnelType}</h5>
+                  <Badge
+                    bg="secondary"
+                    style={{
+                      fontSize: '1.3rem',
+                      fontWeight: 'bold',
+                      padding: '0.5rem 1rem',
+                      backgroundColor: COLORS[index % COLORS.length]
+                    }}
+                  >
+                    {entry.count}
+                  </Badge>
+                </Card>
               </Col>
             );
           })}
         </Row>
+        {/* <div className="text-end mt-0" style={{ color: '#fff', fontWeight: '600' }}>
+          Total Personnel: {total}
+        </div> */}
       </Card.Body>
-
-      {/* small scoped styles for accessibility / scrollbar */}
-      <style>{`
-        .personnel-panel::-webkit-scrollbar { height: 8px; width: 8px; }
-        .personnel-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 8px; }
-      `}</style>
     </Card>
   );
 }
