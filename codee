@@ -1,298 +1,229 @@
-wrti correct format documantion.
-getting ero    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7432:39)
-    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3373:24)
-    at FlowParserMixin.parseBindingElement (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7416:23)
-    at FlowParserMixin.parseBindingList (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7385:24)
-    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:13333:24)
-    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3477:11)
-    at FlowParserMixin.parseMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11961:10)
-    at FlowParserMixin.parseObjectMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11862:19)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:23)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
-    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
-    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12334:12)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
-    at FlowParserMixin.parseObjectProperty (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11868:83)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:100)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
-    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
-    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12329:16)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+import React from "react";
+import { Container, Row, Col } from "react-bootstrap";
 
-ERROR in [eslint]
-src\pages\DashboardHome.jsx
-  Line 195:14:  Parsing error: Unexpected token (195:14)
+import SummaryCards from "../components/SummaryCards";
+import FloorOccupancyChart from "../components/FloorOccupancyChart";
+import PersonnelDonutChart from "../components/PersonnelDonutChart";
+import FloorInOutTable from "../components/FloorInOutTable";
 
-webpack compiled with 2 errors
-Compiling...
-Failed to compile.
+/**
+ * DashboardHome
+ * -----------------------------
+ * Light-theme redesign for the GSOC live occupancy dashboard.
+ * - Focuses on layout and styling only (business logic remains unchanged).
+ * - Uses Bootstrap grid utilities and inline styles for fine-tuned control.
+ * - Displays summary cards, charts, in/out activity table, and footer metadata.
+ */
+export default function DashboardHome({
+  personnelSummary,
+  totalVisitedToday,
+  visitedToday,
+  floorData,
+  personnelBreakdown,
+  floorInOutSummary,
+}) {
+  // --- Derived values ---
+  const employees = personnelSummary?.employees ?? 0;
+  const contractors = personnelSummary?.contractors ?? 0;
+  const totalOccupancy = employees + contractors;
 
-SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
-  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
-  194 |
-> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4"> {/* Header area /} 
-      |               ^
-  196 |
-  197 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
-  198 |
-ERROR in ./src/pages/DashboardHome.jsx
-Module build failed (from ./node_modules/babel-loader/lib/index.js):
-SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
+  // Chart input for donut chart
+  const chartData = personnelBreakdown.map(({ personnelType, count }) => ({
+    personnelType,
+    count,
+  }));
 
-  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
-  194 |
-> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4"> {/* Header area /}
-      |               ^
-  196 |
-  197 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
-  198 |
-    at constructor (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:360:19)
-    at FlowParserMixin.raise (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6613:19)
-    at FlowParserMixin.unexpected (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6633:16)
-    at FlowParserMixin.parseIdentifierName (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12116:12)
-    at FlowParserMixin.parseIdentifier (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12099:23)
-    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7349:17)
-    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3469:22)
-    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7432:39)
-    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3373:24)
-    at FlowParserMixin.parseBindingElement (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7416:23)
-    at FlowParserMixin.parseBindingList (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7385:24)
-    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:13333:24)
-    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3477:11)
-    at FlowParserMixin.parseMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11961:10)
-    at FlowParserMixin.parseObjectMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11862:19)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:23)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
-    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
-    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12334:12)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
-    at FlowParserMixin.parseObjectProperty (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11868:83)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:100)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
-    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
-    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12329:16)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+  // --- Shared style tokens ---
+  const styles = {
+    pageBg: {
+      backgroundColor: "#f5f7fb",
+    },
+    panel: {
+      background: "#ffffff",
+      borderRadius: "12px",
+      padding: "1rem",
+      boxShadow: "0 6px 18px rgba(35, 47, 63, 0.06)",
+      border: "1px solid #e9edf3",
+    },
+    panelHeader: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: "0.75rem",
+    },
+    title: {
+      margin: 0,
+      fontSize: "1.125rem",
+      fontWeight: 600,
+      color: "#23303f",
+    },
+    subtitle: {
+      margin: 0,
+      fontSize: "0.875rem",
+      color: "#64707a",
+    },
+    footer: {
+      backgroundColor: "#ffffff",
+      color: "#6b7280",
+      padding: "1.25rem 0",
+      textAlign: "center",
+      marginTop: "2rem",
+      borderTop: "1px solid #e6e9ee",
+      fontSize: "0.95rem",
+      lineHeight: "1.6",
+    },
+    accent: {
+      color: "#ffb800", // keeps brand yellow as accent where appropriate
+      textDecoration: "none",
+      fontWeight: 600,
+    },
+    smallMeta: {
+      fontSize: "0.85rem",
+      color: "#8a98a6",
+    },
+  };
 
-ERROR in [eslint]
-src\pages\DashboardHome.jsx
-  Line 195:14:  Parsing error: Unexpected token (195:14)
+  // --- Component layout ---
+  return (
+    <div style={styles.pageBg} className="min-vh-100 py-4">
+      <Container fluid className="px-4">
+        {/* Header area */}
+        <div style={{ marginBottom: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "1rem",
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "1.5rem",
+                  color: "#0f1724",
+                }}
+              >
+                Live Occupancy — Denver
+              </h2>
+              <div style={styles.smallMeta}>
+                Global Security Operations Center (GSOC) — real-time floor
+                occupancy & personnel insights
+              </div>
+            </div>
 
-webpack compiled with 2 errors
-Compiling...
-Failed to compile.
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                alignItems: "center",
+              }}
+            >
+              {/* Action placeholders (design-only) */}
+              <button className="btn btn-outline-secondary btn-sm">
+                Refresh
+              </button>
+              <button className="btn btn-primary btn-sm">Export</button>
+            </div>
+          </div>
+        </div>
 
-SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
-  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
-  194 |
-> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4"> 
-      |               ^
-  196 |       {/* Header area /} 
-  197 |
-  198 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
-ERROR in ./src/pages/DashboardHome.jsx
-Module build failed (from ./node_modules/babel-loader/lib/index.js):
-SyntaxError: C:\Users\W0024618\Desktop\swipeData\client-denver\src\pages\DashboardHome.jsx: Unexpected token (195:14)
+        {/* Summary cards row */}
+        <div style={{ ...styles.panel, marginBottom: "1rem" }}>
+          <SummaryCards
+            totalOccupancy={totalOccupancy}
+            employeeCount={employees}
+            contractorCount={contractors}
+            totalVisitedToday={totalVisitedToday}
+            employeesVisitedToday={visitedToday?.employees ?? 0}
+            contractorsVisitedToday={visitedToday?.contractors ?? 0}
+          />
+        </div>
 
-  193 |       color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
-  194 |
-> 195 |       return( <div style = { styles.pageBg } className = "min-vh-100 py-4" > <Container fluid className="px-4">
-      |               ^
-  196 |       {/* Header area /}
-  197 |
-  198 |         <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
-    at constructor (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:360:19)
-    at FlowParserMixin.raise (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6613:19)
-    at FlowParserMixin.unexpected (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:6633:16)
-    at FlowParserMixin.parseIdentifierName (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12116:12)
-    at FlowParserMixin.parseIdentifier (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12099:23)
-    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7349:17)
-    at FlowParserMixin.parseBindingAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3469:22)
-    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7432:39)
-    at FlowParserMixin.parseMaybeDefault (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3373:24)
-    at FlowParserMixin.parseBindingElement (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7416:23)
-    at FlowParserMixin.parseBindingList (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:7385:24)
-    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:13333:24)
-    at FlowParserMixin.parseFunctionParams (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3477:11)
-    at FlowParserMixin.parseMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11961:10)
-    at FlowParserMixin.parseObjectMethod (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11862:19)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:23)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
-    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
-    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12334:12)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
-    at FlowParserMixin.parseObjectProperty (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11868:83)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11896:100)
-    at FlowParserMixin.parseObjPropValue (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3345:26)
-    at FlowParserMixin.parsePropertyDefinition (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11833:17)
-    at FlowParserMixin.parseObjectLike (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11748:21)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:11250:23)
-    at FlowParserMixin.parseExprAtom (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:4770:20)
-    at FlowParserMixin.parseExprSubscripts (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10992:23)
-    at FlowParserMixin.parseUpdate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10977:21)
-    at FlowParserMixin.parseMaybeUnary (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10957:23)
-    at FlowParserMixin.parseMaybeUnaryOrPrivate (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10810:61)
-    at FlowParserMixin.parseExprOps (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10815:23)
-    at FlowParserMixin.parseMaybeConditional (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10792:23)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10745:21)
-    at FlowParserMixin.parseMaybeAssign (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:3555:18)
-    at C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:39
-    at FlowParserMixin.allowInAnd (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:12329:16)
-    at FlowParserMixin.parseMaybeAssignAllowIn (C:\Users\W0024618\Desktop\swipeData\client-denver\node_modules\@babel\parser\lib\index.js:10714:17)
+        {/* Dashboard Charts + In/Out Table */}
+        <Row className="g-4">
+          <Col md={4}>
+            <div style={{ ...styles.panel, height: "100%" }} className="h-100">
+              <div style={styles.panelHeader}>
+                <div>
+                  <h3 style={styles.title}>Floor Occupancy</h3>
+                  <div style={styles.subtitle}>Current occupancy by floor</div>
+                </div>
+              </div>
+              <div style={{ minHeight: "240px" }}>
+                <FloorOccupancyChart data={floorData} />
+              </div>
+            </div>
+          </Col>
 
-ERROR in [eslint]
-src\pages\DashboardHome.jsx
-  Line 195:14:  Parsing error: Unexpected token (195:14)
+          <Col md={4}>
+            <div style={{ ...styles.panel, height: "100%" }} className="h-100">
+              <div style={styles.panelHeader}>
+                <div>
+                  <h3 style={styles.title}>Personnel Breakdown</h3>
+                  <div style={styles.subtitle}>Employees vs. contractors</div>
+                </div>
+              </div>
+              <div
+                style={{
+                  minHeight: "240px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <PersonnelDonutChart data={chartData} />
+              </div>
+            </div>
+          </Col>
 
-webpack compiled with 2 errors
+          <Col md={4}>
+            <div
+              style={{ ...styles.panel, height: "100%" }}
+              className="h-100 d-flex flex-column"
+            >
+              <div style={styles.panelHeader}>
+                <div>
+                  <h3 style={styles.title}>Floor In / Out</h3>
+                  <div style={styles.subtitle}>Recent entries & exits</div>
+                </div>
+              </div>
 
+              <div style={{ flex: 1, overflow: "auto" }}>
+                <FloorInOutTable data={floorInOutSummary} />
+              </div>
+            </div>
+          </Col>
+        </Row>
 
-import React from 'react'; import { Container, Row, Col } from 'react-bootstrap';
+        {/* Footer */}
+        <footer style={styles.footer}>
+          <div>
+            <strong style={{ color: "#1f2937" }}>
+              Global Security Operations Center (GSOC)
+            </strong>
+            <div style={{ marginTop: "0.25rem" }}>
+              Live occupancy dashboard for Western Union Denver — real-time
+              occupancy, floor activity, and personnel insights.
+            </div>
+          </div>
 
-import SummaryCards from '../components/SummaryCards'; import FloorOccupancyChart from '../components/FloorOccupancyChart'; import PersonnelDonutChart from '../components/PersonnelDonutChart'; import FloorInOutTable from '../components/FloorInOutTable';
-
-// Light-theme redesign for DashboardHome // NOTES: // - This file only changes styling and layout, not the component logic or props. // - Uses Bootstrap utility classes + a small styles object for fine-tuned inline styles. // - Child components (SummaryCards, charts, table) are kept as-is; they are wrapped with light cards.
-
-export default function DashboardHome({ personnelSummary, totalVisitedToday, visitedToday, floorData, personnelBreakdown, floorInOutSummary }) { const employees = personnelSummary?.employees ?? 0; const contractors = personnelSummary?.contractors ?? 0; const totalOccupancy = employees + contractors;
-
-const chartData = personnelBreakdown.map(({ personnelType, count }) => ({ personnelType, count }));
-
-const styles = { pageBg: { backgroundColor: '#f5f7fb' }, panel: { background: '#ffffff', borderRadius: '12px', padding: '1rem', boxShadow: '0 6px 18px rgba(35, 47, 63, 0.06)', border: '1px solid #e9edf3' }, panelHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }, title: { margin: 0, fontSize: '1.125rem', fontWeight: 600, color: '#23303f' }, subtitle: { margin: 0, fontSize: '0.875rem', color: '#64707a' }, footer: { backgroundColor: '#ffffff', color: '#6b7280', padding: '1.25rem 0', textAlign: 'center', marginTop: '2rem', borderTop: '1px solid #e6e9ee', fontSize: '0.95rem', lineHeight: '1.6' }, accent: { color: '#ffb800', // keeps brand yellow as accent where appropriate textDecoration: 'none', fontWeight: 600 }, smallMeta: { fontSize: '0.85rem', color: '#8a98a6' } };
-
-return ( <div style={styles.pageBg} className="min-vh-100 py-4"> <Container fluid className="px-4"> {/* Header area /} <div style={{ marginBottom: '1rem' }}> <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}> <div> <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f1724' }}>Live Occupancy — Denver</h2> <div style={styles.smallMeta}>Global Security Operations Center (GSOC) — real-time floor occupancy & personnel insights</div> </div> <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}> {/ Action placeholders (design-only) */} <button className="btn btn-outline-secondary btn-sm">Refresh</button> <button className="btn btn-primary btn-sm">Export</button> </div> </div> </div>
-
-{/* Summary cards row (keeps existing SummaryCards component) */}
-    <div style={{ ...styles.panel, marginBottom: '1rem' }}>
-      <SummaryCards
-        totalOccupancy={totalOccupancy}
-        employeeCount={employees}
-        contractorCount={contractors}
-        totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees ?? 0}
-        contractorsVisitedToday={visitedToday?.contractors ?? 0}
-      />
+          <div style={{ marginTop: "0.75rem" }}>
+            Contact us:
+            <a
+              href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+              style={{ marginLeft: "0.25rem", marginRight: "0.5rem", ...styles.accent }}
+            >
+              gsoc@westernunion.com
+            </a>
+            | Landline:{" "}
+            <span style={{ marginLeft: "0.25rem", ...styles.accent }}>
+              +91-020-67632394
+            </span>
+          </div>
+        </footer>
+      </Container>
     </div>
-
-    {/* Dashboard Charts + In/Out Table in one row */}
-    <Row className="g-4">
-      <Col md={4}>
-        <div style={{ ...styles.panel, height: '100%' }} className="h-100">
-          <div style={styles.panelHeader}>
-            <div>
-              <h3 style={styles.title}>Floor Occupancy</h3>
-              <div style={styles.subtitle}>Current occupancy by floor</div>
-            </div>
-          </div>
-          <div style={{ minHeight: '240px' }}>
-            <FloorOccupancyChart data={floorData} />
-          </div>
-        </div>
-      </Col>
-
-      <Col md={4}>
-        <div style={{ ...styles.panel, height: '100%' }} className="h-100">
-          <div style={styles.panelHeader}>
-            <div>
-              <h3 style={styles.title}>Personnel Breakdown</h3>
-              <div style={styles.subtitle}>Employees vs. contractors</div>
-            </div>
-          </div>
-          <div style={{ minHeight: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PersonnelDonutChart data={chartData} />
-          </div>
-        </div>
-      </Col>
-
-      <Col md={4}>
-        <div style={{ ...styles.panel, height: '100%' }} className="h-100 d-flex flex-column">
-          <div style={styles.panelHeader}>
-            <div>
-              <h3 style={styles.title}>Floor In / Out</h3>
-              <div style={styles.subtitle}>Recent entries & exits</div>
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflow: 'auto' }}>
-            <FloorInOutTable data={floorInOutSummary} />
-          </div>
-        </div>
-      </Col>
-    </Row>
-
-    {/* Footer */}
-    <footer style={styles.footer}>
-      <div>
-        <strong style={{ color: '#1f2937' }}>Global Security Operations Center (GSOC)</strong>
-        <div style={{ marginTop: '0.25rem' }}>Live occupancy dashboard for Western Union Denver — real-time occupancy, floor activity, and personnel insights.</div>
-      </div>
-
-      <div style={{ marginTop: '0.75rem' }}>
-        Contact us:
-        <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com" style={{ marginLeft: '0.25rem', marginRight: '0.5rem', ...styles.accent }}>gsoc@westernunion.com</a>
-        | Landline: <span style={{ marginLeft: '0.25rem', ...styles.accent }}>+91-020-67632394</span>
-      </div>
-    </footer>
-  </Container>
-</div>
-
-); }
-
+  );
+}
