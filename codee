@@ -1,2 +1,6 @@
+?time=09:30:00
+
+
+
 http://localhost:5000/api/occupancy-at-time-denver?time=$%7BencodeURIComponent(timeForApi)%7D
 {"error":"time must be in format HH:mm or HH:mm:ss"}
