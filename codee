@@ -1,54 +1,67 @@
-
-
 /* src/App.css */
 
 /* ———————————————————————————————  
-   Western Union Infographic Palette  
+   Western Union Light Theme Palette  
 ———————————————————————————————————— */
 :root {
   --wu-yellow:     #FFC72C;
   --wu-black:      #000000;
-  --wu-gray-dark:  #1a1a1a;
+  --wu-gray-dark:  #23303f;
+  --wu-gray:       #64707a;
+  --wu-gray-light: #f5f7fb;
+  --wu-white:      #ffffff;
+
   --wu-accent-1:   #ffe680;
   --wu-accent-2:   #ffdb4d;
   --wu-accent-3:   #ffd11a;
 }
 
 /* ———————————————————————————————  
-   GLOBAL DARK THEME  
+   GLOBAL LIGHT THEME  
 ———————————————————————————————————— */
-.dark-theme {
-  background-color: var(--wu-black);
-  color: #fff;
+.light-theme {
+  background-color: var(--wu-gray-light);
+  color: var(--wu-gray-dark);
   min-height: 100vh;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
 }
 
 /* ———————————————————————————————  
    NAVBAR & NAV ITEMS  
 ———————————————————————————————————— */
 .navbar-infographic {
-  border-bottom: 3px solid var(--wu-yellow);
+  background-color: var(--wu-white) !important;
+  border-bottom: 2px solid var(--wu-yellow);
+  box-shadow: 0 2px 6px rgba(35, 47, 63, 0.05);
 }
+
 .wu-brand {
-  color: var(--wu-yellow) !important;
-  font-weight: bold;
-  font-size: 1.3rem;
+  color: var(--wu-gray-dark) !important;
+  font-weight: 700;
+  font-size: 1.25rem;
 }
+
 .nav-item-infographic {
   position: relative;
   font-weight: 500;
   padding: 0.5rem 1rem;
-  color: #fff !important;
+  color: var(--wu-gray-dark) !important;
+  transition: color 0.2s ease;
 }
+
 .nav-item-infographic::after {
   content: '';
   position: absolute;
   bottom: 4px;
   left: 50%;
   width: 0;
-  height: 3px;
+  height: 2px;
   background: var(--wu-yellow);
   transition: width 0.3s ease, left 0.3s ease;
+}
+
+.nav-item-infographic:hover {
+  color: var(--wu-black) !important;
 }
 .nav-item-infographic:hover::after {
   width: 80%;
@@ -61,35 +74,39 @@
 .theme-toggle-icon {
   font-size: 1.2rem;
   color: var(--wu-yellow) !important;
-  cursor: default;
+  cursor: pointer;
   padding: 0.5rem;
 }
 
 /* ———————————————————————————————  
    SUMMARY CARDS  
-   (Wrap your cards in .summary-card)  
 ———————————————————————————————————— */
-.dark-theme .summary-card {
-  background: var(--wu-black);
-  border: 2px solid var(--wu-yellow);
-  color: #fff;
+.summary-card {
+  background: var(--wu-white);
+  border: 1px solid #e6e9ee;
+  border-radius: 12px;
+  color: var(--wu-gray-dark);
+  box-shadow: 0 4px 12px rgba(35, 47, 63, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .summary-card:hover {
-  box-shadow: 0 0 10px var(--wu-accent-3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(35, 47, 63, 0.1);
 }
 
 /* ———————————————————————————————  
    CHART CONTAINERS  
-   (Wrap your charts in .chart-container)  
 ———————————————————————————————————— */
-.dark-theme .chart-container {
-  background: var(--wu-gray-dark);
+.chart-container {
+  background: var(--wu-white);
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: 12px;
+  border: 1px solid #e6e9ee;
+  box-shadow: 0 4px 12px rgba(35, 47, 63, 0.05);
 }
 
 /* ———————————————————————————————  
-   CHART.JS PALETTE EXAMPLE  
+   CHART PALETTE (EXAMPLE)  
 ———————————————————————————————————— */
 /*  
    const WU_PALETTE = [
@@ -99,5 +116,3 @@
      'var(--wu-accent-3)'
    ];
 */
-
-
