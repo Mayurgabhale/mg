@@ -1,17 +1,34 @@
-// src/components/PersonnelBarChart.jsx
+
+
+
+// src/components/PersonnelDonutChart.jsx
+
 import React from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend
+  PieChart, Pie, Cell, Tooltip,
+  ResponsiveContainer, Legend, Label
 } from 'recharts';
 import { Card } from 'react-bootstrap';
 
-const BAR_COLORS = [
-  '#FFC72C', '#228B22', '#EEA0F1', '#E18E30',
-  '#B5B21A', '#FFE680', '#FFD11A', '#FFEB99',
-  '#C9A9A6', '#96DED1'
+// Expanded Western Union–style palette for up to 10 categories
+const SLICE_COLORS = [
+  '#FFC72C', // yellow
+  '#228B22', // forest green
+  '#EEA0F1',
+  '#E18E30',
+  '#B5B21A',
+  '#FFE680', // light yellow
+  '#FFD11A', // gold
+  '#FFEB99', // pale gold
+  '#C9A9A6', // muted rose
+  '#96DED1', // teal
+  '#FF8C00', // dark orange
+  '#8B0000', // dark red
+  '#4B0082'  // indigo
 ];
 
-export default function PersonnelBarChart({ data = [] }) {
+export default function PersonnelDonutChart({ data = [] }) {
+  // Sum all counts across every category in `data`
   const total = data.reduce((sum, e) => sum + e.count, 0);
 
   if (!data.length || total === 0) {
@@ -22,6 +39,7 @@ export default function PersonnelBarChart({ data = [] }) {
     );
   }
 
+  // Sort descending by count so largest slice is first
   const sorted = [...data].sort((a, b) => b.count - a.count);
 
   return (
@@ -37,23 +55,35 @@ export default function PersonnelBarChart({ data = [] }) {
       </Card.Header>
       <Card.Body style={{ height: 450, padding: '1rem' }}>
         <ResponsiveContainer>
-          <BarChart
-            layout="vertical"
-            data={sorted}
-            margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
-          >
-            <XAxis
-              type="number"
-              stroke="#fff"
-              tick={{ fill: '#fff' }}
-            />
-            <YAxis
-              type="category"
-              dataKey="personnelType"
-              stroke="#fff"
-              tick={{ fill: '#fff', fontWeight: '600' }}
-              width={150}
-            />
+          <PieChart>
+            <Pie
+              data={sorted}
+              dataKey="count"
+              nameKey="personnelType"
+              cx="50%" cy="50%"
+              innerRadius={70} outerRadius={140}
+              paddingAngle={4}
+              labelLine={false}
+              label={({ percent, name }) => (
+                <tspan fill="#fff">
+                  {`${name}: ${(percent * 100).toFixed(0)}%`}
+                </tspan>
+              )}
+              stroke="#333"
+              strokeWidth={1.5}
+            >
+              {sorted.map((entry, idx) => (
+                <Cell
+                  key={entry.personnelType}
+                  fill={SLICE_COLORS[idx % SLICE_COLORS.length]}
+                />
+              ))}
+              <Label
+                value={total}
+                position="center"
+                style={{ fill: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}
+              />
+            </Pie>
             <Tooltip
               wrapperStyle={{
                 backgroundColor: '#2f2f2f',
@@ -64,17 +94,13 @@ export default function PersonnelBarChart({ data = [] }) {
               formatter={(value, name) => [`${value}`, `${name}`]}
             />
             <Legend
-              verticalAlign="top"
-              wrapperStyle={{ color: '#fff', paddingBottom: 10 }}
+              verticalAlign="bottom"
+              wrapperStyle={{ color: '#fff', paddingTop: 10 }}
             />
-            <Bar dataKey="count" barSize={30}>
-              {sorted.map((entry, index) => (
-                <Cell key={entry.personnelType} fill={BAR_COLORS[index % BAR_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
+          </PieChart>
         </ResponsiveContainer>
       </Card.Body>
     </Card>
   );
 }
+
