@@ -1,3 +1,111 @@
+......
+// src/components/SummaryCards.jsx
+import React from 'react';
+import { Card, Row, Col } from 'react-bootstrap';
+import { FaUsers, FaUserTie, FaHardHat } from 'react-icons/fa';
+
+export default function SummaryCards({
+  totalVisitedToday,
+  employeesVisitedToday,
+  contractorsVisitedToday,
+  totalOccupancy,
+  employeeCount,
+  contractorCount
+}) {
+  const cards = [
+    { title: "Today's Total Headcount", value: totalVisitedToday, icon: <FaUsers /> },
+    { title: "Today's Employees Count", value: employeesVisitedToday, icon: <FaUserTie /> },
+    { title: "Today's Contractors Count", value: contractorsVisitedToday, icon: <FaHardHat /> },
+    { title: 'Realtime Headcount', value: totalOccupancy, icon: <FaUsers /> },
+    { title: 'Realtime Employees Count', value: employeeCount, icon: <FaUserTie /> },
+    { title: 'Realtime Contractors Count', value: contractorCount, icon: <FaHardHat /> }
+  ];
+
+  const GRADIENTS = [
+    'linear-gradient(135deg, #FFB74D 0%, #FF8A65 100%)',
+    'linear-gradient(135deg, #4DB6AC 0%, #26A69A 100%)',
+    'linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%)',
+    'linear-gradient(135deg, #BA68C8 0%, #AB47BC 100%)',
+    'linear-gradient(135deg, #FFD54F 0%, #FFB300 100%)',
+    'linear-gradient(135deg, #FF8A65 0%, #FF7043 100%)'
+  ];
+
+  const ICON_BG = [
+    '#FF7043', '#26A69A', '#42A5F5', '#AB47BC', '#FFC107', '#FF5722'
+  ];
+
+  return (
+    <Row className="mb-4">
+      {cards.map((c, i) => (
+        <Col key={i} sm={6} md={4} lg={2} className="mb-3">
+          <Card
+            className="shadow-lg"
+            style={{
+              background: '#1f1f1f',
+              border: 'none',
+              borderRadius: '12px',
+              transition: 'transform 0.2s, box-shadow 0.2s'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.4)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+            }}
+          >
+            <Card.Body className="text-center">
+              <div
+                style={{
+                  background: ICON_BG[i % ICON_BG.length],
+                  borderRadius: '50%',
+                  width: '50px',
+                  height: '50px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 10px',
+                  color: '#fff',
+                  fontSize: '1.5rem'
+                }}
+              >
+                {c.icon}
+              </div>
+              <Card.Title style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>
+                {c.title}
+              </Card.Title>
+              <Card.Text
+                style={{
+                  fontSize: '1.8rem',
+                  fontWeight: '700',
+                  color: '#fff',
+                  marginTop: '5px'
+                }}
+              >
+                {c.value}
+              </Card.Text>
+              <div
+                style={{
+                  marginTop: '10px',
+                  height: '4px',
+                  width: '60%',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  borderRadius: '2px',
+                  background: GRADIENTS[i % GRADIENTS.length]
+                }}
+              ></div>
+            </Card.Body>
+          </Card>
+        </Col>
+      ))}
+    </Row>
+  );
+}
+
+
+...
 
 // src/components/SummaryCards.jsx
 
