@@ -1,4 +1,13 @@
-REad all code carefuuly and slove this error 
+
+// Ensure module exports an object with the handlers.
+// This keeps existing exports.* assignments while guaranteeing require() returns an object.
+module.exports = {
+  getDenverLiveOccupancy: exports.getDenverLiveOccupancy || module.exports?.getDenverLiveOccupancy,
+  getSnapshotAt:          exports.getSnapshotAt          || module.exports?.getSnapshotAt
+};
+
+
+..REad all code carefuuly and slove this error 
 C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\router\lib\route.js:228
         throw new TypeError('argument handler must be a function')
         ^
