@@ -1,135 +1,348 @@
-import React from 'react'; import { Navbar, Nav, Container, Form, InputGroup, Button, Badge, Dropdown } from 'react-bootstrap'; import { Link } from 'react-router-dom'; import { FaSun, FaMoon, FaBell, FaUserCircle, FaDownload } from 'react-icons/fa';
+// src/components/TopNavbar.js
+import React from 'react';
+import {
+  Navbar,
+  Nav,
+  Container,
+  Form,
+  InputGroup,
+  Button,
+  Dropdown,
+} from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import { FaSun, FaMoon, FaBell, FaUserCircle, FaDownload } from 'react-icons/fa';
 
 /**
+ * TopNavbar
+ *
+ * A polished, responsive Navbar component designed to replace the existing
+ * raw Navbar in App.js. This component focuses on presentation and wiring.
+ *
+ * Props:
+ * - theme: "light" | "dark"
+ * - toggleTheme: () => void
+ * - snapshotDate, snapshotTime: string
+ * - onSnapshotDateChange, onSnapshotTimeChange: (e) => void
+ * - onApplySnapshot, onClearSnapshot: () => void
+ * - snapshotLoading: boolean
+ * - snapshotLabel: string | null
+ * - smallBrandLogo?: ReactNode (optional logo element)
+ */
+export default function TopNavbar({
+  theme = 'dark',
+  toggleTheme,
+  snapshotDate,
+  snapshotTime,
+  onSnapshotDateChange,
+  onSnapshotTimeChange,
+  onApplySnapshot,
+  onClearSnapshot,
+  snapshotLoading = false,
+  snapshotLabel = null,
+  smallBrandLogo = null,
+}) {
+  const isLight = theme === 'light';
 
-TopNavbar
+  const brandStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    color: isLight ? '#23303f' : '#FFC72C',
+    fontWeight: 700,
+    textDecoration: 'none',
+  };
 
-
----
-
-A polished, responsive Navbar component designed to replace the existing
-
-raw Navbar in App.js. This component focuses purely on presentation and
-
-wiring. It expects the parent (App) to hold state and handlers for theme,
-
-snapshot controls and any other live-data related actions.
-
-Props:
-
-theme: "light" | "dark"
-
-
-toggleTheme: () => void
-
-
-snapshotDate, snapshotTime: string
-
-
-onSnapshotDateChange, onSnapshotTimeChange: (e) => void
-
-
-onApplySnapshot, onClearSnapshot: () => void
-
-
-snapshotLoading: boolean
-
-
-snapshotLabel: string | null
-
-
-smallBrandLogo?: ReactNode (optional logo element) */
-
-
-
-export default function TopNavbar({ theme = 'dark', toggleTheme, snapshotDate, snapshotTime, onSnapshotDateChange, onSnapshotTimeChange, onApplySnapshot, onClearSnapshot, snapshotLoading = false, snapshotLabel = null, smallBrandLogo = null }) { const isLight = theme === 'light';
-
-const brandStyle = { display: 'flex', alignItems: 'center', gap: 12, color: isLight ? '#23303f' : '#FFC72C', fontWeight: 700, textDecoration: 'none' };
-
-const pillStyle = { borderRadius: 9999, padding: '0.2rem 0.6rem', fontSize: '0.75rem', fontWeight: 600 };
-
-return ( <Navbar expand="lg" bg={isLight ? 'light' : 'dark'} variant={isLight ? 'light' : 'dark'} className="px-3 navbar-infographic shadow-sm" > <Container fluid> <Navbar.Brand as={Link} to="/" style={brandStyle} className="wu-brand d-flex align-items-center"> {/* optional small logo */} {smallBrandLogo || ( <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" focusable="false"> <rect width="24" height="24" rx="6" fill={isLight ? '#ffb800' : '#FFC72C'} /> <text x="50%" y="55%" textAnchor="middle" fill={isLight ? '#23303f' : '#000'} fontWeight="700" fontSize="12">WU</text> </svg> )} <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}> <span style={{ fontSize: '1rem' }}>Live Occupancy</span> <small style={{ color: isLight ? '#6b7280' : '#ffe680' }}>Western Union — Denver</small> </div> </Navbar.Brand>
-
-<Navbar.Toggle aria-controls="top-navbar" />
-    <Navbar.Collapse id="top-navbar">
-      <Nav className="ms-auto align-items-center" style={{ gap: 8 }}>
-        {/* Snapshot label (subtle) */}
-        {snapshotLabel && (
-          <div className="d-none d-md-flex align-items-center me-2" style={{ color: isLight ? '#ff8c00' : '#FFC72C', fontWeight: 600 }}>
-            {snapshotLabel}
+  return (
+    <Navbar
+      expand="lg"
+      bg={isLight ? 'light' : 'dark'}
+      variant={isLight ? 'light' : 'dark'}
+      className="px-3 navbar-infographic shadow-sm"
+    >
+      <Container fluid>
+        <Navbar.Brand as={Link} to="/" style={brandStyle} className="wu-brand">
+          {/* optional small logo */}
+          {smallBrandLogo || (
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                background: isLight ? '#ffb800' : '#FFC72C',
+              }}
+            />
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+            <span style={{ fontSize: '1rem' }}>Live Occupancy</span>
+            <small style={{ color: isLight ? '#6b7280' : '#ffe680' }}>
+              Western Union — Denver
+            </small>
           </div>
-        )}
+        </Navbar.Brand>
 
-        {/* Quick actions: export & alerts */}
-        <div className="d-flex align-items-center" style={{ gap: 8 }}>
-          <Button variant={isLight ? 'outline-secondary' : 'outline-light'} size="sm" className="d-none d-md-inline-flex align-items-center">
-            <FaDownload style={{ marginRight: 6 }} /> Export
-          </Button>
+        <Navbar.Toggle aria-controls="top-navbar" />
+        <Navbar.Collapse id="top-navbar">
+          <Nav className="ms-auto align-items-center" style={{ gap: 8 }}>
+            {/* Snapshot label */}
+            {snapshotLabel && (
+              <div
+                className="d-none d-md-flex align-items-center me-2"
+                style={{ color: isLight ? '#ff8c00' : '#FFC72C', fontWeight: 600 }}
+              >
+                {snapshotLabel}
+              </div>
+            )}
 
-          <Button variant={isLight ? 'outline-secondary' : 'outline-light'} size="sm" title="Notifications">
-            <FaBell />
-          </Button>
+            {/* Quick actions */}
+            <div className="d-flex align-items-center" style={{ gap: 8 }}>
+              <Button
+                variant={isLight ? 'outline-secondary' : 'outline-light'}
+                size="sm"
+                className="d-none d-md-inline-flex align-items-center"
+              >
+                <FaDownload style={{ marginRight: 6 }} />
+                Export
+              </Button>
 
-          <Dropdown align="end">
-            <Dropdown.Toggle variant={isLight ? 'light' : 'dark'} id="user-dd" className="d-flex align-items-center" style={{ padding: '0.2rem 0.6rem' }}>
-              <FaUserCircle size={20} style={{ marginRight: 6 }} />
-              <span className="d-none d-md-inline">GSOC</span>
-            </Dropdown.Toggle>
+              <Button
+                variant={isLight ? 'outline-secondary' : 'outline-light'}
+                size="sm"
+                title="Notifications"
+              >
+                <FaBell />
+              </Button>
 
-            <Dropdown.Menu align="end">
-              <Dropdown.Item as={Link} to="#">Profile</Dropdown.Item>
-              <Dropdown.Item as={Link} to="#">Settings</Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Item as={Link} to="#">Sign out</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </div>
+              <Dropdown align="end">
+                <Dropdown.Toggle
+                  variant={isLight ? 'light' : 'dark'}
+                  id="user-dd"
+                  className="d-flex align-items-center"
+                  style={{ padding: '0.2rem 0.6rem' }}
+                >
+                  <FaUserCircle size={20} style={{ marginRight: 6 }} />
+                  <span className="d-none d-md-inline">GSOC</span>
+                </Dropdown.Toggle>
 
-        {/* Primary nav links (collapse on small screens) */}
-        <Nav.Item>
-          <Nav.Link as={Link} to="/" className="nav-item-infographic">
-            Dashboard
-          </Nav.Link>
-        </Nav.Item>
+                <Dropdown.Menu align="end">
+                  <Dropdown.Item as={Link} to="#">
+                    Profile
+                  </Dropdown.Item>
+                  <Dropdown.Item as={Link} to="#">
+                    Settings
+                  </Dropdown.Item>
+                  <Dropdown.Divider />
+                  <Dropdown.Item as={Link} to="#">
+                    Sign out
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </div>
 
-        <Nav.Item>
-          <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
-            History
-          </Nav.Link>
-        </Nav.Item>
+            {/* Primary nav links */}
+            <Nav.Item>
+              <Nav.Link as={Link} to="/" className="nav-item-infographic">
+                Dashboard
+              </Nav.Link>
+            </Nav.Item>
 
-        <Nav.Item>
-          <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
-            Floor Details
-          </Nav.Link>
-        </Nav.Item>
+            <Nav.Item>
+              <Nav.Link
+                href="http://10.199.22.57:3002/partition/US.CO.OBS/history"
+                className="nav-item-infographic"
+              >
+                History
+              </Nav.Link>
+            </Nav.Item>
 
-        <Nav.Item>
-          <Nav.Link as={Link} to="/inout-inconsistency-denver" className="nav-item-infographic">
-            In/Out Inconsistency
-          </Nav.Link>
-        </Nav.Item>
+            <Nav.Item>
+              <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
+                Floor Details
+              </Nav.Link>
+            </Nav.Item>
 
-        {/* Snapshot picker compact for navbar */}
-        <Form className="d-flex align-items-center ms-2" onSubmit={(e) => e.preventDefault()}>
-          <InputGroup className="align-items-center">
-            <Form.Control type="date" value={snapshotDate} onChange={onSnapshotDateChange} title="Select date (Denver)" style={{ maxWidth: 150 }} />
-            <Form.Control type="time" step="1" value={snapshotTime} onChange={onSnapshotTimeChange} title="Select time (Denver)" style={{ maxWidth: 120 }} />
-            <Button size="sm" variant={isLight ? 'outline-secondary' : 'outline-light'} onClick={onApplySnapshot} disabled={snapshotLoading}>
-              {snapshotLoading ? 'Loading…' : 'Apply'}
-            </Button>
-            <Button size="sm" variant="outline-secondary" onClick={onClearSnapshot} className="ms-1">Clear</Button>
-          </InputGroup>
-        </Form>
+            <Nav.Item>
+              <Nav.Link
+                as={Link}
+                to="/inout-inconsistency-denver"
+                className="nav-item-infographic"
+              >
+                In/Out Inconsistency
+              </Nav.Link>
+            </Nav.Item>
 
-        {/* Theme toggle */}
-        <Nav.Link onClick={toggleTheme} className="theme-toggle-icon" title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}>
-          {isLight ? <FaMoon color="#23303f" /> : <FaSun color="#FFC72C" />}
-        </Nav.Link>
-      </Nav>
-    </Navbar.Collapse>
-  </Container>
-</Navbar>
+            {/* Snapshot picker */}
+            <Form className="d-flex align-items-center ms-2" onSubmit={(e) => e.preventDefault()}>
+              <InputGroup className="align-items-center">
+                <Form.Control
+                  type="date"
+                  value={snapshotDate}
+                  onChange={onSnapshotDateChange}
+                  title="Select date (Denver)"
+                  style={{ maxWidth: 150 }}
+                />
+                <Form.Control
+                  type="time"
+                  step="1"
+                  value={snapshotTime}
+                  onChange={onSnapshotTimeChange}
+                  title="Select time (Denver)"
+                  style={{ maxWidth: 120 }}
+                />
+                <Button
+                  size="sm"
+                  variant={isLight ? 'outline-secondary' : 'outline-light'}
+                  onClick={onApplySnapshot}
+                  disabled={snapshotLoading}
+                >
+                  {snapshotLoading ? 'Loading…' : 'Apply'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={onClearSnapshot}
+                  className="ms-1"
+                >
+                  Clear
+                </Button>
+              </InputGroup>
+            </Form>
 
-); }
+            {/* Theme toggle */}
+            <Nav.Link
+              onClick={toggleTheme}
+              className="theme-toggle-icon"
+              title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {isLight ? <FaMoon color="#23303f" /> : <FaSun color="#FFC72C" />}
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+}
 
+
+
+
+....
+
+/* ———————————————————————————————
+   THEME COLORS
+———————————————————————————————————— */
+:root {
+  --wu-yellow: #FFC72C;
+  --wu-black: #000000;
+  --wu-gray-dark: #1a1a1a;
+  --wu-gray-light: #f8f9fa;
+  --wu-accent-1: #ffe680;
+  --wu-accent-2: #ffdb4d;
+  --wu-accent-3: #ffd11a;
+}
+
+/* ———————————————————————————————
+   GLOBAL THEMES
+———————————————————————————————————— */
+.dark-theme {
+  background-color: var(--wu-black);
+  color: #fff;
+  min-height: 100vh;
+}
+
+.light-theme {
+  background-color: var(--wu-gray-light);
+  color: #23303f;
+  min-height: 100vh;
+}
+
+/* ———————————————————————————————
+   NAVBAR
+———————————————————————————————————— */
+.navbar-infographic {
+  border-bottom: 3px solid var(--wu-yellow);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.navbar-infographic .nav-item-infographic {
+  position: relative;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  color: inherit !important;
+  transition: color 0.3s ease;
+}
+
+.navbar-infographic .nav-item-infographic::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background: var(--wu-yellow);
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+.navbar-infographic .nav-item-infographic:hover::after {
+  width: 80%;
+  left: 10%;
+}
+
+.navbar-infographic .theme-toggle-icon {
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.navbar-infographic .theme-toggle-icon:hover {
+  transform: rotate(20deg);
+}
+
+/* ———————————————————————————————
+   SNAPSHOT LABEL
+———————————————————————————————————— */
+.navbar-infographic .snapshot-label {
+  font-weight: 600;
+  color: var(--wu-yellow);
+  transition: color 0.3s ease;
+}
+
+/* ———————————————————————————————
+   QUICK ACTION BUTTONS
+———————————————————————————————————— */
+.navbar-infographic button {
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.navbar-infographic button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* ———————————————————————————————
+   USER DROPDOWN
+———————————————————————————————————— */
+.navbar-infographic .dropdown-toggle::after {
+  margin-left: 4px;
+}
+
+.navbar-infographic .dropdown-menu {
+  min-width: 180px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ———————————————————————————————
+   RESPONSIVE ADJUSTMENTS
+———————————————————————————————————— */
+@media (max-width: 991px) {
+  .navbar-infographic .nav-item-infographic {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.95rem;
+  }
+  .navbar-infographic .d-flex.align-items-center {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
