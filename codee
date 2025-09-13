@@ -1,65 +1,94 @@
-// src/components/PersonnelSummaryCards.jsx import React from 'react'; import { Card, Row, Col, Badge } from 'react-bootstrap'; import { FaUserTie, FaHardHat, FaUsers } from 'react-icons/fa';
+// src/components/PersonnelSummaryCards.jsx
+import React from 'react';
+import { Card, Row, Col, Badge } from 'react-bootstrap';
+import { FaUserTie, FaHardHat, FaUsers, FaChartPie } from 'react-icons/fa';
 
-const COLORS = [ 'linear-gradient(135deg, #FFC72C, #FFB100)', 'linear-gradient(135deg, #228B22, #32CD32)', 'linear-gradient(135deg, #EEA0F1, #D870E0)', 'linear-gradient(135deg, #E18E30, #FF7F50)', 'linear-gradient(135deg, #B5B21A, #D4D700)' ];
+const COLORS = ['#FFC72C', '#228B22', '#3A86FF', '#E18E30', '#8338EC', '#FB5607', '#8AC926'];
 
-export default function PersonnelSummaryCards({ data = [] }) { const total = data.reduce((sum, e) => sum + e.count, 0);
+export default function PersonnelSummaryCards({ data = [] }) {
+  const total = data.reduce((sum, e) => sum + e.count, 0);
 
-if (!data.length || total === 0) { return ( <Card body className="bg-dark text-warning text-center shadow-lg rounded-3"> No personnel data </Card> ); }
+  if (!data.length || total === 0) {
+    return (
+      <Card className="mb-4 personnel-summary-card">
+        <Card.Header className="personnel-card-header">
+          <FaChartPie className="me-2" /> Personnel Type Occupancy
+        </Card.Header>
+        <Card.Body className="d-flex align-items-center justify-content-center" style={{ minHeight: '200px' }}>
+          <div className="text-center text-muted">
+            <FaUsers size="2.5rem" className="mb-2" />
+            <p>No personnel data available</p>
+          </div>
+        </Card.Body>
+      </Card>
+    );
+  }
 
-return ( <Card className="mb-4 shadow-lg border-0" style={{ background: '#121212' }}> <Card.Header className="text-center fw-bold fs-5" style={{ background: '#000', color: '#FFC72C', borderBottom: '2px solid #FFC72C' }} > Personnel Type Occupancy </Card.Header> <Card.Body style={{ height: 450, padding: '1.25rem', overflowY: 'auto' }} > <Row> {data.map((entry, index) => { let icon; if (entry.personnelType.toLowerCase().includes('employee')) icon = <FaUserTie />; else if (entry.personnelType.toLowerCase().includes('contractor')) icon = <FaHardHat />; else icon = <FaUsers />;
+  return (
+    <Card className="mb-4 personnel-summary-card">
+      <Card.Header className="personnel-card-header">
+        <FaChartPie className="me-2" /> Personnel Type Occupancy
+      </Card.Header>
+      <Card.Body className="personnel-card-body">
+        <Row className="g-3">
+          {data.map((entry, index) => {
+            const percentage = Math.round((entry.count / total) * 100);
+            let icon;
+            if (entry.personnelType.toLowerCase().includes('employee')) icon = <FaUserTie />;
+            else if (entry.personnelType.toLowerCase().includes('contractor')) icon = <FaHardHat />;
+            else icon = <FaUsers />;
 
-return (
-          <Col key={entry.personnelType} xs={12} md={6} lg={4} className="mb-4">
-            <Card
-              className="text-center h-100 border-0 shadow-sm hover-shadow-lg transition-all"
-              style={{
-                background: '#1f1f1f',
-                borderRadius: '14px',
-                padding: '1.25rem',
-                transition: 'transform 0.2s ease-in-out'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-6px)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-            >
-              <div
-                style={{
-                  fontSize: '2.2rem',
-                  background: COLORS[index % COLORS.length],
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }}
-                className="mb-2"
-              >
-                {icon}
-              </div>
-              <h5 style={{ color: '#f1f1f1', marginBottom: '0.75rem' }}>{entry.personnelType}</h5>
-              <Badge
-                bg="dark"
-                style={{
-                  fontSize: '1.3rem',
-                  fontWeight: 'bold',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '30px',
-                  background: COLORS[index % COLORS.length],
-                  color: '#000'
-                }}
-              >
-                {entry.count}
-              </Badge>
-            </Card>
-          </Col>
-        );
-      })}
-    </Row>
-
-    <div
-      className="text-end mt-3"
-      style={{ color: '#aaa', fontWeight: '600', fontSize: '0.95rem' }}
-    >
-      Total Personnel: <span style={{ color: '#FFC72C' }}>{total}</span>
-    </div>
-  </Card.Body>
-</Card>
-
-); }
-
+            return (
+              <Col key={entry.personnelType} xs={12} md={6} lg={4} className="mb-2">
+                <Card className="personnel-type-card h-100">
+                  <Card.Body className="d-flex flex-column justify-content-between p-3">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div className="personnel-icon" style={{ color: COLORS[index % COLORS.length] }}>
+                        {icon}
+                      </div>
+                      <Badge className="percentage-badge" bg="light" text="dark">
+                        {percentage}%
+                      </Badge>
+                    </div>
+                    
+                    <h6 className="personnel-type-title">{entry.personnelType}</h6>
+                    
+                    <div className="mt-2">
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <span className="personnel-count" style={{ color: COLORS[index % COLORS.length] }}>
+                          {entry.count}
+                        </span>
+                        <span className="text-muted small">of {total}</span>
+                      </div>
+                      <div className="progress" style={{ height: '6px' }}>
+                        <div 
+                          className="progress-bar" 
+                          role="progressbar" 
+                          style={{ 
+                            width: `${percentage}%`, 
+                            backgroundColor: COLORS[index % COLORS.length] 
+                          }} 
+                          aria-valuenow={percentage} 
+                          aria-valuemin="0" 
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+      </Card.Body>
+      <Card.Footer className="personnel-card-footer">
+        <div className="d-flex justify-content-between align-items-center">
+          <span className="text-muted">Total Personnel</span>
+          <Badge bg="warning" text="dark" className="total-badge">
+            {total}
+          </Badge>
+        </div>
+      </Card.Footer>
+    </Card>
+  );
+}
