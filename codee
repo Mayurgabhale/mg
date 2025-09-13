@@ -1,348 +1,204 @@
-// src/components/TopNavbar.js
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import {
-  Navbar,
-  Nav,
-  Container,
-  Form,
-  InputGroup,
-  Button,
-  Dropdown,
-} from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import { FaSun, FaMoon, FaBell, FaUserCircle, FaDownload } from 'react-icons/fa';
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  LabelList,
+  Legend
+} from 'recharts';
+import { Card } from 'react-bootstrap';
+import floorCapacities from '../constants/floorCapacities';
 
-/**
- * TopNavbar
- *
- * A polished, responsive Navbar component designed to replace the existing
- * raw Navbar in App.js. This component focuses on presentation and wiring.
- *
- * Props:
- * - theme: "light" | "dark"
- * - toggleTheme: () => void
- * - snapshotDate, snapshotTime: string
- * - onSnapshotDateChange, onSnapshotTimeChange: (e) => void
- * - onApplySnapshot, onClearSnapshot: () => void
- * - snapshotLoading: boolean
- * - snapshotLabel: string | null
- * - smallBrandLogo?: ReactNode (optional logo element)
- */
-export default function TopNavbar({
-  theme = 'dark',
-  toggleTheme,
-  snapshotDate,
-  snapshotTime,
-  onSnapshotDateChange,
-  onSnapshotTimeChange,
-  onApplySnapshot,
-  onClearSnapshot,
-  snapshotLoading = false,
-  snapshotLabel = null,
-  smallBrandLogo = null,
-}) {
-  const isLight = theme === 'light';
+// ─── CUSTOM TOOLTIP ───────────────────────────────────────────────────────────
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  const { capacity, headcount, percentage } = payload[0].payload;
+  return (
+    <div style={{
+      background: '#2f2f2f',
+      border: '1px solid #444',
+      borderRadius: 4,
+      padding: '8px 12px',
+      color: '#fff',
+      fontSize: 14,
+      lineHeight: 1.4
+    }}>
+      <strong style={{ color: '#FFC72C' }}>{label}</strong><br/>
+      Occupancy: <strong>{capacity}</strong><br/>
+      Headcount: <strong>{headcount}</strong><br/>
+      Usage: <strong>{percentage.toFixed(1)}%</strong>
+    </div>
+  );
+};
 
-  const brandStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    color: isLight ? '#23303f' : '#FFC72C',
-    fontWeight: 700,
-    textDecoration: 'none',
-  };
+
+
+
+// place headcount label just inside the top of the green bar
+const HeadcountLabel = ({ x, y, width, value }) => (
+  <text
+    x={x + width / 2}
+    y={y - 6}            // <-- moved above the top edge by 6px
+    textAnchor="middle"
+    fill="#228B22"
+    margin="6"
+    fontWeight="bold"
+    fontSize={15}
+  >
+    {value}
+  </text>
+);
+
+
+
+
+
+const CapacityLabel = ({ x, y, width, payload }) => {
+  if (!payload) return null;
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 6}
+      textAnchor="middle"
+      fill="#000"
+      fontWeight="bold"
+      fontSize={14}
+    >
+      {payload.capacity}
+    </text>
+  );
+};
+
+// ─── PERCENTAGE LABEL (Infographic style) ────────────────────────────────────
+const PercentageLabel = ({ x, y, width, value }) => (
+  <text
+    x={x + width / 2}
+    y={y - 20}
+    textAnchor="middle"
+    fill="#FFC72C"
+    fontWeight="bold"
+    fontSize={14}
+  >
+    {value.toFixed(1)}%
+  </text>
+);
+
+export default function FloorOccupancyChart({ data = [] }) {
+  // Build per-floor list + aggregate
+  const floors = useMemo(() => {
+    const list = Object.entries(floorCapacities).map(([floor, capacity]) => {
+      const rec = data.find(d =>
+        d.floor.replace(/^Floor\s0*/, 'Floor ') === floor
+      );
+       const headcount = rec ? Number(rec.total) || 0 : 0;
+
+      
+     // use totalPersons (not total) from your API
+    //  const headcount = rec ? Number(rec.totalPersons) || 0 : 0;
+      const percentage = capacity > 0 ? (headcount / capacity) * 100 : 0;
+      return { floor, capacity, headcount, free: capacity - headcount, percentage };
+    });
+
+    const totalCapacity  = list.reduce((sum, f) => sum + f.capacity, 0);
+    const totalHeadcount = list.reduce((sum, f) => sum + f.headcount, 0);
+    const totalPct       = totalCapacity > 0 ? (totalHeadcount / totalCapacity) * 100 : 0;
+    const aggregate = {
+      floor: 'All Floors',
+      capacity: totalCapacity,
+      headcount: totalHeadcount,
+      free: totalCapacity - totalHeadcount,
+      percentage: totalPct
+    };
+
+    return [aggregate, ...list];
+  }, [data]);
+
+  const maxCap = Math.max(...floors.map(f => f.capacity));
+
+  const legendPayload = [
+    { value: 'Headcount',          type: 'square', id: 'headcount', color: '#228B22' },
+    { value: 'Occupancy', type: 'square', id: 'free',      color: '#FFD700' }
+  ];
 
   return (
-    <Navbar
-      expand="lg"
-      bg={isLight ? 'light' : 'dark'}
-      variant={isLight ? 'light' : 'dark'}
-      className="px-3 navbar-infographic shadow-sm"
-    >
-      <Container fluid>
-        <Navbar.Brand as={Link} to="/" style={brandStyle} className="wu-brand">
-          {/* optional small logo */}
-          {smallBrandLogo || (
-            <div
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                background: isLight ? '#ffb800' : '#FFC72C',
+    <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
+      <Card.Header className="text-center" style={{ background: '#000', color: '#FFC72C' }}>
+        Western Union – Denver Headcount vs. Occupancy
+      </Card.Header>
+      <Card.Body style={{ height: 450, padding: 0 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={floors}
+            margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+            barCategoryGap="10%"
+            barGap={4}
+          >
+            <CartesianGrid stroke="#444" strokeDasharray="4 4" />
+            <XAxis
+              dataKey="floor"
+              tick={{ fill: '#fff', fontSize: 15 }}
+              label={{ value: 'Floor', fill: '#fff', position: 'bottom', offset: 20 }}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fill: '#fff', fontSize: 15 }}
+              domain={[0, maxCap]}
+              label={{
+                value: 'Headcount',
+                fill: '#fff',
+                angle: -90,
+                position: 'insideLeft',
+                offset: 10
               }}
             />
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-            <span style={{ fontSize: '1rem' }}>Live Occupancy</span>
-            <small style={{ color: isLight ? '#6b7280' : '#ffe680' }}>
-              Western Union — Denver
-            </small>
-          </div>
-        </Navbar.Brand>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              verticalAlign="top"
+              align="center"
+              payload={legendPayload}
+              wrapperStyle={{ color: '#fff', paddingBottom: 10 }}
+            />
 
-        <Navbar.Toggle aria-controls="top-navbar" />
-        <Navbar.Collapse id="top-navbar">
-          <Nav className="ms-auto align-items-center" style={{ gap: 8 }}>
-            {/* Snapshot label */}
-            {snapshotLabel && (
-              <div
-                className="d-none d-md-flex align-items-center me-2"
-                style={{ color: isLight ? '#ff8c00' : '#FFC72C', fontWeight: 600 }}
-              >
-                {snapshotLabel}
-              </div>
-            )}
+            {/* Headcount (green) */}
+            {/* <Bar dataKey="headcount" stackId="a" fill="#228B22" fontSize={15} fontWeight={15}> */}
 
-            {/* Quick actions */}
-            <div className="d-flex align-items-center" style={{ gap: 8 }}>
-              <Button
-                variant={isLight ? 'outline-secondary' : 'outline-light'}
-                size="sm"
-                className="d-none d-md-inline-flex align-items-center"
-              >
-                <FaDownload style={{ marginRight: 6 }} />
-                Export
-              </Button>
-
-              <Button
-                variant={isLight ? 'outline-secondary' : 'outline-light'}
-                size="sm"
-                title="Notifications"
-              >
-                <FaBell />
-              </Button>
-
-              <Dropdown align="end">
-                <Dropdown.Toggle
-                  variant={isLight ? 'light' : 'dark'}
-                  id="user-dd"
-                  className="d-flex align-items-center"
-                  style={{ padding: '0.2rem 0.6rem' }}
-                >
-                  <FaUserCircle size={20} style={{ marginRight: 6 }} />
-                  <span className="d-none d-md-inline">GSOC</span>
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu align="end">
-                  <Dropdown.Item as={Link} to="#">
-                    Profile
-                  </Dropdown.Item>
-                  <Dropdown.Item as={Link} to="#">
-                    Settings
-                  </Dropdown.Item>
-                  <Dropdown.Divider />
-                  <Dropdown.Item as={Link} to="#">
-                    Sign out
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-
-            {/* Primary nav links */}
-            <Nav.Item>
-              <Nav.Link as={Link} to="/" className="nav-item-infographic">
-                Dashboard
-              </Nav.Link>
-            </Nav.Item>
-
-            <Nav.Item>
-              <Nav.Link
-                href="http://10.199.22.57:3002/partition/US.CO.OBS/history"
-                className="nav-item-infographic"
-              >
-                History
-              </Nav.Link>
-            </Nav.Item>
-
-            <Nav.Item>
-              <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
-                Floor Details
-              </Nav.Link>
-            </Nav.Item>
-
-            <Nav.Item>
-              <Nav.Link
-                as={Link}
-                to="/inout-inconsistency-denver"
-                className="nav-item-infographic"
-              >
-                In/Out Inconsistency
-              </Nav.Link>
-            </Nav.Item>
-
-            {/* Snapshot picker */}
-            <Form className="d-flex align-items-center ms-2" onSubmit={(e) => e.preventDefault()}>
-              <InputGroup className="align-items-center">
-                <Form.Control
-                  type="date"
-                  value={snapshotDate}
-                  onChange={onSnapshotDateChange}
-                  title="Select date (Denver)"
-                  style={{ maxWidth: 150 }}
-                />
-                <Form.Control
-                  type="time"
-                  step="1"
-                  value={snapshotTime}
-                  onChange={onSnapshotTimeChange}
-                  title="Select time (Denver)"
-                  style={{ maxWidth: 120 }}
-                />
-                <Button
-                  size="sm"
-                  variant={isLight ? 'outline-secondary' : 'outline-light'}
-                  onClick={onApplySnapshot}
-                  disabled={snapshotLoading}
-                >
-                  {snapshotLoading ? 'Loading…' : 'Apply'}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline-secondary"
-                  onClick={onClearSnapshot}
-                  className="ms-1"
-                >
-                  Clear
-                </Button>
-              </InputGroup>
-            </Form>
-
-            {/* Theme toggle */}
-            <Nav.Link
-              onClick={toggleTheme}
-              className="theme-toggle-icon"
-              title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            <Bar
+              dataKey="headcount"
+              stackId="a"
+              fill="#228B22"
+              stroke="#000"        // ← add a black border
+              strokeWidth={2}
             >
-              {isLight ? <FaMoon color="#23303f" /> : <FaSun color="#FFC72C" />}
-            </Nav.Link>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+
+
+
+              {/* <LabelList dataKey="headcount" content={HeadcountLabel} /> */}
+            </Bar>
+
+            {/* Remaining capacity (yellow) */}
+            {/* <Bar dataKey="free" stackId="a" fill="#FFD700" fontSize={15}> */}
+
+            <Bar
+              dataKey="free"
+              stackId="a"
+              fill="#FFD700"
+              stroke="#000"        // ← add a black border
+              strokeWidth={1}
+            >
+
+              <LabelList dataKey="free" content={CapacityLabel} />
+              <LabelList dataKey="percentage" content={PercentageLabel} />
+               {/* also render headcount here so it appears above the yellow */}
+              <LabelList dataKey="headcount" content={HeadcountLabel} fontSize={15} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
   );
-}
-
-
-
-
-....
-
-/* ———————————————————————————————
-   THEME COLORS
-———————————————————————————————————— */
-:root {
-  --wu-yellow: #FFC72C;
-  --wu-black: #000000;
-  --wu-gray-dark: #1a1a1a;
-  --wu-gray-light: #f8f9fa;
-  --wu-accent-1: #ffe680;
-  --wu-accent-2: #ffdb4d;
-  --wu-accent-3: #ffd11a;
-}
-
-/* ———————————————————————————————
-   GLOBAL THEMES
-———————————————————————————————————— */
-.dark-theme {
-  background-color: var(--wu-black);
-  color: #fff;
-  min-height: 100vh;
-}
-
-.light-theme {
-  background-color: var(--wu-gray-light);
-  color: #23303f;
-  min-height: 100vh;
-}
-
-/* ———————————————————————————————
-   NAVBAR
-———————————————————————————————————— */
-.navbar-infographic {
-  border-bottom: 3px solid var(--wu-yellow);
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-.navbar-infographic .nav-item-infographic {
-  position: relative;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  color: inherit !important;
-  transition: color 0.3s ease;
-}
-
-.navbar-infographic .nav-item-infographic::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  width: 0;
-  height: 3px;
-  background: var(--wu-yellow);
-  transition: width 0.3s ease, left 0.3s ease;
-}
-
-.navbar-infographic .nav-item-infographic:hover::after {
-  width: 80%;
-  left: 10%;
-}
-
-.navbar-infographic .theme-toggle-icon {
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.navbar-infographic .theme-toggle-icon:hover {
-  transform: rotate(20deg);
-}
-
-/* ———————————————————————————————
-   SNAPSHOT LABEL
-———————————————————————————————————— */
-.navbar-infographic .snapshot-label {
-  font-weight: 600;
-  color: var(--wu-yellow);
-  transition: color 0.3s ease;
-}
-
-/* ———————————————————————————————
-   QUICK ACTION BUTTONS
-———————————————————————————————————— */
-.navbar-infographic button {
-  border-radius: 9999px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.navbar-infographic button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* ———————————————————————————————
-   USER DROPDOWN
-———————————————————————————————————— */
-.navbar-infographic .dropdown-toggle::after {
-  margin-left: 4px;
-}
-
-.navbar-infographic .dropdown-menu {
-  min-width: 180px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* ———————————————————————————————
-   RESPONSIVE ADJUSTMENTS
-———————————————————————————————————— */
-@media (max-width: 991px) {
-  .navbar-infographic .nav-item-infographic {
-    padding: 0.5rem 0.5rem;
-    font-size: 0.95rem;
-  }
-  .navbar-infographic .d-flex.align-items-center {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
 }
