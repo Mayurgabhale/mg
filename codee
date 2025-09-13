@@ -1,43 +1,17 @@
-// routes/occupancyDenverRoutes.js
-const express = require('express');
-const router = express.Router();
-const { getDenverLiveOccupancy,getSnapshotAt } = require('../controllers/denverLiveOccupancyController');
-const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+// //////////////////////////////////// start
+// ************************************
 
-// Denver live occupancy
-router.get('/live-occupancy-denver', getDenverLiveOccupancy);
-
-// Denver in/out inconsistency trends
-router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
-router.get('/denver-occupancy-at', getSnapshotAt);
-
-module.exports = router;
-
-
-
-
-  // //////////////////////////////////// start
-  // ************************************
-
-
-// ---- Fix normalizeZoneKey (was using wrong template syntax) ----
+// ---- Fix normalizeZoneKey ----
 function normalizeZoneKey(rawDoor, rawDir) {
-  // 1) Ensure it’s a string and trim whitespace
   let door = String(rawDoor || '').trim();
-
-  // 2) Strip any "_HH:MM:SS" or "XX:XX:XX" suffix (hex codes or times at end)
+  door = door.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
   door = door.replace(/[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
-
-  // 3) Collapse multiple spaces into one, then uppercase
   door = door.replace(/\s+/g, ' ').toUpperCase();
-
-  // 4) Pick the direction token exactly as doorZoneMap expects
   const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
-
   return `${door}___${dir}`;
 }
 
-// ---- Fix normalizePersonName (was using wrong template syntax) ----
+// ---- Fix normalizePersonName ----
 function normalizePersonName(raw) {
   let n = String(raw || '').trim();
   if (n.includes(',')) {
@@ -47,33 +21,29 @@ function normalizePersonName(raw) {
   return n.toLowerCase();
 }
 
-
-
-
-
-
-
-
-
-
-// Handler: GET /api/occupancy-at?at=
+// Handler: GET /denver-occupancy-at?at=
 exports.getSnapshotAt = async (req, res) => {
   try {
     const atRaw = req.query.at;
 
-    // If no 'at' provided, default to "now" in Asia/Kolkata
+    // If no 'at' provided, default to "now" in Denver
     let atDate;
     if (!atRaw) {
-      atDate = DateTime.now().setZone('Asia/Kolkata').toJSDate();
+      atDate = DateTime.now().setZone('America/Denver').toJSDate();
     } else {
-      // Try to parse ISO first (accept timezone), then accept date-only (yyyy-MM-dd) in Asia/Kolkata
-      let dt = DateTime.fromISO(atRaw, { zone: 'utc' });
+      // 1) Try ISO string (respects offset if present)
+      let dt = DateTime.fromISO(atRaw, { setZone: true });
+
+      // 2) If not ISO, try yyyy-MM-dd as Denver local end-of-day
       if (!dt.isValid) {
-        // try date-only format in Asia/Kolkata
-        dt = DateTime.fromFormat(atRaw, 'yyyy-LL-dd', { zone: 'Asia/Kolkata' });
+        dt = DateTime.fromFormat(atRaw, 'yyyy-LL-dd', { zone: 'America/Denver' });
+        if (dt.isValid) {
+          dt = dt.endOf('day');
+        }
       }
+
+      // 3) Final fallback → native Date
       if (!dt.isValid) {
-        // fallback to native Date as last resort and validate
         const native = new Date(atRaw);
         if (Number.isNaN(native.getTime())) {
           return res.status(400).json({
@@ -108,11 +78,9 @@ exports.getSnapshotAt = async (req, res) => {
   }
 };
 
+// //////////////////////////////////// end
+// ************************************
 
 
-
-
-
-  // //////////////////////////////////// end
-  // ************************************
+http://localhost:3000/denver-occupancy-at?at=2025-09-13T09:00:00-06:00
 
