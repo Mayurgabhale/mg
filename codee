@@ -1,29 +1,3 @@
-read all code chekc why data and count are not disply, and writ correct coee, read alos pune code then write and give me updat code, crrect. 
-
-http://localhost:5000/api/occupancy-at-time-denver?at=2025-09-11T01:30:00
-
-  "asOf": "2025-09-11T01:30:00.000Z",
-  "currentCount": 0,
-  "floorBreakdown": [],
-  "personnelSummary": {
-    "employees": 0,
-    "contractors": 0
-  },
-  "personnelBreakdown": [],
-  "totalVisitedToday": 0,
-  "visitedToday": {
-    "employees": 0,
-    "contractors": 0,
-    "total": 0
-  },
-  "swipeStats": {
-    "totalInSwipes": 0,
-    "totalOutSwipes": 0
-  },
-  "floorInOutSummary": []
-}
-
-
 
 
 
@@ -560,23 +534,6 @@ const push = async () => {
   req.on('close', () => clearInterval(timer));
 };
 
-// routes/occupancyDenverRoutes.js
-const express = require('express');
-const router = express.Router();
-
-const { getDenverLiveOccupancy, getDenverSnapshotAt } = require('../controllers/denverLiveOccupancyController');
-const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
-
-// Denver live occupancy
-router.get('/live-occupancy-denver', getDenverLiveOccupancy);
-
-// Denver in/out inconsistency trends
-router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
-
-// Denver snapshot endpoint
-router.get('/occupancy-at-time-denver', getDenverSnapshotAt);
-
-module.exports = router;
 
 
 
