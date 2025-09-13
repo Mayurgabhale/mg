@@ -1,31 +1,4 @@
-// routes/occupancyDenverRoutes.js
-const express = require('express');
-const router = express.Router();
-
-// import the whole controller module (avoid destructuring surprises)
-const denverController = require('../controllers/denverLiveOccupancyController');
-const denverInOut = require('../controllers/denverInOutInconsistencyController');
-
-// Denver live occupancy (SSE)
-router.get('/live-occupancy-denver', denverController.getDenverLiveOccupancy);
-
-// Denver in/out inconsistency trends
-router.get('/inout-inconsistency-denver', denverInOut.getDenverInOutInconsistency);
-
-// Denver snapshot at (optional ?at=)
-router.get('/denver-occupancy-at', denverController.getSnapshotAt);
-
-module.exports = router;
-
-
-
-...
-Node.js v22.17.0
-PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> npm start
-
-> employee-ai-insights@1.0.0 start
-> node server.js
-
+REad all code carefuuly and slove this error 
 C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\router\lib\route.js:228
         throw new TypeError('argument handler must be a function')
         ^
@@ -33,7 +6,7 @@ C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\router\lib
 TypeError: argument handler must be a function
     at Route.<computed> [as get] (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\router\lib\route.js:228:15)
     at Router.<computed> [as get] (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\router\index.js:448:19)
-    at Object.<anonymous> (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\occupancyDenverRoutes.js:24:8)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\occupancyDenverRoutes.js:56:8)
     at Module._compile (node:internal/modules/cjs/loader:1730:14)
     at Object..js (node:internal/modules/cjs/loader:1895:10)
     at Module.load (node:internal/modules/cjs/loader:1465:32)
@@ -44,6 +17,27 @@ TypeError: argument handler must be a function
 
 Node.js v22.17.0
 PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> 
+
+
+// routes/occupancyDenverRoutes.js
+const express = require('express');
+const router = express.Router();
+const { getDenverLiveOccupancy,getSnapshotAt } = require('../controllers/denverLiveOccupancyController');
+const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+
+// Denver live occupancy
+router.get('/live-occupancy-denver', getDenverLiveOccupancy);
+
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
+
+
+router.get('/denver-occupancy-at', getSnapshotAt);
+
+module.exports = router;
+
+
+
 
 
 // controllers/denverLiveOccupancyController.js
@@ -561,21 +555,3 @@ const push = async () => {
 
 
 
-
-
-
-
-// routes/occupancyDenverRoutes.js
-const express = require('express');
-const router = express.Router();
-const { getDenverLiveOccupancy,getSnapshotAt } = require('../controllers/denverLiveOccupancyController');
-const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
-
-// Denver live occupancy
-router.get('/live-occupancy-denver', getDenverLiveOccupancy);
-
-// Denver in/out inconsistency trends
-router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
-router.get('/denver-occupancy-at', getSnapshotAt);
-
-module.exports = router;
