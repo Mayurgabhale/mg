@@ -1,2 +1,26 @@
+exports.debugFetchCount = async (req, res) => {
+  try {
+    await denver.poolPromise;
+    const denverStart = DateTime.now().setZone('America/Denver').startOf('day');
+    const utcStart = denverStart.toUTC();
+
+    const rows = await fetchNewEvents(utcStart.toJSDate());
+    return res.json({
+      denverStart: denverStart.toISO(),
+      utcStart: utcStart.toISO(),
+      fetched: Array.isArray(rows) ? rows.length : 0,
+      sample: (rows || []).slice(0,5)
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+
+
+
+
 http://localhost:5000/api/debug-fetch-count
 {"fetched":0,"sample":[]}
