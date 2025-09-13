@@ -1,4 +1,24 @@
+// routes/occupancyDenverRoutes.js
+const express = require('express');
+const router = express.Router();
 
+const { getDenverLiveOccupancy, getDenverSnapshotAtTime } = require('../controllers/denverLiveOccupancyController');
+const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+
+// Denver live occupancy
+router.get('/live-occupancy-denver', getDenverLiveOccupancy);
+
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
+
+// Denver snapshot endpoint
+router.get('/occupancy-at-time-denver', getDenverSnapshotAtTime);
+
+module.exports = router;
+
+
+
+...
 read all code carefully and slov ethis error C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\router\lib\route.js:228
         throw new TypeError('argument handler must be a function')
         ^
