@@ -1,5 +1,21 @@
-know create this. 
 // src/App.js
+/**
+ * App.js
+ * -------------------------------------------------------------------------
+ * Root application component for the Denver Live Occupancy dashboard.
+ *
+ * Responsibilities:
+ * - Host the main layout & navigation (Navbar + snapshot controls).
+ * - Maintain live state from SSE (EventSource) and one-time fetches (in/out inconsistency).
+ * - Provide a snapshot mode (fetch occupancy for a given date/time).
+ * - Route to pages: DashboardHome, FloorDetailsPage, DenverInOutInconsistencyPage.
+ *
+ * Notes:
+ * - This file is intentionally presentation + state only. Child components
+ *   (SummaryCards, FloorOccupancyChart, etc.) receive data via props.
+ * - Styling is loaded from './App.css'. Toggle or remove the `.dark-theme`
+ *   wrapper if you want a different global theme.
+ */
 
 import React, { useEffect, useState } from 'react';
 import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
@@ -8,33 +24,37 @@ import { FaSun } from 'react-icons/fa';
 
 import DashboardHome from './pages/DashboardHome';
 import FloorDetailsPage from './pages/FloorDetailsPage';
-import DenverInOutInconsistencyPage from './pages/DenverInOutInconsistency'; // ← NEW
+import DenverInOutInconsistencyPage from './pages/DenverInOutInconsistency';
 
 import './App.css';
 
 export default function App() {
-  // live data states
+  // -----------------------
+  // Live data / application state
+  // -----------------------
   const [floorData, setFloorData] = useState([]);
   const [personnelBreakdown, setPersonnelBreakdown] = useState([]);
   const [totalVisitedToday, setTotalVisitedToday] = useState(0);
   const [personnelSummary, setPersonnelSummary] = useState({ employees: 0, contractors: 0 });
   const [visitedToday, setVisitedToday] = useState({ employees: 0, contractors: 0, total: 0 });
-  const [floorInOutSummary, setFloorInOutSummary] = useState([]); // ← NEW
+  const [floorInOutSummary, setFloorInOutSummary] = useState([]);
 
-  // new: in/out inconsistency data
+  // In/Out inconsistency page data
   const [inOutData, setInOutData] = useState(null);
   const [loadingInOut, setLoadingInOut] = useState(true);
   const [inOutError, setInOutError] = useState(null);
 
-  // --- Snapshot/time selection states ---
+  // -----------------------
+  // Snapshot UI + state (select a historical date/time)
+  // -----------------------
   const [snapshotMode, setSnapshotMode] = useState(false);
   const [snapshotTime, setSnapshotTime] = useState(''); // "HH:MM" or "HH:MM:SS"
   const [snapshotDate, setSnapshotDate] = useState(() => {
-    // default to today's date in America/Denver in YYYY-MM-DD (en-CA format)
+    // Default to today's date in America/Denver (en-CA: YYYY-MM-DD)
     try {
       return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
     } catch (e) {
-      // fallback to local date if running in environment without timeZone support
+      // Fallback if environment lacks timeZone support
       const d = new Date();
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -44,12 +64,15 @@ export default function App() {
   });
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [snapshotError, setSnapshotError] = useState(null);
-  const [snapshotData, setSnapshotData] = useState(null); // will hold the payload returned by the new API
+  const [snapshotData, setSnapshotData] = useState(null); // payload returned by snapshot API
 
-  // live SSE (unchanged)
+  // -----------------------
+  // Server-Sent Events (live updates)
+  // -----------------------
   useEffect(() => {
     const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-    es.onmessage = e => {
+
+    es.onmessage = (e) => {
       try {
         const p = JSON.parse(e.data);
         setFloorData(p.floorBreakdown || []);
@@ -57,37 +80,47 @@ export default function App() {
         setTotalVisitedToday(p.totalVisitedToday || 0);
         setPersonnelSummary(p.personnelSummary || { employees: 0, contractors: 0 });
         setVisitedToday(p.visitedToday || { employees: 0, contractors: 0, total: 0 });
-        setFloorInOutSummary(p.floorInOutSummary || []); // ← NEW
+        setFloorInOutSummary(p.floorInOutSummary || []);
       } catch (err) {
         console.error('SSE parse error:', err);
       }
     };
-    es.onerror = err => {
+
+    es.onerror = (err) => {
       console.error('SSE error:', err);
+      // On error, close to avoid repeated failures.
       es.close();
     };
-    return () => es.close();
+
+    return () => {
+      es.close();
+    };
   }, []);
 
-  // Fetch once: in/out inconsistency JSON (unchanged)
+  // -----------------------
+  // One-time fetch: In/Out inconsistency data for Denver
+  // -----------------------
   useEffect(() => {
     fetch('http://localhost:5000/api/inout-inconsistency-denver')
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
         return res.json();
       })
-      .then(data => {
-        setInOutData(data.floorInconsistency || []); // ✅ Store only the array we want
+      .then((data) => {
+        // Store the floor inconsistency array (the page expects an array)
+        setInOutData(data.floorInconsistency || []);
         setLoadingInOut(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to load in/out inconsistency:', err);
-        setInOutError(err.message);
+        setInOutError(err.message || String(err));
         setLoadingInOut(false);
       });
   }, []);
 
-  // --- Snapshot handlers ---
+  // -----------------------
+  // Snapshot handlers
+  // -----------------------
   const handleSnapshotTimeChange = (e) => {
     setSnapshotTime(e.target.value);
     setSnapshotError(null);
@@ -99,6 +132,7 @@ export default function App() {
   };
 
   const applySnapshot = async () => {
+    // Basic validation
     if (!snapshotTime) {
       setSnapshotError('Select a time first.');
       return;
@@ -115,12 +149,17 @@ export default function App() {
     setSnapshotError(null);
 
     try {
-      const url = `http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`;
+      const url = `http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(
+        snapshotDate
+      )}&time=${encodeURIComponent(timeForApi)}`;
       const resp = await fetch(url);
+
       if (!resp.ok) {
+        // if API returns text error body, include it for debugging
         const txt = await resp.text();
         throw new Error(`${resp.status} ${resp.statusText} - ${txt}`);
       }
+
       const json = await resp.json();
       setSnapshotData(json);
       setSnapshotMode(true);
@@ -140,23 +179,30 @@ export default function App() {
     setSnapshotTime('');
     setSnapshotError(null);
     setSnapshotLoading(false);
-    // keep snapshotDate (so user doesn't need to reselect date)
+    // keep snapshotDate so the user doesn't need to reselect
   };
 
-  // --- Decide which data to pass into child components: snapshotData (if active) or live data ---
-  const activeFloorData = snapshotMode && snapshotData ? (snapshotData.floorBreakdown || []) : floorData;
-  const activePersonnelBreakdown = snapshotMode && snapshotData ? (snapshotData.personnelBreakdown || []) : personnelBreakdown;
-  const activeTotalVisitedToday = snapshotMode && snapshotData ? (snapshotData.totalVisitedToday || 0) : totalVisitedToday;
-  const activePersonnelSummary = snapshotMode && snapshotData ? (snapshotData.personnelSummary || { employees: 0, contractors: 0 }) : personnelSummary;
-  const activeVisitedToday = snapshotMode && snapshotData ? (snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 }) : visitedToday;
-  const activeFloorInOutSummary = snapshotMode && snapshotData ? (snapshotData.floorInOutSummary || []) : floorInOutSummary;
+  // -----------------------
+  // Active dataset selection: snapshot (if enabled) or live
+  // -----------------------
+  const activeFloorData =
+    snapshotMode && snapshotData ? snapshotData.floorBreakdown || [] : floorData;
+  const activePersonnelBreakdown =
+    snapshotMode && snapshotData ? snapshotData.personnelBreakdown || [] : personnelBreakdown;
+  const activeTotalVisitedToday =
+    snapshotMode && snapshotData ? snapshotData.totalVisitedToday || 0 : totalVisitedToday;
+  const activePersonnelSummary =
+    snapshotMode && snapshotData ? snapshotData.personnelSummary || { employees: 0, contractors: 0 } : personnelSummary;
+  const activeVisitedToday =
+    snapshotMode && snapshotData ? snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 } : visitedToday;
+  const activeFloorInOutSummary =
+    snapshotMode && snapshotData ? snapshotData.floorInOutSummary || [] : floorInOutSummary;
 
-  // Helper text to be shown in navbar / header when snapshot is active
+  // Snapshot label for header when snapshot is active
   let snapshotLabel = null;
   if (snapshotMode && snapshotData) {
     const asOfLocal = snapshotData.asOfLocal || snapshotData.asOf || snapshotData.asOfUTC;
     try {
-      // If asOfLocal exists, show it formatted for Denver
       const d = asOfLocal ? new Date(asOfLocal) : null;
       const formatted = d ? d.toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${snapshotDate} ${snapshotTime}`;
       snapshotLabel = `Snapshot: ${formatted} (Denver)`;
@@ -165,8 +211,12 @@ export default function App() {
     }
   }
 
+  // -----------------------
+  // Render
+  // -----------------------
   return (
     <BrowserRouter>
+      {/* NOTE: 'dark-theme' wrapper present - remove or change if you want the light theme */}
       <div className="dark-theme">
         <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
           <Navbar.Brand as={Link} to="/" className="wu-brand">
@@ -177,18 +227,22 @@ export default function App() {
             <Nav.Link as={Link} to="/" className="nav-item-infographic">
               Dashboard
             </Nav.Link>
+
+            {/* Link to your existing history / partition UI */}
             <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
               History
             </Nav.Link>
+
             <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
               Floor Details
             </Nav.Link>
+
             <Nav.Link as={Link} to="/inout-inconsistency-denver" className="nav-item-infographic">
               In/Out Inconsistency
             </Nav.Link>
 
             {/* Snapshot time + date picker UI */}
-            <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
+            <Form className="d-flex align-items-center ms-3" onSubmit={(e) => e.preventDefault()}>
               <InputGroup>
                 <Form.Control
                   type="date"
@@ -199,7 +253,7 @@ export default function App() {
                 />
                 <Form.Control
                   type="time"
-                  step="1"              // allow seconds in browsers that support it
+                  step="1" // allow seconds in supporting browsers
                   value={snapshotTime}
                   onChange={handleSnapshotTimeChange}
                   title="Select time (Denver)"
@@ -214,6 +268,7 @@ export default function App() {
               </InputGroup>
             </Form>
 
+            {/* Theme indicator / toggle placeholder */}
             <Nav.Link className="theme-toggle-icon" title="Dark mode only">
               <FaSun color="#FFC72C" />
             </Nav.Link>
@@ -221,7 +276,7 @@ export default function App() {
         </Navbar>
 
         <Container fluid className="mt-4">
-          {/* If snapshot active, show small label */}
+          {/* If snapshot active show a small label */}
           {snapshotLabel && (
             <div style={{ color: '#FFC72C', marginBottom: 8 }}>
               {snapshotLabel}
