@@ -1,3 +1,16 @@
+	W0026176 this are present in Floor 01 but 
+in table disply 0 count 
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 01	2	1	1	0	
+Floor 12	1	1	0	0	
+Floor 09	1	1	0	0	
+Floor 06	0	1	-1	0 
+id: 1758008845982
+data: {"asOfLocal":"2025-09-16T01:47:25.982-06:00","asOfUTC":"2025-09-16T07:47:25.982Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 01","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T00:07:59.000Z",
+"Dateonly":"2025-09-16","Swipe_Time":"00:07:59","EmployeeID":"W0026176","PersonGUID":"6F93B492-C95A-436E-996A-92202EFB9915","ObjectName1":"Vargas, Erika","PersonnelType":"Contractor","CardNumber":"617979","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ.
+01. Focus Area North-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":3,"visitedToday":{"employees":0,"contractors":3,"total":3},"swipeStats":{"totalInSwipes":8,"totalOutSwipes":7},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":0,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]}]}
+
+Read all code carefully and writ correc code, and find out why count are not diplsy in Security column ok 
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useState } from 'react';
 import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
