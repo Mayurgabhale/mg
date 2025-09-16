@@ -42,3 +42,30 @@ async function getRejections(req, res) {
 }
 
 module.exports = { getRejections };
+
+
+
+
+
+
+.....
+
+
+
+const express = require("express");
+const router = express.Router();
+const { getRejections } = require("../controllers/denverRejection");
+
+router.get("/rejections", getRejections);
+
+module.exports = router;
+
+
+
+...
+
+..
+
+
+
+app.use("/api/denver", require("./routes/denverRoutes"));
