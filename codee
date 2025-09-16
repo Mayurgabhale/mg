@@ -1,66 +1,83 @@
-know i want to new colum in  <th>Security</th> 
-in securityOfficers: [
-    'W0003901','W0019956','W0023386','W0025278','W0025490',
-    'W0025492','W0025493','W0025639','W0026149','W0026151',
-    'W0026208','W0026455' 
-this are ther empl id,  so want ot add the on this paritcial floor who much secirty 
-and after hovor on this row 
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 15	40	32	8		                  3 count disply ther list of id ok 
-Floor 14	180	173	7	
-for exmpal: Floor 15 4 secirity, Floor 01 2 seciryt. like that, 
+// controllers/denversecurityrejection.js
 
-Floor In vs Out Swipe Summary
-Highest inconsistency: 8 on Floor 15
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 15	40	32	8		
-Floor 14	180	173	7		
-Floor 12	173	167	6		
-Floor 06	90	85	5		
-Floor 13	140	136	4		
-Floor 01	11	7	4		
-Floor 11	127	124	3		
-Floor 09	103	104	-1	
- <th>Security</th>
-              <th>Rejection</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((row, idx) => (
-              <tr key={row.floor}>
-                <td style={{ color: '#fff' }}>{row.floor}</td>
-                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
-                  {row.inSwipes}
-                </td>
-                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
-                  {row.outSwipes}
-                </td>
-                <td
-                  style={{
-                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {row.inconsistency}
-                </td>
-                <td></td>
-                <td></td>
+const mssql = require('mssql');
 
-this is the query :: 
-  const query = `
+/**
+ * Controller: getDenverSecurityRejection
+ * - Expects req.query.parts to be a comma-separated list of PartitionName2 values,
+ *   e.g. parts=US.CO.OBS.15,US.CO.OBS.14
+ *
+ * Response JSON:
+ * {
+ *   securityByFloor: [{ floor: 'Floor 15', count: 4, ids: ['W00...', ...] }, ...],
+ *   rejectionsByFloor: [{ floor: 'Floor 15', rejectionCount: 3, cards: ['...'] }, ...],
+ *   raw: { /* optional raw rows for debugging */ }
+ * }
+ *
+ * NOTE: adjust sqlConfig to reuse your app-wide pool/config if you have one.
+ */
+
+const sqlConfig = {
+  user: process.env.DB_USER || 'your_user',
+  password: process.env.DB_PASSWORD || 'your_password',
+  server: process.env.DB_HOST || 'your_sql_server_host',
+  database: process.env.DB_DATABASE || 'ACVSUJournal_00010029',
+  port: parseInt(process.env.DB_PORT || '1433', 10),
+  options: {
+    encrypt: false, // set true if using Azure / encryption
+    enableArithAbort: true,
+  },
+  pool: { max: 10, min: 0, idleTimeoutMillis: 30000 }
+};
+
+// Security officers list provided by you
+const SECURITY_OFFICERS = [
+  'W0003901','W0019956','W0023386','W0025278','W0025490',
+  'W0025492','W0025493','W0025639','W0026149','W0026151',
+  'W0026208','W0026455'
+];
+
+function sanitizePartitionList(partsRaw) {
+  if (!partsRaw) return null;
+  return partsRaw
+    .split(',')
+    .map(p => p.trim())
+    .filter(p => p.length > 0)
+    .map(p => p.replace(/'/g, "''")) // basic single-quote escape
+    .map(p => `'${p}'`)
+    .join(', ');
+}
+
+async function getDenverSecurityRejection(req, res) {
+  let pool;
+  try {
+    const partsRaw = req.query.parts; // expected comma separated
+    const partsList = sanitizePartitionList(partsRaw);
+    if (!partsList) {
+      return res.status(400).json({ error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14" });
+    }
+
+    pool = await mssql.connect(sqlConfig);
+
+    // build a table-valued inline list of security officer IDs
+    const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
+
+    const sql = `
+-- Combined query for recent events (last 7 days)
 WITH CombinedQuery AS (
   SELECT
     DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
     t1.ObjectName1      AS ObjectName1,
-     t1.ObjectName2      AS Door,                -- ← ADD THIS LINE
+    t1.ObjectName2      AS Door,
     t1.PartitionName2   AS PartitionName2,
     COALESCE(
       TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
       TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
       sc.value
-    )                    AS CardNumber,
-    t3.Name              AS PersonnelType,
-    t5_rej.value         AS RejectionType
+    ) AS CardNumber,
+    t3.Name AS PersonnelType,
+    t5_rej.value AS RejectionType,
+    t1.MessageType
   FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
   LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
     ON t1.ObjectIdentity1 = t2.GUID
@@ -77,429 +94,111 @@ WITH CombinedQuery AS (
   LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
     ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
   WHERE
-    t1.MessageType = 'CardRejected'
-    AND t1.PartitionName2 IN (${parts})
+    /* both accepted and rejected messages - we want security activity + rejections */
+    t1.MessageType IN ('CardAccepted', 'CardRejected')
+    AND t1.PartitionName2 IN (${partsList})
     AND CONVERT(DATE,
-         DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
         ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
+),
+
+-- Keep only events with a parsed CardNumber
+EventsWithCard AS (
+  SELECT *, LTRIM(RTRIM(CardNumber)) AS CardNumTrim
+  FROM CombinedQuery
+  WHERE COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
+),
+
+-- Latest event per card (so we can approximate where that officer was last seen)
+LatestPerCard AS (
+  SELECT *
+  , ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
+  FROM EventsWithCard
+),
+
+-- Security officers dataset (inline)
+SecurityList AS (
+  SELECT s.ID AS CardNumber FROM (VALUES
+    ${secValues}
+  ) AS s(ID)
+),
+
+-- Match latest security officers to floors
+SecurityLatest AS (
+  SELECT
+    lp.CardNumTrim AS CardNumber,
+    lp.PartitionName2,
+    lp.LocaleMessageTime,
+    'Floor ' + PARSENAME(lp.PartitionName2, 1) AS FloorLabel
+  FROM LatestPerCard lp
+  INNER JOIN SecurityList sec ON lp.CardNumTrim = sec.CardNumber
+  WHERE lp.rn = 1
+    AND lp.PartitionName2 IS NOT NULL
+),
+
+-- Aggregate security counts and lists per floor
+SecurityByFloor AS (
+  SELECT
+    ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
+    COUNT(DISTINCT CardNumber) AS SecurityCount,
+    STRING_AGG(DISTINCT CardNumber, ',') AS SecurityIDs -- requires SQL Server 2017+
+  FROM SecurityLatest
+  GROUP BY PartitionName2
+),
+
+-- Rejection counts per floor (last 7 days)
+Rejections AS (
+  SELECT
+    ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
+    COUNT(*) AS RejectionCount,
+    STRING_AGG(DISTINCT COALESCE(CardNumber, '?'), ',') AS Cards
+  FROM CombinedQuery
+  WHERE MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
+  GROUP BY PartitionName2
 )
 
 SELECT
-  LocaleMessageTime,
-  CONVERT(date, LocaleMessageTime)    AS DateOnly,
-  CONVERT(time(0), LocaleMessageTime) AS SwipeTime,
-  CardNumber,
-  PersonnelType,
-  PartitionName2                     AS Location,
-  Door,
-  RejectionType
-FROM CombinedQuery
-ORDER BY LocaleMessageTime DESC;
-  `;
- this code i want add on this file C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js ok 
-so rread  all cod carefully, and writ corect code;
+  (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH) AS securityJson,
+  (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
+`;
 
+    const result = await pool.request().query(sql);
 
+    // The SQL returns two JSON strings as single-row result
+    const row = result.recordset && result.recordset[0];
+    let securityByFloor = [];
+    let rejectionsByFloor = [];
 
-
-// src/components/FloorInOutTable.jsx
-
-import React from 'react';
-import { Card, Table } from 'react-bootstrap';
-
-// Accent palette (re-used from FloorOccupancyChart)
-const ROW_COLORS = [
-  '#FFC72C',
-  '#C9A9A6',
-  '#FFE680',
-  '#FFF5EE',
-  '#FFD11A',
-  '#96DED1',
-  '#FFEB99'
-];
-
-export default function FloorInOutTable({ data = [] }) {
-  // Compute inconsistency and sort descending
-  const sorted = data
-    .map(({ floor, inSwipes, outSwipes }) => ({
-      floor,
-      inSwipes,
-      outSwipes,
-      inconsistency: inSwipes - outSwipes
-    }))
-    .sort((a, b) => b.inconsistency - a.inconsistency);
-
-  const top = sorted[0];
-
-  return (
-    <Card
-      className="mb-4 shadow-sm"
-      style={{
-        background: '#1a1a1a',
-        border: '2px solid #FFC72C'
-      }}
-    >
-      <Card.Header
-        className="text-center fw-bold"
-        style={{ background: '#000', color: '#FFC72C' }}
-      >
-        Floor In vs Out Swipe Summary
-      </Card.Header>
-
-      {/* Match other charts: fixed body height and auto-scroll */}
-      <Card.Body
-        style={{
-          height: 450,
-          padding: '1rem',
-          overflowY: 'auto'
-        }}
-      >
-        {top && (
-          <div
-            className="mb-3"
-            style={{ color: '#fff', fontSize: '1rem' }}
-          >
-            Highest inconsistency:&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-              {top.inconsistency}
-            </span>
-            &nbsp;on&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-              {top.floor}
-            </span>
-          </div>
-        )}
-
-        <Table striped bordered hover size="sm" variant="dark" className="mb-0">
-          <thead>
-            <tr>
-              <th>Floor</th>
-              <th>In Swipes</th>
-              <th>Out Swipes</th>
-              <th>In &minus; Out</th>
-              <th>Security</th>
-              <th>Rejection</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((row, idx) => (
-              <tr key={row.floor}>
-                <td style={{ color: '#fff' }}>{row.floor}</td>
-                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
-                  {row.inSwipes}
-                </td>
-                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
-                  {row.outSwipes}
-                </td>
-                <td
-                  style={{
-                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {row.inconsistency}
-                </td>
-                <td></td>
-                <td></td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card.Body>
-    </Card>
-  );
-}
-
-
-import React, { useEffect, useState } from 'react';
-import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-
-import DashboardHome from './pages/DashboardHome';
-import FloorDetailsPage from './pages/FloorDetailsPage';
-import DenverInOutInconsistencyPage from './pages/DenverInOutInconsistency'; // ← NEW
-
-import './App.css';
-
-export default function App() {
-  // live data states
-  const [floorData, setFloorData] = useState([]);
-  const [personnelBreakdown, setPersonnelBreakdown] = useState([]);
-  const [totalVisitedToday, setTotalVisitedToday] = useState(0);
-  const [personnelSummary, setPersonnelSummary] = useState({ employees: 0, contractors: 0 });
-  const [visitedToday, setVisitedToday] = useState({ employees: 0, contractors: 0, total: 0 });
-  const [floorInOutSummary, setFloorInOutSummary] = useState([]); // ← NEW
-
-  // new: in/out inconsistency data
-  const [inOutData, setInOutData] = useState(null);
-  const [loadingInOut, setLoadingInOut] = useState(true);
-  const [inOutError, setInOutError] = useState(null);
-
-  // --- Snapshot/time selection states ---
-  const [snapshotMode, setSnapshotMode] = useState(false);
-  const [snapshotTime, setSnapshotTime] = useState(''); // "HH:MM" or "HH:MM:SS"
-  const [snapshotDate, setSnapshotDate] = useState(() => {
-    // default to today's date in America/Denver in YYYY-MM-DD (en-CA format)
-    try {
-      return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-    } catch (e) {
-      // fallback to local date if running in environment without timeZone support
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
-  });
-  const [snapshotLoading, setSnapshotLoading] = useState(false);
-  const [snapshotError, setSnapshotError] = useState(null);
-  const [snapshotData, setSnapshotData] = useState(null); // will hold the payload returned by the new API
-
-  // live SSE (unchanged)
-  useEffect(() => {
-    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-    es.onmessage = e => {
+    if (row) {
       try {
-        const p = JSON.parse(e.data);
-        setFloorData(p.floorBreakdown || []);
-        setPersonnelBreakdown(p.personnelBreakdown || []);
-        setTotalVisitedToday(p.totalVisitedToday || 0);
-        setPersonnelSummary(p.personnelSummary || { employees: 0, contractors: 0 });
-        setVisitedToday(p.visitedToday || { employees: 0, contractors: 0, total: 0 });
-        setFloorInOutSummary(p.floorInOutSummary || []); // ← NEW
-      } catch (err) {
-        console.error('SSE parse error:', err);
+        securityByFloor = row.securityJson ? JSON.parse(row.securityJson) : [];
+      } catch (e) {
+        securityByFloor = [];
       }
-    };
-    es.onerror = err => {
-      console.error('SSE error:', err);
-      es.close();
-    };
-    return () => es.close();
-  }, []);
-
-  // Fetch once: in/out inconsistency JSON (unchanged)
-  useEffect(() => {
-    fetch('http://localhost:5000/api/inout-inconsistency-denver')
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-        return res.json();
-      })
-      .then(data => {
-        setInOutData(data.floorInconsistency || []); // ✅ Store only the array we want
-        setLoadingInOut(false);
-      })
-      .catch(err => {
-        console.error('Failed to load in/out inconsistency:', err);
-        setInOutError(err.message);
-        setLoadingInOut(false);
-      });
-  }, []);
-
-  // --- Snapshot handlers ---
-  const handleSnapshotTimeChange = (e) => {
-    setSnapshotTime(e.target.value);
-    setSnapshotError(null);
-  };
-
-  const handleSnapshotDateChange = (e) => {
-    setSnapshotDate(e.target.value);
-    setSnapshotError(null);
-  };
-
-  const applySnapshot = async () => {
-    if (!snapshotTime) {
-      setSnapshotError('Select a time first.');
-      return;
-    }
-    if (!snapshotDate) {
-      setSnapshotError('Select a date first.');
-      return;
-    }
-
-    // Ensure time has seconds (append :00 if only HH:MM)
-    const timeForApi = snapshotTime.length === 5 ? `${snapshotTime}:00` : snapshotTime;
-
-    setSnapshotLoading(true);
-    setSnapshotError(null);
-
-    try {
-      const url = `http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(`${resp.status} ${resp.statusText} - ${txt}`);
+      try {
+        rejectionsByFloor = row.rejectionsJson ? JSON.parse(row.rejectionsJson) : [];
+      } catch (e) {
+        rejectionsByFloor = [];
       }
-      const json = await resp.json();
-      setSnapshotData(json);
-      setSnapshotMode(true);
-    } catch (err) {
-      console.error('Failed to fetch snapshot:', err);
-      setSnapshotError(err.message || 'Failed to fetch snapshot');
-      setSnapshotData(null);
-      setSnapshotMode(false);
-    } finally {
-      setSnapshotLoading(false);
     }
-  };
 
-  const clearSnapshot = () => {
-    setSnapshotMode(false);
-    setSnapshotData(null);
-    setSnapshotTime('');
-    setSnapshotError(null);
-    setSnapshotLoading(false);
-    // keep snapshotDate (so user doesn't need to reselect date)
-  };
+    return res.json({
+      securityByFloor,
+      rejectionsByFloor,
+      meta: {
+        partsRequested: partsRaw,
+        securityOfficersCount: SECURITY_OFFICERS.length,
+      }
+    });
 
-  // --- Decide which data to pass into child components: snapshotData (if active) or live data ---
-  const activeFloorData = snapshotMode && snapshotData ? (snapshotData.floorBreakdown || []) : floorData;
-  const activePersonnelBreakdown = snapshotMode && snapshotData ? (snapshotData.personnelBreakdown || []) : personnelBreakdown;
-  const activeTotalVisitedToday = snapshotMode && snapshotData ? (snapshotData.totalVisitedToday || 0) : totalVisitedToday;
-  const activePersonnelSummary = snapshotMode && snapshotData ? (snapshotData.personnelSummary || { employees: 0, contractors: 0 }) : personnelSummary;
-  const activeVisitedToday = snapshotMode && snapshotData ? (snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 }) : visitedToday;
-  const activeFloorInOutSummary = snapshotMode && snapshotData ? (snapshotData.floorInOutSummary || []) : floorInOutSummary;
-
-  // Helper text to be shown in navbar / header when snapshot is active
-  let snapshotLabel = null;
-  if (snapshotMode && snapshotData) {
-    const asOfLocal = snapshotData.asOfLocal || snapshotData.asOf || snapshotData.asOfUTC;
-    try {
-      // If asOfLocal exists, show it formatted for Denver
-      const d = asOfLocal ? new Date(asOfLocal) : null;
-      const formatted = d ? d.toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${snapshotDate} ${snapshotTime}`;
-      snapshotLabel = <div style={{
-            background: '#363d37',
-            color: '#FFF',
-            padding: '8px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderLeft: '4px solid rgb(11, 248, 3)',
-            marginBottom: 8
-          }}> Snapshot: {formatted} (Denver) </div>;
-    } catch (e) {
-      snapshotLabel = `Snapshot: ${snapshotDate} ${snapshotTime}`;
-    }
+  } catch (err) {
+    console.error('denverSecurityRejection error:', err);
+    return res.status(500).json({ error: err.message || String(err) });
+  } finally {
+    try { if (pool) await pool.close(); } catch (e) { /* ignore */ }
   }
-
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
-          <Navbar.Brand as={Link} to="/" className="wu-brand">
-            Live Occupancy — Western Union Denver
-          </Navbar.Brand>
-
-          <Nav className="ms-auto align-items-center">
-            <Nav.Link as={Link} to="/" className="nav-item-infographic">
-              Dashboard
-            </Nav.Link>
-            <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
-              History
-            </Nav.Link>
-            <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
-              Floor Details
-            </Nav.Link>
-            <Nav.Link as={Link} to="/inout-inconsistency-denver" className="nav-item-infographic">
-              In/Out Inconsistency
-            </Nav.Link>
-
-            {/* Snapshot time + date picker UI */}
-            <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
-              <InputGroup>
-                <Form.Control
-                  type="date"
-                  value={snapshotDate}
-                  onChange={handleSnapshotDateChange}
-                  title="Select date (Denver)"
-                  style={{ maxWidth: 150 }}
-                />
-                <Form.Control
-                  type="time"
-                  step="1"              // allow seconds in browsers that support it
-                  value={snapshotTime}
-                  onChange={handleSnapshotTimeChange}
-                  title="Select time (Denver)"
-                  style={{ maxWidth: 120 }}
-                />
-                <Button variant="outline-light" onClick={applySnapshot} disabled={snapshotLoading}>
-                  {snapshotLoading ? 'Loading…' : 'Apply'}
-                </Button>
-                <Button variant="outline-secondary" onClick={clearSnapshot} className="ms-1">
-                  Clear
-                </Button>
-              </InputGroup>
-            </Form>
-
-            <Nav.Link className="theme-toggle-icon" title="Dark mode only">
-              <FaSun color="#FFC72C" />
-            </Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Container fluid className="mt-4">
-          {/* If snapshot active, show small label */}
-          {snapshotLabel && (
-            <div style={{ color: '#FFC72C', marginBottom: 8 }}>
-              {snapshotLabel}
-              {snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{snapshotError}</span>}
-            </div>
-          )}
-
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <DashboardHome
-                  personnelSummary={activePersonnelSummary}
-                  totalVisitedToday={activeTotalVisitedToday}
-                  visitedToday={activeVisitedToday}
-                  floorData={activeFloorData}
-                  personnelBreakdown={activePersonnelBreakdown}
-                  floorInOutSummary={activeFloorInOutSummary}
-                />
-              }
-            />
-
-            <Route
-              path="/floor-details"
-              element={
-                <FloorDetailsPage
-                  floorData={activeFloorData}
-                  floorInOutSummary={activeFloorInOutSummary}
-                />
-              }
-            />
-
-            <Route
-              path="/inout-inconsistency-denver"
-              element={
-                <DenverInOutInconsistencyPage
-                  data={inOutData}
-                  loading={loadingInOut}
-                  error={inOutError}
-                />
-              }
-            />
-          </Routes>
-        </Container>
-      </div>
-    </BrowserRouter>
-  );
 }
 
-
-
-
-//  light theme
-
-
-
-
-
-
-
-
-
+module.exports = {
+  getDenverSecurityRejection
+};
