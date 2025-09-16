@@ -1,20 +1,3 @@
-not disply writ correct code
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 01	2	1	1	0	
-Floor 09	2	1	1	0	
-Floor 12	2	2	0	0	
-Floor 11	2	2	0	0	
-Floor 15	1	1	0	0	
-Floor 14	1	1	0	0	
-Floor 13	1	1	0	0	
-Floor 06	3	4	-1	0
-
-
-webpack compiled successfully
-(node:5488) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
-
-
-
 // src/components/FloorInOutTable.jsx
 import React from 'react';
 import { Card, Table } from 'react-bootstrap';
@@ -33,12 +16,13 @@ const SECURITY_IDS = [
 
 const normalizeId = v => String(v || '').trim().toUpperCase();
 
-export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
-  // Build security set
+export default function FloorInOutTable({ data = [], floorBreakdown = [], floorInOutSummary = [] }) {
   const securitySet = new Set(SECURITY_IDS);
 
-  // Map floor → security count (based on live occupants)
+  // Map floor → security count
   const securityByFloor = {};
+
+  // 1. Check live occupants on each floor
   (floorBreakdown || []).forEach(fb => {
     let count = 0;
     (fb.occupants || []).forEach(o => {
@@ -47,7 +31,19 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
         count++;
       }
     });
-    securityByFloor[fb.floor] = count;
+    if (count > 0) {
+      securityByFloor[fb.floor] = (securityByFloor[fb.floor] || 0) + count;
+    }
+  });
+
+  // 2. Check inOnlyPersons from floorInOutSummary
+  (floorInOutSummary || []).forEach(f => {
+    (f.inOnlyPersons || []).forEach(pid => {
+      const empId = normalizeId(pid);
+      if (securitySet.has(empId)) {
+        securityByFloor[f.floor] = (securityByFloor[f.floor] || 0) + 1;
+      }
+    });
   });
 
   // Compute inconsistency and attach security count
@@ -64,30 +60,18 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
   const top = sorted[0];
 
   return (
-    <Card
-      className="mb-4 shadow-sm"
-      style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}
-    >
-      <Card.Header
-        className="text-center fw-bold"
-        style={{ background: '#000', color: '#FFC72C' }}
-      >
+    <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
+      <Card.Header className="text-center fw-bold" style={{ background: '#000', color: '#FFC72C' }}>
         Floor In vs Out Swipe Summary
       </Card.Header>
 
-      <Card.Body
-        style={{ height: 450, padding: '1rem', overflowY: 'auto' }}
-      >
+      <Card.Body style={{ height: 450, padding: '1rem', overflowY: 'auto' }}>
         {top && (
           <div className="mb-3" style={{ color: '#fff', fontSize: '1rem' }}>
             Highest inconsistency:&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-              {top.inconsistency}
-            </span>
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.inconsistency}</span>
             &nbsp;on&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-              {top.floor}
-            </span>
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.floor}</span>
           </div>
         )}
 
@@ -104,34 +88,14 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
           </thead>
           <tbody>
             {sorted.map((row, idx) => (
-              <tr
-                key={row.floor}
-                style={{
-                  backgroundColor:
-                    row.securityCount > 0 ? '#333300' : undefined
-                }}
-              >
+              <tr key={row.floor} style={{ backgroundColor: row.securityCount > 0 ? '#333300' : undefined }}>
                 <td style={{ color: '#fff' }}>{row.floor}</td>
-                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
-                  {row.inSwipes}
-                </td>
-                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
-                  {row.outSwipes}
-                </td>
-                <td
-                  style={{
-                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                    fontWeight: 'bold'
-                  }}
-                >
+                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
+                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
+                <td style={{ color: ROW_COLORS[(idx + 2) % ROW_COLORS.length], fontWeight: 'bold' }}>
                   {row.inconsistency}
                 </td>
-                <td
-                  style={{
-                    color: row.securityCount > 0 ? '#FFC72C' : '#aaa',
-                    fontWeight: row.securityCount > 0 ? 'bold' : 'normal'
-                  }}
-                >
+                <td style={{ color: row.securityCount > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityCount > 0 ? 'bold' : 'normal' }}>
                   {row.securityCount}
                 </td>
                 <td></td>
