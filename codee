@@ -1,5 +1,5 @@
-ok, good,
-{
+ok, good, 
+
   "summary": [
     {
       "floor": "Floor 6",
@@ -39,29 +39,11 @@ ok, good,
       "floor": "Floor 6"
     },
     {
-      "LocaleMessageTime": "2025-09-15T12:30:46.000Z",
-      "DateOnly": "2025-09-15T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T12:30:46.000Z",
-      "CardNumber": "618918",
-      "PersonnelType": "Contractor",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "Expired",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-15T12:30:40.000Z",
-      "DateOnly": "2025-09-15T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T12:30:40.000Z",
-      "CardNumber": "618918",
-      "PersonnelType": "Contractor",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "Expired",
-      "floor": "Floor 12"
+      "LocaleMessageTime": 
 
 
-++++ But this all reject yesterday  means this date 2025-09-15 ok want only today ok. 
+Know i want date wise
+
 
 // controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
