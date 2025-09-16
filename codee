@@ -1,3 +1,4 @@
+
 {
   "summary": [
     {
@@ -60,3 +61,114 @@ in "Door": "US.CO.HQ. 06.  -- 06 floor 6
  "Door": "US.CO.HQ. 12. ---- 12 floor 12 like that 
 
 and location only   "Location": "US.CO.OBS", not all locaiton rejectn:; i want only  "Location": "US.CO.OBS", this locain only ok 
+
+
+
+
+
+
+
+// controllers/denverRejection.js
+const { denver } = require("../config/siteConfig");
+const doorFloorMap = require("../data/denverDoorFloorMap");
+const normalizeKey = require("../data/normalizeKey"); // import normalizeKey
+
+async function getRejections(req, res) {
+  try {
+    const pool = await denver.poolPromise;
+
+    const parts = req.query.parts
+      ? req.query.parts.split(",").map(f => `'${f.trim()}'`).join(",")
+      : null;
+
+    const query = `
+      WITH CombinedQuery AS (
+        SELECT
+          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+          t1.ObjectName1      AS ObjectName1,
+          t1.ObjectName2      AS Door,
+          t1.PartitionName2   AS PartitionName2,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+            sc.value
+          )                    AS CardNumber,
+          t3.Name              AS PersonnelType,
+          t5_rej.value         AS RejectionType
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
+          ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+          ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) AS sc
+          ON t1.XmlGUID = sc.GUID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
+          ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
+        WHERE
+          t1.MessageType = 'CardRejected'
+          ${parts ? `AND t1.PartitionName2 IN (${parts})` : ""}
+          AND CONVERT(DATE,
+               DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+              ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
+      )
+      SELECT
+        LocaleMessageTime,
+        CONVERT(date, LocaleMessageTime)    AS DateOnly,
+        CONVERT(time(0), LocaleMessageTime) AS SwipeTime,
+        CardNumber,
+        PersonnelType,
+        PartitionName2                     AS Location,
+        Door,
+        RejectionType
+      FROM CombinedQuery
+      ORDER BY LocaleMessageTime DESC;
+    `;
+
+    const result = await pool.request().query(query);
+
+    // Post-process in JS
+    const details = result.recordset.map(r => {
+  let floor = r.PartitionName2; // default fallback
+  try {
+    const [doorRaw, dirRaw] = (r.Door || "").split("___");
+    const normKey = normalizeKey(doorRaw || "", dirRaw || "");
+    if (doorFloorMap[normKey]) {
+      floor = doorFloorMap[normKey];
+    }
+  } catch (e) {
+    console.warn("Failed to normalize door:", r.Door, e.message);
+  }
+
+  return { ...r, floor };
+});
+
+    // Floor-wise rejection count
+    const summary = details.reduce((acc, row) => {
+      if (!acc[row.floor]) acc[row.floor] = 0;
+      acc[row.floor]++;
+      return acc;
+    }, {});
+
+    const summaryArr = Object.entries(summary).map(([floor, rejectionCount]) => ({
+      floor,
+      rejectionCount
+    }));
+
+    res.json({
+      summary: summaryArr,
+      details
+    });
+
+  } catch (err) {
+    console.error("Error fetching rejection data:", err);
+    res.status(500).send("Server Error");
+  }
+}
+
+module.exports = { getRejections };
