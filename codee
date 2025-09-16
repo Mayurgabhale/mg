@@ -1,3 +1,43 @@
+http://localhost:5000/api/denver-security-rejection
+Cannot GET /api/denver-security-rejection
+
+_________________________________________________
+
+
+
+
+
+
+// routes/occupancyDenverRoutes.js
+const express = require('express');
+const router = express.Router();
+
+const { getDenverLiveOccupancy, getDenverSnapshotAtDateTime } = require('../controllers/denverLiveOccupancyController');
+const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+
+// <-- add this import:
+const { getDenverSecurityRejection } = require('../controllers/denversecurityrejection');
+
+// Denver live occupancy
+router.get('/live-occupancy-denver', getDenverLiveOccupancy);
+
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
+
+// Denver snapshot endpoint
+router.get('/occupancy-at-time-denver', getDenverSnapshotAtDateTime);
+
+
+// NEW: Denver security + rejection summary (expects ?parts=...)
+router.get('/denver-security-rejection', getDenverSecurityRejection);
+
+
+module.exports = router;
+
+
+
+
+
 // controllers/denversecurityrejection.js
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
 
@@ -186,32 +226,3 @@ SELECT
     return res.status(500).json({ error: err.message || String(err) });
   }
 };
-
-
-
-
-.....
-
-..
-const express = require('express');
-const router = express.Router();
-
-const { getDenverLiveOccupancy, getDenverSnapshotAtDateTime } = require('../controllers/denverLiveOccupancyController');
-const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
-
-// <-- add this import:
-const { getDenverSecurityRejection } = require('../controllers/denversecurityrejection');
-
-// Denver live occupancy
-router.get('/live-occupancy-denver', getDenverLiveOccupancy);
-
-// Denver in/out inconsistency trends
-router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
-
-// Denver snapshot endpoint
-router.get('/occupancy-at-time-denver', getDenverSnapshotAtDateTime);
-
-// NEW: Denver security + rejection summary (expects ?parts=...)
-router.get('/denver-security-rejection', getDenverSecurityRejection);
-
-module.exports = router;
