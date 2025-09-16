@@ -1,32 +1,43 @@
-<Col md={4}>
-  <FloorInOutTable
-    data={floorInOutSummary}
-    floorBreakdown={floorData}
-    floorInOutSummary={floorInOutSummary}
-  />
-</Col>
+good, filnay done.
+know i want to do after click on this row 
+Security  Floor 09	3	1	2	1 .. this 1 i want to to show ther informtin on popup 
+EmployeeID: 
+"ObjectName1":"Ali, Shuayb"
+{"floor":"Floor 14","inSwipes":1,"
+Swipe_Time":"03:09:14"
 
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 09	3	1	2	1	
 
-
-
-
-
-not disply 
-read beloc all code 
-Floor In vs Out Swipe Summary
 Highest inconsistency: 2 on Floor 09
 Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 09	3	1	2	0	
-Floor 01	2	1	1	0	
+Floor 09	3	1	2	1	
+Floor 01	2	1	1	1	
+Floor 11	3	2	1	0	
 Floor 12	2	2	0	0	
-Floor 11	2	2	0	0	
 Floor 15	1	1	0	0	
 Floor 14	1	1	0	0	
 Floor 13	1	1	0	0	
-Floor 06	3	4	-1	0	
+Floor 06	3	4	-1	0
+
+know count is one afte some time is 5:
+so EmployeeID: 
+"ObjectName1":"Ali, Shuayb"
+{"floor":"Floor 14","inSwipes":1,"
+Swipe_Time":"03:09:14"
+
+i want into on table , ok 
+
+id: 1758013778064
+data: {"asOfLocal":"2025-09-16T03:09:38.064-06:00","asOfUTC":"2025-09-16T09:09:38.064Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 13","total":1,"employees":0,"contractors":1,"tempBadge":0,
+"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T03:09:14.000Z","Dateonly":"2025-09-16","Swipe_Time":"03:09:14","EmployeeID":"W0028120","PersonGUID":"8593096B-76A0-4985-B2AC-D4C4294A9ABF","ObjectName1":"Ali, Shuayb","PersonnelType":"Contractor"
+,"CardNumber":"618890","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 13. South Stairwell-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":5,
+"visitedToday":{"employees":0,"contractors":5,"total":5},"swipeStats":{"totalInSwipes":38,"totalOutSwipes":23},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":2,"outSwipes":3,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,
+"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons"
+:[]},{"floor":"Floor 11","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 15","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 14","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons"
+:[]},{"floor":"Floor 13","inSwipes":1,"outSwipes":0,"inOnlyCount":1,"inOnlyPersons":["8593096B-76A0-4985-B2AC-D4C4294A9ABF"]}]}
 
 
-Chek bela each line and findout why count not disly 
 // src/components/FloorInOutTable.jsx
 import React from 'react';
 import { Card, Table } from 'react-bootstrap';
@@ -134,372 +145,5 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [], floorI
         </Table>
       </Card.Body>
     </Card>
-  );
-}
-
-// src/pages/DashboardHome.jsx
-
-import React from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
-
-import SummaryCards from '../components/SummaryCards';
-import FloorOccupancyChart from '../components/FloorOccupancyChart';
-import PersonnelDonutChart from '../components/PersonnelDonutChart';
-import FloorInOutTable from '../components/FloorInOutTable';
-
-export default function DashboardHome({
-  personnelSummary,
-  totalVisitedToday,
-  visitedToday,
-  floorData,
-  personnelBreakdown,
-  floorInOutSummary
-}) {
-  const employees = personnelSummary?.employees ?? 0;
-  const contractors = personnelSummary?.contractors ?? 0;
-  const totalOccupancy = employees + contractors;
-
-  const chartData = personnelBreakdown.map(({ personnelType, count }) => ({
-    personnelType,
-    count
-  }));
-
-  return (
-    <Container fluid className="py-4">
-      <SummaryCards
-        totalOccupancy={totalOccupancy}
-        employeeCount={employees}
-        contractorCount={contractors}
-        totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees ?? 0}
-        contractorsVisitedToday={visitedToday?.contractors ?? 0}
-      />
-
-      {/* Dashboard Charts + In/Out Table in one row */}
-      <Row className="g-4">
-        <Col md={4}>
-          <FloorOccupancyChart data={floorData} />
-        </Col>
-        <Col md={4}>
-          <PersonnelDonutChart data={chartData} />
-        </Col>
-
-         {/* <Row className="g-4"> */}
-        <Col md={4}>
-          <FloorInOutTable data={floorInOutSummary} />
-        </Col>
-      </Row>
-
-      {/* Footer */}
-      <footer
-        style={{
-          backgroundColor: '#000',
-          color: '#FFC72C',
-          padding: '1.5rem 0',
-          textAlign: 'center',
-          marginTop: '2rem',
-          borderTop: '2px solid #FFC72C',
-          fontSize: '0.95rem',
-          lineHeight: '1.6'
-        }}
-      >
-        <div>
-          <strong>Global Security Operations Center (GSOC)</strong><br />
-          Live Occupancy dashboard for Western Union Denver — Real-time occupancy, floor activity, and personnel insights.
-        </div>
-        <div style={{ marginTop: '0.75rem' }}>
-          Contact us: <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com" style={{ color: '#FFC72C', textDecoration: 'underline' }}>gsoc@westernunion.com</a> |
-          Landline: <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-        </div>
-      </footer>
-    </Container>
-  );
-}
-
-
-
-
-
-
-
-
-// src/App.js
-
-import React, { useEffect, useState } from 'react';
-import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-
-import DashboardHome from './pages/DashboardHome';
-import FloorDetailsPage from './pages/FloorDetailsPage';
-import DenverInOutInconsistencyPage from './pages/DenverInOutInconsistency'; // ← NEW
-
-import './App.css';
-
-export default function App() {
-  // live data states
-  const [floorData, setFloorData] = useState([]);
-  const [personnelBreakdown, setPersonnelBreakdown] = useState([]);
-  const [totalVisitedToday, setTotalVisitedToday] = useState(0);
-  const [personnelSummary, setPersonnelSummary] = useState({ employees: 0, contractors: 0 });
-  const [visitedToday, setVisitedToday] = useState({ employees: 0, contractors: 0, total: 0 });
-  const [floorInOutSummary, setFloorInOutSummary] = useState([]); // ← NEW
-
-  // new: in/out inconsistency data
-  const [inOutData, setInOutData] = useState(null);
-  const [loadingInOut, setLoadingInOut] = useState(true);
-  const [inOutError, setInOutError] = useState(null);
-
-  // --- Snapshot/time selection states ---
-  const [snapshotMode, setSnapshotMode] = useState(false);
-  const [snapshotTime, setSnapshotTime] = useState(''); // "HH:MM" or "HH:MM:SS"
-  const [snapshotDate, setSnapshotDate] = useState(() => {
-    // default to today's date in America/Denver in YYYY-MM-DD (en-CA format)
-    try {
-      return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-    } catch (e) {
-      // fallback to local date if running in environment without timeZone support
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
-  });
-  const [snapshotLoading, setSnapshotLoading] = useState(false);
-  const [snapshotError, setSnapshotError] = useState(null);
-  const [snapshotData, setSnapshotData] = useState(null); // will hold the payload returned by the new API
-
-  // live SSE (unchanged)
-  useEffect(() => {
-    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-    es.onmessage = e => {
-      try {
-        const p = JSON.parse(e.data);
-        setFloorData(p.floorBreakdown || []);
-        setPersonnelBreakdown(p.personnelBreakdown || []);
-        setTotalVisitedToday(p.totalVisitedToday || 0);
-        setPersonnelSummary(p.personnelSummary || { employees: 0, contractors: 0 });
-        setVisitedToday(p.visitedToday || { employees: 0, contractors: 0, total: 0 });
-        setFloorInOutSummary(p.floorInOutSummary || []); // ← NEW
-      } catch (err) {
-        console.error('SSE parse error:', err);
-      }
-    };
-    es.onerror = err => {
-      console.error('SSE error:', err);
-      es.close();
-    };
-    return () => es.close();
-  }, []);
-
-  // Fetch once: in/out inconsistency JSON (unchanged)
-  useEffect(() => {
-    fetch('http://localhost:5000/api/inout-inconsistency-denver')
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-        return res.json();
-      })
-      .then(data => {
-        setInOutData(data.floorInconsistency || []); // ✅ Store only the array we want
-        setLoadingInOut(false);
-      })
-      .catch(err => {
-        console.error('Failed to load in/out inconsistency:', err);
-        setInOutError(err.message);
-        setLoadingInOut(false);
-      });
-  }, []);
-
-  // --- Snapshot handlers ---
-  const handleSnapshotTimeChange = (e) => {
-    setSnapshotTime(e.target.value);
-    setSnapshotError(null);
-  };
-
-  const handleSnapshotDateChange = (e) => {
-    setSnapshotDate(e.target.value);
-    setSnapshotError(null);
-  };
-
-  const applySnapshot = async () => {
-    if (!snapshotTime) {
-      setSnapshotError('Select a time first.');
-      return;
-    }
-    if (!snapshotDate) {
-      setSnapshotError('Select a date first.');
-      return;
-    }
-
-    // Ensure time has seconds (append :00 if only HH:MM)
-    const timeForApi = snapshotTime.length === 5 ? `${snapshotTime}:00` : snapshotTime;
-
-    setSnapshotLoading(true);
-    setSnapshotError(null);
-
-    try {
-      const url = `http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(`${resp.status} ${resp.statusText} - ${txt}`);
-      }
-      const json = await resp.json();
-      setSnapshotData(json);
-      setSnapshotMode(true);
-    } catch (err) {
-      console.error('Failed to fetch snapshot:', err);
-      setSnapshotError(err.message || 'Failed to fetch snapshot');
-      setSnapshotData(null);
-      setSnapshotMode(false);
-    } finally {
-      setSnapshotLoading(false);
-    }
-  };
-
-  const clearSnapshot = () => {
-    setSnapshotMode(false);
-    setSnapshotData(null);
-    setSnapshotTime('');
-    setSnapshotError(null);
-    setSnapshotLoading(false);
-    // keep snapshotDate (so user doesn't need to reselect date)
-  };
-
-  // --- Decide which data to pass into child components: snapshotData (if active) or live data ---
-  const activeFloorData = snapshotMode && snapshotData ? (snapshotData.floorBreakdown || []) : floorData;
-  const activePersonnelBreakdown = snapshotMode && snapshotData ? (snapshotData.personnelBreakdown || []) : personnelBreakdown;
-  const activeTotalVisitedToday = snapshotMode && snapshotData ? (snapshotData.totalVisitedToday || 0) : totalVisitedToday;
-  const activePersonnelSummary = snapshotMode && snapshotData ? (snapshotData.personnelSummary || { employees: 0, contractors: 0 }) : personnelSummary;
-  const activeVisitedToday = snapshotMode && snapshotData ? (snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 }) : visitedToday;
-  const activeFloorInOutSummary = snapshotMode && snapshotData ? (snapshotData.floorInOutSummary || []) : floorInOutSummary;
-
-  // Helper text to be shown in navbar / header when snapshot is active
-  let snapshotLabel = null;
-  if (snapshotMode && snapshotData) {
-    const asOfLocal = snapshotData.asOfLocal || snapshotData.asOf || snapshotData.asOfUTC;
-    try {
-      // If asOfLocal exists, show it formatted for Denver
-      const d = asOfLocal ? new Date(asOfLocal) : null;
-      const formatted = d ? d.toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${snapshotDate} ${snapshotTime}`;
-      snapshotLabel = <div style={{
-            background: '#363d37',
-            color: '#FFF',
-            padding: '8px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderLeft: '4px solid rgb(11, 248, 3)',
-            marginBottom: 8
-          }}> Snapshot: {formatted} (Denver) </div>;
-    } catch (e) {
-      snapshotLabel = `Snapshot: ${snapshotDate} ${snapshotTime}`;
-    }
-  }
-
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
-          <Navbar.Brand as={Link} to="/" className="wu-brand">
-            Live Occupancy — Western Union Denver
-          </Navbar.Brand>
-
-          <Nav className="ms-auto align-items-center">
-            <Nav.Link as={Link} to="/" className="nav-item-infographic">
-              Dashboard
-            </Nav.Link>
-            <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
-              History
-            </Nav.Link>
-            <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
-              Floor Details
-            </Nav.Link>
-            <Nav.Link as={Link} to="/inout-inconsistency-denver" className="nav-item-infographic">
-              In/Out Inconsistency
-            </Nav.Link>
-
-            {/* Snapshot time + date picker UI */}
-            <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
-              <InputGroup>
-                <Form.Control
-                  type="date"
-                  value={snapshotDate}
-                  onChange={handleSnapshotDateChange}
-                  title="Select date (Denver)"
-                  style={{ maxWidth: 150 }}
-                />
-                <Form.Control
-                  type="time"
-                  step="1"              // allow seconds in browsers that support it
-                  value={snapshotTime}
-                  onChange={handleSnapshotTimeChange}
-                  title="Select time (Denver)"
-                  style={{ maxWidth: 120 }}
-                />
-                <Button variant="outline-light" onClick={applySnapshot} disabled={snapshotLoading}>
-                  {snapshotLoading ? 'Loading…' : 'Apply'}
-                </Button>
-                <Button variant="outline-secondary" onClick={clearSnapshot} className="ms-1">
-                  Clear
-                </Button>
-              </InputGroup>
-            </Form>
-
-            <Nav.Link className="theme-toggle-icon" title="Dark mode only">
-              <FaSun color="#FFC72C" />
-            </Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Container fluid className="mt-4">
-          {/* If snapshot active, show small label */}
-          {snapshotLabel && (
-            <div style={{ color: '#FFC72C', marginBottom: 8 }}>
-              {snapshotLabel}
-              {snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{snapshotError}</span>}
-            </div>
-          )}
-
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <DashboardHome
-                  personnelSummary={activePersonnelSummary}
-                  totalVisitedToday={activeTotalVisitedToday}
-                  visitedToday={activeVisitedToday}
-                  floorData={activeFloorData}
-                  personnelBreakdown={activePersonnelBreakdown}
-                  floorInOutSummary={activeFloorInOutSummary}
-                />
-              }
-            />
-
-            <Route
-              path="/floor-details"
-              element={
-                <FloorDetailsPage
-                  floorData={activeFloorData}
-                  floorInOutSummary={activeFloorInOutSummary}
-                />
-              }
-            />
-
-            <Route
-              path="/inout-inconsistency-denver"
-              element={
-                <DenverInOutInconsistencyPage
-                  data={inOutData}
-                  loading={loadingInOut}
-                  error={inOutError}
-                />
-              }
-            />
-          </Routes>
-        </Container>
-      </div>
-    </BrowserRouter>
   );
 }
