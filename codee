@@ -1,3 +1,55 @@
+not all rejection 
+only for this
+ {
+      "floor": "US.CO.OBS",
+      "rejectionCount": 44
+    },
+    {
+US.CO.OBS +++ ok
+this is door name "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN
+if getting "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN door rejection: show Floor 12 floor ok 
+and 
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\denverDoorFloorMap.js
+// Auto-generated from data/doorDenver.xlsx
+const normalizeKey = require('./normalizeKey');
+const rawMap = {
+  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___OUT": "Out of office",
+  "US.CO.HQ. 12. IDF RESTRICTED DOOR___IN": "Floor 12",
+  "US.CO.HQ. 12. IDF RESTRICTED DOOR___OUT": "Out of office",
+  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___IN": "Floor 12",
+  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___OUT": "Out of office",
+  "US.CO.HQ. 12. NORTH STAIRWELL-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. NORTH STAIRWELL-IN___OUT": "Out of office",
+  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
+  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___IN": "Floor 12",
+  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___OUT": "Out of office",
+  "US.CO.HQ. 12. SOUTH STAIRWELL-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. SOUTH STAIRWELL-IN___OUT": "Out of office",
+  "US.CO.HQ. 11. IDF ROOM_11:01:42 RESTRICTED DOOR___IN": "Floor 11",
+  "US.CO.HQ. 11. IDF ROOM_11:01:42 RESTRICTED DOOR___OUT": "Out of office",
+  "US.CO.HQ. 11. STORAGE ROOM_11:01:DD___IN": "Floor 11",
+  "US.CO.HQ. 11. STORAGE ROOM_11:01:DD___OUT": "Out of office",
+  "US.CO.HQ. 11. NORTH STAIRWELL-IN___IN": "Floor 11",
+  "US.CO.HQ. 11. NORTH STAIRWELL-IN___OUT": "Out of office",
+  "US.CO.HQ. 11. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 11",
+  "US.CO.HQ. 11. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
+  "US.CO.HQ. 11. QUIET ROOM_11:01:0E___IN": "Floor 11",
+  "US.CO.HQ. 11. QUIET ROOM_11:01:0E___OUT": "Out of office",
+  "US.CO.HQ. 11. SOUTH STAIRWELL-IN___IN": "Floor 11",
+  "US.CO.HQ. 11. SOUTH STAIRWELL-IN___OUT": "Out of office",
+  "US.CO.HQ. 09. IDF ROOM_11:00:98 RESTRICTED DOOR___IN": "Floor 09",
+  "US.CO.HQ. 09. IDF ROOM_11:00:98 RESTRICTED DOOR___OUT": "Out of office",
+  "US.CO.HQ. 09. STORAGE ROOM_11:01:05___IN": "Floor 09",
+  "US.CO.HQ. 09. STORAGE ROOM_11:01:05___OUT": "Out of office",
+  "US.CO.HQ. 09. SOUTH STAIRWELL-IN___IN": "Floor 09",
+  "US.CO.HQ. 09. SOUTH STAIRWELL-IN___OUT": "Out of office",
+  "US.CO.HQ. 09. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 09",
+  "US.CO.HQ. 09. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
+
+
+
 // controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
 
