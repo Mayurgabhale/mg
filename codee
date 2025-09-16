@@ -1,8 +1,147 @@
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\DenverSecurity.json
+
 [
   { "Name": "Martin, Paul", "EmployeeID": "W0023386" },
   { "Name": "", "EmployeeID": "W0025490" },
   { "Name": "", "EmployeeID": "W0025492" },
   { "Name": "", "EmployeeID": "W0025493" },
   { "Name": "Asuako, Derrick", "EmployeeID": "W0025639" },
-  { "Name": "Abdalla, Meira", "EmployeeID": "W0026455" }
+  { "Name": "Abdalla, Meira", "EmployeeID": "W0026455" },
+  { "Name": "Ali, Shuayb", "EmployeeID": "W0028120" },
+  { "Name": "D'Nicuola, Jeff", "EmployeeID": "305776" }
 ]
+
+in this security colum i want to show ther count 
+Floor 01 2 membe is present like at  
+chekc ther swpie and disply the count in secrout column 
+on this above member if the presen then disply,
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 01	2	1	1		
+Floor 09	2	1	1		
+Floor 12	2	2	0		
+Floor 11	2	2	0		
+Floor 15	1	1	0		
+Floor 14	1	1	0		
+Floor 13	1	1	0		
+Floor 06	3	4	-1
+from  live occupnay api ok 
+http://localhost:5000/api/live-occupancy-denver
+
+id: 1758013778064
+data: {"asOfLocal":"2025-09-16T03:09:38.064-06:00","asOfUTC":"2025-09-16T09:09:38.064Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 13","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants"
+:[{"LocaleMessageTime":"2025-09-16T03:09:14.000Z","Dateonly":"2025-09-16","Swipe_Time":"03:09:14","EmployeeID":"W0028120","PersonGUID":"8593096B-76A0-4985-B2AC-D4C4294A9ABF","ObjectName1":"Ali, Shuayb","PersonnelType":"Contractor","CardNumber":"618890","AdmitCode":
+"Admit","Direction":"InDirection","Door":"US.CO.HQ. 13. South Stairwell-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":5,"visitedToday":{"employees":0,"contractors":5,"tota
+l":5},"swipeStats":{"totalInSwipes":38,"totalOutSwipes":23},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":2,"outSwipes":3,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 01",
+"inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 11","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPerson
+s":[]},{"floor":"Floor 15","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},
+{"floor":"Floor 14","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 13","inSwipes":1,"outSwipes":0,"inOnlyCount":1,"inOnlyPersons":["8593096B-76A0-4985-B2AC-D4C4294A9ABF"]}]}
+
+C:\Users\W0024618\Desktop\swipeData\client-denver\src\components\FloorInOutTable.jsx
+// src/components/FloorInOutTable.jsx
+
+import React from 'react';
+import { Card, Table } from 'react-bootstrap';
+
+// Accent palette (re-used from FloorOccupancyChart)
+const ROW_COLORS = [
+  '#FFC72C',
+  '#C9A9A6',
+  '#FFE680',
+  '#FFF5EE',
+  '#FFD11A',
+  '#96DED1',
+  '#FFEB99'
+];
+
+export default function FloorInOutTable({ data = [] }) {
+  // Compute inconsistency and sort descending
+  const sorted = data
+    .map(({ floor, inSwipes, outSwipes }) => ({
+      floor,
+      inSwipes,
+      outSwipes,
+      inconsistency: inSwipes - outSwipes
+    }))
+    .sort((a, b) => b.inconsistency - a.inconsistency);
+
+  const top = sorted[0];
+
+  return (
+    <Card
+      className="mb-4 shadow-sm"
+      style={{
+        background: '#1a1a1a',
+        border: '2px solid #FFC72C'
+      }}
+    >
+      <Card.Header
+        className="text-center fw-bold"
+        style={{ background: '#000', color: '#FFC72C' }}
+      >
+        Floor In vs Out Swipe Summary
+      </Card.Header>
+
+      {/* Match other charts: fixed body height and auto-scroll */}
+      <Card.Body
+        style={{
+          height: 450,
+          padding: '1rem',
+          overflowY: 'auto'
+        }}
+      >
+        {top && (
+          <div
+            className="mb-3"
+            style={{ color: '#fff', fontSize: '1rem' }}
+          >
+            Highest inconsistency:&nbsp;
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
+              {top.inconsistency}
+            </span>
+            &nbsp;on&nbsp;
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
+              {top.floor}
+            </span>
+          </div>
+        )}
+
+        <Table striped bordered hover size="sm" variant="dark" className="mb-0">
+          <thead>
+            <tr>
+              <th>Floor</th>
+              <th>In Swipes</th>
+              <th>Out Swipes</th>
+              <th>In &minus; Out</th>
+              <th>Security</th>
+              <th>Rejection</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, idx) => (
+              <tr key={row.floor}>
+                <td style={{ color: '#fff' }}>{row.floor}</td>
+                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
+                  {row.inSwipes}
+                </td>
+                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
+                  {row.outSwipes}
+                </td>
+                <td
+                  style={{
+                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {row.inconsistency}
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Card.Body>
+    </Card>
+  );
+}
+
