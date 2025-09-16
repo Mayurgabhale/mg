@@ -1,3 +1,16 @@
+<Col md={4}>
+  <FloorInOutTable
+    data={floorInOutSummary}
+    floorBreakdown={floorData}
+    floorInOutSummary={floorInOutSummary}
+  />
+</Col>
+
+
+
+
+
+
 not disply 
 read beloc all code 
 Floor In vs Out Swipe Summary
