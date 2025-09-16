@@ -1,38 +1,23 @@
-	W0026176 this are present in Floor 01 but 
-in table disply 0 count 
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 01	2	1	1	0	
-Floor 12	1	1	0	0	
-Floor 09	1	1	0	0	
-Floor 06	0	1	-1	0 
-id: 1758008845982
-data: {"asOfLocal":"2025-09-16T01:47:25.982-06:00","asOfUTC":"2025-09-16T07:47:25.982Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 01","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T00:07:59.000Z",
-"Dateonly":"2025-09-16","Swipe_Time":"00:07:59","EmployeeID":"W0026176","PersonGUID":"6F93B492-C95A-436E-996A-92202EFB9915","ObjectName1":"Vargas, Erika","PersonnelType":"Contractor","CardNumber":"617979","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ.
-01. Focus Area North-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":3,"visitedToday":{"employees":0,"contractors":3,"total":3},"swipeStats":{"totalInSwipes":8,"totalOutSwipes":7},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":0,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]}]}
-
-Read all code carefully and writ correc code, and find out why count are not diplsy in Security column ok 
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useState } from 'react';
 import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
-// Accent palette
 const ROW_COLORS = [
   '#FFC72C','#C9A9A6','#FFE680','#FFF5EE','#FFD11A','#96DED1','#FFEB99'
 ];
 
-// Security officer IDs
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
   'W0026208','W0026455','W0026176'
 ];
+
 const normalizeId = v => String(v || '').trim().toUpperCase();
 
 export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
-  const [securityLive, setSecurityLive] = useState({}); 
+  const [securityLive, setSecurityLive] = useState({});
   const securitySet = new Set(SECURITY_OFFICERS.map(normalizeId));
 
-  // 🔴 subscribe to live occupancy for security officer location
   useEffect(() => {
     const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
     es.onmessage = (e) => {
@@ -59,16 +44,17 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
     return () => es.close();
   }, []);
 
-  // --- existing floor summary logic ---
+  // Build GUID/Card → EmployeeID map
   const idToEmployee = new Map();
   if (Array.isArray(floorBreakdown)) {
     floorBreakdown.forEach(fb => {
       (fb.occupants || []).forEach(o => {
-        const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
         const emp = normalizeId(o.EmployeeID || o.EmployeeId || o.employeeID || o.Employee);
+        const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
         const card = normalizeId(o.CardNumber || o.cardNumber || o.Card);
-        if (guid) idToEmployee.set(guid, emp || '');
-        if (card) idToEmployee.set(card, emp || '');
+
+        if (guid) idToEmployee.set(guid, emp);
+        if (card) idToEmployee.set(card, emp);
         if (emp) idToEmployee.set(emp, emp);
       });
     });
@@ -85,23 +71,22 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
         : [];
 
     const securityMatches = new Set();
+
     inOnlyPersons.forEach(rawId => {
-      if (!rawId) return;
-      if (typeof rawId === 'object') {
-        const objEmp = normalizeId(rawId.EmployeeID);
-        const objGuid = normalizeId(rawId.PersonGUID);
-        if (objEmp && securitySet.has(objEmp)) securityMatches.add(objEmp);
-        if (!objEmp && objGuid && idToEmployee.has(objGuid)) {
-          const mapped = idToEmployee.get(objGuid);
-          if (mapped && securitySet.has(mapped)) securityMatches.add(mapped);
-        }
+      const nid = normalizeId(rawId);
+
+      // Direct match on EmployeeID
+      if (securitySet.has(nid)) {
+        securityMatches.add(nid);
         return;
       }
-      const nid = normalizeId(rawId);
-      if (securitySet.has(nid)) securityMatches.add(nid);
-      else if (idToEmployee.has(nid)) {
-        const mapped = idToEmployee.get(nid);
-        if (securitySet.has(mapped)) securityMatches.add(mapped);
+
+      // If GUID/card → map to EmployeeID
+      if (idToEmployee.has(nid)) {
+        const mapped = normalizeId(idToEmployee.get(nid));
+        if (securitySet.has(mapped)) {
+          securityMatches.add(mapped);
+        }
       }
     });
 
