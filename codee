@@ -1,12 +1,6 @@
-http://localhost:5000/api/live-occupancy-denver
-data: {"asOfLocal":"2025-09-16T01:47:25.982-06:00","asOfUTC":"2025-09-16T07:47:25.982Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 01","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T00:07:59.000Z","Dateonly":"2025-09-16","Swipe_Time":"00:07:59","EmployeeID":"W0026176","PersonGUID":"6F93B492-C95A-436E-996A-92202EFB9915","ObjectName1":"Vargas, Erika","PersonnelType":"Contractor","CardNumber":"617979","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 01. Focus Area North-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":3,"visitedToday":{"employees":0,"contractors":3,"total":3},"swipeStats":{"totalInSwipes":8,"totalOutSwipes":7},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":0,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},
-{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]}]}
-why add this import { lookupFloor } from '../utils/floorLookup';
-remove this 
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useState } from 'react';
 import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { lookupFloor } from '../utils/floorLookup';
 
 // Accent palette
 const ROW_COLORS = [
@@ -38,19 +32,8 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
           const emp = normalizeId(d.EmployeeID);
           if (!securitySet.has(emp)) return;
 
-          const inLocation =
-            d.PartitionName2 && d.Door
-              ? lookupFloor(d.PartitionName2, d.Door, 'InDirection')
-              : '';
-          const outLocation =
-            d.PartitionName2 && d.Door
-              ? lookupFloor(d.PartitionName2, d.Door, 'OutDirection')
-              : '';
-
           liveMap[emp] = {
             direction: d.Direction || '',
-            inLocation,
-            outLocation,
             door: d.Door || ''
           };
         });
@@ -156,10 +139,7 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
                   ? row.securityList.map(emp => {
                       const live = securityLive[emp];
                       if (!live) return emp;
-                      const loc = live.direction === 'OutDirection'
-                        ? live.outLocation || 'Out'
-                        : live.inLocation || 'Unknown';
-                      return `${emp} → ${loc}`;
+                      return `${emp} → ${live.door || 'Unknown'}`;
                     }).join(', ')
                   : 'No security present';
 
