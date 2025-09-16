@@ -1,23 +1,7 @@
-http://localhost:5000/api/denver-security-rejection?parts=US.CO.OBS.15,US.CO.OBS.14
-
-
-
-
-
-
-http://localhost:5000/api/denver-security-rejection
-{
-  "error": "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
-}
-
-
-whey this erro is happen
-
 // controllers/denversecurityrejection.js
-// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
-
 const sql = require('mssql');
 const { denver } = require('../config/siteConfig'); // reuse poolPromise used elsewhere
+const util = require('util');
 
 // Security officers list (source you provided)
 const SECURITY_OFFICERS = [
@@ -26,21 +10,52 @@ const SECURITY_OFFICERS = [
   'W0026208','W0026455'
 ];
 
+/**
+ * sanitizePartitionList
+ * - Accepts a comma-separated string like "US.CO.OBS.15,US.CO.OBS.14"
+ * - Returns a SQL-friendly quoted list:  "'US.CO.OBS.15','US.CO.OBS.14'"
+ * - Returns null for invalid input
+ */
 function sanitizePartitionList(partsRaw) {
-  if (!partsRaw) return null;
-  return partsRaw
+  if (!partsRaw || typeof partsRaw !== 'string') return null;
+  const parts = partsRaw
     .split(',')
     .map(p => p.trim())
-    .filter(p => p.length > 0)
+    .filter(p => p.length > 0);
+  if (parts.length === 0) return null;
+  return parts
     .map(p => p.replace(/'/g, "''")) // escape single quotes
     .map(p => `'${p}'`)
     .join(', ');
 }
 
+/**
+ * Helper: build defaultParts string
+ * - You can configure DEFAULT_PARTS in environment (comma-separated).
+ * - If not present, use this small default list (change as needed).
+ */
+function getDefaultParts() {
+  if (process.env.DEFAULT_PARTS && process.env.DEFAULT_PARTS.trim()) {
+    return process.env.DEFAULT_PARTS.trim();
+  }
+  // sensible default (adjust to your partitions)
+  return 'US.CO.OBS.15,US.CO.OBS.14,US.CO.OBS.12,US.CO.OBS.06,US.CO.OBS.13,US.CO.OBS.01';
+}
+
 exports.getDenverSecurityRejection = async (req, res) => {
-  let pool;
   try {
-    const partsRaw = req.query.parts;
+    // allow parts passed via query OR fallback to DEFAULT_PARTS
+    let partsRaw = req.query.parts;
+    if (!partsRaw || !String(partsRaw).trim()) {
+      // fallback to default (log it so you know)
+      partsRaw = getDefaultParts();
+      console.warn(`[denverSecurityRejection] No parts provided - falling back to DEFAULT_PARTS: ${partsRaw}`);
+      // If you prefer to force parts to be required, uncomment next lines to return 400 instead:
+      // return res.status(400).json({
+      //   error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
+      // });
+    }
+
     const partsList = sanitizePartitionList(partsRaw);
     if (!partsList) {
       return res.status(400).json({
@@ -49,7 +64,7 @@ exports.getDenverSecurityRejection = async (req, res) => {
     }
 
     // get pool from config (same approach used in other controllers)
-    pool = await denver.poolPromise;
+    const pool = await denver.poolPromise;
     const request = pool.request();
 
     // prepare inline VALUES list for security officers
@@ -144,7 +159,6 @@ Rejections AS (
 )
 
 SELECT
-  (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) AS securityJsonSingle,
   (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH) AS securityJson,
   (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
 `;
@@ -159,11 +173,13 @@ SELECT
       try {
         securityByFloor = row.securityJson ? JSON.parse(row.securityJson) : [];
       } catch (e) {
+        console.warn('[denverSecurityRejection] Failed parsing securityJson:', e);
         securityByFloor = [];
       }
       try {
         rejectionsByFloor = row.rejectionsJson ? JSON.parse(row.rejectionsJson) : [];
       } catch (e) {
+        console.warn('[denverSecurityRejection] Failed parsing rejectionsJson:', e);
         rejectionsByFloor = [];
       }
     }
@@ -196,6 +212,7 @@ SELECT
         securityOfficersCount: SECURITY_OFFICERS.length
       }
     });
+
   } catch (err) {
     console.error('denverSecurityRejection error:', err);
     return res.status(500).json({ error: err.message || String(err) });
