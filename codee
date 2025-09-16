@@ -1,80 +1,8 @@
-i want to moniter only ther  floor locarion ,
-only this 
-const SECURITY_OFFICERS = [
-  'W0003901','W0019956','W0023386','W0025278','W0025490',
-  'W0025492','W0025493','W0025639','W0026149','W0026151',
-  'W0026208','W0026455','W0022449'
-];
-i want to monite ther locarin floor locain ok. and
-+++++
-
-  const query = `
-WITH CombinedQuery AS (
-  SELECT
-    DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-    t1.ObjectName1      AS ObjectName1,
-     t1.ObjectName2      AS Door,                -- ← ADD THIS LINE
-    t1.PartitionName2   AS PartitionName2,
-    COALESCE(
-      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-      sc.value
-    )                    AS CardNumber,
-    t3.Name              AS PersonnelType,
-    t5_rej.value         AS RejectionType
-  FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
-  LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
-    ON t1.ObjectIdentity1 = t2.GUID
-  LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
-    ON t2.PersonnelTypeId = t3.ObjectID
-  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
-    ON t1.XmlGUID = t_xml.GUID
-  LEFT JOIN (
-    SELECT GUID, value
-    FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-    WHERE Name IN ('Card','CHUID')
-  ) AS sc
-    ON t1.XmlGUID = sc.GUID
-  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
-    ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
-  WHERE
-    t1.MessageType = 'CardRejected'
-    AND t1.PartitionName2 IN (${parts})
-    AND CONVERT(DATE,
-         DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
-        ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
-)
-
-SELECT
-  LocaleMessageTime,
-  CONVERT(date, LocaleMessageTime)    AS DateOnly,
-  CONVERT(time(0), LocaleMessageTime) AS SwipeTime,
-  CardNumber,
-  PersonnelType,
-  PartitionName2                     AS Location,
-  Door,
-  RejectionType
-FROM CombinedQuery
-ORDER BY LocaleMessageTime DESC;
-  `;
-
-
-and this quiry is rejectin ok; this all for to floor how much recein ok this both are differnt ok 
-Floor 12 Rejection 20 Rejection like that. ok. 
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 12	1	0	1	0	
-Floor 01	2	1	1	0	
-Floor 09	1	1	0	0	
-Floor 06	0	1	-1	0	
-
-http://localhost:5000/api/denver-security-rejection
-
-
 // controllers/denversecurityrejection.js
 const sql = require('mssql');
 const { denver } = require('../config/siteConfig');
 
-// Security officers list (source you provided)
+// SECURITY_OFFICERS — now includes W0022449 per your request
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
@@ -93,46 +21,43 @@ function getDefaultParts() {
   if (process.env.DEFAULT_PARTS && process.env.DEFAULT_PARTS.trim()) {
     return process.env.DEFAULT_PARTS.trim().split(',').map(s => s.trim()).filter(Boolean);
   }
-  // fallback default parts (adjust if you want)
   return ['US.CO.OBS.15','US.CO.OBS.14','US.CO.OBS.12','US.CO.OBS.06','US.CO.OBS.13','US.CO.OBS.01'];
 }
 
 exports.getDenverSecurityRejection = async (req, res) => {
   try {
-    // accept parts from query; fall back to default if not provided
+    // parse parts param (or fall back)
     let partsArr = normalizePartsArray(req.query.parts);
     if (partsArr.length === 0) {
       partsArr = getDefaultParts();
-      console.warn(`[denverSecurityRejection] parts not provided - falling back to defaultParts: ${partsArr.join(',')}`);
+      console.warn(`[denverSecurityRejection] parts not provided — using default: ${partsArr.join(',')}`);
     }
-
     if (partsArr.length === 0) {
-      return res.status(400).json({
-        error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
-      });
+      return res.status(400).json({ error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14" });
     }
 
-    // Build parameter placeholders and bind them to the request
+    // get pool + request and bind part parameters
     const pool = await denver.poolPromise;
     const request = pool.request();
-
     const partPlaceholders = partsArr.map((p, i) => {
       const name = `part${i}`;
       request.input(name, sql.NVarChar, p);
       return `@${name}`;
     }).join(', ');
 
-    // Build inline security VALUES list (static list so safe inline)
+    // static security list (safe inline)
     const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
 
+    // SQL: CombinedQuery for last 7 days, SecurityLatest for latest per security card,
+    // SecurityByFloor (STUFF FOR XML PATH for older SQL Server), and Rejections per floor.
     const sqlQuery = `
-/* Combined query for recent events (last 7 days) */
+/* CombinedQuery: last 7 days for partitions provided */
 WITH CombinedQuery AS (
   SELECT
     DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-    t1.ObjectName1      AS ObjectName1,
-    t1.ObjectName2      AS Door,
-    t1.PartitionName2   AS PartitionName2,
+    t1.ObjectName1 AS ObjectName1,
+    t1.ObjectName2 AS Door,
+    t1.PartitionName2 AS PartitionName2,
     COALESCE(
       TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
       TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
@@ -141,27 +66,21 @@ WITH CombinedQuery AS (
     t3.Name AS PersonnelType,
     t5_rej.value AS RejectionType,
     t1.MessageType
-  FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
-  LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
-    ON t1.ObjectIdentity1 = t2.GUID
-  LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
-    ON t2.PersonnelTypeId = t3.ObjectID
-  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
-    ON t1.XmlGUID = t_xml.GUID
+  FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+  LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
+  LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml ON t1.XmlGUID = t_xml.GUID
   LEFT JOIN (
     SELECT GUID, value
     FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
     WHERE Name IN ('Card','CHUID')
-  ) AS sc
-    ON t1.XmlGUID = sc.GUID
-  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
+  ) AS sc ON t1.XmlGUID = sc.GUID
+  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5_rej
     ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
   WHERE
-    t1.MessageType IN ('CardAccepted', 'CardRejected')
+    t1.MessageType IN ('CardAccepted','CardRejected')
     AND t1.PartitionName2 IN (${partPlaceholders})
-    AND CONVERT(DATE,
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
-        ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
+    AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
 ),
 
 EventsWithCard AS (
@@ -171,8 +90,7 @@ EventsWithCard AS (
 ),
 
 LatestPerCard AS (
-  SELECT *,
-    ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
+  SELECT *, ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
   FROM EventsWithCard
 ),
 
@@ -190,43 +108,39 @@ SecurityLatest AS (
     'Floor ' + PARSENAME(lp.PartitionName2, 1) AS FloorLabel
   FROM LatestPerCard lp
   INNER JOIN SecurityList sec ON lp.CardNumTrim = sec.CardNumber
-  WHERE lp.rn = 1
-    AND lp.PartitionName2 IS NOT NULL
+  WHERE lp.rn = 1 AND lp.PartitionName2 IS NOT NULL
 ),
 
-/* Use FOR XML PATH + STUFF for older SQL Server compatibility */
+/* aggregate security officers per floor — compatible with older SQL Server */
 SecurityByFloor AS (
   SELECT
-    ISNULL('Floor ' + PARSENAME(sl.PartitionName2, 1), sl.PartitionName2) AS Floor,
+    ISNULL('Floor ' + PARSENAME(sl.PartitionName2,1), sl.PartitionName2) AS Floor,
     COUNT(DISTINCT sl.CardNumber) AS SecurityCount,
-    STUFF(
-      (
-        SELECT DISTINCT ',' + s2.CardNumber
-        FROM SecurityLatest s2
-        WHERE s2.PartitionName2 = sl.PartitionName2
-        FOR XML PATH(''), TYPE
-      ).value('.', 'NVARCHAR(MAX)')
-    ,1,1,'') AS SecurityIDs
+    STUFF((
+      SELECT DISTINCT ',' + s2.CardNumber
+      FROM SecurityLatest s2
+      WHERE s2.PartitionName2 = sl.PartitionName2
+      FOR XML PATH(''), TYPE
+    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS SecurityIDs
   FROM SecurityLatest sl
   GROUP BY sl.PartitionName2
 ),
 
+/* rejection counts per floor (last 7 days) */
 Rejections AS (
   SELECT
-    ISNULL('Floor ' + PARSENAME(c.PartitionName2, 1), c.PartitionName2) AS Floor,
+    ISNULL('Floor ' + PARSENAME(c.PartitionName2,1), c.PartitionName2) AS Floor,
     COUNT(*) AS RejectionCount,
-    STUFF(
-      (
-        SELECT DISTINCT ',' + COALESCE(c2.CardNumber, '?')
-        FROM CombinedQuery c2
-        WHERE c2.PartitionName2 = c.PartitionName2
-          AND c2.MessageType = 'CardRejected'
-          AND COALESCE(LTRIM(RTRIM(c2.CardNumber)), '') <> ''
-        FOR XML PATH(''), TYPE
-      ).value('.', 'NVARCHAR(MAX)')
-    ,1,1,'') AS Cards
+    STUFF((
+      SELECT DISTINCT ',' + COALESCE(c2.CardNumber,'?')
+      FROM CombinedQuery c2
+      WHERE c2.PartitionName2 = c.PartitionName2
+        AND c2.MessageType = 'CardRejected'
+        AND COALESCE(LTRIM(RTRIM(c2.CardNumber)),'') <> ''
+      FOR XML PATH(''), TYPE
+    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS Cards
   FROM CombinedQuery c
-  WHERE c.MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(c.CardNumber)), '') <> ''
+  WHERE c.MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(c.CardNumber)),'') <> ''
   GROUP BY c.PartitionName2
 )
 
@@ -235,47 +149,31 @@ SELECT
   (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
 `;
 
-    // DEBUG
-    console.log('[denverSecurityRejection] Executing SQL - partitions:', partsArr.join(','));
+    console.log('[denverSecurityRejection] partitions:', partsArr.join(','));
 
     const result = await request.query(sqlQuery);
 
     const row = result.recordset && result.recordset[0];
-    let securityByFloor = [];
-    let rejectionsByFloor = [];
+    const securityByFloor = row && row.securityJson ? JSON.parse(row.securityJson) : [];
+    const rejectionsByFloor = row && row.rejectionsJson ? JSON.parse(row.rejectionsJson) : [];
 
-    if (row) {
-      try {
-        securityByFloor = row.securityJson ? JSON.parse(row.securityJson) : [];
-      } catch (e) {
-        console.warn('[denverSecurityRejection] Failed parsing securityJson:', e);
-        securityByFloor = [];
-      }
-      try {
-        rejectionsByFloor = row.rejectionsJson ? JSON.parse(row.rejectionsJson) : [];
-      } catch (e) {
-        console.warn('[denverSecurityRejection] Failed parsing rejectionsJson:', e);
-        rejectionsByFloor = [];
-      }
-    }
-
-    // Build a map keyed by floor for quick frontend lookup
+    // Build a keyed map for quick frontend merge
     const securityMap = {};
-    securityByFloor.forEach(item => {
-      const floorKey = item.Floor || item.floor || item.FloorLabel || 'Unknown Floor';
+    securityByFloor.forEach(it => {
+      const floorKey = it.Floor || it.floor || it.FloorLabel || 'Unknown Floor';
       securityMap[floorKey] = {
-        count: item.SecurityCount || 0,
-        ids: item.SecurityIDs ? String(item.SecurityIDs).split(',').filter(Boolean) : [],
-        SecurityIDs: item.SecurityIDs,
-        SecurityCount: item.SecurityCount,
+        count: it.SecurityCount || 0,
+        ids: it.SecurityIDs ? String(it.SecurityIDs).split(',').filter(Boolean) : [],
+        SecurityIDs: it.SecurityIDs,
+        SecurityCount: it.SecurityCount,
         Floor: floorKey
       };
     });
-    rejectionsByFloor.forEach(item => {
-      const floorKey = item.Floor || item.floor || 'Unknown Floor';
+    rejectionsByFloor.forEach(it => {
+      const floorKey = it.Floor || it.floor || 'Unknown Floor';
       if (!securityMap[floorKey]) securityMap[floorKey] = {};
-      securityMap[floorKey].RejectionCount = item.RejectionCount || 0;
-      securityMap[floorKey].Cards = item.Cards ? String(item.Cards).split(',').filter(Boolean) : [];
+      securityMap[floorKey].RejectionCount = it.RejectionCount || 0;
+      securityMap[floorKey].Cards = it.Cards ? String(it.Cards).split(',').filter(Boolean) : [];
     });
 
     return res.json({
