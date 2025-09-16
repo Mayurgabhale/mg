@@ -1,42 +1,10 @@
 http://localhost:5000/api/denver-security-rejection
-Cannot GET /api/denver-security-rejection
-
-_________________________________________________
-
-
+{
+  "error": "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
+}
 
 
-
-
-// routes/occupancyDenverRoutes.js
-const express = require('express');
-const router = express.Router();
-
-const { getDenverLiveOccupancy, getDenverSnapshotAtDateTime } = require('../controllers/denverLiveOccupancyController');
-const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
-
-// <-- add this import:
-const { getDenverSecurityRejection } = require('../controllers/denversecurityrejection');
-
-// Denver live occupancy
-router.get('/live-occupancy-denver', getDenverLiveOccupancy);
-
-// Denver in/out inconsistency trends
-router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
-
-// Denver snapshot endpoint
-router.get('/occupancy-at-time-denver', getDenverSnapshotAtDateTime);
-
-
-// NEW: Denver security + rejection summary (expects ?parts=...)
-router.get('/denver-security-rejection', getDenverSecurityRejection);
-
-
-module.exports = router;
-
-
-
-
+whey this erro is happen
 
 // controllers/denversecurityrejection.js
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
