@@ -1,113 +1,56 @@
-how to add pie chart border 
-pie chart circl border
+<PieChart>
+  {/* Main Pie */}
+  <Pie
+    data={sorted}
+    dataKey="count"
+    nameKey="personnelType"
+    cx="50%" cy="50%"
+    innerRadius={70} outerRadius={140}
+    paddingAngle={4}
+    labelLine={false}
+    label={({ percent, name }) => (
+      <tspan fill="#fff">
+        {`${name}: ${(percent * 100).toFixed(0)}%`}
+      </tspan>
+    )}
+    stroke="#1a1a1a"
+    strokeWidth={2}
+  >
+    {sorted.map((entry, idx) => (
+      <Cell
+        key={entry.personnelType}
+        fill={SLICE_COLORS[idx % SLICE_COLORS.length]}
+      />
+    ))}
+    <Label
+      value={total}
+      position="center"
+      style={{ fill: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}
+    />
+  </Pie>
 
-// src/components/PersonnelDonutChart.jsx
+  {/* Outer border ring */}
+  <Pie
+    data={[{ value: 1 }]}   // single dummy slice
+    cx="50%" cy="50%"
+    innerRadius={140} outerRadius={144}  // just slightly bigger
+    fill="none"
+    stroke="#FFC72C"   // border color
+    strokeWidth={3}
+    isAnimationActive={false}
+  />
 
-import React from 'react';
-import {
-  PieChart, Pie, Cell, Tooltip,
-  ResponsiveContainer, Legend, Label
-} from 'recharts';
-import { Card } from 'react-bootstrap';
-
-// Expanded Western Union–style palette for up to 10 categories
-const SLICE_COLORS = [
-  '#FFC72C', // yellow
-  '#228B22', // forest green
-  '#EEA0F1',
-  '#E18E30',
-  '#B5B21A',
-  '#FFE680', // light yellow
-  '#FFD11A', // gold
-  '#FFEB99', // pale gold
-  '#C9A9A6', // muted rose
-  '#96DED1', // teal
-  '#FF8C00', // dark orange
-  '#8B0000', // dark red
-  '#4B0082'  // indigo
-];
-
-export default function PersonnelDonutChart({ data = [] }) {
-  // Sum all counts across every category in `data`
-  const total = data.reduce((sum, e) => sum + e.count, 0);
-
-  if (!data.length || total === 0) {
-    return (
-      <Card body className="bg-dark text-warning">
-        No personnel data
-      </Card>
-    );
-  }
-
-  // Sort descending by count so largest slice is first
-  const sorted = [...data].sort((a, b) => b.count - a.count);
-
-  return (
-    <Card
-      className="mb-4 shadow-sm"
-      style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}
-    >
-      <Card.Header
-        className="text-center fw-bold"
-        style={{ background: '#000', color: '#FFC72C' }}
-      >
-        Personnel Type Occupancy
-      </Card.Header>
-      <Card.Body style={{ height: 450, padding: '1rem' }}>
-        <ResponsiveContainer >
-          <PieChart>
-            <Pie
-              data={sorted}
-              dataKey="count"
-              nameKey="personnelType"
-              cx="50%" cy="50%"
-              innerRadius={70} outerRadius={140}
-              paddingAngle={4}
-              labelLine={false}
-              label={({ percent, name }) => (
-                <tspan fill="#fff">
-                  {`${name}: ${(percent * 100).toFixed(0)}%`}
-                </tspan>
-              )}
-              stroke="#333"
-              strokeWidth={1.5}
-            >
-              {sorted.map((entry, idx) => (
-                <Cell
-                  key={entry.personnelType}
-                  fill={SLICE_COLORS[idx % SLICE_COLORS.length]}
-                  
-                />
-              ))}
-              <Label
-                value={total}
-                position="center"
-                style={{ fill: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}
-              />
-            </Pie>
-            <Tooltip
-              wrapperStyle={{
-                backgroundColor: '#2f2f2f',
-                border: '1px solid #444',
-                borderRadius: '4px',
-                color: '#fff'
-              }}
-              formatter={(value, name) => [`${value}`, `${name}`]}
-            />
-            <Legend
-              verticalAlign="bottom"
-              wrapperStyle={{ color: '#fff', paddingTop: 10 }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </Card.Body>
-    </Card>
-  );
-}
-
-
-
-
-
-
-
+  <Tooltip
+    wrapperStyle={{
+      backgroundColor: '#2f2f2f',
+      border: '1px solid #444',
+      borderRadius: '4px',
+      color: '#fff'
+    }}
+    formatter={(value, name) => [`${value}`, `${name}`]}
+  />
+  <Legend
+    verticalAlign="bottom"
+    wrapperStyle={{ color: '#fff', paddingTop: 10 }}
+  />
+</PieChart>
