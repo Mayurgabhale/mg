@@ -1,69 +1,16 @@
-not all rejection 
-only for this
- {
-      "floor": "US.CO.OBS",
-      "rejectionCount": 44
-    },
-    {
-US.CO.OBS +++ ok
-this is door name "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN
-if getting "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN door rejection: show Floor 12 floor ok 
-and 
-C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\denverDoorFloorMap.js
-// Auto-generated from data/doorDenver.xlsx
-const normalizeKey = require('./normalizeKey');
-const rawMap = {
-  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___OUT": "Out of office",
-  "US.CO.HQ. 12. IDF RESTRICTED DOOR___IN": "Floor 12",
-  "US.CO.HQ. 12. IDF RESTRICTED DOOR___OUT": "Out of office",
-  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___IN": "Floor 12",
-  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___OUT": "Out of office",
-  "US.CO.HQ. 12. NORTH STAIRWELL-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. NORTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
-  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___IN": "Floor 12",
-  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___OUT": "Out of office",
-  "US.CO.HQ. 12. SOUTH STAIRWELL-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. SOUTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 11. IDF ROOM_11:01:42 RESTRICTED DOOR___IN": "Floor 11",
-  "US.CO.HQ. 11. IDF ROOM_11:01:42 RESTRICTED DOOR___OUT": "Out of office",
-  "US.CO.HQ. 11. STORAGE ROOM_11:01:DD___IN": "Floor 11",
-  "US.CO.HQ. 11. STORAGE ROOM_11:01:DD___OUT": "Out of office",
-  "US.CO.HQ. 11. NORTH STAIRWELL-IN___IN": "Floor 11",
-  "US.CO.HQ. 11. NORTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 11. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 11",
-  "US.CO.HQ. 11. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
-  "US.CO.HQ. 11. QUIET ROOM_11:01:0E___IN": "Floor 11",
-  "US.CO.HQ. 11. QUIET ROOM_11:01:0E___OUT": "Out of office",
-  "US.CO.HQ. 11. SOUTH STAIRWELL-IN___IN": "Floor 11",
-  "US.CO.HQ. 11. SOUTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 09. IDF ROOM_11:00:98 RESTRICTED DOOR___IN": "Floor 09",
-  "US.CO.HQ. 09. IDF ROOM_11:00:98 RESTRICTED DOOR___OUT": "Out of office",
-  "US.CO.HQ. 09. STORAGE ROOM_11:01:05___IN": "Floor 09",
-  "US.CO.HQ. 09. STORAGE ROOM_11:01:05___OUT": "Out of office",
-  "US.CO.HQ. 09. SOUTH STAIRWELL-IN___IN": "Floor 09",
-  "US.CO.HQ. 09. SOUTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 09. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 09",
-  "US.CO.HQ. 09. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
-
-
-
 // controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
+const doorFloorMap = require("../data/denverDoorFloorMap"); // import map
 
 async function getRejections(req, res) {
   try {
     const pool = await denver.poolPromise;
 
-    // Optional floors from query params (?parts=Floor%2001,Floor%2009)
     const parts = req.query.parts
       ? req.query.parts.split(",").map(f => `'${f.trim()}'`).join(",")
       : null;
 
-    // 👇 Common CTE
-    const baseCTE = `
+    const query = `
       WITH CombinedQuery AS (
         SELECT
           DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
@@ -99,22 +46,6 @@ async function getRejections(req, res) {
                DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
               ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
       )
-    `;
-
-    // 1️⃣ Floor-wise count
-    const countQuery = `
-      ${baseCTE}
-      SELECT
-        PartitionName2 AS floor,
-        COUNT(*) AS rejectionCount
-      FROM CombinedQuery
-      GROUP BY PartitionName2
-      ORDER BY floor;
-    `;
-
-    // 2️⃣ Detailed records
-    const detailsQuery = `
-      ${baseCTE}
       SELECT
         LocaleMessageTime,
         CONVERT(date, LocaleMessageTime)    AS DateOnly,
@@ -128,14 +59,29 @@ async function getRejections(req, res) {
       ORDER BY LocaleMessageTime DESC;
     `;
 
-    // Run both queries
-    const counts = await pool.request().query(countQuery);
-    const details = await pool.request().query(detailsQuery);
+    const result = await pool.request().query(query);
 
-    // Respond with combined payload
+    // Post-process in JS
+    const details = result.recordset.map(r => {
+      const floor = doorFloorMap[r.Door] || r.PartitionName2; // map door → floor
+      return { ...r, floor };
+    });
+
+    // Floor-wise rejection count
+    const summary = details.reduce((acc, row) => {
+      if (!acc[row.floor]) acc[row.floor] = 0;
+      acc[row.floor]++;
+      return acc;
+    }, {});
+
+    const summaryArr = Object.entries(summary).map(([floor, rejectionCount]) => ({
+      floor,
+      rejectionCount
+    }));
+
     res.json({
-      summary: counts.recordset,
-      details: details.recordset
+      summary: summaryArr,
+      details
     });
 
   } catch (err) {
