@@ -1,46 +1,5 @@
-good, filnay done.
-know i want to do after click on this row 
-Security  Floor 09	3	1	2	1 .. this 1 i want to to show ther informtin on popup 
-EmployeeID: 
-"ObjectName1":"Ali, Shuayb"
-{"floor":"Floor 14","inSwipes":1,"
-Swipe_Time":"03:09:14"
-
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 09	3	1	2	1	
-
-Highest inconsistency: 2 on Floor 09
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 09	3	1	2	1	
-Floor 01	2	1	1	1	
-Floor 11	3	2	1	0	
-Floor 12	2	2	0	0	
-Floor 15	1	1	0	0	
-Floor 14	1	1	0	0	
-Floor 13	1	1	0	0	
-Floor 06	3	4	-1	0
-
-know count is one afte some time is 5:
-so EmployeeID: 
-"ObjectName1":"Ali, Shuayb"
-{"floor":"Floor 14","inSwipes":1,"
-Swipe_Time":"03:09:14"
-
-i want into on table , ok 
-
-id: 1758013778064
-data: {"asOfLocal":"2025-09-16T03:09:38.064-06:00","asOfUTC":"2025-09-16T09:09:38.064Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 13","total":1,"employees":0,"contractors":1,"tempBadge":0,
-"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T03:09:14.000Z","Dateonly":"2025-09-16","Swipe_Time":"03:09:14","EmployeeID":"W0028120","PersonGUID":"8593096B-76A0-4985-B2AC-D4C4294A9ABF","ObjectName1":"Ali, Shuayb","PersonnelType":"Contractor"
-,"CardNumber":"618890","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 13. South Stairwell-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":5,
-"visitedToday":{"employees":0,"contractors":5,"total":5},"swipeStats":{"totalInSwipes":38,"totalOutSwipes":23},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":2,"outSwipes":3,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,
-"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons"
-:[]},{"floor":"Floor 11","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 15","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 14","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons"
-:[]},{"floor":"Floor 13","inSwipes":1,"outSwipes":0,"inOnlyCount":1,"inOnlyPersons":["8593096B-76A0-4985-B2AC-D4C4294A9ABF"]}]}
-
-
-// src/components/FloorInOutTable.jsx
-import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Card, Table, Modal } from 'react-bootstrap';
 
 // Accent palette
 const ROW_COLORS = [
@@ -59,29 +18,35 @@ const normalizeId = v => String(v || '').trim().toUpperCase();
 export default function FloorInOutTable({ data = [], floorBreakdown = [], floorInOutSummary = [] }) {
   const securitySet = new Set(SECURITY_IDS);
 
-  // Map floor → security count
+  // State for modal
+  const [showModal, setShowModal] = useState(false);
+  const [selectedFloor, setSelectedFloor] = useState(null);
+  const [selectedPeople, setSelectedPeople] = useState([]);
+
+  // Map floor → security occupants
   const securityByFloor = {};
 
-  // 1. Check live occupants on each floor
   (floorBreakdown || []).forEach(fb => {
-    let count = 0;
+    const people = [];
     (fb.occupants || []).forEach(o => {
       const empId = normalizeId(o.EmployeeID);
       if (securitySet.has(empId)) {
-        count++;
+        people.push(o);
       }
     });
-    if (count > 0) {
-      securityByFloor[fb.floor] = (securityByFloor[fb.floor] || 0) + count;
+    if (people.length > 0) {
+      securityByFloor[fb.floor] = (securityByFloor[fb.floor] || []).concat(people);
     }
   });
 
-  // 2. Check inOnlyPersons from floorInOutSummary
   (floorInOutSummary || []).forEach(f => {
     (f.inOnlyPersons || []).forEach(pid => {
       const empId = normalizeId(pid);
       if (securitySet.has(empId)) {
-        securityByFloor[f.floor] = (securityByFloor[f.floor] || 0) + 1;
+        // Just store as placeholder if not found in occupants
+        securityByFloor[f.floor] = (securityByFloor[f.floor] || []).concat([
+          { EmployeeID: empId, ObjectName1: "(Unknown)", Swipe_Time: "—" }
+        ]);
       }
     });
   });
@@ -93,57 +58,103 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [], floorI
       inSwipes,
       outSwipes,
       inconsistency: inSwipes - outSwipes,
-      securityCount: securityByFloor[floor] || 0
+      securityCount: (securityByFloor[floor] || []).length
     }))
     .sort((a, b) => b.inconsistency - a.inconsistency);
 
   const top = sorted[0];
 
+  const handleRowClick = (floor) => {
+    const people = securityByFloor[floor] || [];
+    if (people.length > 0) {
+      setSelectedFloor(floor);
+      setSelectedPeople(people);
+      setShowModal(true);
+    }
+  };
+
   return (
-    <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
-      <Card.Header className="text-center fw-bold" style={{ background: '#000', color: '#FFC72C' }}>
-        Floor In vs Out Swipe Summary
-      </Card.Header>
+    <>
+      <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
+        <Card.Header className="text-center fw-bold" style={{ background: '#000', color: '#FFC72C' }}>
+          Floor In vs Out Swipe Summary
+        </Card.Header>
 
-      <Card.Body style={{ height: 450, padding: '1rem', overflowY: 'auto' }}>
-        {top && (
-          <div className="mb-3" style={{ color: '#fff', fontSize: '1rem' }}>
-            Highest inconsistency:&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.inconsistency}</span>
-            &nbsp;on&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.floor}</span>
-          </div>
-        )}
+        <Card.Body style={{ height: 450, padding: '1rem', overflowY: 'auto' }}>
+          {top && (
+            <div className="mb-3" style={{ color: '#fff', fontSize: '1rem' }}>
+              Highest inconsistency:&nbsp;
+              <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.inconsistency}</span>
+              &nbsp;on&nbsp;
+              <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.floor}</span>
+            </div>
+          )}
 
-        <Table striped bordered hover size="sm" variant="dark" className="mb-0">
-          <thead>
-            <tr>
-              <th>Floor</th>
-              <th>In Swipes</th>
-              <th>Out Swipes</th>
-              <th>In − Out</th>
-              <th>Security</th>
-              <th>Rejection</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((row, idx) => (
-              <tr key={row.floor} style={{ backgroundColor: row.securityCount > 0 ? '#333300' : undefined }}>
-                <td style={{ color: '#fff' }}>{row.floor}</td>
-                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
-                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
-                <td style={{ color: ROW_COLORS[(idx + 2) % ROW_COLORS.length], fontWeight: 'bold' }}>
-                  {row.inconsistency}
-                </td>
-                <td style={{ color: row.securityCount > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityCount > 0 ? 'bold' : 'normal' }}>
-                  {row.securityCount}
-                </td>
-                <td></td>
+          <Table striped bordered hover size="sm" variant="dark" className="mb-0">
+            <thead>
+              <tr>
+                <th>Floor</th>
+                <th>In Swipes</th>
+                <th>Out Swipes</th>
+                <th>In − Out</th>
+                <th>Security</th>
+                <th>Rejection</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card.Body>
-    </Card>
+            </thead>
+            <tbody>
+              {sorted.map((row, idx) => (
+                <tr
+                  key={row.floor}
+                  style={{ backgroundColor: row.securityCount > 0 ? '#333300' : undefined, cursor: row.securityCount > 0 ? 'pointer' : 'default' }}
+                  onClick={() => handleRowClick(row.floor)}
+                >
+                  <td style={{ color: '#fff' }}>{row.floor}</td>
+                  <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
+                  <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
+                  <td style={{ color: ROW_COLORS[(idx + 2) % ROW_COLORS.length], fontWeight: 'bold' }}>
+                    {row.inconsistency}
+                  </td>
+                  <td style={{ color: row.securityCount > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityCount > 0 ? 'bold' : 'normal' }}>
+                    {row.securityCount}
+                  </td>
+                  <td></td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+      {/* Modal for details */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Security Occupants - {selectedFloor}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Table striped bordered hover size="sm">
+            <thead>
+              <tr>
+                <th>EmployeeID</th>
+                <th>Name</th>
+                <th>Swipe Time</th>
+                <th>Door</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedPeople.map((p, idx) => (
+                <tr key={idx}>
+                  <td>{p.EmployeeID}</td>
+                  <td>{p.ObjectName1 || "(Unknown)"}</td>
+                  <td>{p.Swipe_Time || "—"}</td>
+                  <td>{p.Door || "—"}</td>
+                  <td>{p.PersonnelType || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Modal.Body>
+      </Modal>
+    </>
   );
 }
