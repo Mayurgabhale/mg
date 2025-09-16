@@ -1,82 +1,7 @@
-http://localhost:5000/api/rejections
-getting undefned
-
-  "summary": [
-    {
-      "floor": "undefined",
-      "rejectionCount": 63
-    }
-  ],
-  "details": [
-    {
-      "LocaleMessageTime": "2025-09-15T15:06:01.000Z",
-      "DateOnly": "2025-09-15T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T15:06:01.000Z",
-      "CardNumber": "610043",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 06. Fitness Center West_11:01:B9",
-      "RejectionType": "Clearance"
-    },
-    {
-      "LocaleMessageTime": "2025-0
-
-C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\denverDoorFloorMap.js
-// Auto-generated from data/doorDenver.xlsx
-const normalizeKey = require('./normalizeKey');
-const rawMap = {
-  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___OUT": "Out of office",
-  "US.CO.HQ. 12. IDF RESTRICTED DOOR___IN": "Floor 12",
-  "US.CO.HQ. 12. IDF RESTRICTED DOOR___OUT": "Out of office",
-  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___IN": "Floor 12",
-  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___OUT": "Out of office",
-  "US.CO.HQ. 12. NORTH STAIRWELL-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. NORTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
-  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___IN": "Floor 12",
-  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___OUT": "Out of office",
-  "US.CO.HQ. 12. SOUTH STAIRWELL-IN___IN": "Floor 12",
-  "US.CO.HQ. 12. SOUTH STAIRWELL-IN___OUT": "Out of office",
-  "US.CO.HQ. 11. IDF ROOM_11:01:42 RESTRICTED DOOR___IN": "Floor 11",
-  "US.CO.HQ. 11. IDF ROOM_11:01:42 RESTRICTED DOOR___OUT": "Out of office",
-  "US.CO.HQ. 11. STORAGE ROOM_11:01:DD___IN": "Floor 11"
-US.CO.HQ. 14. SOUTH LOBBY DOORS-OUT___OUT": "Out of office",
-  "US.CO.HQ. 14. SOUTH STAIRWELL-OUT___IN": "Floor 14",
-  "US.CO.HQ. 14. SOUTH STAIRWELL-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY EAST DOOR-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY EAST DOOR-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY LEFT-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY LEFT-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY RIGHT DOOR-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY RIGHT DOOR-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. NORTH LOBBY DOORS-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. NORTH LOBBY DOORS-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. NORTH STAIRWELL-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. NORTH STAIRWELL-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. SOUTH LOBBY DOORS-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. SOUTH LOBBY DOORS-OUT___OUT": "Out of office",
-  "US.CO.HQ. 15. SOUTH STAIRWELL-OUT___IN": "Floor 15",
-  "US.CO.HQ. 15. SOUTH STAIRWELL-OUT___OUT": "Out of office"
-}
-
-const doorToFloorMap = {};
-for (const [rawKey, floor] of Object.entries(rawMap)) {
-  const [doorRaw, dirRaw] = rawKey.split('___');
-  const normKey = normalizeKey(doorRaw, dirRaw);
-  doorToFloorMap[normKey] = floor;
-}
-
-module.exports = doorToFloorMap;
-
-
-
-
-
 // controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
-const doorFloorMap = require("../data/denverDoorFloorMap"); // import map
+const doorFloorMap = require("../data/denverDoorFloorMap");
+const normalizeKey = require("../data/normalizeKey"); // import normalizeKey
 
 async function getRejections(req, res) {
   try {
@@ -139,7 +64,11 @@ async function getRejections(req, res) {
 
     // Post-process in JS
     const details = result.recordset.map(r => {
-      const floor = doorFloorMap[r.Door] || r.PartitionName2; // map door → floor
+      // normalize Door before lookup
+      const [doorRaw, dirRaw] = r.Door.split("___");
+      const normKey = normalizeKey(doorRaw, dirRaw);
+      const floor = doorFloorMap[normKey] || r.PartitionName2;
+
       return { ...r, floor };
     });
 
@@ -167,92 +96,3 @@ async function getRejections(req, res) {
 }
 
 module.exports = { getRejections };
-
-
-
-
-
-
-
-
-
-
-const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType   = 'CardAdmitted'
-        AND t1.ObjectName2 LIKE '%HQ%'
-        AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >=@since
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
-      CardNumber, AdmitCode, Direction, Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
-}
-data: {"asOfLocal":"2025-09-16T05:10:07.858-06:00","asOfUTC":"2025-09-16T11:10:07.858Z","currentCount":13,"floorBreakdown":[{"floor":"Floor 01","total":1,
-"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T04:28:27.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:28:27","EmployeeID":
-"W0028120","PersonGUID":"8593096B-76A0-4985-B2AC-D4C4294A9ABF","ObjectName1":"Ali, Shuayb","PersonnelType":"Contractor","CardNumber":"618890","AdmitCode":"Admit","Direction":"InDirection",
-"Door":"US.CO.HQ. 01. Focus Area West-IN"}]},{"floor":"Floor 09","total":7,"employees":7,"contractors":0,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T03:11:13.000Z",
-"Dateonly":"2025-09-16","Swipe_Time":"03:11:13","EmployeeID":"305776","PersonGUID":"52B69EA4-1DD6-44A4-972A-EA2F87D2858E","ObjectName1":"D'Nicuola, Jeff","PersonnelType":"Employee","CardNumber":"23239
-7","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 09. South Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T03:59:56.000Z","Dateonly":"2025-09-16","Swipe_Time":"03:59:56","EmployeeID":"
-236001","PersonGUID":"E4443CC3-EC80-47A9-99E0-F470A967AE6E","ObjectName1":"Del Barco, Rene F","PersonnelType":"Employee","CardNumber":"608735","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ
-. 09. North Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T04:20:46.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:20:46","EmployeeID":"301969","PersonGUID":"93311BFA-4087-4AA6-89C1-17BC44519CED","ObjectName1":
-"Khuu, May","PersonnelType":"Employee","CardNumber":"232358","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 09. North Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T04:46:54.000Z","Dateonly":"2025
--09-16","Swipe_Time":"04:46:54","EmployeeID":"236044","PersonGUID":"D00F0768-631A-4234-9BA0-BE42B26E2E13","ObjectName1":"Leung, Christine S","PersonnelType":"Employee","CardNumber":"232607","AdmitCode":"Admit","Directio
-n":"InDirection","Door":"US.CO.HQ. 09. South Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T04:53:19.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:53:19","EmployeeID":"74480","PersonGUID":"04BEC3F6-0BB7-4BD1-940E-012D6A8
-BE14A","ObjectName1":"Schloeman, William","PersonnelType":"Employee","CardNumber":"608728","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 09. North Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T05:05:47.000
-Z","Dateonly":"2025-09-16","Swipe_Time":"05:05:47","EmployeeID":"327362","PersonGUID":"B4BAE8BC-6E3B-4C68-AB8E-B678E7F26ED9","ObjectName1":"Morales, Fernando","PersonnelType":"Employee","CardNumber":"613402","AdmitCode":"Admit","
-Direction":"InDirection","Door":"US.CO.HQ. 09. North Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T05:07:48.000Z","Dateonly":"2025-09-16","Swipe_Time":"05:07:48","EmployeeID":"327391","PersonGUID":"4382C459-4BB1-44AB-B4EB-4CFFE0A1E
-AF3","ObjectName1":"Owens, Brittany","PersonnelType":"Employee","CardNumber":"613379","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 09. South Lobby Doors-IN"}]},{"floor":"Floor 11","total":3,"employees":3,"contractors":
-0,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T04:05:34.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:05:34","EmployeeID":"301966","PersonGUID":"B0BF3506-A8A6-4A81-9D2F-6EDB5EF16924","ObjectName1":"Laird, Heathe
-r","PersonnelType":"Employee","CardNumber":"232962","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 11. North Lobby Doors-IN"},{"LocaleMessageTime":"2025-09-16T04:55:13.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:55:13","E
-mployeeID":"140217","PersonGUID":"312D55E5-5194-4153-BA20-7CE81155B835","ObjectName1":"Splatt, Gordon","PersonnelType":"Employee","CardNumber":"232580","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 11. South Lobby Doors-IN"},{
-"LocaleMessageTime":"2025-09-16T04:56:27.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:56:27","EmployeeID":"319779","PersonGUID":"031037CA-9C9C-4A85-B8BB-5FF3F418D0F7","ObjectName1":"Lewis, David Wayne","PersonnelType":"Employee","CardNumber":"61
-3494","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 11. South Lobby Doors-IN"}]},{"floor":"Floor 13","total":1,"employees":1,"contractors":0,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T04:42:22
-.000Z","Dateonly":"2025-09-16","Swipe_Time":"04:42:22","EmployeeID":"199599","PersonGUID":"2909F487-2D9B-4413-A230-EF5D02BA465A","ObjectName1":"Formento, Dennis","PersonnelType":"Employee","CardNumber":"231699","AdmitCode":"Admit","
-Direction":"InDirection","Door":"US.CO.HQ. 13. North Lobby Doors-IN"}]},{"floor":"Floor 12","total":1,"employees":1,"contractors":0,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T04:58:36.000Z","Dateonly":"2025
--09-16","Swipe_Time":"04:58:36","EmployeeID":"244644","PersonGUID":"4BB56406-252D-432C-B1DA-D4A911CCFB26","ObjectName1":"Saenz, Robert J","PersonnelType":"Employee","CardNumber":"229002","AdmitCode":"Admit","Direction":"InDirection","
-Door":"US.CO.HQ. 12. North Lobby Doors-IN"}]}],"personnelSummary":{"employees":12,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1},{"personnelType":"Employee","count":12}],"totalVisitedToday":17,"visitedT
-oday":{"employees":12,"contractors":5,"total":17},"swipeStats":{"totalInSwipes":85,"totalOutSwipes":42},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":3,"outSwipes":4,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwip
-es":3,"outSwipes":2,"inOnlyCount":1,"inOnlyPersons":["4BB56406-252D-432C-B1DA-D4A911CCFB26"]},{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09",
-"inSwipes":8,"outSwipes":1,"inOnlyCount":7,"inOnlyPersons":["52B69EA4-1DD6-44A4-972A-EA2F87D2858E","E4443CC3-EC80-47A9-99E0-F470A967AE6E","93311BFA-4087-4AA6-89C1-17BC44519CED","D00F0768-631A-4234-9BA0-BE42B26E2E13","04BEC3F6-0BB7-4BD1-
-940E-012D6A8BE14A","B4BAE8BC-6E3B-4C68-AB8E-B678E7F26ED9","4382C459-4BB1-44AB-B4EB-4CFFE0A1EAF3"]},{"floor":"Floor 11","inSwipes":5,"outSwipes":2,"inOnlyCount":3,"inOnlyPersons":["B0BF3506-A8A6-4A81-9D2F-6EDB5EF16924","312D55E5-5194-4153
--BA20-7CE81155B835","031037CA-9C9C-4A85-B8BB-5FF3F418D0F7"]},{"floor":"Floor 15","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 14","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"
-Floor 13","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["2909F487-2D9B-4413-A230-EF5D02BA465A"]}]}
