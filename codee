@@ -1,3 +1,6 @@
+ok. but i want to click only Security column and only not all column 
+Security	Rejection
+Floor 09	4	1	3	1
 import React, { useState } from 'react';
 import { Card, Table, Modal } from 'react-bootstrap';
 
