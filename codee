@@ -1,3 +1,9 @@
+i want to moniter only ther  floor locarion ,
+
+
+http://localhost:5000/api/denver-security-rejection
+
+
 // controllers/denversecurityrejection.js
 const sql = require('mssql');
 const { denver } = require('../config/siteConfig');
@@ -6,7 +12,7 @@ const { denver } = require('../config/siteConfig');
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
-  'W0026208','W0026455'
+  'W0026208','W0026455','W0022449'
 ];
 
 function normalizePartsArray(partsRaw) {
