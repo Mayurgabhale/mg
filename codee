@@ -1,193 +1,374 @@
-// controllers/denversecurityrejection.js
-const sql = require('mssql');
-const { denver } = require('../config/siteConfig');
+REad this code, in this we got the member locaitn they excaly wher>>>
 
-// SECURITY_OFFICERS — now includes W0022449 per your request
+like that i want ot creat for this seciryt, ther ecalcy locain 
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
   'W0026208','W0026455','W0022449'
+]
+for exMPL W0003901 IS ON FLOOR 12 THEN in tabl in thsi secity Security coulmm  disply count 1
+
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 12	1	0	1	0	                      1
+like tthatok first do this then we move on rejectin ok
+,,,,,
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 12	1	0	1	0	
+Floor 01	2	1	1	0	
+Floor 09	1	1	0	0	
+Floor 06	0	1	-1	0	
+
+import React, { useState, useMemo } from 'react';
+import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
+import {
+  FaHome,
+  FaBuilding,
+  FaLayerGroup,
+  FaEnvelope,
+  FaPhone,
+  FaUserTie,
+  FaUserShield,
+  FaUserNurse,
+  FaUsers,
+  FaEye,
+  FaEyeSlash,
+  FaUserCog,
+  FaIdCard,
+  FaLocationArrow
+} from 'react-icons/fa';
+
+const firstColumnRoles = [
+  'Site Head',
+  'BCM Team / Site Operations',
+  'HR',
+  'Incident Controller'
 ];
 
-function normalizePartsArray(partsRaw) {
-  if (!partsRaw || typeof partsRaw !== 'string') return [];
-  return partsRaw
-    .split(',')
-    .map(p => p.trim())
-    .filter(p => p.length > 0);
-}
-
-function getDefaultParts() {
-  if (process.env.DEFAULT_PARTS && process.env.DEFAULT_PARTS.trim()) {
-    return process.env.DEFAULT_PARTS.trim().split(',').map(s => s.trim()).filter(Boolean);
-  }
-  return ['US.CO.OBS.15','US.CO.OBS.14','US.CO.OBS.12','US.CO.OBS.06','US.CO.OBS.13','US.CO.OBS.01'];
-}
-
-exports.getDenverSecurityRejection = async (req, res) => {
-  try {
-    // parse parts param (or fall back)
-    let partsArr = normalizePartsArray(req.query.parts);
-    if (partsArr.length === 0) {
-      partsArr = getDefaultParts();
-      console.warn(`[denverSecurityRejection] parts not provided — using default: ${partsArr.join(',')}`);
-    }
-    if (partsArr.length === 0) {
-      return res.status(400).json({ error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14" });
-    }
-
-    // get pool + request and bind part parameters
-    const pool = await denver.poolPromise;
-    const request = pool.request();
-    const partPlaceholders = partsArr.map((p, i) => {
-      const name = `part${i}`;
-      request.input(name, sql.NVarChar, p);
-      return `@${name}`;
-    }).join(', ');
-
-    // static security list (safe inline)
-    const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
-
-    // SQL: CombinedQuery for last 7 days, SecurityLatest for latest per security card,
-    // SecurityByFloor (STUFF FOR XML PATH for older SQL Server), and Rejections per floor.
-    const sqlQuery = `
-/* CombinedQuery: last 7 days for partitions provided */
-WITH CombinedQuery AS (
-  SELECT
-    DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-    t1.ObjectName1 AS ObjectName1,
-    t1.ObjectName2 AS Door,
-    t1.PartitionName2 AS PartitionName2,
-    COALESCE(
-      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-      sc.value
-    ) AS CardNumber,
-    t3.Name AS PersonnelType,
-    t5_rej.value AS RejectionType,
-    t1.MessageType
-  FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-  LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
-  LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml ON t1.XmlGUID = t_xml.GUID
-  LEFT JOIN (
-    SELECT GUID, value
-    FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-    WHERE Name IN ('Card','CHUID')
-  ) AS sc ON t1.XmlGUID = sc.GUID
-  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5_rej
-    ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
-  WHERE
-    t1.MessageType IN ('CardAccepted','CardRejected')
-    AND t1.PartitionName2 IN (${partPlaceholders})
-    AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
-),
-
-EventsWithCard AS (
-  SELECT *, LTRIM(RTRIM(CardNumber)) AS CardNumTrim
-  FROM CombinedQuery
-  WHERE COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
-),
-
-LatestPerCard AS (
-  SELECT *, ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
-  FROM EventsWithCard
-),
-
-SecurityList AS (
-  SELECT s.ID AS CardNumber FROM (VALUES
-    ${secValues}
-  ) AS s(ID)
-),
-
-SecurityLatest AS (
-  SELECT
-    lp.CardNumTrim AS CardNumber,
-    lp.PartitionName2,
-    lp.LocaleMessageTime,
-    'Floor ' + PARSENAME(lp.PartitionName2, 1) AS FloorLabel
-  FROM LatestPerCard lp
-  INNER JOIN SecurityList sec ON lp.CardNumTrim = sec.CardNumber
-  WHERE lp.rn = 1 AND lp.PartitionName2 IS NOT NULL
-),
-
-/* aggregate security officers per floor — compatible with older SQL Server */
-SecurityByFloor AS (
-  SELECT
-    ISNULL('Floor ' + PARSENAME(sl.PartitionName2,1), sl.PartitionName2) AS Floor,
-    COUNT(DISTINCT sl.CardNumber) AS SecurityCount,
-    STUFF((
-      SELECT DISTINCT ',' + s2.CardNumber
-      FROM SecurityLatest s2
-      WHERE s2.PartitionName2 = sl.PartitionName2
-      FOR XML PATH(''), TYPE
-    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS SecurityIDs
-  FROM SecurityLatest sl
-  GROUP BY sl.PartitionName2
-),
-
-/* rejection counts per floor (last 7 days) */
-Rejections AS (
-  SELECT
-    ISNULL('Floor ' + PARSENAME(c.PartitionName2,1), c.PartitionName2) AS Floor,
-    COUNT(*) AS RejectionCount,
-    STUFF((
-      SELECT DISTINCT ',' + COALESCE(c2.CardNumber,'?')
-      FROM CombinedQuery c2
-      WHERE c2.PartitionName2 = c.PartitionName2
-        AND c2.MessageType = 'CardRejected'
-        AND COALESCE(LTRIM(RTRIM(c2.CardNumber)),'') <> ''
-      FOR XML PATH(''), TYPE
-    ).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS Cards
-  FROM CombinedQuery c
-  WHERE c.MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(c.CardNumber)),'') <> ''
-  GROUP BY c.PartitionName2
-)
-
-SELECT
-  (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH) AS securityJson,
-  (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
-`;
-
-    console.log('[denverSecurityRejection] partitions:', partsArr.join(','));
-
-    const result = await request.query(sqlQuery);
-
-    const row = result.recordset && result.recordset[0];
-    const securityByFloor = row && row.securityJson ? JSON.parse(row.securityJson) : [];
-    const rejectionsByFloor = row && row.rejectionsJson ? JSON.parse(row.rejectionsJson) : [];
-
-    // Build a keyed map for quick frontend merge
-    const securityMap = {};
-    securityByFloor.forEach(it => {
-      const floorKey = it.Floor || it.floor || it.FloorLabel || 'Unknown Floor';
-      securityMap[floorKey] = {
-        count: it.SecurityCount || 0,
-        ids: it.SecurityIDs ? String(it.SecurityIDs).split(',').filter(Boolean) : [],
-        SecurityIDs: it.SecurityIDs,
-        SecurityCount: it.SecurityCount,
-        Floor: floorKey
-      };
-    });
-    rejectionsByFloor.forEach(it => {
-      const floorKey = it.Floor || it.floor || 'Unknown Floor';
-      if (!securityMap[floorKey]) securityMap[floorKey] = {};
-      securityMap[floorKey].RejectionCount = it.RejectionCount || 0;
-      securityMap[floorKey].Cards = it.Cards ? String(it.Cards).split(',').filter(Boolean) : [];
-    });
-
-    return res.json({
-      securityByFloor,
-      rejectionsByFloor,
-      securityMap,
-      meta: {
-        partsRequested: partsArr,
-        securityOfficersCount: SECURITY_OFFICERS.length
-      }
-    });
-
-  } catch (err) {
-    console.error('denverSecurityRejection error:', err);
-    return res.status(500).json({ error: err.message || String(err) });
-  }
+const roleIcons = {
+  'Site Head': <FaUserTie className="text-info" />,
+  'BCM Team / Site Operations': <FaUserShield className="text-teal" />,
+  'HR': <FaUserTie className="text-purple" />,
+  'Incident Controller': <FaUserShield className="text-warning" />,
+  'ERT Team Leader': <FaUserShield className="text-danger" />,
+  'ERT Team Members': <FaUsers className="text-primary" />,
+  'First Aid Team': <FaUserNurse className="text-orange" />
 };
+
+const baseLocationByRole = {
+  'Site Head': 'Podium Floor – Red Zone',
+  'HR': 'Podium Floor – Red Zone',
+  'Incident Controller': 'Podium Floor – Red Zone',
+  'First Aid Team': 'Podium Floor – Green Zone',
+  'ERT Team Leader': 'Podium Floor – Green Zone',
+  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
+};
+
+// ---- Photo helpers ----
+const DEFAULT_PHOTO = '/photos/default.png';
+
+const toSlug = (name = '') =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+const getPhotoSrc = (member) => {
+  if (!member) return DEFAULT_PHOTO;
+  if (member.photo) return member.photo;
+
+  const name = member.name || member.Name;
+  if (name) return `/photos/${toSlug(name)}.png`;
+
+  return DEFAULT_PHOTO;
+};
+
+// ------------------ Helpers ------------------
+const isPresent = (m) => {
+  if (!m) return false;
+  return typeof m.present === 'boolean' ? m.present : Boolean(m.present);
+};
+
+const getLiveLocation = (m = {}) => (m.zone || m.liveLocation || '').toString();
+const getBaseLocation = (m = {}) => (m['Base Location'] || m.Floor || m.baseLocation || '').toString();
+
+const matchesFilterZone = (location = '', filterZone = '') => {
+  if (!filterZone) return true;
+  return (location || '').toLowerCase().includes(filterZone.toLowerCase());
+};
+
+// ------------------ Role card renderer ------------------
+function renderRoleCard(role, membersRaw = [], filterZone) {
+  const members = filterZone
+    ? membersRaw.filter(m =>
+      isPresent(m) &&
+      (matchesFilterZone(getLiveLocation(m), filterZone) ||
+        matchesFilterZone(getBaseLocation(m), filterZone) ||
+        matchesFilterZone(baseLocationByRole[role] || '', filterZone))
+    )
+    : membersRaw;
+
+  if (filterZone && members.length === 0) return null;
+
+  return (
+    <Card className="dashboard-card mb-1" key={role}>
+      <Card.Header className="dashboard-card-header d-flex align-items-center">
+        <span className="role-icon me-2">{roleIcons[role] || <FaUserCog className="text-muted" />}</span>
+        <span className="role-title">{role}</span>
+        <Badge bg="outline-light" className="ms-2">{members.length}</Badge>
+      </Card.Header>
+      <Card.Body className="p-1">
+        {members.length > 0 ? members.map((m, i) => {
+          const location = isPresent(m)
+            ? getLiveLocation(m) || 'Unknown Zone'
+            : getBaseLocation(m) || baseLocationByRole[role] || 'Unknown Zone';
+
+          return (
+            <div key={i} className="member-item pb-0 mb-1">
+              <div className="d-flex justify-content-between align-items-start mb-1">
+                <div className="d-flex align-items-center">
+                  <div className={`member-photo-container ${isPresent(m) ? 'present-border' : 'away-border'}`}>
+                    <img
+                      src={getPhotoSrc(m)}
+                      alt={m.name || m.Name || 'Member'}
+                      className="member-photo"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_PHOTO;
+                      }}
+                    />
+                    <div className={`status-indicator ${isPresent(m) ? 'present' : 'away'}`}></div>
+                  </div>
+                  <div className="ms-3">
+                    <h6 className="mb-0 member-name">{m.name || m.Name}</h6>
+                    <small className="text-muted">{m.designation || m.role}</small>
+                  </div>
+                </div>
+                <Badge bg={isPresent(m) ? 'success' : 'danger'} className="status-badge">
+                  {isPresent(m) ? 'Available' : 'Away'}
+                </Badge>
+              </div>
+
+              <div className="member-contact-info">
+                <div className="contact-item">
+                  <FaEnvelope className="contact-icon text-primary" />
+                  <a href={`mailto:${m.email || m.Email}`} className="contact-link">{m.email || m.Email}</a>
+                </div>
+                <div className="contact-item">
+                  <FaPhone className="contact-icon text-success" />
+                  <span className="contact-text">{m.phone || m.Phone}</span>
+                </div>
+                <div className="contact-item">
+                  <FaLocationArrow className="contact-icon text-danger" />
+                  <span className="contact-text">{location}</span>
+                </div>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="text-center py-3 text-muted">
+            <FaIdCard size={24} className="mb-2" />
+            <p className="mb-0">No members available</p>
+          </div>
+        )}
+      </Card.Body>
+    </Card>
+  );
+}
+
+// ------------------ Main component ------------------
+export default function ERTOverview({ ertStatus = {} }) {
+  const [filterZone, setFilterZone] = useState(null);
+  const [showAllMembers, setShowAllMembers] = useState(false);
+
+  const allMembers = useMemo(() => {
+    const list = [];
+    Object.entries(ertStatus || {}).forEach(([role, members]) => {
+      (members || []).forEach(m => list.push({ role, ...m }));
+    });
+    return list;
+  }, [ertStatus]);
+
+  // ---- Floor Counts (like in first code)
+  const floorCounts = useMemo(() => {
+    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
+    allMembers.forEach(m => {
+      if (!isPresent(m)) return;
+      const z = (m.zone || m.liveLocation || '').toLowerCase();
+      if (z.includes('2nd')) counts['2nd Floor']++;
+      else if (z.includes('tower b')) counts['Tower B']++;
+      else counts['Podium Floor']++;
+    });
+    return counts;
+  }, [allMembers]);
+
+  // ---- ERT Leaders
+  const ertLeaders = useMemo(() => {
+    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
+    const filtered = filterZone
+      ? raw.filter(m => isPresent(m) &&
+        (matchesFilterZone(getLiveLocation(m), filterZone) ||
+          matchesFilterZone(getBaseLocation(m), filterZone) ||
+          matchesFilterZone(baseLocationByRole['ERT Team Leader'], filterZone)))
+      : raw;
+
+    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
+    return filtered.sort((a, b) => {
+      const pa = isPresent(a) ? 1 : 0, pb = isPresent(b) ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      const ia = order.indexOf(a.name || a.Name || ''), ib = order.indexOf(b.name || b.Name || '');
+      if (ia !== -1 || ib !== -1) {
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      }
+      return (a.name || a.Name || '').localeCompare(b.name || b.Name || '');
+    });
+  }, [ertStatus, filterZone]);
+
+  // ---- ERT Members
+  const ertMembers = useMemo(() => {
+    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
+      role: 'ERT Team Members',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone || '',
+      liveLocation: m.zone || m.liveLocation || '',
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    const filtered = filterZone
+      ? members.filter(m => isPresent(m) &&
+        (matchesFilterZone(m.liveLocation, filterZone) || matchesFilterZone(m.baseLocation, filterZone)))
+      : members;
+
+    filtered.sort((a, b) => {
+      const pa = isPresent(a) ? 1 : 0, pb = isPresent(b) ? 1 : 0;
+      if (pa !== pb) return pb - pa;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return showAllMembers ? filtered : filtered.slice(0, 6);
+  }, [ertStatus, filterZone, showAllMembers]);
+
+  // ---- First Aid Team
+  const firstAidMembers = useMemo(() => {
+    const members = (ertStatus['First Aid Team'] || []).map(m => ({
+      role: 'First Aid Team',
+      name: m.Name || m.name,
+      baseLocation: m['Base Location'] || m.Floor || m.zone || '',
+      liveLocation: m.zone || m.liveLocation || '',
+      email: m.Email || m.email,
+      phone: m.Phone || m.phone,
+      present: m.present
+    }));
+
+    return filterZone
+      ? members.filter(m => isPresent(m) &&
+        (matchesFilterZone(m.liveLocation, filterZone) || matchesFilterZone(m.baseLocation, filterZone)))
+      : members;
+  }, [ertStatus, filterZone]);
+
+  const floorIcons = {
+    'Podium Floor': <FaHome className="text-danger" />,
+    '2nd Floor': <FaBuilding className="text-info" />,
+    'Tower B': <FaLayerGroup className="text-success" />
+  };
+
+  // ------------------ UI ------------------
+  return (
+    <div className="ert-dashboard">
+      <Container fluid className="py-4">
+        {/* Stats Cards */}
+        <Row className="mb-4">
+          <Col xs={12} md={3} className="mb-3">
+            <Card className="stats-card total-members">
+              <Card.Body className="p-3">
+                <div className="d-flex align-items-center">
+                  <div className="stats-icon me-3">
+                    <FaUsers size={24} />
+                  </div>
+                  <div>
+                    <h6 className="stats-label">Total Members</h6>
+                    <h3 className="stats-value mb-0">
+                      {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
+                    </h3>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
+            const count = floorCounts[floor] || 0;
+            const isSelected = filterZone === floor;
+            return (
+              <Col key={floor} xs={12} md={3} className="mb-3">
+                <Card
+                  className={`stats-card location-card ${isSelected ? 'active' : ''}`}
+                  onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
+                >
+                  <Card.Body className="p-3">
+                    <div className="d-flex align-items-center">
+                      <div className="stats-icon me-3">{floorIcons[floor]}</div>
+                      <div>
+                        <h6 className="stats-label">{floor}</h6>
+                        <h3 className="stats-value mb-0">{count}</h3>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+
+        {/* Three-column layout */}
+        <Row className="align-items-stretch">
+          {/* First column */}
+          <Col xs={12} lg={4} className="mb-3 h-100 d-flex flex-column">
+            <div className="flex-grow-1 d-flex flex-column">
+              {firstColumnRoles.map(role =>
+                renderRoleCard(role, ertStatus[role] || [], filterZone)
+              )}
+            </div>
+          </Col>
+
+          {/* Leaders */}
+          <Col xs={12} lg={4} className="mb-5 h-105 d-flex flex-column ">
+            <div className="flex-grow-1 d-flex flex-column">
+              {renderRoleCard('ERT Team Leader', ertLeaders, filterZone)}
+            </div>
+          </Col>
+
+          {/* Members */}
+          <Col xs={12} lg={4} className="mb-0 h-115 d-flex flex-column">
+            <div className="flex-grow-1 d-flex flex-column">
+              {renderRoleCard('ERT Team Members', ertMembers, filterZone)}
+
+
+              <div className="text-center mt-3">
+                <Button
+                  variant="outline-primary"
+                  className="d-flex align-items-center mx-auto"
+                  onClick={() => setShowAllMembers(prev => !prev)}
+                >
+                  {showAllMembers ? (
+                    <>
+                      <FaEyeSlash className="me-2" /> Show Less
+                    </>
+                  ) : (
+                    <>
+                      <FaEye className="me-2" /> Show More
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* First Aid Team */}
+              {/* {renderRoleCard('First Aid Team', firstAidMembers, filterZone)} */}
+            </div>
+          </Col>
+        </Row>
+      </Container>
