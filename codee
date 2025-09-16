@@ -1,12 +1,8 @@
-http://localhost:5000/api/denver-security-rejection?parts=US.CO.OBS.15,US.CO.OBS.14
-
-{"error":"Incorrect syntax near ','."}
-
-
 // controllers/denversecurityrejection.js
+// Path: C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
+
 const sql = require('mssql');
-const { denver } = require('../config/siteConfig'); // reuse poolPromise used elsewhere
-const util = require('util');
+const { denver } = require('../config/siteConfig');
 
 // Security officers list (source you provided)
 const SECURITY_OFFICERS = [
@@ -15,64 +11,48 @@ const SECURITY_OFFICERS = [
   'W0026208','W0026455'
 ];
 
-/**
- * sanitizePartitionList
- * - Accepts a comma-separated string like "US.CO.OBS.15,US.CO.OBS.14"
- * - Returns a SQL-friendly quoted list:  "'US.CO.OBS.15','US.CO.OBS.14'"
- * - Returns null for invalid input
- */
-function sanitizePartitionList(partsRaw) {
-  if (!partsRaw || typeof partsRaw !== 'string') return null;
-  const parts = partsRaw
+function normalizePartsArray(partsRaw) {
+  if (!partsRaw || typeof partsRaw !== 'string') return [];
+  return partsRaw
     .split(',')
     .map(p => p.trim())
     .filter(p => p.length > 0);
-  if (parts.length === 0) return null;
-  return parts
-    .map(p => p.replace(/'/g, "''")) // escape single quotes
-    .map(p => `'${p}'`)
-    .join(', ');
 }
 
-/**
- * Helper: build defaultParts string
- * - You can configure DEFAULT_PARTS in environment (comma-separated).
- * - If not present, use this small default list (change as needed).
- */
 function getDefaultParts() {
   if (process.env.DEFAULT_PARTS && process.env.DEFAULT_PARTS.trim()) {
-    return process.env.DEFAULT_PARTS.trim();
+    return process.env.DEFAULT_PARTS.trim().split(',').map(s => s.trim()).filter(Boolean);
   }
-  // sensible default (adjust to your partitions)
-  return 'US.CO.OBS.15,US.CO.OBS.14,US.CO.OBS.12,US.CO.OBS.06,US.CO.OBS.13,US.CO.OBS.01';
+  // fallback default parts (adjust if you want)
+  return ['US.CO.OBS.15','US.CO.OBS.14','US.CO.OBS.12','US.CO.OBS.06','US.CO.OBS.13','US.CO.OBS.01'];
 }
 
 exports.getDenverSecurityRejection = async (req, res) => {
   try {
-    // allow parts passed via query OR fallback to DEFAULT_PARTS
-    let partsRaw = req.query.parts;
-    if (!partsRaw || !String(partsRaw).trim()) {
-      // fallback to default (log it so you know)
-      partsRaw = getDefaultParts();
-      console.warn(`[denverSecurityRejection] No parts provided - falling back to DEFAULT_PARTS: ${partsRaw}`);
-      // If you prefer to force parts to be required, uncomment next lines to return 400 instead:
-      // return res.status(400).json({
-      //   error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
-      // });
+    // accept parts from query; fall back to default if not provided
+    let partsArr = normalizePartsArray(req.query.parts);
+    if (partsArr.length === 0) {
+      partsArr = getDefaultParts();
+      console.warn(`[denverSecurityRejection] parts not provided - falling back to defaultParts: ${partsArr.join(',')}`);
     }
 
-    const partsList = sanitizePartitionList(partsRaw);
-    if (!partsList) {
+    if (partsArr.length === 0) {
       return res.status(400).json({
         error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
       });
     }
 
-    // get pool from config (same approach used in other controllers)
+    // Build parameter placeholders and bind them to the request
     const pool = await denver.poolPromise;
     const request = pool.request();
 
-    // prepare inline VALUES list for security officers
+    const partPlaceholders = partsArr.map((p, i) => {
+      const name = `part${i}`;
+      request.input(name, sql.NVarChar, p);
+      return `@${name}`;
+    }).join(', ');
+
+    // Build inline security VALUES list (safe because SECURITY_OFFICERS is static)
     const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
 
     const sqlQuery = `
@@ -108,7 +88,7 @@ WITH CombinedQuery AS (
     ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
   WHERE
     t1.MessageType IN ('CardAccepted', 'CardRejected')
-    AND t1.PartitionName2 IN (${partsList})
+    AND t1.PartitionName2 IN (${partPlaceholders})
     AND CONVERT(DATE,
         DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
         ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
@@ -168,6 +148,11 @@ SELECT
   (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
 `;
 
+    // DEBUG: log short info to help diagnose SQL errors (remove in production)
+    console.log('[denverSecurityRejection] Executing SQL - partitions:', partsArr.join(','));
+    // Uncomment next line if you want to print the entire SQL for debugging (can be long)
+    // console.log(sqlQuery);
+
     const result = await request.query(sqlQuery);
 
     const row = result.recordset && result.recordset[0];
@@ -213,7 +198,7 @@ SELECT
       rejectionsByFloor,
       securityMap,
       meta: {
-        partsRequested: partsRaw,
+        partsRequested: partsArr,
         securityOfficersCount: SECURITY_OFFICERS.length
       }
     });
