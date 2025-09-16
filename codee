@@ -1,54 +1,6 @@
-ok, good, 
-Know i want date wise also 
-  "summary": [
-    {
-      "floor": "Floor 6",
-      "rejectionCount": 9
-    },
-    {
-      "floor": "Floor 12",
-      "rejectionCount": 15
-    },
-    {
-      "floor": "Floor 1",
-      "rejectionCount": 7
-    },
-    {
-      "floor": "Floor 15",
-      "rejectionCount": 4
-    },
-    {
-      "floor": "Floor 9",
-      "rejectionCount": 5
-    },
-    {
-      "floor": "Floor 13",
-      "rejectionCount": 1
-    }
-  ],
-  "details": [
-    {
-      "LocaleMessageTime": "2025-09-15T15:06:01.000Z",
-      "DateOnly": "2025-09-15T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T15:06:01.000Z",
-      "CardNumber": "610043",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 06. Fitness Center West_11:01:B9",
-      "RejectionType": "Clearance",
-      "floor": "Floor 6"
-    },
-    {
-      "LocaleMessageTime": 
-
-
-Know i want date wise
-
-
-// controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
 const doorFloorMap = require("../data/denverDoorFloorMap");
-const normalizeKey = require("../data/normalizeKey"); 
+const normalizeKey = require("../data/normalizeKey");
 
 // helper: regex fallback to extract floor number from Door string
 function extractFloorFromDoor(door) {
@@ -122,14 +74,11 @@ async function getRejections(req, res) {
       try {
         const [doorRaw, dirRaw] = (r.Door || "").split("___");
         const normKey = normalizeKey(doorRaw || "", dirRaw || "");
-
         const mapped = doorFloorMap[normKey];
 
         if (mapped && mapped !== "Out of office") {
-          // ✅ keep mapped floor
           floor = mapped;
         } else {
-          // ✅ fallback: parse floor number directly from Door
           floor = extractFloorFromDoor(r.Door);
         }
       } catch (e) {
@@ -139,25 +88,42 @@ async function getRejections(req, res) {
       return { ...r, floor };
     });
 
-    // Floor-wise rejection count
+    // Floor-wise rejection count (all days combined)
     const summary = details.reduce((acc, row) => {
-      if (row.floor !== "Unknown") {   // ✅ exclude unknowns
+      if (row.floor !== "Unknown") {
         if (!acc[row.floor]) acc[row.floor] = 0;
         acc[row.floor]++;
       }
       return acc;
     }, {});
-
     const summaryArr = Object.entries(summary).map(([floor, rejectionCount]) => ({
       floor,
-      rejectionCount
+      rejectionCount,
+    }));
+
+    // Date + Floor-wise rejection count
+    const dateWiseMap = {};
+    details.forEach(row => {
+      if (row.floor === "Unknown") return;
+      const date = row.DateOnly.toISOString().split("T")[0]; // yyyy-mm-dd
+      if (!dateWiseMap[date]) dateWiseMap[date] = {};
+      if (!dateWiseMap[date][row.floor]) dateWiseMap[date][row.floor] = 0;
+      dateWiseMap[date][row.floor]++;
+    });
+
+    const dateWiseArr = Object.entries(dateWiseMap).map(([date, floors]) => ({
+      date,
+      floors: Object.entries(floors).map(([floor, rejectionCount]) => ({
+        floor,
+        rejectionCount,
+      })),
     }));
 
     res.json({
       summary: summaryArr,
-      details
+      dateWise: dateWiseArr,
+      details,
     });
-
   } catch (err) {
     console.error("Error fetching rejection data:", err);
     res.status(500).send("Server Error");
