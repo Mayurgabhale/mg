@@ -1,3 +1,6 @@
+http://localhost:5000/api/live-occupancy-denver
+data: {"asOfLocal":"2025-09-16T01:47:25.982-06:00","asOfUTC":"2025-09-16T07:47:25.982Z","currentCount":1,"floorBreakdown":[{"floor":"Floor 01","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-09-16T00:07:59.000Z","Dateonly":"2025-09-16","Swipe_Time":"00:07:59","EmployeeID":"W0026176","PersonGUID":"6F93B492-C95A-436E-996A-92202EFB9915","ObjectName1":"Vargas, Erika","PersonnelType":"Contractor","CardNumber":"617979","AdmitCode":"Admit","Direction":"InDirection","Door":"US.CO.HQ. 01. Focus Area North-IN"}]}],"personnelSummary":{"employees":0,"contractors":1},"personnelBreakdown":[{"personnelType":"Contractor","count":1}],"totalVisitedToday":3,"visitedToday":{"employees":0,"contractors":3,"total":3},"swipeStats":{"totalInSwipes":8,"totalOutSwipes":7},"floorInOutSummary":[{"floor":"Floor 06","inSwipes":0,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},{"floor":"Floor 12","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]},
+{"floor":"Floor 01","inSwipes":2,"outSwipes":1,"inOnlyCount":1,"inOnlyPersons":["6F93B492-C95A-436E-996A-92202EFB9915"]},{"floor":"Floor 09","inSwipes":1,"outSwipes":1,"inOnlyCount":0,"inOnlyPersons":[]}]}
 why add this import { lookupFloor } from '../utils/floorLookup';
 remove this 
 // src/components/FloorInOutTable.jsx
@@ -14,7 +17,7 @@ const ROW_COLORS = [
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
-  'W0026208','W0026455','W0022449'
+  'W0026208','W0026455','W0026176'
 ];
 const normalizeId = v => String(v || '').trim().toUpperCase();
 
