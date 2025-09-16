@@ -1,30 +1,63 @@
-REad this code, in this we got the member locaitn they excaly wher>>>
-
-like that i want ot creat for this seciryt, ther ecalcy locain 
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
   'W0026208','W0026455','W0022449'
-]
-for exMPL W0003901 IS ON FLOOR 12 THEN in tabl in thsi secity Security coulmm  disply count 1
+];
 
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 12	1	0	1	0	                      1
-like tthatok first do this then we move on rejectin ok
-,,,,,
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 12	1	0	1	0	
-Floor 01	2	1	1	0	
-Floor 09	1	1	0	0	
-Floor 06	0	1	-1	0	
-_______________________________
+Read the bleow denverLiveOccupancyController.js code and i want ot monite ther floor locain,
+ther swpie, 
+adn i want ot add this in 
 
+means this on this floor seciryt count  Floor 12 5 Security
+then in Security colmn disply 5 count. and afte hove on this row Floor 12 Security 5 then hover disply ther list of id ok 
+and get the locaton from denverLiveOccupancyController.js
+Read all code carefullya nd writ correcg 
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 12	1	0	1		
+Floor 01	2	1	1		
+Floor 09	1	1	0		
+Floor 06	0	1	-1	
+
+<Table striped bordered hover size="sm" variant="dark" className="mb-0">
+          <thead>
+            <tr>
+              <th>Floor</th>
+              <th>In Swipes</th>
+              <th>Out Swipes</th>
+              <th>In &minus; Out</th>
+              <th>Security</th>
+              <th>Rejection</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, idx) => (
+              <tr key={row.floor}>
+                <td style={{ color: '#fff' }}>{row.floor}</td>
+                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
+                  {row.inSwipes}
+                </td>
+                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
+                  {row.outSwipes}
+                </td>
+                <td
+                  style={{
+                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {row.inconsistency}
+                </td>
+                <td></td>
+                <td></td>
+
+
+this table ok 
 
 
 // src/components/FloorInOutTable.jsx
 
 import React from 'react';
-import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Card, Table } from 'react-bootstrap';
 
 // Accent palette (re-used from FloorOccupancyChart)
 const ROW_COLORS = [
@@ -37,47 +70,18 @@ const ROW_COLORS = [
   '#FFEB99'
 ];
 
-export default function FloorInOutTable({ data = [], securityMap = {} }) {
-  // data: [{ floor: 'Floor 15', inSwipes: 40, outSwipes: 32 }, ...]
-  // securityMap: {
-  //   'Floor 15': { count: 4, ids: ['W0003901','W00...'] },
-  //   'Floor 14': { count: 2, ids: [] },
-  //   ...
-  // }
+export default function FloorInOutTable({ data = [] }) {
   // Compute inconsistency and sort descending
   const sorted = data
-    .map(({ floor, inSwipes = 0, outSwipes = 0 }) => ({
+    .map(({ floor, inSwipes, outSwipes }) => ({
       floor,
       inSwipes,
       outSwipes,
-      inconsistency: (inSwipes || 0) - (outSwipes || 0)
+      inconsistency: inSwipes - outSwipes
     }))
     .sort((a, b) => b.inconsistency - a.inconsistency);
 
   const top = sorted[0];
-
-  // helper to read security info given a floor label
-  const getSecurityInfo = (floorLabel) => {
-    // Accept both 'Floor 15' or just '15' or partition names - try robust lookups
-    if (!floorLabel) return { count: 0, ids: [] };
-    const exact = securityMap[floorLabel];
-    if (exact) return { count: exact.count ?? exact.SecurityCount ?? 0, ids: exact.ids ?? (exact.SecurityIDs ? String(exact.SecurityIDs).split(',') : []) };
-
-    // also try 'Floor X' normalization
-    const normalized = securityMap[`Floor ${floorLabel}`];
-    if (normalized) return { count: normalized.count ?? normalized.SecurityCount ?? 0, ids: normalized.ids ?? (normalized.SecurityIDs ? String(normalized.SecurityIDs).split(',') : []) };
-
-    // fallback: look for keys that endWith the numeric part
-    const numeric = String(floorLabel).match(/(\d+)$/);
-    if (numeric) {
-      const candidateKey = Object.keys(securityMap).find(k => k.endsWith(numeric[1]));
-      if (candidateKey) {
-        const v = securityMap[candidateKey];
-        return { count: v.count ?? v.SecurityCount ?? 0, ids: v.ids ?? (v.SecurityIDs ? String(v.SecurityIDs).split(',') : []) };
-      }
-    }
-    return { count: 0, ids: [] };
-  };
 
   return (
     <Card
@@ -94,6 +98,7 @@ export default function FloorInOutTable({ data = [], securityMap = {} }) {
         Floor In vs Out Swipe Summary
       </Card.Header>
 
+      {/* Match other charts: fixed body height and auto-scroll */}
       <Card.Body
         style={{
           height: 450,
@@ -129,63 +134,27 @@ export default function FloorInOutTable({ data = [], securityMap = {} }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row, idx) => {
-              const sec = getSecurityInfo(row.floor);
-              const secCount = sec.count || 0;
-              const secIds = Array.isArray(sec.ids) ? sec.ids.filter(Boolean) : [];
-              // Try to fetch rejection count if provided in securityMap for same floor
-              const rejectionObj = securityMap[row.floor] && securityMap[row.floor].RejectionCount !== undefined
-                ? securityMap[row.floor]
-                : Object.values(securityMap).find(v => (v.Floor === row.floor || v.Floor?.endsWith(String(row.floor).replace(/\D/g, ''))));
-              const rejectionCount = rejectionObj ? (rejectionObj.RejectionCount ?? rejectionObj.rejectionCount ?? 0) : 0;
-
-              // Tooltip content string
-              const tooltipText = secIds.length > 0 ? secIds.join(', ') : 'No security officers recorded';
-
-              return (
-                <tr key={row.floor}>
-                  <td style={{ color: '#fff' }}>{row.floor}</td>
-
-                  <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
-                    {row.inSwipes}
-                  </td>
-
-                  <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
-                    {row.outSwipes}
-                  </td>
-
-                  <td
-                    style={{
-                      color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {row.inconsistency}
-                  </td>
-
-                  <td style={{ color: '#fff', cursor: secIds.length ? 'pointer' : 'default' }}>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`sec-tooltip-${row.floor}`}>
-                          {tooltipText}
-                        </Tooltip>
-                      }
-                    >
-                      <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-                        {secCount}
-                      </span>
-                    </OverlayTrigger>
-                  </td>
-
-                  <td style={{ color: '#fff' }}>
-                    <span style={{ color: '#FFD1A3', fontWeight: 'bold' }}>
-                      {rejectionCount || ''}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+            {sorted.map((row, idx) => (
+              <tr key={row.floor}>
+                <td style={{ color: '#fff' }}>{row.floor}</td>
+                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
+                  {row.inSwipes}
+                </td>
+                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
+                  {row.outSwipes}
+                </td>
+                <td
+                  style={{
+                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {row.inconsistency}
+                </td>
+                <td></td>
+                <td></td>
+              </tr>
+            ))}
           </tbody>
         </Table>
       </Card.Body>
@@ -194,357 +163,518 @@ export default function FloorInOutTable({ data = [], securityMap = {} }) {
 }
 
 
-import React, { useState, useMemo } from 'react';
-import { Card, Row, Col, Badge, Button, Container } from 'react-bootstrap';
-import {
-  FaHome,
-  FaBuilding,
-  FaLayerGroup,
-  FaEnvelope,
-  FaPhone,
-  FaUserTie,
-  FaUserShield,
-  FaUserNurse,
-  FaUsers,
-  FaEye,
-  FaEyeSlash,
-  FaUserCog,
-  FaIdCard,
-  FaLocationArrow
-} from 'react-icons/fa';
 
-const firstColumnRoles = [
-  'Site Head',
-  'BCM Team / Site Operations',
-  'HR',
-  'Incident Controller'
-];
+///   16-09----------
 
-const roleIcons = {
-  'Site Head': <FaUserTie className="text-info" />,
-  'BCM Team / Site Operations': <FaUserShield className="text-teal" />,
-  'HR': <FaUserTie className="text-purple" />,
-  'Incident Controller': <FaUserShield className="text-warning" />,
-  'ERT Team Leader': <FaUserShield className="text-danger" />,
-  'ERT Team Members': <FaUsers className="text-primary" />,
-  'First Aid Team': <FaUserNurse className="text-orange" />
-};
 
-const baseLocationByRole = {
-  'Site Head': 'Podium Floor – Red Zone',
-  'HR': 'Podium Floor – Red Zone',
-  'Incident Controller': 'Podium Floor – Red Zone',
-  'First Aid Team': 'Podium Floor – Green Zone',
-  'ERT Team Leader': 'Podium Floor – Green Zone',
-  'BCM Team / Site Operations': 'Podium Floor – Red Zone'
-};
 
-// ---- Photo helpers ----
-const DEFAULT_PHOTO = '/photos/default.png';
 
-const toSlug = (name = '') =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
 
-const getPhotoSrc = (member) => {
-  if (!member) return DEFAULT_PHOTO;
-  if (member.photo) return member.photo;
 
-  const name = member.name || member.Name;
-  if (name) return `/photos/${toSlug(name)}.png`;
 
-  return DEFAULT_PHOTO;
-};
 
-// ------------------ Helpers ------------------
-const isPresent = (m) => {
-  if (!m) return false;
-  return typeof m.present === 'boolean' ? m.present : Boolean(m.present);
-};
 
-const getLiveLocation = (m = {}) => (m.zone || m.liveLocation || '').toString();
-const getBaseLocation = (m = {}) => (m['Base Location'] || m.Floor || m.baseLocation || '').toString();
 
-const matchesFilterZone = (location = '', filterZone = '') => {
-  if (!filterZone) return true;
-  return (location || '').toLowerCase().includes(filterZone.toLowerCase());
-};
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverLiveOccupancyController.js
+// controllers/denverLiveOccupancyController.js
 
-// ------------------ Role card renderer ------------------
-function renderRoleCard(role, membersRaw = [], filterZone) {
-  const members = filterZone
-    ? membersRaw.filter(m =>
-      isPresent(m) &&
-      (matchesFilterZone(getLiveLocation(m), filterZone) ||
-        matchesFilterZone(getBaseLocation(m), filterZone) ||
-        matchesFilterZone(baseLocationByRole[role] || '', filterZone))
-    )
-    : membersRaw;
+const { DateTime }       = require('luxon');
+const { denver }         = require('../config/siteConfig');
+const doorFloorMap       = require('../data/denverDoorFloorMap');
+const { monitoredDoors } = require('../data/strictDoorList');
+const sql                = require('mssql');
+const normalizeKey       = require('../data/normalizeKey');
 
-  if (filterZone && members.length === 0) return null;
+const warnedKeys = new Set();
 
-  return (
-    <Card className="dashboard-card mb-1" key={role}>
-      <Card.Header className="dashboard-card-header d-flex align-items-center">
-        <span className="role-icon me-2">{roleIcons[role] || <FaUserCog className="text-muted" />}</span>
-        <span className="role-title">{role}</span>
-        <Badge bg="outline-light" className="ms-2">{members.length}</Badge>
-      </Card.Header>
-      <Card.Body className="p-1">
-        {members.length > 0 ? members.map((m, i) => {
-          const location = isPresent(m)
-            ? getLiveLocation(m) || 'Unknown Zone'
-            : getBaseLocation(m) || baseLocationByRole[role] || 'Unknown Zone';
+// build a Set of normalized door___direction keys
+const normalizedMonitoredKeys = new Set(
+  Object.entries(monitoredDoors).map(([door, dir]) => normalizeKey(door, dir))
+);
 
-          return (
-            <div key={i} className="member-item pb-0 mb-1">
-              <div className="d-flex justify-content-between align-items-start mb-1">
-                <div className="d-flex align-items-center">
-                  <div className={`member-photo-container ${isPresent(m) ? 'present-border' : 'away-border'}`}>
-                    <img
-                      src={getPhotoSrc(m)}
-                      alt={m.name || m.Name || 'Member'}
-                      className="member-photo"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = DEFAULT_PHOTO;
-                      }}
-                    />
-                    <div className={`status-indicator ${isPresent(m) ? 'present' : 'away'}`}></div>
-                  </div>
-                  <div className="ms-3">
-                    <h6 className="mb-0 member-name">{m.name || m.Name}</h6>
-                    <small className="text-muted">{m.designation || m.role}</small>
-                  </div>
-                </div>
-                <Badge bg={isPresent(m) ? 'success' : 'danger'} className="status-badge">
-                  {isPresent(m) ? 'Available' : 'Away'}
-                </Badge>
-              </div>
-
-              <div className="member-contact-info">
-                <div className="contact-item">
-                  <FaEnvelope className="contact-icon text-primary" />
-                  <a href={`mailto:${m.email || m.Email}`} className="contact-link">{m.email || m.Email}</a>
-                </div>
-                <div className="contact-item">
-                  <FaPhone className="contact-icon text-success" />
-                  <span className="contact-text">{m.phone || m.Phone}</span>
-                </div>
-                <div className="contact-item">
-                  <FaLocationArrow className="contact-icon text-danger" />
-                  <span className="contact-text">{location}</span>
-                </div>
-              </div>
-            </div>
-          );
-        }) : (
-          <div className="text-center py-3 text-muted">
-            <FaIdCard size={24} className="mb-2" />
-            <p className="mb-0">No members available</p>
-          </div>
-        )}
-      </Card.Body>
-    </Card>
-  );
+/** Determine floor label, fallback to “HQ. N.” parsing **/
+function mapDoorToFloor(rawDoor, rawDir) {
+  const key = normalizeKey(rawDoor, rawDir);
+  if (doorFloorMap[key]) return doorFloorMap[key];
+  const m = rawDoor.match(/HQ\.\s*(\d{1,2})\b/);
+  if (m) return `Floor ${m[1]}`;
+  if (!warnedKeys.has(key)) {
+    console.warn(`⛔ Unmapped door-floor key: "${key}"`);
+    warnedKeys.add(key);
+  }
+  return 'Unknown Floor';
 }
 
-// ------------------ Main component ------------------
-export default function ERTOverview({ ertStatus = {} }) {
-  const [filterZone, setFilterZone] = useState(null);
-  const [showAllMembers, setShowAllMembers] = useState(false);
+/** Strip any trailing “_HH:MM:SS” from a door name **/
+function stripTimeSuffix(doorRaw) {
+  return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
+}
 
-  const allMembers = useMemo(() => {
-    const list = [];
-    Object.entries(ertStatus || {}).forEach(([role, members]) => {
-      (members || []).forEach(m => list.push({ role, ...m }));
-    });
-    return list;
-  }, [ertStatus]);
+/**
+ * Compare a DB row's Dateonly (yyyy-MM-dd) to either "today in Denver" OR a supplied reference DateTime (also Denver).
+ * - dateOnly: string like '2025-09-11'
+ * - referenceDt: optional luxon DateTime (zone 'America/Denver') to treat as "today"
+ */
+function isSameDenverDate(dateOnly, referenceDt = null) {
+  if (!dateOnly) return false;
+  const swipeDate = DateTime.fromISO(dateOnly, { zone: 'America/Denver' }).toFormat('yyyy-LL-dd');
+  const today = referenceDt
+    ? referenceDt.setZone('America/Denver').toFormat('yyyy-LL-dd')
+    : DateTime.now().setZone('America/Denver').toFormat('yyyy-LL-dd');
+  return swipeDate === today;
+}
 
-  // ---- Floor Counts (like in first code)
-  const floorCounts = useMemo(() => {
-    const counts = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
-    allMembers.forEach(m => {
-      if (!isPresent(m)) return;
-      const z = (m.zone || m.liveLocation || '').toLowerCase();
-      if (z.includes('2nd')) counts['2nd Floor']++;
-      else if (z.includes('tower b')) counts['Tower B']++;
-      else counts['Podium Floor']++;
-    });
-    return counts;
-  }, [allMembers]);
+async function fetchNewEvents(since) {
+  let pool;
+  try {
+    pool = await denver.poolPromise;
+  } catch (err) {
+    console.error('❌ Failed to get Denver pool in fetchNewEvents():', err);
+    return [];
+  }
+  if (!pool) return [];
 
-  // ---- ERT Leaders
-  const ertLeaders = useMemo(() => {
-    const raw = (ertStatus['ERT Team Leader'] || []).map(m => ({ role: 'ERT Team Leader', ...m }));
-    const filtered = filterZone
-      ? raw.filter(m => isPresent(m) &&
-        (matchesFilterZone(getLiveLocation(m), filterZone) ||
-          matchesFilterZone(getBaseLocation(m), filterZone) ||
-          matchesFilterZone(baseLocationByRole['ERT Team Leader'], filterZone)))
-      : raw;
+  const req = pool.request();
+  req.input('since', sql.DateTime2, since);
 
-    const order = ['Vishal Chaudhari', 'Vinit Kumar', 'Sonu Pandey', 'Sagar Jamdade', 'Rangare, Bhupendra Babu', 'Satish Bhoyane'];
-    return filtered.sort((a, b) => {
-      const pa = isPresent(a) ? 1 : 0, pb = isPresent(b) ? 1 : 0;
-      if (pa !== pb) return pb - pa;
-      const ia = order.indexOf(a.name || a.Name || ''), ib = order.indexOf(b.name || b.Name || '');
-      if (ia !== -1 || ib !== -1) {
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-        return ia - ib;
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType   = 'CardAdmitted'
+        AND t1.ObjectName2 LIKE '%HQ%'
+        AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >=@since
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+      CardNumber, AdmitCode, Direction, Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  return recordset;
+}
+
+// fetch events in 24h window ending at `until`
+async function fetchEventsWindowUntil(until) {
+  let pool;
+  try {
+    pool = await denver.poolPromise;
+  } catch (err) {
+    console.error('❌ Failed to get Denver pool in fetchEventsWindowUntil():', err);
+    return [];
+  }
+  if (!pool) return [];
+
+  const req = pool.request();
+  req.input('until', sql.DateTime2, until);
+
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        CASE WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'), sc.value) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+      LEFT JOIN ACVSCore.Access.Personnel t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.ObjectName2 LIKE '%HQ%'
+        AND DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) <= @until
+        AND DATEADD(HOUR, -24, @until) < DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC)
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+      CardNumber, AdmitCode, Direction, Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  return recordset;
+}
+
+// --- ONLY endpoint: Snapshot endpoint for Denver with date + time ---
+// GET /api/occupancy-at-time-denver?date=YYYY-MM-DD&time=HH:MM[:SS]
+exports.getDenverSnapshotAtDateTime = async (req, res) => {
+  try {
+    const { date, time } = req.query;
+    if (!date || !time) {
+      return res.status(400).json({
+        error: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]'
+      });
+    }
+
+    // Validate date
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!dateMatch) return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
+
+    // Validate time
+    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
+    if (!timeMatch) return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+
+    const year   = Number(dateMatch[1]);
+    const month  = Number(dateMatch[2]);
+    const day    = Number(dateMatch[3]);
+    const hour   = Number(timeMatch[1]);
+    const minute = Number(timeMatch[2]);
+    const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
+
+    // Build Denver-local datetime
+    const atDt = DateTime.fromObject(
+      { year, month, day, hour, minute, second, millisecond: 0 },
+      { zone: 'America/Denver' }
+    );
+
+    if (!atDt.isValid) {
+      return res.status(400).json({ error: 'invalid date+time combination' });
+    }
+
+    const untilJsDate = atDt.toJSDate();
+
+    // fetch with 24h window ending at requested datetime
+    const events = await fetchEventsWindowUntil(untilJsDate);
+
+    // filter only events on that Denver local date
+    const targetDate = atDt.toFormat('yyyy-LL-dd');
+    const filtered = events.filter(e => e.Dateonly === targetDate);
+
+    // build occupancy payload (pass atDt so date checks use it)
+    const payload = buildOccupancyForToday(filtered, [], atDt);
+
+    return res.json(payload);
+  } catch (err) {
+    console.error('getDenverSnapshotAtDateTime error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// --------------------------
+// helper: computeVisitedToday using optional reference date
+function computeVisitedToday(allEvents, referenceDt = null) {
+  const seen = new Map(); // key -> PersonnelType
+  allEvents.forEach(evt => {
+    if (evt.Direction === 'InDirection' && isSameDenverDate(evt.Dateonly, referenceDt)) {
+      const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+      if (!seen.has(key)) {
+        seen.set(key, evt.PersonnelType);
       }
-      return (a.name || a.Name || '').localeCompare(b.name || b.Name || '');
+    }
+  });
+  let emp = 0, ctr = 0;
+  seen.forEach(type => {
+    if (type === 'Employee' || type === 'Terminated Personnel') emp++;
+    else ctr++;
+  });
+  return { total: seen.size, employees: emp, contractors: ctr };
+}
+
+// Build occupancy for "today" where "today" can be the real today OR the date represented by atDt (Denver)
+function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
+  // ─── A) Evict “Out of office” ───────────────────────────────────
+  const evicted = new Set();
+  const lastByPerson = new Map();
+
+  allEvents.forEach(evt => {
+    if (!isSameDenverDate(evt.Dateonly, atDt)) return;
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    const prev = lastByPerson.get(key);
+    if (!prev || evt.LocaleMessageTime > prev.LocaleMessageTime) {
+      lastByPerson.set(key, evt);
+    }
+  });
+
+  lastByPerson.forEach(evt => {
+    if (
+      evt.Direction === 'OutDirection'
+      && mapDoorToFloor(evt.Door, evt.Direction) === 'Out of office'
+    ) {
+      evicted.add(evt.PersonGUID || evt.EmployeeID || evt.CardNumber);
+    }
+  });
+
+  const activeEvents = allEvents.filter(evt => {
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    return !evicted.has(key);
+  });
+
+  // ─── 1) Live occupancy dedupe by last InDirection ───────────────
+  const todayIn = activeEvents.filter(e =>
+    e.Direction === 'InDirection' && isSameDenverDate(e.Dateonly, atDt)
+  );
+
+  const latestByPerson = new Map();
+  todayIn.forEach(e => {
+    const prev = latestByPerson.get(e.PersonGUID);
+    const tcur = DateTime.fromFormat(e.Swipe_Time, 'HH:mm:ss');
+    if (!prev || tcur > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
+      latestByPerson.set(e.PersonGUID, e);
+    }
+  });
+  const finalList = Array.from(latestByPerson.values());
+
+  // ─── 2) Floor breakdown & personnel counts (live) ───────────────
+  let employees = 0, contractors = 0;
+  const floorMap = {};
+  finalList.forEach(e => {
+    const fl = mapDoorToFloor(e.Door, e.Direction);
+    floorMap[fl] = floorMap[fl] || [];
+    floorMap[fl].push(e);
+    if (e.PersonnelType === 'Employee' || e.PersonnelType === 'Terminated Personnel') {
+      employees++;
+    } else {
+      contractors++;
+    }
+  });
+
+  const floorBreakdown = Object.entries(floorMap).map(([floor, occ]) => {
+    let empCount = 0;
+    let contractorCount = 0;
+    let tempBadgeCount = 0;
+    let otherCount = 0;
+
+    occ.forEach(e => {
+      switch (e.PersonnelType) {
+        case 'Employee':
+        case 'Terminated Personnel':
+          empCount++;
+          break;
+        case 'Contractor':
+        case 'Terminated Contractor':
+          contractorCount++;
+          break;
+        case 'Temp Badge':
+          tempBadgeCount++;
+          break;
+        default:
+          otherCount++;
+      }
     });
-  }, [ertStatus, filterZone]);
 
-  // ---- ERT Members
-  const ertMembers = useMemo(() => {
-    const members = (ertStatus['ERT Team Members'] || []).map(m => ({
-      role: 'ERT Team Members',
-      name: m.Name || m.name,
-      baseLocation: m['Base Location'] || m.Floor || m.zone || '',
-      liveLocation: m.zone || m.liveLocation || '',
-      email: m.Email || m.email,
-      phone: m.Phone || m.phone,
-      present: m.present
-    }));
+    return {
+      floor,
+      total: occ.length,
+      employees: empCount,
+      contractors: contractorCount,
+      tempBadge: tempBadgeCount,
+      others: otherCount,
+      occupants: occ
+    };
+  });
 
-    const filtered = filterZone
-      ? members.filter(m => isPresent(m) &&
-        (matchesFilterZone(m.liveLocation, filterZone) || matchesFilterZone(m.baseLocation, filterZone)))
-      : members;
+  // ─── 3) Personnel breakdown ───────────────────────────────────────
+  const personnelBreakdown = Array.from(
+    finalList.reduce((m, e) => {
+      m.set(e.PersonnelType, (m.get(e.PersonnelType) || 0) + 1);
+      return m;
+    }, new Map()),
+    ([personnelType, count]) => ({ personnelType, count })
+  );
 
-    filtered.sort((a, b) => {
-      const pa = isPresent(a) ? 1 : 0, pb = isPresent(b) ? 1 : 0;
-      if (pa !== pb) return pb - pa;
-      return (a.name || '').localeCompare(b.name || '');
+  // ─── 4) Swipe stats (fresh only) ─────────────────────────────────
+  const totalInSwipes = (freshEvents || []).filter(e =>
+    e.Direction === 'InDirection' && isSameDenverDate(e.Dateonly, atDt)
+  ).length;
+  const totalOutSwipes = (freshEvents || []).filter(e =>
+    e.Direction === 'OutDirection' && isSameDenverDate(e.Dateonly, atDt)
+  ).length;
+
+  // ─── 5) Floor In/Out summary (strict doors only) ───────────────
+  const validEvents = allEvents
+    .filter(e => isSameDenverDate(e.Dateonly, atDt))
+    .filter(evt => {
+      const doorNoTime = stripTimeSuffix(evt.Door.trim());
+      const key = normalizeKey(doorNoTime, evt.Direction.trim());
+      return normalizedMonitoredKeys.has(key);
     });
 
-    return showAllMembers ? filtered : filtered.slice(0, 6);
-  }, [ertStatus, filterZone, showAllMembers]);
+  // Dedupe per person+floor+direction
+  const deduped = new Map();
+  validEvents.forEach(evt => {
+    const rawNoTime = stripTimeSuffix(evt.Door);
+    const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
+    const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
 
-  // ---- First Aid Team
-  const firstAidMembers = useMemo(() => {
-    const members = (ertStatus['First Aid Team'] || []).map(m => ({
-      role: 'First Aid Team',
-      name: m.Name || m.name,
-      baseLocation: m['Base Location'] || m.Floor || m.zone || '',
-      liveLocation: m.zone || m.liveLocation || '',
-      email: m.Email || m.email,
-      phone: m.Phone || m.phone,
-      present: m.present
-    }));
+    const mapKey = `${evt.PersonGUID || evt.EmployeeID}___${floor}___${evt.Direction}`;
+    const prev = deduped.get(mapKey);
+    const now = DateTime.fromFormat(evt.Swipe_Time, 'HH:mm:ss');
+    if (!prev || now > DateTime.fromFormat(prev.Swipe_Time, 'HH:mm:ss')) {
+      deduped.set(mapKey, evt);
+    }
+  });
 
-    return filterZone
-      ? members.filter(m => isPresent(m) &&
-        (matchesFilterZone(m.liveLocation, filterZone) || matchesFilterZone(m.baseLocation, filterZone)))
-      : members;
-  }, [ertStatus, filterZone]);
+  // Aggregate inSwipes/outSwipes per floor
+  const floorMapIO = {};
+  for (const evt of deduped.values()) {
+    const rawNoTime = stripTimeSuffix(evt.Door);
+    const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
+    const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
 
-  const floorIcons = {
-    'Podium Floor': <FaHome className="text-danger" />,
-    '2nd Floor': <FaBuilding className="text-info" />,
-    'Tower B': <FaLayerGroup className="text-success" />
+    if (!floorMapIO[floor]) {
+      floorMapIO[floor] = {
+        inSwipes: 0,
+        outSwipes: 0,
+        inSet: new Set(),
+        outSet: new Set()
+      };
+    }
+
+    const id = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    if (evt.Direction === 'InDirection') {
+      floorMapIO[floor].inSwipes++;
+      floorMapIO[floor].inSet.add(id);
+    } else {
+      floorMapIO[floor].outSwipes++;
+      floorMapIO[floor].outSet.add(id);
+    }
+  }
+
+  const floorInOutSummary = Object.entries(floorMapIO).map(([floor, stats]) => {
+    const inOnly = [...stats.inSet].filter(id => !stats.outSet.has(id));
+    return {
+      floor,
+      inSwipes: stats.inSwipes,
+      outSwipes: stats.outSwipes,
+      inOnlyCount: inOnly.length,
+      inOnlyPersons: inOnly
+    };
+  });
+
+  // ─── 6) Visited today breakdown ─────────────────────────────────
+  const visited = computeVisitedToday(allEvents, atDt);
+
+  // Build final payload; include both local Denver and UTC `asOf`
+  const asOfLocal = atDt ? atDt.setZone('America/Denver').toISO() : DateTime.now().setZone('America/Denver').toISO();
+  const asOfUTC = atDt ? atDt.toUTC().toISO() : new Date().toISOString();
+
+  return {
+    asOfLocal,
+    asOfUTC,
+    currentCount: finalList.length,
+    floorBreakdown,
+    personnelSummary: { employees, contractors },
+    personnelBreakdown,
+    totalVisitedToday: visited.total,
+    visitedToday: {
+      employees: visited.employees,
+      contractors: visited.contractors,
+      total: visited.total
+    },
+    swipeStats: { totalInSwipes: totalInSwipes, totalOutSwipes: totalOutSwipes },
+    floorInOutSummary
+  };
+}
+
+// -----------------------------
+// Live SSE endpoint (unchanged behaviour)
+exports.getDenverLiveOccupancy = async (req, res) => {
+  try {
+    await denver.poolPromise;
+  } catch (err) {
+    console.error('❌ Failed to initialize Denver pool in SSE endpoint:', err);
+    return res.status(500).end();
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+  res.write('\n');
+
+  let lastSeen = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const events = [];
+
+  const push = async () => {
+    let fresh;
+    try {
+      fresh = await fetchNewEvents(lastSeen);
+    } catch (err) {
+      console.error('❌ Error in fetchNewEvents():', err);
+      fresh = [];
+    }
+
+    if (Array.isArray(fresh) && fresh.length) {
+      lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
+      events.push(...fresh);
+    }
+
+    let payload;
+    try {
+      payload = buildOccupancyForToday(events, fresh, null); // live: atDt null -> uses now
+    } catch (err) {
+      console.error('❌ Error building Denver occupancy payload:', err);
+      payload = {
+        asOfLocal: DateTime.now().setZone('America/Denver').toISO(),
+        asOfUTC: new Date().toISOString(),
+        currentCount: 0,
+        floorBreakdown: [],
+        personnelSummary: { employees: 0, contractors: 0 },
+        personnelBreakdown: [],
+        totalVisitedToday: 0,
+        visitedToday: { employees: 0, contractors: 0, total: 0 },
+        swipeStats: { totalInSwipes: 0, totalOutSwipes: 0 },
+        floorInOutSummary: []
+      };
+    }
+
+    const sid = Date.now();
+    res.write(`id: ${sid}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    if (typeof res.flush === 'function') res.flush();
   };
 
-  // ------------------ UI ------------------
-  return (
-    <div className="ert-dashboard">
-      <Container fluid className="py-4">
-        {/* Stats Cards */}
-        <Row className="mb-4">
-          <Col xs={12} md={3} className="mb-3">
-            <Card className="stats-card total-members">
-              <Card.Body className="p-3">
-                <div className="d-flex align-items-center">
-                  <div className="stats-icon me-3">
-                    <FaUsers size={24} />
-                  </div>
-                  <div>
-                    <h6 className="stats-label">Total Members</h6>
-                    <h3 className="stats-value mb-0">
-                      {Object.values(floorCounts).reduce((sum, c) => sum + c, 0)}
-                    </h3>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => {
-            const count = floorCounts[floor] || 0;
-            const isSelected = filterZone === floor;
-            return (
-              <Col key={floor} xs={12} md={3} className="mb-3">
-                <Card
-                  className={`stats-card location-card ${isSelected ? 'active' : ''}`}
-                  onClick={() => setFilterZone(prev => prev === floor ? null : floor)}
-                >
-                  <Card.Body className="p-3">
-                    <div className="d-flex align-items-center">
-                      <div className="stats-icon me-3">{floorIcons[floor]}</div>
-                      <div>
-                        <h6 className="stats-label">{floor}</h6>
-                        <h3 className="stats-value mb-0">{count}</h3>
-                      </div>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
-        </Row>
-
-        {/* Three-column layout */}
-        <Row className="align-items-stretch">
-          {/* First column */}
-          <Col xs={12} lg={4} className="mb-3 h-100 d-flex flex-column">
-            <div className="flex-grow-1 d-flex flex-column">
-              {firstColumnRoles.map(role =>
-                renderRoleCard(role, ertStatus[role] || [], filterZone)
-              )}
-            </div>
-          </Col>
-
-          {/* Leaders */}
-          <Col xs={12} lg={4} className="mb-5 h-105 d-flex flex-column ">
-            <div className="flex-grow-1 d-flex flex-column">
-              {renderRoleCard('ERT Team Leader', ertLeaders, filterZone)}
-            </div>
-          </Col>
-
-          {/* Members */}
-          <Col xs={12} lg={4} className="mb-0 h-115 d-flex flex-column">
-            <div className="flex-grow-1 d-flex flex-column">
-              {renderRoleCard('ERT Team Members', ertMembers, filterZone)}
-
-
-              <div className="text-center mt-3">
-                <Button
-                  variant="outline-primary"
-                  className="d-flex align-items-center mx-auto"
-                  onClick={() => setShowAllMembers(prev => !prev)}
-                >
-                  {showAllMembers ? (
-                    <>
-                      <FaEyeSlash className="me-2" /> Show Less
-                    </>
-                  ) : (
-                    <>
-                      <FaEye className="me-2" /> Show More
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {/* First Aid Team */}
-              {/* {renderRoleCard('First Aid Team', firstAidMembers, filterZone)} */}
-            </div>
-          </Col>
-        </Row>
-      </Container>
+  // initial push then schedule
+  push();
+  const timer = setInterval(push, 1000);
+  req.on('close', () => clearInterval(timer));
+};
