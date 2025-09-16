@@ -1,14 +1,62 @@
-const details = result.recordset.map(r => {
-  let floor = r.PartitionName2; // default fallback
-  try {
-    const [doorRaw, dirRaw] = (r.Door || "").split("___");
-    const normKey = normalizeKey(doorRaw || "", dirRaw || "");
-    if (doorFloorMap[normKey]) {
-      floor = doorFloorMap[normKey];
+{
+  "summary": [
+    {
+      "floor": "Out of office",
+      "rejectionCount": 46
+    },
+    {
+      "floor": "undefined",
+      "rejectionCount": 17
     }
-  } catch (e) {
-    console.warn("Failed to normalize door:", r.Door, e.message);
-  }
+  ],
+  "details": [
+    {
+      "LocaleMessageTime": "2025-09-15T15:06:01.000Z",
+      "DateOnly": "2025-09-15T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T15:06:01.000Z",
+      "CardNumber": "610043",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 06. Fitness Center West_11:01:B9",
+      "RejectionType": "Clearance",
+      "floor": "Out of office"
+    },
+    {
+      "LocaleMessageTime": "2025-09-15T12:30:46.000Z",
+      "DateOnly": "2025-09-15T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T12:30:46.000Z",
+      "CardNumber": "618918",
+      "PersonnelType": "Contractor",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "Expired",
+      "floor": "Out of office"
+    },
+    {
+      "LocaleMessageTime": "2025-09-15T12:30:40.000Z",
+      "DateOnly": "2025-09-15T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T12:30:40.000Z",
+      "CardNumber": "618918",
+      "PersonnelType": "Contractor",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "Expired",
+      "floor": "Out of office"
+    },
+    {
+      "LocaleMessageTime": "2025-09-15T10:24:10.000Z",
+      "DateOnly": "2025-09-15T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T10:24:10.000Z",
+      "CardNumber": "612304",
+      "PersonnelType": "Employee",
+      "Location": "USA/Canada Default",
+      "Door": "AUSTIN MAIN ENTRY",
+      "RejectionType": "CardDisabled"
+    },
 
-  return { ...r, floor };
-});
+
+floor is not "floor": "Out of office", 
+in "Door": "US.CO.HQ. 06.  -- 06 floor 6
+ "Door": "US.CO.HQ. 12. ---- 12 floor 12 like that 
+
+and location only   "Location": "US.CO.OBS", not all locaiton rejectn:; i want only  "Location": "US.CO.OBS", this locain only ok 
