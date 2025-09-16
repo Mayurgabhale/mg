@@ -1,3 +1,8 @@
+http://localhost:5000/api/denver-security-rejection?parts=US.CO.OBS.15,US.CO.OBS.14
+
+{"error":"Incorrect syntax near ','."}
+
+
 // controllers/denversecurityrejection.js
 const sql = require('mssql');
 const { denver } = require('../config/siteConfig'); // reuse poolPromise used elsewhere
