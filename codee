@@ -1,3 +1,22 @@
+Compiled with problems:
+×
+ERROR in ./src/components/FloorInOutTable.jsx 211:0-57
+Module not found: Error: Can't resolve '../data/DenverSecurity.json' in 'C:\Users\W0024618\Desktop\swipeData\client-denver\src\components'
+
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\DenverSecurity.json  this file i create in backend folder ok 
+[
+  { "Name": "Martin, Paul", "EmployeeID": "W0023386" },
+  { "Name": "", "EmployeeID": "W0025490" },
+  { "Name": "", "EmployeeID": "W0025492" },
+  { "Name": "", "EmployeeID": "W0025493" },
+  { "Name": "Asuako, Derrick", "EmployeeID": "W0025639" },
+  { "Name": "Abdalla, Meira", "EmployeeID": "W0026455" },
+  { "Name": "Ali, Shuayb", "EmployeeID": "W0028120" },
+  { "Name": "D'Nicuola, Jeff", "EmployeeID": "305776" }
+]
+
+it is possivel to without bakend do that, wiht this api  http://localhost:5000/api/live-occupancy-denver
+
 // src/components/FloorInOutTable.jsx
 import React from 'react';
 import { Card, Table } from 'react-bootstrap';
@@ -123,3 +142,6 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
     </Card>
   );
 }
+
+
+
