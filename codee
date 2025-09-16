@@ -1,87 +1,4 @@
-http://localhost:5000/api/denver-security-rejection?parts=US.CO.OBS.15,US.CO.OBS.14
-
-
-{"error":"Incorrect syntax near ','."}
-S C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> npm start
-
-> employee-ai-insights@1.0.0 start
-> node server.js
-
-Server running at http://localhost:5000
-✅ MSSQL pool connected
-✅ Denver MSSQL pool connected
-[denverSecurityRejection] Executing SQL - partitions: US.CO.OBS.15,US.CO.OBS.14
-denverSecurityRejection error: RequestError: Incorrect syntax near ','.
-    at handleError (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:518:28)
-    at Connection.emit (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:970:18)
-    at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\token\handler.js:284:21)
-    at Readable.<anonymous> (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-    at Readable.emit (node:events:518:28)
-    at addChunk (node:internal/streams/readable:561:12)
-    at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
-    at Readable.push (node:internal/streams/readable:393:5)
-    at nextAsync (node:internal/streams/from:194:22) {
-  code: 'EREQUEST',
-  originalError: Error: Incorrect syntax near ','.
-      at handleError (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:518:28)
-      at Connection.emit (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:970:18)
-      at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\token\handler.js:284:21)
-      at Readable.<anonymous> (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-      at Readable.emit (node:events:518:28)
-      at addChunk (node:internal/streams/readable:561:12)
-      at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
-      at Readable.push (node:internal/streams/readable:393:5)
-      at nextAsync (node:internal/streams/from:194:22) {
-    info: ErrorMessageToken {
-      name: 'ERROR',
-      handlerName: 'onErrorMessage',
-      number: 102,
-      state: 1,
-      class: 15,
-      message: "Incorrect syntax near ','.",
-      serverName: 'SRVWUDEN0891V',
-      procName: '',
-      lineNumber: 94
-    }
-  },
-  number: 102,
-  lineNumber: 94,
-  state: 1,
-  class: 15,
-  serverName: 'SRVWUDEN0891V',
-  procName: '',
-  precedingErrors: [
-    RequestError: Incorrect syntax near ','.
-        at handleError (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\mssql\lib\tedious\request.js:384:15)
-        at Connection.emit (node:events:518:28)
-        at Connection.emit (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:970:18)
-        at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\token\handler.js:284:21)
-        at Readable.<anonymous> (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-        at Readable.emit (node:events:518:28)
-        at addChunk (node:internal/streams/readable:561:12)
-        at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
-        at Readable.push (node:internal/streams/readable:393:5)
-        at nextAsync (node:internal/streams/from:194:22) {
-      code: 'EREQUEST',
-      originalError: [Error],
-      number: 102,
-      lineNumber: 85,
-      state: 1,
-      class: 15,
-      serverName: 'SRVWUDEN0891V',
-      procName: ''
-    }
-  ]
-}
-
-
-Read abive erri and slove 
-
 // controllers/denversecurityrejection.js
-// Path: C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
-
 const sql = require('mssql');
 const { denver } = require('../config/siteConfig');
 
@@ -133,11 +50,11 @@ exports.getDenverSecurityRejection = async (req, res) => {
       return `@${name}`;
     }).join(', ');
 
-    // Build inline security VALUES list (safe because SECURITY_OFFICERS is static)
+    // Build inline security VALUES list (static list so safe inline)
     const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
 
     const sqlQuery = `
--- Combined query for recent events (last 7 days)
+/* Combined query for recent events (last 7 days) */
 WITH CombinedQuery AS (
   SELECT
     DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
@@ -205,23 +122,40 @@ SecurityLatest AS (
     AND lp.PartitionName2 IS NOT NULL
 ),
 
+/* Use FOR XML PATH + STUFF for older SQL Server compatibility */
 SecurityByFloor AS (
   SELECT
-    ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
-    COUNT(DISTINCT CardNumber) AS SecurityCount,
-    STRING_AGG(DISTINCT CardNumber, ',') AS SecurityIDs
-  FROM SecurityLatest
-  GROUP BY PartitionName2
+    ISNULL('Floor ' + PARSENAME(sl.PartitionName2, 1), sl.PartitionName2) AS Floor,
+    COUNT(DISTINCT sl.CardNumber) AS SecurityCount,
+    STUFF(
+      (
+        SELECT DISTINCT ',' + s2.CardNumber
+        FROM SecurityLatest s2
+        WHERE s2.PartitionName2 = sl.PartitionName2
+        FOR XML PATH(''), TYPE
+      ).value('.', 'NVARCHAR(MAX)')
+    ,1,1,'') AS SecurityIDs
+  FROM SecurityLatest sl
+  GROUP BY sl.PartitionName2
 ),
 
 Rejections AS (
   SELECT
-    ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
+    ISNULL('Floor ' + PARSENAME(c.PartitionName2, 1), c.PartitionName2) AS Floor,
     COUNT(*) AS RejectionCount,
-    STRING_AGG(DISTINCT COALESCE(CardNumber, '?'), ',') AS Cards
-  FROM CombinedQuery
-  WHERE MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
-  GROUP BY PartitionName2
+    STUFF(
+      (
+        SELECT DISTINCT ',' + COALESCE(c2.CardNumber, '?')
+        FROM CombinedQuery c2
+        WHERE c2.PartitionName2 = c.PartitionName2
+          AND c2.MessageType = 'CardRejected'
+          AND COALESCE(LTRIM(RTRIM(c2.CardNumber)), '') <> ''
+        FOR XML PATH(''), TYPE
+      ).value('.', 'NVARCHAR(MAX)')
+    ,1,1,'') AS Cards
+  FROM CombinedQuery c
+  WHERE c.MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(c.CardNumber)), '') <> ''
+  GROUP BY c.PartitionName2
 )
 
 SELECT
@@ -229,10 +163,8 @@ SELECT
   (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
 `;
 
-    // DEBUG: log short info to help diagnose SQL errors (remove in production)
+    // DEBUG
     console.log('[denverSecurityRejection] Executing SQL - partitions:', partsArr.join(','));
-    // Uncomment next line if you want to print the entire SQL for debugging (can be long)
-    // console.log(sqlQuery);
 
     const result = await request.query(sqlQuery);
 
