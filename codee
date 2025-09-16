@@ -1,385 +1,64 @@
-
-
-// src/components/LacaERTOverview.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Card, Row, Col, Badge } from "react-bootstrap";
-import {
-  FaEnvelopeOpenText,
-  FaMapMarkerAlt,
-  FaUsers,
-  FaMobileAlt,
-  FaLayerGroup,
-} from "react-icons/fa";
-import membersData from "../data/lacaErtMembers.json";
-import LoadingSpinner from "./LoadingSpinner";
-import { lookupFloor } from "../utils/floorLookup";
-import '../App.css';
-import Impimg from "../assets/images/busy.png";
-
-export default function LacaERTOverview() {
-  const [members, setMembers] = useState([]);
-  const [filterType, setFilterType] = useState("total"); // "total" | "available"
-  const [loading, setLoading] = useState(true); // ⬅️ add state
-
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       setLoading(true); // ⬅️ add this line
-  //       const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-  //       const liveData = await res.json();
-  //       const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-  //       const merged = membersData["Team Members"].map((m) => {
-  //         const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-  //         const inLocation =
-  //           live.PartitionName2 && live.Door
-  //             ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-  //             : "";
-  //         const outLocation =
-  //           live.PartitionName2 && live.Door
-  //             ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-  //             : "";
-
-  //         return {
-  //           ...m,
-  //           present: !!live.EmployeeID,
-  //           direction: live.Direction || "",
-  //           inLocation,
-  //           outLocation,
-  //           door: live.Door || "",
-  //           phone: m.phone || "",
-  //         };
-  //       });
-
-  //       const sorted = merged.sort((a, b) =>
-  //         a.present === b.present ? 0 : a.present ? -1 : 1
-  //       );
-
-  //       setMembers(sorted);
-  //     } catch (err) {
-  //       console.error("Error fetching live data:", err);
-  //     } finally {
-  //       setLoading(false); // ⬅️ add this line
-  //     }
-  //   }
-
-  //   fetchData();
-  //   // const interval = setInterval(fetchData, 15000);
-  //   // return () => clearInterval(interval);
-  // }, []);
-
-
-
-
-
-useEffect(() => {
-  let isMounted = true;
-
-  async function fetchData(showLoader = false) {
-    try {
-      if (showLoader) setLoading(true); // only show spinner if first load
-      const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-      const liveData = await res.json();
-      const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-      const merged = membersData["Team Members"].map((m) => {
-        const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-        const inLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-            : "";
-        const outLocation =
-          live.PartitionName2 && live.Door
-            ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-            : "";
-
-        return {
-          ...m,
-          present: !!live.EmployeeID,
-          direction: live.Direction || "",
-          inLocation,
-          outLocation,
-          door: live.Door || "",
-          phone: m.phone || "",
-        };
-      });
-
-      const sorted = merged.sort((a, b) =>
-        a.present === b.present ? 0 : a.present ? -1 : 1
-      );
-
-      if (isMounted) setMembers(sorted);
-    } catch (err) {
-      console.error("Error fetching live data:", err);
-    } finally {
-      if (isMounted && showLoader) setLoading(false);
-    }
-  }
-
-  // First load → show spinner
-  fetchData(true);
-
-  // Interval loads → no spinner
-  const interval = setInterval(() => fetchData(false), 10000);
-
-  return () => {
-    isMounted = false;
-    clearInterval(interval);
-  };
-}, []);
-
-
-  const totalCount = useMemo(() => members.length, [members]);
-  const availableCount = useMemo(
-    () => members.filter((m) => m.present).length,
-    [members]
-  );
-
-  // Filter members to display based on selection
-  const displayedMembers =
-    filterType === "available"
-      ? members.filter((m) => m.present)
-      : members;
-
-
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-
-  return (
-    <>
-
-      {/* === TOP SUMMARY CARDS (Black theme, yellow border) === */}
-      <Row className="g-3 mb-4">
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100 hover-card"
-            style={{
-              // backgroundColor: "#061f38",
-              backgroundColor: "#061f38",
-              cursor: "pointer"
-
-            }}
-            onClick={() => setFilterType("total")}
-
-          >
-            <Card.Body className="py-3">
-              <FaLayerGroup
-                size={28}
-                style={{ color: "#7F8C8D" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff", textDecoration: filterType === "total" ? "underline" : "none", textDecoration: "none" }}>
-                Total Members
-              </h5>
-              <h2 className="m-0" style={{ color: "#fff", fontWeight: "600" }}>
-                {totalCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col xs={12} md={6}>
-          <Card
-            className="text-center shadow-sm h-100 hover-card"
-            style={{
-              backgroundColor: "#061f38",
-              cursor: "pointer"
-
-
-            }}
-            onClick={() => setFilterType("available")}
-          >
-            <Card.Body className="py-3">
-              <FaUsers
-                size={28}
-                style={{ color: "#1ABC9C" }}
-                className="mb-2"
-              />
-              <h5 className="mb-1" style={{ fontWeight: "500", color: "#fff" }}>
-                Available Members
-              </h5>
-              <h2
-                className="m-0"
-                style={{ color: "#1ABC9C", fontWeight: "600", textDecoration: filterType === "available" ? "underline" : "none", textDecoration: "none" }}
-              >
-                {availableCount}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* === MEMBERS CARD (Black theme, yellow border, 3-column layout) === */}
-      <Card
-        className="shadow-sm"
-        style={{ backgroundColor: "#1a1a1a", border: "2px solid #F1C40F" }}
-      >
-        <Card.Header
-          style={{
-            borderBottom: "1px solid #F1C40F",
-            fontWeight: "600",
-            display: "flex",
-            fontSize: "20px",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            gap: "10px",
-            color: "#fff",
-          }}
-        >
-          <FaUsers style={{ color: "#F1C40F", alignItems: "center", textAlign: "center" }} />
-          {/* Costa Rica ERT Team Members */}
-          {filterType === "available"
-            ? "Available Costa Rica ERT Members"
-            : "Costa Rica ERT Members"}
-        </Card.Header>
-
-        <Card.Body style={{ padding: "1.5rem" }}>
-
-          {displayedMembers.length > 0 ? (
-            // ⬇️ add the three-col-divider class here
-            <Row className="g-3 three-col-divider">
-
-              {displayedMembers.map((m, i) => {
-                const isAway =
-                  m.present === false ||
-                  (m.direction === "OutDirection" &&
-                    m.outLocation.trim().toLowerCase() === "out of office");
-
-                const location = m.present
-                  ? m.inLocation || "Unknown Zone"
-                  : "Away";
-
-                return (
-                  <Col xs={12} md={6} lg={4} key={i}>
-                    <div
-                      className="mb-3 pb-2"
-                      style={{
-                        borderBottom: "0.5px solid rgb(86, 86, 85)",
-                        color: "#fff",
-                      }}
-                    >
-                      {/* === NAME + STATUS === */}
-                      <div className="d-flex justify-content-between align-items-center">
-                        <h5 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                          {m.name}{" "}
-                          <span style={{ fontSize: "0.8rem", color: "#bbb" }}>
-                            ({m.emp_id})
-                          </span>
-                        </h5>
-
-                        <Badge
-                          bg={!isAway ? "success" : "danger"}
-                          pill
-                          style={{ marginBottom: "0.8rem" }}
-                        >
-                          {!isAway ? "Available" : "Away"}
-                        </Badge>
-                      </div>
-
-                      {/* === Email === */}
-                      <div
-                        className="d-flex align-items-center mt-2 mb-1"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        <FaEnvelopeOpenText
-                          className="me-2"
-                          style={{ color: "#3498DB", minWidth: "16px" }}
-                        />
-                        <a
-                          href={`mailto:${m.email}`}
-                          style={{ color: "#2980B9", textDecoration: "none" }}
-                        >
-                          {m.email}
-                        </a>
-                      </div>
-
-                      {/* === Phone === */}
-                      {m.phone && (
-                        <div
-                          className="d-flex align-items-center mb-1"
-                          style={{ fontSize: "0.85rem" }}
-                        >
-                          <FaMobileAlt
-                            className="me-2"
-                            style={{ color: "#27AE60", minWidth: "16px" }}
-                          />
-                          <span style={{ color: "#27AE60" }}>{m.phone}</span>
-                        </div>
-                      )}
-
-                      {/* === Location === */}
-                      <div
-                        className="d-flex align-items-center"
-                        style={{ fontSize: "0.85rem" }}
-                      >
-                        <FaMapMarkerAlt
-                          className="me-2"
-                          style={{ color: "#E74C3C", minWidth: "16px" }}
-                        />
-                        <span style={{ color: "#E74C3C" }}>{location}</span>
-                      </div>
-                    </div>
-                  </Col>
-
-
-
-                );
-              })}
-            </Row>
-          ) : (
-            <div className="text-muted text-center py-2" style={{ color: "#fff" }}>No members</div>
-          )}
-        </Card.Body>
-      </Card>
-
-
-    </>
-  );
-}
-
-
-
-
-Read above code, in this alos we got ert member location disply,
-this same logic, use for here to get security location;
-just thi show in table only this ok
- const es = new EventSource('http://localhost:5000/api/live-occupancy-denver'); for this route ok 
-
 // src/components/FloorInOutTable.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { lookupFloor } from '../utils/floorLookup';
 
-// Accent palette (re-used from FloorOccupancyChart)
+// Accent palette
 const ROW_COLORS = [
-  '#FFC72C',
-  '#C9A9A6',
-  '#FFE680',
-  '#FFF5EE',
-  '#FFD11A',
-  '#96DED1',
-  '#FFEB99'
+  '#FFC72C','#C9A9A6','#FFE680','#FFF5EE','#FFD11A','#96DED1','#FFEB99'
 ];
 
-// Security officer IDs (canonical EmployeeIDs)
+// Security officer IDs
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
   'W0026208','W0026455','W0022449'
 ];
-
-// helper: normalize any id/string for robust comparison
 const normalizeId = v => String(v || '').trim().toUpperCase();
 
 export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
-  // build fast lookup set for security employeeIDs
+  const [securityLive, setSecurityLive] = useState({}); 
   const securitySet = new Set(SECURITY_OFFICERS.map(normalizeId));
 
-  // Build map: PersonGUID/CardNumber -> EmployeeID (normalized)
+  // 🔴 subscribe to live occupancy for security officer location
+  useEffect(() => {
+    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
+    es.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        const details = Array.isArray(payload.details) ? payload.details : [];
+        const liveMap = {};
+
+        details.forEach(d => {
+          const emp = normalizeId(d.EmployeeID);
+          if (!securitySet.has(emp)) return;
+
+          const inLocation =
+            d.PartitionName2 && d.Door
+              ? lookupFloor(d.PartitionName2, d.Door, 'InDirection')
+              : '';
+          const outLocation =
+            d.PartitionName2 && d.Door
+              ? lookupFloor(d.PartitionName2, d.Door, 'OutDirection')
+              : '';
+
+          liveMap[emp] = {
+            direction: d.Direction || '',
+            inLocation,
+            outLocation,
+            door: d.Door || ''
+          };
+        });
+
+        setSecurityLive(liveMap);
+      } catch (err) {
+        console.error('Error parsing live occupancy:', err);
+      }
+    };
+    return () => es.close();
+  }, []);
+
+  // --- existing floor summary logic ---
   const idToEmployee = new Map();
   if (Array.isArray(floorBreakdown)) {
     floorBreakdown.forEach(fb => {
@@ -387,19 +66,14 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
         const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
         const emp = normalizeId(o.EmployeeID || o.EmployeeId || o.employeeID || o.Employee);
         const card = normalizeId(o.CardNumber || o.cardNumber || o.Card);
-        // map all known keys to the employee id (if available)
         if (guid) idToEmployee.set(guid, emp || '');
         if (card) idToEmployee.set(card, emp || '');
-        // also map employee id to itself for consistent lookups
         if (emp) idToEmployee.set(emp, emp);
       });
     });
   }
 
-  // Defensive: if `data` items come from a different shape (e.g. floorBreakdown passed accidentally),
-  // try to support both floorInOutSummary items and floorBreakdown-like items.
   const normalizedRows = (Array.isArray(data) ? data : []).map(item => {
-    // possible shapes
     const floor = item.floor || item.name || item.floorName || 'Unknown Floor';
     const inSwipes = Number(item.inSwipes || item.in_swipes || 0);
     const outSwipes = Number(item.outSwipes || item.out_swipes || 0);
@@ -409,16 +83,12 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
         ? item.in_only_persons
         : [];
 
-    // find security matches for this row
     const securityMatches = new Set();
-
-    // 1) quick check: any id in inOnlyPersons directly matches a SECURITY employee id
     inOnlyPersons.forEach(rawId => {
-      if (rawId == null) return;
-      // sometimes the array might contain an object { PersonGUID: '...', EmployeeID: '...' }
+      if (!rawId) return;
       if (typeof rawId === 'object') {
-        const objEmp = normalizeId(rawId.EmployeeID || rawId.employeeID || rawId.Employee);
-        const objGuid = normalizeId(rawId.PersonGUID || rawId.personGUID || rawId.PersonGuid);
+        const objEmp = normalizeId(rawId.EmployeeID);
+        const objGuid = normalizeId(rawId.PersonGUID);
         if (objEmp && securitySet.has(objEmp)) securityMatches.add(objEmp);
         if (!objEmp && objGuid && idToEmployee.has(objGuid)) {
           const mapped = idToEmployee.get(objGuid);
@@ -426,54 +96,21 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
         }
         return;
       }
-
       const nid = normalizeId(rawId);
-      if (!nid) return;
-
-      // direct employee-id match
-      if (securitySet.has(nid)) {
-        securityMatches.add(nid);
-        return;
-      }
-
-      // if this id is actually a GUID or a card, map to EmployeeID via idToEmployee
-      if (idToEmployee.has(nid)) {
+      if (securitySet.has(nid)) securityMatches.add(nid);
+      else if (idToEmployee.has(nid)) {
         const mapped = idToEmployee.get(nid);
-        if (mapped && securitySet.has(mapped)) securityMatches.add(mapped);
+        if (securitySet.has(mapped)) securityMatches.add(mapped);
       }
     });
 
-    // 2) As a fallback: inspect floorBreakdown occupants for this floor (if available)
-    //    to find any occupant whose PersonGUID or CardNumber appears in inOnlyPersons, then map to EmployeeID.
-    if (securityMatches.size === 0 && Array.isArray(floorBreakdown)) {
-      const fb = floorBreakdown.find(f => normalizeId(f.floor) === normalizeId(floor));
-      if (fb && Array.isArray(fb.occupants)) {
-        fb.occupants.forEach(o => {
-          const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
-          const emp = normalizeId(o.EmployeeID || o.EmployeeId || o.employeeID || o.Employee);
-          const card = normalizeId(o.CardNumber || o.cardNumber || o.Card);
-
-          // if any inOnlyPersons contains guid/card/employee, and emp is a security id, add it
-          const anyMatch = inOnlyPersons.some(rawId => {
-            const nid = normalizeId(rawId);
-            return nid && (nid === guid || nid === card || nid === emp);
-          });
-          if (anyMatch && emp && securitySet.has(emp)) securityMatches.add(emp);
-        });
-      }
-    }
-
     const securityList = Array.from(securityMatches).sort();
-    const securityCount = securityList.length;
-
     return {
       floor,
       inSwipes,
       outSwipes,
       inconsistency: inSwipes - outSwipes,
-      securityCount,
-      securityList,
-      rawInOnlyPersons: inOnlyPersons // keep for debugging if needed
+      securityList
     };
   });
 
@@ -481,33 +118,18 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
   const top = sorted[0];
 
   return (
-    <Card
-      className="mb-4 shadow-sm"
-      style={{
-        background: '#1a1a1a',
-        border: '2px solid #FFC72C'
-      }}
-    >
-      <Card.Header
-        className="text-center fw-bold"
-        style={{ background: '#000', color: '#FFC72C' }}
-      >
+    <Card className="mb-4 shadow-sm" style={{background:'#1a1a1a', border:'2px solid #FFC72C'}}>
+      <Card.Header className="text-center fw-bold" style={{background:'#000', color:'#FFC72C'}}>
         Floor In vs Out Swipe Summary
       </Card.Header>
 
-      <Card.Body
-        style={{
-          height: 450,
-          padding: '1rem',
-          overflowY: 'auto'
-        }}
-      >
+      <Card.Body style={{height:450, padding:'1rem', overflowY:'auto'}}>
         {top && (
-          <div className="mb-3" style={{ color: '#fff', fontSize: '1rem' }}>
+          <div className="mb-3" style={{color:'#fff', fontSize:'1rem'}}>
             Highest inconsistency:&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.inconsistency}</span>
+            <span style={{color:'#FFC72C', fontWeight:'bold'}}>{top.inconsistency}</span>
             &nbsp;on&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.floor}</span>
+            <span style={{color:'#FFC72C', fontWeight:'bold'}}>{top.floor}</span>
           </div>
         )}
 
@@ -517,7 +139,7 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
               <th>Floor</th>
               <th>In Swipes</th>
               <th>Out Swipes</th>
-              <th>In &minus; Out</th>
+              <th>In − Out</th>
               <th>Security</th>
               <th>Rejection</th>
             </tr>
@@ -525,39 +147,30 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
           <tbody>
             {sorted.map((row, idx) => {
               const tooltipText =
-                row.securityList && row.securityList.length > 0
-                  ? row.securityList.join(', ')
-                  : (row.rawInOnlyPersons && row.rawInOnlyPersons.length > 0
-                      ? `No matching EmployeeID in SECURITY_OFFICERS. rawIDs: ${row.rawInOnlyPersons.map(x => normalizeId(x)).join(', ')}`
-                      : 'No security present');
+                row.securityList.length > 0
+                  ? row.securityList.map(emp => {
+                      const live = securityLive[emp];
+                      if (!live) return emp;
+                      const loc = live.direction === 'OutDirection'
+                        ? live.outLocation || 'Out'
+                        : live.inLocation || 'Unknown';
+                      return `${emp} → ${loc}`;
+                    }).join(', ')
+                  : 'No security present';
 
               return (
-                <tr
-                  key={row.floor}
-                  style={{ backgroundColor: row.securityCount > 0 ? '#333300' : undefined }}
-                >
-                  <td style={{ color: '#fff' }}>{row.floor}</td>
-                  <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
-                  <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
-                  <td
-                    style={{
-                      color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                      fontWeight: 'bold'
-                    }}
-                  >
+                <tr key={row.floor} style={{ backgroundColor: row.securityList.length > 0 ? '#333300' : undefined }}>
+                  <td style={{ color:'#fff' }}>{row.floor}</td>
+                  <td style={{ color:ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
+                  <td style={{ color:ROW_COLORS[(idx+1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
+                  <td style={{ color:ROW_COLORS[(idx+2) % ROW_COLORS.length], fontWeight:'bold' }}>
                     {row.inconsistency}
                   </td>
-
-                  {/* Security column with Bootstrap tooltip */}
-                  <td style={{ color: row.securityCount > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityCount > 0 ? 'bold' : 'normal' }}>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip id={`sec-tip-${row.floor}`}>{tooltipText}</Tooltip>}
-                    >
-                      <span style={{ cursor: 'default' }}>{row.securityCount}</span>
+                  <td style={{ color: row.securityList.length > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityList.length > 0 ? 'bold' : 'normal' }}>
+                    <OverlayTrigger placement="top" overlay={<Tooltip id={`sec-tip-${row.floor}`}>{tooltipText}</Tooltip>}>
+                      <span style={{ cursor:'default' }}>{row.securityList.length}</span>
                     </OverlayTrigger>
                   </td>
-
                   <td></td>
                 </tr>
               );
