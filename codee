@@ -1,5 +1,71 @@
 i want to moniter only ther  floor locarion ,
+only this 
+const SECURITY_OFFICERS = [
+  'W0003901','W0019956','W0023386','W0025278','W0025490',
+  'W0025492','W0025493','W0025639','W0026149','W0026151',
+  'W0026208','W0026455','W0022449'
+];
+i want to monite ther locarin floor locain ok. and
++++++
 
+  const query = `
+WITH CombinedQuery AS (
+  SELECT
+    DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+    t1.ObjectName1      AS ObjectName1,
+     t1.ObjectName2      AS Door,                -- ← ADD THIS LINE
+    t1.PartitionName2   AS PartitionName2,
+    COALESCE(
+      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+      sc.value
+    )                    AS CardNumber,
+    t3.Name              AS PersonnelType,
+    t5_rej.value         AS RejectionType
+  FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
+  LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
+    ON t1.ObjectIdentity1 = t2.GUID
+  LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+    ON t2.PersonnelTypeId = t3.ObjectID
+  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
+    ON t1.XmlGUID = t_xml.GUID
+  LEFT JOIN (
+    SELECT GUID, value
+    FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+    WHERE Name IN ('Card','CHUID')
+  ) AS sc
+    ON t1.XmlGUID = sc.GUID
+  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
+    ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
+  WHERE
+    t1.MessageType = 'CardRejected'
+    AND t1.PartitionName2 IN (${parts})
+    AND CONVERT(DATE,
+         DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
+)
+
+SELECT
+  LocaleMessageTime,
+  CONVERT(date, LocaleMessageTime)    AS DateOnly,
+  CONVERT(time(0), LocaleMessageTime) AS SwipeTime,
+  CardNumber,
+  PersonnelType,
+  PartitionName2                     AS Location,
+  Door,
+  RejectionType
+FROM CombinedQuery
+ORDER BY LocaleMessageTime DESC;
+  `;
+
+
+and this quiry is rejectin ok; this all for to floor how much recein ok this both are differnt ok 
+Floor 12 Rejection 20 Rejection like that. ok. 
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 12	1	0	1	0	
+Floor 01	2	1	1	0	
+Floor 09	1	1	0	0	
+Floor 06	0	1	-1	0	
 
 http://localhost:5000/api/denver-security-rejection
 
