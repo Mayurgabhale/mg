@@ -1,3 +1,20 @@
+not disply writ correct code
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
+Floor 01	2	1	1	0	
+Floor 09	2	1	1	0	
+Floor 12	2	2	0	0	
+Floor 11	2	2	0	0	
+Floor 15	1	1	0	0	
+Floor 14	1	1	0	0	
+Floor 13	1	1	0	0	
+Floor 06	3	4	-1	0
+
+
+webpack compiled successfully
+(node:5488) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+
+
+
 // src/components/FloorInOutTable.jsx
 import React from 'react';
 import { Card, Table } from 'react-bootstrap';
