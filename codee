@@ -1,166 +1,23 @@
-// src/components/FloorInOutTable.jsx
-import React, { useEffect, useState } from 'react';
-import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
-const ROW_COLORS = [
-  '#FFC72C','#C9A9A6','#FFE680','#FFF5EE','#FFD11A','#96DED1','#FFEB99'
-];
+  "ERT Team Members": [
+  { "Name": "Nair, Saurabh",                    "Base Location": "Podium Floor -Yellow Zone",  "Email": "Saurabh.Nair@wu.com" , "phone": "xxx-xxx-xxxx" },
+  { "Name": "Ladva, Hirav",                     "Floor": "Podium Floor- Yellow Zone",  "Email": "Hirav.Ladva@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Ahuja, Charandeep Singh",          "Floor": "Podium Floor-Green Zone - 2", "Email": "CharandeepSingh.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Samrendra, Samar",                 "Floor": "Podium Floor-Green Zone - 2",  "Email": "Samar.Samrendra@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Mahajan, Sachin",               "Floor": "Podium Floor-Green Zone - 2",  "Email": "sachin.mahajan@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Sharma, Rajesh",                  "Floor": "Podium Floor-Green Zone - 2", "Email": "Rajesh.Sharma@wu.com"  , "phone": "xxx-xxx-xxxx"},
+  {  "Name": "Palve, Vikas",                     "Floor": "2nd Floor",  "Email": "Vikas.Palve@wu.com" , "phone": "xxx-xxx-xxxx" },
+  {  "Name": "Nalband, Khushboo",               "Floor": "2nd Floor",  "Email": "Khushboo.Nalband@wu.com"  , "phone": "xxx-xxx-xxxx"},
+read above and like that ceat beloc only Name 	EmployeeID
 
-const SECURITY_OFFICERS = [
-  'W0003901','W0019956','W0023386','W0025278','W0025490',
-  'W0025492','W0025493','W0025639','W0026149','W0026151',
-  'W0026208','W0026455','W0026176'
-];
 
-const normalizeId = v => String(v || '').trim().toUpperCase();
+C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\DenverSecurity.json
 
-export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
-  const [securityLive, setSecurityLive] = useState({});
-  const securitySet = new Set(SECURITY_OFFICERS.map(normalizeId));
 
-  useEffect(() => {
-    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-    es.onmessage = (e) => {
-      try {
-        const payload = JSON.parse(e.data);
-        const details = Array.isArray(payload.details) ? payload.details : [];
-        const liveMap = {};
-
-        details.forEach(d => {
-          const emp = normalizeId(d.EmployeeID);
-          if (!securitySet.has(emp)) return;
-
-          liveMap[emp] = {
-            direction: d.Direction || '',
-            door: d.Door || ''
-          };
-        });
-
-        setSecurityLive(liveMap);
-      } catch (err) {
-        console.error('Error parsing live occupancy:', err);
-      }
-    };
-    return () => es.close();
-  }, []);
-
-  // Build GUID/Card → EmployeeID map
-  const idToEmployee = new Map();
-  if (Array.isArray(floorBreakdown)) {
-    floorBreakdown.forEach(fb => {
-      (fb.occupants || []).forEach(o => {
-        const emp = normalizeId(o.EmployeeID || o.EmployeeId || o.employeeID || o.Employee);
-        const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
-        const card = normalizeId(o.CardNumber || o.cardNumber || o.Card);
-
-        if (guid) idToEmployee.set(guid, emp);
-        if (card) idToEmployee.set(card, emp);
-        if (emp) idToEmployee.set(emp, emp);
-      });
-    });
-  }
-
-  const normalizedRows = (Array.isArray(data) ? data : []).map(item => {
-    const floor = item.floor || item.name || item.floorName || 'Unknown Floor';
-    const inSwipes = Number(item.inSwipes || item.in_swipes || 0);
-    const outSwipes = Number(item.outSwipes || item.out_swipes || 0);
-    const inOnlyPersons = Array.isArray(item.inOnlyPersons)
-      ? item.inOnlyPersons
-      : Array.isArray(item.in_only_persons)
-        ? item.in_only_persons
-        : [];
-
-    const securityMatches = new Set();
-
-    inOnlyPersons.forEach(rawId => {
-      const nid = normalizeId(rawId);
-
-      // Direct match on EmployeeID
-      if (securitySet.has(nid)) {
-        securityMatches.add(nid);
-        return;
-      }
-
-      // If GUID/card → map to EmployeeID
-      if (idToEmployee.has(nid)) {
-        const mapped = normalizeId(idToEmployee.get(nid));
-        if (securitySet.has(mapped)) {
-          securityMatches.add(mapped);
-        }
-      }
-    });
-
-    const securityList = Array.from(securityMatches).sort();
-    return {
-      floor,
-      inSwipes,
-      outSwipes,
-      inconsistency: inSwipes - outSwipes,
-      securityList
-    };
-  });
-
-  const sorted = normalizedRows.sort((a, b) => b.inconsistency - a.inconsistency);
-  const top = sorted[0];
-
-  return (
-    <Card className="mb-4 shadow-sm" style={{background:'#1a1a1a', border:'2px solid #FFC72C'}}>
-      <Card.Header className="text-center fw-bold" style={{background:'#000', color:'#FFC72C'}}>
-        Floor In vs Out Swipe Summary
-      </Card.Header>
-
-      <Card.Body style={{height:450, padding:'1rem', overflowY:'auto'}}>
-        {top && (
-          <div className="mb-3" style={{color:'#fff', fontSize:'1rem'}}>
-            Highest inconsistency:&nbsp;
-            <span style={{color:'#FFC72C', fontWeight:'bold'}}>{top.inconsistency}</span>
-            &nbsp;on&nbsp;
-            <span style={{color:'#FFC72C', fontWeight:'bold'}}>{top.floor}</span>
-          </div>
-        )}
-
-        <Table striped bordered hover size="sm" variant="dark" className="mb-0">
-          <thead>
-            <tr>
-              <th>Floor</th>
-              <th>In Swipes</th>
-              <th>Out Swipes</th>
-              <th>In − Out</th>
-              <th>Security</th>
-              <th>Rejection</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((row, idx) => {
-              const tooltipText =
-                row.securityList.length > 0
-                  ? row.securityList.map(emp => {
-                      const live = securityLive[emp];
-                      if (!live) return emp;
-                      return `${emp} → ${live.door || 'Unknown'}`;
-                    }).join(', ')
-                  : 'No security present';
-
-              return (
-                <tr key={row.floor} style={{ backgroundColor: row.securityList.length > 0 ? '#333300' : undefined }}>
-                  <td style={{ color:'#fff' }}>{row.floor}</td>
-                  <td style={{ color:ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
-                  <td style={{ color:ROW_COLORS[(idx+1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
-                  <td style={{ color:ROW_COLORS[(idx+2) % ROW_COLORS.length], fontWeight:'bold' }}>
-                    {row.inconsistency}
-                  </td>
-                  <td style={{ color: row.securityList.length > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityList.length > 0 ? 'bold' : 'normal' }}>
-                    <OverlayTrigger placement="top" overlay={<Tooltip id={`sec-tip-${row.floor}`}>{tooltipText}</Tooltip>}>
-                      <span style={{ cursor:'default' }}>{row.securityList.length}</span>
-                    </OverlayTrigger>
-                  </td>
-                  <td></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      </Card.Body>
-    </Card>
-  );
-}
+Name 	EmployeeID
+Martin, Paul	W0023386
+ ------	      W0025490
+------    W0025492
+_-----      W0025493
+Asuako, Derrick	W0025639
+Abdalla, Meira	W0026455
