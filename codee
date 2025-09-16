@@ -1,4 +1,182 @@
+
 // src/components/FloorInOutTable.jsx
+
+import React from 'react';
+import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
+
+// Accent palette (re-used from FloorOccupancyChart)
+const ROW_COLORS = [
+  '#FFC72C',
+  '#C9A9A6',
+  '#FFE680',
+  '#FFF5EE',
+  '#FFD11A',
+  '#96DED1',
+  '#FFEB99'
+];
+
+export default function FloorInOutTable({ data = [], securityMap = {} }) {
+  // data: [{ floor: 'Floor 15', inSwipes: 40, outSwipes: 32 }, ...]
+  // securityMap: {
+  //   'Floor 15': { count: 4, ids: ['W0003901','W00...'] },
+  //   'Floor 14': { count: 2, ids: [] },
+  //   ...
+  // }
+  // Compute inconsistency and sort descending
+  const sorted = data
+    .map(({ floor, inSwipes = 0, outSwipes = 0 }) => ({
+      floor,
+      inSwipes,
+      outSwipes,
+      inconsistency: (inSwipes || 0) - (outSwipes || 0)
+    }))
+    .sort((a, b) => b.inconsistency - a.inconsistency);
+
+  const top = sorted[0];
+
+  // helper to read security info given a floor label
+  const getSecurityInfo = (floorLabel) => {
+    // Accept both 'Floor 15' or just '15' or partition names - try robust lookups
+    if (!floorLabel) return { count: 0, ids: [] };
+    const exact = securityMap[floorLabel];
+    if (exact) return { count: exact.count ?? exact.SecurityCount ?? 0, ids: exact.ids ?? (exact.SecurityIDs ? String(exact.SecurityIDs).split(',') : []) };
+
+    // also try 'Floor X' normalization
+    const normalized = securityMap[`Floor ${floorLabel}`];
+    if (normalized) return { count: normalized.count ?? normalized.SecurityCount ?? 0, ids: normalized.ids ?? (normalized.SecurityIDs ? String(normalized.SecurityIDs).split(',') : []) };
+
+    // fallback: look for keys that endWith the numeric part
+    const numeric = String(floorLabel).match(/(\d+)$/);
+    if (numeric) {
+      const candidateKey = Object.keys(securityMap).find(k => k.endsWith(numeric[1]));
+      if (candidateKey) {
+        const v = securityMap[candidateKey];
+        return { count: v.count ?? v.SecurityCount ?? 0, ids: v.ids ?? (v.SecurityIDs ? String(v.SecurityIDs).split(',') : []) };
+      }
+    }
+    return { count: 0, ids: [] };
+  };
+
+  return (
+    <Card
+      className="mb-4 shadow-sm"
+      style={{
+        background: '#1a1a1a',
+        border: '2px solid #FFC72C'
+      }}
+    >
+      <Card.Header
+        className="text-center fw-bold"
+        style={{ background: '#000', color: '#FFC72C' }}
+      >
+        Floor In vs Out Swipe Summary
+      </Card.Header>
+
+      <Card.Body
+        style={{
+          height: 450,
+          padding: '1rem',
+          overflowY: 'auto'
+        }}
+      >
+        {top && (
+          <div
+            className="mb-3"
+            style={{ color: '#fff', fontSize: '1rem' }}
+          >
+            Highest inconsistency:&nbsp;
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
+              {top.inconsistency}
+            </span>
+            &nbsp;on&nbsp;
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
+              {top.floor}
+            </span>
+          </div>
+        )}
+
+        <Table striped bordered hover size="sm" variant="dark" className="mb-0">
+          <thead>
+            <tr>
+              <th>Floor</th>
+              <th>In Swipes</th>
+              <th>Out Swipes</th>
+              <th>In &minus; Out</th>
+              <th>Security</th>
+              <th>Rejection</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, idx) => {
+              const sec = getSecurityInfo(row.floor);
+              const secCount = sec.count || 0;
+              const secIds = Array.isArray(sec.ids) ? sec.ids.filter(Boolean) : [];
+              // Try to fetch rejection count if provided in securityMap for same floor
+              const rejectionObj = securityMap[row.floor] && securityMap[row.floor].RejectionCount !== undefined
+                ? securityMap[row.floor]
+                : Object.values(securityMap).find(v => (v.Floor === row.floor || v.Floor?.endsWith(String(row.floor).replace(/\D/g, ''))));
+              const rejectionCount = rejectionObj ? (rejectionObj.RejectionCount ?? rejectionObj.rejectionCount ?? 0) : 0;
+
+              // Tooltip content string
+              const tooltipText = secIds.length > 0 ? secIds.join(', ') : 'No security officers recorded';
+
+              return (
+                <tr key={row.floor}>
+                  <td style={{ color: '#fff' }}>{row.floor}</td>
+
+                  <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
+                    {row.inSwipes}
+                  </td>
+
+                  <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
+                    {row.outSwipes}
+                  </td>
+
+                  <td
+                    style={{
+                      color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {row.inconsistency}
+                  </td>
+
+                  <td style={{ color: '#fff', cursor: secIds.length ? 'pointer' : 'default' }}>
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={
+                        <Tooltip id={`sec-tooltip-${row.floor}`}>
+                          {tooltipText}
+                        </Tooltip>
+                      }
+                    >
+                      <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
+                        {secCount}
+                      </span>
+                    </OverlayTrigger>
+                  </td>
+
+                  <td style={{ color: '#fff' }}>
+                    <span style={{ color: '#FFD1A3', fontWeight: 'bold' }}>
+                      {rejectionCount || ''}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </Card.Body>
+    </Card>
+  );
+}
+
+
+
+
+
+
+....// src/components/FloorInOutTable.jsx
 
 import React from 'react';
 import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
