@@ -1,26 +1,6 @@
-Compiled with problems:
-×
-ERROR in ./src/components/FloorInOutTable.jsx 211:0-57
-Module not found: Error: Can't resolve '../data/DenverSecurity.json' in 'C:\Users\W0024618\Desktop\swipeData\client-denver\src\components'
-
-C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\DenverSecurity.json  this file i create in backend folder ok 
-[
-  { "Name": "Martin, Paul", "EmployeeID": "W0023386" },
-  { "Name": "", "EmployeeID": "W0025490" },
-  { "Name": "", "EmployeeID": "W0025492" },
-  { "Name": "", "EmployeeID": "W0025493" },
-  { "Name": "Asuako, Derrick", "EmployeeID": "W0025639" },
-  { "Name": "Abdalla, Meira", "EmployeeID": "W0026455" },
-  { "Name": "Ali, Shuayb", "EmployeeID": "W0028120" },
-  { "Name": "D'Nicuola, Jeff", "EmployeeID": "305776" }
-]
-
-it is possivel to without bakend do that, wiht this api  http://localhost:5000/api/live-occupancy-denver
-
 // src/components/FloorInOutTable.jsx
 import React from 'react';
 import { Card, Table } from 'react-bootstrap';
-import DenverSecurity from '../data/DenverSecurity.json';
 
 // Accent palette
 const ROW_COLORS = [
@@ -28,13 +8,17 @@ const ROW_COLORS = [
   '#FFF5EE', '#FFD11A', '#96DED1', '#FFEB99'
 ];
 
+// Security Employee IDs (hardcoded, no JSON needed)
+const SECURITY_IDS = [
+  "W0023386", "W0025490", "W0025492", "W0025493",
+  "W0025639", "W0026455", "W0028120", "305776"
+].map(id => id.toUpperCase());
+
 const normalizeId = v => String(v || '').trim().toUpperCase();
 
 export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
-  // Build security set from JSON
-  const securitySet = new Set(
-    (DenverSecurity || []).map(p => normalizeId(p.EmployeeID))
-  );
+  // Build security set
+  const securitySet = new Set(SECURITY_IDS);
 
   // Map floor → security count (based on live occupants)
   const securityByFloor = {};
@@ -142,6 +126,3 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
     </Card>
   );
 }
-
-
-
