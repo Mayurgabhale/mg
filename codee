@@ -75,3 +75,217 @@ denverSecurityRejection error: RequestError: Incorrect syntax near ','.
     }
   ]
 }
+
+
+Read abive erri and slove 
+
+// controllers/denversecurityrejection.js
+// Path: C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
+
+const sql = require('mssql');
+const { denver } = require('../config/siteConfig');
+
+// Security officers list (source you provided)
+const SECURITY_OFFICERS = [
+  'W0003901','W0019956','W0023386','W0025278','W0025490',
+  'W0025492','W0025493','W0025639','W0026149','W0026151',
+  'W0026208','W0026455'
+];
+
+function normalizePartsArray(partsRaw) {
+  if (!partsRaw || typeof partsRaw !== 'string') return [];
+  return partsRaw
+    .split(',')
+    .map(p => p.trim())
+    .filter(p => p.length > 0);
+}
+
+function getDefaultParts() {
+  if (process.env.DEFAULT_PARTS && process.env.DEFAULT_PARTS.trim()) {
+    return process.env.DEFAULT_PARTS.trim().split(',').map(s => s.trim()).filter(Boolean);
+  }
+  // fallback default parts (adjust if you want)
+  return ['US.CO.OBS.15','US.CO.OBS.14','US.CO.OBS.12','US.CO.OBS.06','US.CO.OBS.13','US.CO.OBS.01'];
+}
+
+exports.getDenverSecurityRejection = async (req, res) => {
+  try {
+    // accept parts from query; fall back to default if not provided
+    let partsArr = normalizePartsArray(req.query.parts);
+    if (partsArr.length === 0) {
+      partsArr = getDefaultParts();
+      console.warn(`[denverSecurityRejection] parts not provided - falling back to defaultParts: ${partsArr.join(',')}`);
+    }
+
+    if (partsArr.length === 0) {
+      return res.status(400).json({
+        error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
+      });
+    }
+
+    // Build parameter placeholders and bind them to the request
+    const pool = await denver.poolPromise;
+    const request = pool.request();
+
+    const partPlaceholders = partsArr.map((p, i) => {
+      const name = `part${i}`;
+      request.input(name, sql.NVarChar, p);
+      return `@${name}`;
+    }).join(', ');
+
+    // Build inline security VALUES list (safe because SECURITY_OFFICERS is static)
+    const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
+
+    const sqlQuery = `
+-- Combined query for recent events (last 7 days)
+WITH CombinedQuery AS (
+  SELECT
+    DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+    t1.ObjectName1      AS ObjectName1,
+    t1.ObjectName2      AS Door,
+    t1.PartitionName2   AS PartitionName2,
+    COALESCE(
+      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+      TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+      sc.value
+    ) AS CardNumber,
+    t3.Name AS PersonnelType,
+    t5_rej.value AS RejectionType,
+    t1.MessageType
+  FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
+  LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
+    ON t1.ObjectIdentity1 = t2.GUID
+  LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+    ON t2.PersonnelTypeId = t3.ObjectID
+  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
+    ON t1.XmlGUID = t_xml.GUID
+  LEFT JOIN (
+    SELECT GUID, value
+    FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+    WHERE Name IN ('Card','CHUID')
+  ) AS sc
+    ON t1.XmlGUID = sc.GUID
+  LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
+    ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
+  WHERE
+    t1.MessageType IN ('CardAccepted', 'CardRejected')
+    AND t1.PartitionName2 IN (${partPlaceholders})
+    AND CONVERT(DATE,
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
+),
+
+EventsWithCard AS (
+  SELECT *, LTRIM(RTRIM(CardNumber)) AS CardNumTrim
+  FROM CombinedQuery
+  WHERE COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
+),
+
+LatestPerCard AS (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
+  FROM EventsWithCard
+),
+
+SecurityList AS (
+  SELECT s.ID AS CardNumber FROM (VALUES
+    ${secValues}
+  ) AS s(ID)
+),
+
+SecurityLatest AS (
+  SELECT
+    lp.CardNumTrim AS CardNumber,
+    lp.PartitionName2,
+    lp.LocaleMessageTime,
+    'Floor ' + PARSENAME(lp.PartitionName2, 1) AS FloorLabel
+  FROM LatestPerCard lp
+  INNER JOIN SecurityList sec ON lp.CardNumTrim = sec.CardNumber
+  WHERE lp.rn = 1
+    AND lp.PartitionName2 IS NOT NULL
+),
+
+SecurityByFloor AS (
+  SELECT
+    ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
+    COUNT(DISTINCT CardNumber) AS SecurityCount,
+    STRING_AGG(DISTINCT CardNumber, ',') AS SecurityIDs
+  FROM SecurityLatest
+  GROUP BY PartitionName2
+),
+
+Rejections AS (
+  SELECT
+    ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
+    COUNT(*) AS RejectionCount,
+    STRING_AGG(DISTINCT COALESCE(CardNumber, '?'), ',') AS Cards
+  FROM CombinedQuery
+  WHERE MessageType = 'CardRejected' AND COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
+  GROUP BY PartitionName2
+)
+
+SELECT
+  (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH) AS securityJson,
+  (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
+`;
+
+    // DEBUG: log short info to help diagnose SQL errors (remove in production)
+    console.log('[denverSecurityRejection] Executing SQL - partitions:', partsArr.join(','));
+    // Uncomment next line if you want to print the entire SQL for debugging (can be long)
+    // console.log(sqlQuery);
+
+    const result = await request.query(sqlQuery);
+
+    const row = result.recordset && result.recordset[0];
+    let securityByFloor = [];
+    let rejectionsByFloor = [];
+
+    if (row) {
+      try {
+        securityByFloor = row.securityJson ? JSON.parse(row.securityJson) : [];
+      } catch (e) {
+        console.warn('[denverSecurityRejection] Failed parsing securityJson:', e);
+        securityByFloor = [];
+      }
+      try {
+        rejectionsByFloor = row.rejectionsJson ? JSON.parse(row.rejectionsJson) : [];
+      } catch (e) {
+        console.warn('[denverSecurityRejection] Failed parsing rejectionsJson:', e);
+        rejectionsByFloor = [];
+      }
+    }
+
+    // Build a map keyed by floor for quick frontend lookup
+    const securityMap = {};
+    securityByFloor.forEach(item => {
+      const floorKey = item.Floor || item.floor || item.FloorLabel || 'Unknown Floor';
+      securityMap[floorKey] = {
+        count: item.SecurityCount || 0,
+        ids: item.SecurityIDs ? String(item.SecurityIDs).split(',').filter(Boolean) : [],
+        SecurityIDs: item.SecurityIDs,
+        SecurityCount: item.SecurityCount,
+        Floor: floorKey
+      };
+    });
+    rejectionsByFloor.forEach(item => {
+      const floorKey = item.Floor || item.floor || 'Unknown Floor';
+      if (!securityMap[floorKey]) securityMap[floorKey] = {};
+      securityMap[floorKey].RejectionCount = item.RejectionCount || 0;
+      securityMap[floorKey].Cards = item.Cards ? String(item.Cards).split(',').filter(Boolean) : [];
+    });
+
+    return res.json({
+      securityByFloor,
+      rejectionsByFloor,
+      securityMap,
+      meta: {
+        partsRequested: partsArr,
+        securityOfficersCount: SECURITY_OFFICERS.length
+      }
+    });
+
+  } catch (err) {
+    console.error('denverSecurityRejection error:', err);
+    return res.status(500).json({ error: err.message || String(err) });
+  }
+};
