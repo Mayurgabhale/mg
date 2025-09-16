@@ -1,166 +1,113 @@
-import React, { useMemo } from 'react';
+how to add pie chart border 
+
+
+// src/components/PersonnelDonutChart.jsx
+
+import React from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, LabelList, Legend
+  PieChart, Pie, Cell, Tooltip,
+  ResponsiveContainer, Legend, Label
 } from 'recharts';
 import { Card } from 'react-bootstrap';
-import floorCapacities from '../constants/floorCapacities';
 
-// ─── CUSTOM TOOLTIP ──────────────────────────────
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  const { capacity, headcount, percentage } = payload[0].payload;
-  return (
-    <div style={{
-      background: '#2f2f2f',
-      border: '1px solid #444',
-      borderRadius: 8,
-      padding: '10px 14px',
-      color: '#fff',
-      fontSize: 14,
-      lineHeight: 1.5,
-      boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-    }}>
-      <strong style={{ color: '#FFC72C', fontSize: 15 }}>{label}</strong>
-      <div>Occupancy: <strong>{capacity}</strong></div>
-      <div>Headcount: <strong>{headcount}</strong></div>
-      <div>Usage: <strong>{percentage.toFixed(1)}%</strong></div>
-    </div>
-  );
-};
+// Expanded Western Union–style palette for up to 10 categories
+const SLICE_COLORS = [
+  '#FFC72C', // yellow
+  '#228B22', // forest green
+  '#EEA0F1',
+  '#E18E30',
+  '#B5B21A',
+  '#FFE680', // light yellow
+  '#FFD11A', // gold
+  '#FFEB99', // pale gold
+  '#C9A9A6', // muted rose
+  '#96DED1', // teal
+  '#FF8C00', // dark orange
+  '#8B0000', // dark red
+  '#4B0082'  // indigo
+];
 
-// ─── LABELS ──────────────────────────────
-const HeadcountLabel = ({ x, y, width, value }) => (
-  <text
-    x={x + width / 2}
-    y={y - 6}
-    textAnchor="middle"
-    fill="#228B22"
-    fontWeight="bold"
-    fontSize={14}
-  >
-    {value}
-  </text>
-);
+export default function PersonnelDonutChart({ data = [] }) {
+  // Sum all counts across every category in `data`
+  const total = data.reduce((sum, e) => sum + e.count, 0);
 
-const CapacityLabel = ({ x, y, width, payload }) => (
-  <text
-    x={x + width / 2}
-    y={y - 6}
-    textAnchor="middle"
-    fill="#000"
-    fontWeight="bold"
-    fontSize={14}
-  >
-    {payload?.capacity}
-  </text>
-);
+  if (!data.length || total === 0) {
+    return (
+      <Card body className="bg-dark text-warning">
+        No personnel data
+      </Card>
+    );
+  }
 
-const PercentageLabel = ({ x, y, width, value }) => (
-  <text
-    x={x + width / 2}
-    y={y - 22}
-    textAnchor="middle"
-    fill="#FFC72C"
-    fontWeight="bold"
-    fontSize={13}
-    style={{ background: '#222' }}
-  >
-    {value.toFixed(1)}%
-  </text>
-);
-
-// ─── MAIN COMPONENT ──────────────────────────────
-export default function FloorOccupancyChart({ data = [] }) {
-  const floors = useMemo(() => {
-    const list = Object.entries(floorCapacities).map(([floor, capacity]) => {
-      const rec = data.find(d => d.floor.replace(/^Floor\s0*/, 'Floor ') === floor);
-      const headcount = rec ? Number(rec.total) || 0 : 0;
-      const percentage = capacity > 0 ? (headcount / capacity) * 100 : 0;
-      return { floor, capacity, headcount, free: capacity - headcount, percentage };
-    });
-
-    const totalCapacity  = list.reduce((sum, f) => sum + f.capacity, 0);
-    const totalHeadcount = list.reduce((sum, f) => sum + f.headcount, 0);
-    const totalPct       = totalCapacity > 0 ? (totalHeadcount / totalCapacity) * 100 : 0;
-
-    return [{ floor: 'All Floors', capacity: totalCapacity, headcount: totalHeadcount, free: totalCapacity - totalHeadcount, percentage: totalPct }, ...list];
-  }, [data]);
-
-  const maxCap = Math.max(...floors.map(f => f.capacity));
-
-  const legendPayload = [
-    { value: 'Headcount', type: 'square', id: 'headcount', color: '#228B22' },
-    { value: 'Occupancy', type: 'square', id: 'free', color: '#FFD700' }
-  ];
+  // Sort descending by count so largest slice is first
+  const sorted = [...data].sort((a, b) => b.count - a.count);
 
   return (
-    <Card className="mb-4 shadow-sm" style={{
-      background: 'linear-gradient(160deg, #1a1a1a, #222)',
-      border: '2px solid #FFC72C',
-      borderRadius: 12
-    }}>
-      <Card.Header className="text-center" style={{ background: '#000', color: '#FFC72C', fontWeight: 700 }}>
-        Western Union – Denver Headcount vs. Occupancy
+    <Card
+      className="mb-4 shadow-sm"
+      style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}
+    >
+      <Card.Header
+        className="text-center fw-bold"
+        style={{ background: '#000', color: '#FFC72C' }}
+      >
+        Personnel Type Occupancy
       </Card.Header>
-      <Card.Body style={{ height: 480, padding: 0 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={floors}
-            margin={{ top: 20, right: 20, left: 10, bottom: 0 }}
-            barCategoryGap="20%"
-            barGap={4}
-          >
-            <CartesianGrid stroke="#444" strokeDasharray="4 4" />
-            <XAxis dataKey="floor" tick={{ fill: '#fff', fontSize: 14 }} />
-            <YAxis
-              allowDecimals={false}
-              tick={{ fill: '#fff', fontSize: 14 }}
-              domain={[0, maxCap]}
-              label={{ value: 'Headcount', fill: '#fff', angle: -90, position: 'insideLeft', offset: 10 }}
+      <Card.Body style={{ height: 450, padding: '1rem' }}>
+        <ResponsiveContainer >
+          <PieChart>
+            <Pie
+              data={sorted}
+              dataKey="count"
+              nameKey="personnelType"
+              cx="50%" cy="50%"
+              innerRadius={70} outerRadius={140}
+              paddingAngle={4}
+              labelLine={false}
+              label={({ percent, name }) => (
+                <tspan fill="#fff">
+                  {`${name}: ${(percent * 100).toFixed(0)}%`}
+                </tspan>
+              )}
+              stroke="#333"
+              strokeWidth={1.5}
+            >
+              {sorted.map((entry, idx) => (
+                <Cell
+                  key={entry.personnelType}
+                  fill={SLICE_COLORS[idx % SLICE_COLORS.length]}
+                  
+                />
+              ))}
+              <Label
+                value={total}
+                position="center"
+                style={{ fill: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}
+              />
+            </Pie>
+            <Tooltip
+              wrapperStyle={{
+                backgroundColor: '#2f2f2f',
+                border: '1px solid #444',
+                borderRadius: '4px',
+                color: '#fff'
+              }}
+              formatter={(value, name) => [`${value}`, `${name}`]}
             />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend verticalAlign="top" align="center" payload={legendPayload} wrapperStyle={{ color: '#fff', paddingBottom: 10 }} />
-
-            {/* Headcount bar with gradient */}
-            <Bar
-              dataKey="headcount"
-              stackId="a"
-              fill="url(#headGradient)"
-              radius={[6, 6, 0, 0]}
-              stroke="#000"
-              strokeWidth={1}
-            >
-              <LabelList dataKey="headcount" content={HeadcountLabel} />
-            </Bar>
-
-            {/* Free/remaining capacity bar */}
-            <Bar
-              dataKey="free"
-              stackId="a"
-              fill="url(#freeGradient)"
-              radius={[6, 6, 0, 0]}
-              stroke="#000"
-              strokeWidth={1}
-            >
-              <LabelList dataKey="percentage" content={PercentageLabel} />
-            </Bar>
-
-            {/* Define gradients */}
-            <defs>
-              <linearGradient id="headGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#32CD32" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#228B22" stopOpacity={0.9} />
-              </linearGradient>
-              <linearGradient id="freeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FFFF99" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#FFD700" stopOpacity={0.9} />
-              </linearGradient>
-            </defs>
-
-          </BarChart>
+            <Legend
+              verticalAlign="bottom"
+              wrapperStyle={{ color: '#fff', paddingTop: 10 }}
+            />
+          </PieChart>
         </ResponsiveContainer>
       </Card.Body>
     </Card>
   );
 }
+
+
+
+
+
+
+
