@@ -1,19 +1,6 @@
-
-not wokr 
-this secity are avalble but count not disply 	W0022449 
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 12	1	0	1	0	
-Floor 01	2	1	1	0	
-Floor 09	1	1	0	0	
-Floor 06	0	1	-1	0
-
-
-
-
 // src/components/FloorInOutTable.jsx
-
 import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+import { Card, Table, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 // Accent palette (re-used from FloorOccupancyChart)
 const ROW_COLORS = [
@@ -26,34 +13,119 @@ const ROW_COLORS = [
   '#FFEB99'
 ];
 
-// Security officer IDs
+// Security officer IDs (canonical EmployeeIDs)
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
   'W0026208','W0026455','W0022449'
 ];
 
-export default function FloorInOutTable({ data = [] }) {
-  // Compute inconsistency + security per floor
-  const sorted = data
-    .map(({ floor, inSwipes, outSwipes, inOnlyPersons = [] }) => {
-      const inconsistency = inSwipes - outSwipes;
+// helper: normalize any id/string for robust comparison
+const normalizeId = v => String(v || '').trim().toUpperCase();
 
-      const securityList = inOnlyPersons.filter(id =>
-        SECURITY_OFFICERS.includes(id)
-      );
+export default function FloorInOutTable({ data = [], floorBreakdown = [] }) {
+  // build fast lookup set for security employeeIDs
+  const securitySet = new Set(SECURITY_OFFICERS.map(normalizeId));
 
-      return {
-        floor,
-        inSwipes,
-        outSwipes,
-        inconsistency,
-        securityCount: securityList.length,
-        securityList
-      };
-    })
-    .sort((a, b) => b.inconsistency - a.inconsistency);
+  // Build map: PersonGUID/CardNumber -> EmployeeID (normalized)
+  const idToEmployee = new Map();
+  if (Array.isArray(floorBreakdown)) {
+    floorBreakdown.forEach(fb => {
+      (fb.occupants || []).forEach(o => {
+        const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
+        const emp = normalizeId(o.EmployeeID || o.EmployeeId || o.employeeID || o.Employee);
+        const card = normalizeId(o.CardNumber || o.cardNumber || o.Card);
+        // map all known keys to the employee id (if available)
+        if (guid) idToEmployee.set(guid, emp || '');
+        if (card) idToEmployee.set(card, emp || '');
+        // also map employee id to itself for consistent lookups
+        if (emp) idToEmployee.set(emp, emp);
+      });
+    });
+  }
 
+  // Defensive: if `data` items come from a different shape (e.g. floorBreakdown passed accidentally),
+  // try to support both floorInOutSummary items and floorBreakdown-like items.
+  const normalizedRows = (Array.isArray(data) ? data : []).map(item => {
+    // possible shapes
+    const floor = item.floor || item.name || item.floorName || 'Unknown Floor';
+    const inSwipes = Number(item.inSwipes || item.in_swipes || 0);
+    const outSwipes = Number(item.outSwipes || item.out_swipes || 0);
+    const inOnlyPersons = Array.isArray(item.inOnlyPersons)
+      ? item.inOnlyPersons
+      : Array.isArray(item.in_only_persons)
+        ? item.in_only_persons
+        : [];
+
+    // find security matches for this row
+    const securityMatches = new Set();
+
+    // 1) quick check: any id in inOnlyPersons directly matches a SECURITY employee id
+    inOnlyPersons.forEach(rawId => {
+      if (rawId == null) return;
+      // sometimes the array might contain an object { PersonGUID: '...', EmployeeID: '...' }
+      if (typeof rawId === 'object') {
+        const objEmp = normalizeId(rawId.EmployeeID || rawId.employeeID || rawId.Employee);
+        const objGuid = normalizeId(rawId.PersonGUID || rawId.personGUID || rawId.PersonGuid);
+        if (objEmp && securitySet.has(objEmp)) securityMatches.add(objEmp);
+        if (!objEmp && objGuid && idToEmployee.has(objGuid)) {
+          const mapped = idToEmployee.get(objGuid);
+          if (mapped && securitySet.has(mapped)) securityMatches.add(mapped);
+        }
+        return;
+      }
+
+      const nid = normalizeId(rawId);
+      if (!nid) return;
+
+      // direct employee-id match
+      if (securitySet.has(nid)) {
+        securityMatches.add(nid);
+        return;
+      }
+
+      // if this id is actually a GUID or a card, map to EmployeeID via idToEmployee
+      if (idToEmployee.has(nid)) {
+        const mapped = idToEmployee.get(nid);
+        if (mapped && securitySet.has(mapped)) securityMatches.add(mapped);
+      }
+    });
+
+    // 2) As a fallback: inspect floorBreakdown occupants for this floor (if available)
+    //    to find any occupant whose PersonGUID or CardNumber appears in inOnlyPersons, then map to EmployeeID.
+    if (securityMatches.size === 0 && Array.isArray(floorBreakdown)) {
+      const fb = floorBreakdown.find(f => normalizeId(f.floor) === normalizeId(floor));
+      if (fb && Array.isArray(fb.occupants)) {
+        fb.occupants.forEach(o => {
+          const guid = normalizeId(o.PersonGUID || o.personGUID || o.PersonGuid);
+          const emp = normalizeId(o.EmployeeID || o.EmployeeId || o.employeeID || o.Employee);
+          const card = normalizeId(o.CardNumber || o.cardNumber || o.Card);
+
+          // if any inOnlyPersons contains guid/card/employee, and emp is a security id, add it
+          const anyMatch = inOnlyPersons.some(rawId => {
+            const nid = normalizeId(rawId);
+            return nid && (nid === guid || nid === card || nid === emp);
+          });
+          if (anyMatch && emp && securitySet.has(emp)) securityMatches.add(emp);
+        });
+      }
+    }
+
+    const securityList = Array.from(securityMatches).sort();
+    const securityCount = securityList.length;
+
+    return {
+      floor,
+      inSwipes,
+      outSwipes,
+      inconsistency: inSwipes - outSwipes,
+      securityCount,
+      securityList,
+      rawInOnlyPersons: inOnlyPersons // keep for debugging if needed
+    };
+  });
+
+  const sorted = normalizedRows.sort((a, b) => b.inconsistency - a.inconsistency);
   const top = sorted[0];
 
   return (
@@ -79,18 +151,11 @@ export default function FloorInOutTable({ data = [] }) {
         }}
       >
         {top && (
-          <div
-            className="mb-3"
-            style={{ color: '#fff', fontSize: '1rem' }}
-          >
+          <div className="mb-3" style={{ color: '#fff', fontSize: '1rem' }}>
             Highest inconsistency:&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-              {top.inconsistency}
-            </span>
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.inconsistency}</span>
             &nbsp;on&nbsp;
-            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>
-              {top.floor}
-            </span>
+            <span style={{ color: '#FFC72C', fontWeight: 'bold' }}>{top.floor}</span>
           </div>
         )}
 
@@ -106,332 +171,48 @@ export default function FloorInOutTable({ data = [] }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row, idx) => (
-              <tr
-                key={row.floor}
-                style={{
-                  backgroundColor: row.securityCount > 0 ? '#333300' : undefined
-                }}
-              >
-                <td style={{ color: '#fff' }}>{row.floor}</td>
-                <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>
-                  {row.inSwipes}
-                </td>
-                <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>
-                  {row.outSwipes}
-                </td>
-                <td
-                  style={{
-                    color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {row.inconsistency}
-                </td>
+            {sorted.map((row, idx) => {
+              const tooltipText =
+                row.securityList && row.securityList.length > 0
+                  ? row.securityList.join(', ')
+                  : (row.rawInOnlyPersons && row.rawInOnlyPersons.length > 0
+                      ? `No matching EmployeeID in SECURITY_OFFICERS. rawIDs: ${row.rawInOnlyPersons.map(x => normalizeId(x)).join(', ')}`
+                      : 'No security present');
 
-                {/* Security column */}
-                <td
-                  title={
-                    row.securityList.length > 0
-                      ? row.securityList.join(', ')
-                      : 'No security present'
-                  }
-                  style={{
-                    color: row.securityCount > 0 ? '#FFC72C' : '#aaa',
-                    fontWeight: row.securityCount > 0 ? 'bold' : 'normal'
-                  }}
+              return (
+                <tr
+                  key={row.floor}
+                  style={{ backgroundColor: row.securityCount > 0 ? '#333300' : undefined }}
                 >
-                  {row.securityCount}
-                </td>
+                  <td style={{ color: '#fff' }}>{row.floor}</td>
+                  <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
+                  <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
+                  <td
+                    style={{
+                      color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {row.inconsistency}
+                  </td>
 
-                <td></td>
-              </tr>
-            ))}
+                  {/* Security column with Bootstrap tooltip */}
+                  <td style={{ color: row.securityCount > 0 ? '#FFC72C' : '#aaa', fontWeight: row.securityCount > 0 ? 'bold' : 'normal' }}>
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip id={`sec-tip-${row.floor}`}>{tooltipText}</Tooltip>}
+                    >
+                      <span style={{ cursor: 'default' }}>{row.securityCount}</span>
+                    </OverlayTrigger>
+                  </td>
+
+                  <td></td>
+                </tr>
+              );
+            })}
           </tbody>
         </Table>
       </Card.Body>
     </Card>
-  );
-}
-
-
-// src/App.js
-
-import React, { useEffect, useState } from 'react';
-import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-
-import DashboardHome from './pages/DashboardHome';
-import FloorDetailsPage from './pages/FloorDetailsPage';
-import DenverInOutInconsistencyPage from './pages/DenverInOutInconsistency'; // ← NEW
-
-import './App.css';
-
-export default function App() {
-  // live data states
-  const [floorData, setFloorData] = useState([]);
-  const [personnelBreakdown, setPersonnelBreakdown] = useState([]);
-  const [totalVisitedToday, setTotalVisitedToday] = useState(0);
-  const [personnelSummary, setPersonnelSummary] = useState({ employees: 0, contractors: 0 });
-  const [visitedToday, setVisitedToday] = useState({ employees: 0, contractors: 0, total: 0 });
-  const [floorInOutSummary, setFloorInOutSummary] = useState([]); // ← NEW
-
-  // new: in/out inconsistency data
-  const [inOutData, setInOutData] = useState(null);
-  const [loadingInOut, setLoadingInOut] = useState(true);
-  const [inOutError, setInOutError] = useState(null);
-
-  // --- Snapshot/time selection states ---
-  const [snapshotMode, setSnapshotMode] = useState(false);
-  const [snapshotTime, setSnapshotTime] = useState(''); // "HH:MM" or "HH:MM:SS"
-  const [snapshotDate, setSnapshotDate] = useState(() => {
-    // default to today's date in America/Denver in YYYY-MM-DD (en-CA format)
-    try {
-      return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-    } catch (e) {
-      // fallback to local date if running in environment without timeZone support
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
-  });
-  const [snapshotLoading, setSnapshotLoading] = useState(false);
-  const [snapshotError, setSnapshotError] = useState(null);
-  const [snapshotData, setSnapshotData] = useState(null); // will hold the payload returned by the new API
-
-  // live SSE (unchanged)
-  useEffect(() => {
-    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-    es.onmessage = e => {
-      try {
-        const p = JSON.parse(e.data);
-        setFloorData(p.floorBreakdown || []);
-        setPersonnelBreakdown(p.personnelBreakdown || []);
-        setTotalVisitedToday(p.totalVisitedToday || 0);
-        setPersonnelSummary(p.personnelSummary || { employees: 0, contractors: 0 });
-        setVisitedToday(p.visitedToday || { employees: 0, contractors: 0, total: 0 });
-        setFloorInOutSummary(p.floorInOutSummary || []); // ← NEW
-      } catch (err) {
-        console.error('SSE parse error:', err);
-      }
-    };
-    es.onerror = err => {
-      console.error('SSE error:', err);
-      es.close();
-    };
-    return () => es.close();
-  }, []);
-
-  // Fetch once: in/out inconsistency JSON (unchanged)
-  useEffect(() => {
-    fetch('http://localhost:5000/api/inout-inconsistency-denver')
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-        return res.json();
-      })
-      .then(data => {
-        setInOutData(data.floorInconsistency || []); // ✅ Store only the array we want
-        setLoadingInOut(false);
-      })
-      .catch(err => {
-        console.error('Failed to load in/out inconsistency:', err);
-        setInOutError(err.message);
-        setLoadingInOut(false);
-      });
-  }, []);
-
-  // --- Snapshot handlers ---
-  const handleSnapshotTimeChange = (e) => {
-    setSnapshotTime(e.target.value);
-    setSnapshotError(null);
-  };
-
-  const handleSnapshotDateChange = (e) => {
-    setSnapshotDate(e.target.value);
-    setSnapshotError(null);
-  };
-
-  const applySnapshot = async () => {
-    if (!snapshotTime) {
-      setSnapshotError('Select a time first.');
-      return;
-    }
-    if (!snapshotDate) {
-      setSnapshotError('Select a date first.');
-      return;
-    }
-
-    // Ensure time has seconds (append :00 if only HH:MM)
-    const timeForApi = snapshotTime.length === 5 ? `${snapshotTime}:00` : snapshotTime;
-
-    setSnapshotLoading(true);
-    setSnapshotError(null);
-
-    try {
-      const url = `http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(`${resp.status} ${resp.statusText} - ${txt}`);
-      }
-      const json = await resp.json();
-      setSnapshotData(json);
-      setSnapshotMode(true);
-    } catch (err) {
-      console.error('Failed to fetch snapshot:', err);
-      setSnapshotError(err.message || 'Failed to fetch snapshot');
-      setSnapshotData(null);
-      setSnapshotMode(false);
-    } finally {
-      setSnapshotLoading(false);
-    }
-  };
-
-  const clearSnapshot = () => {
-    setSnapshotMode(false);
-    setSnapshotData(null);
-    setSnapshotTime('');
-    setSnapshotError(null);
-    setSnapshotLoading(false);
-    // keep snapshotDate (so user doesn't need to reselect date)
-  };
-
-  // --- Decide which data to pass into child components: snapshotData (if active) or live data ---
-  const activeFloorData = snapshotMode && snapshotData ? (snapshotData.floorBreakdown || []) : floorData;
-  const activePersonnelBreakdown = snapshotMode && snapshotData ? (snapshotData.personnelBreakdown || []) : personnelBreakdown;
-  const activeTotalVisitedToday = snapshotMode && snapshotData ? (snapshotData.totalVisitedToday || 0) : totalVisitedToday;
-  const activePersonnelSummary = snapshotMode && snapshotData ? (snapshotData.personnelSummary || { employees: 0, contractors: 0 }) : personnelSummary;
-  const activeVisitedToday = snapshotMode && snapshotData ? (snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 }) : visitedToday;
-  const activeFloorInOutSummary = snapshotMode && snapshotData ? (snapshotData.floorInOutSummary || []) : floorInOutSummary;
-
-  // Helper text to be shown in navbar / header when snapshot is active
-  let snapshotLabel = null;
-  if (snapshotMode && snapshotData) {
-    const asOfLocal = snapshotData.asOfLocal || snapshotData.asOf || snapshotData.asOfUTC;
-    try {
-      // If asOfLocal exists, show it formatted for Denver
-      const d = asOfLocal ? new Date(asOfLocal) : null;
-      const formatted = d ? d.toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${snapshotDate} ${snapshotTime}`;
-      snapshotLabel = <div style={{
-            background: '#363d37',
-            color: '#FFF',
-            padding: '8px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderLeft: '4px solid rgb(11, 248, 3)',
-            marginBottom: 8
-          }}> Snapshot: {formatted} (Denver) </div>;
-    } catch (e) {
-      snapshotLabel = `Snapshot: ${snapshotDate} ${snapshotTime}`;
-    }
-  }
-
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
-          <Navbar.Brand as={Link} to="/" className="wu-brand">
-            Live Occupancy — Western Union Denver
-          </Navbar.Brand>
-
-          <Nav className="ms-auto align-items-center">
-            <Nav.Link as={Link} to="/" className="nav-item-infographic">
-              Dashboard
-            </Nav.Link>
-            <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
-              History
-            </Nav.Link>
-            <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
-              Floor Details
-            </Nav.Link>
-            <Nav.Link as={Link} to="/inout-inconsistency-denver" className="nav-item-infographic">
-              In/Out Inconsistency
-            </Nav.Link>
-
-            {/* Snapshot time + date picker UI */}
-            <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
-              <InputGroup>
-                <Form.Control
-                  type="date"
-                  value={snapshotDate}
-                  onChange={handleSnapshotDateChange}
-                  title="Select date (Denver)"
-                  style={{ maxWidth: 150 }}
-                />
-                <Form.Control
-                  type="time"
-                  step="1"              // allow seconds in browsers that support it
-                  value={snapshotTime}
-                  onChange={handleSnapshotTimeChange}
-                  title="Select time (Denver)"
-                  style={{ maxWidth: 120 }}
-                />
-                <Button variant="outline-light" onClick={applySnapshot} disabled={snapshotLoading}>
-                  {snapshotLoading ? 'Loading…' : 'Apply'}
-                </Button>
-                <Button variant="outline-secondary" onClick={clearSnapshot} className="ms-1">
-                  Clear
-                </Button>
-              </InputGroup>
-            </Form>
-
-            <Nav.Link className="theme-toggle-icon" title="Dark mode only">
-              <FaSun color="#FFC72C" />
-            </Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Container fluid className="mt-4">
-          {/* If snapshot active, show small label */}
-          {snapshotLabel && (
-            <div style={{ color: '#FFC72C', marginBottom: 8 }}>
-              {snapshotLabel}
-              {snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{snapshotError}</span>}
-            </div>
-          )}
-
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <DashboardHome
-                  personnelSummary={activePersonnelSummary}
-                  totalVisitedToday={activeTotalVisitedToday}
-                  visitedToday={activeVisitedToday}
-                  floorData={activeFloorData}
-                  personnelBreakdown={activePersonnelBreakdown}
-                  floorInOutSummary={activeFloorInOutSummary}
-                />
-              }
-            />
-
-            <Route
-              path="/floor-details"
-              element={
-                <FloorDetailsPage
-                  floorData={activeFloorData}
-                  floorInOutSummary={activeFloorInOutSummary}
-                />
-              }
-            />
-
-            <Route
-              path="/inout-inconsistency-denver"
-              element={
-                <DenverInOutInconsistencyPage
-                  data={inOutData}
-                  loading={loadingInOut}
-                  error={inOutError}
-                />
-              }
-            />
-          </Routes>
-        </Container>
-      </div>
-    </BrowserRouter>
   );
 }
