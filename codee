@@ -1,3 +1,17 @@
+http://localhost:5000/api/rejections
+Server Error
+
+Server running at http://localhost:5000
+✅ MSSQL pool connected
+✅ Denver MSSQL pool connected
+Error fetching rejection data: TypeError: Cannot read properties of undefined (reading 'trim')
+    at normalizeKey (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\normalizeKey.js:10:22)
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverRejection.js:149:23
+    at Array.map (<anonymous>)
+    at getRejections (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverRejection.js:146:38)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+
 // controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
 const doorFloorMap = require("../data/denverDoorFloorMap");
