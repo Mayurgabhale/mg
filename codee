@@ -1,23 +1,8 @@
-
-  "ERT Team Members": [
-  { "Name": "Nair, Saurabh",                    "Base Location": "Podium Floor -Yellow Zone",  "Email": "Saurabh.Nair@wu.com" , "phone": "xxx-xxx-xxxx" },
-  { "Name": "Ladva, Hirav",                     "Floor": "Podium Floor- Yellow Zone",  "Email": "Hirav.Ladva@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Ahuja, Charandeep Singh",          "Floor": "Podium Floor-Green Zone - 2", "Email": "CharandeepSingh.Ahuja@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Samrendra, Samar",                 "Floor": "Podium Floor-Green Zone - 2",  "Email": "Samar.Samrendra@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Mahajan, Sachin",               "Floor": "Podium Floor-Green Zone - 2",  "Email": "sachin.mahajan@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Sharma, Rajesh",                  "Floor": "Podium Floor-Green Zone - 2", "Email": "Rajesh.Sharma@wu.com"  , "phone": "xxx-xxx-xxxx"},
-  {  "Name": "Palve, Vikas",                     "Floor": "2nd Floor",  "Email": "Vikas.Palve@wu.com" , "phone": "xxx-xxx-xxxx" },
-  {  "Name": "Nalband, Khushboo",               "Floor": "2nd Floor",  "Email": "Khushboo.Nalband@wu.com"  , "phone": "xxx-xxx-xxxx"},
-read above and like that ceat beloc only Name 	EmployeeID
-
-
-C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\data\DenverSecurity.json
-
-
-Name 	EmployeeID
-Martin, Paul	W0023386
- ------	      W0025490
-------    W0025492
-_-----      W0025493
-Asuako, Derrick	W0025639
-Abdalla, Meira	W0026455
+[
+  { "Name": "Martin, Paul", "EmployeeID": "W0023386" },
+  { "Name": "", "EmployeeID": "W0025490" },
+  { "Name": "", "EmployeeID": "W0025492" },
+  { "Name": "", "EmployeeID": "W0025493" },
+  { "Name": "Asuako, Derrick", "EmployeeID": "W0025639" },
+  { "Name": "Abdalla, Meira", "EmployeeID": "W0026455" }
+]
