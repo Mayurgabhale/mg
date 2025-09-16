@@ -1,40 +1,10 @@
-writ correct // controllers/denversecurityrejection.js and also route
-
 // controllers/denversecurityrejection.js
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denversecurityrejection.js
 
-const mssql = require('mssql');
+const sql = require('mssql');
+const { denver } = require('../config/siteConfig'); // reuse poolPromise used elsewhere
 
-/**
- * Controller: getDenverSecurityRejection
- * - Expects req.query.parts to be a comma-separated list of PartitionName2 values,
- *   e.g. parts=US.CO.OBS.15,US.CO.OBS.14
- *
- * Response JSON:
- * {
- *   securityByFloor: [{ floor: 'Floor 15', count: 4, ids: ['W00...', ...] }, ...],
- *   rejectionsByFloor: [{ floor: 'Floor 15', rejectionCount: 3, cards: ['...'] }, ...],
- *   raw: { /* optional raw rows for debugging */ 
-//  * 
-//  *
-//  * NOTE: adjust sqlConfig to reuse your app-wide pool/config if you have one.
-//  * 
-//  *   */
-
-const sqlConfig = {
-  user: process.env.DB_USER || 'your_user',
-  password: process.env.DB_PASSWORD || 'your_password',
-  server: process.env.DB_HOST || 'your_sql_server_host',
-  database: process.env.DB_DATABASE || 'ACVSUJournal_00010029',
-  port: parseInt(process.env.DB_PORT || '1433', 10),
-  options: {
-    encrypt: false, // set true if using Azure / encryption
-    enableArithAbort: true,
-  },
-  pool: { max: 10, min: 0, idleTimeoutMillis: 30000 }
-};
-
-// Security officers list provided by you
+// Security officers list (source you provided)
 const SECURITY_OFFICERS = [
   'W0003901','W0019956','W0023386','W0025278','W0025490',
   'W0025492','W0025493','W0025639','W0026149','W0026151',
@@ -47,26 +17,30 @@ function sanitizePartitionList(partsRaw) {
     .split(',')
     .map(p => p.trim())
     .filter(p => p.length > 0)
-    .map(p => p.replace(/'/g, "''")) // basic single-quote escape
+    .map(p => p.replace(/'/g, "''")) // escape single quotes
     .map(p => `'${p}'`)
     .join(', ');
 }
 
-async function getDenverSecurityRejection(req, res) {
+exports.getDenverSecurityRejection = async (req, res) => {
   let pool;
   try {
-    const partsRaw = req.query.parts; // expected comma separated
+    const partsRaw = req.query.parts;
     const partsList = sanitizePartitionList(partsRaw);
     if (!partsList) {
-      return res.status(400).json({ error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14" });
+      return res.status(400).json({
+        error: "Missing or invalid 'parts' query param. Example: ?parts=US.CO.OBS.15,US.CO.OBS.14"
+      });
     }
 
-    pool = await mssql.connect(sqlConfig);
+    // get pool from config (same approach used in other controllers)
+    pool = await denver.poolPromise;
+    const request = pool.request();
 
-    // build a table-valued inline list of security officer IDs
+    // prepare inline VALUES list for security officers
     const secValues = SECURITY_OFFICERS.map(id => `('${id.replace("'", "''")}')`).join(',\n');
 
-    const sql = `
+    const sqlQuery = `
 -- Combined query for recent events (last 7 days)
 WITH CombinedQuery AS (
   SELECT
@@ -98,7 +72,6 @@ WITH CombinedQuery AS (
   LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
     ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
   WHERE
-    /* both accepted and rejected messages - we want security activity + rejections */
     t1.MessageType IN ('CardAccepted', 'CardRejected')
     AND t1.PartitionName2 IN (${partsList})
     AND CONVERT(DATE,
@@ -106,28 +79,24 @@ WITH CombinedQuery AS (
         ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
 ),
 
--- Keep only events with a parsed CardNumber
 EventsWithCard AS (
   SELECT *, LTRIM(RTRIM(CardNumber)) AS CardNumTrim
   FROM CombinedQuery
   WHERE COALESCE(LTRIM(RTRIM(CardNumber)), '') <> ''
 ),
 
--- Latest event per card (so we can approximate where that officer was last seen)
 LatestPerCard AS (
-  SELECT *
-  , ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY CardNumTrim ORDER BY LocaleMessageTime DESC) AS rn
   FROM EventsWithCard
 ),
 
--- Security officers dataset (inline)
 SecurityList AS (
   SELECT s.ID AS CardNumber FROM (VALUES
     ${secValues}
   ) AS s(ID)
 ),
 
--- Match latest security officers to floors
 SecurityLatest AS (
   SELECT
     lp.CardNumTrim AS CardNumber,
@@ -140,17 +109,15 @@ SecurityLatest AS (
     AND lp.PartitionName2 IS NOT NULL
 ),
 
--- Aggregate security counts and lists per floor
 SecurityByFloor AS (
   SELECT
     ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
     COUNT(DISTINCT CardNumber) AS SecurityCount,
-    STRING_AGG(DISTINCT CardNumber, ',') AS SecurityIDs -- requires SQL Server 2017+
+    STRING_AGG(DISTINCT CardNumber, ',') AS SecurityIDs
   FROM SecurityLatest
   GROUP BY PartitionName2
 ),
 
--- Rejection counts per floor (last 7 days)
 Rejections AS (
   SELECT
     ISNULL('Floor ' + PARSENAME(PartitionName2, 1), PartitionName2) AS Floor,
@@ -162,13 +129,13 @@ Rejections AS (
 )
 
 SELECT
+  (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) AS securityJsonSingle,
   (SELECT Floor, SecurityCount, SecurityIDs FROM SecurityByFloor FOR JSON PATH) AS securityJson,
   (SELECT Floor, RejectionCount, Cards FROM Rejections FOR JSON PATH) AS rejectionsJson;
 `;
 
-    const result = await pool.request().query(sql);
+    const result = await request.query(sqlQuery);
 
-    // The SQL returns two JSON strings as single-row result
     const row = result.recordset && result.recordset[0];
     let securityByFloor = [];
     let rejectionsByFloor = [];
@@ -186,36 +153,54 @@ SELECT
       }
     }
 
+    // Build a map keyed by floor for quick frontend lookup
+    const securityMap = {};
+    securityByFloor.forEach(item => {
+      const floorKey = item.Floor || item.floor || item.FloorLabel || 'Unknown Floor';
+      securityMap[floorKey] = {
+        count: item.SecurityCount || 0,
+        ids: item.SecurityIDs ? String(item.SecurityIDs).split(',').filter(Boolean) : [],
+        SecurityIDs: item.SecurityIDs,
+        SecurityCount: item.SecurityCount,
+        Floor: floorKey
+      };
+    });
+    rejectionsByFloor.forEach(item => {
+      const floorKey = item.Floor || item.floor || 'Unknown Floor';
+      if (!securityMap[floorKey]) securityMap[floorKey] = {};
+      securityMap[floorKey].RejectionCount = item.RejectionCount || 0;
+      securityMap[floorKey].Cards = item.Cards ? String(item.Cards).split(',').filter(Boolean) : [];
+    });
+
     return res.json({
       securityByFloor,
       rejectionsByFloor,
+      securityMap,
       meta: {
         partsRequested: partsRaw,
-        securityOfficersCount: SECURITY_OFFICERS.length,
+        securityOfficersCount: SECURITY_OFFICERS.length
       }
     });
-
   } catch (err) {
     console.error('denverSecurityRejection error:', err);
     return res.status(500).json({ error: err.message || String(err) });
-  } finally {
-    try { if (pool) await pool.close(); } catch (e) { /* ignore */ }
   }
-}
-
-module.exports = {
-  getDenverSecurityRejection
 };
 
 
 
-///////////////////////////
-// routes/occupancyDenverRoutes.js
+
+.....
+
+..
 const express = require('express');
 const router = express.Router();
 
 const { getDenverLiveOccupancy, getDenverSnapshotAtDateTime } = require('../controllers/denverLiveOccupancyController');
 const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+
+// <-- add this import:
+const { getDenverSecurityRejection } = require('../controllers/denversecurityrejection');
 
 // Denver live occupancy
 router.get('/live-occupancy-denver', getDenverLiveOccupancy);
@@ -226,394 +211,7 @@ router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
 // Denver snapshot endpoint
 router.get('/occupancy-at-time-denver', getDenverSnapshotAtDateTime);
 
+// NEW: Denver security + rejection summary (expects ?parts=...)
+router.get('/denver-security-rejection', getDenverSecurityRejection);
+
 module.exports = router;
-
-
-
-
-
-
-
-
-***********************
-
-// controllers/denverInOutInconsistencyController.js
-
-const { DateTime }       = require('luxon');
-const { denver }         = require('../config/siteConfig');
-const sql                = require('mssql');
-const normalizeKey       = require('../data/normalizeKey');
-const doorFloorMap       = require('../data/denverDoorFloorMap');
-const { monitoredDoors } = require('../data/strictDoorList');
-
-const warnedKeys = new Set();
-
-// Build a Set of normalized door___direction keys (strict doors only)
-const normalizedMonitoredKeys = new Set(
-  Object.entries(monitoredDoors).map(
-    ([door, dir]) => normalizeKey(door, dir)
-  )
-);
-
-/** Strip any trailing “_HH:MM:SS” from a door name **/
-function stripTimeSuffix(doorRaw) {
-  return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '').trim();
-}
-
-/**
- * Determine floor label by regex.
- * Falls back to doorFloorMap if necessary.
- */
-function extractFloor(rawDoor) {
-  const noTime = stripTimeSuffix(rawDoor);
-  const m = noTime.match(/HQ\.\s*(\d{1,2})\b/);
-  if (m) {
-    return `Floor ${m[1]}`;
-  }
-  // fallback: attempt to map via doorFloorMap
-  const keyIn  = normalizeKey(noTime, 'InDirection');
-  const keyOut = normalizeKey(noTime, 'OutDirection');
-  if (doorFloorMap[keyIn])  return doorFloorMap[keyIn];
-  if (doorFloorMap[keyOut]) return doorFloorMap[keyOut];
-  if (!warnedKeys.has(noTime)) {
-    console.warn(`⛔ Unmapped door for floor extraction: "${noTime}"`);
-    warnedKeys.add(noTime);
-  }
-  return 'Unknown Floor';
-}
-
-/**
-  Fetch all swipe events from Jan 1, 2025 up to now.
- * Returns an array of records with fields:
- *   LocaleMessageTime (Date),
- *   Dateonly (YYYY-MM-DD string),
- *   Swipe_Time (HH:mm:ss string),
- *   EmployeeID (string),
- *   PersonGUID (string),
- *   ObjectName1 (employee name),
- *   PersonnelType (string),
- *   CardNumber (string),
- *   AdmitCode (string),
- *   Direction ('InDirection' or 'OutDirection'),
- *   Door (string).
- */
-async function fetchHistoricalEvents() {
-  const pool = await denver.poolPromise;
-  const req  = pool.request();
-
-  // Start from January 1, 2025 at midnight (America/Denver)
-  const since = DateTime.fromObject(
-    { year: 2025, month: 1, day: 1, hour: 0, minute: 0, second: 0 },
-    { zone: 'America/Denver' }
-  ).toJSDate();
-
-
-    // Up to (but not including) today at midnight (America/Denver)
-  const until = DateTime.now()
-    .setZone('America/Denver')
-    .startOf('day')
-    .toJSDate();
-
-
-  req.input('since', sql.DateTime2, since);
-  req.input('until', sql.DateTime2, until);
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM ACVSUJournal_00010027.dbo.ACVSUJournalLog t1
-      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
-      LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-      LEFT JOIN ACVSUJournal_00010027.dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM ACVSUJournal_00010027.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType   = 'CardAdmitted'
-        AND t1.ObjectName2 LIKE '%HQ%'
-        AND DATEADD(MINUTE, t1.MessageLocaleOffset, t1.MessageUTC) >= @since
-          AND DATEADD(MINUTE, t1.MessageLocaleOffset, t1.MessageUTC) <  @until
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
-      CardNumber, AdmitCode, Direction, Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
-}
-
-/**
- * Compute in/out inconsistency metrics, adding:
- *   - dailyFloorStats: [
- *       {
- *         date,
- *         month,
- *         floor,
- *         inCount,
- *         outCount,
- *         totalPersons,
- *         inconsistentCount,
- *         inconsistencyPercentage,
- *         instances: [
- *           { employeeId, name, personnelType }
- *         ]
- *       }
- *     ]
- *   - floorInconsistency: [
- *       { floor, totalPersonDays, inconsistentPersonDays, inconsistencyPercentage }
- *     ]
- *   - employeeInconsistency: [
- *       { employeeId, totalDays, inconsistentDays, inconsistencyPercentage }
- *     ]
- *
- * Only strict‐door events (per monitoredDoors) are considered.
- */
-function computeInOutInconsistency(events) {
-  // STEP A: Build per‐person‐day‐floor buckets
-  // Key: `${personId}__${date}__${floor}`
-  const bucketMap = new Map();
-
-  events.forEach(evt => {
-    const dateOnly   = evt.Dateonly;           // 'YYYY-MM-DD'
-    const direction  = evt.Direction.trim();    // 'InDirection' or 'OutDirection'
-    const rawDoor    = evt.Door.trim();
-    const doorNoTime = stripTimeSuffix(rawDoor);
-    const normKey    = normalizeKey(doorNoTime, direction);
-
-    if (!normalizedMonitoredKeys.has(normKey)) return;
-
-    const personId = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
-    if (!personId) return;
-
-    const name          = evt.ObjectName1 || null;
-    const personnelType = evt.PersonnelType || null;
-    const floor         = extractFloor(doorNoTime);
-    const groupKey      = `${personId}__${dateOnly}__${floor}`;
-
-    if (!bucketMap.has(groupKey)) {
-      bucketMap.set(groupKey, {
-        personId,
-        name,
-        personnelType,
-        dateOnly,
-        floor,
-        firstInTime: null,
-        lastOutTime: null
-      });
-    }
-
-    const bucket    = bucketMap.get(groupKey);
-    const swipeTime = DateTime.fromFormat(evt.Swipe_Time, 'HH:mm:ss');
-
-    if (direction === 'InDirection') {
-      if (!bucket.firstInTime || swipeTime < bucket.firstInTime) {
-        bucket.firstInTime = swipeTime;
-      }
-    } else if (direction === 'OutDirection') {
-      if (!bucket.lastOutTime || swipeTime > bucket.lastOutTime) {
-        bucket.lastOutTime = swipeTime;
-      }
-    }
-  });
-
-  // STEP B: Aggregate per date‐floor for dailyFloorStats
-  // Key: `${dateOnly}__${floor}`
-  const dateFloorMap = new Map();
-
-  bucketMap.forEach(bucket => {
-    const { personId, name, personnelType, dateOnly, floor, firstInTime, lastOutTime } = bucket;
-    const dfKey = `${dateOnly}__${floor}`;
-
-    if (!dateFloorMap.has(dfKey)) {
-      dateFloorMap.set(dfKey, {
-        date: dateOnly,
-        month: DateTime.fromISO(dateOnly).toFormat('LLLL'),
-        floor,
-        totalPersons: 0,
-        inCount: 0,
-        outCount: 0,
-        inconsistentCount: 0,
-        instances: []
-      });
-    }
-
-    const stats = dateFloorMap.get(dfKey);
-    stats.totalPersons += 1;
-
-    const hasIn  = Boolean(firstInTime);
-    const hasOut = Boolean(lastOutTime);
-    if (hasIn)  stats.inCount += 1;
-    if (hasOut) stats.outCount += 1;
-
-    if (!(hasIn && hasOut)) {
-      stats.inconsistentCount += 1;
-      stats.instances.push({
-        employeeId: personId,
-        name,
-        personnelType
-      });
-    }
-  });
-
-  // After populating, compute inconsistencyPercentage for each date‐floor
-  const dailyFloorStats = [];
-  dateFloorMap.forEach(stats => {
-    const { totalPersons, inconsistentCount } = stats;
-    const pct = totalPersons > 0 ? (inconsistentCount / totalPersons) * 100 : 0;
-    dailyFloorStats.push({
-      date: stats.date,
-      month: stats.month,
-      floor: stats.floor,
-      inCount: stats.inCount,
-      outCount: stats.outCount,
-      totalPersons: stats.totalPersons,
-      inconsistentCount: stats.inconsistentCount,
-      inconsistencyPercentage: parseFloat(pct.toFixed(2)),
-      instances: stats.instances
-    });
-  });
-
-  // STEP C: Floor‐level aggregated over entire period
-  const floorAgg = new Map();
-  bucketMap.forEach(bucket => {
-    const { dateOnly, floor, firstInTime, lastOutTime } = bucket;
-    const isInconsistent = !(firstInTime && lastOutTime);
-
-    if (!floorAgg.has(floor)) {
-      floorAgg.set(floor, {
-        totalPersonDays: 0,
-        inconsistentPersonDays: 0
-      });
-    }
-    const fAgg = floorAgg.get(floor);
-    fAgg.totalPersonDays += 1;
-    if (isInconsistent) {
-      fAgg.inconsistentPersonDays += 1;
-    }
-  });
-
-  const floorInconsistency = [];
-  floorAgg.forEach((vals, floor) => {
-    const { totalPersonDays, inconsistentPersonDays } = vals;
-    const pct =
-      totalPersonDays > 0
-        ? (inconsistentPersonDays / totalPersonDays) * 100
-        : 0;
-    floorInconsistency.push({
-      floor,
-      totalPersonDays,
-      inconsistentPersonDays,
-      inconsistencyPercentage: parseFloat(pct.toFixed(2))
-    });
-  });
-
-  // STEP D: Employee‐level aggregated over entire period
-  const empAgg = new Map();
-  bucketMap.forEach(bucket => {
-    const { personId, dateOnly, firstInTime, lastOutTime } = bucket;
-    const isInconsistent = !(firstInTime && lastOutTime);
-
-    if (!empAgg.has(personId)) {
-      empAgg.set(personId, {
-        totalDaysSet: new Set(),
-        inconsistentDaysSet: new Set()
-      });
-    }
-    const eAgg = empAgg.get(personId);
-    eAgg.totalDaysSet.add(dateOnly);
-    if (isInconsistent) {
-      eAgg.inconsistentDaysSet.add(dateOnly);
-    }
-  });
-
-  const employeeInconsistency = [];
-  empAgg.forEach((vals, personId) => {
-    const totalDays = vals.totalDaysSet.size;
-    const inconsistentDays = vals.inconsistentDaysSet.size;
-    const pct =
-      totalDays > 0 ? (inconsistentDays / totalDays) * 100 : 0;
-    employeeInconsistency.push({
-      employeeId: personId,
-      totalDays,
-      inconsistentDays,
-      inconsistencyPercentage: parseFloat(pct.toFixed(2))
-    });
-  });
-
-  return {
-    asOf: new Date().toISOString(),
-    dailyFloorStats,
-    floorInconsistency,
-    employeeInconsistency
-  };
-}
-
-/**
- * Controller endpoint: GET /api/denver/inout-inconsistency
- *
- * Fetches all strict-door swipe events from Jan 1, 2025 to now,
- * computes:
- *   1. dailyFloorStats (by date + floor)
- *   2. floorInconsistency (overall per floor)
- *   3. employeeInconsistency (overall per employee)
- * and returns a JSON payload.
- */
-
-
-async function withRetry(fn, retries = 2) {
-  let lastErr;
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      if ((err.code === 'ECONNRESET' || err.code === 'ESOCKET') && i < retries) {
-        console.warn(`🔁 Retrying due to ${err.code} (${i + 1}/${retries})`);
-        await new Promise(res => setTimeout(res, 1000));
-        continue;
-      }
-      break;
-    }
-  }
-  throw lastErr;
-}
-
-exports.getDenverInOutInconsistency = async (req, res) => {
-  try {
-    const events = await withRetry(fetchHistoricalEvents, 3);
-    const result = computeInOutInconsistency(events);
-    res.status(200).json(result);
-  } catch (err) {
-    console.error('❌ Error computing in/out inconsistency:', err);
-    res.status(500).json({
-      error: 'Failed to compute in/out inconsistency'
-    });
-  }
-};
