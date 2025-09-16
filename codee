@@ -1,16 +1,12 @@
-
 {
   "summary": [
     {
       "floor": "Out of office",
       "rejectionCount": 46
     },
-    {
-      "floor": "undefined",
-      "rejectionCount": 17
-    }
-  ],
-  "details": [
+if floor is out of office then chekc 
+
+"details": [
     {
       "LocaleMessageTime": "2025-09-15T15:06:01.000Z",
       "DateOnly": "2025-09-15T00:00:00.000Z",
@@ -43,30 +39,62 @@
       "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
       "RejectionType": "Expired",
       "floor": "Out of office"
-    },
-    {
-      "LocaleMessageTime": "2025-09-15T10:24:10.000Z",
-      "DateOnly": "2025-09-15T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T10:24:10.000Z",
-      "CardNumber": "612304",
-      "PersonnelType": "Employee",
-      "Location": "USA/Canada Default",
-      "Door": "AUSTIN MAIN ENTRY",
-      "RejectionType": "CardDisabled"
-    },
+"Door": "US.CO.HQ. 12 || 12 means floor is 12 
+  "Door": "US.CO.HQ. 06}|| 06 means floor is 6 ok:
 
+ {
+      "floor": "undefined",
+      "rejectionCount": 17
+    }
+and otehr is undefined 
+chekc const doorFloorMap = require("../data/denverDoorFloorMap");
+we alread define which door whic floor see this also 
+// Auto-generated from data/doorDenver.xlsx
+const normalizeKey = require('./normalizeKey');
+const rawMap = {
+  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. SOUTH LOBBY DOORS-IN___OUT": "Out of office",
+  "US.CO.HQ. 12. IDF RESTRICTED DOOR___IN": "Floor 12",
+  "US.CO.HQ. 12. IDF RESTRICTED DOOR___OUT": "Out of office",
+  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___IN": "Floor 12",
+  "US.CO.HQ. 12. STORAGE ROOM_11:01:0A___OUT": "Out of office",
+  "US.CO.HQ. 12. NORTH STAIRWELL-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. NORTH STAIRWELL-IN___OUT": "Out of office",
+  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___IN": "Floor 12",
+  "US.CO.HQ. 12. FREIGHT ELEVATOR LOBBY-IN___OUT": "Out of office",
+  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___IN": "Floor 12",
+  "US.CO.HQ. 12. MOTHERS ROOM_11:01:CC___OUT": "Out of office",
+ "US.CO.HQ. 14. SOUTH LOBBY DOORS-OUT___IN": "Floor 14",
+  "US.CO.HQ. 14. SOUTH LOBBY DOORS-OUT___OUT": "Out of office",
+  "US.CO.HQ. 14. SOUTH STAIRWELL-OUT___IN": "Floor 14",
+  "US.CO.HQ. 14. SOUTH STAIRWELL-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY EAST DOOR-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY EAST DOOR-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY LEFT-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY LEFT-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY RIGHT DOOR-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. FREIGHT ELEVATOR LOBBY RIGHT DOOR-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. NORTH LOBBY DOORS-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. NORTH LOBBY DOORS-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. NORTH STAIRWELL-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. NORTH STAIRWELL-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. SOUTH LOBBY DOORS-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. SOUTH LOBBY DOORS-OUT___OUT": "Out of office",
+  "US.CO.HQ. 15. SOUTH STAIRWELL-OUT___IN": "Floor 15",
+  "US.CO.HQ. 15. SOUTH STAIRWELL-OUT___OUT": "Out of office"
+}
 
-floor is not "floor": "Out of office", 
-in "Door": "US.CO.HQ. 06.  -- 06 floor 6
- "Door": "US.CO.HQ. 12. ---- 12 floor 12 like that 
+const doorToFloorMap = {};
+for (const [rawKey, floor] of Object.entries(rawMap)) {
+  const [doorRaw, dirRaw] = rawKey.split('___');
+  const normKey = normalizeKey(doorRaw, dirRaw);
+  doorToFloorMap[normKey] = floor;
+}
 
-and location only   "Location": "US.CO.OBS", not all locaiton rejectn:; i want only  "Location": "US.CO.OBS", this locain only ok 
+module.exports = doorToFloorMap;
 
-
-
-
-
-
+se this already deniend ok 
+"US.CO.HQ. 15. SOUTH STAIRWELL-OUT___IN": "Floor 15", 
 
 // controllers/denverRejection.js
 const { denver } = require("../config/siteConfig");
