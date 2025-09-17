@@ -1,3 +1,315 @@
+Not disply only today: 
+Highest inconsistency: 15 on Floor 14
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection (Today)
+Floor 14	269	254	15	0	0
+Floor 15	37	27	10	0	4
+Floor 01	15	6	9	1	9
+Floor 13	165	160	5	0	1
+Floor 11	147	142	5	0	0
+Floor 12	203	198	5	0	22
+Floor 09	128	124	4	0	5
+Floor 06	86	82	4	0	9
+
+I want to disply one today in table 
+
+http://localhost:5000/api/rejections
+{
+  "summary": [
+    {
+      "floor": "Floor 12",
+      "rejectionCount": 22
+    },
+    {
+      "floor": "Floor 1",
+      "rejectionCount": 9
+    },
+    {
+      "floor": "Floor 6",
+      "rejectionCount": 9
+    },
+    {
+      "floor": "Floor 15",
+      "rejectionCount": 4
+    },
+    {
+      "floor": "Floor 9",
+      "rejectionCount": 5
+    },
+    {
+      "floor": "Floor 13",
+      "rejectionCount": 1
+    }
+  ],
+  "dateWise": [
+    {
+      "date": "2025-09-16",
+      "floors": [
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 7
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-09-15",
+      "floors": [
+        {
+          "floor": "Floor 6",
+          "rejectionCount": 3
+        },
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 2
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-09-12",
+      "floors": [
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 1
+        },
+        {
+          "floor": "Floor 15",
+          "rejectionCount": 3
+        }
+      ]
+    },
+    {
+      "date": "2025-09-11",
+      "floors": [
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 10
+        },
+        {
+          "floor": "Floor 9",
+          "rejectionCount": 5
+        },
+        {
+          "floor": "Floor 13",
+          "rejectionCount": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-09-10",
+      "floors": [
+        {
+          "floor": "Floor 6",
+          "rejectionCount": 5
+        },
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 1
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-09-09",
+      "floors": [
+        {
+          "floor": "Floor 6",
+          "rejectionCount": 1
+        },
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 2
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        },
+        {
+          "floor": "Floor 15",
+          "rejectionCount": 1
+        }
+      ]
+    }
+  ],
+  "details": [
+    {
+      "LocaleMessageTime": "2025-09-16T13:39:11.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:39:11.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:51.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:51.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:42.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+
+
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverRejection.js
+const { denver } = require("../config/siteConfig");
+const doorFloorMap = require("../data/denverDoorFloorMap");
+const normalizeKey = require("../data/normalizeKey");
+
+// helper: regex fallback to extract floor number from Door string
+function extractFloorFromDoor(door) {
+  if (!door) return "Unknown";
+  const match = door.match(/HQ\.\s*(\d{2})\./i);
+  if (match) {
+    return `Floor ${parseInt(match[1], 10)}`;
+  }
+  return "Unknown";
+}
+
+async function getRejections(req, res) {
+  try {
+    const pool = await denver.poolPromise;
+
+    const query = `
+      WITH CombinedQuery AS (
+        SELECT
+          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+          t1.ObjectName1      AS ObjectName1,
+          t1.ObjectName2      AS Door,
+          t1.PartitionName2   AS PartitionName2,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+            sc.value
+          )                    AS CardNumber,
+          t3.Name              AS PersonnelType,
+          t5_rej.value         AS RejectionType
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2
+          ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+          ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) AS sc
+          ON t1.XmlGUID = sc.GUID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5_rej
+          ON t1.XmlGUID = t5_rej.GUID AND t5_rej.Name = 'RejectCode'
+        WHERE
+          t1.MessageType = 'CardRejected'
+          AND t1.PartitionName2 = 'US.CO.OBS'
+          AND CONVERT(DATE,
+               DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+              ) >= DATEADD(DAY, -7, CONVERT(DATE, GETDATE()))
+      )
+      SELECT
+        LocaleMessageTime,
+        CONVERT(date, LocaleMessageTime)    AS DateOnly,
+        CONVERT(time(0), LocaleMessageTime) AS SwipeTime,
+        CardNumber,
+        PersonnelType,
+        PartitionName2                     AS Location,
+        Door,
+        RejectionType
+      FROM CombinedQuery
+      ORDER BY LocaleMessageTime DESC;
+    `;
+
+    const result = await pool.request().query(query);
+
+    // Post-process in JS
+    const details = result.recordset.map(r => {
+      let floor = "Unknown";
+
+      try {
+        const [doorRaw, dirRaw] = (r.Door || "").split("___");
+        const normKey = normalizeKey(doorRaw || "", dirRaw || "");
+        const mapped = doorFloorMap[normKey];
+
+        if (mapped && mapped !== "Out of office") {
+          floor = mapped;
+        } else {
+          floor = extractFloorFromDoor(r.Door);
+        }
+      } catch (e) {
+        console.warn("Failed to resolve floor for door:", r.Door, e.message);
+      }
+
+      return { ...r, floor };
+    });
+
+    // Floor-wise rejection count (all days combined)
+    const summary = details.reduce((acc, row) => {
+      if (row.floor !== "Unknown") {
+        if (!acc[row.floor]) acc[row.floor] = 0;
+        acc[row.floor]++;
+      }
+      return acc;
+    }, {});
+    const summaryArr = Object.entries(summary).map(([floor, rejectionCount]) => ({
+      floor,
+      rejectionCount,
+    }));
+
+    // Date + Floor-wise rejection count
+    const dateWiseMap = {};
+    details.forEach(row => {
+      if (row.floor === "Unknown") return;
+      const date = row.DateOnly.toISOString().split("T")[0]; // yyyy-mm-dd
+      if (!dateWiseMap[date]) dateWiseMap[date] = {};
+      if (!dateWiseMap[date][row.floor]) dateWiseMap[date][row.floor] = 0;
+      dateWiseMap[date][row.floor]++;
+    });
+
+    const dateWiseArr = Object.entries(dateWiseMap).map(([date, floors]) => ({
+      date,
+      floors: Object.entries(floors).map(([floor, rejectionCount]) => ({
+        floor,
+        rejectionCount,
+      })),
+    }));
+
+    res.json({
+      summary: summaryArr,
+      dateWise: dateWiseArr,
+      details,
+    });
+  } catch (err) {
+    console.error("Error fetching rejection data:", err);
+    res.status(500).send("Server Error");
+  }
+}
+
+module.exports = { getRejections };
+
+
+
+
+
 
 // src/components/FloorInOutTable.jsx
 // (only showing the full component for completeness — replace your file with this)
