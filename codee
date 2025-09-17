@@ -1,3 +1,217 @@
+rejection are disply in table :
+but when click on rejectin then details are not disply: 
+i got this message 
+Rejections Today - Floor 01
+No rejections recorded today for Floor 01
+in this table i want to dispy this detials 
+"LocaleMessageTime": "2025-09-16T13:38:51.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:51.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+ok 
+______________________________________________________________
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection (Today)
+Floor 14	267	253	14	0	0
+Floor 15	37	27	10	0	0
+Floor 01	15	6	9	1	2
+Floor 13	165	160	5	0	0
+Floor 12	202	198	4	0	7
+Floor 11	145	142	3	0	0
+Floor 06	86	83	3	0	0
+Floor 09	123	124	-1	0	0
+____________________________________
+http://localhost:5000/api/rejections
+{
+  "summary": [
+    {
+      "floor": "Floor 12",
+      "rejectionCount": 22
+    },
+    {
+      "floor": "Floor 1",
+      "rejectionCount": 9
+    },
+    {
+      "floor": "Floor 6",
+      "rejectionCount": 9
+    },
+    {
+      "floor": "Floor 15",
+      "rejectionCount": 4
+    },
+    {
+      "floor": "Floor 9",
+      "rejectionCount": 5
+    },
+    {
+      "floor": "Floor 13",
+      "rejectionCount": 1
+    }
+  ],
+  "dateWise": [
+    {
+      "date": "2025-09-16",
+      "floors": [
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 7
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-09-15",
+      "floors": [
+        {
+          "floor": "Floor 6",
+          "rejectionCount": 3
+        },
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 2
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-09-12",
+      "floors": [
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 1
+        },
+        {
+          "floor": "Floor 15",
+          "rejectionCount": 3
+        }
+      ]
+    },
+    {
+      "date": "2025-09-11",
+      "floors": [
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 10
+        },
+        {
+          "floor": "Floor 9",
+          "rejectionCount": 5
+        },
+        {
+          "floor": "Floor 13",
+          "rejectionCount": 1
+        }
+      ]
+    },
+    {
+      "date": "2025-09-10",
+      "floors": [
+        {
+          "floor": "Floor 6",
+          "rejectionCount": 5
+        },
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 1
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        }
+      ]
+    },
+    {
+      "date": "2025-09-09",
+      "floors": [
+        {
+          "floor": "Floor 6",
+          "rejectionCount": 1
+        },
+        {
+          "floor": "Floor 12",
+          "rejectionCount": 2
+        },
+        {
+          "floor": "Floor 1",
+          "rejectionCount": 2
+        },
+        {
+          "floor": "Floor 15",
+          "rejectionCount": 1
+        }
+      ]
+    }
+  ],
+  "details": [
+    {
+      "LocaleMessageTime": "2025-09-16T13:39:11.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:39:11.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:51.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:51.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:42.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:42.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:35.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:35.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:28.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:28.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+
+
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Table, Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
