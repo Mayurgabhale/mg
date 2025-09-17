@@ -1,206 +1,6 @@
-i want ot add <th>Rejection</th> count ech floor wise ok 
-for example ::
-Floor 12 Rejection  7 ok like that 
-Highest inconsistency: 15 on Floor 14 || Floor 1 rejection 2 ok 
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 14	269	254	15	0	
-Floor 15	37	27	10	0	
-Floor 01	15	6	9	1	
-Floor 12	203	198	5	0
-like that 
-
-http://localhost:5000/api/rejections
-{
-  "summary": [
-    {
-      "floor": "Floor 12",
-      "rejectionCount": 22
-    },
-    {
-      "floor": "Floor 1",
-      "rejectionCount": 9
-    },
-    {
-      "floor": "Floor 6",
-      "rejectionCount": 9
-    },
-    {
-      "floor": "Floor 15",
-      "rejectionCount": 4
-    },
-    {
-      "floor": "Floor 9",
-      "rejectionCount": 5
-    },
-    {
-      "floor": "Floor 13",
-      "rejectionCount": 1
-    }
-  ],
-  "dateWise": [
-    {
-      "date": "2025-09-16",
-      "floors": [
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 7
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        }
-      ]
-    },
-    {
-      "date": "2025-09-15",
-      "floors": [
-        {
-          "floor": "Floor 6",
-          "rejectionCount": 3
-        },
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 2
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        }
-      ]
-    },
-    {
-      "date": "2025-09-12",
-      "floors": [
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 1
-        },
-        {
-          "floor": "Floor 15",
-          "rejectionCount": 3
-        }
-      ]
-    },
-    {
-      "date": "2025-09-11",
-      "floors": [
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 10
-        },
-        {
-          "floor": "Floor 9",
-          "rejectionCount": 5
-        },
-        {
-          "floor": "Floor 13",
-          "rejectionCount": 1
-        }
-      ]
-    },
-    {
-      "date": "2025-09-10",
-      "floors": [
-        {
-          "floor": "Floor 6",
-          "rejectionCount": 5
-        },
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 1
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        }
-      ]
-    },
-    {
-      "date": "2025-09-09",
-      "floors": [
-        {
-          "floor": "Floor 6",
-          "rejectionCount": 1
-        },
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 2
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        },
-        {
-          "floor": "Floor 15",
-          "rejectionCount": 1
-        }
-      ]
-    }
-  ],
-  "details": [
-    {
-      "LocaleMessageTime": "2025-09-16T13:39:11.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:39:11.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:51.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:51.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:42.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:42.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:35.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:35.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:28.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:28.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-
-
-
-
-_________________________________________________________________
-import React, { useState } from 'react';
-import { Card, Table, Modal } from 'react-bootstrap';
+// src/components/FloorInOutTable.jsx
+import React, { useEffect, useMemo, useState } from 'react';
+import { Card, Table, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 // Accent palette
 const ROW_COLORS = [
@@ -208,69 +8,165 @@ const ROW_COLORS = [
   '#FFF5EE', '#FFD11A', '#96DED1', '#FFEB99'
 ];
 
-// Security Employee IDs (hardcoded, no JSON needed)
+// Security Employee IDs (hardcoded)
 const SECURITY_IDS = [
   "W0023386", "W0026455", "W0028120"
 ].map(id => id.toUpperCase());
 
 const normalizeId = v => String(v || '').trim().toUpperCase();
 
-export default function FloorInOutTable({ data = [], floorBreakdown = [], floorInOutSummary = [] }) {
-  const securitySet = new Set(SECURITY_IDS);
+// normalize floor names so "Floor 01" == "Floor 1"
+const normalizeFloorName = (f) => {
+  if (!f && f !== 0) return '';
+  return String(f).replace(/^Floor\s0*/, 'Floor ').trim();
+};
 
-  // State for modal
-  const [showModal, setShowModal] = useState(false);
-  const [selectedFloor, setSelectedFloor] = useState(null);
-  const [selectedPeople, setSelectedPeople] = useState([]);
+export default function FloorInOutTable({
+  data = [],
+  floorBreakdown = [],
+  floorInOutSummary = []
+}) {
+  const securitySet = useMemo(() => new Set(SECURITY_IDS), []);
 
-  // Map floor → security occupants
-  const securityByFloor = {};
+  // Security modal state (unchanged behavior: only security cell clickable)
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [selectedFloorSecurity, setSelectedFloorSecurity] = useState(null);
+  const [selectedPeopleSecurity, setSelectedPeopleSecurity] = useState([]);
 
-  (floorBreakdown || []).forEach(fb => {
-    const people = [];
-    (fb.occupants || []).forEach(o => {
-      const empId = normalizeId(o.EmployeeID);
-      if (securitySet.has(empId)) {
-        people.push(o);
+  // Rejection modal (optional) — we'll show tooltip instead, but keep state if later needed
+  const [rejectionDetails, setRejectionDetails] = useState({}); // { floor -> [details...] }
+  const [rejectionSummaryMap, setRejectionSummaryMap] = useState({}); // { floor -> count }
+  const [rejectionsLoading, setRejectionsLoading] = useState(false);
+
+  // Build securityByFloor from occupants & inOnlyPersons (same logic you had)
+  const securityByFloor = useMemo(() => {
+    const byFloor = {};
+
+    (floorBreakdown || []).forEach(fb => {
+      const people = [];
+      (fb.occupants || []).forEach(o => {
+        const empId = normalizeId(o.EmployeeID);
+        if (securitySet.has(empId)) people.push(o);
+      });
+      if (people.length) {
+        byFloor[fb.floor] = (byFloor[fb.floor] || []).concat(people);
       }
     });
-    if (people.length > 0) {
-      securityByFloor[fb.floor] = (securityByFloor[fb.floor] || []).concat(people);
+
+    (floorInOutSummary || []).forEach(f => {
+      (f.inOnlyPersons || []).forEach(pid => {
+        const empId = normalizeId(pid);
+        if (securitySet.has(empId)) {
+          byFloor[f.floor] = (byFloor[f.floor] || []).concat([
+            { EmployeeID: empId, ObjectName1: "(Unknown)", Swipe_Time: "—", Door: "—", PersonnelType: "—" }
+          ]);
+        }
+      });
+    });
+
+    return byFloor;
+  }, [floorBreakdown, floorInOutSummary, securitySet]);
+
+  // Fetch rejection summary + details from backend
+  useEffect(() => {
+    let mounted = true;
+    async function loadRejections() {
+      setRejectionsLoading(true);
+      try {
+        const res = await fetch('/api/rejections');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+
+        // payload: { summary: [{floor, rejectionCount}, ...], dateWise: [...], details: [...] }
+        // Build simple maps for fast lookup
+        const summaryMap = {};
+        (payload.summary || []).forEach(s => {
+          summaryMap[normalizeFloorName(s.floor)] = Number(s.rejectionCount) || 0;
+        });
+
+        // For details, group by normalized floor and also build dateWise map if present
+        const detailsByFloor = {};
+        (payload.details || []).forEach(d => {
+          const floorKey = normalizeFloorName(d.floor || d.floor || (d.floor === 0 ? 'Floor 0' : d.floor) || d.floor) ||
+                           normalizeFloorName(d.floor) ||
+                           normalizeFloorName(d.Location) ||
+                           ''; // fallback
+          // prefer the provided `floor` if present; else try to derive from Door/Location in backend
+          const nf = normalizeFloorName(d.floor || d.Location || '');
+          const key = nf || normalizeFloorName(d.Location || '');
+
+          const useKey = key || normalizeFloorName(d.floor) || 'Unknown';
+
+          detailsByFloor[useKey] = detailsByFloor[useKey] || [];
+          detailsByFloor[useKey].push(d);
+        });
+
+        if (!mounted) return;
+        setRejectionSummaryMap(summaryMap);
+        setRejectionDetails(detailsByFloor);
+      } catch (err) {
+        console.error('Failed to load rejections:', err);
+        if (mounted) {
+          setRejectionSummaryMap({});
+          setRejectionDetails({});
+        }
+      } finally {
+        if (mounted) setRejectionsLoading(false);
+      }
     }
-  });
 
-  (floorInOutSummary || []).forEach(f => {
-    (f.inOnlyPersons || []).forEach(pid => {
-      const empId = normalizeId(pid);
-      if (securitySet.has(empId)) {
-        // Just store as placeholder if not found in occupants
-        securityByFloor[f.floor] = (securityByFloor[f.floor] || []).concat([
-          { EmployeeID: empId, ObjectName1: "(Unknown)", Swipe_Time: "—" }
-        ]);
-      }
+    loadRejections();
+    return () => { mounted = false; };
+  }, []);
+
+  // Build sorted table rows (same as before) and attach securityCount & rejectionCount
+  const sorted = useMemo(() => {
+    const rows = (Array.isArray(data) ? data : []).map(({ floor, inSwipes, outSwipes }) => {
+      const normFloor = normalizeFloorName(floor);
+      return {
+        floor,
+        normFloor,
+        inSwipes: Number(inSwipes || 0),
+        outSwipes: Number(outSwipes || 0),
+        inconsistency: Number(inSwipes || 0) - Number(outSwipes || 0),
+        securityCount: (securityByFloor[floor] || []).length,
+        rejectionCount: rejectionSummaryMap[normFloor] || 0
+      };
     });
-  });
-
-  // Compute inconsistency and attach security count
-  const sorted = data
-    .map(({ floor, inSwipes, outSwipes }) => ({
-      floor,
-      inSwipes,
-      outSwipes,
-      inconsistency: inSwipes - outSwipes,
-      securityCount: (securityByFloor[floor] || []).length
-    }))
-    .sort((a, b) => b.inconsistency - a.inconsistency);
+    return rows.sort((a, b) => b.inconsistency - a.inconsistency);
+  }, [data, securityByFloor, rejectionSummaryMap]);
 
   const top = sorted[0];
 
-  const handleRowClick = (floor) => {
+  // Security modal handler (only open from Security cell)
+  const handleSecurityCellClick = (floor) => {
     const people = securityByFloor[floor] || [];
     if (people.length > 0) {
-      setSelectedFloor(floor);
-      setSelectedPeople(people);
-      setShowModal(true);
+      setSelectedFloorSecurity(floor);
+      setSelectedPeopleSecurity(people);
+      setShowSecurityModal(true);
     }
+  };
+
+  // Tooltip content for rejection cell: show date-wise breakdown (if available)
+  const renderRejectionTooltip = (floor) => {
+    // dateWise is returned by backend as array of {date, floors: [{floor, rejectionCount}, ...]}
+    // However to keep simple we will show recent details count + first few details if details exist
+    const nf = normalizeFloorName(floor);
+    const byFloor = rejectionDetails[nf] || [];
+    if (!byFloor.length) return 'No rejections';
+    const lines = [
+      `Total: ${byFloor.length}`,
+      '',
+      'Recent:'
+    ];
+    byFloor.slice(0, 6).forEach(d => {
+      const date = (d.DateOnly ? (new Date(d.DateOnly)).toISOString().slice(0,10) : (d.LocaleMessageTime ? d.LocaleMessageTime.slice(0,10) : ''));
+      const time = (d.SwipeTime ? (typeof d.SwipeTime === 'string' ? d.SwipeTime : new Date(d.SwipeTime).toTimeString().slice(0,8)) : '');
+      lines.push(`${date} ${time} — ${d.RejectionType || d.Rejection || ''}`);
+    });
+    if (byFloor.length > 6) lines.push(`… +${byFloor.length - 6} more`);
+    return lines.join('\n');
   };
 
   return (
@@ -313,16 +209,11 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [], floorI
                   <td style={{ color: '#fff' }}>{row.floor}</td>
                   <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
                   <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
-                  <td
-                    style={{
-                      color: ROW_COLORS[(idx + 2) % ROW_COLORS.length],
-                      fontWeight: 'bold'
-                    }}
-                  >
+                  <td style={{ color: ROW_COLORS[(idx + 2) % ROW_COLORS.length], fontWeight: 'bold' }}>
                     {row.inconsistency}
                   </td>
 
-                  {/* 👇 Only this cell is clickable */}
+                  {/* Security cell - clickable only this cell */}
                   <td
                     style={{
                       color: row.securityCount > 0 ? '#FFC72C' : '#aaa',
@@ -330,27 +221,39 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [], floorI
                       cursor: row.securityCount > 0 ? 'pointer' : 'default',
                       textDecoration: row.securityCount > 0 ? 'underline' : 'none'
                     }}
-                    onClick={() => {
-                      if (row.securityCount > 0) handleRowClick(row.floor);
-                    }}
+                    onClick={() => { if (row.securityCount > 0) handleSecurityCellClick(row.floor); }}
                   >
                     {row.securityCount}
                   </td>
 
-                  <td></td>
+                  {/* Rejection cell - shows count + tooltip with quick details */}
+                  <td style={{
+                    color: row.rejectionCount > 0 ? '#FFCCCB' : '#aaa',
+                    fontWeight: row.rejectionCount > 0 ? 'bold' : 'normal',
+                    cursor: row.rejectionCount > 0 ? 'help' : 'default'
+                  }}>
+                    {row.rejectionCount > 0 ? (
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={<Tooltip id={`rej-tip-${row.floor.replace(/\s+/g,'_')}`}>{renderRejectionTooltip(row.normFloor)}</Tooltip>}
+                      >
+                        <span>{row.rejectionCount}</span>
+                      </OverlayTrigger>
+                    ) : (
+                      0
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
-
-
           </Table>
         </Card.Body>
       </Card>
 
-      {/* Modal for details */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
+      {/* Security Modal */}
+      <Modal show={showSecurityModal} onHide={() => setShowSecurityModal(false)} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>Security Occupants - {selectedFloor}</Modal.Title>
+          <Modal.Title>Security Occupants - {selectedFloorSecurity}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Table striped bordered hover size="sm">
@@ -364,7 +267,7 @@ export default function FloorInOutTable({ data = [], floorBreakdown = [], floorI
               </tr>
             </thead>
             <tbody>
-              {selectedPeople.map((p, idx) => (
+              {selectedPeopleSecurity.map((p, idx) => (
                 <tr key={idx}>
                   <td>{p.EmployeeID}</td>
                   <td>{p.ObjectName1 || "(Unknown)"}</td>
