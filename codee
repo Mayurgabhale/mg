@@ -4,3 +4,124 @@ export default function FloorInOutTable({
   floorInOutSummary = [],
   rejectionSnapshot = null   // NEW
 }) {
+
+
+
+
+useEffect(() => {
+  let mounted = true;
+
+  async function loadFromSnapshotOrLive() {
+    setRejectionsLoading(true);
+
+    // If caller supplied a snapshot array, use it
+    if (Array.isArray(rejectionSnapshot)) {
+      try {
+        const detailsToday = rejectionSnapshot.slice(); // assume snapshot provides flat list
+        const summaryMap = {};
+        const detailsByFloor = {};
+
+        detailsToday.forEach(d => {
+          const derived = deriveFloorFromRecord(d) || 'Unknown';
+          const key = normalizeFloorName(derived) || 'Unknown';
+          detailsByFloor[key] = detailsByFloor[key] || [];
+          detailsByFloor[key].push(d);
+          summaryMap[key] = (summaryMap[key] || 0) + 1;
+        });
+
+        if (!mounted) return;
+        setRejectionSummaryMap(summaryMap);
+        setRejectionDetails(detailsByFloor);
+        setRejectionAllDetailsToday(detailsToday);
+      } catch (err) {
+        console.error('Failed to process rejection snapshot:', err);
+        if (mounted) {
+          setRejectionSummaryMap({});
+          setRejectionDetails({});
+          setRejectionAllDetailsToday([]);
+        }
+      } finally {
+        if (mounted) setRejectionsLoading(false);
+      }
+      return;
+    }
+
+    // Otherwise fetch live rejections (existing behavior)
+    try {
+      const res = await fetch('/api/rejections');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+
+      const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+      let detailsToday = [];
+      const summaryMap = {};
+
+      if (Array.isArray(payload.dateWise)) {
+        const dayObj = payload.dateWise.find(d => d.date === todayDenver);
+        if (dayObj && Array.isArray(dayObj.floors)) {
+          dayObj.floors.forEach(f => {
+            const key = normalizeFloorName(f.floor || '');
+            if (!key) return;
+            summaryMap[key] = Number(f.rejectionCount || 0);
+          });
+        }
+        if (Array.isArray(payload.details)) {
+          detailsToday = payload.details.filter(d => {
+            const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
+            if (!raw) return false;
+            try {
+              const dt = new Date(raw);
+              const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+              return dtStr === todayDenver;
+            } catch (e) {
+              return String(raw).slice(0, 10) === todayDenver;
+            }
+          });
+        }
+      } else if (Array.isArray(payload.details)) {
+        detailsToday = payload.details.filter(d => {
+          const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
+          if (!raw) return false;
+          try {
+            const dt = new Date(raw);
+            const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+            return dtStr === todayDenver;
+          } catch (e) {
+            return String(raw).slice(0, 10) === todayDenver;
+          }
+        });
+        detailsToday.forEach(d => {
+          const derived = deriveFloorFromRecord(d) || 'Unknown';
+          const key = normalizeFloorName(derived);
+          summaryMap[key] = (summaryMap[key] || 0) + 1;
+        });
+      }
+
+      const detailsByFloor = {};
+      detailsToday.forEach(d => {
+        const derived = deriveFloorFromRecord(d) || 'Unknown';
+        const key = normalizeFloorName(derived) || 'Unknown';
+        detailsByFloor[key] = detailsByFloor[key] || [];
+        detailsByFloor[key].push(d);
+      });
+
+      if (!mounted) return;
+      setRejectionSummaryMap(summaryMap);
+      setRejectionDetails(detailsByFloor);
+      setRejectionAllDetailsToday(detailsToday);
+    } catch (err) {
+      console.error('Failed to load rejections:', err);
+      if (mounted) {
+        setRejectionSummaryMap({});
+        setRejectionDetails({});
+        setRejectionAllDetailsToday([]);
+      }
+    } finally {
+      if (mounted) setRejectionsLoading(false);
+    }
+  }
+
+  loadFromSnapshotOrLive();
+  return () => { mounted = false; };
+}, [rejectionSnapshot]); // rerun when caller supplies a new snapshot
+
