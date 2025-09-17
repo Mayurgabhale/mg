@@ -146,14 +146,26 @@ in above code, so read below code and how to add EmployeeID tell me
 
 
 _____________________________________________________________________________________
-console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
+ swipeDate === today;
+}
+
+async function fetchNewEvents(since) {
+  let pool;
+  try {
+    pool = await denver.poolPromise;
+  } catch (err) {
+    console.error('❌ Failed to get Denver pool in fetchNewEvents():', err);
+    return [];
+  }
+  if (!pool) return [];
+
+  const req = pool.request();
+  req.input('since', sql.DateTime2, since);
+
   const { recordset } = await req.query(`
     WITH CombinedQuery AS (
       SELECT
-       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-       
-
-
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
         t1.ObjectName1,
         CASE
           WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
@@ -162,51 +174,40 @@ console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString(
         t1.ObjectIdentity1 AS PersonGUID,
         t3.Name AS PersonnelType,
         COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
           sc.value
         ) AS CardNumber,
         t5a.value AS AdmitCode,
         t5d.value AS Direction,
         t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
         ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
         ON t1.XmlGUID = t_xml.GUID
       LEFT JOIN (
         SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
         WHERE Name IN ('Card','CHUID')
       ) sc ON t1.XmlGUID = sc.GUID
       WHERE
-        t1.MessageType     = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) >@since
+        t1.MessageType   = 'CardAdmitted'
+        AND t1.ObjectName2 LIKE '%HQ%'
+        AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >=@since
     )
     SELECT
       LocaleMessageTime,
       CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door
+      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+      CardNumber, AdmitCode, Direction, Door
     FROM CombinedQuery
     ORDER BY LocaleMessageTime ASC;
   `);
 
-  // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
-    // recordset.map(r => r.LocaleMessageTime.toISOString()));
-
   return recordset;
 }
-This is my my different quier 
