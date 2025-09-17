@@ -1,21 +1,3 @@
-What i say::
-Highest inconsistency: 3 on Floor 11
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 11	5	2	3	0	0
-Floor 09	4	1	3	0	0
-Floor 13	3	2	1	0	0
-Floor 01	2	1	1	1	0
-Floor 06	3	3	0	0	0
-Floor 14	1	1	0	0	0
-Floor 12	2	2	0	0	0
-Floor 15	1	2	-1	0	0
-
-
-in table headre Security then disply all seciryt  Ok
-and in headre of table Rejection when clikc on Rejection then disply all rejectin:
-like that:
-ok: add the new 
-
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Table, Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
@@ -97,6 +79,10 @@ export default function FloorInOutTable({
   const [selectedRejectionFloor, setSelectedRejectionFloor] = useState(null);
   const [selectedRejectionList, setSelectedRejectionList] = useState([]);
 
+  // NEW: modals for header-clicks (show ALL security across floors, show ALL rejections today)
+  const [showAllSecurityModal, setShowAllSecurityModal] = useState(false);
+  const [showAllRejectionsModal, setShowAllRejectionsModal] = useState(false);
+
   // Build securityByFloor from occupants & inOnlyPersons
   const securityByFloor = useMemo(() => {
     const byFloor = {};
@@ -125,6 +111,15 @@ export default function FloorInOutTable({
 
     return byFloor;
   }, [floorBreakdown, floorInOutSummary, securitySet]);
+
+  // NEW: flattened security list (each item gets a floor property)
+  const securityFlat = useMemo(() => {
+    const arr = [];
+    Object.keys(securityByFloor || {}).forEach(f => {
+      (securityByFloor[f] || []).forEach(p => arr.push({ ...p, floor: f }));
+    });
+    return arr;
+  }, [securityByFloor]);
 
   // --- fetch rejections and keep only today's (Denver) records ---
   useEffect(() => {
@@ -270,6 +265,15 @@ export default function FloorInOutTable({
     setShowRejectionModal(true);
   };
 
+  // NEW: header click handlers
+  const handleSecurityHeaderClick = () => {
+    if ((securityFlat || []).length > 0) setShowAllSecurityModal(true);
+  };
+
+  const handleRejectionHeaderClick = () => {
+    if ((rejectionAllDetailsToday || []).length > 0) setShowAllRejectionsModal(true);
+  };
+
   // Tooltip content uses rejectionDetails (already filtered to today)
   const renderRejectionTooltip = (floor) => {
     const nf = normalizeFloorName(floor);
@@ -309,8 +313,20 @@ export default function FloorInOutTable({
                 <th>In Swipes</th>
                 <th>Out Swipes</th>
                 <th>In − Out</th>
-                <th>Security</th>
-                <th>Rejection</th>
+                <th
+                  style={{ cursor: (securityFlat && securityFlat.length) ? 'pointer' : 'default', textDecoration: (securityFlat && securityFlat.length) ? 'underline' : 'none' }}
+                  onClick={handleSecurityHeaderClick}
+                  title={securityFlat && securityFlat.length ? `Show all security (${securityFlat.length})` : 'No security'}
+                >
+                  Security
+                </th>
+                <th
+                  style={{ cursor: (rejectionAllDetailsToday && rejectionAllDetailsToday.length) ? 'pointer' : 'default', textDecoration: (rejectionAllDetailsToday && rejectionAllDetailsToday.length) ? 'underline' : 'none' }}
+                  onClick={handleRejectionHeaderClick}
+                  title={rejectionAllDetailsToday && rejectionAllDetailsToday.length ? `Show all rejections today (${rejectionAllDetailsToday.length})` : 'No rejections today'}
+                >
+                  Rejection
+                </th>
               </tr>
             </thead>
 
@@ -395,6 +411,46 @@ export default function FloorInOutTable({
         </Modal.Body>
       </Modal>
 
+      {/* NEW: All Security Modal (header click) */}
+      <Modal show={showAllSecurityModal} onHide={() => setShowAllSecurityModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>All Security Occupants</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {(!securityFlat || securityFlat.length === 0) ? (
+            <div>No security occupants found</div>
+          ) : (
+            <Table striped bordered hover size="sm">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Floor</th>
+                  <th>EmployeeID</th>
+                  <th>Name</th>
+                  <th>Swipe Time</th>
+                  <th>Door</th>
+                </tr>
+              </thead>
+              <tbody>
+                {securityFlat.map((p, i) => (
+                  <tr key={i}>
+                    <td>{i + 1}</td>
+                    <td>{p.floor}</td>
+                    <td>{p.EmployeeID}</td>
+                    <td>{p.ObjectName1 || '(Unknown)'}</td>
+                    <td>{p.Swipe_Time || '—'}</td>
+                    <td style={{ maxWidth: 240, wordBreak: 'break-word' }}>{p.Door || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAllSecurityModal(false)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Rejection details modal (today) */}
       <Modal show={showRejectionModal} onHide={() => setShowRejectionModal(false)} size="lg" centered>
         <Modal.Header closeButton>
@@ -459,7 +515,72 @@ export default function FloorInOutTable({
           <Button variant="secondary" onClick={() => setShowRejectionModal(false)}>Close</Button>
         </Modal.Footer>
       </Modal>
+
+      {/* NEW: All Rejections Modal (header click) */}
+      <Modal show={showAllRejectionsModal} onHide={() => setShowAllRejectionsModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>All Rejections Today</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {(!rejectionAllDetailsToday || rejectionAllDetailsToday.length === 0) ? (
+            <div>No rejections recorded today</div>
+          ) : (
+            <Table striped bordered hover size="sm">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Name</th>
+                  <th>EmployeeID</th>
+                  <th>CardNumber</th>
+                  <th>PersonnelType</th>
+                  <th>Door</th>
+                  <th>RejectionType</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rejectionAllDetailsToday.map((r, i) => {
+                  let localDate = '';
+                  let localTime = '';
+                  try {
+                    if (r.LocaleMessageTime) {
+                      const dt = new Date(r.LocaleMessageTime);
+                      localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                      localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
+                    } else if (r.DateOnly) {
+                      localDate = (typeof r.DateOnly === 'string' ? r.DateOnly.slice(0,10) : new Date(r.DateOnly).toISOString().slice(0,10));
+                      localTime = r.SwipeTime || '';
+                    }
+                  } catch (e) {
+                    localDate = (r.DateOnly || '').slice(0,10);
+                    localTime = r.SwipeTime || '';
+                  }
+
+                  const derived = deriveFloorFromRecord(r) || 'Unknown';
+
+                  return (
+                    <tr key={i}>
+                      <td>{i + 1}</td>
+                      <td>{localDate}</td>
+                      <td>{localTime}</td>
+                      <td>{r.ObjectName1}</td>
+                      <td>{r.EmployeeID}</td>
+                      <td>{r.CardNumber || '—'}</td>
+                      <td>{r.PersonnelType || '—'}</td>
+                      <td style={{ maxWidth: 280, wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
+                      <td>{r.RejectionType || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAllRejectionsModal(false)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
-
