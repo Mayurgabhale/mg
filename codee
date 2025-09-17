@@ -1,217 +1,3 @@
-rejection are disply in table :
-but when click on rejectin then details are not disply: 
-i got this message 
-Rejections Today - Floor 01
-No rejections recorded today for Floor 01
-in this table i want to dispy this detials 
-"LocaleMessageTime": "2025-09-16T13:38:51.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:51.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-ok 
-______________________________________________________________
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection (Today)
-Floor 14	267	253	14	0	0
-Floor 15	37	27	10	0	0
-Floor 01	15	6	9	1	2
-Floor 13	165	160	5	0	0
-Floor 12	202	198	4	0	7
-Floor 11	145	142	3	0	0
-Floor 06	86	83	3	0	0
-Floor 09	123	124	-1	0	0
-____________________________________
-http://localhost:5000/api/rejections
-{
-  "summary": [
-    {
-      "floor": "Floor 12",
-      "rejectionCount": 22
-    },
-    {
-      "floor": "Floor 1",
-      "rejectionCount": 9
-    },
-    {
-      "floor": "Floor 6",
-      "rejectionCount": 9
-    },
-    {
-      "floor": "Floor 15",
-      "rejectionCount": 4
-    },
-    {
-      "floor": "Floor 9",
-      "rejectionCount": 5
-    },
-    {
-      "floor": "Floor 13",
-      "rejectionCount": 1
-    }
-  ],
-  "dateWise": [
-    {
-      "date": "2025-09-16",
-      "floors": [
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 7
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        }
-      ]
-    },
-    {
-      "date": "2025-09-15",
-      "floors": [
-        {
-          "floor": "Floor 6",
-          "rejectionCount": 3
-        },
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 2
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        }
-      ]
-    },
-    {
-      "date": "2025-09-12",
-      "floors": [
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 1
-        },
-        {
-          "floor": "Floor 15",
-          "rejectionCount": 3
-        }
-      ]
-    },
-    {
-      "date": "2025-09-11",
-      "floors": [
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 10
-        },
-        {
-          "floor": "Floor 9",
-          "rejectionCount": 5
-        },
-        {
-          "floor": "Floor 13",
-          "rejectionCount": 1
-        }
-      ]
-    },
-    {
-      "date": "2025-09-10",
-      "floors": [
-        {
-          "floor": "Floor 6",
-          "rejectionCount": 5
-        },
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 1
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        }
-      ]
-    },
-    {
-      "date": "2025-09-09",
-      "floors": [
-        {
-          "floor": "Floor 6",
-          "rejectionCount": 1
-        },
-        {
-          "floor": "Floor 12",
-          "rejectionCount": 2
-        },
-        {
-          "floor": "Floor 1",
-          "rejectionCount": 2
-        },
-        {
-          "floor": "Floor 15",
-          "rejectionCount": 1
-        }
-      ]
-    }
-  ],
-  "details": [
-    {
-      "LocaleMessageTime": "2025-09-16T13:39:11.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:39:11.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:51.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:51.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:42.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:42.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:35.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:35.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:28.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:28.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-
-
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Table, Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
@@ -235,21 +21,39 @@ const normalizeFloorName = (f) => {
   return String(f).replace(/^Floor\s0*/, 'Floor ').trim();
 };
 
-// Try to extract floor number from Door string, returns "Floor N" or null
-function extractFloorFromDoorString(door) {
-  if (!door || typeof door !== 'string') return null;
-  // match patterns like "US.CO.HQ. 12. South ..." or "US.CO.HQ. 06. Fitness..."
-  // Accept one or two digits after HQ.
-  const m = door.match(/HQ\.\s*(\d{1,2})\b/i) || door.match(/HQ\.\s*(\d{1,2})\./i);
-  if (m && m[1]) {
-    return `Floor ${parseInt(m[1], 10)}`;
+// Try to extract floor number from Door/Location strings robustly
+function deriveFloorFromRecord(rec) {
+  // Prefer explicit floor field if present
+  if (rec.floor && String(rec.floor).trim()) return normalizeFloorName(rec.floor);
+
+  const door = String(rec.Door || rec.door || rec.Location || '').trim();
+
+  if (!door) return 'Unknown';
+
+  // Common patterns: "US.CO.HQ. 12. South ..." or "US.CO.HQ. 06" or "US.CO.HQ 12"
+  // Look for HQ[.]? <num>
+  const mHQ = door.match(/HQ[.\s]*\s*(\d{1,2})\b/i);
+  if (mHQ && mHQ[1]) return `Floor ${parseInt(mHQ[1], 10)}`;
+
+  // Sometimes the floor appears right after the site prefix (e.g. "US.CO.HQ 6")
+  const mSimple = door.match(/\b(\d{1,2})\b/);
+  if (mSimple && mSimple[1]) {
+    // extra guard: don't accidentally pick small numbers from serials like "11:01:0A"
+    // require that the matched number is followed by a dot, space, or end-of-string (typical in " 12." or " 12 ")
+    const idx = door.indexOf(mSimple[1]);
+    if (idx !== -1) {
+      const after = door[idx + mSimple[1].length] || '';
+      if (after === '' || /\s|\./.test(after)) {
+        return `Floor ${parseInt(mSimple[1], 10)}`;
+      }
+    }
   }
-  // fallback: maybe the door starts with something like "US.CO.HQ 12 " (no dot)
-  const m2 = door.match(/HQ\s*(\d{1,2})\b/i);
-  if (m2 && m2[1]) {
-    return `Floor ${parseInt(m2[1], 10)}`;
-  }
-  return null;
+
+  // If Location contains 'Floor X'
+  const mFloorText = door.match(/Floor\s*(\d{1,2})/i);
+  if (mFloorText && mFloorText[1]) return `Floor ${parseInt(mFloorText[1], 10)}`;
+
+  return 'Unknown';
 }
 
 export default function FloorInOutTable({
@@ -267,6 +71,7 @@ export default function FloorInOutTable({
   // Rejection state (today only)
   const [rejectionDetails, setRejectionDetails] = useState({}); // { normFloor -> [records...] }
   const [rejectionSummaryMap, setRejectionSummaryMap] = useState({}); // { normFloor -> count }
+  const [rejectionAllDetailsToday, setRejectionAllDetailsToday] = useState([]); // flat array of today's details
   const [rejectionsLoading, setRejectionsLoading] = useState(false);
 
   // Modal for showing today's rejection list
@@ -317,10 +122,11 @@ export default function FloorInOutTable({
         // today in Denver (YYYY-MM-DD)
         const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
 
+        // collect today's details (flat)
         let detailsToday = [];
         const summaryMap = {};
 
-        // If backend provided dateWise for fast aggregated counts, prefer that (but still build details)
+        // Prefer backend dateWise (aggregates) for counts if available
         if (Array.isArray(payload.dateWise)) {
           const dayObj = payload.dateWise.find(d => d.date === todayDenver);
           if (dayObj && Array.isArray(dayObj.floors)) {
@@ -330,11 +136,10 @@ export default function FloorInOutTable({
               summaryMap[key] = Number(f.rejectionCount || 0);
             });
           }
-
-          // build detailsToday from payload.details (so we can show records in modal)
+          // build detailsToday from payload.details so we can populate modal content
           if (Array.isArray(payload.details)) {
             detailsToday = payload.details.filter(d => {
-              const raw = d.DateOnly || d.LocaleMessageTime || d.LocaleMessageTime;
+              const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
               if (!raw) return false;
               try {
                 const dt = new Date(raw);
@@ -346,7 +151,7 @@ export default function FloorInOutTable({
             });
           }
         } else {
-          // fallback: filter details for today and build summaryMap from them
+          // fallback: filter details for today and aggregate counts
           if (Array.isArray(payload.details)) {
             detailsToday = payload.details.filter(d => {
               const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
@@ -360,25 +165,11 @@ export default function FloorInOutTable({
               }
             });
 
+            // derive floor per record and increment summary
             detailsToday.forEach(d => {
-              // derive floor consistently from record (prefer d.floor, else extract from d.Door)
-              let floorCandidate = '';
-              if (d.floor) {
-                floorCandidate = normalizeFloorName(d.floor);
-              } else {
-                // try Door first
-                const fromDoor = extractFloorFromDoorString(d.Door);
-                if (fromDoor) floorCandidate = normalizeFloorName(fromDoor);
-                else {
-                  // if Location already contains floor-like text, use it
-                  if (d.Location && String(d.Location).toLowerCase().includes('floor')) {
-                    floorCandidate = normalizeFloorName(d.Location);
-                  } else {
-                    floorCandidate = 'Unknown';
-                  }
-                }
-              }
-              summaryMap[floorCandidate] = (summaryMap[floorCandidate] || 0) + 1;
+              const derived = deriveFloorFromRecord(d) || 'Unknown';
+              const key = normalizeFloorName(derived);
+              summaryMap[key] = (summaryMap[key] || 0) + 1;
             });
           }
         }
@@ -386,33 +177,22 @@ export default function FloorInOutTable({
         // group detailsToday by normalized floor (derive floor if missing)
         const detailsByFloor = {};
         detailsToday.forEach(d => {
-          let floorKey = '';
-          if (d.floor) {
-            floorKey = normalizeFloorName(d.floor);
-          } else {
-            const fromDoor = extractFloorFromDoorString(d.Door);
-            if (fromDoor) floorKey = normalizeFloorName(fromDoor);
-            else {
-              // try Partition/Location if it contains floor-like pattern
-              if (d.Location && /Floor\s?\d+/i.test(d.Location)) {
-                floorKey = normalizeFloorName(d.Location);
-              } else {
-                floorKey = 'Unknown';
-              }
-            }
-          }
-          detailsByFloor[floorKey] = detailsByFloor[floorKey] || [];
-          detailsByFloor[floorKey].push(d);
+          const derived = deriveFloorFromRecord(d) || 'Unknown';
+          const key = normalizeFloorName(derived) || 'Unknown';
+          detailsByFloor[key] = detailsByFloor[key] || [];
+          detailsByFloor[key].push(d);
         });
 
         if (!mounted) return;
         setRejectionSummaryMap(summaryMap);
         setRejectionDetails(detailsByFloor);
+        setRejectionAllDetailsToday(detailsToday);
       } catch (err) {
         console.error('Failed to load rejections:', err);
         if (mounted) {
           setRejectionSummaryMap({});
           setRejectionDetails({});
+          setRejectionAllDetailsToday([]);
         }
       } finally {
         if (mounted) setRejectionsLoading(false);
@@ -453,9 +233,22 @@ export default function FloorInOutTable({
 
   // when user clicks the rejection cell, open modal and show today's details for that normalized floor
   const handleRejectionCellClick = (normFloor, displayFloor) => {
-    const list = rejectionDetails[normFloor] || [];
+    let list = rejectionDetails[normFloor] || [];
+
+    // fallback: if grouped list empty but we have a count, try scanning flat details for the floor number
+    if ((!list || list.length === 0) && (rejectionSummaryMap[normFloor] || 0) > 0) {
+      const numMatch = (normFloor && normFloor.match(/\d+/)) ? normFloor.match(/\d+/)[0] : null;
+      if (numMatch && Array.isArray(rejectionAllDetailsToday)) {
+        const regex = new RegExp(`\\b${numMatch}\\b`);
+        list = rejectionAllDetailsToday.filter(d => {
+          const door = String(d.Door || d.door || d.Location || '');
+          return regex.test(door);
+        });
+      }
+    }
+
     setSelectedRejectionFloor(displayFloor || normFloor);
-    setSelectedRejectionList(list);
+    setSelectedRejectionList(list || []);
     setShowRejectionModal(true);
   };
 
@@ -468,7 +261,7 @@ export default function FloorInOutTable({
     byFloor.slice(0, 6).forEach(d => {
       const date = d.LocaleMessageTime ? d.LocaleMessageTime.slice(0,10) : (d.DateOnly ? (typeof d.DateOnly === 'string' ? d.DateOnly.slice(0,10) : new Date(d.DateOnly).toISOString().slice(0,10)) : '');
       const time = d.SwipeTime || (d.LocaleMessageTime ? d.LocaleMessageTime.slice(11,19) : '');
-      lines.push(`${date} ${time} — ${d.RejectionType || ''}`);
+      lines.push(`${date} ${time} — ${d.RejectionType || ''} — ${d.Door || d.Location || ''}`);
     });
     if (byFloor.length > 6) lines.push(`… +${byFloor.length - 6} more`);
     return lines.join('\n');
