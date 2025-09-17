@@ -1,4 +1,37 @@
-function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
+// helpers: robust parsing + consistent identity key
+function parseLocaleMessageTime(evt) {
+  // evt.LocaleMessageTime may be:
+  //  - a JS Date (from mssql driver),
+  //  - an ISO string with a timezone / 'Z' suffix,
+  //  - or an ISO-like string without offset (treat as Denver local).
+  const val = evt && evt.LocaleMessageTime;
+  if (!val) return null;
+
+  if (val instanceof Date) {
+    // treat as an absolute instant from DB (driver returns Date -> assume UTC instant)
+    return DateTime.fromJSDate(val, { zone: 'utc' }).setZone('America/Denver');
+  }
+
+  const s = String(val).trim();
+  // If ISO string contains Z or an explicit offset, parse preserving that zone then convert to Denver
+  if (/[Zz]$/.test(s) || /[+\-]\d{2}:\d{2}$/.test(s)) {
+    return DateTime.fromISO(s, { setZone: true }).setZone('America/Denver');
+  }
+  // Otherwise assume the timestamp is already in Denver-local representation
+  return DateTime.fromISO(s, { zone: 'America/Denver' });
+}
+
+function personKey(evt) {
+  return evt.PersonGUID || evt.EmployeeID || evt.CardNumber || null;
+}
+
+
+
+
+
+
+
+.....function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
   const atMillis = atDt ? atDt.setZone('America/Denver').toMillis() : null;
 
   // 1) Build eventsForAtDt: same Denver date AND event instant <= atDt (if atDt)
