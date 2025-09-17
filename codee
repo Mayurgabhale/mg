@@ -1,17 +1,3 @@
-know when i click on Security then get all security
-and  click on Rejection then get all rejectin: ok 
-
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection
-Floor 11	4	2	2	0	0
-Floor 13	3	2	1	0	0
-Floor 01	2	1	1	1	0
-Floor 09	2	1	1	0	0
-Floor 06	3	3	0	0	0
-Floor 14	1	1	0	0	0
-Floor 12	2	2	0	0	0
-Floor 15	1	2	-1	0	0
-
-
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Table, Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
@@ -73,7 +59,8 @@ function deriveFloorFromRecord(rec) {
 export default function FloorInOutTable({
   data = [],
   floorBreakdown = [],
-  floorInOutSummary = []
+  floorInOutSummary = [],
+  visitedOccupants = [] // <-- NEW optional prop (snapshot or live visited list)
 }) {
   const securitySet = useMemo(() => new Set(SECURITY_IDS), []);
 
@@ -93,34 +80,94 @@ export default function FloorInOutTable({
   const [selectedRejectionFloor, setSelectedRejectionFloor] = useState(null);
   const [selectedRejectionList, setSelectedRejectionList] = useState([]);
 
-  // Build securityByFloor from occupants & inOnlyPersons
+  // -------------------------
+  // Build lookup maps from visitedOccupants and floorBreakdown occupants
+  // This lets us resolve PersonGUID -> full record, EmployeeID -> full record, CardNumber -> full record
+  const occupantLookups = useMemo(() => {
+    const byGUID = {};
+    const byEmpId = {};
+    const byCard = {};
+
+    const pushRecord = (r) => {
+      if (!r) return;
+      if (r.PersonGUID) byGUID[String(r.PersonGUID).toUpperCase()] = r;
+      if (r.EmployeeID) byEmpId[normalizeId(r.EmployeeID)] = r;
+      if (r.CardNumber) byCard[String(r.CardNumber).trim()] = r;
+    };
+
+    // visitedOccupants may contain all day rows (good source)
+    (Array.isArray(visitedOccupants) ? visitedOccupants : []).forEach(pushRecord);
+
+    // floorBreakdown occupants are another source (sometimes different fields)
+    (Array.isArray(floorBreakdown) ? floorBreakdown : []).forEach(fb => {
+      (fb.occupants || []).forEach(pushRecord);
+    });
+
+    return { byGUID, byEmpId, byCard };
+  }, [visitedOccupants, floorBreakdown]);
+
+  // Build securityByFloor from occupants & inOnlyPersons, resolving GUIDs where possible
   const securityByFloor = useMemo(() => {
     const byFloor = {};
 
+    // First, scan floorBreakdown occupants (full records)
     (floorBreakdown || []).forEach(fb => {
       const people = [];
       (fb.occupants || []).forEach(o => {
         const empId = normalizeId(o.EmployeeID);
+        const guid = o.PersonGUID ? String(o.PersonGUID).toUpperCase() : null;
+        // match either by EmployeeID OR by GUID mapping to an EmployeeID in securitySet
         if (securitySet.has(empId)) people.push(o);
+        else if (guid && occupantLookups.byGUID[guid]) {
+          const rec = occupantLookups.byGUID[guid];
+          if (securitySet.has(normalizeId(rec.EmployeeID))) people.push(rec);
+        }
       });
       if (people.length) {
         byFloor[fb.floor] = (byFloor[fb.floor] || []).concat(people);
       }
     });
 
+    // Next, handle inOnlyPersons from floorInOutSummary; these sometimes contain GUIDs or raw IDs
     (floorInOutSummary || []).forEach(f => {
-      (f.inOnlyPersons || []).forEach(pid => {
-        const empId = normalizeId(pid);
-        if (securitySet.has(empId)) {
-          byFloor[f.floor] = (byFloor[f.floor] || []).concat([
-            { EmployeeID: empId, ObjectName1: "(Unknown)", Swipe_Time: "—", Door: "—", PersonnelType: "—" }
-          ]);
+      (f.inOnlyPersons || []).forEach(pidRaw => {
+        if (!pidRaw) return;
+        const pid = String(pidRaw).trim();
+        const pidUpper = pid.toUpperCase();
+
+        // Try GUID lookup first
+        let resolved = occupantLookups.byGUID[pidUpper];
+
+        // If not GUID, try EmployeeID
+        if (!resolved) resolved = occupantLookups.byEmpId[normalizeId(pid)];
+
+        // Try CardNumber
+        if (!resolved) resolved = occupantLookups.byCard[pid];
+
+        // If resolved, check if they're security by EmployeeID
+        if (resolved) {
+          const empIdNorm = normalizeId(resolved.EmployeeID);
+          if (securitySet.has(empIdNorm)) {
+            byFloor[f.floor] = (byFloor[f.floor] || []).concat(resolved);
+            return;
+          }
         }
+
+        // If pid itself looks like an EmployeeID that is security, add a minimal record
+        if (securitySet.has(normalizeId(pid))) {
+          byFloor[f.floor] = (byFloor[f.floor] || []).concat([
+            { EmployeeID: normalizeId(pid), ObjectName1: "(Security)", Swipe_Time: "—", Door: "—", PersonnelType: "Security" }
+          ]);
+          return;
+        }
+
+        // Lastly: if resolved but not in securitySet, ignore (not security)
+        // (no-op)
       });
     });
 
     return byFloor;
-  }, [floorBreakdown, floorInOutSummary, securitySet]);
+  }, [floorBreakdown, floorInOutSummary, occupantLookups, securitySet]);
 
   // --- fetch rejections and keep only today's (Denver) records ---
   useEffect(() => {
@@ -379,7 +426,7 @@ export default function FloorInOutTable({
             <tbody>
               {selectedPeopleSecurity.map((p, idx) => (
                 <tr key={idx}>
-                  <td>{p.EmployeeID}</td>
+                  <td>{p.EmployeeID || (p.PersonGUID ? p.PersonGUID : '—')}</td>
                   <td>{p.ObjectName1 || "(Unknown)"}</td>
                   <td>{p.Swipe_Time || "—"}</td>
                   <td>{p.Door || "—"}</td>
@@ -424,13 +471,14 @@ export default function FloorInOutTable({
                       const dt = new Date(r.LocaleMessageTime);
                       localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
                       localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
-                    } else if (r.DateOnly) {
-                      localDate = (typeof r.DateOnly === 'string' ? r.DateOnly.slice(0,10) : new Date(r.DateOnly).toISOString().slice(0,10));
-                      localTime = r.SwipeTime || '';
+                    } else if (r.DateOnly || r.Dateonly) {
+                      const dstr = (r.DateOnly || r.Dateonly);
+                      localDate = (typeof dstr === 'string' ? dstr.slice(0,10) : new Date(dstr).toISOString().slice(0,10));
+                      localTime = r.SwipeTime || r.Swipe_Time || '';
                     }
                   } catch (e) {
-                    localDate = (r.DateOnly || '').slice(0,10);
-                    localTime = r.SwipeTime || '';
+                    localDate = (r.DateOnly || r.Dateonly || '').slice(0,10);
+                    localTime = r.SwipeTime || r.Swipe_Time || '';
                   }
 
                   return (
