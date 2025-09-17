@@ -1,18 +1,3 @@
-Rejections Today - Floor 01
-
-No rejections recorded today for Floor 01
-
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection (Today)
-Floor 14	268	253	15	0	0
-Floor 15	37	27	10	0	0
-Floor 01	15	6	9	1	2
-Floor 13	165	160	5	0	0
-Floor 12	202	198	4	0	7
-Floor 11	145	142	3	0	0
-Floor 06	86	83	3	0	0
-Floor 09	124	124	0	0	0
-
-
 // src/components/FloorInOutTable.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Table, Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
@@ -35,6 +20,23 @@ const normalizeFloorName = (f) => {
   if (!f && f !== 0) return '';
   return String(f).replace(/^Floor\s0*/, 'Floor ').trim();
 };
+
+// Try to extract floor number from Door string, returns "Floor N" or null
+function extractFloorFromDoorString(door) {
+  if (!door || typeof door !== 'string') return null;
+  // match patterns like "US.CO.HQ. 12. South ..." or "US.CO.HQ. 06. Fitness..."
+  // Accept one or two digits after HQ.
+  const m = door.match(/HQ\.\s*(\d{1,2})\b/i) || door.match(/HQ\.\s*(\d{1,2})\./i);
+  if (m && m[1]) {
+    return `Floor ${parseInt(m[1], 10)}`;
+  }
+  // fallback: maybe the door starts with something like "US.CO.HQ 12 " (no dot)
+  const m2 = door.match(/HQ\s*(\d{1,2})\b/i);
+  if (m2 && m2[1]) {
+    return `Floor ${parseInt(m2[1], 10)}`;
+  }
+  return null;
+}
 
 export default function FloorInOutTable({
   data = [],
@@ -104,19 +106,21 @@ export default function FloorInOutTable({
         let detailsToday = [];
         const summaryMap = {};
 
+        // If backend provided dateWise for fast aggregated counts, prefer that (but still build details)
         if (Array.isArray(payload.dateWise)) {
           const dayObj = payload.dateWise.find(d => d.date === todayDenver);
           if (dayObj && Array.isArray(dayObj.floors)) {
             dayObj.floors.forEach(f => {
-              // const key = normalizeFloorName(f.floor || f.floor);
-               const key = normalizeFloorName(f.floor);
+              const key = normalizeFloorName(f.floor || '');
+              if (!key) return;
               summaryMap[key] = Number(f.rejectionCount || 0);
             });
           }
-          // still build detailsToday from payload.details for modal content
+
+          // build detailsToday from payload.details (so we can show records in modal)
           if (Array.isArray(payload.details)) {
             detailsToday = payload.details.filter(d => {
-              const raw = d.DateOnly || d.LocaleMessageTime || d.DateOnly;
+              const raw = d.DateOnly || d.LocaleMessageTime || d.LocaleMessageTime;
               if (!raw) return false;
               try {
                 const dt = new Date(raw);
@@ -128,7 +132,7 @@ export default function FloorInOutTable({
             });
           }
         } else {
-          // fallback: filter details for today and build summaryMap
+          // fallback: filter details for today and build summaryMap from them
           if (Array.isArray(payload.details)) {
             detailsToday = payload.details.filter(d => {
               const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
@@ -143,20 +147,48 @@ export default function FloorInOutTable({
             });
 
             detailsToday.forEach(d => {
-              const rawFloor = d.floor || d.Floor || d.Location || '';
-              const key = normalizeFloorName(rawFloor || 'Unknown');
-              summaryMap[key] = (summaryMap[key] || 0) + 1;
+              // derive floor consistently from record (prefer d.floor, else extract from d.Door)
+              let floorCandidate = '';
+              if (d.floor) {
+                floorCandidate = normalizeFloorName(d.floor);
+              } else {
+                // try Door first
+                const fromDoor = extractFloorFromDoorString(d.Door);
+                if (fromDoor) floorCandidate = normalizeFloorName(fromDoor);
+                else {
+                  // if Location already contains floor-like text, use it
+                  if (d.Location && String(d.Location).toLowerCase().includes('floor')) {
+                    floorCandidate = normalizeFloorName(d.Location);
+                  } else {
+                    floorCandidate = 'Unknown';
+                  }
+                }
+              }
+              summaryMap[floorCandidate] = (summaryMap[floorCandidate] || 0) + 1;
             });
           }
         }
 
-        // group detailsToday by normalized floor
+        // group detailsToday by normalized floor (derive floor if missing)
         const detailsByFloor = {};
         detailsToday.forEach(d => {
-          const rawFloor = d.floor || d.Floor || d.Location || '';
-          const key = normalizeFloorName(rawFloor || 'Unknown');
-          detailsByFloor[key] = detailsByFloor[key] || [];
-          detailsByFloor[key].push(d);
+          let floorKey = '';
+          if (d.floor) {
+            floorKey = normalizeFloorName(d.floor);
+          } else {
+            const fromDoor = extractFloorFromDoorString(d.Door);
+            if (fromDoor) floorKey = normalizeFloorName(fromDoor);
+            else {
+              // try Partition/Location if it contains floor-like pattern
+              if (d.Location && /Floor\s?\d+/i.test(d.Location)) {
+                floorKey = normalizeFloorName(d.Location);
+              } else {
+                floorKey = 'Unknown';
+              }
+            }
+          }
+          detailsByFloor[floorKey] = detailsByFloor[floorKey] || [];
+          detailsByFloor[floorKey].push(d);
         });
 
         if (!mounted) return;
