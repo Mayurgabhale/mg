@@ -1,5 +1,6 @@
-I want to disply rejectin only today rejectin not all 
+
 // src/components/FloorInOutTable.jsx
+// (only showing the full component for completeness — replace your file with this)
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Table, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
 
@@ -29,17 +30,17 @@ export default function FloorInOutTable({
 }) {
   const securitySet = useMemo(() => new Set(SECURITY_IDS), []);
 
-  // Security modal state (unchanged behavior: only security cell clickable)
+  // Security modal state
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [selectedFloorSecurity, setSelectedFloorSecurity] = useState(null);
   const [selectedPeopleSecurity, setSelectedPeopleSecurity] = useState([]);
 
-  // Rejection modal (optional) — we'll show tooltip instead, but keep state if later needed
-  const [rejectionDetails, setRejectionDetails] = useState({}); // { floor -> [details...] }
-  const [rejectionSummaryMap, setRejectionSummaryMap] = useState({}); // { floor -> count }
+  // Rejection state (we'll only store *today*'s rejections)
+  const [rejectionDetails, setRejectionDetails] = useState({}); // { normFloor -> [records...] }
+  const [rejectionSummaryMap, setRejectionSummaryMap] = useState({}); // { normFloor -> count }
   const [rejectionsLoading, setRejectionsLoading] = useState(false);
 
-  // Build securityByFloor from occupants & inOnlyPersons (same logic you had)
+  // Build securityByFloor from occupants & inOnlyPersons
   const securityByFloor = useMemo(() => {
     const byFloor = {};
 
@@ -68,38 +69,51 @@ export default function FloorInOutTable({
     return byFloor;
   }, [floorBreakdown, floorInOutSummary, securitySet]);
 
-  // Fetch rejection summary + details from backend
+  // --- NEW: fetch rejections and keep only today's (Denver) records ---
   useEffect(() => {
     let mounted = true;
-    async function loadRejections() {
+
+    async function loadRejectionsTodayOnly() {
       setRejectionsLoading(true);
       try {
         const res = await fetch('/api/rejections');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
 
-        // payload: { summary: [{floor, rejectionCount}, ...], dateWise: [...], details: [...] }
-        // Build simple maps for fast lookup
-        const summaryMap = {};
-        (payload.summary || []).forEach(s => {
-          summaryMap[normalizeFloorName(s.floor)] = Number(s.rejectionCount) || 0;
+        // Determine "today" in Denver (YYYY-MM-DD)
+        const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+
+        const allDetails = Array.isArray(payload.details) ? payload.details : [];
+
+        // Filter to only today's records using LocaleMessageTime (fallback to DateOnly)
+        const detailsToday = allDetails.filter(d => {
+          const dtRaw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
+          if (!dtRaw) return false;
+          try {
+            const dt = new Date(dtRaw);
+            const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+            return dtStr === todayDenver;
+          } catch (e) {
+            // fallback: try to take first 10 chars if it's an ISO-like string
+            const maybeDate = String(dtRaw).slice(0, 10);
+            return maybeDate === todayDenver;
+          }
         });
 
-        // For details, group by normalized floor and also build dateWise map if present
+        // Build detailsByFloor grouped by normalized floor key (prefer d.floor then d.Location)
         const detailsByFloor = {};
-        (payload.details || []).forEach(d => {
-          const floorKey = normalizeFloorName(d.floor || d.floor || (d.floor === 0 ? 'Floor 0' : d.floor) || d.floor) ||
-                           normalizeFloorName(d.floor) ||
-                           normalizeFloorName(d.Location) ||
-                           ''; // fallback
-          // prefer the provided `floor` if present; else try to derive from Door/Location in backend
-          const nf = normalizeFloorName(d.floor || d.Location || '');
-          const key = nf || normalizeFloorName(d.Location || '');
+        detailsToday.forEach(d => {
+          const rawFloor = d.floor || d.Floor || d.Location || '';
+          const normFloorFromRecord = normalizeFloorName(rawFloor);
+          const key = normFloorFromRecord || normalizeFloorName(d.Location || '') || 'Unknown';
+          detailsByFloor[key] = detailsByFloor[key] || [];
+          detailsByFloor[key].push(d);
+        });
 
-          const useKey = key || normalizeFloorName(d.floor) || 'Unknown';
-
-          detailsByFloor[useKey] = detailsByFloor[useKey] || [];
-          detailsByFloor[useKey].push(d);
+        // Build summaryMap from detailsToday (today only)
+        const summaryMap = {};
+        Object.entries(detailsByFloor).forEach(([floorKey, arr]) => {
+          summaryMap[floorKey] = arr.length;
         });
 
         if (!mounted) return;
@@ -116,11 +130,11 @@ export default function FloorInOutTable({
       }
     }
 
-    loadRejections();
+    loadRejectionsTodayOnly();
     return () => { mounted = false; };
   }, []);
 
-  // Build sorted table rows (same as before) and attach securityCount & rejectionCount
+  // Build sorted rows and attach securityCount & rejectionCount (today only)
   const sorted = useMemo(() => {
     const rows = (Array.isArray(data) ? data : []).map(({ floor, inSwipes, outSwipes }) => {
       const normFloor = normalizeFloorName(floor);
@@ -139,7 +153,6 @@ export default function FloorInOutTable({
 
   const top = sorted[0];
 
-  // Security modal handler (only open from Security cell)
   const handleSecurityCellClick = (floor) => {
     const people = securityByFloor[floor] || [];
     if (people.length > 0) {
@@ -149,22 +162,16 @@ export default function FloorInOutTable({
     }
   };
 
-  // Tooltip content for rejection cell: show date-wise breakdown (if available)
+  // Tooltip content uses rejectionDetails (already filtered to today)
   const renderRejectionTooltip = (floor) => {
-    // dateWise is returned by backend as array of {date, floors: [{floor, rejectionCount}, ...]}
-    // However to keep simple we will show recent details count + first few details if details exist
     const nf = normalizeFloorName(floor);
     const byFloor = rejectionDetails[nf] || [];
-    if (!byFloor.length) return 'No rejections';
-    const lines = [
-      `Total: ${byFloor.length}`,
-      '',
-      'Recent:'
-    ];
+    if (!byFloor.length) return 'No rejections today';
+    const lines = [`Total today: ${byFloor.length}`, '', 'Recent:'];
     byFloor.slice(0, 6).forEach(d => {
-      const date = (d.DateOnly ? (new Date(d.DateOnly)).toISOString().slice(0,10) : (d.LocaleMessageTime ? d.LocaleMessageTime.slice(0,10) : ''));
-      const time = (d.SwipeTime ? (typeof d.SwipeTime === 'string' ? d.SwipeTime : new Date(d.SwipeTime).toTimeString().slice(0,8)) : '');
-      lines.push(`${date} ${time} — ${d.RejectionType || d.Rejection || ''}`);
+      const date = d.LocaleMessageTime ? d.LocaleMessageTime.slice(0,10) : (d.DateOnly ? d.DateOnly.slice(0,10) : '');
+      const time = d.SwipeTime || (d.LocaleMessageTime ? d.LocaleMessageTime.slice(11,19) : '');
+      lines.push(`${date} ${time} — ${d.RejectionType || ''}`);
     });
     if (byFloor.length > 6) lines.push(`… +${byFloor.length - 6} more`);
     return lines.join('\n');
@@ -174,7 +181,7 @@ export default function FloorInOutTable({
     <>
       <Card className="mb-4 shadow-sm" style={{ background: '#1a1a1a', border: '2px solid #FFC72C' }}>
         <Card.Header className="text-center fw-bold" style={{ background: '#000', color: '#FFC72C' }}>
-          Floor In vs Out Swipe Summary
+          Floor In vs Out Swipe Summary (Rejections — Today)
         </Card.Header>
 
         <Card.Body style={{ height: 450, padding: '1rem', overflowY: 'auto' }}>
@@ -195,18 +202,13 @@ export default function FloorInOutTable({
                 <th>Out Swipes</th>
                 <th>In − Out</th>
                 <th>Security</th>
-                <th>Rejection</th>
+                <th>Rejection (Today)</th>
               </tr>
             </thead>
 
             <tbody>
               {sorted.map((row, idx) => (
-                <tr
-                  key={row.floor}
-                  style={{
-                    backgroundColor: row.securityCount > 0 ? '#333300' : undefined
-                  }}
-                >
+                <tr key={row.floor} style={{ backgroundColor: row.securityCount > 0 ? '#333300' : undefined }}>
                   <td style={{ color: '#fff' }}>{row.floor}</td>
                   <td style={{ color: ROW_COLORS[idx % ROW_COLORS.length] }}>{row.inSwipes}</td>
                   <td style={{ color: ROW_COLORS[(idx + 1) % ROW_COLORS.length] }}>{row.outSwipes}</td>
@@ -227,7 +229,7 @@ export default function FloorInOutTable({
                     {row.securityCount}
                   </td>
 
-                  {/* Rejection cell - shows count + tooltip with quick details */}
+                  {/* Rejection cell (today only) */}
                   <td style={{
                     color: row.rejectionCount > 0 ? '#FFCCCB' : '#aaa',
                     fontWeight: row.rejectionCount > 0 ? 'bold' : 'normal',
@@ -236,13 +238,11 @@ export default function FloorInOutTable({
                     {row.rejectionCount > 0 ? (
                       <OverlayTrigger
                         placement="top"
-                        overlay={<Tooltip id={`rej-tip-${row.floor.replace(/\s+/g,'_')}`}>{renderRejectionTooltip(row.normFloor)}</Tooltip>}
+                        overlay={<Tooltip id={`rej-tip-${row.floor.replace(/\s+/g,'_')}`}>{renderRejectionTooltip(row.normFloor || row.floor)}</Tooltip>}
                       >
                         <span>{row.rejectionCount}</span>
                       </OverlayTrigger>
-                    ) : (
-                      0
-                    )}
+                    ) : 0}
                   </td>
                 </tr>
               ))}
