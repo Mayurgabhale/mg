@@ -1,3 +1,8 @@
+const finalList = relevantEvents; // includes IN + OUT
+
+
+
+......
 // After computing `visited`...
 const visitedOccupants = relevantEvents
   .filter(e => eventDtFor(e) && eventDtFor(e) <= refDt)
