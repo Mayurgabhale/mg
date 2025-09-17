@@ -1,45 +1,6 @@
-ok, know i, when i clikc on 7 then i wan to disply details or list of the this rejection 
-],
-  "details": [
-    {
-      "LocaleMessageTime": "2025-09-16T13:39:11.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:39:11.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-    {
-      "LocaleMessageTime": "2025-09-16T13:38:51.000Z",
-      "DateOnly": "2025-09-16T00:00:00.000Z",
-      "SwipeTime": "1970-01-01T13:38:51.000Z",
-      "CardNumber": "618861",
-      "PersonnelType": "Employee",
-      "Location": "US.CO.OBS",
-      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
-      "RejectionType": "CardDisabled",
-      "floor": "Floor 12"
-    },
-
-Floor 12	202	198	4	0	7
-
-Floor	In Swipes	Out Swipes	In − Out	Security	Rejection (Today)
-Floor 14	269	254	15	0	0
-Floor 15	37	27	10	0	0
-Floor 01	15	6	9	1	2
-Floor 13	165	160	5	0	0
-Floor 06	86	82	4	0	0
-Floor 12	202	198	4	0	7
-Floor 11	145	142	3	0	0
-Floor 09	126	124	2	0	0
-
 // src/components/FloorInOutTable.jsx
-// (only showing the full component for completeness — replace your file with this)
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Table, Modal, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Card, Table, Modal, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
 
 // Accent palette
 const ROW_COLORS = [
@@ -72,10 +33,15 @@ export default function FloorInOutTable({
   const [selectedFloorSecurity, setSelectedFloorSecurity] = useState(null);
   const [selectedPeopleSecurity, setSelectedPeopleSecurity] = useState([]);
 
-  // Rejection state (we'll only store *today*'s rejections)
+  // Rejection state (today only)
   const [rejectionDetails, setRejectionDetails] = useState({}); // { normFloor -> [records...] }
   const [rejectionSummaryMap, setRejectionSummaryMap] = useState({}); // { normFloor -> count }
   const [rejectionsLoading, setRejectionsLoading] = useState(false);
+
+  // Modal for showing today's rejection list
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [selectedRejectionFloor, setSelectedRejectionFloor] = useState(null);
+  const [selectedRejectionList, setSelectedRejectionList] = useState([]);
 
   // Build securityByFloor from occupants & inOnlyPersons
   const securityByFloor = useMemo(() => {
@@ -106,103 +72,96 @@ export default function FloorInOutTable({
     return byFloor;
   }, [floorBreakdown, floorInOutSummary, securitySet]);
 
-  // --- NEW: fetch rejections and keep only today's (Denver) records ---
-// paste/replace in src/components/FloorInOutTable.jsx (inside the component)
-useEffect(() => {
-  let mounted = true;
+  // --- fetch rejections and keep only today's (Denver) records ---
+  useEffect(() => {
+    let mounted = true;
 
-  async function loadRejectionsTodayOnly() {
-    setRejectionsLoading(true);
-    try {
-      const res = await fetch('/api/rejections');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = await res.json();
+    async function loadRejectionsTodayOnly() {
+      setRejectionsLoading(true);
+      try {
+        const res = await fetch('/api/rejections');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
 
-      // ----- today in Denver (YYYY-MM-DD) -----
-      const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+        // today in Denver (YYYY-MM-DD)
+        const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
 
-      // results we'll populate
-      let detailsToday = [];
-      const summaryMap = {};     // { "Floor 12": 7, ... }
+        let detailsToday = [];
+        const summaryMap = {};
 
-      // 1) If backend provided dateWise, prefer it (fast, aggregated)
-      if (Array.isArray(payload.dateWise)) {
-        const dayObj = payload.dateWise.find(d => d.date === todayDenver);
-        if (dayObj && Array.isArray(dayObj.floors)) {
-          dayObj.floors.forEach(f => {
-            const key = normalizeFloorName(f.floor || f.floor);
-            summaryMap[key] = Number(f.rejectionCount || 0);
-          });
+        if (Array.isArray(payload.dateWise)) {
+          const dayObj = payload.dateWise.find(d => d.date === todayDenver);
+          if (dayObj && Array.isArray(dayObj.floors)) {
+            dayObj.floors.forEach(f => {
+              const key = normalizeFloorName(f.floor || f.floor);
+              summaryMap[key] = Number(f.rejectionCount || 0);
+            });
+          }
+          // still build detailsToday from payload.details for modal content
+          if (Array.isArray(payload.details)) {
+            detailsToday = payload.details.filter(d => {
+              const raw = d.DateOnly || d.LocaleMessageTime || d.DateOnly;
+              if (!raw) return false;
+              try {
+                const dt = new Date(raw);
+                const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                return dtStr === todayDenver;
+              } catch (e) {
+                return String(raw).slice(0, 10) === todayDenver;
+              }
+            });
+          }
+        } else {
+          // fallback: filter details for today and build summaryMap
+          if (Array.isArray(payload.details)) {
+            detailsToday = payload.details.filter(d => {
+              const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
+              if (!raw) return false;
+              try {
+                const dt = new Date(raw);
+                const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                return dtStr === todayDenver;
+              } catch (e) {
+                return String(raw).slice(0, 10) === todayDenver;
+              }
+            });
+
+            detailsToday.forEach(d => {
+              const rawFloor = d.floor || d.Floor || d.Location || '';
+              const key = normalizeFloorName(rawFloor) || 'Unknown';
+              summaryMap[key] = (summaryMap[key] || 0) + 1;
+            });
+          }
         }
-        // Build detailsToday from payload.details (if available) so tooltip/modal has items
-        if (Array.isArray(payload.details)) {
-          detailsToday = payload.details.filter(d => {
-            // try DateOnly (may be Date object or string) then LocaleMessageTime
-            const raw = d.DateOnly || d.LocaleMessageTime || d.LocaleMessageTime;
-            if (!raw) return false;
-            try {
-              const dt = new Date(raw);
-              const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-              return dtStr === todayDenver;
-            } catch (e) {
-              return String(raw).slice(0, 10) === todayDenver;
-            }
-          });
-        }
-      } else {
-        // 2) fallback: filter payload.details for today
-        if (Array.isArray(payload.details)) {
-          detailsToday = payload.details.filter(d => {
-            const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
-            if (!raw) return false;
-            try {
-              const dt = new Date(raw);
-              const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-              return dtStr === todayDenver;
-            } catch (e) {
-              return String(raw).slice(0, 10) === todayDenver;
-            }
-          });
 
-          // build summaryMap from filtered details
-          detailsToday.forEach(d => {
-            // prefer d.floor (if backend already added floor), else d.Location/door-derived floor
-            const rawFloor = d.floor || d.Floor || d.Location || '';
-            const key = normalizeFloorName(rawFloor) || 'Unknown';
-            summaryMap[key] = (summaryMap[key] || 0) + 1;
-          });
+        // group detailsToday by normalized floor
+        const detailsByFloor = {};
+        detailsToday.forEach(d => {
+          const rawFloor = d.floor || d.Floor || d.Location || '';
+          const key = normalizeFloorName(rawFloor) || 'Unknown';
+          detailsByFloor[key] = detailsByFloor[key] || [];
+          detailsByFloor[key].push(d);
+        });
+
+        if (!mounted) return;
+        setRejectionSummaryMap(summaryMap);
+        setRejectionDetails(detailsByFloor);
+      } catch (err) {
+        console.error('Failed to load rejections:', err);
+        if (mounted) {
+          setRejectionSummaryMap({});
+          setRejectionDetails({});
         }
+      } finally {
+        if (mounted) setRejectionsLoading(false);
       }
-
-      // group detailsToday by normalized floor for tooltip/modal usage
-      const detailsByFloor = {};
-      detailsToday.forEach(d => {
-        const rawFloor = d.floor || d.Floor || d.Location || '';
-        const key = normalizeFloorName(rawFloor) || 'Unknown';
-        detailsByFloor[key] = detailsByFloor[key] || [];
-        detailsByFloor[key].push(d);
-      });
-
-      if (!mounted) return;
-      setRejectionSummaryMap(summaryMap);
-      setRejectionDetails(detailsByFloor);
-    } catch (err) {
-      console.error('Failed to load rejections:', err);
-      if (mounted) {
-        setRejectionSummaryMap({});
-        setRejectionDetails({});
-      }
-    } finally {
-      if (mounted) setRejectionsLoading(false);
     }
-  }
 
-  loadRejectionsTodayOnly();
-  return () => { mounted = false; };
-}, []);
+    loadRejectionsTodayOnly();
+    return () => { mounted = false; };
+  }, []);
 
-
-  // Build sorted rows and attach securityCount & rejectionCount (today only)
+  // Build sorted rows and attach securityCount & today's rejectionCount
   const sorted = useMemo(() => {
     const rows = (Array.isArray(data) ? data : []).map(({ floor, inSwipes, outSwipes }) => {
       const normFloor = normalizeFloorName(floor);
@@ -230,6 +189,14 @@ useEffect(() => {
     }
   };
 
+  // when user clicks the rejection cell, open modal and show today's details for that normalized floor
+  const handleRejectionCellClick = (normFloor, displayFloor) => {
+    const list = rejectionDetails[normFloor] || [];
+    setSelectedRejectionFloor(displayFloor || normFloor);
+    setSelectedRejectionList(list);
+    setShowRejectionModal(true);
+  };
+
   // Tooltip content uses rejectionDetails (already filtered to today)
   const renderRejectionTooltip = (floor) => {
     const nf = normalizeFloorName(floor);
@@ -237,7 +204,7 @@ useEffect(() => {
     if (!byFloor.length) return 'No rejections today';
     const lines = [`Total today: ${byFloor.length}`, '', 'Recent:'];
     byFloor.slice(0, 6).forEach(d => {
-      const date = d.LocaleMessageTime ? d.LocaleMessageTime.slice(0,10) : (d.DateOnly ? d.DateOnly.slice(0,10) : '');
+      const date = d.LocaleMessageTime ? d.LocaleMessageTime.slice(0,10) : (d.DateOnly ? (typeof d.DateOnly === 'string' ? d.DateOnly.slice(0,10) : new Date(d.DateOnly).toISOString().slice(0,10)) : '');
       const time = d.SwipeTime || (d.LocaleMessageTime ? d.LocaleMessageTime.slice(11,19) : '');
       lines.push(`${date} ${time} — ${d.RejectionType || ''}`);
     });
@@ -297,18 +264,23 @@ useEffect(() => {
                     {row.securityCount}
                   </td>
 
-                  {/* Rejection cell (today only) */}
+                  {/* Rejection cell (today only) - clickable to open modal */}
                   <td style={{
                     color: row.rejectionCount > 0 ? '#FFCCCB' : '#aaa',
                     fontWeight: row.rejectionCount > 0 ? 'bold' : 'normal',
-                    cursor: row.rejectionCount > 0 ? 'help' : 'default'
+                    cursor: row.rejectionCount > 0 ? 'pointer' : 'default'
                   }}>
                     {row.rejectionCount > 0 ? (
                       <OverlayTrigger
                         placement="top"
-                        overlay={<Tooltip id={`rej-tip-${row.floor.replace(/\s+/g,'_')}`}>{renderRejectionTooltip(row.normFloor || row.floor)}</Tooltip>}
+                        overlay={<Tooltip id={`rej-tip-${row.normFloor.replace(/\s+/g,'_')}`}>{renderRejectionTooltip(row.normFloor || row.floor)}</Tooltip>}
                       >
-                        <span>{row.rejectionCount}</span>
+                        <span
+                          onClick={() => handleRejectionCellClick(row.normFloor, row.floor)}
+                          style={{ textDecoration: 'underline', display: 'inline-block' }}
+                        >
+                          {row.rejectionCount}
+                        </span>
                       </OverlayTrigger>
                     ) : 0}
                   </td>
@@ -348,6 +320,67 @@ useEffect(() => {
             </tbody>
           </Table>
         </Modal.Body>
+      </Modal>
+
+      {/* Rejection details modal (today) */}
+      <Modal show={showRejectionModal} onHide={() => setShowRejectionModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Rejections Today - {selectedRejectionFloor}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedRejectionList.length === 0 ? (
+            <div>No rejections recorded today for {selectedRejectionFloor}</div>
+          ) : (
+            <Table striped bordered hover size="sm">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date (local)</th>
+                  <th>Time</th>
+                  <th>CardNumber</th>
+                  <th>PersonnelType</th>
+                  <th>Door</th>
+                  <th>RejectionType</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedRejectionList.map((r, i) => {
+                  // try to format date/time nicely; r.LocaleMessageTime is ISO in UTC
+                  let localDate = '';
+                  let localTime = '';
+                  try {
+                    if (r.LocaleMessageTime) {
+                      const dt = new Date(r.LocaleMessageTime);
+                      localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                      localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
+                    } else if (r.DateOnly) {
+                      localDate = (typeof r.DateOnly === 'string' ? r.DateOnly.slice(0,10) : new Date(r.DateOnly).toISOString().slice(0,10));
+                      localTime = r.SwipeTime || '';
+                    }
+                  } catch (e) {
+                    localDate = (r.DateOnly || '').slice(0,10);
+                    localTime = r.SwipeTime || '';
+                  }
+
+                  return (
+                    <tr key={i}>
+                      <td>{i + 1}</td>
+                      <td>{localDate}</td>
+                      <td>{localTime}</td>
+                      <td>{r.CardNumber || '—'}</td>
+                      <td>{r.PersonnelType || '—'}</td>
+                      <td style={{ maxWidth: 280, wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
+                      <td>{r.RejectionType || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRejectionModal(false)}>Close</Button>
+        </Modal.Footer>
       </Modal>
     </>
   );
