@@ -1,93 +1,27 @@
-http://localhost:5000/api/occupancy-at-time-denver?date=2025-09-17&time=01:25:00
-"totalVisitedToday": 4,
-  "visitedToday": {
-    "employees": 0,
-    "contractors": 4,
-    "total": 4
+// After computing `visited`...
+const visitedOccupants = relevantEvents
+  .filter(e => eventDtFor(e) && eventDtFor(e) <= refDt)
+  .reduce((map, e) => {
+    const key = personKey(e);
+    if (!map.has(key)) map.set(key, e); // keep first event for identity
+    return map;
+  }, new Map());
+
+...
+return {
+  asOfLocal,
+  asOfUTC,
+  currentCount: finalList.length,
+  floorBreakdown,
+  personnelSummary: { employees, contractors },
+  personnelBreakdown,
+  totalVisitedToday: visited.total,
+  visitedToday: {
+    employees: visited.employees,
+    contractors: visited.contractors,
+    total: visited.total
   },
-this count is correct but 
-but still occupants only disply 2 detaisl i want to disply 4 person details/occupants in this 
-
-we got only this 
-{
-  "asOfLocal": "2025-09-17T01:25:00.000-06:00",
-  "asOfUTC": "2025-09-17T07:25:00.000Z",
-  "currentCount": 2,
-  "floorBreakdown": [
-    {
-      "floor": "Floor 01",
-      "total": 1,
-      "employees": 0,
-      "contractors": 1,
-      "tempBadge": 0,
-      "others": 0,
-      "occupants": [
-        {
-          "LocaleMessageTime": "2025-09-17T00:26:55.000Z",
-          "Dateonly": "2025-09-17",
-          "Swipe_Time": "00:26:55",
-          "EmployeeID": "W0026176",
-          "PersonGUID": "6F93B492-C95A-436E-996A-92202EFB9915",
-          "ObjectName1": "Vargas, Erika",
-          "PersonnelType": "Contractor",
-          "CardNumber": "617979",
-          "AdmitCode": "Admit",
-          "Direction": "InDirection",
-          "Door": "US.CO.HQ. 01. Focus Area North-IN"
-        }
-      ]
-    },
-    {
-      "floor": "Floor 13",
-      "total": 1,
-      "employees": 0,
-      "contractors": 1,
-      "tempBadge": 0,
-      "others": 0,
-      "occupants": [
-        {
-          "LocaleMessageTime": "2025-09-17T01:24:28.000Z",
-          "Dateonly": "2025-09-17",
-          "Swipe_Time": "01:24:28",
-          "EmployeeID": "W0028120",
-          "PersonGUID": "8593096B-76A0-4985-B2AC-D4C4294A9ABF",
-          "ObjectName1": "Ali, Shuayb",
-          "PersonnelType": "Contractor",
-          "CardNumber": "618890",
-          "AdmitCode": "Admit",
-          "Direction": "InDirection",
-          "Door": "US.CO.HQ. 13. IDF Room_11:01:8C Restricted Door"
-        }
-      ]
-    }
-  ],
-  "personnelSummary": {
-    "employees": 0,
-    "contractors": 2
-  },
-  "personnelBreakdown": [
-    {
-      "personnelType": "Contractor",
-      "count": 2
-    }
-  ],
-  "totalVisitedToday": 4,
-  "visitedToday": {
-    "employees": 0,
-    "contractors": 4,
-    "total": 4
-  },
-  "swipeStats": {
-    "totalInSwipes": 0,
-    "totalOutSwipes": 0
-  }
-
-
-1	2025-09-17	12:21:39 AM	W0022449	Angel, Maria	Contractor	618945	US.CO.HQ. 13. North Lobby Doors-OUT	Denver
-2	2025-09-17	12:22:16 AM	W0022451	Alamo, Martin	Contractor	613770	US.CO.HQ. 06. South Entrance-OUT	Denver
-3	2025-09-17	12:26:55 AM	W0026176	Vargas, Erika	Contractor	617979	US.CO.HQ. 01. Focus Area North-IN	Denver
-4	2025-09-17	01:21:44 AM	W0028120	Ali, Shuayb	Contractor	618890	US.CO.HQ. 14. North Lobby Doors-IN	Denver
-
-from 12:21:39 AM to 01:21:44 AM four empleoy are ok; so on that time ime=01:25:00 we got this four details ok
-____________________________________________________
-
+  visitedOccupants: Array.from(visitedOccupants.values()),  // 👈 new full list
+  swipeStats: { totalInSwipes, totalOutSwipes },
+  floorInOutSummary
+};
