@@ -1,3 +1,58 @@
+function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
+  // If atDt is provided we should consider only events that actually occurred
+  // at-or-before that instant (and are on the same Denver date).
+  const eventsForAtDt = atDt
+    ? allEvents.filter(evt => {
+        if (!isSameDenverDate(evt.Dateonly, atDt)) return false;
+        const evtDt = DateTime.fromISO(evt.LocaleMessageTime, { setZone: true });
+        return evtDt.isValid && evtDt.toMillis() <= atDt.toMillis();
+      })
+    : // live mode: consider all events for "today" per previous behaviour
+      allEvents.filter(evt => isSameDenverDate(evt.Dateonly, DateTime.now().setZone('America/Denver')));
+
+  // use eventsForAtDt instead of allEvents below
+  // ─── A) Evict “Out of office”
+  const evicted = new Set();
+  const lastByPerson = new Map();
+
+  eventsForAtDt.forEach(evt => {
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    const prev = lastByPerson.get(key);
+    if (!prev || DateTime.fromISO(evt.LocaleMessageTime, { setZone: true }) > DateTime.fromISO(prev.LocaleMessageTime, { setZone: true })) {
+      lastByPerson.set(key, evt);
+    }
+  });
+
+  lastByPerson.forEach(evt => {
+    if (
+      evt.Direction === 'OutDirection'
+      && mapDoorToFloor(evt.Door, evt.Direction) === 'Out of office'
+    ) {
+      evicted.add(evt.PersonGUID || evt.EmployeeID || evt.CardNumber);
+    }
+  });
+
+  const activeEvents = eventsForAtDt.filter(evt => {
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    return !evicted.has(key);
+  });
+
+  // ─── 1) Live occupancy dedupe by last InDirection
+  const todayIn = activeEvents.filter(e =>
+    e.Direction === 'InDirection' // we already limited by date & <= atDt
+  );
+
+  // ...rest of existing code remains the same but operate on todayIn / activeEvents / eventsForAtDt
+
+
+
+
+
+
+
+
+
+..........
 // filter only events on that Denver local date
 const targetDate = atDt.toFormat('yyyy-LL-dd');
 const filtered = events.filter(e => e.Dateonly === targetDate);
