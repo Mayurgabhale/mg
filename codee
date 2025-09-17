@@ -4,6 +4,7 @@
 3	2025-09-17	12:26:55 AM	W0026176	Vargas, Erika	Contractor	617979	\
 See this denvar first swipe is 12:21:39 AM	but in this
 we got 0
+http://localhost:5000/api/occupancy-at-time-denver?date=2025-09-17&time=00:30:00
 {
   "asOfLocal": "2025-09-17T00:30:00.000-06:00",
   "asOfUTC": "2025-09-17T06:30:00.000Z",
