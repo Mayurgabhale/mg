@@ -1,4 +1,50 @@
 
+.
+
+
+
+function computeVisitedToday(allEvents, referenceDt = null) {
+  const refDate = referenceDt ? referenceDt.setZone('America/Denver') : DateTime.now().setZone('America/Denver');
+  const results = { employees: 0, contractors: 0, total: 0 };
+
+  const seen = new Set();
+
+  allEvents.forEach(evt => {
+    // Only same Denver date
+    if (!isSameDenverDate(evt.Dateonly, refDate)) return;
+
+    // If referenceDt provided, skip anything after that moment
+    if (referenceDt) {
+      const iso = `${evt.Dateonly}T${evt.Swipe_Time}`;
+      const eDt = DateTime.fromISO(iso, { zone: 'America/Denver' });
+      if (!eDt.isValid || eDt > referenceDt) return;
+    }
+
+    const id = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    if (seen.has(id)) return;
+    seen.add(id);
+
+    if (evt.PersonnelType === 'Employee' || evt.PersonnelType === 'Terminated Personnel') results.employees++;
+    else results.contractors++;
+
+    results.total++;
+  });
+
+  return results;
+}
+
+
+
+
+
+
+....
+
+
+
+
+
+
 // replace this line
 const visited = computeVisitedToday(allEvents, refDt);
 
