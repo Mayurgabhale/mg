@@ -1,3 +1,34 @@
+http://localhost:5000/api/occupancy-at-time-denver?date=2025-09-17&time=00:00:00
+{
+  "asOfLocal": "2025-09-17T00:00:00.000-06:00",
+  "asOfUTC": "2025-09-17T06:00:00.000Z",
+  "currentCount": 0,
+  "floorBreakdown": [],
+  "personnelSummary": {
+    "employees": 0,
+    "contractors": 0
+  },
+  "personnelBreakdown": [],
+  "totalVisitedToday": 3,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 3,
+    "total": 3
+  },
+  "swipeStats": {
+    "totalInSwipes": 0,
+    "totalOutSwipes": 0
+  },
+  "floorInOutSummary": []
+}
+this alos we will got 0
+"totalVisitedToday": 3,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 3,
+    "total": 3
+
+
 // Build occupancy for "today" where "today" can be the real today OR the date represented by atDt (Denver)
 function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
   // reference DateTime in Denver (null => live now)
