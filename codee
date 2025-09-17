@@ -1,4 +1,3 @@
-in bar bar cente disply headcount but there color is white i want black ok, white is not visible 
 
 import React, { useMemo } from 'react';
 import {
@@ -35,9 +34,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 const HeadcountLabel = ({ x, y, width, value }) => (
   <text
     x={x + width / 2}
-    y={y - 6}
-    textAnchor="middle"
-    fill="#228B22"
+    y={y - 5}
+    textAnchor="top"
+    fill="#f71905"
     fontWeight="bold"
     fontSize={14}
   >
