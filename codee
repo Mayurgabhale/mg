@@ -1,3 +1,34 @@
+function computeVisitedToday(allEvents, referenceDt = null) {
+  const seen = new Map(); // key -> PersonnelType
+  allEvents.forEach(evt => {
+    if (evt.Direction !== 'InDirection') return;
+
+    // ensure the event occurred on the same Denver date and at-or-before referenceDt (if supplied)
+    if (!isSameDenverDate(evt.Dateonly, referenceDt)) return;
+
+    if (referenceDt) {
+      const evtDt = DateTime.fromISO(evt.LocaleMessageTime, { setZone: true });
+      if (!evtDt.isValid || evtDt.toMillis() > referenceDt.toMillis()) return;
+    }
+
+    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
+    if (!seen.has(key)) {
+      seen.set(key, evt.PersonnelType);
+    }
+  });
+  let emp = 0, ctr = 0;
+  seen.forEach(type => {
+    if (type === 'Employee' || type === 'Terminated Personnel') emp++;
+    else ctr++;
+  });
+  return { total: seen.size, employees: emp, contractors: ctr };
+}
+
+
+
+
+
+....
 function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
   // If atDt is provided we should consider only events that actually occurred
   // at-or-before that instant (and are on the same Denver date).
