@@ -1,4 +1,40 @@
+ok, know i, when i clikc on 7 then i wan to disply details or list of the this rejection 
+],
+  "details": [
+    {
+      "LocaleMessageTime": "2025-09-16T13:39:11.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:39:11.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. South Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
+    {
+      "LocaleMessageTime": "2025-09-16T13:38:51.000Z",
+      "DateOnly": "2025-09-16T00:00:00.000Z",
+      "SwipeTime": "1970-01-01T13:38:51.000Z",
+      "CardNumber": "618861",
+      "PersonnelType": "Employee",
+      "Location": "US.CO.OBS",
+      "Door": "US.CO.HQ. 12. North Lobby Doors-IN",
+      "RejectionType": "CardDisabled",
+      "floor": "Floor 12"
+    },
 
+Floor 12	202	198	4	0	7
+
+Floor	In Swipes	Out Swipes	In − Out	Security	Rejection (Today)
+Floor 14	269	254	15	0	0
+Floor 15	37	27	10	0	0
+Floor 01	15	6	9	1	2
+Floor 13	165	160	5	0	0
+Floor 06	86	82	4	0	0
+Floor 12	202	198	4	0	7
+Floor 11	145	142	3	0	0
+Floor 09	126	124	2	0	0
 
 // src/components/FloorInOutTable.jsx
 // (only showing the full component for completeness — replace your file with this)
