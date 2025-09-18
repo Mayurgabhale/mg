@@ -1,3 +1,61 @@
+function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
+  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
+
+  useEffect(() => {
+    if (currentTimestamp) setLocal(isoToInput(currentTimestamp));
+    else setLocal('');
+  }, [currentTimestamp]);
+
+  function handleApply() {
+    if (!local) return;
+
+    // Convert selected local datetime to a Date object
+    const selected = new Date(local);
+    const now = new Date();
+
+    if (selected > now) {
+      window.alert("Please select a relevant time — snapshot cannot be in the future");
+      return;
+    }
+
+    const [datePart, timePart] = local.split('T');
+    onApply(datePart, timePart);
+  }
+
+  function handleLive() {
+    setLocal('');
+    onLive();
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
+      <InputGroup>
+        <FormControl
+          type="datetime-local"
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          placeholder="Select date & time"
+        />
+      </InputGroup>
+
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
+          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
+        </Button>
+        <Button variant="warning" onClick={handleLive} disabled={loading}>
+          Live
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+.....
 current time is 5:28 PM 
 whene is select 5:28 PM after  time then we got this pop up message 
 when i select 6:15 PM or 
