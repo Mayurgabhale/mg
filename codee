@@ -1,3 +1,34 @@
+// --- Compute the target local date (Asia/Kolkata) from the provided `at` timestamp
+const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
+  .setZone('Asia/Kolkata')
+  .toFormat('yyyy-LL-dd');
+
+// --- Convert the end-of-that-local-day to UTC and fetch the 24h window ending there
+// This guarantees we fetch all events for that local date (00:00..23:59:59.999 IST)
+const endOfLocalDayUtc = DateTime.fromISO(asOfLocalDate, { zone: 'Asia/Kolkata' })
+  .endOf('day')                 // end of local day in IST
+  .setZone('utc')               // convert to UTC
+  .toJSDate();
+
+let events = await fetchEventsWindow(endOfLocalDayUtc);
+
+// --- Defensive: still ensure each event maps to the same local date
+events = events.filter(evt => {
+  const evTime = evt.LocaleMessageTime instanceof Date
+    ? DateTime.fromJSDate(evt.LocaleMessageTime, { zone: 'utc' })
+    : DateTime.fromISO(String(evt.LocaleMessageTime), { zone: 'utc' });
+
+  const evLocalDate = evTime.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  return evLocalDate === asOfLocalDate;
+});
+
+
+
+
+
+
+
+ ........m
 Not disply:
 first read all code carefully, find out why this count is not disply:
 this count is not disply one partiqular times between from 18:30:00.000Z this to http://localhost:5000/api/occupancy-at?at=2025-09-17T23:58:00.000Z 0r 23:59:00.000Z  in betwwen not work correctly os
