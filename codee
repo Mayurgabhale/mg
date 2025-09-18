@@ -1,6 +1,31 @@
+know thi is is over live occupancy code:
+ok:: know i want ot create get occupancy any time or any date: 
+for example: currunt time is 12:12 PM: but i want to see occupany on 9:30 am or 6:15 am or 3:00 am or 11:45 Pm 
+so how to do: 
+Read below code carefuuly and write correc code; to get occupan all times ok 
+dont chang my privius code only add this new future ok carefuulyl:::
+
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\liveOccupancyRoutes.js
+const express = require('express');
+const router  = express.Router();
+const {
+  getLiveOccupancy,
+ 
+
+} = require('../controllers/liveOccupancyController');
+
+router.get('/live-occupancy', getLiveOccupancy);
+
+
+
+module.exports = router;
+
+__________________________________________
+
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
-
-
 const { DateTime }   = require('luxon');
 // const { poolConnect, pool, sql } = require('../config/db');
 const { sql, getPool } = require('../config/db');
@@ -19,9 +44,6 @@ function getTodayString() {
     .setZone('Asia/Kolkata')
     .toFormat('yyyy-LL-dd');
 }
-
-
-
 
 function normalizeZoneKey(rawDoor, rawDir) {
   // 1) Ensure it’s a string and trim whitespace
@@ -206,48 +228,6 @@ if (Direction === 'OutDirection') {
   }
   continue;
 }
-
-
-// if (Direction === 'OutDirection') {
-//   // true Out-of-office → full eviction (already checked earlier too)
-//   if (zone === 'out of office') {
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//     continue;
-//   }
-
-//   // Allowlist of OutDirection zones that should be kept (not evicted).
-//   // Add any other special OutDirection zones here as they are discovered.
-//   const allowedOutZones = new Set([
-//     'Assembly Area',
-//     'Reception Area'
-//   ]);
-
-//   // Preserve if it's an "Outer Area" OR explicitly allowed OutDirection zone.
-//   if (zoneRaw.endsWith('Outer Area') || allowedOutZones.has(zoneRaw)) {
-//     uniquePeople.set(dedupKey, PersonnelType);
-//     current[dedupKey] = {
-//       Dateonly, Swipe_Time,
-//       EmployeeID, ObjectName1, CardNumber,
-//       PersonnelType,
-//       zone: zoneRaw,
-//       door: Door,
-//       Direction
-//     };
-//   } else {
-//     // Any other OutDirection (TURNSTILE, lobby exits, etc.) = full eviction
-//     if (!warnedKeys.has(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`)) {
-//       console.log(`ℹ️ Evicting OutDirection for ${normalizePersonName(ObjectName1)} at zone ${zoneRaw}`);
-//       warnedKeys.add(`EVICTED_OUT|${normalizePersonName(ObjectName1)}|${zoneRaw}`);
-//     }
-//     uniquePeople.delete(dedupKey);
-//     delete current[dedupKey];
-//   }
-//   continue;
-// }
-
-
-
     // 3) InDirection → normal check-in
     if (Direction === 'InDirection') {
       uniquePeople.set(dedupKey, PersonnelType);
@@ -452,7 +432,6 @@ exports.getLiveOccupancy = async (req, res) => {
         events.push(...fresh);
       }
 
-    
 
       // build occupancy + today counts
       const occupancy  = await buildOccupancy(events);
@@ -465,16 +444,12 @@ exports.getLiveOccupancy = async (req, res) => {
         total:       todayStats.total
       };
 
-   
-
-
       // add an `id:` so EventSource treats even identical payloads as “new”
       
       const sid = Date.now();
       res.write(`id: ${sid}\n`);
       res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
 
-    
       if (typeof res.flush === 'function') {
         res.flush();
       }
@@ -491,4 +466,3 @@ exports.getLiveOccupancy = async (req, res) => {
     }
   }
 };
-
