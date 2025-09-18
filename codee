@@ -1,4 +1,33 @@
-
+is search this time http://localhost:5000/api/occupancy-at-time-pune?date=2025-09-18&time=13:50
+but we go this 08:20:00.000Z", time data why this happen: correct this 
+,
+  "personnelBreakdown": [
+    {
+      "personnelType": "Temp Badge",
+      "count": 1
+    },
+    {
+      "personnelType": "Employee",
+      "count": 18
+    },
+    {
+      "personnelType": "Property Management",
+      "count": 20
+    },
+    {
+      "personnelType": "Contractor",
+      "count": 3
+    }
+  ],
+  "asOfLocal": "2025-09-18T13:50:00.000+05:30",
+  "asOfUTC": "2025-09-18T08:20:00.000Z",
+  "totalVisitedToday": 53,
+  "visitedToday": {
+    "employees": 21,
+    "contractors": 32,
+    "total": 53
+  }
+}
 
 
 
