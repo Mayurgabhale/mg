@@ -1,3 +1,37 @@
+
+// Fetch a historical snapshot
+async function fetchSnapshot(dateStr, timeStr) {
+  setTimeTravelLoading(true);
+  const url = `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}`;
+  console.debug('[TimeTravel] fetching', url);
+  try {
+    const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => '');
+      console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
+      window.alert(`Failed to load snapshot (${resp.status}). See console for details.`);
+      throw new Error(`Server returned ${resp.status}`);
+    }
+
+    const p = await resp.json();
+    setPayload(p);
+    setTimeTravelMode(true);
+
+    // prefer backend timestamp if returned
+    setTimeTravelTimestamp(p?.asOfLocal || `${dateStr} ${timeStr}`);
+  } catch (err) {
+    console.error('Failed to fetch snapshot', err);
+    if (!err.message.includes('Server returned')) {
+      window.alert('Failed to load snapshot. See console for details.');
+    }
+  } finally {
+    setTimeTravelLoading(false);
+  }
+}
+
+
+
+....
 Update app.js file wiht this new update code:::
 
 
