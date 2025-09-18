@@ -1,1 +1,83 @@
 http://localhost:5000/api/occupancy-at?date=2025-09-16&time=03:00:00
+
+
+
+
+/**
+ * GET /occupancy-at?date=YYYY-MM-DD&time=HH:mm:ss
+ *
+ * Example:
+ *   /occupancy-at?date=2025-09-16&time=03:00:00
+ *
+ * Optional:
+ *   &hours=N   (how many hours of history to fetch before target, default 168)
+ */
+exports.getOccupancyAt = async (req, res) => {
+  try {
+    await getPool(); // ensure DB pool ready
+
+    const { date, time, hours } = req.query;
+    if (!date || !time) {
+      return res.status(400).json({
+        error: 'Please provide both `date` (YYYY-MM-DD) and `time` (HH:mm:ss)'
+      });
+    }
+
+    // Parse target datetime in Asia/Kolkata
+    let targetDT = DateTime.fromFormat(
+      `${date} ${time}`,
+      'yyyy-LL-dd HH:mm:ss',
+      { zone: 'Asia/Kolkata' }
+    );
+
+    // fallback if only HH:mm was given
+    if (!targetDT.isValid) {
+      targetDT = DateTime.fromFormat(
+        `${date} ${time}`,
+        'yyyy-LL-dd HH:mm',
+        { zone: 'Asia/Kolkata' }
+      );
+    }
+
+    if (!targetDT.isValid) {
+      return res.status(400).json({
+        error: 'Invalid date or time format. Example: date=2025-09-16&time=03:00:00'
+      });
+    }
+
+    const lookbackHours = Number.isFinite(Number(hours))
+      ? Math.max(1, parseInt(hours, 10))
+      : 168; // default 7 days
+
+    const sinceDT = targetDT.minus({ hours: lookbackHours }).toUTC();
+    const sinceJS = sinceDT.toJSDate();
+
+    // fetch events newer than sinceJS
+    const rawEvents = await fetchNewEvents(sinceJS);
+
+    // filter events only up to the target moment
+    const targetUTCjs = targetDT.toUTC().toJSDate();
+    const eventsUpToTarget = rawEvents.filter(
+      evt => evt.LocaleMessageTime <= targetUTCjs
+    );
+
+    // build occupancy as of that time
+    const occupancy = await buildOccupancy(eventsUpToTarget);
+
+    occupancy.asOf = targetDT.toUTC().toISO();
+    occupancy.requestedAsOfLocal = targetDT.toISO();
+    occupancy.requestedAsOfHuman = targetDT.toFormat('yyyy-LL-dd HH:mm:ss');
+    occupancy._meta = {
+      historyHoursUsed: lookbackHours,
+      eventsConsidered: eventsUpToTarget.length,
+    };
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('Error in getOccupancyAt:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+};
+
