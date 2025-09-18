@@ -1,8 +1,3 @@
-current time is 12:33 PM: but is 1:00 PM then get message like : Please select a relevant time —  cannot be in the future
-
-http://localhost:5000/api/occupancy-at?date=2025-09-18&time=03:00:00
-
-
 /**
  * GET /occupancy-at?date=YYYY-MM-DD&time=HH:mm:ss
  *
@@ -19,7 +14,7 @@ exports.getOccupancyAt = async (req, res) => {
     const { date, time, hours } = req.query;
     if (!date || !time) {
       return res.status(400).json({
-        error: 'Please provide both `date` (YYYY-MM-DD) and `time` (HH:mm:ss)'
+        error: 'Please provide both `date` (YYYY-MM-DD) and `time` (HH:mm:ss)',
       });
     }
 
@@ -41,7 +36,15 @@ exports.getOccupancyAt = async (req, res) => {
 
     if (!targetDT.isValid) {
       return res.status(400).json({
-        error: 'Invalid date or time format. Example: date=2025-09-16&time=03:00:00'
+        error: 'Invalid date or time format. Example: date=2025-09-16&time=03:00:00',
+      });
+    }
+
+    // ✅ Check if target is in the future (compared to "now" in Asia/Kolkata)
+    const nowLocal = DateTime.now().setZone('Asia/Kolkata');
+    if (targetDT > nowLocal) {
+      return res.status(400).json({
+        error: 'Please select a relevant time — cannot be in the future',
       });
     }
 
