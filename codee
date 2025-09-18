@@ -1,6 +1,6 @@
-http://localhost:5000/api/occupancy-at?date=2025-09-16&time=03:00:00
+current time is 12:33 PM: but is 1:00 PM then get message like : Please select a relevant time —  cannot be in the future
 
-
+http://localhost:5000/api/occupancy-at?date=2025-09-18&time=03:00:00
 
 
 /**
@@ -80,4 +80,3 @@ exports.getOccupancyAt = async (req, res) => {
     }
   }
 };
-
