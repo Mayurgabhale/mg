@@ -16,3 +16,93 @@ router.get('/live-occupancy', getLiveOccupancy);
 router.get('/occupancy-at', getOccupancyAt);
 
 module.exports = router;
+
+
+
+
+.....
+// Add this at the bottom of C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
+// (after your existing exports.getLiveOccupancy = ...)
+
+const HISTORY_HOURS_DEFAULT = 168; // default lookback (hours) when reconstructing past occupancy
+
+/**
+ * GET /occupancy-at
+ * Query params:
+ *  - asOf (ISO datetime) OR
+ *  - time (HH:mm or h:mm a) optionally with date (yyyy-LL-dd). If only time is provided, date defaults to today (Asia/Kolkata).
+ *  - hours (optional) how many hours of history to fetch before asOf (default 168)
+ *
+ * Examples:
+ *  /occupancy-at?asOf=2025-09-18T09:30
+ *  /occupancy-at?time=09:30
+ *  /occupancy-at?time=9:30%20AM&date=2025-09-18&hours=72
+ */
+exports.getOccupancyAt = async (req, res) => {
+  try {
+    await getPool(); // ensure pool ready (like live endpoint)
+
+    const { asOf, time, date, hours } = req.query;
+
+    let targetDT = null;
+    // 1) If asOf provided, try ISO parse (in Asia/Kolkata)
+    if (asOf) {
+      targetDT = DateTime.fromISO(asOf, { zone: 'Asia/Kolkata' });
+      // fallback to a common format if ISO fails
+      if (!targetDT.isValid) {
+        targetDT = DateTime.fromFormat(asOf, 'yyyy-LL-dd HH:mm', { zone: 'Asia/Kolkata' });
+      }
+    } else if (time) {
+      // 2) If only time provided, combine with date or today in Asia/Kolkata
+      let dateBase = date ? DateTime.fromISO(date, { zone: 'Asia/Kolkata' }) : DateTime.now().setZone('Asia/Kolkata');
+      if (!dateBase.isValid) dateBase = DateTime.now().setZone('Asia/Kolkata');
+
+      // Try 24-hour first, then 12-hour with AM/PM
+      targetDT = DateTime.fromFormat(`${dateBase.toFormat('yyyy-LL-dd')} ${time.trim()}`, 'yyyy-LL-dd HH:mm', { zone: 'Asia/Kolkata' });
+      if (!targetDT.isValid) {
+        targetDT = DateTime.fromFormat(`${dateBase.toFormat('yyyy-LL-dd')} ${time.trim()}`, 'yyyy-LL-dd h:mm a', { zone: 'Asia/Kolkata' });
+      }
+    } else {
+      return res.status(400).json({ error: 'Please provide either `asOf` (ISO) or `time` (HH:mm) query parameter.' });
+    }
+
+    if (!targetDT || !targetDT.isValid) {
+      return res.status(400).json({ error: 'Invalid date/time format for asOf/time. Examples: 2025-09-18T09:30 or time=09:30' });
+    }
+
+    const lookbackHours = Number.isFinite(Number(hours)) ? Math.max(1, parseInt(hours, 10)) : HISTORY_HOURS_DEFAULT;
+
+    // Build since = target - lookbackHours (in UTC JS Date) to pass to fetchNewEvents
+    const sinceDT_utc = targetDT.minus({ hours: lookbackHours }).toUTC();
+    const sinceJS = sinceDT_utc.toJSDate();
+
+    // fetch events newer than `since` (this returns up-to-now rows from DB)
+    const rawEvents = await fetchNewEvents(sinceJS);
+
+    // Convert target to UTC Date and filter events <= targetUTC
+    const targetUTCjs = targetDT.toUTC().toJSDate();
+    const eventsUpToTarget = rawEvents.filter(evt => {
+      // evt.LocaleMessageTime is a Date coming from DB; compare directly
+      return evt.LocaleMessageTime <= targetUTCjs;
+    });
+
+    // Reuse your buildOccupancy function on the filtered sequence
+    const occupancy = await buildOccupancy(eventsUpToTarget);
+
+    // Overwrite asOf to reflect requested time (instead of 'new Date()' inside buildOccupancy)
+    occupancy.asOf = targetDT.toUTC().toISO(); // canonical ISO in UTC
+    occupancy.requestedAsOfLocal = targetDT.setZone('Asia/Kolkata').toISO(); // local ISO for clarity
+    occupancy.requestedAsOfHuman = targetDT.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd HH:mm'); // human-friendly
+    occupancy._meta = {
+      historyHoursUsed: lookbackHours,
+      eventsConsidered: eventsUpToTarget.length,
+    };
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('Error in getOccupancyAt:', err);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+};
