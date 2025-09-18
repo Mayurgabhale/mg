@@ -1,3 +1,26 @@
+// --- Keep only events whose local Asia/Kolkata date matches the requested 'at' date
+const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
+  .setZone('Asia/Kolkata')
+  .toFormat('yyyy-LL-dd');
+
+events = events.filter(evt => {
+  // LocaleMessageTime from DB may be a Date or a string — handle both safely
+  const evTime = evt.LocaleMessageTime instanceof Date
+    ? DateTime.fromJSDate(evt.LocaleMessageTime, { zone: 'utc' })
+    : DateTime.fromISO(String(evt.LocaleMessageTime), { zone: 'utc' });
+
+  const evLocalDate = evTime.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  return evLocalDate === asOfLocalDate;
+});
+
+
+
+
+
+.....
+
+
+
 chekc why this time occupnay are not display> 
 http://localhost:5000/api/occupancy-at?at=2025-09-17T23:30:00.000Z
 
