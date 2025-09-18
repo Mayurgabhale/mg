@@ -1,3 +1,19 @@
+...
+
+// build occupancy as of that time
+const occupancy = await buildOccupancy(eventsUpToTarget);
+
+// Use local IST in output
+occupancy.asOf = targetDT.toISO(); // <-- local, not UTC
+occupancy.requestedAsOfLocal = targetDT.toISO();
+occupancy.requestedAsOfHuman = targetDT.toFormat('yyyy-LL-dd HH:mm:ss');
+occupancy._meta = {
+  historyHoursUsed: lookbackHours,
+  eventsConsidered: eventsUpToTarget.length,
+};
+
+...
+
 http://localhost:5000/api/occupancy-at?date=2025-09-18&time=10:00:00
 
 {
