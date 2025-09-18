@@ -1,3 +1,41 @@
+http://localhost:5000/api/occupancy-at?date=2025-09-18&time=10:00:00
+
+{
+  "asOf": "2025-09-18T04:30:00.000Z", see this time this show different time and i search different what i considert which time data is came: 
+  "summary": [
+    {
+      "zone": "Reception Area",
+      "count": 8
+    },
+    {
+      "zone": "Red Zone - Outer Area",
+      "count": 1
+    },
+    {
+      "zone": "Yellow Zone",
+      "count": 4
+    },
+    {
+      "zone": "2nd Floor, Pune",
+      "count": 2
+    },
+    {
+      "zone": "Green Zone",
+      "count": 1
+    },
+    {
+      "zone": "Tower B",
+      "count": 2
+    },
+    {
+      "zone": "Red Zone",
+      "count": 1
+    }
+  ],
+  "zoneBreakdown": [
+    {
+
+
 /**
  * GET /occupancy-at?date=YYYY-MM-DD&time=HH:mm:ss
  *
