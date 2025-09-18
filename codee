@@ -38,7 +38,6 @@ REad all code carefully and slove this issue
 
 
 
-
 const { DateTime } = require('luxon');
 // const { poolConnect, pool, sql } = require('../config/db');
 const { sql, getPool } = require('../config/db');
@@ -581,5 +580,8 @@ exports.getLiveOccupancy = async (req, res) => {
     }
   }
 };
+
+
+
 
 
