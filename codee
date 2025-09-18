@@ -299,6 +299,65 @@ export default function WrappedApp() {
       </div>
     </BrowserRouter>
   );
+}__________
+
+// src/components/TimeTravelControl.jsx
+import React, { useEffect, useState } from 'react';
+import { Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
+
+
+export default function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
+  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
+
+  useEffect(() => {
+    if (currentTimestamp) setLocal(isoToInput(currentTimestamp));
+    else setLocal('');
+  }, [currentTimestamp]);
+
+  function handleApply() {
+    if (!local) return;
+    
+    const iso = `${local}:00.000Z`;
+    onApply(iso);
+  }
+  function handleLive() {
+    setLocal('');
+    onLive();
+  }
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
+      <InputGroup>
+        <FormControl
+          type="datetime-local"
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          placeholder="Select date & time"
+        />
+      </InputGroup>
+
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
+          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
+        </Button>
+        <Button variant="warning" onClick={handleLive} disabled={loading}>
+          Live
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function isoToInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const year = d.getUTCFullYear();
+  const month = pad(d.getUTCMonth() + 1);
+  const day = pad(d.getUTCDate());
+  const hours = pad(d.getUTCHours());
+  const minutes = pad(d.getUTCMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 
