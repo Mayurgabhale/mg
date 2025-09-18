@@ -1,3 +1,129 @@
+we getting issue::
+i select this date and time
+http://localhost:5000/api/occupancy-at?date=2025-09-18&time=10:00:00
+But in respons i got this;
+we got alos privisu date date; 
+++ but we need only select date and time not privius: the date get only select date and  time 
+++++++++
+
+{
+  "asOf": "2025-09-18T04:30:00.000Z",   +++++++++++++++++++++++++++++++++
+  "summary": [
+    {
+      "zone": "Red Zone - Outer Area",
+      "count": 1
+    },
+    {
+      "zone": "Tower B",
+      "count": 5
+    },
+    {
+      "zone": "Reception Area",
+      "count": 45
+    },
+    {
+      "zone": "Yellow Zone",
+      "count": 4
+    },
+    {
+      "zone": "2nd Floor, Pune",
+      "count": 3
+    },
+    {
+      "zone": "Orange Zone",
+      "count": 2
+    },
+    {
+      "zone": "Green Zone",
+      "count": 2
+    },
+    {
+      "zone": "Red Zone",
+      "count": 2
+    }
+  ],
+  "zoneBreakdown": [
+    {
+      "zone": "Red Zone - Outer Area",
+      "Property Management": 1,
+      "total": 1
+
+details": {
+    "Red Zone - Outer Area": [
+      {
+        "Dateonly": "2025-09-17",
+        "Swipe_Time": "18:59:00",
+        "EmployeeID": "0",
+        "ObjectName1": "Patil, Shivanand (Teapoint)",
+        "CardNumber": "413971",
+        "PersonnelType": "Property Management",
+        "zone": "Red Zone - Outer Area",
+        "door": "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)",
+        "Direction": "OutDirection"
+      }
+    ],
+    "Tower B": [
+      {
+        "Dateonly": "2025-09-17",
+        "Swipe_Time": "10:22:08",
+        "EmployeeID": "0",
+        "ObjectName1": "Pune, VIS_PUN_150",
+        "CardNumber": "419394",
+        "PersonnelType": "Visitor",
+        "zone": "Tower B",
+        "door": "APAC_IN_PUN_TOWER B_ST5_WKS SIDE DOOR",
+        "Direction": "OutDirection"
+      },
+   {
+        "Dateonly": "2025-09-11",
+        "Swipe_Time": "15:20:37",
+        "EmployeeID": "318837",
+        "ObjectName1": "Shaha, Ajinkya",
+        "CardNumber": "602472",
+        "PersonnelType": "Terminated Personnel",
+        "zone": "Reception Area",
+        "door": "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW",
+        "Direction": "OutDirection"
+      },
+
+},
+  "personnelBreakdown": [
+    {
+      "personnelType": "Property Management",
+      "count": 6
+    },
+    {
+      "personnelType": "Visitor",
+      "count": 30
+    },
+    {
+      "personnelType": "Temp Badge",
+      "count": 7
+    },
+    {
+      "personnelType": "Terminated Personnel",
+      "count": 7
+    },
+    {
+      "personnelType": "Employee",
+      "count": 10
+    },
+    {
+      "personnelType": "None",
+      "count": 1
+    },
+    {
+      "personnelType": "Contractor",
+      "count": 3
+    }
+  ],
+  "requestedAsOfLocal": "2025-09-18T10:00:00.000+05:30",
+  "requestedAsOfHuman": "2025-09-18 10:00:00",
+  "_meta": {
+    "historyHoursUsed": 168,
+    "eventsConsidered": 106494
+  }
+
 /**
  * GET /occupancy-at?date=YYYY-MM-DD&time=HH:mm:ss
  *
