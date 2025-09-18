@@ -1,64 +1,5 @@
-
-occupancy.asOfUTC = atDt.toISO({ suppressMilliseconds: false });
-
-
-
-is search this time http://localhost:5000/api/occupancy-at-time-pune?date=2025-09-18&time=13:50
-but we go this 08:20:00.000Z", time data why this happen: correct this 
-,
-  "personnelBreakdown": [
-    {
-      "personnelType": "Temp Badge",
-      "count": 1
-    },
-    {
-      "personnelType": "Employee",
-      "count": 18
-    },
-    {
-      "personnelType": "Property Management",
-      "count": 20
-    },
-    {
-      "personnelType": "Contractor",
-      "count": 3
-    }
-  ],
-  "asOfLocal": "2025-09-18T13:50:00.000+05:30",
-  "asOfUTC": "2025-09-18T08:20:00.000Z",
-  "totalVisitedToday": 53,
-  "visitedToday": {
-    "employees": 21,
-    "contractors": 32,
-    "total": 53
-  }
-}
-
-
-
-
-
-
-....// routes/liveOccupancyRoutes.js
-const express = require('express');
-const router = express.Router();
-const liveOccupancyController = require('../controllers/liveOccupancyController');
-
-// Existing live SSE endpoint
-router.get('/occupancy-live-pune', liveOccupancyController.getLiveOccupancy);
-
-// New snapshot endpoint
-router.get('/occupancy-at-time-pune', liveOccupancyController.getPuneSnapshotAtDateTime);
-
-module.exports = router;
-
-
-
-
-GET /api/occupancy-at-time-pune?date=2025-09-18&time=14:30
-
-
-
+without time convert i want this data, as it is; if i seach this time 
+but but if is search http://localhost:5000/api/occupancy-at-time-pune?date=2025-09-18&time=13:50
 
 // GET /api/occupancy-at-time-pune?date=YYYY-MM-DD&time=HH:MM[:SS]
 exports.getPuneSnapshotAtDateTime = async (req, res) => {
@@ -169,6 +110,7 @@ exports.getPuneSnapshotAtDateTime = async (req, res) => {
 
     occupancy.asOfLocal = atDt.toISO();
     occupancy.asOfUTC   = atDt.toUTC().toISO();
+    occupancy.asOfUTC = atDt.toISO({ suppressMilliseconds: false });
     occupancy.totalVisitedToday = visitedStats.total;
     occupancy.visitedToday = visitedStats;
 
