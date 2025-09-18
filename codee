@@ -1,3 +1,17 @@
+function handleApply() {
+  if (!local) return;
+
+- const iso = `${local}:00.000Z`;
+- onApply(iso);
++ // local looks like "2025-09-18T13:43"
++ const [datePart, timePart] = local.split('T');
++ onApply(datePart, timePart);
+}
+
+
+
+
+....
 Failed to load snapshot (400). See console for details.
 GET http://localhost:5000/api/occupancy-at-time-pune?date=2025-09-18T13%3A43%3A00.000Z&time=undefined 400 (Bad Request)
 fetchSnapshot @ App.js:456
