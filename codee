@@ -1,127 +1,158 @@
-export default function FloorInOutTable({
-  data = [],
-  floorBreakdown = [],
-  floorInOutSummary = [],
-  rejectionSnapshot = null   // NEW
-}) {
+if in name is Red Zone - Outer Area: then in graph display --->> East out door Area
+and if name is Yellow Zone - Outer Area: then in praph disply ---->> West out door Area
 
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList,
+} from "recharts";
+import { Card } from "react-bootstrap";
+// Gradients/solid colors for known zones
 
+const ZONE_GRADIENTS = {
+  "Red Zone": ["#FF0000", "#D22B2B"],
+  "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
+  "Yellow Zone": ["#FFDE21", "#FFBF00"],
+  "Yellow Zone - Outer Area": ["#FFDE21", "#FFBF00"],
+  "Orange Zone": ["#E3963E", "#FFC966"],
+  "Orange Zone - Outer Area": ["#E3963E", "#FFC966"],
+  "Green Zone": ["#009E60", "#50C878"],
+  "Reception Area": ["#E0CCFF", "#F4E6FF"],
+  "Assembly Area": ["#FE6F5E", "#A366FF"],
+  "Tower B": ["#E68FAC", "#99BBFF"],
+  "2nd Floor, Pune": ["#FF6F61", "#FFA28F"],
+};
 
+const SOLID_COLORS = [
+  "#FFD100",
+  "#009E60",
+  "#FF6F61",
+  "#58595B",
+  "#FFB800",
+  "#C75D00",
+];
 
-useEffect(() => {
-  let mounted = true;
+// 🔹 Helper: shorten long zone names
+const shortenName = (name) => {
+  if (name.length > 18) {
+    return name.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
+  }
+  return name;
+};
 
-  async function loadFromSnapshotOrLive() {
-    setRejectionsLoading(true);
-
-    // If caller supplied a snapshot array, use it
-    if (Array.isArray(rejectionSnapshot)) {
-      try {
-        const detailsToday = rejectionSnapshot.slice(); // assume snapshot provides flat list
-        const summaryMap = {};
-        const detailsByFloor = {};
-
-        detailsToday.forEach(d => {
-          const derived = deriveFloorFromRecord(d) || 'Unknown';
-          const key = normalizeFloorName(derived) || 'Unknown';
-          detailsByFloor[key] = detailsByFloor[key] || [];
-          detailsByFloor[key].push(d);
-          summaryMap[key] = (summaryMap[key] || 0) + 1;
-        });
-
-        if (!mounted) return;
-        setRejectionSummaryMap(summaryMap);
-        setRejectionDetails(detailsByFloor);
-        setRejectionAllDetailsToday(detailsToday);
-      } catch (err) {
-        console.error('Failed to process rejection snapshot:', err);
-        if (mounted) {
-          setRejectionSummaryMap({});
-          setRejectionDetails({});
-          setRejectionAllDetailsToday([]);
-        }
-      } finally {
-        if (mounted) setRejectionsLoading(false);
-      }
-      return;
-    }
-
-    // Otherwise fetch live rejections (existing behavior)
-    try {
-      const res = await fetch('/api/rejections');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = await res.json();
-
-      const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-      let detailsToday = [];
-      const summaryMap = {};
-
-      if (Array.isArray(payload.dateWise)) {
-        const dayObj = payload.dateWise.find(d => d.date === todayDenver);
-        if (dayObj && Array.isArray(dayObj.floors)) {
-          dayObj.floors.forEach(f => {
-            const key = normalizeFloorName(f.floor || '');
-            if (!key) return;
-            summaryMap[key] = Number(f.rejectionCount || 0);
-          });
-        }
-        if (Array.isArray(payload.details)) {
-          detailsToday = payload.details.filter(d => {
-            const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
-            if (!raw) return false;
-            try {
-              const dt = new Date(raw);
-              const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-              return dtStr === todayDenver;
-            } catch (e) {
-              return String(raw).slice(0, 10) === todayDenver;
-            }
-          });
-        }
-      } else if (Array.isArray(payload.details)) {
-        detailsToday = payload.details.filter(d => {
-          const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
-          if (!raw) return false;
-          try {
-            const dt = new Date(raw);
-            const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-            return dtStr === todayDenver;
-          } catch (e) {
-            return String(raw).slice(0, 10) === todayDenver;
-          }
-        });
-        detailsToday.forEach(d => {
-          const derived = deriveFloorFromRecord(d) || 'Unknown';
-          const key = normalizeFloorName(derived);
-          summaryMap[key] = (summaryMap[key] || 0) + 1;
-        });
-      }
-
-      const detailsByFloor = {};
-      detailsToday.forEach(d => {
-        const derived = deriveFloorFromRecord(d) || 'Unknown';
-        const key = normalizeFloorName(derived) || 'Unknown';
-        detailsByFloor[key] = detailsByFloor[key] || [];
-        detailsByFloor[key].push(d);
-      });
-
-      if (!mounted) return;
-      setRejectionSummaryMap(summaryMap);
-      setRejectionDetails(detailsByFloor);
-      setRejectionAllDetailsToday(detailsToday);
-    } catch (err) {
-      console.error('Failed to load rejections:', err);
-      if (mounted) {
-        setRejectionSummaryMap({});
-        setRejectionDetails({});
-        setRejectionAllDetailsToday([]);
-      }
-    } finally {
-      if (mounted) setRejectionsLoading(false);
-    }
+export default function SummaryChart({ summary = [] }) {
+  if (!summary.length) {
+    return <Card body>No zone data available</Card>;
   }
 
-  loadFromSnapshotOrLive();
-  return () => { mounted = false; };
-}, [rejectionSnapshot]); // rerun when caller supplies a new snapshot
+  // 🔹 Sort zones by headcount (descending)
+  const sortedData = [...summary].sort((a, b) => b.count - a.count);
+  // Custom tooltip
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+    const { zone, count } = payload[0].payload;
+    return (
+      <div
+        style={{
+          backgroundColor: "#000",
+          border: "1px solid var(--wu-yellow)",
+          borderRadius: 4,
+          padding: "8px",
+          color: "#FFD100",
+          fontSize: "0.9rem",
+        }}
+      >
+        <div>
+          <strong>{zone}</strong>
+        </div>
+        <div>Headcount: {count}</div>
+      </div>
+    );
+  };
 
+  return (
+    <Card
+      className="mb-4 shadow-sm border"
+      style={{ borderColor: "var(--wu-yellow)" }}
+    >
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{
+          fontSize: "1.2rem",
+          borderBottom: "2px solid var(--wu-yellow)",
+        }}
+      >
+        Western Union - Pune Zone-wise Headcount
+      </Card.Header>
+
+      <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            layout="vertical"
+            data={sortedData.map((z) => ({
+              ...z,
+              shortZone: shortenName(z.zone),
+            }))}
+            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
+          >
+            <XAxis type="number" tick={{ fill: "#FFD100" }} />
+            <YAxis
+              dataKey="shortZone"
+              type="category"
+              tick={{ fill: "#FFD100", fontWeight: "bold" }}
+              width={150}
+            />
+            <Tooltip content={renderTooltip} />
+
+            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
+              {sortedData.map((entry, idx) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                const color = grad
+                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
+                  : SOLID_COLORS[idx % SOLID_COLORS.length];
+                return <Cell key={`cell-${idx}`} fill={color} />;
+              })}
+
+              <LabelList
+                dataKey="count"
+                position="inside"
+                style={{
+                  fill: "#fff",
+                  fontWeight: "bold",
+                  fontSize: "0.9rem",
+                }}
+              />
+            </Bar>
+
+            <defs>
+              {sortedData.map((entry) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                if (!grad) return null;
+                return (
+                  <linearGradient
+                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
+                    key={entry.zone}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="0"
+                  >
+                    <stop offset="0%" stopColor={grad[0]} />
+                    <stop offset="100%" stopColor={grad[1]} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  );
+}
