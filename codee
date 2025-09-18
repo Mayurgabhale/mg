@@ -1,45 +1,5 @@
-// --- Keep only events whose local Asia/Kolkata date matches the requested 'at' date
-const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
-  .setZone('Asia/Kolkata')
-  .toFormat('yyyy-LL-dd');
-
-events = events.filter(evt => {
-  // LocaleMessageTime from DB may be a Date or a string — handle both safely
-  const evTime = evt.LocaleMessageTime instanceof Date
-    ? DateTime.fromJSDate(evt.LocaleMessageTime, { zone: 'utc' })
-    : DateTime.fromISO(String(evt.LocaleMessageTime), { zone: 'utc' });
-
-  const evLocalDate = evTime.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-  return evLocalDate === asOfLocalDate;
-});
-
-
-
-
-
-.....
-
-
-
-chekc why this time occupnay are not display> 
-http://localhost:5000/api/occupancy-at?at=2025-09-17T23:30:00.000Z
-
-{
-  "asOf": "2025-09-17T23:30:00.000Z",
-  "summary": [],
-  "zoneBreakdown": [],
-  "floorBreakdown": [],
-  "details": {
-
-  },
-  "personnelSummary": {
-    "employees": 0,
-    "contractors": 0
-  },
-      }
-    ]
-  },
-  "personnelBreakdown": [],
+http://localhost:5000/api/occupancy-at?at=2025-09-17T19:30:00.000Z
+in this count not disply: chekc what is the issue and why not disply: and correc it
   "totalVisitedToday": 0,
   "visitedToday": {
     "employees": 0,
@@ -47,15 +7,43 @@ http://localhost:5000/api/occupancy-at?at=2025-09-17T23:30:00.000Z
     "total": 0
   }
 }
+__________
+
+"personnelBreakdown": [
+    {
+      "personnelType": "Contractor",
+      "count": 6
+    },
+    {
+      "personnelType": "Employee",
+      "count": 76
+    },
+    {
+      "personnelType": "Visitor",
+      "count": 9
+    },
+    {
+      "personnelType": "Property Management",
+      "count": 13
+    }
+  ],
+  "totalVisitedToday": 0,
+  "visitedToday": {
+    "employees": 0,
+    "contractors": 0,
+    "total": 0
+  }
+}
+REad all code carefully and slove this issue
 
 
 
 
-const { DateTime }   = require('luxon');
+const { DateTime } = require('luxon');
 // const { poolConnect, pool, sql } = require('../config/db');
 const { sql, getPool } = require('../config/db');
-const doorZoneMap    = require('../data/doorZoneMap');
-const zoneFloorMap   = require('../data/zoneFloorMap');
+const doorZoneMap = require('../data/doorZoneMap');
+const zoneFloorMap = require('../data/zoneFloorMap');
 const ertMembers = require('../data/puneErtMembers.json');
 // track which door→zone keys we've already warned on
 const warnedKeys = new Set();
@@ -120,10 +108,10 @@ function mapDoorToZone(rawDoor, rawDir) {
 async function fetchNewEvents(since) {
   // await the shared pool promise instead of poolConnect
   const pool = await getPool();
-  const req  = pool.request();
+  const req = pool.request();
   req.input('since', sql.DateTime2, since);
 
-// console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
+  // console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
   const { recordset } = await req.query(`
     WITH CombinedQuery AS (
       SELECT
@@ -179,14 +167,14 @@ async function fetchNewEvents(since) {
   `);
 
   // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
-    // recordset.map(r => r.LocaleMessageTime.toISOString()));
+  // recordset.map(r => r.LocaleMessageTime.toISOString()));
 
   return recordset;
 }
 
 
 async function buildOccupancy(allEvents) {
-  const current      = {};
+  const current = {};
   const uniquePeople = new Map();
 
   for (const evt of allEvents) {
@@ -197,10 +185,10 @@ async function buildOccupancy(allEvents) {
       Swipe_Time, Direction, Door
     } = evt;
     const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
-    const zoneRaw  = mapDoorToZone(Door, Direction);
-    const zone     = zoneRaw && zoneRaw.toLowerCase();
+    const zoneRaw = mapDoorToZone(Door, Direction);
+    const zone = zoneRaw && zoneRaw.toLowerCase();
 
- // ─── 1) If we can’t map door+direction to a valid zone, skip this event entirely. ───
+    // ─── 1) If we can’t map door+direction to a valid zone, skip this event entirely. ───
     //     (prevents "Unknown Zone" from ever entering uniquePeople/current)
     if (zoneRaw === 'Unknown Zone') {
       // We warned once in mapDoorToZone already; just ignore.
@@ -216,29 +204,29 @@ async function buildOccupancy(allEvents) {
       continue;
     }
 
-if (Direction === 'OutDirection') {
-  // Compare lowercased zone safely
-  const zoneLower = String(zone).toLowerCase();
+    if (Direction === 'OutDirection') {
+      // Compare lowercased zone safely
+      const zoneLower = String(zone).toLowerCase();
 
-  // Only full eviction when it's the real "Out of office"
-  if (zoneLower === 'out of office') {
-    uniquePeople.delete(dedupKey);
-    delete current[dedupKey];
-  } else {
-    // Keep the person in current headcount for all other OutDirection cases
-    // Update their last-seen metadata (zone, door, Direction)
-    uniquePeople.set(dedupKey, PersonnelType);
-    current[dedupKey] = {
-      Dateonly, Swipe_Time,
-      EmployeeID, ObjectName1, CardNumber,
-      PersonnelType,
-      zone: zoneRaw,
-      door: Door,
-      Direction
-    };
-  }
-  continue;
-}
+      // Only full eviction when it's the real "Out of office"
+      if (zoneLower === 'out of office') {
+        uniquePeople.delete(dedupKey);
+        delete current[dedupKey];
+      } else {
+        // Keep the person in current headcount for all other OutDirection cases
+        // Update their last-seen metadata (zone, door, Direction)
+        uniquePeople.set(dedupKey, PersonnelType);
+        current[dedupKey] = {
+          Dateonly, Swipe_Time,
+          EmployeeID, ObjectName1, CardNumber,
+          PersonnelType,
+          zone: zoneRaw,
+          door: Door,
+          Direction
+        };
+      }
+      continue;
+    }
 
 
     // 3) InDirection → normal check-in
@@ -260,10 +248,10 @@ if (Direction === 'OutDirection') {
   }
 
   // live headcounts (only from uniquePeople, which has already evicted all true out-of-office)
-  let employeeCount   = 0;
+  let employeeCount = 0;
   let contractorCount = 0;
   for (const pt of uniquePeople.values()) {
-    if (['Employee','Terminated Personnel'].includes(pt)) employeeCount++;
+    if (['Employee', 'Terminated Personnel'].includes(pt)) employeeCount++;
     else contractorCount++;
   }
   // Build zone→people map, but filter out any out-of-office at this final step too
@@ -279,10 +267,10 @@ if (Direction === 'OutDirection') {
   const zoneDetails = Object.fromEntries(
     Object.entries(zoneMap).map(([zone, emps]) => {
       const byType = emps.reduce((acc, e) => {
-        acc[e.PersonnelType] = (acc[e.PersonnelType]||0) + 1;
+        acc[e.PersonnelType] = (acc[e.PersonnelType] || 0) + 1;
         return acc;
       }, {});
-      return [ zone, { total: emps.length, byPersonnelType: byType, employees: emps } ];
+      return [zone, { total: emps.length, byPersonnelType: byType, employees: emps }];
     })
   );
 
@@ -293,7 +281,7 @@ if (Direction === 'OutDirection') {
     floorMap[floor] = floorMap[floor] || { total: 0, byPersonnelType: {} };
     floorMap[floor].total += data.total;
     for (const [pt, c] of Object.entries(data.byPersonnelType)) {
-      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt]||0) + c;
+      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt] || 0) + c;
     }
   }
 
@@ -313,30 +301,30 @@ if (Direction === 'OutDirection') {
         return {
           ...m,
           present: !!matchEvt,
-          zone:    matchEvt ? matchEvt.zone : null
+          zone: matchEvt ? matchEvt.zone : null
         };
-     });
-      return [ role, list ];
+      });
+      return [role, list];
     })
   );
 
   return {
-    asOf:             new Date().toISOString(),
-    summary:          Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
-    zoneBreakdown:    Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
-    floorBreakdown:   Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
-    details:          zoneMap,
+    asOf: new Date().toISOString(),
+    summary: Object.entries(zoneDetails).map(([z, d]) => ({ zone: z, count: d.total })),
+    zoneBreakdown: Object.entries(zoneDetails).map(([z, d]) => ({ zone: z, ...d.byPersonnelType, total: d.total })),
+    floorBreakdown: Object.entries(floorMap).map(([f, d]) => ({ floor: f, ...d.byPersonnelType, total: d.total })),
+    details: zoneMap,
     personnelSummary: { employees: employeeCount, contractors: contractorCount },
-     ertStatus,
-  
-  personnelBreakdown: (() => {
-    const map = new Map();
-    // uniquePeople: Map<dedupKey, PersonnelType>
-    for (const pt of uniquePeople.values()) {
-      map.set(pt, (map.get(pt) || 0) + 1);
-    }
-    return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
-  })(),
+    ertStatus,
+
+    personnelBreakdown: (() => {
+      const map = new Map();
+      // uniquePeople: Map<dedupKey, PersonnelType>
+      for (const pt of uniquePeople.values()) {
+        map.set(pt, (map.get(pt) || 0) + 1);
+      }
+      return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
+    })(),
   };
 }
 
@@ -372,7 +360,7 @@ function buildVisitedToday(allEvents) {
 
   // Separate employees vs contractors
   const employees = finalList.filter(e =>
-    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
+    !['Contractor', 'Terminated Contractor', 'Temp Badge', 'Visitor', 'Property Management']
       .includes(e.PersonnelType)
   ).length;
   const contractors = finalList.length - employees;
@@ -383,7 +371,7 @@ function buildVisitedToday(allEvents) {
 // Helper: fetch events in the 24h window ending at `until` (inclusive)
 async function fetchEventsWindow(until) {
   const pool = await getPool();
-  const req  = pool.request();
+  const req = pool.request();
   req.input('until', sql.DateTime2, until);
 
   const { recordset } = await req.query(`
@@ -461,7 +449,7 @@ function buildVisitedForDate(allEvents, atDate) {
   }
   const finalList = Array.from(dedup.values());
   const employees = finalList.filter(e =>
-    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management'].includes(e.PersonnelType)
+    !['Contractor', 'Terminated Contractor', 'Temp Badge', 'Visitor', 'Property Management'].includes(e.PersonnelType)
   ).length;
   const contractors = finalList.length - employees;
   return { employees, contractors, total: finalList.length };
@@ -482,14 +470,22 @@ exports.getSnapshotAt = async (req, res) => {
     // const events = await fetchEventsWindow(atDate);
 
     // fetch events in the 24h window ending at atDate
-let events = await fetchEventsWindow(atDate);
+    let events = await fetchEventsWindow(atDate);
 
-// --- Keep only events whose local Asia/Kolkata date matches the requested 'at' date
+    // --- Keep only events whose local Asia/Kolkata date matches the requested 'at' date
 const asOfLocalDate = DateTime.fromJSDate(atDate, { zone: 'utc' })
   .setZone('Asia/Kolkata')
   .toFormat('yyyy-LL-dd');
 
-events = events.filter(evt => evt.Dateonly === asOfLocalDate);
+    events = events.filter(evt => {
+  // LocaleMessageTime from DB may be a Date or a string — handle both safely
+  const evTime = evt.LocaleMessageTime instanceof Date
+    ? DateTime.fromJSDate(evt.LocaleMessageTime, { zone: 'utc' })
+    : DateTime.fromISO(String(evt.LocaleMessageTime), { zone: 'utc' });
+
+  const evLocalDate = evTime.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  return evLocalDate === asOfLocalDate;
+});
 
     const occupancy = await buildOccupancy(events);
     const visitedStats = buildVisitedForDate(events, atDate);
@@ -510,7 +506,7 @@ events = events.filter(evt => evt.Dateonly === asOfLocalDate);
 };
 
 
-  // *******************
+// *******************
 
 
 /** Server‐Sent‐Events endpoint */
@@ -521,9 +517,9 @@ exports.getLiveOccupancy = async (req, res) => {
     await getPool();
 
     res.writeHead(200, {
-      'Content-Type':  'text/event-stream',
+      'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection':    'keep-alive'
+      'Connection': 'keep-alive'
     });
     res.write('\n');
 
@@ -534,38 +530,38 @@ exports.getLiveOccupancy = async (req, res) => {
 
     const push = async () => {
 
-    // Option B: Recompute date from the JS timestamp in Asia/Kolkata:
-    const todayKolkata = DateTime.now().setZone('Asia/Kolkata').toISODate();
-    for (let i = events.length - 1; i >= 0; i--) {
-      const ts = DateTime.fromJSDate(events[i].LocaleMessageTime, { zone: 'utc' })
-                     .setZone('Asia/Kolkata')
-                     .toISODate();
-      if (ts !== todayKolkata) {
-        events.splice(i, 1);
+      // Option B: Recompute date from the JS timestamp in Asia/Kolkata:
+      const todayKolkata = DateTime.now().setZone('Asia/Kolkata').toISODate();
+      for (let i = events.length - 1; i >= 0; i--) {
+        const ts = DateTime.fromJSDate(events[i].LocaleMessageTime, { zone: 'utc' })
+          .setZone('Asia/Kolkata')
+          .toISODate();
+        if (ts !== todayKolkata) {
+          events.splice(i, 1);
+        }
       }
-    }
 
       const fresh = await fetchNewEvents(lastSeen);
       //  console.log('📥 New events fetched:', fresh.length);
 
       if (fresh.length) {
         // lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
-         lastSeen = new Date();
+        lastSeen = new Date();
         events.push(...fresh);
       }
 
-  
+
       // build occupancy + today counts
-      const occupancy  = await buildOccupancy(events);
+      const occupancy = await buildOccupancy(events);
       const todayStats = buildVisitedToday(events);
       occupancy.totalVisitedToday = todayStats.total;
-      occupancy.visitedToday      = {
-        employees:   todayStats.employees,
+      occupancy.visitedToday = {
+        employees: todayStats.employees,
         contractors: todayStats.contractors,
-        total:       todayStats.total
+        total: todayStats.total
       };
 
-  
+
       const sid = Date.now();
       res.write(`id: ${sid}\n`);
       res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
@@ -573,7 +569,7 @@ exports.getLiveOccupancy = async (req, res) => {
       if (typeof res.flush === 'function') {
         res.flush();
       }
-     };
+    };
     await push();
     const timer = setInterval(push, 2000);
     req.on('close', () => clearInterval(timer));
