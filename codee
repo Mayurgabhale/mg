@@ -7,7 +7,7 @@ http://localhost:5000/api/monthly-summary?month=2025-09  This is excaly correct\
       "employeeId": "314345",
       "name": "Dass, Lloyds",
       "personnelType": "Employee",
-      "2025-09-01": "P",
+      "2025-09-01": "P", 
       "2025-09-02": "P",
       "2025-09-03": "P",
       "2025-09-04": "P",
