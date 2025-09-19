@@ -1,272 +1,48 @@
-// ---- Photo helpers (UI-only) ----
-import Impimg from "../assets/images/busy.png";
-
-const DEFAULT_PHOTO = Impimg || "/assets/images/busy.png";
-
-// Load all images from assets/images
-const images = require.context("../assets/images", false, /\.png$/);
-
-// Build a map { "178990": "resolvedPath", ... }
-const PHOTO_MAP = images.keys().reduce((acc, key) => {
-  const fileName = key.replace("./", ""); // e.g. "178990.png"
-  const id = fileName.split(".")[0];      // e.g. "178990"
-  acc[id] = images(key);
-  return acc;
-}, {});
-
-const toSlug = (name = "") =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-
-const getPhotoSrc = (m) => {
-  if (!m) return DEFAULT_PHOTO;
-  if (m.photo) return m.photo;
-  if (m.image) return m.image;
-
-  // Prefer employee-id photo if found
-  if (m.emp_id && PHOTO_MAP[m.emp_id]) {
-    return PHOTO_MAP[m.emp_id];
-  }
-
-  const name = m.name || m.Name;
-  if (name) return `/photos/${toSlug(name)}.png`;
-  return DEFAULT_PHOTO;
-};
-
-
-
-....
-
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\assets\images\178990.png
-in this path each membe photo i save with ther emp_id ok, they match and add ther photo ok
-C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\data\lacaErtMembers.json
-{
-  "Team Members": [
-    { "name": "Esteban Lopez Villalobos", "email": "Esteban.LopezVillalobos@wu.com", "emp_id": "302566","phone":"xxx-xxx-xxx" },
-    { "name": "Melissa Castro", "email": "Melissa.CastroUgalde@wu.com", "emp_id": "308530","phone":"xxx-xxx-xxx" },
-    { "name": "Leonardo Escalante", "email": "Leonardo.Escalante@wu.com", "emp_id": "249719","phone":"xxx-xxx-xxx" },
-    { "name": "María Gabriela Brenes", "email": "Maria.Brenes@wu.com", "emp_id": "239462","phone":"xxx-xxx-xxx" },
-    { "name": "Jose David Hernandez Salazar", "email": "JOSE.HERNANDEZ@wu.com", "emp_id": "315501","phone":"xxx-xxx-xxx" },
-    { "name": "Montserrat Sanabria Moreno", "email": "Monserrat.Sanabria@wu.com", "emp_id": "313147","phone":"xxx-xxx-xxx" },
-    { "name": "Marcelo Rivera Gutierrez", "email": "Marcelo.Rivera@wu.com", "emp_id": "315354","phone":"xxx-xxx-xxx" },
-    { "name": "Leandro Agredo Orozco", "email": "Leandro.AgredoOrozco@wu.com", "emp_id": "328465","phone":"xxx-xxx-xxx" },
-    { "name": "Natalia Araya Morera", "email": "NATALIA.ARAYA@wu.com", "emp_id": "81241784","phone":"xxx-xxx-xxx" },
-    { "name": "Carolina Flores Reyes", "email": "carolina.floresreyes@wu.com", "emp_id": "73432644","phone":"xxx-xxx-xxx" },
-    { "name": "Paula Jimenez", "email": "paula.jimenez@wu.com", "emp_id": "305073","phone":"xxx-xxx-xxx" },
-    { "name": "Guido Alberto Ramírez Camacho", "email": "guido.ramirez@westernunion.com", "emp_id": "238287","phone":"xxx-xxx-xxx" },
-    { "name": "Jason Chaves Vega", "email": "jason.chaves@westernunion.com", "emp_id": "324949","phone":"xxx-xxx-xxx" },
-    { "name": "Anahita Hashemi", "email": "anahita.hashemi@wu.com", "emp_id": "311968","phone":"xxx-xxx-xxx" },
-    { "name": "Olga Carvajal Castillo", "email": "olga.carvajal@westernunion.com", "emp_id": "319021","phone":"xxx-xxx-xxx" },
-    { "name": "Warner Alberto Granados Ewers", "email": "warner.granados@westernunion.com", "emp_id": "178990","phone":"xxx-xxx-xxx" },
-    { "name": "David Arce Calvo", "email": "david.arce@wu.com", "emp_id": "319972","phone":"xxx-xxx-xxx" },
-    { "name": "David Briceño", "email": "david.briceno@wu.com", "emp_id": "314240","phone":"xxx-xxx-xxx" },
-    { "name": "Jafeth Alexander Morales", "email": "Jafet.Morales@westernunion.com", "emp_id": "326589","phone":"xxx-xxx-xxx" },
-    { "name": "Karl Anthony Orozco", "email": "karl.orozcochinchilla@westernunion.com", "emp_id": "306365","phone":"xxx-xxx-xxx" },
-    { "name": "Omar Arias", "email": "omar.arias@westernunion.com", "emp_id": "313388","phone":"xxx-xxx-xxx" },
-    { "name": "Alfonso Guardia", "email": "alfonso.guardia@westernunion.com", "emp_id": "308280","phone":"xxx-xxx-xxx" },
-    { "name": "Ximena Espinoza", "email": "ximena.espinoza@westernunion.com", "emp_id": "327061" ,"phone":"xxx-xxx-xxx"},
-    { "name": "Mayer Pereira", "email": "meyer.pereira@westernunion.com", "emp_id": "237998","phone":"xxx-xxx-xxx" },
-    { "name": "Steven Alexander Alvarado Fallas", "email": "steven.alvarado@wu.com", "emp_id": "243957","phone":"xxx-xxx-xxx" },
-    { "name": "Kevin Alonso Arce", "email": "kevin.arce@wu.com", "emp_id": "314618","phone":"xxx-xxx-xxx" },
-    { "name": "Ronald Andrey Garro", "email": "ronald.garro@wu.com", "emp_id": "306147","phone":"xxx-xxx-xxx" },
-    { "name": "Carlos Manuel Hernandez", "email": "carlos.hernandezgonzalez@westernunion.com", "emp_id": "304864","phone":"xxx-xxx-xxx" },
-    { "name": "Taeseung Josue Yoon", "email": "taeseung.yoon@westernunion.com", "emp_id": "325507","phone":"xxx-xxx-xxx" },
-    { "name": "Andrey Molina", "email": "Andrey.Molina@wu.com", "emp_id": "323105","phone":"xxx-xxx-xxx" },
-    { "name": "Dra Lillan Marti", "email": "Lillan.Marti@westernunion.com", "emp_id": "11561479","phone":"xxx-xxx-xxx" }
-  ]
-}
-
-
-
-// src/components/LacaERTOverview.jsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Card, Row, Col, Badge, Container, Button } from "react-bootstrap";
-import {
-  FaEnvelopeOpenText,
-  FaMapMarkerAlt,
-  FaUsers,
-  FaMobileAlt,
-  FaLayerGroup,
-  FaIdCard,
-  FaPhone,
-  FaEye,
-  FaEyeSlash,
-  FaLocationArrow
-} from "react-icons/fa";
-import membersData from "../data/lacaErtMembers.json";
-import LoadingSpinner from "./LoadingSpinner";
-import { lookupFloor } from "../utils/floorLookup";
-import '../App.css';
-import Impimg from "../assets/images/busy.png";
-
-// ---- Photo helpers (UI-only) ----
-const DEFAULT_PHOTO = Impimg || '/assets/images/busy.png';
-const toSlug = (name = '') =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-const getPhotoSrc = (m) => {
-  if (!m) return DEFAULT_PHOTO;
-  if (m.photo) return m.photo;
-  if (m.image) return m.image;
-
-  // Prefer employee-id named images placed under src/assets/images (e.g. 178990.png)
-  if (m.emp_id) {
-    try {
-      // webpack will bundle files in the folder if present
-      // eslint-disable-next-line global-require, import/no-dynamic-require
-      return require(`../assets/images/${m.emp_id}.png`);
-    } catch (err) {
-      // fallthrough to next options
-    }
-  }
-
-  const name = m.name || m.Name;
-  if (name) return `/photos/${toSlug(name)}.png`;
-  return DEFAULT_PHOTO;
-};
-
-export default function LacaERTOverview() {
-  const [members, setMembers] = useState([]);
-  const [filterType, setFilterType] = useState("total"); // "total" | "available"
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchData(showLoader = false) {
-      try {
-        if (showLoader) setLoading(true);
-        const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-        const liveData = await res.json();
-        const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-        const merged = membersData["Team Members"].map((m) => {
-          const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-          const inLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-              : "";
-          const outLocation =
-            live.PartitionName2 && live.Door
-              ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-              : "";
-
-          return {
-            ...m,
-            present: !!live.EmployeeID,
-            direction: live.Direction || "",
-            inLocation,
-            outLocation,
-            door: live.Door || "",
-            phone: m.phone || "",
-          };
-        });
-
-        const sorted = merged.sort((a, b) =>
-          a.present === b.present ? 0 : a.present ? -1 : 1
-        );
-
-        if (isMounted) setMembers(sorted);
-      } catch (err) {
-        console.error("Error fetching live data:", err);
-      } finally {
-        if (isMounted && showLoader) setLoading(false);
-      }
-    }
-
-    // First load → show spinner
-    fetchData(true);
-
-    // Interval loads → no spinner
-    const interval = setInterval(() => fetchData(false), 10000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, []);
-
-  const totalCount = useMemo(() => members.length, [members]);
-  const availableCount = useMemo(
-    () => members.filter((m) => m.present).length,
-    [members]
-  );
-
-  const displayedMembers =
-    filterType === "available"
-      ? members.filter((m) => m.present)
-      : members;
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  return (
-    <div className="ert-dashboard">
-      <Container fluid className="py-4">
-        {/* Header */}
-        <div className="dashboard-header mb-4">
-          <div className="header-content">
-            <h1>Costa Rica — ERT Overview</h1>
-            <p>Emergency Response Team — Costa Rica site</p>
-          </div>
-        </div>
-
-        {/* Stats Cards (Top) */}
-        <Row className="mb-4">
-          <Col xs={12} md={6} className="mb-3">
-            <Card className="stats-card total-members" onClick={() => setFilterType('total')}>
-              <Card.Body className="p-3 d-flex align-items-center">
-                <div className="stats-icon me-3"><FaLayerGroup size={22} /></div>
-                <div>
-                  <h6 className="stats-label">Total Members</h6>
-                  <h3 className="stats-value mb-0">{totalCount}</h3>
+<div key={i} className="member-item pb-0 mb-1">
+              <div className="d-flex justify-content-between align-items-start mb-1">
+                <div className="d-flex align-items-center">
+                  <div className={`member-photo-container ${isPresent(m) ? 'present-border' : 'away-border'}`}>
+                    <img
+                      src={getPhotoSrc(m)}
+                      alt={m.name || m.Name || 'Member'}
+                      className="member-photo"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_PHOTO;
+                      }}
+                    />
+                    <div className={`status-indicator ${isPresent(m) ? 'present' : 'away'}`}></div>
+                  </div>
+                  <div className="ms-3">
+                    <h6 className="mb-0 member-name">{m.name || m.Name}</h6>
+                    <small className="text-muted">{m.designation || m.role}</small>
+                  </div>
                 </div>
-              </Card.Body>
-            </Card>
-          </Col>
+                <Badge bg={isPresent(m) ? 'success' : 'danger'} className="status-badge">
+                  {isPresent(m) ? 'Available' : 'Away'}
+                </Badge>
+              </div>
 
-          <Col xs={12} md={6} className="mb-3">
-            <Card className={`stats-card available-members`} onClick={() => setFilterType('available')}>
-              <Card.Body className="p-3 d-flex align-items-center">
-                <div className="stats-icon me-3"><FaUsers size={22} /></div>
-                <div>
-                  <h6 className="stats-label">Available Members</h6>
-                  <h3 className="stats-value mb-0">{availableCount}</h3>
+              <div className="member-contact-info">
+                <div className="contact-item">
+                  <FaEnvelope className="contact-icon text-primary" />
+                  <a href={`mailto:${m.email || m.Email}`} className="contact-link">{m.email || m.Email}</a>
                 </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+                <div className="contact-item">
+                  <FaPhone className="contact-icon text-success" />
+                  <span className="contact-text">{m.phone || m.Phone}</span>
+                </div>
+                <div className="contact-item">
+                  <FaLocationArrow className="contact-icon text-danger" />
+                  <span className="contact-text">{location}</span>
+                </div>
+              </div>
+            </div>
 
-        {/* Members list (styled like Pune UI) */}
-        <Row>
-          <Col xs={12}>
-            <Card className="dashboard-card members-card">
-              <Card.Header className="dashboard-card-header d-flex align-items-center justify-content-center">
-                <FaUsers className="me-2" />
-                <span className="role-title">Costa Rica ERT Members</span>
-                <Badge bg="outline-light" className="ms-2">{displayedMembers.length}</Badge>
-              </Card.Header>
+Read above code carefuuly, and and create below code card structeu same for above card look like: ok 
 
-              <Card.Body className="p-1">
-                {displayedMembers.length > 0 ? (
-                  <Row className="g-3">
-                    {displayedMembers.map((m, i) => {
-                      const isAway =
-                        m.present === false || (m.direction === 'OutDirection' && m.outLocation && m.outLocation.trim().toLowerCase() === 'out of office');
 
-                      const location = m.present ? m.inLocation || 'Unknown Zone' : 'Away';
-
-                      return (
-                        <Col xs={12} md={6} lg={4} key={i}>
-                          <div className="member-item-card p-3 h-100">
+ <div className="member-item-card p-3 h-100">
                             <div className="d-flex align-items-start">
                               <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
                                 <img
@@ -309,106 +85,3 @@ export default function LacaERTOverview() {
                               </div>
                             </div>
                           </div>
-                        </Col>
-                      );
-                    })}
-                  </Row>
-                ) : (
-                  <div className="text-center py-3 text-muted">
-                    <FaIdCard size={24} className="mb-2" />
-                    <p className="mb-0">No members available</p>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-
-      {/* --- Styles (UI-only) --- */}
-      <style jsx>{`
-        .ert-dashboard {
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-          min-height: 100vh;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-          padding-bottom: 40px;
-        }
-
-        .dashboard-header {
-          background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-          backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-          padding: 1rem 0.75rem;
-          border-radius: 12px;
-          margin-bottom: 1rem;
-        }
-
-        .header-content h1 {
-          color: #f8fafc;
-          margin: 0;
-          font-size: 1.6rem;
-          font-weight: 700;
-        }
-
-        .header-content p {
-          color: #94a3b8;
-          margin: 0;
-          font-size: 0.95rem;
-        }
-
-        .stats-card {
-          background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(26, 35, 51, 0.9) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
-          transition: all 0.25s ease;
-          cursor: pointer;
-        }
-
-        .stats-card:hover { transform: translateY(-4px); }
-
-        .stats-icon { width: 48px; height: 48px; display:flex; align-items:center; justify-content:center; border-radius:10px; background: rgba(99,102,241,0.06); }
-
-        .stats-label { color: #cbd5e1; font-size: 0.9rem; margin: 0; }
-        .stats-value { color: #f8fafc; font-weight:700; font-size:1.6rem; }
-
-        .dashboard-card { background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(26,35,51,0.9) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
-
-        .dashboard-card-header { background: rgba(30,41,59,0.98); border-bottom: 1px solid rgba(255,255,255,0.06); color:#e2e8f0; font-weight:600; padding: 0.75rem 1rem; }
-
-        .member-item { border-bottom: 1px solid rgba(148,163,184,0.06); padding: 0.75rem 1rem; margin: 0; }
-        .member-item:last-child { border-bottom: none; }
-
-        /* Card variant used in 3-column layout */
-        .member-item-card { background: rgba(255,255,255,0.02); border-radius: 10px; }
-        .member-item-card .member-photo-container { width:64px; height:64px; }
-        .member-item-card .member-name { font-size:1rem; }
-        .member-item-card .contact-item { font-size:0.85rem; }
-        
-        .member-item:last-child { border-bottom: none; }
-
-        .member-photo-container { position: relative; width:56px; height:56px; border-radius:50%; overflow:hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
-        .member-photo-container.present-border { border: 2px solid #10b981; }
-        .member-photo-container.away-border { border: 2px solid #ffffff; }
-        .member-photo { width:100%; height:100%; object-fit:cover; }
-
-        .member-name { color:#f1f5f9; font-weight:600; margin:0; }
-
-        .status-badge { font-size:0.75rem; font-weight:600; padding:0.35em 0.6em; }
-
-        .member-contact-info { padding-left: 12px; border-left: 2px solid rgba(96,165,250,0.12); margin-left: 18px; margin-top: 0.5rem; }
-        .contact-item { display:flex; align-items:center; margin-bottom: 0.45rem; }
-        .contact-icon { width:16px; margin-right:0.6rem; }
-        .contact-link, .contact-text { color:#cbd5e1; font-size:0.9rem; text-decoration:none; }
-        .contact-link:hover { color:#60a5fa; }
-
-        .status-indicator { position:absolute; right: -2px; bottom: -2px; width:14px; height:14px; border-radius:50%; border:2px solid rgba(0,0,0,0.5); }
-        .status-indicator.present { background: #10b981; }
-        .status-indicator.away { background: #f87171; }
-
-        @media (max-width: 768px) {
-          .header-content h1 { font-size: 1.25rem; }
-        }
-      `}</style>
-    </div>
-  );
-}
