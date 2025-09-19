@@ -1,15 +1,36 @@
-after hover disply name:
-  <i className="bi bi-house"></i> <----- Dashboard
- <i className="bi bi-clock-history"></i> <---- Navigate To History Page
-<i className="fa-solid fa-calendar-day"></i> <--------- Details
+import { Nav } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Tooltip from "react-bootstrap/Tooltip";
 
 <Nav className="ms-auto align-items-center">
-            <Nav.Link as={Link} to="/" className="nav-item-infographic">
-            <i className="bi bi-house"></i>
-            </Nav.Link>
-            <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
-              <i className="bi bi-clock-history"></i>
-            </Nav.Link>
-            <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
-              <i className="fa-solid fa-calendar-day"></i>
-            </Nav.Link>
+  <OverlayTrigger
+    placement="bottom"
+    overlay={<Tooltip id="tooltip-dashboard">Dashboard</Tooltip>}
+  >
+    <Nav.Link as={Link} to="/" className="nav-item-infographic">
+      <i className="bi bi-house"></i>
+    </Nav.Link>
+  </OverlayTrigger>
+
+  <OverlayTrigger
+    placement="bottom"
+    overlay={<Tooltip id="tooltip-history">Navigate To History Page</Tooltip>}
+  >
+    <Nav.Link
+      href="http://10.199.22.57:3002/partition/US.CO.OBS/history"
+      className="nav-item-infographic"
+    >
+      <i className="bi bi-clock-history"></i>
+    </Nav.Link>
+  </OverlayTrigger>
+
+  <OverlayTrigger
+    placement="bottom"
+    overlay={<Tooltip id="tooltip-details">Details</Tooltip>}
+  >
+    <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
+      <i className="fa-solid fa-calendar-day"></i>
+    </Nav.Link>
+  </OverlayTrigger>
+</Nav>
