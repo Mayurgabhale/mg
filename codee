@@ -1,50 +1,3 @@
-not correct:
- {
-      "employeeId": "0",
-      "name": "India, TEMP_PUN_006",
-      "personnelType": "Temp Badge",
-      "2025-08-01": "A",
-      "2025-08-02": "A",
-      "2025-08-03": "A",
-      "2025-08-04": "A",
-      "2025-08-05": "A",
-      "2025-08-06": "A",
-      "2025-08-07": "A",
-      "2025-08-08": "A",
-      "2025-08-09": "A",
-      "2025-08-10": "A",
-      "2025-08-11": "A",
-      "2025-08-12": "A",
-      "2025-08-13": "A",
-      "2025-08-14": "A",
-      "2025-08-15": "A",
-      "2025-08-16": "A",
-      "2025-08-17": "A",
-      "2025-08-18": "A",
-      "2025-08-19": "A",
-      "2025-08-20": "P",
-      "2025-08-21": "P",
-      "2025-08-22": "P",
-      "2025-08-23": "P",
-      "2025-08-24": "A",
-      "2025-08-25": "P",
-      "2025-08-26": "P",
-      "2025-08-27": "A",
-      "2025-08-28": "P",
-      "2025-08-29": "P",
-      "2025-08-30": "P",
-      "2025-08-31": "A",
-      "daysPresent": 9,
-      "daysAbsent": 22,
-      "attendancePercent": "29.0%"
-    },
-
-i came all days: not came only sunday 
-and in this show only 9 day i Present:
-this is wrong: 
-please write correct logic:
-check each day swpie: 
-
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
@@ -62,7 +15,7 @@ exports.getMonthlySummary = async (req, res) => {
     // Today in Pune (string yyyy-LL-dd)
     const todayKolkataStr = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-    // All month dates as strings
+    // Build all dates in month
     const allDates = [];
     let cursor = start;
     while (cursor <= end) {
@@ -73,9 +26,18 @@ exports.getMonthlySummary = async (req, res) => {
     // If requested month is current month, only consider days up to today for attendance math.
     const isRequestedMonthCurrent =
       start.toFormat('yyyy-LL') === DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL');
+
     const consideredDates = isRequestedMonthCurrent
       ? allDates.filter(d => d <= todayKolkataStr)
-      : allDates.slice(); // full month for past months
+      : allDates.slice();
+
+    // ---------- configuration: exclude Sundays from working days ----------
+    // Set to true because you said "not come only sunday"
+    const excludeSundays = true;
+    const consideredDatesFiltered = consideredDates.filter(d => {
+      if (!excludeSundays) return true;
+      return DateTime.fromISO(d, { zone: 'Asia/Kolkata' }).weekday !== 7; // 7 = Sunday
+    });
 
     // SQL boundaries (UTC)
     const startUtc = start.setZone('utc').toJSDate();
@@ -86,7 +48,7 @@ exports.getMonthlySummary = async (req, res) => {
     reqDb.input('start', sql.DateTime2, startUtc);
     reqDb.input('end', sql.DateTime2, endUtc);
 
-    // Fetch events and also pull Card/CHUID (CardNumber) to improve dedupe
+    // Fetch events with Card/CHUID (CardNumber)
     const { recordset } = await reqDb.query(`
       WITH CombinedQuery AS (
         SELECT
@@ -121,7 +83,7 @@ exports.getMonthlySummary = async (req, res) => {
       ORDER BY MessageUTC ASC;
     `);
 
-    // Normalize to Pune local date
+    // Normalize to Pune local time and enrich
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
@@ -132,129 +94,115 @@ exports.getMonthlySummary = async (req, res) => {
       };
     });
 
-    // Group events by local date
-    const byDay = new Map();
-    for (const evt of events) {
-      if (!byDay.has(evt.Dateonly)) byDay.set(evt.Dateonly, []);
-      byDay.get(evt.Dateonly).push(evt);
-    }
-
-    // Aggregates containers
-    const dailySummaries = [];        // {date, total}
-    const peakOccupancy = [];         // {date, peak}
-    const visitCounter = new Map();   // key -> {count, employeeId, name, personnelType}
-    const presenceByPerson = new Map(); // key -> {employeeId, name, personnelType, days: Set}
-
-    // Stable dedupe key function (deterministic)
-    const dedupeKey = (e) => {
+    // Build canonical key function (stable)
+    function canonicalKey(e) {
       const guid = (e.PersonGUID || '').toString().trim();
-      const emp  = (e.EmployeeID || '').toString().trim();
       const card = (e.CardNumber || '').toString().trim();
-      const name = (e.ObjectName1 || '').toString().trim();
+      const emp  = (e.EmployeeID || '').toString().trim();
+      const name = (e.ObjectName1 || '').toString().trim().toLowerCase();
       if (guid) return `g:${guid}`;
-      if (emp)  return `e:${emp}`;
       if (card) return `c:${card}`;
-      if (name) return `n:${name.toLowerCase()}`;
-      return `unknown`; // stable fallback
-    };
+      // prefer EmployeeID if it's a meaningful id (not '0' or empty)
+      if (emp && emp !== '0') return `e:${emp}`;
+      if (name) return `n:${name}`;
+      return `unknown`;
+    }
 
-    // Process each day (days that actually have events)
-    for (const [date, dayEvents] of byDay.entries()) {
-      // Unique daily headcount: dedupe per-person for that day using stable key
-      const uniquePeople = new Set();
-      for (const e of dayEvents) uniquePeople.add(dedupeKey(e));
-      dailySummaries.push({ date, total: uniquePeople.size });
+    // Containers
+    const visitCounter = new Map();     // key -> {count, employeeId, name, personnelType}
+    const presenceByPerson = new Map(); // key -> { employeeId, name, personnelType, days:Set }
 
-      // Peak occupancy simulation (+1 on InDirection, -1 on OutDirection). Null/unknown Direction ignored for counter.
-      let currentCount = 0;
-      let maxCount = 0;
-      for (const e of dayEvents) {
-        if (e.Direction === 'InDirection') currentCount++;
-        else if (e.Direction === 'OutDirection') currentCount = Math.max(0, currentCount - 1);
-        if (currentCount > maxCount) maxCount = currentCount;
+    // Scan all events once and populate presence & visits
+    for (const e of events) {
+      const date = e.Dateonly;
+      const key = canonicalKey(e);
+
+      // initialize presence record if needed
+      if (!presenceByPerson.has(key)) {
+        presenceByPerson.set(key, {
+          employeeId: e.EmployeeID,
+          name: e.ObjectName1,
+          personnelType: e.PersonnelType,
+          days: new Set()
+        });
       }
-      peakOccupancy.push({ date, peak: maxCount });
 
-      // Track visits & presence:
-      // - visits: count only explicit InDirection swipes
-      // - presence: ANY event for the person on that date counts as present (this fixes missed presences)
-      const daySeen = new Set();
-      for (const e of dayEvents) {
-        const key = dedupeKey(e);
+      // presence: mark day present for ANY event on that date (this counts IN/OUT/null)
+      presenceByPerson.get(key).days.add(date);
 
-        // visits (raw InDirection)
-        if (e.Direction === 'InDirection') {
-          if (!visitCounter.has(key)) {
-            visitCounter.set(key, {
-              count: 0,
-              employeeId: e.EmployeeID,
-              name: e.ObjectName1,
-              personnelType: e.PersonnelType
-            });
-          }
-          visitCounter.get(key).count++;
+      // visits: count explicit InDirection swipes only
+      if (e.Direction === 'InDirection') {
+        if (!visitCounter.has(key)) {
+          visitCounter.set(key, {
+            count: 0,
+            employeeId: e.EmployeeID,
+            name: e.ObjectName1,
+            personnelType: e.PersonnelType
+          });
         }
-
-        // presence: any event => mark present (avoid double counting via daySeen)
-        if (!daySeen.has(key)) {
-          daySeen.add(key);
-          if (!presenceByPerson.has(key)) {
-            presenceByPerson.set(key, {
-              employeeId: e.EmployeeID,
-              name: e.ObjectName1,
-              personnelType: e.PersonnelType,
-              days: new Set()
-            });
-          }
-          presenceByPerson.get(key).days.add(date);
-        }
+        visitCounter.get(key).count++;
       }
     }
 
-    // Compute avg daily headcount over consideredDates (up to today for current month, else entire month)
-    const dailyTotalsByDate = Object.fromEntries(dailySummaries.map(d => [d.date, d.total]));
-    const consideredTotals = consideredDates.map(d => dailyTotalsByDate[d] || 0);
+    // Build dailySummaries & peakOccupancy from events grouped by date (simulate counter)
+    const byDateMap = new Map(); // date -> list of events
+    for (const ev of events) {
+      if (!byDateMap.has(ev.Dateonly)) byDateMap.set(ev.Dateonly, []);
+      byDateMap.get(ev.Dateonly).push(ev);
+    }
+
+    const dailySummaries = [];
+    const peakOccupancy = [];
+    for (const d of allDates) {
+      const dayEvents = byDateMap.get(d) || [];
+      // Unique daily headcount: dedupe per-person for that day using canonicalKey
+      const uniqueSet = new Set(dayEvents.map(e => canonicalKey(e)));
+      dailySummaries.push({ date: d, total: uniqueSet.size });
+
+      // peak occupancy simulate
+      let current = 0, maxCount = 0;
+      for (const ev of dayEvents) {
+        if (ev.Direction === 'InDirection') current++;
+        else if (ev.Direction === 'OutDirection') current = Math.max(0, current - 1);
+        // ignore unknown Direction for counter
+        if (current > maxCount) maxCount = current;
+      }
+      peakOccupancy.push({ date: d, peak: maxCount });
+    }
+
+    // Compute avg daily headcount over consideredDatesFiltered (excludes Sundays if configured)
+    const totalsByDate = Object.fromEntries(dailySummaries.map(d => [d.date, d.total]));
+    const consideredTotals = consideredDatesFiltered.map(d => totalsByDate[d] || 0);
     const avgDailyHeadcount = consideredTotals.length
       ? Math.round(consideredTotals.reduce((s, v) => s + v, 0) / consideredTotals.length)
       : 0;
 
-    // Top 10 visitors by InDirection counts
+    // Top10 visitors by raw InDirection counts
     const top10Visitors = Array.from(visitCounter.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
-      .map(v => ({
-        employeeId: v.employeeId,
-        name: v.name,
-        personnelType: v.personnelType,
-        visits: v.count
-      }));
+      .map(v => ({ employeeId: v.employeeId, name: v.name, personnelType: v.personnelType, visits: v.count }));
 
-    // Attendance sheet: for each person seen in month, produce a row across all days
-    const attendanceSheet = Array.from(presenceByPerson.entries()).map(([key, p]) => {
-      const row = {
-        employeeId: p.employeeId,
-        name: p.name,
-        personnelType: p.personnelType
-      };
-
+    // Build attendance sheet rows for every canonical person seen in month
+    const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
+      const row = { employeeId: p.employeeId, name: p.name, personnelType: p.personnelType };
       let presentCount = 0;
 
       for (const d of allDates) {
         const isFuture = (isRequestedMonthCurrent && d > todayKolkataStr);
-        if (isFuture) {
-          row[d] = null; // not applicable yet
+        if (isFuture) { row[d] = null; continue; }
+
+        // If we exclude Sundays from considered days, mark Sundays as null (not applicable)
+        if (excludeSundays && DateTime.fromISO(d, { zone: 'Asia/Kolkata' }).weekday === 7) {
+          row[d] = null; // not considered working day
           continue;
         }
 
-        if (p.days.has(d)) {
-          row[d] = 'P';
-          presentCount++;
-        } else {
-          row[d] = 'A';
-        }
+        if (p.days.has(d)) { row[d] = 'P'; presentCount++; }
+        else { row[d] = 'A'; }
       }
 
-      const workingDaysToDate = consideredDates.length;
+      const workingDaysToDate = consideredDatesFiltered.length;
       const daysAbsent = Math.max(0, workingDaysToDate - presentCount);
       const attendancePercent = workingDaysToDate > 0
         ? ((presentCount / workingDaysToDate) * 100).toFixed(1) + '%'
@@ -269,7 +217,7 @@ exports.getMonthlySummary = async (req, res) => {
     return res.json({
       month,
       today: todayKolkataStr,
-      workingDaysConsidered: consideredDates.length,
+      workingDaysConsidered: consideredDatesFiltered.length,
       avgDailyHeadcount,
       peakOccupancy,
       top10Visitors,
