@@ -1,5 +1,4 @@
 // GET /api/monthly-summary?month=YYYY-MM
-// Assumes: DateTime from luxon, sql and getPool() are available in scope
 exports.getMonthlySummary = async (req, res) => {
   try {
     const { month } = req.query;
@@ -8,12 +7,13 @@ exports.getMonthlySummary = async (req, res) => {
     }
 
     const [year, monthNum] = month.split('-').map(Number);
+
+    // Start/end in IST (Asia/Kolkata)
     const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
     const end = start.endOf('month');
+    const todayStr = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-    const todayKolkataStr = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-
-    // Build all dates in month (strings 'yyyy-LL-dd')
+    // All dates of that month
     const allDates = [];
     let cursor = start;
     while (cursor <= end) {
@@ -21,235 +21,105 @@ exports.getMonthlySummary = async (req, res) => {
       cursor = cursor.plus({ days: 1 });
     }
 
-    // If requested month is current, we only consider dates up to today for attendance math
-    const isRequestedMonthCurrent =
+    const isCurrentMonth =
       start.toFormat('yyyy-LL') === DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL');
 
-    const consideredDates = isRequestedMonthCurrent
-      ? allDates.filter(d => d <= todayKolkataStr)
+    const consideredDates = isCurrentMonth
+      ? allDates.filter(d => d <= todayStr)
       : allDates.slice();
 
-    // SQL boundaries in UTC
+    // Query DB for swipe events
     const startUtc = start.setZone('utc').toJSDate();
     const endUtc = end.setZone('utc').toJSDate();
-
     const pool = await getPool();
     const reqDb = pool.request();
     reqDb.input('start', sql.DateTime2, startUtc);
     reqDb.input('end', sql.DateTime2, endUtc);
 
-    // Fetch events (same query as before)
     const { recordset } = await reqDb.query(`
-      WITH CombinedQuery AS (
-        SELECT
-          t1.MessageUTC,
-          t1.ObjectName1,
-          CASE
-            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-            ELSE CAST(t2.Int1 AS NVARCHAR)
-          END AS EmployeeID,
-          t1.ObjectIdentity1 AS PersonGUID,
-          t3.Name AS PersonnelType,
-          t5d.value AS Direction,
-          t1.ObjectName2 AS Door,
-          sc.value AS CardNumber
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-        LEFT JOIN (
-          SELECT GUID, value
-          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-          WHERE Name IN ('Card','CHUID')
-        ) sc ON t1.XmlGUID = sc.GUID
-        WHERE
-          t1.MessageType = 'CardAdmitted'
-          AND t1.PartitionName2 = 'APAC.Default'
-          AND t1.MessageUTC BETWEEN @start AND @end
-      )
-      SELECT *
-      FROM CombinedQuery
-      ORDER BY MessageUTC ASC;
+      SELECT
+        t1.MessageUTC,
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t3.Name AS PersonnelType
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND t1.MessageUTC BETWEEN @start AND @end
+      ORDER BY t1.MessageUTC ASC;
     `);
 
-    // Normalize events to Asia/Kolkata and produce small event objects
+    // Normalize events to IST
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
-        raw: e,
-        Dateonly: local.toFormat('yyyy-LL-dd'),
-        Swipe_Time: local.toFormat('HH:mm:ss'),
-        EmployeeID: (e.EmployeeID || '').toString().trim(),
-        CardNumber: (e.CardNumber || '').toString().trim(),
-        PersonGUID: (e.PersonGUID || '').toString().trim(),
-        Name: (e.ObjectName1 || '').toString().trim(),
-        PersonnelType: e.PersonnelType,
-        Direction: (e.Direction || '').toString().trim()
+        employeeId: (e.EmployeeID || '').toString().trim(),
+        name: e.ObjectName1,
+        personnelType: e.PersonnelType,
+        date: local.toFormat('yyyy-LL-dd'),
       };
     });
 
-    // ========================
-    // Alias-resolution pass
-    // Build mappings card -> employeeId, guid -> employeeId, name -> employeeId
-    // If an event contains both card and employeeId, use that to map the card to employee.
-    // This fixes the "same person appears as card-only and employee-only" problem.
-    // ========================
-    const cardToEmp = new Map();
-    const guidToEmp = new Map();
-    const nameToEmp = new Map();
-
-    for (const ev of events) {
-      const emp = ev.EmployeeID || '';
-      const card = ev.CardNumber || '';
-      const guid = ev.PersonGUID || '';
-      const name = ev.Name ? ev.Name.toLowerCase() : '';
-
-      if (emp && emp !== '0') {
-        if (card) cardToEmp.set(card, emp);
-        if (guid) guidToEmp.set(guid, emp);
-        if (name) nameToEmp.set(name, emp);
-      }
-    }
-
-    // canonical id resolver - prefers employeeId when we can map to it
-    function resolveCanonical(ev) {
-      const emp = ev.EmployeeID || '';
-      const card = ev.CardNumber || '';
-      const guid = ev.PersonGUID || '';
-      const name = ev.Name ? ev.Name.toLowerCase() : '';
-
-      if (emp && emp !== '0') return `e:${emp}`;
-      if (card && cardToEmp.has(card)) return `e:${cardToEmp.get(card)}`;
-      if (guid && guidToEmp.has(guid)) return `e:${guidToEmp.get(guid)}`;
-      if (name && nameToEmp.has(name)) return `e:${nameToEmp.get(name)}`;
-
-      // fallback to using whichever identifier we have (so we still dedupe)
-      if (card) return `c:${card}`;
-      if (guid) return `g:${guid}`;
-      if (name) return `n:${name}`;
-      return `unknown:${Math.random().toString(36).slice(2,8)}`; // last resort unique key
-    }
-
-    // Build presenceByPerson keyed by canonical id (e:..., c:..., g:...)
+    // Group swipes per employee → per date
     const presenceByPerson = new Map();
-    const visitCounter = new Map();
-
     for (const ev of events) {
-      const date = ev.Dateonly;
-      const canonical = resolveCanonical(ev);
-
-      if (!presenceByPerson.has(canonical)) {
-        // store employeeId if canonical starts with 'e:'
-        presenceByPerson.set(canonical, {
-          canonical,
-          employeeId: canonical.startsWith('e:') ? canonical.slice(2) : null,
-          name: ev.Name,
-          personnelType: ev.PersonnelType,
+      if (!ev.employeeId) continue; // skip if no employeeId
+      if (!presenceByPerson.has(ev.employeeId)) {
+        presenceByPerson.set(ev.employeeId, {
+          employeeId: ev.employeeId,
+          name: ev.name,
+          personnelType: ev.personnelType,
           days: new Set()
         });
       }
-
-      // mark presence for that day
-      presenceByPerson.get(canonical).days.add(date);
-
-      // count visits (we count InDirection occurrences)
-      if (ev.Direction === 'InDirection') {
-        if (!visitCounter.has(canonical)) {
-          visitCounter.set(canonical, { count: 0, employeeId: presenceByPerson.get(canonical).employeeId, name: ev.Name, personnelType: ev.PersonnelType });
-        }
-        visitCounter.get(canonical).count++;
-      }
+      presenceByPerson.get(ev.employeeId).days.add(ev.date);
     }
 
-    // -- If you want to include all employees even those with ZERO swipes in the month,
-    //    you can uncomment and run a query against Personnel and merge them in here.
-    //    (I left it commented because I don't know your Personnel table fields.)
-    //
-    // const rosterReq = pool.request();
-    // const rosterRs = await rosterReq.query(`
-    //   SELECT CAST(Int1 AS NVARCHAR) AS EmployeeID, GUID, Name
-    //   FROM [ACVSCore].[Access].[Personnel]
-    //   WHERE /* add your active/visible filters here */
-    // `);
-    // for (const r of rosterRs.recordset) {
-    //   const key = r.EmployeeID ? `e:${r.EmployeeID}` : (r.GUID ? `g:${r.GUID}` : `n:${(r.Name||'').toLowerCase()}`);
-    //   if (!presenceByPerson.has(key)) {
-    //     presenceByPerson.set(key, { canonical: key, employeeId: r.EmployeeID || null, name: r.Name, personnelType: null, days: new Set() });
-    //   }
-    // }
-
-    // Build daily summaries & peak occupancy (same approach as before)
-    const byDateMap = new Map();
-    for (const ev of events) {
-      if (!byDateMap.has(ev.Dateonly)) byDateMap.set(ev.Dateonly, []);
-      byDateMap.get(ev.Dateonly).push(ev);
-    }
-
-    const dailySummaries = [];
-    const peakOccupancy = [];
-    for (const d of allDates) {
-      const dayEvents = byDateMap.get(d) || [];
-      // Unique daily headcount: use canonical ids for dedupe
-      const uniqueSet = new Set(dayEvents.map(ev => resolveCanonical(ev)));
-      dailySummaries.push({ date: d, total: uniqueSet.size });
-
-      // simulate simple peak occupancy
-      let current = 0, maxCount = 0;
-      for (const ev of dayEvents) {
-        if (ev.Direction === 'InDirection') current++;
-        else if (ev.Direction === 'OutDirection') current = Math.max(0, current - 1);
-        if (current > maxCount) maxCount = current;
-      }
-      peakOccupancy.push({ date: d, peak: maxCount });
-    }
-
-    // avg daily headcount over consideredDates
-    const totalsByDate = Object.fromEntries(dailySummaries.map(d => [d.date, d.total]));
-    const consideredTotals = consideredDates.map(d => totalsByDate[d] || 0);
-    const avgDailyHeadcount = consideredTotals.length
-      ? Math.round(consideredTotals.reduce((s, v) => s + v, 0) / consideredTotals.length)
-      : 0;
-
-    // Top10 visitors (by InDirection)
-    const top10Visitors = Array.from(visitCounter.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
-      .map(v => ({ employeeId: v.employeeId, name: v.name, personnelType: v.personnelType, visits: v.count }));
-
-    // Build attendance sheet rows for every canonical person (includes those with zero swipes if merged above)
+    // Build attendance sheet
     const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
-      const row = { employeeId: p.employeeId, name: p.name, personnelType: p.personnelType };
+      const row = {
+        employeeId: p.employeeId,
+        name: p.name,
+        personnelType: p.personnelType
+      };
+
       let presentCount = 0;
-
       for (const d of allDates) {
-        const isFuture = (isRequestedMonthCurrent && d > todayKolkataStr);
-        if (isFuture) { row[d] = null; continue; }
+        const isFuture = isCurrentMonth && d > todayStr;
+        if (isFuture) {
+          row[d] = null;
+          continue;
+        }
 
-        if (p.days.has(d)) { row[d] = 'P'; presentCount++; }
-        else { row[d] = 'A'; }
+        if (p.days.has(d)) {
+          row[d] = 'P';
+          presentCount++;
+        } else {
+          row[d] = 'A';
+        }
       }
 
-      const workingDaysToDate = consideredDates.length;
-      const daysAbsent = Math.max(0, workingDaysToDate - presentCount);
-      const attendancePercent = workingDaysToDate > 0
-        ? ((presentCount / workingDaysToDate) * 100).toFixed(1) + '%'
-        : '0.0%';
-
+      const totalDays = consideredDates.length;
+      const daysAbsent = totalDays - presentCount;
       row.daysPresent = presentCount;
       row.daysAbsent = daysAbsent;
-      row.attendancePercent = attendancePercent;
+      row.attendancePercent = totalDays > 0
+        ? ((presentCount / totalDays) * 100).toFixed(1) + '%'
+        : '0.0%';
+
       return row;
     });
 
-    // Return full payload
     return res.json({
       month,
-      today: todayKolkataStr,
+      today: todayStr,
       workingDaysConsidered: consideredDates.length,
-      avgDailyHeadcount,
-      peakOccupancy,
-      top10Visitors,
       attendanceSheet
     });
   } catch (err) {
