@@ -1,50 +1,15 @@
-<div className="member-item-card p-3 h-100">
-  <div className="d-flex justify-content-between align-items-start mb-2">
-    {/* Left: Photo + Name */}
-    <div className="d-flex align-items-center">
-      <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
-        <img
-          src={getPhotoSrc(m)}
-          alt={m.emp_id || m.name || 'Member'}
-          className="member-photo"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = DEFAULT_PHOTO;
-          }}
-        />
-        <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
-      </div>
+after hover disply name:
+  <i className="bi bi-house"></i> <----- Dashboard
+ <i className="bi bi-clock-history"></i> <---- Navigate To History Page
+<i className="fa-solid fa-calendar-day"></i> <--------- Details
 
-      <div className="ms-3">
-        {/* Employee ID as primary */}
-        <h6 className="mb-0 member-name">{m.emp_id}</h6>
-        <small className="text-muted">{m.name}</small>
-      </div>
-    </div>
-
-    {/* Right: Availability Badge */}
-    <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
-      {m.present ? 'Available' : 'Away'}
-    </Badge>
-  </div>
-
-  {/* Contact Info Section */}
-  <div className="member-contact-info mt-2">
-    <div className="contact-item">
-      <FaEnvelopeOpenText className="contact-icon text-primary" />
-      <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
-    </div>
-
-    {m.phone && (
-      <div className="contact-item">
-        <FaMobileAlt className="contact-icon text-success" />
-        <span className="contact-text">{m.phone}</span>
-      </div>
-    )}
-
-    <div className="contact-item">
-      <FaMapMarkerAlt className="contact-icon text-danger" />
-      <span className="contact-text">{location}</span>
-    </div>
-  </div>
-</div>
+<Nav className="ms-auto align-items-center">
+            <Nav.Link as={Link} to="/" className="nav-item-infographic">
+            <i className="bi bi-house"></i>
+            </Nav.Link>
+            <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic">
+              <i className="bi bi-clock-history"></i>
+            </Nav.Link>
+            <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic">
+              <i className="fa-solid fa-calendar-day"></i>
+            </Nav.Link>
