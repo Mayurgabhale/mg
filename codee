@@ -1,32 +1,7 @@
-# download attendance CSV for May 2025
-curl "http://localhost:3000/api/monthly-attendance-pune?year=2025&month=5" -o attendance-2025-05.csv
-
-
-
-
-
-// routes/occupancyRoutes.js
-const express = require('express');
-const router  = express.Router();
-const liveOccupancyController = require('../controllers/liveOccupancyController');
-
-// existing endpoints you already have
-router.get('/occupancy-at-time-pune', liveOccupancyController.getPuneSnapshotAtDateTime);
-
-// NEW: monthly attendance CSV
 // GET /api/monthly-attendance-pune?year=YYYY&month=MM
-router.get('/monthly-attendance-pune', liveOccupancyController.getPuneMonthlyAttendance);
-
-module.exports = router;
-
-
-...
-
-// Monthly attendance CSV endpoint
-// GET /api/monthly-attendance-pune?year=YYYY&month=MM
+// Returns JSON (not CSV)
 exports.getPuneMonthlyAttendance = async (req, res) => {
   try {
-    // parse query or default to current month (Asia/Kolkata)
     const nowKolkata = DateTime.now().setZone('Asia/Kolkata');
     const year = req.query.year ? Number(req.query.year) : Number(nowKolkata.toFormat('yyyy'));
     const month = req.query.month ? Number(req.query.month) : Number(nowKolkata.toFormat('LL'));
@@ -35,14 +10,15 @@ exports.getPuneMonthlyAttendance = async (req, res) => {
       return res.status(400).json({ error: 'invalid year/month. expected ?year=YYYY&month=MM' });
     }
 
-    // Build month start and next-month start (Asia/Kolkata), then convert to UTC for DB boundaries
-    const startLocal = DateTime.fromObject({ year, month, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 }, { zone: 'Asia/Kolkata' });
+    const startLocal = DateTime.fromObject(
+      { year, month, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 },
+      { zone: 'Asia/Kolkata' }
+    );
     const nextMonthLocal = startLocal.plus({ months: 1 });
 
     const fromUtc = startLocal.setZone('utc').toJSDate(); // inclusive
     const toUtc   = nextMonthLocal.setZone('utc').toJSDate(); // exclusive
 
-    // Fetch all CardAdmitted events in the UTC window [fromUtc, toUtc)
     const pool = await getPool();
     const reqDb = pool.request();
     reqDb.input('from', sql.DateTime2, fromUtc);
@@ -92,7 +68,7 @@ exports.getPuneMonthlyAttendance = async (req, res) => {
       ORDER BY MessageUTC ASC;
     `);
 
-    // Convert each event to Pune-local date string (yyyy-LL-dd) and collect per-person swipes
+    // Convert each event to Pune-local date string (yyyy-LL-dd)
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
@@ -103,16 +79,16 @@ exports.getPuneMonthlyAttendance = async (req, res) => {
       };
     });
 
-    // list of days in month (local)
+    // days array for the month (yyyy-LL-dd)
     const days = [];
     for (let d = startLocal; d < nextMonthLocal; d = d.plus({ days: 1 })) {
       days.push(d.toFormat('yyyy-LL-dd'));
     }
 
-    // helper for dedup key similar to controller logic
+    // helper key (same dedup idea)
     const makeKey = (e) => (e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1 || 'unknown');
 
-    // map personKey -> meta and set of present days
+    // aggregate present days per person (any InDirection on that date => present)
     const persons = new Map();
     for (const e of events) {
       const key = makeKey(e);
@@ -125,62 +101,53 @@ exports.getPuneMonthlyAttendance = async (req, res) => {
           presentDays: new Set()
         });
       }
-      // mark present on this date if there was any InDirection swipe
       if (e.Direction === 'InDirection') {
         persons.get(key).presentDays.add(e.Dateonly);
       }
     }
 
-    // Build CSV header
-    const headerCols = ['EmployeeID', 'PersonGUID', 'Name', 'PersonnelType', ...days.map(d => d.slice(8)), 'PresentCount', 'AbsentCount', 'AttendancePct'];
-    // date column labels use day-of-month (1..N) to keep CSV compact; mapping is clear by filename
-
-    // Build rows
-    const rows = [headerCols.join(',')];
-
+    // Build response attendance array
+    const attendance = [];
     for (const [key, p] of persons) {
-      const row = [];
-      row.push(escapeCsv(p.EmployeeID));
-      row.push(escapeCsv(p.PersonGUID));
-      row.push(escapeCsv(p.Name));
-      row.push(escapeCsv(p.PersonnelType));
-
+      const dayFlags = {};
       let presentCount = 0;
-      for (const d of days) {
-        const present = p.presentDays.has(d);
-        row.push(present ? 'P' : 'A');
-        if (present) presentCount++;
+      for (let i = 0; i < days.length; i++) {
+        const d = days[i];
+        const isPresent = p.presentDays.has(d);
+        dayFlags[d] = isPresent;
+        if (isPresent) presentCount++;
       }
       const totalDays = days.length;
       const absentCount = totalDays - presentCount;
-      const pct = totalDays > 0 ? Math.round((presentCount / totalDays) * 10000) / 100 : 0;
-      row.push(String(presentCount));
-      row.push(String(absentCount));
-      row.push(String(pct)); // percent to two decimals
+      const attendancePct = totalDays > 0 ? Math.round((presentCount / totalDays) * 10000) / 100 : 0;
 
-      rows.push(row.join(','));
+      attendance.push({
+        EmployeeID: p.EmployeeID,
+        PersonGUID: p.PersonGUID,
+        Name: p.Name,
+        PersonnelType: p.PersonnelType,
+        days: dayFlags,            // map YYYY-MM-DD -> true/false
+        presentCount,
+        absentCount,
+        attendancePct
+      });
     }
 
-    const csv = rows.join('\r\n');
+    const result = {
+      year,
+      month,
+      days,
+      summary: {
+        persons: attendance.length,
+        daysInMonth: days.length
+      },
+      attendance
+    };
 
-    // Send as CSV download
-    const filename = `attendance-${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}.csv`;
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    return res.send(csv);
+    return res.json(result);
 
   } catch (err) {
     console.error('getPuneMonthlyAttendance error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-// simple CSV escaper for fields containing commas/quotes/newlines
-function escapeCsv(val) {
-  if (val === null || val === undefined) return '';
-  const s = String(val);
-  if (/[,"\n\r]/.test(s)) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-}
