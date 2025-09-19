@@ -1,91 +1,3 @@
-wrong present ans absent data:
-this emplooye is not that much absent:
-this is wrong logic. write correct 
-http://localhost:5000/api/monthly-summary?month=2025-08
- {
-      "employeeId": "W0024618",
-      "name": "Diwate, Swapnil",
-      "personnelType": "Contractor",
-      "2025-08-01": "A",
-      "2025-08-02": "A",
-      "2025-08-03": "A",
-      "2025-08-04": "A",
-      "2025-08-05": "A",
-      "2025-08-06": "A",
-      "2025-08-07": "A",
-      "2025-08-08": "A",
-      "2025-08-09": "A",
-      "2025-08-10": "A",
-      "2025-08-11": "A",
-      "2025-08-12": "A",
-      "2025-08-13": "A",
-      "2025-08-14": "A",
-      "2025-08-15": "A",
-      "2025-08-16": "A",
-      "2025-08-17": "A",
-      "2025-08-18": "A",
-      "2025-08-19": "A",
-      "2025-08-20": "P",
-      "2025-08-21": "P",
-      "2025-08-22": "P",
-      "2025-08-23": "P",
-      "2025-08-24": "A",
-      "2025-08-25": "P",
-      "2025-08-26": "P",
-      "2025-08-27": "P",
-      "2025-08-28": "P",
-      "2025-08-29": "P",
-      "2025-08-30": "P",
-      "2025-08-31": "A",
-      "daysPresent": 10,
-      "daysAbsent": 21,
-      "attendancePercent": "32.3%"
-    },
-    {
-
-
- {
-      "employeeId": "314345",
-      "name": "Dass, Lloyds",
-      "personnelType": "Employee",
-      "2025-08-01": "A",
-      "2025-08-02": "A",
-      "2025-08-03": "A",
-      "2025-08-04": "A",
-      "2025-08-05": "A",
-      "2025-08-06": "A",
-      "2025-08-07": "A",
-      "2025-08-08": "A",
-      "2025-08-09": "A",
-      "2025-08-10": "A",
-      "2025-08-11": "A",
-      "2025-08-12": "A",
-      "2025-08-13": "A",
-      "2025-08-14": "A",
-      "2025-08-15": "A",
-      "2025-08-16": "A",
-      "2025-08-17": "A",
-      "2025-08-18": "A",
-      "2025-08-19": "A",
-      "2025-08-20": "P",
-      "2025-08-21": "P",
-      "2025-08-22": "P",
-      "2025-08-23": "A",
-      "2025-08-24": "A",
-      "2025-08-25": "A",
-      "2025-08-26": "A",
-      "2025-08-27": "A",
-      "2025-08-28": "A",
-      "2025-08-29": "P",
-      "2025-08-30": "A",
-      "2025-08-31": "A",
-      "daysPresent": 4,
-      "daysAbsent": 27,
-      "attendancePercent": "12.9%"
-
-
-
-
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
@@ -103,7 +15,7 @@ exports.getMonthlySummary = async (req, res) => {
     // Today in Pune (string yyyy-LL-dd)
     const todayKolkataStr = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-    // Full month dates (1..endOfMonth) as strings
+    // All month dates as strings
     const allDates = [];
     let cursor = start;
     while (cursor <= end) {
@@ -111,14 +23,12 @@ exports.getMonthlySummary = async (req, res) => {
       cursor = cursor.plus({ days: 1 });
     }
 
-    // Considered dates (for attendance math) = up to today if the requested month is current month,
-    // otherwise the full month (for past months).
+    // If requested month is current month, only consider days up to today for attendance math.
     const isRequestedMonthCurrent =
       start.toFormat('yyyy-LL') === DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL');
-
     const consideredDates = isRequestedMonthCurrent
       ? allDates.filter(d => d <= todayKolkataStr)
-      : allDates.slice(); // full month for past months
+      : allDates.slice();
 
     // SQL boundaries (UTC)
     const startUtc = start.setZone('utc').toJSDate();
@@ -129,28 +39,39 @@ exports.getMonthlySummary = async (req, res) => {
     reqDb.input('start', sql.DateTime2, startUtc);
     reqDb.input('end', sql.DateTime2, endUtc);
 
+    // Grab Card/CHUID value (CardNumber) as well to improve dedupe
     const { recordset } = await reqDb.query(`
-      SELECT
-        t1.MessageUTC,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND t1.MessageUTC BETWEEN @start AND @end
-      ORDER BY t1.MessageUTC ASC;
+      WITH CombinedQuery AS (
+        SELECT
+          t1.MessageUTC,
+          t1.ObjectName1,
+          CASE
+            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+            ELSE CAST(t2.Int1 AS NVARCHAR)
+          END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door,
+          sc.value AS CardNumber
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType = 'CardAdmitted'
+          AND t1.PartitionName2 = 'APAC.Default'
+          AND t1.MessageUTC BETWEEN @start AND @end
+      )
+      SELECT *
+      FROM CombinedQuery
+      ORDER BY MessageUTC ASC;
     `);
 
     // Convert to Pune local time & normalize events
@@ -158,8 +79,8 @@ exports.getMonthlySummary = async (req, res) => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
         ...e,
-        LocaleMessageTime: local.toISO(),            // ISO string
-        Dateonly: local.toFormat('yyyy-LL-dd'),     // day string
+        LocaleMessageTime: local.toISO(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
         Swipe_Time: local.toFormat('HH:mm:ss'),
       };
     });
@@ -177,16 +98,25 @@ exports.getMonthlySummary = async (req, res) => {
     const visitCounter = new Map();   // key -> {count, employeeId, name, personnelType}
     const presenceByPerson = new Map(); // key -> {employeeId, name, personnelType, days: Set}
 
-    // Helper to create stable dedupe key
-    const dedupeKey = (e) => (e.PersonGUID || e.EmployeeID || e.ObjectName1 || ('unk_' + Math.random()));
+    // Stable dedupe key (deterministic)
+    const dedupeKey = (e) => {
+      const guid = (e.PersonGUID || '').toString().trim();
+      const emp = (e.EmployeeID || '').toString().trim();
+      const card = (e.CardNumber || '').toString().trim();
+      const name = (e.ObjectName1 || '').toString().trim();
+      // Prefer GUID, then EmployeeID, then CardNumber, then Name
+      if (guid) return `g:${guid}`;
+      if (emp) return `e:${emp}`;
+      if (card) return `c:${card}`;
+      if (name) return `n:${name.toLowerCase()}`;
+      return `unknown`; // stable fallback
+    };
 
-    // Process each day that has any events (only days present in data)
+    // Process each day that has any events
     for (const [date, dayEvents] of byDay.entries()) {
       // Unique daily headcount: dedupe per-person for that day
       const uniquePeople = new Set();
-      for (const e of dayEvents) {
-        uniquePeople.add(dedupeKey(e));
-      }
+      for (const e of dayEvents) uniquePeople.add(dedupeKey(e));
       dailySummaries.push({ date, total: uniquePeople.size });
 
       // Peak occupancy simulation (+1 on InDirection, -1 on OutDirection)
@@ -195,48 +125,56 @@ exports.getMonthlySummary = async (req, res) => {
       for (const e of dayEvents) {
         if (e.Direction === 'InDirection') currentCount++;
         else if (e.Direction === 'OutDirection') currentCount = Math.max(0, currentCount - 1);
+        // If Direction is null/undefined, do not change counter (can't assume in/out)
         if (currentCount > maxCount) maxCount = currentCount;
       }
       peakOccupancy.push({ date, peak: maxCount });
 
-      // Track visits and presence (count only InDirection as presence marker)
+      // Track visits and presence:
+      // Presence = any event for the person on that date that is NOT explicitly OutDirection.
+      // This counts InDirection OR events where Direction is null/unknown.
+      const daySeen = new Set(); // to avoid incrementing presence multiple times per day for same person
       for (const e of dayEvents) {
-        if (e.Direction !== 'InDirection') continue;
         const key = dedupeKey(e);
 
-        // visits (raw swipe-ins)
-        if (!visitCounter.has(key)) {
-          visitCounter.set(key, {
-            count: 0,
-            employeeId: e.EmployeeID,
-            name: e.ObjectName1,
-            personnelType: e.PersonnelType
-          });
+        // visits: count raw IN swipes only (Direction === 'InDirection')
+        if (e.Direction === 'InDirection') {
+          if (!visitCounter.has(key)) {
+            visitCounter.set(key, {
+              count: 0,
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType
+            });
+          }
+          visitCounter.get(key).count++;
         }
-        visitCounter.get(key).count++;
 
-        // presence (days set)
-        if (!presenceByPerson.has(key)) {
-          presenceByPerson.set(key, {
-            employeeId: e.EmployeeID,
-            name: e.ObjectName1,
-            personnelType: e.PersonnelType,
-            days: new Set()
-          });
+        // presence: count the person present on this day if we see any non-OutDirection row
+        const isPresenceEvent = (e.Direction !== 'OutDirection'); // includes 'InDirection' and null
+        if (isPresenceEvent && !daySeen.has(key)) {
+          daySeen.add(key);
+          if (!presenceByPerson.has(key)) {
+            presenceByPerson.set(key, {
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType,
+              days: new Set()
+            });
+          }
+          presenceByPerson.get(key).days.add(date);
         }
-        presenceByPerson.get(key).days.add(date);
       }
     }
 
-    // Average daily headcount: average over considered dates (only days that have data up to today)
-    // We compute average over the intersection: for each considered date, if dailySummaries contains it use its total else 0.
+    // Average daily headcount: average over consideredDates (days up to today for current month)
     const dailyTotalsByDate = Object.fromEntries(dailySummaries.map(d => [d.date, d.total]));
     const consideredTotals = consideredDates.map(d => dailyTotalsByDate[d] || 0);
     const avgDailyHeadcount = consideredTotals.length
       ? Math.round(consideredTotals.reduce((s, v) => s + v, 0) / consideredTotals.length)
       : 0;
 
-    // Top 10 visitors by swipe count (unchanged)
+    // Top 10 visitors by swipe count
     const top10Visitors = Array.from(visitCounter.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
@@ -248,8 +186,8 @@ exports.getMonthlySummary = async (req, res) => {
       }));
 
     // Attendance sheet:
-    // - For each person who appeared at least once in month, produce a row with all month columns.
-    // - For dates after today (if it's the current month) mark as null (not applicable) and DO NOT count them into daysAbsent/attendance%.
+    // For each person who appeared at least once in the month, produce a row with all month columns.
+    // Future dates (if current month) are null and are NOT counted in daysAbsent/attendance%.
     const attendanceSheet = Array.from(presenceByPerson.entries()).map(([key, p]) => {
       const row = {
         employeeId: p.employeeId,
@@ -262,12 +200,10 @@ exports.getMonthlySummary = async (req, res) => {
       for (const d of allDates) {
         const isFuture = (isRequestedMonthCurrent && d > todayKolkataStr);
         if (isFuture) {
-          // Future date for current month: mark as null (not yet applicable)
           row[d] = null;
           continue;
         }
 
-        // Not future => count as Present (P) if in p.days else Absent (A)
         if (p.days.has(d)) {
           row[d] = "P";
           presentCount++;
@@ -302,80 +238,3 @@ exports.getMonthlySummary = async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-
-
-______________________________
-
-
-async function fetchNewEvents(since) {
-  // await the shared pool promise instead of poolConnect
-  const pool = await getPool();
-  const req  = pool.request();
-  req.input('since', sql.DateTime2, since);
-
-// console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-       
-
-
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType     = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) >@since
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
-    // recordset.map(r => r.LocaleMessageTime.toISOString()));
-
-  return recordset;
-}
-
-
