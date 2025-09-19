@@ -54,6 +54,14 @@ exports.getMonthlySummary = async (req, res) => {
       };
     });
 
+    // Get all dates in the month
+    const allDates = [];
+    let cursor = start;
+    while (cursor <= end) {
+      allDates.push(cursor.toFormat('yyyy-LL-dd'));
+      cursor = cursor.plus({ days: 1 });
+    }
+
     // Group by day
     const byDay = new Map();
     for (const evt of events) {
@@ -63,8 +71,8 @@ exports.getMonthlySummary = async (req, res) => {
 
     const dailySummaries = [];
     const peakOccupancy = [];
-    const visitCounter = new Map(); // total swipes
-    const presenceCounter = new Map(); // unique days present
+    const visitCounter = new Map();       // track total visits
+    const presenceByPerson = new Map();   // track which days each person was present
 
     // Process each day
     for (const [date, dayEvents] of byDay.entries()) {
@@ -85,13 +93,12 @@ exports.getMonthlySummary = async (req, res) => {
       }
       peakOccupancy.push({ date, peak: maxCount });
 
-      // --- Track visits per person (swipes + presence days) ---
-      const seenToday = new Set();
+      // --- Track visits & attendance ---
       for (const e of dayEvents) {
         if (e.Direction === 'InDirection') {
           const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
 
-          // Count raw swipes
+          // Track visits
           if (!visitCounter.has(key)) {
             visitCounter.set(key, {
               count: 0,
@@ -102,21 +109,16 @@ exports.getMonthlySummary = async (req, res) => {
           }
           visitCounter.get(key).count++;
 
-          // Count daily presence (unique days)
-          if (!presenceCounter.has(key)) {
-            presenceCounter.set(key, {
-              daysPresent: 0,
+          // Track attendance
+          if (!presenceByPerson.has(key)) {
+            presenceByPerson.set(key, {
               employeeId: e.EmployeeID,
               name: e.ObjectName1,
               personnelType: e.PersonnelType,
-              dates: new Set()
+              days: new Set()
             });
           }
-          const person = presenceCounter.get(key);
-          if (!person.dates.has(date)) {
-            person.dates.add(date);
-            person.daysPresent++;
-          }
+          presenceByPerson.get(key).days.add(date);
         }
       }
     }
@@ -125,7 +127,7 @@ exports.getMonthlySummary = async (req, res) => {
     const avgDailyHeadcount =
       dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
 
-    const top10BySwipes = Array.from(visitCounter.values())
+    const top10 = Array.from(visitCounter.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
       .map(v => ({
@@ -135,22 +137,37 @@ exports.getMonthlySummary = async (req, res) => {
         visits: v.count
       }));
 
-    const top10ByPresence = Array.from(presenceCounter.values())
-      .sort((a, b) => b.daysPresent - a.daysPresent)
-      .slice(0, 10)
-      .map(v => ({
-        employeeId: v.employeeId,
-        name: v.name,
-        personnelType: v.personnelType,
-        daysPresent: v.daysPresent
-      }));
+    // --- Attendance sheet ---
+    const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
+      const daily = {};
+      let presentCount = 0;
+
+      for (const d of allDates) {
+        if (p.days.has(d)) {
+          daily[d] = "P"; // Present
+          presentCount++;
+        } else {
+          daily[d] = "A"; // Absent
+        }
+      }
+
+      return {
+        employeeId: p.employeeId,
+        name: p.name,
+        personnelType: p.personnelType,
+        ...daily,
+        daysPresent: presentCount,
+        daysAbsent: allDates.length - presentCount,
+        attendancePercent: ((presentCount / allDates.length) * 100).toFixed(1) + "%"
+      };
+    });
 
     return res.json({
       month,
       avgDailyHeadcount: Math.round(avgDailyHeadcount),
       peakOccupancy,
-      top10VisitorsBySwipes: top10BySwipes,
-      top10VisitorsByDays: top10ByPresence
+      top10Visitors: top10,
+      attendanceSheet
     });
   } catch (err) {
     console.error('getMonthlySummary error:', err);
