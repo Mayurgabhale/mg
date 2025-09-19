@@ -1,3 +1,45 @@
+// ---- Photo helpers (UI-only) ----
+import Impimg from "../assets/images/busy.png";
+
+const DEFAULT_PHOTO = Impimg || "/assets/images/busy.png";
+
+// Load all images from assets/images
+const images = require.context("../assets/images", false, /\.png$/);
+
+// Build a map { "178990": "resolvedPath", ... }
+const PHOTO_MAP = images.keys().reduce((acc, key) => {
+  const fileName = key.replace("./", ""); // e.g. "178990.png"
+  const id = fileName.split(".")[0];      // e.g. "178990"
+  acc[id] = images(key);
+  return acc;
+}, {});
+
+const toSlug = (name = "") =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+const getPhotoSrc = (m) => {
+  if (!m) return DEFAULT_PHOTO;
+  if (m.photo) return m.photo;
+  if (m.image) return m.image;
+
+  // Prefer employee-id photo if found
+  if (m.emp_id && PHOTO_MAP[m.emp_id]) {
+    return PHOTO_MAP[m.emp_id];
+  }
+
+  const name = m.name || m.Name;
+  if (name) return `/photos/${toSlug(name)}.png`;
+  return DEFAULT_PHOTO;
+};
+
+
+
+....
+
 C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\assets\images\178990.png
 in this path each membe photo i save with ther emp_id ok, they match and add ther photo ok
 C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\data\lacaErtMembers.json
