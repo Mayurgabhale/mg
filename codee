@@ -1,3 +1,20 @@
+// routes/occupancyRoutes.js
+const express = require('express');
+const router  = express.Router();
+const liveOccupancyController = require('../controllers/liveOccupancyController');
+
+// existing endpoints you already have
+router.get('/occupancy-at-time-pune', liveOccupancyController.getPuneSnapshotAtDateTime);
+
+// NEW: monthly attendance CSV
+// GET /api/monthly-attendance-pune?year=YYYY&month=MM
+router.get('/monthly-attendance-pune', liveOccupancyController.getPuneMonthlyAttendance);
+
+module.exports = router;
+
+
+...
+
 // Monthly attendance CSV endpoint
 // GET /api/monthly-attendance-pune?year=YYYY&month=MM
 exports.getPuneMonthlyAttendance = async (req, res) => {
