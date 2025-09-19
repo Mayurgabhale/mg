@@ -1,24 +1,6 @@
-Uncaught runtime errors:
-×
-ERROR
-Cannot read properties of undefined (reading 'Body')
-TypeError: Cannot read properties of undefined (reading 'Body')
-    at LacaERTOverview (http://localhost:3000/src_pages_ErtPage_jsx.807caea3d78bc1f151b3.hot-update.js:796:155)
-    at react-stack-bottom-frame (http://localhost:3000/static/js/bundle.js:27588:18)
-    at renderWithHooks (http://localhost:3000/static/js/bundle.js:17798:20)
-    at updateFunctionComponent (http://localhost:3000/static/js/bundle.js:19491:17)
-    at beginWork (http://localhost:3000/static/js/bundle.js:20077:16)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15569:68)
-    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22150:93)
-    at workLoopSync (http://localhost:3000/static/js/bundle.js:22043:38)
-    at renderRootSync (http://localhost:3000/static/js/bundle.js:22027:7)
-    at performWorkOnRoot (http://localhost:3000/static/js/bundle.js:21791:42)
-
-
-
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import { Card, Row, Col, Badge, Container, Button, Body } from "react-bootstrap";
+import { Card, Row, Col, Badge, Container, Button } from "react-bootstrap";
 import {
   FaEnvelopeOpenText,
   FaMapMarkerAlt,
@@ -37,9 +19,8 @@ import { lookupFloor } from "../utils/floorLookup";
 import '../App.css';
 import Impimg from "../assets/images/busy.png";
 
-// C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\assets\images\178990.png << img wiht  employee id
 // ---- Photo helpers (UI-only) ----
-const DEFAULT_PHOTO = Impimg || '/assets/images/default.png';
+const DEFAULT_PHOTO = Impimg || '/assets/images/busy.png';
 const toSlug = (name = '') =>
   name
     .toLowerCase()
