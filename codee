@@ -56,3 +56,182 @@ why so future date
       "daysAbsent": 14,
       "attendancePercent": "53.3%"
     },
+
+
+write correct
+// GET /api/monthly-summary?month=YYYY-MM
+exports.getMonthlySummary = async (req, res) => {
+  try {
+    const { month } = req.query;
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({ error: 'invalid "month" format; expected YYYY-MM' });
+    }
+
+    const [year, monthNum] = month.split('-').map(Number);
+
+    const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
+    const end = start.endOf('month');
+
+    const startUtc = start.setZone('utc').toJSDate();
+    const endUtc   = end.setZone('utc').toJSDate();
+
+    const pool = await getPool();
+    const reqDb = pool.request();
+    reqDb.input('start', sql.DateTime2, startUtc);
+    reqDb.input('end', sql.DateTime2, endUtc);
+
+    const { recordset } = await reqDb.query(`
+      SELECT
+        t1.MessageUTC,
+        t1.ObjectName1,  -- Person name
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND t1.MessageUTC BETWEEN @start AND @end
+      ORDER BY t1.MessageUTC ASC;
+    `);
+
+    // Convert to Pune local time
+    const events = recordset.map(e => {
+      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
+      return {
+        ...e,
+        LocaleMessageTime: local.toJSDate(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
+      };
+    });
+
+    // Get all dates in the month
+    const allDates = [];
+    let cursor = start;
+    while (cursor <= end) {
+      allDates.push(cursor.toFormat('yyyy-LL-dd'));
+      cursor = cursor.plus({ days: 1 });
+    }
+
+    // Group by day
+    const byDay = new Map();
+    for (const evt of events) {
+      if (!byDay.has(evt.Dateonly)) byDay.set(evt.Dateonly, []);
+      byDay.get(evt.Dateonly).push(evt);
+    }
+
+    const dailySummaries = [];
+    const peakOccupancy = [];
+    const visitCounter = new Map();       // track total visits
+    const presenceByPerson = new Map();   // track which days each person was present
+
+    // Process each day
+    for (const [date, dayEvents] of byDay.entries()) {
+      // --- Unique daily headcount ---
+      const uniquePeople = new Set(dayEvents.map(e => e.PersonGUID));
+      dailySummaries.push({ date, total: uniquePeople.size });
+
+      // --- Peak occupancy counter ---
+      let currentCount = 0;
+      let maxCount = 0;
+      for (const e of dayEvents) {
+        if (e.Direction === 'InDirection') {
+          currentCount++;
+        } else if (e.Direction === 'OutDirection') {
+          currentCount = Math.max(0, currentCount - 1);
+        }
+        if (currentCount > maxCount) maxCount = currentCount;
+      }
+      peakOccupancy.push({ date, peak: maxCount });
+
+      // --- Track visits & attendance ---
+      for (const e of dayEvents) {
+        if (e.Direction === 'InDirection') {
+          const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
+
+          // Track visits
+          if (!visitCounter.has(key)) {
+            visitCounter.set(key, {
+              count: 0,
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType
+            });
+          }
+          visitCounter.get(key).count++;
+
+          // Track attendance
+          if (!presenceByPerson.has(key)) {
+            presenceByPerson.set(key, {
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType,
+              days: new Set()
+            });
+          }
+          presenceByPerson.get(key).days.add(date);
+        }
+      }
+    }
+
+    // --- Final aggregates ---
+    const avgDailyHeadcount =
+      dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
+
+    const top10 = Array.from(visitCounter.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map(v => ({
+        employeeId: v.employeeId,
+        name: v.name,
+        personnelType: v.personnelType,
+        visits: v.count
+      }));
+
+    // --- Attendance sheet ---
+    const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
+      const daily = {};
+      let presentCount = 0;
+
+      for (const d of allDates) {
+        if (p.days.has(d)) {
+          daily[d] = "P"; // Present
+          presentCount++;
+        } else {
+          daily[d] = "A"; // Absent
+        }
+      }
+
+      return {
+        employeeId: p.employeeId,
+        name: p.name,
+        personnelType: p.personnelType,
+        ...daily,
+        daysPresent: presentCount,
+        daysAbsent: allDates.length - presentCount,
+        attendancePercent: ((presentCount / allDates.length) * 100).toFixed(1) + "%"
+      };
+    });
+
+    return res.json({
+      month,
+      avgDailyHeadcount: Math.round(avgDailyHeadcount),
+      peakOccupancy,
+      top10Visitors: top10,
+      attendanceSheet
+    });
+  } catch (err) {
+    console.error('getMonthlySummary error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
