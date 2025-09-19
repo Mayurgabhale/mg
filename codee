@@ -1,7 +1,3 @@
-
-API only loading: not disply results:
-all is correct
-http://localhost:5000/api/monthly-summary?month=2025-07
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
@@ -47,6 +43,7 @@ exports.getMonthlySummary = async (req, res) => {
       ORDER BY t1.MessageUTC ASC;
     `);
 
+    // Convert to Pune local time
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
@@ -68,23 +65,26 @@ exports.getMonthlySummary = async (req, res) => {
     const peakOccupancy = [];
     const visitCounter = new Map(); // key = PersonGUID, value = { count, id, name, type }
 
+    // Process each day
     for (const [date, dayEvents] of byDay.entries()) {
-      // Unique daily headcount
-      const visitedStats = buildVisitedToday(dayEvents, date);
-      dailySummaries.push({ date, total: visitedStats.total });
+      // --- Unique daily headcount ---
+      const uniquePeople = new Set(dayEvents.map(e => e.PersonGUID));
+      dailySummaries.push({ date, total: uniquePeople.size });
 
-      // Peak occupancy of the day
+      // --- Peak occupancy counter ---
+      let currentCount = 0;
       let maxCount = 0;
-      let runningEvents = [];
       for (const e of dayEvents) {
-        runningEvents.push(e);
-        const occ = await buildOccupancy(runningEvents);
-        const insideCount = occ.personnelSummary.employees + occ.personnelSummary.contractors;
-        if (insideCount > maxCount) maxCount = insideCount;
+        if (e.Direction === 'InDirection') {
+          currentCount++;
+        } else if (e.Direction === 'OutDirection') {
+          currentCount = Math.max(0, currentCount - 1);
+        }
+        if (currentCount > maxCount) maxCount = currentCount;
       }
       peakOccupancy.push({ date, peak: maxCount });
 
-      // Track visits per person
+      // --- Track visits per person ---
       for (const e of dayEvents) {
         if (e.Direction === 'InDirection') {
           const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
@@ -102,9 +102,9 @@ exports.getMonthlySummary = async (req, res) => {
       }
     }
 
-    // Final aggregates
+    // --- Final aggregates ---
     const avgDailyHeadcount =
-      dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length;
+      dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
 
     const top10 = Array.from(visitCounter.values())
       .sort((a, b) => b.count - a.count)
