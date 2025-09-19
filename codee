@@ -1,3 +1,95 @@
+
+current month getting correct, 
+But privius mont not gettting correct :
+thinks long, why this happening and write correct data
+Current month:
+http://localhost:5000/api/monthly-summary?month=2025-09  This is excaly correct\\ perfect 
+{
+      "employeeId": "314345",
+      "name": "Dass, Lloyds",
+      "personnelType": "Employee",
+      "2025-09-01": "P", 
+      "2025-09-02": "P",
+      "2025-09-03": "P",
+      "2025-09-04": "P",
+      "2025-09-05": "P",
+      "2025-09-06": "A",
+      "2025-09-07": null,
+      "2025-09-08": "P",
+      "2025-09-09": "P",
+      "2025-09-10": "P",
+      "2025-09-11": "P",
+      "2025-09-12": "P",
+      "2025-09-13": "A",
+      "2025-09-14": null,
+      "2025-09-15": "P",
+      "2025-09-16": "P",
+      "2025-09-17": "P",
+      "2025-09-18": "P",
+      "2025-09-19": "P",
+      "2025-09-20": null,
+      "2025-09-21": null,
+      "2025-09-22": null,
+      "2025-09-23": null,
+      "2025-09-24": null,
+      "2025-09-25": null,
+      "2025-09-26": null,
+      "2025-09-27": null,
+      "2025-09-28": null,
+      "2025-09-29": null,
+      "2025-09-30": null,
+      "daysPresent": 15,
+      "daysAbsent": 2,
+      "attendancePercent": "88.2%"
+
+this is priius month 
+this is wrong not correct: 
+http://localhost:5000/api/monthly-summary?month=2025-08
+wrong 
+{
+      "employeeId": "314345",
+      "name": "Dass, Lloyds",
+      "personnelType": "Employee",
+      "2025-08-01": "A",
+      "2025-08-02": "A",
+      "2025-08-03": null,
+      "2025-08-04": "A",
+      "2025-08-05": "A",
+      "2025-08-06": "A",
+      "2025-08-07": "A",
+      "2025-08-08": "A",
+      "2025-08-09": "A",
+      "2025-08-10": null,
+      "2025-08-11": "A",
+      "2025-08-12": "A",
+      "2025-08-13": "A",
+      "2025-08-14": "A",
+      "2025-08-15": "A",
+      "2025-08-16": "A",
+      "2025-08-17": null,
+      "2025-08-18": "A",
+      "2025-08-19": "A",
+      "2025-08-20": "P",
+      "2025-08-21": "P",
+      "2025-08-22": "P",
+      "2025-08-23": "A",
+      "2025-08-24": null,
+      "2025-08-25": "A",
+      "2025-08-26": "A",
+      "2025-08-27": "A",
+      "2025-08-28": "A",
+      "2025-08-29": "P",
+      "2025-08-30": "A",
+      "2025-08-31": null,
+      "daysPresent": 4,
+      "daysAbsent": 22,
+      "attendancePercent": "15.4%"
+    },
+dont sunday null: becaus some employee alos came sunday ok:
+
+write correct code: logic, to get correct present and absent:
+___ what is say chekc thery each date swpie, becaseu we< gete theire preent and absent for ther swpie ok
+
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
@@ -12,10 +104,10 @@ exports.getMonthlySummary = async (req, res) => {
     const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
     const end = start.endOf('month');
 
-    // Today in Pune
+    // Today in Pune (string yyyy-LL-dd)
     const todayKolkataStr = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-    // All dates in the requested month
+    // Build all dates in month
     const allDates = [];
     let cursor = start;
     while (cursor <= end) {
@@ -23,15 +115,23 @@ exports.getMonthlySummary = async (req, res) => {
       cursor = cursor.plus({ days: 1 });
     }
 
-    // Decide which dates count for attendance %
+    // If requested month is current month, only consider days up to today for attendance math.
     const isRequestedMonthCurrent =
       start.toFormat('yyyy-LL') === DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL');
 
     const consideredDates = isRequestedMonthCurrent
-      ? allDates.filter(d => d <= todayKolkataStr) // only up to today
-      : allDates.slice(); // full month for past months
+      ? allDates.filter(d => d <= todayKolkataStr)
+      : allDates.slice();
 
-    // SQL range in UTC
+    // ---------- configuration: exclude Sundays from working days ----------
+    // Set to true because you said "not come only sunday"
+    const excludeSundays = true;
+    const consideredDatesFiltered = consideredDates.filter(d => {
+      if (!excludeSundays) return true;
+      return DateTime.fromISO(d, { zone: 'Asia/Kolkata' }).weekday !== 7; // 7 = Sunday
+    });
+
+    // SQL boundaries (UTC)
     const startUtc = start.setZone('utc').toJSDate();
     const endUtc = end.setZone('utc').toJSDate();
 
@@ -40,7 +140,7 @@ exports.getMonthlySummary = async (req, res) => {
     reqDb.input('start', sql.DateTime2, startUtc);
     reqDb.input('end', sql.DateTime2, endUtc);
 
-    // Query swipes
+    // Fetch events with Card/CHUID (CardNumber)
     const { recordset } = await reqDb.query(`
       WITH CombinedQuery AS (
         SELECT
@@ -75,16 +175,18 @@ exports.getMonthlySummary = async (req, res) => {
       ORDER BY MessageUTC ASC;
     `);
 
-    // Normalize to Pune time
+    // Normalize to Pune local time and enrich
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
         ...e,
+        LocaleMessageTime: local.toISO(),
         Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
       };
     });
 
-    // Canonical key
+    // Build canonical key function (stable)
     function canonicalKey(e) {
       const guid = (e.PersonGUID || '').toString().trim();
       const card = (e.CardNumber || '').toString().trim();
@@ -92,19 +194,22 @@ exports.getMonthlySummary = async (req, res) => {
       const name = (e.ObjectName1 || '').toString().trim().toLowerCase();
       if (guid) return `g:${guid}`;
       if (card) return `c:${card}`;
+      // prefer EmployeeID if it's a meaningful id (not '0' or empty)
       if (emp && emp !== '0') return `e:${emp}`;
       if (name) return `n:${name}`;
       return `unknown`;
     }
 
-    // Presence + visits
-    const visitCounter = new Map();
-    const presenceByPerson = new Map();
+    // Containers
+    const visitCounter = new Map();     // key -> {count, employeeId, name, personnelType}
+    const presenceByPerson = new Map(); // key -> { employeeId, name, personnelType, days:Set }
 
+    // Scan all events once and populate presence & visits
     for (const e of events) {
-      const key = canonicalKey(e);
       const date = e.Dateonly;
+      const key = canonicalKey(e);
 
+      // initialize presence record if needed
       if (!presenceByPerson.has(key)) {
         presenceByPerson.set(key, {
           employeeId: e.EmployeeID,
@@ -113,8 +218,11 @@ exports.getMonthlySummary = async (req, res) => {
           days: new Set()
         });
       }
+
+      // presence: mark day present for ANY event on that date (this counts IN/OUT/null)
       presenceByPerson.get(key).days.add(date);
 
+      // visits: count explicit InDirection swipes only
       if (e.Direction === 'InDirection') {
         if (!visitCounter.has(key)) {
           visitCounter.set(key, {
@@ -128,7 +236,46 @@ exports.getMonthlySummary = async (req, res) => {
       }
     }
 
-    // Build attendance sheet
+    // Build dailySummaries & peakOccupancy from events grouped by date (simulate counter)
+    const byDateMap = new Map(); // date -> list of events
+    for (const ev of events) {
+      if (!byDateMap.has(ev.Dateonly)) byDateMap.set(ev.Dateonly, []);
+      byDateMap.get(ev.Dateonly).push(ev);
+    }
+
+    const dailySummaries = [];
+    const peakOccupancy = [];
+    for (const d of allDates) {
+      const dayEvents = byDateMap.get(d) || [];
+      // Unique daily headcount: dedupe per-person for that day using canonicalKey
+      const uniqueSet = new Set(dayEvents.map(e => canonicalKey(e)));
+      dailySummaries.push({ date: d, total: uniqueSet.size });
+
+      // peak occupancy simulate
+      let current = 0, maxCount = 0;
+      for (const ev of dayEvents) {
+        if (ev.Direction === 'InDirection') current++;
+        else if (ev.Direction === 'OutDirection') current = Math.max(0, current - 1);
+        // ignore unknown Direction for counter
+        if (current > maxCount) maxCount = current;
+      }
+      peakOccupancy.push({ date: d, peak: maxCount });
+    }
+
+    // Compute avg daily headcount over consideredDatesFiltered (excludes Sundays if configured)
+    const totalsByDate = Object.fromEntries(dailySummaries.map(d => [d.date, d.total]));
+    const consideredTotals = consideredDatesFiltered.map(d => totalsByDate[d] || 0);
+    const avgDailyHeadcount = consideredTotals.length
+      ? Math.round(consideredTotals.reduce((s, v) => s + v, 0) / consideredTotals.length)
+      : 0;
+
+    // Top10 visitors by raw InDirection counts
+    const top10Visitors = Array.from(visitCounter.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map(v => ({ employeeId: v.employeeId, name: v.name, personnelType: v.personnelType, visits: v.count }));
+
+    // Build attendance sheet rows for every canonical person seen in month
     const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
       const row = { employeeId: p.employeeId, name: p.name, personnelType: p.personnelType };
       let presentCount = 0;
@@ -137,11 +284,17 @@ exports.getMonthlySummary = async (req, res) => {
         const isFuture = (isRequestedMonthCurrent && d > todayKolkataStr);
         if (isFuture) { row[d] = null; continue; }
 
+        // If we exclude Sundays from considered days, mark Sundays as null (not applicable)
+        if (excludeSundays && DateTime.fromISO(d, { zone: 'Asia/Kolkata' }).weekday === 7) {
+          row[d] = null; // not considered working day
+          continue;
+        }
+
         if (p.days.has(d)) { row[d] = 'P'; presentCount++; }
         else { row[d] = 'A'; }
       }
 
-      const workingDaysToDate = consideredDates.length;
+      const workingDaysToDate = consideredDatesFiltered.length;
       const daysAbsent = Math.max(0, workingDaysToDate - presentCount);
       const attendancePercent = workingDaysToDate > 0
         ? ((presentCount / workingDaysToDate) * 100).toFixed(1) + '%'
@@ -153,17 +306,12 @@ exports.getMonthlySummary = async (req, res) => {
       return row;
     });
 
-    // Top 10 visitors
-    const top10Visitors = Array.from(visitCounter.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-
     return res.json({
       month,
       today: todayKolkataStr,
-      workingDaysConsidered: consideredDates.length,
-      avgDailyHeadcount: 0, // can re-add if needed
-      peakOccupancy: [],    // can re-add if needed
+      workingDaysConsidered: consideredDatesFiltered.length,
+      avgDailyHeadcount,
+      peakOccupancy,
       top10Visitors,
       attendanceSheet
     });
