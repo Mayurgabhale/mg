@@ -1,3 +1,50 @@
+not correct:
+ {
+      "employeeId": "0",
+      "name": "India, TEMP_PUN_006",
+      "personnelType": "Temp Badge",
+      "2025-08-01": "A",
+      "2025-08-02": "A",
+      "2025-08-03": "A",
+      "2025-08-04": "A",
+      "2025-08-05": "A",
+      "2025-08-06": "A",
+      "2025-08-07": "A",
+      "2025-08-08": "A",
+      "2025-08-09": "A",
+      "2025-08-10": "A",
+      "2025-08-11": "A",
+      "2025-08-12": "A",
+      "2025-08-13": "A",
+      "2025-08-14": "A",
+      "2025-08-15": "A",
+      "2025-08-16": "A",
+      "2025-08-17": "A",
+      "2025-08-18": "A",
+      "2025-08-19": "A",
+      "2025-08-20": "P",
+      "2025-08-21": "P",
+      "2025-08-22": "P",
+      "2025-08-23": "P",
+      "2025-08-24": "A",
+      "2025-08-25": "P",
+      "2025-08-26": "P",
+      "2025-08-27": "A",
+      "2025-08-28": "P",
+      "2025-08-29": "P",
+      "2025-08-30": "P",
+      "2025-08-31": "A",
+      "daysPresent": 9,
+      "daysAbsent": 22,
+      "attendancePercent": "29.0%"
+    },
+
+i came all days: not came only sunday 
+and in this show only 9 day i Present:
+this is wrong: 
+please write correct logic:
+check each day swpie: 
+
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
