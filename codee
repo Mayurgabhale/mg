@@ -1,11 +1,42 @@
-Compiled with problems:
-×
-ERROR
-[eslint] 
-src\components\ERTOverview.jsx
-  Line 749:7:  Definition for rule 'import/no-dynamic-require' was not found  import/no-dynamic-require
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\assets\images\178990.png
+in this path each membe photo i save with ther emp_id ok, they match and add ther photo ok
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\data\lacaErtMembers.json
+{
+  "Team Members": [
+    { "name": "Esteban Lopez Villalobos", "email": "Esteban.LopezVillalobos@wu.com", "emp_id": "302566","phone":"xxx-xxx-xxx" },
+    { "name": "Melissa Castro", "email": "Melissa.CastroUgalde@wu.com", "emp_id": "308530","phone":"xxx-xxx-xxx" },
+    { "name": "Leonardo Escalante", "email": "Leonardo.Escalante@wu.com", "emp_id": "249719","phone":"xxx-xxx-xxx" },
+    { "name": "María Gabriela Brenes", "email": "Maria.Brenes@wu.com", "emp_id": "239462","phone":"xxx-xxx-xxx" },
+    { "name": "Jose David Hernandez Salazar", "email": "JOSE.HERNANDEZ@wu.com", "emp_id": "315501","phone":"xxx-xxx-xxx" },
+    { "name": "Montserrat Sanabria Moreno", "email": "Monserrat.Sanabria@wu.com", "emp_id": "313147","phone":"xxx-xxx-xxx" },
+    { "name": "Marcelo Rivera Gutierrez", "email": "Marcelo.Rivera@wu.com", "emp_id": "315354","phone":"xxx-xxx-xxx" },
+    { "name": "Leandro Agredo Orozco", "email": "Leandro.AgredoOrozco@wu.com", "emp_id": "328465","phone":"xxx-xxx-xxx" },
+    { "name": "Natalia Araya Morera", "email": "NATALIA.ARAYA@wu.com", "emp_id": "81241784","phone":"xxx-xxx-xxx" },
+    { "name": "Carolina Flores Reyes", "email": "carolina.floresreyes@wu.com", "emp_id": "73432644","phone":"xxx-xxx-xxx" },
+    { "name": "Paula Jimenez", "email": "paula.jimenez@wu.com", "emp_id": "305073","phone":"xxx-xxx-xxx" },
+    { "name": "Guido Alberto Ramírez Camacho", "email": "guido.ramirez@westernunion.com", "emp_id": "238287","phone":"xxx-xxx-xxx" },
+    { "name": "Jason Chaves Vega", "email": "jason.chaves@westernunion.com", "emp_id": "324949","phone":"xxx-xxx-xxx" },
+    { "name": "Anahita Hashemi", "email": "anahita.hashemi@wu.com", "emp_id": "311968","phone":"xxx-xxx-xxx" },
+    { "name": "Olga Carvajal Castillo", "email": "olga.carvajal@westernunion.com", "emp_id": "319021","phone":"xxx-xxx-xxx" },
+    { "name": "Warner Alberto Granados Ewers", "email": "warner.granados@westernunion.com", "emp_id": "178990","phone":"xxx-xxx-xxx" },
+    { "name": "David Arce Calvo", "email": "david.arce@wu.com", "emp_id": "319972","phone":"xxx-xxx-xxx" },
+    { "name": "David Briceño", "email": "david.briceno@wu.com", "emp_id": "314240","phone":"xxx-xxx-xxx" },
+    { "name": "Jafeth Alexander Morales", "email": "Jafet.Morales@westernunion.com", "emp_id": "326589","phone":"xxx-xxx-xxx" },
+    { "name": "Karl Anthony Orozco", "email": "karl.orozcochinchilla@westernunion.com", "emp_id": "306365","phone":"xxx-xxx-xxx" },
+    { "name": "Omar Arias", "email": "omar.arias@westernunion.com", "emp_id": "313388","phone":"xxx-xxx-xxx" },
+    { "name": "Alfonso Guardia", "email": "alfonso.guardia@westernunion.com", "emp_id": "308280","phone":"xxx-xxx-xxx" },
+    { "name": "Ximena Espinoza", "email": "ximena.espinoza@westernunion.com", "emp_id": "327061" ,"phone":"xxx-xxx-xxx"},
+    { "name": "Mayer Pereira", "email": "meyer.pereira@westernunion.com", "emp_id": "237998","phone":"xxx-xxx-xxx" },
+    { "name": "Steven Alexander Alvarado Fallas", "email": "steven.alvarado@wu.com", "emp_id": "243957","phone":"xxx-xxx-xxx" },
+    { "name": "Kevin Alonso Arce", "email": "kevin.arce@wu.com", "emp_id": "314618","phone":"xxx-xxx-xxx" },
+    { "name": "Ronald Andrey Garro", "email": "ronald.garro@wu.com", "emp_id": "306147","phone":"xxx-xxx-xxx" },
+    { "name": "Carlos Manuel Hernandez", "email": "carlos.hernandezgonzalez@westernunion.com", "emp_id": "304864","phone":"xxx-xxx-xxx" },
+    { "name": "Taeseung Josue Yoon", "email": "taeseung.yoon@westernunion.com", "emp_id": "325507","phone":"xxx-xxx-xxx" },
+    { "name": "Andrey Molina", "email": "Andrey.Molina@wu.com", "emp_id": "323105","phone":"xxx-xxx-xxx" },
+    { "name": "Dra Lillan Marti", "email": "Lillan.Marti@westernunion.com", "emp_id": "11561479","phone":"xxx-xxx-xxx" }
+  ]
+}
 
-Search for the keywords to learn more about each error.
 
 
 // src/components/LacaERTOverview.jsx
