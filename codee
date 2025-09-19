@@ -1,3 +1,13 @@
+Compiled with problems:
+×
+ERROR
+[eslint] 
+src\components\ERTOverview.jsx
+  Line 749:7:  Definition for rule 'import/no-dynamic-require' was not found  import/no-dynamic-require
+
+Search for the keywords to learn more about each error.
+
+
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, Row, Col, Badge, Container, Button } from "react-bootstrap";
