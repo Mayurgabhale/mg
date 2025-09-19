@@ -1,4 +1,5 @@
 // GET /api/monthly-summary?month=YYYY-MM
+// Assumes: DateTime from luxon, sql and getPool() are available in scope
 exports.getMonthlySummary = async (req, res) => {
   try {
     const { month } = req.query;
@@ -7,15 +8,12 @@ exports.getMonthlySummary = async (req, res) => {
     }
 
     const [year, monthNum] = month.split('-').map(Number);
-
-    // Month start/end in Pune local zone
     const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
     const end = start.endOf('month');
 
-    // Today in Pune (string yyyy-LL-dd)
     const todayKolkataStr = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-    // Build all dates in month
+    // Build all dates in month (strings 'yyyy-LL-dd')
     const allDates = [];
     let cursor = start;
     while (cursor <= end) {
@@ -23,7 +21,7 @@ exports.getMonthlySummary = async (req, res) => {
       cursor = cursor.plus({ days: 1 });
     }
 
-    // If requested month is current month, only consider days up to today for attendance math.
+    // If requested month is current, we only consider dates up to today for attendance math
     const isRequestedMonthCurrent =
       start.toFormat('yyyy-LL') === DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL');
 
@@ -31,7 +29,7 @@ exports.getMonthlySummary = async (req, res) => {
       ? allDates.filter(d => d <= todayKolkataStr)
       : allDates.slice();
 
-    // SQL boundaries (UTC)
+    // SQL boundaries in UTC
     const startUtc = start.setZone('utc').toJSDate();
     const endUtc = end.setZone('utc').toJSDate();
 
@@ -40,7 +38,7 @@ exports.getMonthlySummary = async (req, res) => {
     reqDb.input('start', sql.DateTime2, startUtc);
     reqDb.input('end', sql.DateTime2, endUtc);
 
-    // Fetch swipe events
+    // Fetch events (same query as before)
     const { recordset } = await reqDb.query(`
       WITH CombinedQuery AS (
         SELECT
@@ -75,66 +73,113 @@ exports.getMonthlySummary = async (req, res) => {
       ORDER BY MessageUTC ASC;
     `);
 
-    // Normalize to Pune local time and enrich
+    // Normalize events to Asia/Kolkata and produce small event objects
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
-        ...e,
-        LocaleMessageTime: local.toISO(),
+        raw: e,
         Dateonly: local.toFormat('yyyy-LL-dd'),
         Swipe_Time: local.toFormat('HH:mm:ss'),
+        EmployeeID: (e.EmployeeID || '').toString().trim(),
+        CardNumber: (e.CardNumber || '').toString().trim(),
+        PersonGUID: (e.PersonGUID || '').toString().trim(),
+        Name: (e.ObjectName1 || '').toString().trim(),
+        PersonnelType: e.PersonnelType,
+        Direction: (e.Direction || '').toString().trim()
       };
     });
 
-    // Build canonical key function (stable)
-    function canonicalKey(e) {
-      const guid = (e.PersonGUID || '').toString().trim();
-      const card = (e.CardNumber || '').toString().trim();
-      const emp  = (e.EmployeeID || '').toString().trim();
-      const name = (e.ObjectName1 || '').toString().trim().toLowerCase();
-      if (guid) return `g:${guid}`;
-      if (card) return `c:${card}`;
-      if (emp && emp !== '0') return `e:${emp}`;
-      if (name) return `n:${name}`;
-      return `unknown`;
+    // ========================
+    // Alias-resolution pass
+    // Build mappings card -> employeeId, guid -> employeeId, name -> employeeId
+    // If an event contains both card and employeeId, use that to map the card to employee.
+    // This fixes the "same person appears as card-only and employee-only" problem.
+    // ========================
+    const cardToEmp = new Map();
+    const guidToEmp = new Map();
+    const nameToEmp = new Map();
+
+    for (const ev of events) {
+      const emp = ev.EmployeeID || '';
+      const card = ev.CardNumber || '';
+      const guid = ev.PersonGUID || '';
+      const name = ev.Name ? ev.Name.toLowerCase() : '';
+
+      if (emp && emp !== '0') {
+        if (card) cardToEmp.set(card, emp);
+        if (guid) guidToEmp.set(guid, emp);
+        if (name) nameToEmp.set(name, emp);
+      }
     }
 
-    // Containers
-    const visitCounter = new Map();     // key -> {count, employeeId, name, personnelType}
-    const presenceByPerson = new Map(); // key -> { employeeId, name, personnelType, days:Set }
+    // canonical id resolver - prefers employeeId when we can map to it
+    function resolveCanonical(ev) {
+      const emp = ev.EmployeeID || '';
+      const card = ev.CardNumber || '';
+      const guid = ev.PersonGUID || '';
+      const name = ev.Name ? ev.Name.toLowerCase() : '';
 
-    // Scan all events once and populate presence & visits
-    for (const e of events) {
-      const date = e.Dateonly;
-      const key = canonicalKey(e);
+      if (emp && emp !== '0') return `e:${emp}`;
+      if (card && cardToEmp.has(card)) return `e:${cardToEmp.get(card)}`;
+      if (guid && guidToEmp.has(guid)) return `e:${guidToEmp.get(guid)}`;
+      if (name && nameToEmp.has(name)) return `e:${nameToEmp.get(name)}`;
 
-      if (!presenceByPerson.has(key)) {
-        presenceByPerson.set(key, {
-          employeeId: e.EmployeeID,
-          name: e.ObjectName1,
-          personnelType: e.PersonnelType,
+      // fallback to using whichever identifier we have (so we still dedupe)
+      if (card) return `c:${card}`;
+      if (guid) return `g:${guid}`;
+      if (name) return `n:${name}`;
+      return `unknown:${Math.random().toString(36).slice(2,8)}`; // last resort unique key
+    }
+
+    // Build presenceByPerson keyed by canonical id (e:..., c:..., g:...)
+    const presenceByPerson = new Map();
+    const visitCounter = new Map();
+
+    for (const ev of events) {
+      const date = ev.Dateonly;
+      const canonical = resolveCanonical(ev);
+
+      if (!presenceByPerson.has(canonical)) {
+        // store employeeId if canonical starts with 'e:'
+        presenceByPerson.set(canonical, {
+          canonical,
+          employeeId: canonical.startsWith('e:') ? canonical.slice(2) : null,
+          name: ev.Name,
+          personnelType: ev.PersonnelType,
           days: new Set()
         });
       }
 
-      // Mark presence for this date
-      presenceByPerson.get(key).days.add(date);
+      // mark presence for that day
+      presenceByPerson.get(canonical).days.add(date);
 
-      // Count visits
-      if (e.Direction === 'InDirection') {
-        if (!visitCounter.has(key)) {
-          visitCounter.set(key, {
-            count: 0,
-            employeeId: e.EmployeeID,
-            name: e.ObjectName1,
-            personnelType: e.PersonnelType
-          });
+      // count visits (we count InDirection occurrences)
+      if (ev.Direction === 'InDirection') {
+        if (!visitCounter.has(canonical)) {
+          visitCounter.set(canonical, { count: 0, employeeId: presenceByPerson.get(canonical).employeeId, name: ev.Name, personnelType: ev.PersonnelType });
         }
-        visitCounter.get(key).count++;
+        visitCounter.get(canonical).count++;
       }
     }
 
-    // Group events by date for summaries
+    // -- If you want to include all employees even those with ZERO swipes in the month,
+    //    you can uncomment and run a query against Personnel and merge them in here.
+    //    (I left it commented because I don't know your Personnel table fields.)
+    //
+    // const rosterReq = pool.request();
+    // const rosterRs = await rosterReq.query(`
+    //   SELECT CAST(Int1 AS NVARCHAR) AS EmployeeID, GUID, Name
+    //   FROM [ACVSCore].[Access].[Personnel]
+    //   WHERE /* add your active/visible filters here */
+    // `);
+    // for (const r of rosterRs.recordset) {
+    //   const key = r.EmployeeID ? `e:${r.EmployeeID}` : (r.GUID ? `g:${r.GUID}` : `n:${(r.Name||'').toLowerCase()}`);
+    //   if (!presenceByPerson.has(key)) {
+    //     presenceByPerson.set(key, { canonical: key, employeeId: r.EmployeeID || null, name: r.Name, personnelType: null, days: new Set() });
+    //   }
+    // }
+
+    // Build daily summaries & peak occupancy (same approach as before)
     const byDateMap = new Map();
     for (const ev of events) {
       if (!byDateMap.has(ev.Dateonly)) byDateMap.set(ev.Dateonly, []);
@@ -145,9 +190,11 @@ exports.getMonthlySummary = async (req, res) => {
     const peakOccupancy = [];
     for (const d of allDates) {
       const dayEvents = byDateMap.get(d) || [];
-      const uniqueSet = new Set(dayEvents.map(e => canonicalKey(e)));
+      // Unique daily headcount: use canonical ids for dedupe
+      const uniqueSet = new Set(dayEvents.map(ev => resolveCanonical(ev)));
       dailySummaries.push({ date: d, total: uniqueSet.size });
 
+      // simulate simple peak occupancy
       let current = 0, maxCount = 0;
       for (const ev of dayEvents) {
         if (ev.Direction === 'InDirection') current++;
@@ -157,20 +204,20 @@ exports.getMonthlySummary = async (req, res) => {
       peakOccupancy.push({ date: d, peak: maxCount });
     }
 
-    // Compute avg daily headcount
+    // avg daily headcount over consideredDates
     const totalsByDate = Object.fromEntries(dailySummaries.map(d => [d.date, d.total]));
     const consideredTotals = consideredDates.map(d => totalsByDate[d] || 0);
     const avgDailyHeadcount = consideredTotals.length
       ? Math.round(consideredTotals.reduce((s, v) => s + v, 0) / consideredTotals.length)
       : 0;
 
-    // Top10 visitors
+    // Top10 visitors (by InDirection)
     const top10Visitors = Array.from(visitCounter.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
       .map(v => ({ employeeId: v.employeeId, name: v.name, personnelType: v.personnelType, visits: v.count }));
 
-    // Build attendance sheet
+    // Build attendance sheet rows for every canonical person (includes those with zero swipes if merged above)
     const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
       const row = { employeeId: p.employeeId, name: p.name, personnelType: p.personnelType };
       let presentCount = 0;
@@ -195,6 +242,7 @@ exports.getMonthlySummary = async (req, res) => {
       return row;
     });
 
+    // Return full payload
     return res.json({
       month,
       today: todayKolkataStr,
