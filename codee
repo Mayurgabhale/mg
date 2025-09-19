@@ -1,3 +1,91 @@
+wrong present ans absent data:
+this emplooye is not that much absent:
+this is wrong logic. write correct 
+http://localhost:5000/api/monthly-summary?month=2025-08
+ {
+      "employeeId": "W0024618",
+      "name": "Diwate, Swapnil",
+      "personnelType": "Contractor",
+      "2025-08-01": "A",
+      "2025-08-02": "A",
+      "2025-08-03": "A",
+      "2025-08-04": "A",
+      "2025-08-05": "A",
+      "2025-08-06": "A",
+      "2025-08-07": "A",
+      "2025-08-08": "A",
+      "2025-08-09": "A",
+      "2025-08-10": "A",
+      "2025-08-11": "A",
+      "2025-08-12": "A",
+      "2025-08-13": "A",
+      "2025-08-14": "A",
+      "2025-08-15": "A",
+      "2025-08-16": "A",
+      "2025-08-17": "A",
+      "2025-08-18": "A",
+      "2025-08-19": "A",
+      "2025-08-20": "P",
+      "2025-08-21": "P",
+      "2025-08-22": "P",
+      "2025-08-23": "P",
+      "2025-08-24": "A",
+      "2025-08-25": "P",
+      "2025-08-26": "P",
+      "2025-08-27": "P",
+      "2025-08-28": "P",
+      "2025-08-29": "P",
+      "2025-08-30": "P",
+      "2025-08-31": "A",
+      "daysPresent": 10,
+      "daysAbsent": 21,
+      "attendancePercent": "32.3%"
+    },
+    {
+
+
+ {
+      "employeeId": "314345",
+      "name": "Dass, Lloyds",
+      "personnelType": "Employee",
+      "2025-08-01": "A",
+      "2025-08-02": "A",
+      "2025-08-03": "A",
+      "2025-08-04": "A",
+      "2025-08-05": "A",
+      "2025-08-06": "A",
+      "2025-08-07": "A",
+      "2025-08-08": "A",
+      "2025-08-09": "A",
+      "2025-08-10": "A",
+      "2025-08-11": "A",
+      "2025-08-12": "A",
+      "2025-08-13": "A",
+      "2025-08-14": "A",
+      "2025-08-15": "A",
+      "2025-08-16": "A",
+      "2025-08-17": "A",
+      "2025-08-18": "A",
+      "2025-08-19": "A",
+      "2025-08-20": "P",
+      "2025-08-21": "P",
+      "2025-08-22": "P",
+      "2025-08-23": "A",
+      "2025-08-24": "A",
+      "2025-08-25": "A",
+      "2025-08-26": "A",
+      "2025-08-27": "A",
+      "2025-08-28": "A",
+      "2025-08-29": "P",
+      "2025-08-30": "A",
+      "2025-08-31": "A",
+      "daysPresent": 4,
+      "daysAbsent": 27,
+      "attendancePercent": "12.9%"
+
+
+
+
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
@@ -214,3 +302,80 @@ exports.getMonthlySummary = async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+
+
+______________________________
+
+
+async function fetchNewEvents(since) {
+  // await the shared pool promise instead of poolConnect
+  const pool = await getPool();
+  const req  = pool.request();
+  req.input('since', sql.DateTime2, since);
+
+// console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+       
+
+
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType     = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) >@since
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      PersonnelType,
+      CardNumber,
+      AdmitCode,
+      Direction,
+      Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
+    // recordset.map(r => r.LocaleMessageTime.toISOString()));
+
+  return recordset;
+}
+
+
