@@ -1,87 +1,50 @@
-<div key={i} className="member-item pb-0 mb-1">
-              <div className="d-flex justify-content-between align-items-start mb-1">
-                <div className="d-flex align-items-center">
-                  <div className={`member-photo-container ${isPresent(m) ? 'present-border' : 'away-border'}`}>
-                    <img
-                      src={getPhotoSrc(m)}
-                      alt={m.name || m.Name || 'Member'}
-                      className="member-photo"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = DEFAULT_PHOTO;
-                      }}
-                    />
-                    <div className={`status-indicator ${isPresent(m) ? 'present' : 'away'}`}></div>
-                  </div>
-                  <div className="ms-3">
-                    <h6 className="mb-0 member-name">{m.name || m.Name}</h6>
-                    <small className="text-muted">{m.designation || m.role}</small>
-                  </div>
-                </div>
-                <Badge bg={isPresent(m) ? 'success' : 'danger'} className="status-badge">
-                  {isPresent(m) ? 'Available' : 'Away'}
-                </Badge>
-              </div>
+<div className="member-item-card p-3 h-100">
+  <div className="d-flex justify-content-between align-items-start mb-2">
+    {/* Left: Photo + Name */}
+    <div className="d-flex align-items-center">
+      <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
+        <img
+          src={getPhotoSrc(m)}
+          alt={m.emp_id || m.name || 'Member'}
+          className="member-photo"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = DEFAULT_PHOTO;
+          }}
+        />
+        <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
+      </div>
 
-              <div className="member-contact-info">
-                <div className="contact-item">
-                  <FaEnvelope className="contact-icon text-primary" />
-                  <a href={`mailto:${m.email || m.Email}`} className="contact-link">{m.email || m.Email}</a>
-                </div>
-                <div className="contact-item">
-                  <FaPhone className="contact-icon text-success" />
-                  <span className="contact-text">{m.phone || m.Phone}</span>
-                </div>
-                <div className="contact-item">
-                  <FaLocationArrow className="contact-icon text-danger" />
-                  <span className="contact-text">{location}</span>
-                </div>
-              </div>
-            </div>
+      <div className="ms-3">
+        {/* Employee ID as primary */}
+        <h6 className="mb-0 member-name">{m.emp_id}</h6>
+        <small className="text-muted">{m.name}</small>
+      </div>
+    </div>
 
-Read above code carefuuly, and and create below code card structeu same for above card look like: ok 
+    {/* Right: Availability Badge */}
+    <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">
+      {m.present ? 'Available' : 'Away'}
+    </Badge>
+  </div>
 
+  {/* Contact Info Section */}
+  <div className="member-contact-info mt-2">
+    <div className="contact-item">
+      <FaEnvelopeOpenText className="contact-icon text-primary" />
+      <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
+    </div>
 
- <div className="member-item-card p-3 h-100">
-                            <div className="d-flex align-items-start">
-                              <div className={`member-photo-container ${m.present ? 'present-border' : 'away-border'}`}>
-                                <img
-                                  src={getPhotoSrc(m)}
-                                  alt={m.emp_id || m.name || 'Member'}
-                                  className="member-photo"
-                                  onError={(e) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = DEFAULT_PHOTO;
-                                  }}
-                                />
-                                <div className={`status-indicator ${m.present ? 'present' : 'away'}`}></div>
-                              </div>
+    {m.phone && (
+      <div className="contact-item">
+        <FaMobileAlt className="contact-icon text-success" />
+        <span className="contact-text">{m.phone}</span>
+      </div>
+    )}
 
-                              <div className="ms-3 flex-grow-1">
-                                {/* Show Employee ID as primary label (per request) */}
-                                <h6 className="mb-0 member-name">{m.emp_id}</h6>
-                                <small className="text-muted d-block">{m.name}</small>
-
-                                <div className="mt-2 d-flex justify-content-between align-items-center">
-                                  <div className="member-contact-info">
-                                    <div className="contact-item">
-                                      <FaEnvelopeOpenText className="contact-icon text-primary" />
-                                      <a href={`mailto:${m.email}`} className="contact-link">{m.email}</a>
-                                    </div>
-                                    {m.phone && (
-                                      <div className="contact-item">
-                                        <FaMobileAlt className="contact-icon text-success" />
-                                        <span className="contact-text">{m.phone}</span>
-                                      </div>
-                                    )}
-                                    <div className="contact-item">
-                                      <FaMapMarkerAlt className="contact-icon text-danger" />
-                                      <span className="contact-text">{location}</span>
-                                    </div>
-                                  </div>
-
-                                  <Badge bg={m.present ? 'success' : 'danger'} className="status-badge">{m.present ? 'Available' : 'Away'}</Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+    <div className="contact-item">
+      <FaMapMarkerAlt className="contact-icon text-danger" />
+      <span className="contact-text">{location}</span>
+    </div>
+  </div>
+</div>
