@@ -1,3 +1,7 @@
+
+API only loading: not disply results:
+all is correct
+http://localhost:5000/api/monthly-summary?month=2025-07
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
