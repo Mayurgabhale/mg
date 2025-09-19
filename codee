@@ -1,3 +1,153 @@
+Explane this 
+what is this 
+ "avgDailyHeadcount": 610, "peak": 3359  "visits": 1462
+
+{
+  "month": "2025-09",
+  "avgDailyHeadcount": 610,
+  "peakOccupancy": [
+    {
+      "date": "2025-09-01",
+      "peak": 3359
+    },
+    {
+      "date": "2025-09-02",
+      "peak": 3839
+    },
+    {
+      "date": "2025-09-03",
+      "peak": 4193
+    },
+    {
+      "date": "2025-09-04",
+      "peak": 3082
+    },
+    {
+      "date": "2025-09-05",
+      "peak": 1506
+    },
+    {
+      "date": "2025-09-06",
+      "peak": 383
+    },
+    {
+      "date": "2025-09-07",
+      "peak": 423
+    },
+    {
+      "date": "2025-09-08",
+      "peak": 3613
+    },
+    {
+      "date": "2025-09-09",
+      "peak": 4434
+    },
+    {
+      "date": "2025-09-10",
+      "peak": 4340
+    },
+    {
+      "date": "2025-09-11",
+      "peak": 3048
+    },
+    {
+      "date": "2025-09-12",
+      "peak": 2102
+    },
+    {
+      "date": "2025-09-13",
+      "peak": 456
+    },
+    {
+      "date": "2025-09-14",
+      "peak": 465
+    },
+    {
+      "date": "2025-09-15",
+      "peak": 3138
+    },
+    {
+      "date": "2025-09-16",
+      "peak": 4237
+    },
+    {
+      "date": "2025-09-17",
+      "peak": 4465
+    },
+    {
+      "date": "2025-09-18",
+      "peak": 3075
+    },
+    {
+      "date": "2025-09-19",
+      "peak": 1864
+    }
+  ],
+  "top10Visitors": [
+    {
+      "employeeId": "W0025526",
+      "name": "More, Omkar",
+      "personnelType": "Contractor",
+      "visits": 1462
+    },
+    {
+      "employeeId": "0",
+      "name": "Ghodke, Ganesh",
+      "personnelType": "Property Management",
+      "visits": 1282
+    },
+    {
+      "employeeId": "0",
+      "name": "Argel, Sachin",
+      "personnelType": "Property Management",
+      "visits": 1184
+    },
+    {
+      "employeeId": "W0024552",
+      "name": "Raza, Ahmed",
+      "personnelType": "Contractor",
+      "visits": 1155
+    },
+    {
+      "employeeId": "W0021569",
+      "name": "Kamble, Babasaheb",
+      "personnelType": "Contractor",
+      "visits": 1147
+    },
+    {
+      "employeeId": "0",
+      "name": "Punde, Poonam",
+      "personnelType": "Property Management",
+      "visits": 994
+    },
+    {
+      "employeeId": "W0024553",
+      "name": "Thite, Vishal",
+      "personnelType": "Contractor",
+      "visits": 955
+    },
+    {
+      "employeeId": "W0025525",
+      "name": "Patil, Sachin",
+      "personnelType": "Contractor",
+      "visits": 941
+    },
+    {
+      "employeeId": "0",
+      "name": "Inamdar, Amir",
+      "personnelType": "Property Management",
+      "visits": 940
+    },
+    {
+      "employeeId": "63167423",
+      "name": "Divekar, Harichandra",
+      "personnelType": "Contractor",
+      "visits": 903
+    }
+  ]
+}
+
+
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
