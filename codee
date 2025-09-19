@@ -1,153 +1,334 @@
-// GET /api/monthly-attendance-pune?year=YYYY&month=MM
-// Returns JSON (not CSV)
-exports.getPuneMonthlyAttendance = async (req, res) => {
-  try {
-    const nowKolkata = DateTime.now().setZone('Asia/Kolkata');
-    const year = req.query.year ? Number(req.query.year) : Number(nowKolkata.toFormat('yyyy'));
-    const month = req.query.month ? Number(req.query.month) : Number(nowKolkata.toFormat('LL'));
 
-    if (!Number.isInteger(year) || year < 1900 || !Number.isInteger(month) || month < 1 || month > 12) {
-      return res.status(400).json({ error: 'invalid year/month. expected ?year=YYYY&month=MM' });
+// GET /api/monthly-summary?month=YYYY-MM
+exports.getMonthlySummary = async (req, res) => {
+  try {
+    const { month } = req.query;
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({ error: 'invalid "month" format; expected YYYY-MM' });
     }
 
-    const startLocal = DateTime.fromObject(
-      { year, month, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 },
-      { zone: 'Asia/Kolkata' }
-    );
-    const nextMonthLocal = startLocal.plus({ months: 1 });
+    const [year, monthNum] = month.split('-').map(Number);
 
-    const fromUtc = startLocal.setZone('utc').toJSDate(); // inclusive
-    const toUtc   = nextMonthLocal.setZone('utc').toJSDate(); // exclusive
+    const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
+    const end = start.endOf('month');
+
+    const startUtc = start.setZone('utc').toJSDate();
+    const endUtc   = end.setZone('utc').toJSDate();
 
     const pool = await getPool();
     const reqDb = pool.request();
-    reqDb.input('from', sql.DateTime2, fromUtc);
-    reqDb.input('to', sql.DateTime2, toUtc);
+    reqDb.input('start', sql.DateTime2, startUtc);
+    reqDb.input('end', sql.DateTime2, endUtc);
 
     const { recordset } = await reqDb.query(`
-      WITH CombinedQuery AS (
-        SELECT
-          t1.MessageUTC,
-          t1.ObjectName1,
-          CASE
-            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-            ELSE CAST(t2.Int1 AS NVARCHAR)
-          END AS EmployeeID,
-          t1.ObjectIdentity1 AS PersonGUID,
-          t3.Name AS PersonnelType,
-          COALESCE(
-            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-            sc.value
-          ) AS CardNumber,
-          t5a.value AS AdmitCode,
-          t5d.value AS Direction,
-          t1.ObjectName2 AS Door
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-          ON t1.XmlGUID = t_xml.GUID
-        LEFT JOIN (
-          SELECT GUID, value
-          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-          WHERE Name IN ('Card','CHUID')
-        ) sc ON t1.XmlGUID = sc.GUID
-        WHERE
-          t1.MessageType     = 'CardAdmitted'
-          AND t1.PartitionName2 = 'APAC.Default'
-          AND t1.MessageUTC >= @from
-          AND t1.MessageUTC < @to
-      )
-      SELECT *
-      FROM CombinedQuery
-      ORDER BY MessageUTC ASC;
+      SELECT
+        t1.MessageUTC,
+        t1.ObjectName1,  -- Person name
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND t1.MessageUTC BETWEEN @start AND @end
+      ORDER BY t1.MessageUTC ASC;
     `);
 
-    // Convert each event to Pune-local date string (yyyy-LL-dd)
+    // Convert to Pune local time
     const events = recordset.map(e => {
       const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
       return {
         ...e,
-        LocaleMessageTime: local.toISO(),
+        LocaleMessageTime: local.toJSDate(),
         Dateonly: local.toFormat('yyyy-LL-dd'),
-        Swipe_Time: local.toFormat('HH:mm:ss')
+        Swipe_Time: local.toFormat('HH:mm:ss'),
       };
     });
 
-    // days array for the month (yyyy-LL-dd)
-    const days = [];
-    for (let d = startLocal; d < nextMonthLocal; d = d.plus({ days: 1 })) {
-      days.push(d.toFormat('yyyy-LL-dd'));
+    // Get all dates in the month
+    const allDates = [];
+    let cursor = start;
+    while (cursor <= end) {
+      allDates.push(cursor.toFormat('yyyy-LL-dd'));
+      cursor = cursor.plus({ days: 1 });
     }
 
-    // helper key (same dedup idea)
-    const makeKey = (e) => (e.PersonGUID || e.EmployeeID || e.CardNumber || e.ObjectName1 || 'unknown');
+    // Group by day
+    const byDay = new Map();
+    for (const evt of events) {
+      if (!byDay.has(evt.Dateonly)) byDay.set(evt.Dateonly, []);
+      byDay.get(evt.Dateonly).push(evt);
+    }
 
-    // aggregate present days per person (any InDirection on that date => present)
-    const persons = new Map();
-    for (const e of events) {
-      const key = makeKey(e);
-      if (!persons.has(key)) {
-        persons.set(key, {
-          EmployeeID: e.EmployeeID || '',
-          PersonGUID: e.PersonGUID || '',
-          Name: e.ObjectName1 || '',
-          PersonnelType: e.PersonnelType || '',
-          presentDays: new Set()
-        });
+    const dailySummaries = [];
+    const peakOccupancy = [];
+    const visitCounter = new Map();       // track total visits
+    const presenceByPerson = new Map();   // track which days each person was present
+
+    // Process each day
+    for (const [date, dayEvents] of byDay.entries()) {
+      // --- Unique daily headcount ---
+      const uniquePeople = new Set(dayEvents.map(e => e.PersonGUID));
+      dailySummaries.push({ date, total: uniquePeople.size });
+
+      // --- Peak occupancy counter ---
+      let currentCount = 0;
+      let maxCount = 0;
+      for (const e of dayEvents) {
+        if (e.Direction === 'InDirection') {
+          currentCount++;
+        } else if (e.Direction === 'OutDirection') {
+          currentCount = Math.max(0, currentCount - 1);
+        }
+        if (currentCount > maxCount) maxCount = currentCount;
       }
-      if (e.Direction === 'InDirection') {
-        persons.get(key).presentDays.add(e.Dateonly);
+      peakOccupancy.push({ date, peak: maxCount });
+
+      // --- Track visits & attendance ---
+      for (const e of dayEvents) {
+        if (e.Direction === 'InDirection') {
+          const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
+
+          // Track visits
+          if (!visitCounter.has(key)) {
+            visitCounter.set(key, {
+              count: 0,
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType
+            });
+          }
+          visitCounter.get(key).count++;
+
+          // Track attendance
+          if (!presenceByPerson.has(key)) {
+            presenceByPerson.set(key, {
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType,
+              days: new Set()
+            });
+          }
+          presenceByPerson.get(key).days.add(date);
+        }
       }
     }
 
-    // Build response attendance array
-    const attendance = [];
-    for (const [key, p] of persons) {
-      const dayFlags = {};
+    // --- Final aggregates ---
+    const avgDailyHeadcount =
+      dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
+
+    const top10 = Array.from(visitCounter.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map(v => ({
+        employeeId: v.employeeId,
+        name: v.name,
+        personnelType: v.personnelType,
+        visits: v.count
+      }));
+
+    // --- Attendance sheet ---
+    const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
+      const daily = {};
       let presentCount = 0;
-      for (let i = 0; i < days.length; i++) {
-        const d = days[i];
-        const isPresent = p.presentDays.has(d);
-        dayFlags[d] = isPresent;
-        if (isPresent) presentCount++;
+
+      for (const d of allDates) {
+        if (p.days.has(d)) {
+          daily[d] = "P"; // Present
+          presentCount++;
+        } else {
+          daily[d] = "A"; // Absent
+        }
       }
-      const totalDays = days.length;
-      const absentCount = totalDays - presentCount;
-      const attendancePct = totalDays > 0 ? Math.round((presentCount / totalDays) * 10000) / 100 : 0;
 
-      attendance.push({
-        EmployeeID: p.EmployeeID,
-        PersonGUID: p.PersonGUID,
-        Name: p.Name,
-        PersonnelType: p.PersonnelType,
-        days: dayFlags,            // map YYYY-MM-DD -> true/false
-        presentCount,
-        absentCount,
-        attendancePct
-      });
-    }
+      return {
+        employeeId: p.employeeId,
+        name: p.name,
+        personnelType: p.personnelType,
+        ...daily,
+        daysPresent: presentCount,
+        daysAbsent: allDates.length - presentCount,
+        attendancePercent: ((presentCount / allDates.length) * 100).toFixed(1) + "%"
+      };
+    });
 
-    const result = {
-      year,
+    return res.json({
       month,
-      days,
-      summary: {
-        persons: attendance.length,
-        daysInMonth: days.length
-      },
-      attendance
-    };
-
-    return res.json(result);
-
+      avgDailyHeadcount: Math.round(avgDailyHeadcount),
+      peakOccupancy,
+      top10Visitors: top10,
+      attendanceSheet
+    });
   } catch (err) {
-    console.error('getPuneMonthlyAttendance error:', err);
+    console.error('getMonthlySummary error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+http://localhost:5000/api/monthly-summary?month=2025-08
+
+{
+  "month": "2025-08",
+  "avgDailyHeadcount": 483,
+  "peakOccupancy": [
+    {
+      "date": "2025-08-20",
+      "peak": 4540
+    },
+    {
+      "date": "2025-08-21",
+      "peak": 4176
+    },
+    {
+      "date": "2025-08-22",
+      "peak": 2208
+    },
+    {
+      "date": "2025-08-23",
+      "peak": 469
+    },
+    {
+      "date": "2025-08-24",
+      "peak": 434
+    },
+    {
+      "date": "2025-08-25",
+      "peak": 4214
+    },
+    {
+      "date": "2025-08-26",
+      "peak": 3706
+    },
+    {
+      "date": "2025-08-27",
+      "peak": 463
+    },
+    {
+      "date": "2025-08-28",
+      "peak": 3663
+    },
+    {
+      "date": "2025-08-29",
+      "peak": 2449
+    },
+    {
+      "date": "2025-08-30",
+      "peak": 402
+    },
+    {
+      "date": "2025-08-31",
+      "peak": 445
+    }
+  ],
+  "top10Visitors": [
+    {
+      "employeeId": "W0025526",
+      "name": "More, Omkar",
+      "personnelType": "Contractor",
+      "visits": 969
+    },
+    {
+      "employeeId": "0",
+      "name": "Ghodke, Ganesh",
+      "personnelType": "Property Management",
+      "visits": 745
+    },
+    {
+      "employeeId": "W0024553",
+      "name": "Thite, Vishal",
+      "personnelType": "Contractor",
+      "visits": 691
+    },
+    {
+      "employeeId": "W0025525",
+      "name": "Patil, Sachin",
+      "personnelType": "Contractor",
+      "visits": 686
+    },
+    {
+      "employeeId": "0",
+      "name": "India, TEMP_PUN_001",
+      "personnelType": "Temp Badge",
+      "visits": 683
+    },
+    {
+      "employeeId": "W0021569",
+      "name": "Kamble, Babasaheb",
+      "personnelType": "Contractor",
+      "visits": 680
+    },
+    {
+      "employeeId": "0",
+      "name": "India, TEMP_PUN_004",
+      "personnelType": "Temp Badge",
+      "visits": 581
+    },
+    {
+      "employeeId": "0",
+      "name": "Jogdane, Sagar",
+      "personnelType": "Property Management",
+      "visits": 573
+    },
+    {
+      "employeeId": "W0019519",
+      "name": "Kadu, Akshay",
+      "personnelType": "Contractor",
+      "visits": 564
+    },
+    {
+      "employeeId": "0",
+      "name": "Minekar, Kisan",
+      "personnelType": "Property Management",
+      "visits": 558
+    }
+  ],
+  "attendanceSheet": [
+    {
+      "employeeId": "0",
+      "name": "Gavle, Pravin",
+      "personnelType": "Property Management",
+      "2025-08-01": "A",
+      "2025-08-02": "A",
+      "2025-08-03": "A",
+      "2025-08-04": "A",
+      "2025-08-05": "A",
+      "2025-08-06": "A",
+      "2025-08-07": "A",
+      "2025-08-08": "A",
+      "2025-08-09": "A",
+      "2025-08-10": "A",
+      "2025-08-11": "A",
+      "2025-08-12": "A",
+      "2025-08-13": "A",
+      "2025-08-14": "A",
+      "2025-08-15": "A",
+      "2025-08-16": "A",
+      "2025-08-17": "A",
+      "2025-08-18": "A",
+      "2025-08-19": "A",
+      "2025-08-20": "P",
+      "2025-08-21": "P",
+      "2025-08-22": "P",
+      "2025-08-23": "P",
+      "2025-08-24": "P",
+      "2025-08-25": "P",
+      "2025-08-26": "P",
+      "2025-08-27": "A",
+      "2025-08-28": "P",
+      "2025-08-29": "P",
+      "2025-08-30": "P",
+      "2025-08-31": "P",
+      "daysPresent": 11,
+      "daysAbsent": 20,
+      "attendancePercent": "35.5%"
+    },
