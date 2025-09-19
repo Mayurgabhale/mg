@@ -1,3 +1,20 @@
+function isoToInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const year = d.getFullYear();        // local year
+  const month = pad(d.getMonth() + 1); // local month
+  const day = pad(d.getDate());        // local day
+  const hours = pad(d.getHours());     // local hours
+  const minutes = pad(d.getMinutes()); // local minutes
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+
+
+
+
+...
+
 one very small issue is 
 when i in select box selct time:nothing any error or any problme all work good
 but 
