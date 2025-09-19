@@ -1,153 +1,3 @@
-Explane this 
-what is this 
- "avgDailyHeadcount": 610, "peak": 3359  "visits": 1462
-
-{
-  "month": "2025-09",
-  "avgDailyHeadcount": 610,
-  "peakOccupancy": [
-    {
-      "date": "2025-09-01",
-      "peak": 3359
-    },
-    {
-      "date": "2025-09-02",
-      "peak": 3839
-    },
-    {
-      "date": "2025-09-03",
-      "peak": 4193
-    },
-    {
-      "date": "2025-09-04",
-      "peak": 3082
-    },
-    {
-      "date": "2025-09-05",
-      "peak": 1506
-    },
-    {
-      "date": "2025-09-06",
-      "peak": 383
-    },
-    {
-      "date": "2025-09-07",
-      "peak": 423
-    },
-    {
-      "date": "2025-09-08",
-      "peak": 3613
-    },
-    {
-      "date": "2025-09-09",
-      "peak": 4434
-    },
-    {
-      "date": "2025-09-10",
-      "peak": 4340
-    },
-    {
-      "date": "2025-09-11",
-      "peak": 3048
-    },
-    {
-      "date": "2025-09-12",
-      "peak": 2102
-    },
-    {
-      "date": "2025-09-13",
-      "peak": 456
-    },
-    {
-      "date": "2025-09-14",
-      "peak": 465
-    },
-    {
-      "date": "2025-09-15",
-      "peak": 3138
-    },
-    {
-      "date": "2025-09-16",
-      "peak": 4237
-    },
-    {
-      "date": "2025-09-17",
-      "peak": 4465
-    },
-    {
-      "date": "2025-09-18",
-      "peak": 3075
-    },
-    {
-      "date": "2025-09-19",
-      "peak": 1864
-    }
-  ],
-  "top10Visitors": [
-    {
-      "employeeId": "W0025526",
-      "name": "More, Omkar",
-      "personnelType": "Contractor",
-      "visits": 1462
-    },
-    {
-      "employeeId": "0",
-      "name": "Ghodke, Ganesh",
-      "personnelType": "Property Management",
-      "visits": 1282
-    },
-    {
-      "employeeId": "0",
-      "name": "Argel, Sachin",
-      "personnelType": "Property Management",
-      "visits": 1184
-    },
-    {
-      "employeeId": "W0024552",
-      "name": "Raza, Ahmed",
-      "personnelType": "Contractor",
-      "visits": 1155
-    },
-    {
-      "employeeId": "W0021569",
-      "name": "Kamble, Babasaheb",
-      "personnelType": "Contractor",
-      "visits": 1147
-    },
-    {
-      "employeeId": "0",
-      "name": "Punde, Poonam",
-      "personnelType": "Property Management",
-      "visits": 994
-    },
-    {
-      "employeeId": "W0024553",
-      "name": "Thite, Vishal",
-      "personnelType": "Contractor",
-      "visits": 955
-    },
-    {
-      "employeeId": "W0025525",
-      "name": "Patil, Sachin",
-      "personnelType": "Contractor",
-      "visits": 941
-    },
-    {
-      "employeeId": "0",
-      "name": "Inamdar, Amir",
-      "personnelType": "Property Management",
-      "visits": 940
-    },
-    {
-      "employeeId": "63167423",
-      "name": "Divekar, Harichandra",
-      "personnelType": "Contractor",
-      "visits": 903
-    }
-  ]
-}
-
-
 // GET /api/monthly-summary?month=YYYY-MM
 exports.getMonthlySummary = async (req, res) => {
   try {
@@ -213,7 +63,8 @@ exports.getMonthlySummary = async (req, res) => {
 
     const dailySummaries = [];
     const peakOccupancy = [];
-    const visitCounter = new Map(); // key = PersonGUID, value = { count, id, name, type }
+    const visitCounter = new Map(); // total swipes
+    const presenceCounter = new Map(); // unique days present
 
     // Process each day
     for (const [date, dayEvents] of byDay.entries()) {
@@ -234,10 +85,13 @@ exports.getMonthlySummary = async (req, res) => {
       }
       peakOccupancy.push({ date, peak: maxCount });
 
-      // --- Track visits per person ---
+      // --- Track visits per person (swipes + presence days) ---
+      const seenToday = new Set();
       for (const e of dayEvents) {
         if (e.Direction === 'InDirection') {
           const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
+
+          // Count raw swipes
           if (!visitCounter.has(key)) {
             visitCounter.set(key, {
               count: 0,
@@ -246,8 +100,23 @@ exports.getMonthlySummary = async (req, res) => {
               personnelType: e.PersonnelType
             });
           }
-          const data = visitCounter.get(key);
-          data.count++;
+          visitCounter.get(key).count++;
+
+          // Count daily presence (unique days)
+          if (!presenceCounter.has(key)) {
+            presenceCounter.set(key, {
+              daysPresent: 0,
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType,
+              dates: new Set()
+            });
+          }
+          const person = presenceCounter.get(key);
+          if (!person.dates.has(date)) {
+            person.dates.add(date);
+            person.daysPresent++;
+          }
         }
       }
     }
@@ -256,7 +125,7 @@ exports.getMonthlySummary = async (req, res) => {
     const avgDailyHeadcount =
       dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
 
-    const top10 = Array.from(visitCounter.values())
+    const top10BySwipes = Array.from(visitCounter.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
       .map(v => ({
@@ -266,11 +135,22 @@ exports.getMonthlySummary = async (req, res) => {
         visits: v.count
       }));
 
+    const top10ByPresence = Array.from(presenceCounter.values())
+      .sort((a, b) => b.daysPresent - a.daysPresent)
+      .slice(0, 10)
+      .map(v => ({
+        employeeId: v.employeeId,
+        name: v.name,
+        personnelType: v.personnelType,
+        daysPresent: v.daysPresent
+      }));
+
     return res.json({
       month,
       avgDailyHeadcount: Math.round(avgDailyHeadcount),
       peakOccupancy,
-      top10Visitors: top10,
+      top10VisitorsBySwipes: top10BySwipes,
+      top10VisitorsByDays: top10ByPresence
     });
   } catch (err) {
     console.error('getMonthlySummary error:', err);
