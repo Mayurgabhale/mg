@@ -1,3 +1,8 @@
+devide into three column ok:
+and there photo name has Employee ID ok, not name:
+see this 178990.png like that name ok
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\assets\images\178990.png
+C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\assets\images\237998.png
 // src/components/LacaERTOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, Row, Col, Badge, Container, Button } from "react-bootstrap";
