@@ -646,6 +646,7 @@ Carefullym
 
 ++ This is Costa Rica code: chane only desing UI not code logic:
 i want same UI 
+IN consta rica only has only ERT Members 
 ____________________________________________________________________
 
 
@@ -672,54 +673,7 @@ export default function LacaERTOverview() {
   const [filterType, setFilterType] = useState("total"); // "total" | "available"
   const [loading, setLoading] = useState(true); // ⬅️ add state
 
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       setLoading(true); // ⬅️ add this line
-  //       const res = await fetch("http://localhost:3001/api/occupancy/live-summary");
-  //       const liveData = await res.json();
-  //       const liveDetails = Array.isArray(liveData.details) ? liveData.details : [];
-
-  //       const merged = membersData["Team Members"].map((m) => {
-  //         const live = liveDetails.find((d) => d.EmployeeID === m.emp_id) || {};
-  //         const inLocation =
-  //           live.PartitionName2 && live.Door
-  //             ? lookupFloor(live.PartitionName2, live.Door, "InDirection")
-  //             : "";
-  //         const outLocation =
-  //           live.PartitionName2 && live.Door
-  //             ? lookupFloor(live.PartitionName2, live.Door, "OutDirection")
-  //             : "";
-
-  //         return {
-  //           ...m,
-  //           present: !!live.EmployeeID,
-  //           direction: live.Direction || "",
-  //           inLocation,
-  //           outLocation,
-  //           door: live.Door || "",
-  //           phone: m.phone || "",
-  //         };
-  //       });
-
-  //       const sorted = merged.sort((a, b) =>
-  //         a.present === b.present ? 0 : a.present ? -1 : 1
-  //       );
-
-  //       setMembers(sorted);
-  //     } catch (err) {
-  //       console.error("Error fetching live data:", err);
-  //     } finally {
-  //       setLoading(false); // ⬅️ add this line
-  //     }
-  //   }
-
-  //   fetchData();
-  //   // const interval = setInterval(fetchData, 15000);
-  //   // return () => clearInterval(interval);
-  // }, []);
-
-
+ 
 
 
 
