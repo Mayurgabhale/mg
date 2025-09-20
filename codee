@@ -1,14 +1,3 @@
-i want to change table name for bleos
-Red Zone - Outer Area
-Total: 2
-Name	EmployeeID	Date	Swipe Time	Type	Door Name
-Pawar, Sanjay	0	2025-09-20	13:27:21	Property Management	APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)
-Pandri, Babu	0	2025-09-20	13:26:43	Property Management	APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)
-if Red Zone - Outer Area ---->>>East Outdoor Area
-if Orange Zone - Outer Area ---------->>> West Outdoor Area
-ok 
-
-
 import React, { useState, useMemo } from 'react';
 import './ZoneDetailsTable.css';
 
@@ -20,11 +9,19 @@ function ZoneDetailsTable({ data = {}, searchTerm: outerSearch = '' }) {
     return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
   }, [data]);
 
-  // 2) Filter predicate
+  // 2) Zone name mapping
+  const zoneNameMap = {
+    "Red Zone - Outer Area": "East Outdoor Area",
+    "Orange Zone - Outer Area": "West Outdoor Area",
+  };
+
+  const getZoneLabel = (zone) => zoneNameMap[zone] || zone;
+
+  // 3) Filter predicate
   const matchesSearch = (emp) =>
     emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
 
-  // 3) Handler for search input
+  // 4) Handler for search input
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
   if (!sortedEntries.length) {
@@ -39,7 +36,12 @@ function ZoneDetailsTable({ data = {}, searchTerm: outerSearch = '' }) {
           placeholder="Search employee..."
           value={searchTerm}
           onChange={handleSearchChange}
-          style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', borderRadius: 4, border: '1px solid #ccc' }}
+          style={{
+            padding: '0.4rem 0.8rem',
+            fontSize: '0.9rem',
+            borderRadius: 4,
+            border: '1px solid #ccc',
+          }}
         />
       </div>
 
@@ -50,7 +52,7 @@ function ZoneDetailsTable({ data = {}, searchTerm: outerSearch = '' }) {
         return (
           <div key={zone} className="zone-card">
             <div className="zone-header">
-              <h3>{zone}</h3>
+              <h3>{getZoneLabel(zone)}</h3>
               <span className="zone-badge">Total: {filteredEmps.length}</span>
             </div>
             <table className="zone-table">
