@@ -1,334 +1,295 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, CartesianGrid, Legend } from "recharts";
+import { Download, Search, Calendar } from "lucide-react";
 
-// GET /api/monthly-summary?month=YYYY-MM
-exports.getMonthlySummary = async (req, res) => {
-  try {
-    const { month } = req.query;
-    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
-      return res.status(400).json({ error: 'invalid "month" format; expected YYYY-MM' });
-    }
+/*
+  Pune Monthly Summary Dashboard
+  ---------------------------------
+  - Default export is a single-file React component you can drop into a page.
+  - Tailwind is used for styling (no Tailwind imports required here).
+  - Charts use recharts (install: `npm i recharts`).
+  - Icons use lucide-react (install: `npm i lucide-react`).
 
-    const [year, monthNum] = month.split('-').map(Number);
+  How to use
+  ----------
+  1) Put this file in your React app (e.g. src/components/PuneMonthlyDashboard.jsx)
+  2) Ensure Tailwind CSS is configured in your app.
+  3) Install dependencies: `npm i recharts lucide-react`
+  4) Mount <PuneMonthlyDashboard /> in a route or page.
 
-    const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
-    const end = start.endOf('month');
+  Endpoint expectation
+  --------------------
+  It calls: GET /api/monthly-summary?month=YYYY-MM
+  Response example: the JSON you provided earlier (avgDailyHeadcount, peakOccupancy[], top10Visitors[], attendanceSheet[])
 
-    const startUtc = start.setZone('utc').toJSDate();
-    const endUtc   = end.setZone('utc').toJSDate();
+  Notes & ideas
+  -------------
+  - The attendance table is horizontally scrollable and color-coded for "P"/"A".
+  - You can add server-side filters (personnelType) and a JSON export filter if needed.
+*/
 
-    const pool = await getPool();
-    const reqDb = pool.request();
-    reqDb.input('start', sql.DateTime2, startUtc);
-    reqDb.input('end', sql.DateTime2, endUtc);
+export default function PuneMonthlyDashboard({ initialMonth }) {
+  // initialMonth: optional string 'YYYY-MM' to pre-load
+  const now = new Date();
+  const defaultMonth = initialMonth || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-    const { recordset } = await reqDb.query(`
-      SELECT
-        t1.MessageUTC,
-        t1.ObjectName1,  -- Person name
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND t1.MessageUTC BETWEEN @start AND @end
-      ORDER BY t1.MessageUTC ASC;
-    `);
+  const [month, setMonth] = useState(defaultMonth);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
 
-    // Convert to Pune local time
-    const events = recordset.map(e => {
-      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
-      return {
-        ...e,
-        LocaleMessageTime: local.toJSDate(),
-        Dateonly: local.toFormat('yyyy-LL-dd'),
-        Swipe_Time: local.toFormat('HH:mm:ss'),
-      };
-    });
+  // UI controls
+  const [q, setQ] = useState(""); // search
+  const [personnelFilter, setPersonnelFilter] = useState("All");
+  const [showTopOnly, setShowTopOnly] = useState(false);
 
-    // Get all dates in the month
-    const allDates = [];
-    let cursor = start;
-    while (cursor <= end) {
-      allDates.push(cursor.toFormat('yyyy-LL-dd'));
-      cursor = cursor.plus({ days: 1 });
-    }
-
-    // Group by day
-    const byDay = new Map();
-    for (const evt of events) {
-      if (!byDay.has(evt.Dateonly)) byDay.set(evt.Dateonly, []);
-      byDay.get(evt.Dateonly).push(evt);
-    }
-
-    const dailySummaries = [];
-    const peakOccupancy = [];
-    const visitCounter = new Map();       // track total visits
-    const presenceByPerson = new Map();   // track which days each person was present
-
-    // Process each day
-    for (const [date, dayEvents] of byDay.entries()) {
-      // --- Unique daily headcount ---
-      const uniquePeople = new Set(dayEvents.map(e => e.PersonGUID));
-      dailySummaries.push({ date, total: uniquePeople.size });
-
-      // --- Peak occupancy counter ---
-      let currentCount = 0;
-      let maxCount = 0;
-      for (const e of dayEvents) {
-        if (e.Direction === 'InDirection') {
-          currentCount++;
-        } else if (e.Direction === 'OutDirection') {
-          currentCount = Math.max(0, currentCount - 1);
-        }
-        if (currentCount > maxCount) maxCount = currentCount;
-      }
-      peakOccupancy.push({ date, peak: maxCount });
-
-      // --- Track visits & attendance ---
-      for (const e of dayEvents) {
-        if (e.Direction === 'InDirection') {
-          const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
-
-          // Track visits
-          if (!visitCounter.has(key)) {
-            visitCounter.set(key, {
-              count: 0,
-              employeeId: e.EmployeeID,
-              name: e.ObjectName1,
-              personnelType: e.PersonnelType
-            });
-          }
-          visitCounter.get(key).count++;
-
-          // Track attendance
-          if (!presenceByPerson.has(key)) {
-            presenceByPerson.set(key, {
-              employeeId: e.EmployeeID,
-              name: e.ObjectName1,
-              personnelType: e.PersonnelType,
-              days: new Set()
-            });
-          }
-          presenceByPerson.get(key).days.add(date);
-        }
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/monthly-summary?month=${month}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!alive) return;
+        setData(json);
+      } catch (err) {
+        console.error(err);
+        if (!alive) return;
+        setError(err.message || "Failed to load");
+      } finally {
+        if (alive) setLoading(false);
       }
     }
+    load();
+    return () => { alive = false; };
+  }, [month]);
 
-    // --- Final aggregates ---
-    const avgDailyHeadcount =
-      dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
+  // Derived datasets
+  const days = useMemo(() => data?.attendanceSheet?.length ? Object.keys(data.attendanceSheet[0]).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)) : data?.days || [], [data]);
 
-    const top10 = Array.from(visitCounter.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
-      .map(v => ({
-        employeeId: v.employeeId,
-        name: v.name,
-        personnelType: v.personnelType,
-        visits: v.count
-      }));
+  const personnelTypes = useMemo(() => {
+    if (!data) return [];
+    const set = new Set();
+    for (const p of data.attendanceSheet || []) set.add(p.personnelType || p.PersonnelType || "Unknown");
+    return ["All", ...Array.from(set)];
+  }, [data]);
 
-    // --- Attendance sheet ---
-    const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
-      const daily = {};
-      let presentCount = 0;
-
-      for (const d of allDates) {
-        if (p.days.has(d)) {
-          daily[d] = "P"; // Present
-          presentCount++;
-        } else {
-          daily[d] = "A"; // Absent
-        }
+  const filteredAttendance = useMemo(() => {
+    if (!data) return [];
+    const rows = data.attendanceSheet || [];
+    return rows.filter(r => {
+      if (personnelFilter !== "All" && r.personnelType !== personnelFilter) return false;
+      if (q) {
+        const term = q.toLowerCase();
+        return (r.name || "").toLowerCase().includes(term) || (r.employeeId || "").toLowerCase().includes(term);
       }
-
-      return {
-        employeeId: p.employeeId,
-        name: p.name,
-        personnelType: p.personnelType,
-        ...daily,
-        daysPresent: presentCount,
-        daysAbsent: allDates.length - presentCount,
-        attendancePercent: ((presentCount / allDates.length) * 100).toFixed(1) + "%"
-      };
+      return true;
     });
+  }, [data, q, personnelFilter]);
 
-    return res.json({
-      month,
-      avgDailyHeadcount: Math.round(avgDailyHeadcount),
-      peakOccupancy,
-      top10Visitors: top10,
-      attendanceSheet
-    });
-  } catch (err) {
-    console.error('getMonthlySummary error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+  // small helpers
+  const pctColor = (pct) => {
+    if (pct >= 90) return "bg-emerald-500";
+    if (pct >= 75) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
+  function downloadJSON() {
+    const payload = JSON.stringify({ month, data }, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `monthly-summary-${month}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
-};
-http://localhost:5000/api/monthly-summary?month=2025-08
 
-{
-  "month": "2025-08",
-  "avgDailyHeadcount": 483,
-  "peakOccupancy": [
-    {
-      "date": "2025-08-20",
-      "peak": 4540
-    },
-    {
-      "date": "2025-08-21",
-      "peak": 4176
-    },
-    {
-      "date": "2025-08-22",
-      "peak": 2208
-    },
-    {
-      "date": "2025-08-23",
-      "peak": 469
-    },
-    {
-      "date": "2025-08-24",
-      "peak": 434
-    },
-    {
-      "date": "2025-08-25",
-      "peak": 4214
-    },
-    {
-      "date": "2025-08-26",
-      "peak": 3706
-    },
-    {
-      "date": "2025-08-27",
-      "peak": 463
-    },
-    {
-      "date": "2025-08-28",
-      "peak": 3663
-    },
-    {
-      "date": "2025-08-29",
-      "peak": 2449
-    },
-    {
-      "date": "2025-08-30",
-      "peak": 402
-    },
-    {
-      "date": "2025-08-31",
-      "peak": 445
-    }
-  ],
-  "top10Visitors": [
-    {
-      "employeeId": "W0025526",
-      "name": "More, Omkar",
-      "personnelType": "Contractor",
-      "visits": 969
-    },
-    {
-      "employeeId": "0",
-      "name": "Ghodke, Ganesh",
-      "personnelType": "Property Management",
-      "visits": 745
-    },
-    {
-      "employeeId": "W0024553",
-      "name": "Thite, Vishal",
-      "personnelType": "Contractor",
-      "visits": 691
-    },
-    {
-      "employeeId": "W0025525",
-      "name": "Patil, Sachin",
-      "personnelType": "Contractor",
-      "visits": 686
-    },
-    {
-      "employeeId": "0",
-      "name": "India, TEMP_PUN_001",
-      "personnelType": "Temp Badge",
-      "visits": 683
-    },
-    {
-      "employeeId": "W0021569",
-      "name": "Kamble, Babasaheb",
-      "personnelType": "Contractor",
-      "visits": 680
-    },
-    {
-      "employeeId": "0",
-      "name": "India, TEMP_PUN_004",
-      "personnelType": "Temp Badge",
-      "visits": 581
-    },
-    {
-      "employeeId": "0",
-      "name": "Jogdane, Sagar",
-      "personnelType": "Property Management",
-      "visits": 573
-    },
-    {
-      "employeeId": "W0019519",
-      "name": "Kadu, Akshay",
-      "personnelType": "Contractor",
-      "visits": 564
-    },
-    {
-      "employeeId": "0",
-      "name": "Minekar, Kisan",
-      "personnelType": "Property Management",
-      "visits": 558
-    }
-  ],
-  "attendanceSheet": [
-    {
-      "employeeId": "0",
-      "name": "Gavle, Pravin",
-      "personnelType": "Property Management",
-      "2025-08-01": "A",
-      "2025-08-02": "A",
-      "2025-08-03": "A",
-      "2025-08-04": "A",
-      "2025-08-05": "A",
-      "2025-08-06": "A",
-      "2025-08-07": "A",
-      "2025-08-08": "A",
-      "2025-08-09": "A",
-      "2025-08-10": "A",
-      "2025-08-11": "A",
-      "2025-08-12": "A",
-      "2025-08-13": "A",
-      "2025-08-14": "A",
-      "2025-08-15": "A",
-      "2025-08-16": "A",
-      "2025-08-17": "A",
-      "2025-08-18": "A",
-      "2025-08-19": "A",
-      "2025-08-20": "P",
-      "2025-08-21": "P",
-      "2025-08-22": "P",
-      "2025-08-23": "P",
-      "2025-08-24": "P",
-      "2025-08-25": "P",
-      "2025-08-26": "P",
-      "2025-08-27": "A",
-      "2025-08-28": "P",
-      "2025-08-29": "P",
-      "2025-08-30": "P",
-      "2025-08-31": "P",
-      "daysPresent": 11,
-      "daysAbsent": 20,
-      "attendancePercent": "35.5%"
-    },
+  function humanDay(d) {
+    return d.slice(8); // 'YYYY-MM-DD' -> 'DD'
+  }
+
+  return (
+    <div className="p-6 max-w-[1200px] mx-auto">
+      <header className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Pune — Monthly Summary</h1>
+          <p className="text-sm text-slate-500">Monthly attendance, peak occupancy and visitor insights</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <Calendar size={16} />
+            <input
+              aria-label="Select month"
+              type="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="border rounded-md px-3 py-1 text-sm"
+            />
+          </label>
+
+          <button
+            onClick={downloadJSON}
+            className="inline-flex items-center gap-2 bg-slate-800 text-white text-sm px-3 py-2 rounded-lg shadow"
+            title="Download JSON"
+          >
+            <Download size={14} /> Export
+          </button>
+        </div>
+      </header>
+
+      {loading && (
+        <div className="py-12 text-center text-slate-500">Loading...</div>
+      )}
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded">Error: {error}</div>
+      )}
+
+      {!loading && data && (
+        <main className="space-y-6">
+          {/* KPI row */}
+          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 bg-white rounded-lg shadow-sm">
+              <div className="text-sm text-slate-500">Avg Daily Headcount</div>
+              <div className="mt-2 text-3xl font-bold">{data.avgDailyHeadcount ?? "—"}</div>
+              <div className="text-xs text-slate-400">Average of the month</div>
+            </div>
+
+            <div className="p-4 bg-white rounded-lg shadow-sm">
+              <div className="text-sm text-slate-500">Distinct People (attendance)</div>
+              <div className="mt-2 text-3xl font-bold">{data.summary?.persons ?? (data.attendanceSheet?.length ?? 0)}</div>
+              <div className="text-xs text-slate-400">People who recorded at least one In swipe</div>
+            </div>
+
+            <div className="p-4 bg-white rounded-lg shadow-sm">
+              <div className="text-sm text-slate-500">Days in month</div>
+              <div className="mt-2 text-3xl font-bold">{data.summary?.daysInMonth ?? (data.days?.length ?? days.length)}</div>
+              <div className="text-xs text-slate-400">{month}</div>
+            </div>
+          </section>
+
+          {/* Charts */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="col-span-2 p-4 bg-white rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">Peak Occupancy (by day)</h3>
+              <div style={{ height: 240 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.peakOccupancy || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tickFormatter={d => d.slice(8)} />
+                    <YAxis />
+                    <Tooltip formatter={(v) => [v, 'Peak']} />
+                    <Bar dataKey="peak" fill="#2563EB" radius={[6,6,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white rounded-lg shadow-sm">
+              <h3 className="text-sm font-medium text-slate-700 mb-3">Top Visitors (by visits)</h3>
+              <ul className="space-y-3 max-h-[240px] overflow-auto">
+                {(data.top10Visitors || []).map((t, i) => (
+                  <li key={i} className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">{t.name}</div>
+                      <div className="text-xs text-slate-400">{t.employeeId} • {t.personnelType}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold">{t.visits}</div>
+                      <div className="text-xs text-slate-400">visits</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          {/* Attendance controls */}
+          <section className="p-4 bg-white rounded-lg shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <input
+                    className="pl-9 pr-3 py-2 border rounded-md text-sm w-64"
+                    placeholder="Search name or id"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                  />
+                  <div className="absolute left-2 top-2 text-slate-400"><Search size={14} /></div>
+                </div>
+
+                <select className="border rounded-md px-2 py-2 text-sm" value={personnelFilter} onChange={(e) => setPersonnelFilter(e.target.value)}>
+                  {personnelTypes.map((pt) => (
+                    <option key={pt} value={pt}>{pt}</option>
+                  ))}
+                </select>
+
+                <label className="text-sm flex items-center gap-2">
+                  <input type="checkbox" checked={showTopOnly} onChange={(e) => setShowTopOnly(e.target.checked)} /> Show top 50
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-slate-500">
+                <div>Showing <strong>{filteredAttendance.length}</strong> rows</div>
+              </div>
+            </div>
+
+            {/* Attendance table */}
+            <div className="overflow-auto border rounded">
+              <table className="min-w-full divide-y">
+                <thead className="bg-slate-50 sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">#</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Name</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Type</th>
+                    {days.map(d => (
+                      <th key={d} className="px-2 py-2 text-xs text-center text-slate-500">{humanDay(d)}</th>
+                    ))}
+                    <th className="px-3 py-2 text-xs text-right text-slate-600">Present</th>
+                    <th className="px-3 py-2 text-xs text-right text-slate-600">% </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y">
+                  {(showTopOnly ? filteredAttendance.slice(0,50) : filteredAttendance).map((r, idx) => (
+                    <tr key={r.employeeId + idx} className="hover:bg-slate-50">
+                      <td className="px-3 py-2 text-sm">{idx + 1}</td>
+                      <td className="px-3 py-2 text-sm font-medium">{r.name}</td>
+                      <td className="px-3 py-2 text-sm text-slate-500">{r.personnelType}</td>
+                      {days.map(d => {
+                        const v = r[d];
+                        const isP = String(v).toUpperCase() === 'P' || v === true;
+                        return (
+                          <td key={d} className="px-1 py-1 text-center">
+                            <div className={`inline-block text-xs font-semibold px-2 py-0.5 rounded ${isP ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                              {isP ? 'P' : 'A'}
+                            </div>
+                          </td>
+                        );
+                      })}
+                      <td className="px-3 py-2 text-sm text-right">{r.daysPresent ?? r.daysPresent}</td>
+                      <td className="px-3 py-2 text-sm text-right">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded ${pctColor(parseFloat((r.attendancePercent||'0').toString()))}`}>{r.attendancePercent}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+          </section>
+
+          <section className="text-xs text-slate-500">
+            <div>Notes: Present = any InDirection swipe for that date (Asia/Kolkata local time). Data fetched from <code>/api/monthly-summary?month=YYYY-MM</code>.</div>
+          </section>
+
+        </main>
+      )}
+    </div>
+  );
+}
