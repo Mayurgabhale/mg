@@ -1,521 +1,1099 @@
-dont ue talwind css, only use clsass name and id, 
-for this page for desing, ok, 
-dont use talwind css, for desing, 
-because we geeting issue thats way 
+Check below each file line by line 
+issue is we got ZOne like Red, Yellow Where i have defined East Outdoor Area , and West out door area so check below each file carefully and 
+display only those zone which is mentioned in below file strickly....
+
+so check each file line by line and fix the issue ...
 
 
-import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import {
-  FiDownload as Download,
-  FiSearch as Search,
-  FiCalendar as Calendar,
-  FiRefreshCw as Refresh,
-  FiUsers as Users,
-  FiUser as User,
-  FiPieChart as PieChartIcon,
-  FiTrendingUp as TrendingUp,
-  FiFilter,
-  FiCheckSquare,
-  FiMenu,
-  FiChevronLeft,
-  FiChevronRight,
-  FiPlus,
-} from "react-icons/fi";
+Check below example also
+
+Yellow
+Total: 1
+Name	EmployeeID	Date	Swipe Time	Type	Door Name
+Vasulkar, Sachin	0	2025-09-20	15:55:27	Property Management	APAC_IN_PUN_PODIUM_ST 1 DOOR 2 (YELLOW)
+
+
+Red
+Total: 1
+Name	EmployeeID	Date	Swipe Time	Type	Door Name
+Ghodke, Ganesh	0	2025-09-20	15:26:54	Property Management	APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)
+
+
+another one is frontend display Unkmown  Floor 
+
+// data/doorZoneMap.js
+
+
+const doorZoneMap = {
+
+
+  // Podium / Red
+  "APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-RESTRICTED DOOR___InDirection":                 "Red Zone",
+  "APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)___InDirection":                               "Red Zone",
+  "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR___InDirection":                 "Red Zone",
+  "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR___OutDirection":                "Out of office",
+  "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)___InDirection":                                "Red Zone",
+  "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)___OutDirection":                               "Red Zone",
+  "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW___InDirection":             "Red Zone",
+  "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW___OutDirection":            "Reception Area",
+  "APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW___InDirection":         "Red Zone",
+  "APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW___OutDirection":        "East Outdoor Area",
+
+  // Podium / Yellow
+  "APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)___InDirection":                              "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_MDF RESTRICTED DOOR___InDirection":                       "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_IT STORE ROOM-DOOR RESTRICTED DOOR___InDirection":        "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_REPRO STORE-DOOR RESTRICTED DOOR___InDirection":           "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_CONTROL PANEL ROOM-DOOR RESTRICTED DOOR___InDirection":   "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_PREACTION ROOM-DOOR RESTRICTED DOOR___InDirection":        "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_TESTING LAB-DOOR RESTRICTED DOOR___InDirection":           "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR___InDirection":                       "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR___OutDirection":                      "Reception Area",
+  "APAC_IN_PUN_PODIUM_YELLOW_MAIN LIFT LOBBY-DOOR NEW___InDirection":                   "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_MAIN LIFT LOBBY-DOOR NEW___OutDirection":                  "Out of office",
+  "APAC_IN_PUN_PODIUM_ST 1 DOOR 2 (YELLOW)___InDirection":                              "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_ST 1 DOOR 2 (YELLOW)___OutDirection":                             "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_FIRE EXIT 1-DOOR NEW___InDirection":                       "Yellow Zone",
+  "APAC_IN_PUN_PODIUM_YELLOW_FIRE EXIT 1-DOOR NEW___OutDirection":                      "East Outdoor Area",
+
+  // Podium / Green
+  "APAC_IN_PUN_PODIUM_GREEN-_IDF ROOM 1-RESTRICTED DOOR___InDirection":                "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN_UPS ENTRY 1-DOOR RESTRICTED DOOR___InDirection":            "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN_UPS ENTRY 2-DOOR RESTRICTED DOOR___InDirection":            "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN_LOCKER HR STORE 3-DOOR RESTRICTED DOOR___InDirection":      "Green Zone",
+  "APAC_IN_PUN_PODIUM_ST4 DOOR 2 (GREEN)___InDirection":                                "Green Zone",
+   "APAC_IN_PUN_PODIUM_ST4 DOOR 2 (GREEN)___OutDirection":                               "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN-MAIN LIFT LOBBY-DOOR___InDirection":                        "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN-MAIN LIFT LOBBY-DOOR___OutDirection":                       "East Outdoor Area",
+  "APAC_IN_PUN_PODIUM_ST3 DOOR 2 (GREEN)___InDirection":                                "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR___InDirection":                        "Green Zone",
+  "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR___OutDirection":                       "Reception Area",
+
+  // Podium / Orange
+  "APAC_IN_PUN_PODIUM_ST4 DOOR 1 (ORANGE)___InDirection":                               "Orange Zone",
+  "APAC_IN_PUN_PODIUM_ST4 DOOR 1 (ORANGE)___OutDirection":                               "Orange Zone",
+  "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR___InDirection":                      "Orange Zone",
+  "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR___OutDirection":                     "Reception Area",
+  "APAC_IN_PUN_PODIUM_ST3_DOOR 1 (ORANGE)___InDirection":                              "Orange Zone",
+
+  "APAC_IN_PUN_PODIUM_ORANGE_MAIN LIFT LOBBY-DOOR___InDirection":                       "Orange Zone",
+  "APAC_IN_PUN_PODIUM_ORANGE_MAIN LIFT LOBBY-DOOR___OutDirection":                      "Green Zone",
+  "APAC_IN_PUN_PODIUM_ORANGE-IDF ROOM 3-RESTRICTED DOOR___InDirection":                "Orange Zone",
+  "APAC_IN_PUN_PODIUM_ORANGE_KITCHENETTE FIRE EXIT-DOOR NEW___InDirection":            "Orange Zone",
+  "APAC_IN_PUN_PODIUM_ORANGE_KITCHENETTE FIRE EXIT-DOOR NEW___OutDirection":           "West Outdoor Area",
+
+  // Podium / GSOC door
+  "APAC_IN_PUN_PODIUM_GSOC DOOR RESTRICTED DOOR___InDirection":                         "Yellow Zone",
+
+  // Podium / Main Right & Left Entry
+  "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR NEW___InDirection":                  "Reception Area",
+  "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR NEW___OutDirection":                 "Assembly Area",
+  "APAC_IN_PUN_PODIUM_MAIN PODIUM LEFT ENTRY-DOOR NEW___InDirection":                   "Reception Area",
+  "APAC_IN_PUN_PODIUM_MAIN PODIUM LEFT ENTRY-DOOR NEW___OutDirection":                  "Assembly Area",
+
+  // Podium / Turnstiles
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR___InDirection":                               "Reception Area",
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR___InDirection":                               "Reception Area",
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR___InDirection":                               "Reception Area",
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR___InDirection":                               "Reception Area",
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2 -OUT DOOR___OutDirection":                         "Out of office",
+  "APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR___OutDirection":                         "Out of office",
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4 -OUT DOOR___OutDirection":                         "Out of office",
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-OUT DOOR___OutDirection":                          "Out of office",
+
+  // 2nd-Floor / IDF + UPS/ELEC + Reception→Workstation + LiftLobby→Reception
+  "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 RESTRICTED DOOR___InDirection":                  "2nd Floor, Pune",
+  "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM RESTRICTED DOOR___InDirection":                      "2nd Floor, Pune",
+  "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR___InDirection":                       "2nd Floor, Pune",
+  "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR___OutDirection":                      "Out of office",
+  "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR___InDirection":                   "2nd Floor, Pune",
+  "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR___OutDirection":                  "2nd Floor, Pune",
+
+  // Tower B
+  "APAC_IN_PUN_TOWER B_MAIN RECEPTION DOOR___InDirection":                               "Tower B",
+  "APAC_IN_PUN_TOWER B_MAIN RECEPTION DOOR___OutDirection":                              "Out of office",
+  "APAC_IN_PUN_TOWER B_LIFT LOBBY DOOR___InDirection":                                   "Tower B",
+  "APAC_IN_PUN_TOWER B_LIFT LOBBY DOOR___OutDirection":                                  "Out of office",
+  "APAC_IN_PUN_TOWER B_ST6_GYM SIDE DOOR___InDirection":                                 "Tower B",
+  "APAC_IN_PUN_TOWER B_ST6_GYM SIDE DOOR___OutDirection":                                "Tower B",
+  "APAC_IN_PUN_TOWER B_ST6_WKS SIDE DOOR___InDirection":                                 "Tower B",
+  "APAC_IN_PUN_TOWER B_ST6_WKS SIDE DOOR___OutDirection":                                "Tower B",
+  "APAC_IN_PUN_TOWER B_ST5_KAPIL DEV DOOR___InDirection":                                "Tower B",
+  "APAC_IN_PUN_TOWER B_ST5_KAPIL DEV DOOR___OutDirection":                               "Tower B",
+  "APAC_IN_PUN_TOWER B_ST5_WKS SIDE DOOR___InDirection":                                 "Tower B",
+  "APAC_IN_PUN_TOWER B_ST5_WKS SIDE DOOR___OutDirection":                                "Tower B",
+  "APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR___InDirection":                               "Tower B",
+  "APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR___OutDirection":                              "Tower B",
+  "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR___InDirection":                              "Tower B",
+  "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR___OutDirection":                             "Tower B",
+  "APAC_IN_PUN_TOWER B_IBMS ROOM___InDirection":                                         "Tower B",
+  "APAC_IN_PUN_TOWER B_UPS ROOM___InDirection":                                          "Tower B",
+  "APAC_IN_PUN_TOWER B_MDF ROOM___InDirection":                                          "Tower B",
+  "APAC_IN_PUN_TOWER B_PAC ROOM___InDirection":                                          "Tower B",
+  "APAC_IN_PUN_TOWER B_IT STORE ROOM___InDirection":                                    "Tower B",
+  "APAC_IN_PUN_TOWER B_GYM ROOM___InDirection":                                          "Tower B GYM",
+  "APAC_IN_PUN_TOWER B_GYM ROOM___OutDirection":                                         "Tower B GYM",
+  "APAC_IN_PUN_TOWER B_SITE OPS STORE___InDirection":                    "Tower B",
+  "APAC_IN_PUN_TOWER B_INNOVATION CENTER___InDirection" :   "Tower B",
+  "APAC_IN_PUN_TOWER B_INNOVATION CENTER___OutDirection":   "Tower B",
+
+   "APAC_IN_PUN_TOWER B_MOBILE LAB___InDirection":    "Tower B",
+   "APAC_IN_PUN_TOWER B_MOBILE LAB___OutDirection":    "Tower B",
+  "APAC_IN_PUN_TOWER B_CEC DOOR___InDirection":           "Tower B",
+  "APAC_IN_PUN_TOWER B_CEC DOOR___OutDirection":          "Tower B",
+};
+
+module.exports = doorZoneMap;
+
+
+
+
+
+
+
+
+// data/zoneFloorMap.js
+
+const zoneFloorMap = {
+  // Podium Floor
+  "Red Zone":                    "Podium Floor",
+  "Yellow Zone":                 "Podium Floor",
+  "Reception Area":              "Podium Floor",
+  "Green Zone":                  "Podium Floor",
+  "Orange Zone":                 "Podium Floor",
+  "Gsoc Zone":                   "Podium Floor",
+  "Assembly Area":               "Podium Floor",
+  //"Red":"Podium Floor",
+
+  // 2nd Floor
+  "2nd Floor, Pune":             "2nd Floor",
+
+  // Tower B
+  "Tower B":                     "Tower B",
+  "Reception Area Tower B":      "Tower B",
+  "Tower B GYM":                 "Tower B",
+
+  // Outer‐Area variants (same floors as their base zones)
+  "East Outdoor Area":                 "Podium Floor",
+  "West Outdoor Area":            "Podium Floor",
+  "Reception Area - Outer Area":         "Podium Floor",
+
+  "Assembly Area - Outer Area":          "Podium Floor",
+  "2nd Floor, Pune - Outer Area":        "2nd Floor",
+  "Tower B - Outer Area":                "Tower B",
+  "Reception Area Tower B - Outer Area": "Tower B",
+  "Tower B GYM - Outer Area":            "Tower B",
+
+  // True “Out of office” eviction (we filter these out in the controller)
+  "Out of office":               "Podium Floor"
+};
+
+module.exports = zoneFloorMap;
+
+
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
+
+
+const { DateTime }   = require('luxon');
+// const { poolConnect, pool, sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
+
+const doorZoneMap    = require('../data/doorZoneMap');
+const zoneFloorMap   = require('../data/zoneFloorMap');
+
+const ertMembers = require('../data/puneErtMembers.json');
+
+// track which door→zone keys we've already warned on
+const warnedKeys = new Set();
+
+//update
+function getTodayString() {
+  return DateTime.now()
+    .setZone('Asia/Kolkata')
+    .toFormat('yyyy-LL-dd');
+}
+
+
+
+
+function normalizeZoneKey(rawDoor, rawDir) {
+  // 1) Ensure it’s a string and trim whitespace
+  let door = String(rawDoor || '').trim();
+
+  // 2) Strip any "_HH:MM:SS" or "_XX:XX:XX" suffix (hex codes or times at end)
+  door = door.replace(/_[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
+
+  // 3) Collapse multiple spaces into one, then uppercase
+  door = door.replace(/\s+/g, ' ').toUpperCase();
+
+  // 4) Pick the direction token exactly as doorZoneMap expects
+  const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
+
+  return `${door}___${dir}`;
+}
+
+/** Normalize "Last, First" or "First Last" → lowercase "first last" */
+function normalizePersonName(raw) {
+  let n = String(raw || '').trim();
+  if (n.includes(',')) {
+    const [last, rest] = n.split(',', 2);
+    n = `${rest.trim()} ${last.trim()}`;
+  }
+  return n.toLowerCase();
+}
 
 /**
- * Premium Black + Gold Dashboard
- *
- * Requirements:
- *  - TailwindCSS (with backdrop blur enabled)
- *  - framer-motion
- *  - recharts
- *  - react-icons
- *
- * Usage:
- *  <PuneMonthlyPremiumDashboard initialMonth="2025-09" />
+ * Map a swipe’s door+direction → zone using exactly doorZoneMap.
+ * If not in doorZoneMap, log once and return "Unknown Zone".
+ * If OutDirection but not "Out of office", strip off " Zone" suffix.
  */
+function mapDoorToZone(rawDoor, rawDir) {
+  const key = normalizeZoneKey(rawDoor, rawDir);
+  const zone = doorZoneMap[key];
 
-const GOLD = "#FFD166"; // warmer gold for gradients
-const GOLD_DEEP = "#D4AF37";
-const BG_GRADIENT = "bg-gradient-to-br from-black via-neutral-900 to-neutral-950";
-const CARD_GLASS =
-  "bg-white/4 backdrop-blur-md border border-white/6 shadow-lg"; // glassmorphism card base
-
-export default function PuneMonthlyPremiumDashboard({ initialMonth }) {
-  const now = new Date();
-  const defaultMonth =
-    initialMonth ||
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-  // state
-  const [month, setMonth] = useState(defaultMonth);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
-  const [q, setQ] = useState("");
-  const [personnelFilter, setPersonnelFilter] = useState("All");
-  const [showTopOnly, setShowTopOnly] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // fetch data
-  useEffect(() => {
-    let alive = true;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/monthly-summary?month=${month}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!alive) return;
-        setData(json);
-      } catch (err) {
-        console.error(err);
-        if (!alive) return;
-        setError(err.message || "Failed to load");
-      } finally {
-        if (alive) setLoading(false);
-      }
+  if (!zone) {
+    if (!warnedKeys.has(key)) {
+      console.warn('⛔ Unmapped door–direction key:', key);
+      warnedKeys.add(key);
     }
-    load();
-    return () => {
-      alive = false;
-    };
-  }, [month]);
+    return 'Unknown Zone';
+  }
 
-  // derived data
-  const days = useMemo(
-    () =>
-      data?.attendanceSheet?.length
-        ? Object.keys(data.attendanceSheet[0]).filter((k) =>
-            /\d{4}-\d{2}-\d{2}/.test(k)
-          )
-        : data?.days || [],
-    [data]
+  // If it's an OutDirection but not the real "Out of office", remove trailing " Zone"
+  if (rawDir === 'OutDirection' && zone !== 'Out of office') {
+    return zone.replace(/\s+Zone$/i, '');
+  }
+
+  return zone;
+}
+
+
+async function fetchNewEvents(since) {
+  // await the shared pool promise instead of poolConnect
+  const pool = await getPool();
+  const req  = pool.request();
+  req.input('since', sql.DateTime2, since);
+
+// console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+       
+
+
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType     = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) >@since
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      PersonnelType,
+      CardNumber,
+      AdmitCode,
+      Direction,
+      Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
+    // recordset.map(r => r.LocaleMessageTime.toISOString()));
+
+  return recordset;
+}
+
+
+
+async function buildOccupancy(allEvents) {
+  const current      = {};
+  const uniquePeople = new Map();
+
+  for (const evt of allEvents) {
+    const {
+      EmployeeID, PersonGUID,
+      ObjectName1, PersonnelType,
+      CardNumber, Dateonly,
+      Swipe_Time, Direction, Door
+    } = evt;
+
+    const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
+    const zoneRaw  = mapDoorToZone(Door, Direction);
+    const zone     = zoneRaw && zoneRaw.toLowerCase();
+
+ // ─── 1) If we can’t map door+direction to a valid zone, skip this event entirely. ───
+    //     (prevents "Unknown Zone" from ever entering uniquePeople/current)
+    if (zoneRaw === 'Unknown Zone') {
+      // We warned once in mapDoorToZone already; just ignore.
+      continue;
+    }
+
+    const zoneLower = zoneRaw.toLowerCase();
+
+
+
+    // 1) True "Out of office" → full eviction
+    if (Direction === 'OutDirection' && zone === 'out of office') {
+      uniquePeople.delete(dedupKey);
+      delete current[dedupKey];
+      continue;
+    }
+
+
+
+if (Direction === 'OutDirection') {
+  // Compare lowercased zone safely
+  const zoneLower = String(zone).toLowerCase();
+
+  // Only full eviction when it's the real "Out of office"
+  if (zoneLower === 'out of office') {
+    uniquePeople.delete(dedupKey);
+    delete current[dedupKey];
+  } else {
+    // Keep the person in current headcount for all other OutDirection cases
+    // Update their last-seen metadata (zone, door, Direction)
+    uniquePeople.set(dedupKey, PersonnelType);
+    current[dedupKey] = {
+      Dateonly, Swipe_Time,
+      EmployeeID, ObjectName1, CardNumber,
+      PersonnelType,
+      zone: zoneRaw,
+      door: Door,
+      Direction
+    };
+  }
+  continue;
+}
+
+
+
+    // 3) InDirection → normal check-in
+    if (Direction === 'InDirection') {
+      uniquePeople.set(dedupKey, PersonnelType);
+      current[dedupKey] = {
+        Dateonly, Swipe_Time,
+        EmployeeID, ObjectName1, CardNumber,
+        PersonnelType,
+        zone: zoneRaw,
+        door: Door,
+        Direction
+      };
+      continue;
+    }
+
+    // 4) Catch-all eviction
+    uniquePeople.delete(dedupKey);
+    delete current[dedupKey];
+  }
+
+  // live headcounts (only from uniquePeople, which has already evicted all true out-of-office)
+  let employeeCount   = 0;
+  let contractorCount = 0;
+  for (const pt of uniquePeople.values()) {
+    if (['Employee','Terminated Personnel'].includes(pt)) employeeCount++;
+    else contractorCount++;
+  }
+
+  // Build zone→people map, but filter out any out-of-office at this final step too
+  const zoneMap = {};
+  for (const emp of Object.values(current)) {
+    const zKey = emp.zone.toLowerCase();
+    if (zKey === 'out of office') continue;
+    zoneMap[emp.zone] = zoneMap[emp.zone] || [];
+    zoneMap[emp.zone].push(emp);
+  }
+
+  // zoneDetails
+  const zoneDetails = Object.fromEntries(
+    Object.entries(zoneMap).map(([zone, emps]) => {
+      const byType = emps.reduce((acc, e) => {
+        acc[e.PersonnelType] = (acc[e.PersonnelType]||0) + 1;
+        return acc;
+      }, {});
+      return [ zone, { total: emps.length, byPersonnelType: byType, employees: emps } ];
+    })
   );
 
-  const personnelTypes = useMemo(() => {
-    if (!data) return [];
-    const set = new Set();
-    for (const p of data.attendanceSheet || [])
-      set.add(p.personnelType || p.PersonnelType || "Unknown");
-    return ["All", ...Array.from(set)];
-  }, [data]);
-
-  const filteredAttendance = useMemo(() => {
-    if (!data) return [];
-    const rows = data.attendanceSheet || [];
-    return rows.filter((r) => {
-      if (personnelFilter !== "All" && r.personnelType !== personnelFilter)
-        return false;
-      if (q) {
-        const term = q.toLowerCase();
-        return (
-          (r.name || "").toLowerCase().includes(term) ||
-          (r.employeeId || "").toLowerCase().includes(term)
-        );
-      }
-      return true;
-    });
-  }, [data, q, personnelFilter]);
-
-  const personnelDistribution = useMemo(() => {
-    if (!data?.attendanceSheet) return [];
-    const map = new Map();
-    for (const r of data.attendanceSheet) {
-      const t = r.personnelType || r.PersonnelType || "Unknown";
-      map.set(t, (map.get(t) || 0) + 1);
+  // floorBreakdown
+  const floorMap = {};
+  for (const [zone, data] of Object.entries(zoneDetails)) {
+    const floor = zoneFloorMap[zone] || 'Unknown Floor';
+    floorMap[floor] = floorMap[floor] || { total: 0, byPersonnelType: {} };
+    floorMap[floor].total += data.total;
+    for (const [pt, c] of Object.entries(data.byPersonnelType)) {
+      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt]||0) + c;
     }
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }
+
+
+  const ertStatus = Object.fromEntries(
+    Object.entries(ertMembers).map(([role, members]) => {
+      const list = members.map(m => {
+        // pick the correct name field (JSON uses "Name")
+        const rawName = m.name || m.Name;
+        const expected = normalizePersonName(rawName);
+
+
+        // find a matching swipe in current[]
+        const matchEvt = Object.values(current).find(e => {
+          return normalizePersonName(e.ObjectName1) === expected;
+        });
+
+        return {
+          ...m,
+          present: !!matchEvt,
+          zone:    matchEvt ? matchEvt.zone : null
+        };
+     });
+      return [ role, list ];
+    })
+  );
+
+
+
+  return {
+    asOf:             new Date().toISOString(),
+    summary:          Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
+    zoneBreakdown:    Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
+    floorBreakdown:   Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
+    details:          zoneMap,
+    personnelSummary: { employees: employeeCount, contractors: contractorCount },
+     ertStatus,
+  
+
+  personnelBreakdown: (() => {
+    const map = new Map();
+    // uniquePeople: Map<dedupKey, PersonnelType>
+    for (const pt of uniquePeople.values()) {
+      map.set(pt, (map.get(pt) || 0) + 1);
+    }
+    return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
+  })(),
+
+
+
+  };
+}
+
+
+// ________________________________________________________________________
+// _________________________NEW CODE_______________________________________
+// ________________________________________________________________________
+
+/**
+ * Build “visited today” from the same in‐memory stream
+ *
+ * @param {Array} allEvents  - events where evt.Dateonly is already local yyyy-MM-dd
+ * @param {DateTime|Date|string} [asOf] - optional Luxon DateTime, JS Date or yyyy-MM-dd string.
+ *                                       If provided, "today" will be computed from this instead
+ *                                       of DateTime.now().setZone('Asia/Kolkata').
+ */
+function buildVisitedToday(allEvents, asOf) {
+  // Determine "today" in Asia/Kolkata:
+  let today;
+  if (asOf) {
+    // Accept Luxon DateTime, JS Date, or plain yyyy-MM-dd string
+    if (typeof asOf === 'string') {
+      today = asOf; // assume already 'yyyy-LL-dd'
+    } else if (asOf instanceof Date) {
+      today = DateTime.fromJSDate(asOf, { zone: 'Asia/Kolkata' }).toFormat('yyyy-LL-dd');
+    } else if (asOf && typeof asOf.toFormat === 'function') {
+      // assume Luxon DateTime
+      today = asOf.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    } else {
+      // fallback to now
+      today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    }
+  } else {
+    // default behaviour: "today" is now in Kolkata
+    today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  }
+
+  // Use evt.Dateonly (already “yyyy-MM-dd” in local zone) to pick out today's InDirection swipes
+  const todayIns = allEvents.filter(evt => {
+    return (
+      evt.Direction === 'InDirection' &&
+      evt.Dateonly === today
+    );
+  });
+
+  // Dedupe by PersonGUID → keep the latest swipe
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID; // same as original logic
+    const prev = dedup.get(key);
+    // Compare LocaleMessageTime lexicographically is fine for ISO strings; keep original behavior
+    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) {
+      dedup.set(key, e);
+    }
+  }
+
+  const finalList = Array.from(dedup.values());
+
+  // Separate employees vs contractors (preserve original classification list)
+  const employees = finalList.filter(e =>
+    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
+      .includes(e.PersonnelType)
+  ).length;
+  const contractors = finalList.length - employees;
+
+  return { employees, contractors, total: finalList.length };
+}
+
+
+// ________________________________________________________________________
+// ________________________________________________________________________
+// ________________________________________________________________________
+
+
+/** Server‐Sent‐Events endpoint */
+exports.getLiveOccupancy = async (req, res) => {
+ 
+
+  try {
+    // wait for the shared pool to be ready
+    await getPool();
+
+    res.writeHead(200, {
+      'Content-Type':  'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection':    'keep-alive'
+    });
+    res.write('\n');
+
+    // pull last 24h on startup
+    // let lastSeen = new Date(Date.now() - 24*60*60*1000);
+    let lastSeen = new Date();
+    const events = [];
+
+    const push = async () => {
+
+
+
+
+    // Option B: Recompute date from the JS timestamp in Asia/Kolkata:
+    const todayKolkata = DateTime.now().setZone('Asia/Kolkata').toISODate();
+    for (let i = events.length - 1; i >= 0; i--) {
+      const ts = DateTime.fromJSDate(events[i].LocaleMessageTime, { zone: 'utc' })
+                     .setZone('Asia/Kolkata')
+                     .toISODate();
+      if (ts !== todayKolkata) {
+        events.splice(i, 1);
+      }
+    }
+
+
+//  console.log('🔄 [PUSH] Running at:', new Date().toISOString());
+  // console.log('🔍 Last seen swipe time:', lastSeen);
+
+
+      const fresh = await fetchNewEvents(lastSeen);
+
+      //  console.log('📥 New events fetched:', fresh.length);
+
+
+
+
+      if (fresh.length) {
+        // lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
+         lastSeen = new Date();
+        events.push(...fresh);
+      }
+
+    
+
+      // build occupancy + today counts
+      const occupancy  = await buildOccupancy(events);
+      const todayStats = buildVisitedToday(events);
+
+      occupancy.totalVisitedToday = todayStats.total;
+      occupancy.visitedToday      = {
+        employees:   todayStats.employees,
+        contractors: todayStats.contractors,
+        total:       todayStats.total
+      };
+
+   
+
+
+      // add an `id:` so EventSource treats even identical payloads as “new”
+      
+      const sid = Date.now();
+      res.write(`id: ${sid}\n`);
+      res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
+
+    
+      if (typeof res.flush === 'function') {
+        res.flush();
+      }
+
+     };
+    await push();
+    const timer = setInterval(push, 2000);
+    req.on('close', () => clearInterval(timer));
+
+  } catch (err) {
+    console.error('Live occupancy SSE error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+};
+
+
+
+// GET /api/occupancy-at-time-pune?date=YYYY-MM-DD&time=HH:MM[:SS]
+exports.getPuneSnapshotAtDateTime = async (req, res) => {
+  try {
+    const { date, time } = req.query;
+    if (!date || !time) {
+      return res.status(400).json({
+        error: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]'
+      });
+    }
+
+    // Validate date
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!dateMatch) {
+      return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
+    }
+
+    // Validate time
+    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
+    if (!timeMatch) {
+      return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+    }
+
+    const year   = Number(dateMatch[1]);
+    const month  = Number(dateMatch[2]);
+    const day    = Number(dateMatch[3]);
+    const hour   = Number(timeMatch[1]);
+    const minute = Number(timeMatch[2]);
+    const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
+
+    // Build Pune-local datetime
+    const atDt = DateTime.fromObject(
+      { year, month, day, hour, minute, second, millisecond: 0 },
+      { zone: 'Asia/Kolkata' }
+    );
+
+    if (!atDt.isValid) {
+      return res.status(400).json({ error: 'invalid date+time combination' });
+    }
+
+    // Convert to UTC for SQL boundary
+    const untilUtc = atDt.setZone('utc').toJSDate();
+
+    // -----------------
+    // Step 1: fetch events in 24h window ending at atDt
+    const pool = await getPool();
+    const reqDb = pool.request();
+    reqDb.input('until', sql.DateTime2, untilUtc);
+
+    const { recordset } = await reqDb.query(`
+      WITH CombinedQuery AS (
+        SELECT
+          t1.MessageUTC,   -- always UTC
+          t1.ObjectName1,
+          CASE
+            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+            ELSE CAST(t2.Int1 AS NVARCHAR)
+          END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+            sc.value
+          ) AS CardNumber,
+          t5a.value AS AdmitCode,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType     = 'CardAdmitted'
+          AND t1.PartitionName2 = 'APAC.Default'
+          AND t1.MessageUTC <= @until
+          AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
+      )
+      SELECT *
+      FROM CombinedQuery
+      ORDER BY MessageUTC ASC;
+    `);
+
+    // -----------------
+    // Step 2: convert UTC → Asia/Kolkata
+    const events = recordset.map(e => {
+      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' })
+                            .setZone('Asia/Kolkata');
+      return {
+        ...e,
+        LocaleMessageTime: local.toISO(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
+      };
+    });
+
+    // -----------------
+    // Step 3: filter only same Pune date
+    const targetDate = atDt.toFormat('yyyy-LL-dd');
+    const filtered = events.filter(e => e.Dateonly === targetDate);
+
+    // Step 4: build occupancy snapshot
+    const occupancy = await buildOccupancy(filtered);
+
+    // Step 5: visited-today counts aligned to atDt
+    // const visitedStats = buildVisitedToday(filtered);
+    
+    const visitedStats = buildVisitedToday(filtered, atDt);  // this add new code as per function buildVisitedToday change 📝 📝
+
+    // ---- Output timestamps ----
+    occupancy.asOfLocal = atDt.toISO(); // Pune-local with offset
+    occupancy.asOfUTC   = `${date}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}Z`;
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = visitedStats;
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('getPuneSnapshotAtDateTime error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// //////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////\
+
+
+// GET /api/monthly-summary?month=YYYY-MM
+exports.getMonthlySummary = async (req, res) => {
+  try {
+    const { month } = req.query;
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({ error: 'invalid "month" format; expected YYYY-MM' });
+    }
+
+    const [year, monthNum] = month.split('-').map(Number);
+
+    const start = DateTime.fromObject({ year, month: monthNum, day: 1 }, { zone: 'Asia/Kolkata' });
+    const end = start.endOf('month');
+
+    const startUtc = start.setZone('utc').toJSDate();
+    const endUtc   = end.setZone('utc').toJSDate();
+
+    const pool = await getPool();
+    const reqDb = pool.request();
+    reqDb.input('start', sql.DateTime2, startUtc);
+    reqDb.input('end', sql.DateTime2, endUtc);
+
+    const { recordset } = await reqDb.query(`
+      SELECT
+        t1.MessageUTC,
+        t1.ObjectName1,  -- Person name
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND t1.MessageUTC BETWEEN @start AND @end
+      ORDER BY t1.MessageUTC ASC;
+    `);
+
+    // Convert to Pune local time
+    const events = recordset.map(e => {
+      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' }).setZone('Asia/Kolkata');
+      return {
+        ...e,
+        LocaleMessageTime: local.toJSDate(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
+      };
+    });
+
+    // Get all dates in the month
+    const allDates = [];
+    let cursor = start;
+    while (cursor <= end) {
+      allDates.push(cursor.toFormat('yyyy-LL-dd'));
+      cursor = cursor.plus({ days: 1 });
+    }
+
+    // Group by day
+    const byDay = new Map();
+    for (const evt of events) {
+      if (!byDay.has(evt.Dateonly)) byDay.set(evt.Dateonly, []);
+      byDay.get(evt.Dateonly).push(evt);
+    }
+
+    const dailySummaries = [];
+    const peakOccupancy = [];
+    const visitCounter = new Map();       // track total visits
+    const presenceByPerson = new Map();   // track which days each person was present
+
+    // Process each day
+    for (const [date, dayEvents] of byDay.entries()) {
+      // --- Unique daily headcount ---
+      const uniquePeople = new Set(dayEvents.map(e => e.PersonGUID));
+      dailySummaries.push({ date, total: uniquePeople.size });
+
+      // --- Peak occupancy counter ---
+      let currentCount = 0;
+      let maxCount = 0;
+      for (const e of dayEvents) {
+        if (e.Direction === 'InDirection') {
+          currentCount++;
+        } else if (e.Direction === 'OutDirection') {
+          currentCount = Math.max(0, currentCount - 1);
+        }
+        if (currentCount > maxCount) maxCount = currentCount;
+      }
+      peakOccupancy.push({ date, peak: maxCount });
+
+      // --- Track visits & attendance ---
+      for (const e of dayEvents) {
+        if (e.Direction === 'InDirection') {
+          const key = e.PersonGUID || e.EmployeeID || e.ObjectName1;
+
+          // Track visits
+          if (!visitCounter.has(key)) {
+            visitCounter.set(key, {
+              count: 0,
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType
+            });
+          }
+          visitCounter.get(key).count++;
+
+          // Track attendance
+          if (!presenceByPerson.has(key)) {
+            presenceByPerson.set(key, {
+              employeeId: e.EmployeeID,
+              name: e.ObjectName1,
+              personnelType: e.PersonnelType,
+              days: new Set()
+            });
+          }
+          presenceByPerson.get(key).days.add(date);
+        }
+      }
+    }
+
+    // --- Final aggregates ---
+    const avgDailyHeadcount =
+      dailySummaries.reduce((sum, d) => sum + d.total, 0) / dailySummaries.length || 0;
+
+    const top10 = Array.from(visitCounter.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map(v => ({
+        employeeId: v.employeeId,
+        name: v.name,
+        personnelType: v.personnelType,
+        visits: v.count
+      }));
+
+    // --- Attendance sheet ---
+    const attendanceSheet = Array.from(presenceByPerson.values()).map(p => {
+      const daily = {};
+      let presentCount = 0;
+
+      for (const d of allDates) {
+        if (p.days.has(d)) {
+          daily[d] = "P"; // Present
+          presentCount++;
+        } else {
+          daily[d] = "A"; // Absent
+        }
+      }
+
+      return {
+        employeeId: p.employeeId,
+        name: p.name,
+        personnelType: p.personnelType,
+        ...daily,
+        daysPresent: presentCount,
+        daysAbsent: allDates.length - presentCount,
+        attendancePercent: ((presentCount / allDates.length) * 100).toFixed(1) + "%"
+      };
+    });
+
+    return res.json({
+      month,
+      avgDailyHeadcount: Math.round(avgDailyHeadcount),
+      peakOccupancy,
+      top10Visitors: top10,
+      attendanceSheet
+    });
+  } catch (err) {
+    console.error('getMonthlySummary error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//C:\Users\W0024618\Desktop\swipeData\client\src\pages\ZoneDeatailsPage.jsx
+
+import React, { useState, useMemo } from 'react';
+import './ZoneDetailsTable.css';
+
+function ZoneDetailsTable({ data = {}, searchTerm: outerSearch = '' }) {
+  const [searchTerm, setSearchTerm] = useState(outerSearch);
+
+  // 1) Sort zones by descending count (memoized)
+  const sortedEntries = useMemo(() => {
+    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
   }, [data]);
 
-  const COLORS = [GOLD, "#F59E0B", "#F97316", "#10B981", "#60A5FA", "#A78BFA"];
+  // // 2) Zone name mapping
+  // const zoneNameMap = {
+  //   "Red Zone - Outer Area": "East Outdoor Area",
+  //   "Orange Zone - Outer Area": "West Outdoor Area",
+  // };
 
-  // downloads
-  function downloadJSON() {
-    const payload = JSON.stringify({ month, data }, null, 2);
-    const blob = new Blob([payload], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `monthly-summary-${month}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+  const getZoneLabel = (zone) => zoneNameMap[zone] || zone;
 
-  function downloadCSV() {
-    const rows = showTopOnly ? filteredAttendance.slice(0, 50) : filteredAttendance;
-    const headers = ["employeeId", "name", "personnelType", "daysPresent", "attendancePercent"];
-    const csv = [headers.join(",")]
-      .concat(
-        rows.map((r) =>
-          headers
-            .map((h) => `"${(r[h] ?? "").toString().replace(/"/g, '""')}"`)
-            .join(",")
-        )
-      )
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `attendance-${month}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+  // 3) Filter predicate
+  const matchesSearch = (emp) =>
+    emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
 
-  // helpers
-  function humanDay(d) {
-    return d.slice(8);
-  }
-  function pctColor(pct) {
-    const n = parseFloat((pct || 0).toString());
-    if (Number.isNaN(n)) return "bg-neutral-700 text-neutral-200";
-    if (n >= 90) return "bg-emerald-500 text-black";
-    if (n >= 75) return "bg-amber-400 text-black";
-    return "bg-rose-600 text-white";
-  }
+  // 4) Handler for search input
+  const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
-  // small animation props
-  const cardPop = { whileHover: { y: -6, scale: 1.01 }, transition: { type: "spring", stiffness: 300 } };
+  if (!sortedEntries.length) {
+    return <p>No zone detail data available.</p>;
+  }
 
   return (
-   <div className="pune-dashboard">
-    <div className={`${BG_GRADIENT} min-h-screen text-neutral-100`}>
-      <div className="max-w-[1400px] mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          {/* SIDEBAR */}
-          <aside className={`transition-all ${sidebarOpen ? "w-72" : "w-16"} flex-shrink-0`}>
-            <div className={`${CARD_GLASS} rounded-2xl p-4 border-neutral-700`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: `linear-gradient(135deg, rgba(255,209,102,0.08), rgba(212,175,55,0.03))`,
-                      boxShadow: `0 6px 18px rgba(212,175,55,0.05)`,
-                    }}>
-                    <Users className="text-yellow-300" size={20} />
-                  </div>
-                  {sidebarOpen && (
-                    <div>
-                      <div className="text-sm font-semibold" style={{ color: GOLD_DEEP }}>
-                        Pune Dashboard
-                      </div>
-                      <div className="text-xs text-neutral-400">Monthly Attendance</div>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => setSidebarOpen(s => !s)}
-                  aria-label="Toggle sidebar"
-                  className="p-2 rounded-md hover:bg-white/3"
-                >
-                  {sidebarOpen ? <FiChevronLeft /> : <FiChevronRight />}
-                </button>
-              </div>
-
-              {sidebarOpen && (
-                <>
-                  <nav className="mt-6 space-y-2">
-                    <button className="w-full text-left px-3 py-2 rounded-md hover:bg-white/3 flex items-center gap-3 transition">
-                      <TrendingUp /> <span className="text-sm">Overview</span>
-                    </button>
-                    <button className="w-full text-left px-3 py-2 rounded-md hover:bg-white/3 flex items-center gap-3 transition">
-                      <PieChartIcon /> <span className="text-sm">People</span>
-                    </button>
-                    <button className="w-full text-left px-3 py-2 rounded-md hover:bg-white/3 flex items-center gap-3 transition">
-                      <Users /> <span className="text-sm">Directory</span>
-                    </button>
-                  </nav>
-
-                  <div className="mt-6 pt-3 border-t border-white/6 text-xs text-neutral-400">
-                    Data range: <span className="text-neutral-100 font-medium">{month}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </aside>
-
-          {/* MAIN */}
-          <div className="flex-1">
-            {/* HEADER */}
-            <motion.header initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className={`${CARD_GLASS} rounded-2xl p-4 mb-6 flex items-center justify-between border-neutral-700`}>
-              <div className="flex items-center gap-4">
-                <div>
-                  <h1 className="text-xl md:text-2xl font-bold" style={{ color: GOLD_DEEP }}>
-                    Pune — Monthly Attendance
-                  </h1>
-                  <p className="text-sm text-neutral-300">Premium overview • glass UI • gold accents</p>
-                </div>
-
-                {/* month picker compact */}
-                <div className="hidden md:flex items-center gap-3 ml-6">
-                  <div className="flex items-center gap-2 bg-white/3 rounded-full px-3 py-2">
-                    <Calendar className="text-neutral-200" />
-                    <input
-                      aria-label="Select month"
-                      type="month"
-                      value={month}
-                      onChange={(e) => setMonth(e.target.value)}
-                      className="bg-transparent outline-none text-sm"
-                    />
-                  </div>
-                  <button
-                    onClick={() => { setLoading(true); setTimeout(() => setLoading(false), 600); }}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/6 hover:brightness-105 transition"
-                    title="Refresh"
-                  >
-                    <Refresh /> Refresh
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button onClick={downloadCSV} className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-300 text-black font-semibold shadow-sm hover:scale-105 transition transform">
-                  <Download /> CSV
-                </button>
-                <button onClick={downloadJSON} className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-white/8 bg-white/3 hover:bg-white/5 transition">
-                  <Download /> JSON
-                </button>
-              </div>
-            </motion.header>
-
-            {/* KPI ROW */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <motion.div {...cardPop} className={`${CARD_GLASS} rounded-2xl p-5 border-l-4 border-yellow-400`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-neutral-300">Avg Daily Headcount</div>
-                    <div className="text-2xl font-bold mt-1">{data?.avgDailyHeadcount ?? "—"}</div>
-                    <div className="text-xs text-neutral-400 mt-2">Monthly average of unique headcount</div>
-                  </div>
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,209,102,0.06)" }}>
-                    <Users className="text-yellow-300" />
-                  </div>
-                </div>
-                <div className="mt-3 h-1 w-3/4 rounded-full" style={{ background: "linear-gradient(90deg,#FFD166,#D4AF37)" }} />
-              </motion.div>
-
-              <motion.div {...cardPop} className={`${CARD_GLASS} rounded-2xl p-5 border-l-4 border-emerald-400`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-neutral-300">Distinct People</div>
-                    <div className="text-2xl font-bold mt-1">{data?.summary?.persons ?? (data?.attendanceSheet?.length ?? 0)}</div>
-                    <div className="text-xs text-neutral-400 mt-2">Who recorded at least one swipe</div>
-                  </div>
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ background: "rgba(16,185,129,0.06)" }}>
-                    <User className="text-emerald-300" />
-                  </div>
-                </div>
-                <div className="mt-3 h-1 w-1/2 rounded-full bg-white/6" />
-              </motion.div>
-
-              <motion.div {...cardPop} className={`${CARD_GLASS} rounded-2xl p-5 border-l-4 border-amber-400`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-neutral-300">Days in Month</div>
-                    <div className="text-2xl font-bold mt-1">{data?.summary?.daysInMonth ?? (data?.days?.length ?? days.length)}</div>
-                    <div className="text-xs text-neutral-400 mt-2">{month}</div>
-                  </div>
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.06)" }}>
-                    <Calendar className="text-amber-300" />
-                  </div>
-                </div>
-                <div className="mt-3 h-1 w-1/3 rounded-full bg-white/6" />
-              </motion.div>
-            </div>
-
-            {/* CHARTS */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              <motion.div {...cardPop} className={`${CARD_GLASS} rounded-2xl p-4 col-span-1 lg:col-span-2`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="text-yellow-300" />
-                    <h3 className="font-semibold">Peak Occupancy</h3>
-                  </div>
-                  <div className="text-sm text-neutral-400">Daily peaks</div>
-                </div>
-                <div style={{ height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data?.peakOccupancy || []} margin={{ top: 6, right: 12, left: 0, bottom: 6 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                      <XAxis dataKey="date" tickFormatter={d => d.slice(8)} stroke="rgba(255,255,255,0.5)" />
-                      <YAxis stroke="rgba(255,255,255,0.5)" />
-                      <Tooltip formatter={(v) => [v, "Peak"]} contentStyle={{ borderRadius: 8, background: '#0b1220', color: '#fff', border: '1px solid rgba(255,255,255,0.04)' }} />
-                      <Bar dataKey="peak" fill={GOLD} radius={[8,8,0,0]} />
-                      <Line type="monotone" dataKey="peak" stroke="#60A5FA" strokeWidth={2} dot={false} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-
-              <motion.div {...cardPop} className={`${CARD_GLASS} rounded-2xl p-4`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <PieChartIcon className="text-yellow-300" />
-                    <h3 className="font-semibold">People by Type</h3>
-                  </div>
-                  <div className="text-sm text-neutral-400">Distribution</div>
-                </div>
-
-                <div style={{ height: 220 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={personnelDistribution} dataKey="value" nameKey="name" outerRadius={70} innerRadius={36} paddingAngle={4}>
-                        {personnelDistribution.map((entry, idx) => (
-                          <Cell key={`c-${idx}`} fill={COLORS[idx % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="mt-3 grid grid-cols-1 gap-2 text-sm">
-                  {personnelDistribution.map((p, i) => (
-                    <div key={p.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                        <div className="text-neutral-200">{p.name}</div>
-                      </div>
-                      <div className="text-sm font-semibold">{p.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-
-            {/* CONTROLS + TABLE */}
-            <div className={`${CARD_GLASS} rounded-2xl p-4 mb-6`}>
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3 w-full lg:w-auto">
-                  <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="text-neutral-400" />
-                    </div>
-                    <input
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                      placeholder="Search name or ID..."
-                      className="w-full pl-10 pr-4 py-2 rounded-full bg-white/3 border border-white/6 focus:ring-2 focus:ring-yellow-300 outline-none"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FiFilter className="text-neutral-400" />
-                    </div>
-                    <select value={personnelFilter} onChange={(e) => setPersonnelFilter(e.target.value)} className="pl-10 pr-4 py-2 rounded-full bg-white/3 border border-white/6">
-                      {personnelTypes.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
-                    </select>
-                  </div>
-
-                  <label className="flex items-center gap-2 text-sm select-none">
-                    <FiCheckSquare />
-                    <input type="checkbox" checked={showTopOnly} onChange={(e) => setShowTopOnly(e.target.checked)} className="accent-yellow-400" />
-                    Show top 50
-                  </label>
-                </div>
-
-                <div className="text-sm text-neutral-400">Showing <strong className="text-neutral-100">{filteredAttendance.length}</strong> records • Updated: <span>{new Date().toLocaleTimeString()}</span></div>
-              </div>
-
-              {/* table wrapper with sticky header */}
-              <div className="overflow-auto rounded-xl border border-white/6">
-                <table className="min-w-full">
-                  <thead className="bg-gradient-to-r from-black/40 to-transparent sticky top-0 backdrop-blur-sm">
-                    <tr className="text-xs text-neutral-400 uppercase tracking-wider">
-                      <th className="px-3 py-2 text-left">#</th>
-                      <th className="px-3 py-2 text-left">Employee</th>
-                      <th className="px-3 py-2 text-left">Type</th>
-                      {days.map((d) => <th key={d} className="px-1 py-2 text-center">{humanDay(d)}</th>)}
-                      <th className="px-3 py-2 text-right">Present</th>
-                      <th className="px-3 py-2 text-right">%</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {(showTopOnly ? filteredAttendance.slice(0, 50) : filteredAttendance).map((r, idx) => (
-                      <tr key={(r.employeeId || idx) + "-" + idx} className="border-t border-white/6 hover:bg-white/4 transition">
-                        <td className="px-3 py-2 text-sm text-neutral-200">{idx + 1}</td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/4 text-neutral-100 font-semibold">
-                              {(r.name || "?").split(" ").map(s => s[0]).slice(0,2).join("")}
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-neutral-100">{r.name}</div>
-                              <div className="text-xs text-neutral-400">{r.employeeId}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 text-sm text-neutral-300">{r.personnelType}</td>
-
-                        {days.map(d => {
-                          const v = r[d];
-                          const isP = String(v).toUpperCase() === "P" || v === true;
-                          return (
-                            <td key={d} className="px-1 py-2 text-center">
-                              <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold ${isP ? 'bg-emerald-400 text-black' : 'bg-white/6 text-neutral-300'}`}>
-                                {isP ? 'P' : 'A'}
-                              </div>
-                            </td>
-                          );
-                        })}
-
-                        <td className="px-3 py-2 text-sm text-neutral-100 text-right">{r.daysPresent ?? '—'}</td>
-                        <td className="px-3 py-2 text-right">
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${pctColor(r.attendancePercent)}`}>
-                            {r.attendancePercent ? `${r.attendancePercent}%` : '—'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <footer className="text-xs text-neutral-400">Notes: Present = any InDirection swipe (Asia/Kolkata). Data fetched from <code className="bg-white/4 px-1 py-0.5 rounded">/api/monthly-summary?month=YYYY-MM</code>.</footer>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating Action Button */}
-      <div className="fixed right-6 bottom-6">
-        <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.96 }}
-          className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl"
+    <div className="zone-cards">
+      <div style={{ marginBottom: '1rem', textAlign: 'right' }}>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={handleSearchChange}
           style={{
-            background: `radial-gradient(circle at 30% 20%, ${GOLD} 0%, #d9a726 30%, #bf8f1d 100%)`,
-            color: "#111",
-            boxShadow: "0 10px 30px rgba(212,175,55,0.25)",
+            padding: '0.4rem 0.8rem',
+            fontSize: '0.9rem',
+            borderRadius: 4,
+            border: '1px solid #ccc',
           }}
-          title="Quick action"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          <FiPlus />
-        </motion.button>
+        />
       </div>
+
+      {sortedEntries.map(([zone, emps]) => {
+        const filteredEmps = emps.filter(matchesSearch);
+        if (filteredEmps.length === 0) return null;
+
+        return (
+          <div key={zone} className="zone-card">
+            <div className="zone-header">
+              <h3>{getZoneLabel(zone)}</h3>
+              <span className="zone-badge">Total: {filteredEmps.length}</span>
+            </div>
+            <table className="zone-table">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Swipe Time</th><th>Type</th><th>Door Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmps.map((emp, i) => (
+                  <tr key={`${emp.EmployeeID}-${i}`}>
+                    <td>{emp.ObjectName1}</td>
+                    <td>{emp.Swipe_Time}</td>
+                    <td>{emp.PersonnelType}</td>
+                    <td>{emp.door}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
     </div>
-</div>
   );
 }
+
+export default React.memo(ZoneDetailsTable);
+
+
+
+
+
