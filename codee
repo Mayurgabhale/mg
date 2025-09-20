@@ -1,3 +1,7 @@
+css is not appling for this fiel
+and one moe is this css is effect on my other jsx file;
+write correct css and classe names not appply this css for other files only for this not other ok 
+carefuulum
 import React, { useEffect, useMemo, useState } from "react";
 import {
   BarChart,
@@ -149,7 +153,7 @@ export default function PuneMonthlyDashboard({ initialMonth }) {
 
   return (
     <div className="pune-dashboard">
-      <div className="container">
+      <div className="pune-container">
         <div className="min-h-screen bg-gray-50 p-6">
           <div className="max-w-[1400px] mx-auto">
             {/* Header */}
@@ -466,10 +470,12 @@ export default function PuneMonthlyDashboard({ initialMonth }) {
     </div>
   );
 }
+
+
 /* C:\Users\W0024618\Desktop\swipeData\client\src\components\MonthlySummary.css */
 
 :root {
-    --bg: #f6f7fb;
+    --bg: #050505;
     --card-bg: #ffffff;
     --muted: #6b7280;
     --accent-indigo: #4f46e5;
@@ -491,7 +497,7 @@ export default function PuneMonthlyDashboard({ initialMonth }) {
     color: #0f172a;
 }
 
-.pune-dashboard .container {
+.pune-dashboard .pune-container {
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -958,3 +964,4 @@ export default function PuneMonthlyDashboard({ initialMonth }) {
 }
 
 /* End of dashboard.css */
+
