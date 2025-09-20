@@ -1,3 +1,21 @@
+
+// Paper / Card background
+<Paper
+  elevation={3}
+  sx={{
+    padding: 2,
+    marginBottom: 3,
+    borderRadius: 3,
+    backgroundColor: "#ffffff",
+    boxShadow: "0px 2px 8px rgba(0,0,0,0.06)",
+  }}
+>
+
+
+
+
+....
+
 // Header title
 <Typography
   variant="h4"
