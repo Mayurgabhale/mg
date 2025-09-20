@@ -1,4 +1,4 @@
-// frontend/src/pages/DurationPage.jsx // import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"; import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"; import { useAuth } from "../context/AuthContext";
+// frontend/src/pages/DurationPage.jsx import React, { useState, useMemo, useEffect, useCallback, useRef } from "react"; import { useAuth } from "../context/AuthContext";
 
 import axios from "axios"; import { Box, Grid, Paper, Typography, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, CircularProgress, IconButton, Tooltip, Card, CardContent, Dialog, DialogTitle, DialogContent, Divider, MenuItem, Select, FormControl, InputLabel, InputAdornment, } from "@mui/material"; import DateRangeIcon from "@mui/icons-material/DateRange"; import SearchIcon from "@mui/icons-material/Search"; import DownloadIcon from "@mui/icons-material/CloudDownload"; import ClearIcon from "@mui/icons-material/Clear"; import VisibilityIcon from "@mui/icons-material/Visibility";
 
@@ -14,7 +14,7 @@ function isoToLongDateNoCommas(iso) { if (!iso) return iso; const dt = new Date(
 
 // threshold used for highlighting swipe differences > 6 hours const SWIPE_DIFF_RED_THRESHOLD = 6 * 3600;
 
-export default function DurationPage() { // const [region, setRegion] = useState("apac"); const [region, setRegion] = useState("apac"); const auth = useAuth();
+export default function DurationPage() { const [region, setRegion] = useState("apac"); const auth = useAuth();
 
 const [city, setCity] = useState(""); const [citiesForRegion, setCitiesForRegion] = useState([]); const [startDate, setStartDate] = useState(""); const [endDate, setEndDate] = useState(""); const [singleDate, setSingleDate] = useState(""); const [useRange, setUseRange] = useState(true);
 
@@ -34,19 +34,15 @@ const dialogTableSx = { "& th, & td": { border: "1px solid rgba(2,6,23,0.06)" },
 
 // helper to try to open the native date picker (where supported) const openNativeDatePicker = (ref) => { if (!ref || !ref.current) return; try { if (typeof ref.current.showPicker === "function") { ref.current.showPicker(); } else { ref.current.focus(); } } catch (e) { try { ref.current.focus(); } catch {} } };
 
-// fetch cities when region changes useEffect(() => { async function fetchCities() { // setCitiesForRegion([]); // setCity("");
+// fetch cities when region changes useEffect(() => { async function fetchCities() { setCitiesForRegion([]); setCity("");
 
-// clear previous UI
-  setCitiesForRegion([]);
-  setCity("");
-  // permission guard
+// permission guard
   if (!auth.hasPermission(['headcount', `headcount.${region}`, 'global_access'])) {
     setError(`Access denied to ${region.toUpperCase()} locations`);
     return;
   } else {
     setError("");
   }
-
 
   try {
     const res = await axios.get(`${API_BASE}/duration/cities`, {
@@ -62,16 +58,13 @@ const dialogTableSx = { "& th, & td": { border: "1px solid rgba(2,6,23,0.06)" },
 }
 fetchCities();
 
-}, [region]);
+}, [region, auth]);
 
 // --- fetch durations (full) --- const fetchDurations = useCallback( async (opts = {}) => { // default full fetch (used when user clicks Run) setError(""); setLoading(true); setData(null);
 
 try {
-
-    
     const params = {};
 
-    
     if (useRange && startDate && endDate) {
       params.start_date = startDate;
       params.end_date = endDate;
@@ -108,7 +101,7 @@ try {
 
 );
 
-// --- targeted fetch: get only single employee for current region and merge into UI --- const fetchAndMergeEmployee = useCallback( async ({ employeeId, person_uid } = {}) => { if (!employeeId && !person_uid) return; try { const params = {}; if (useRange && startDate && endDate) { params.start_date = startDate; params.end_date = endDate; } else if (!useRange && singleDate) { params.date = singleDate; } else { if (singleDate) params.date = singleDate; } params.regions = region; // prefer server-side employee_id filter (EmployeeID) if (employeeId) params.employee_id = employeeId; // if no EmployeeID but we have person_uid, pass employee_name or a unique param — backend supports employee_id only, // but person_uid may match PersonGUID in swipes. We'll pass employee_name if nothing else. if (!employeeId && person_uid) { params.employee_name = person_uid; } params.sample_rows = 0; // we only need exact employee rows, avoid extra samples const res = await axios.get(${API_BASE}/duration, { params, timeout: 120000 }); const resp = res.data; if (!resp || !resp.regions || !resp.regions[region]) { // no matching data returned return; } const newRegionObj = resp.regions[region]; const fetchedEmployees = newRegionObj.employees || [];
+// --- targeted fetch: get only single employee for current region and merge into UI --- const fetchAndMergeEmployee = useCallback( async ({ employeeId, person_uid } = {}) => { if (!employeeId && !person_uid) return; try { const params = {}; if (useRange && startDate && endDate) { params.start_date = startDate; params.end_date = endDate; } else if (!useRange && singleDate) { params.date = singleDate; } else { if (singleDate) params.date = singleDate; } params.regions = region; if (employeeId) params.employee_id = employeeId; if (!employeeId && person_uid) { params.employee_name = person_uid; } params.sample_rows = 0; // we only need exact employee rows, avoid extra samples const res = await axios.get(${API_BASE}/duration, { params, timeout: 120000 }); const resp = res.data; if (!resp || !resp.regions || !resp.regions[region]) { // no matching data returned return; } const newRegionObj = resp.regions[region]; const fetchedEmployees = newRegionObj.employees || [];
 
 setData((prev) => {
       try {
@@ -130,7 +123,6 @@ setData((prev) => {
         const prevEmployees = Array.isArray(prevRegion.employees) ? [...prevRegion.employees] : [];
         fetchedEmployees.forEach((fe) => {
           const idx = prevEmployees.findIndex((p) => {
-            // match by person_uid if present else by EmployeeID
             if (p.person_uid && fe.person_uid) return p.person_uid === fe.person_uid;
             if (p.EmployeeID && fe.EmployeeID) return String(p.EmployeeID) === String(fe.EmployeeID);
             return false;
@@ -138,7 +130,6 @@ setData((prev) => {
           if (idx >= 0) {
             prevEmployees[idx] = fe;
           } else {
-            // insert (keeping sort might be messy, so append)
             prevEmployees.push(fe);
           }
         });
@@ -147,7 +138,6 @@ setData((prev) => {
         next.regions[region] = mergedRegion;
         return next;
       } catch (e) {
-        // fallback: set full response
         console.error("Failed to merge employee data:", e);
         return resp;
       }
@@ -185,18 +175,9 @@ rows.forEach((r) => {
   csvRows.push(row.join(","));
 });
 
-const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-const url = URL.createObjectURL(blob);
-const a = document.createElement("a");
-a.href = url;
-const filename = `duration_summary_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv`;
-a.download = filename;
-document.body.appendChild(a);
-a.click();
-a.remove();
-URL.revokeObjectURL(url);
+const blob = new Blob([csvRows.join("
 
-};
+")], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const filename = duration_summary_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
 
 const exportReportCsv = () => { if (!regionObj) return; const datesIso = regionObj.dates || []; const weekStarts = computeWeekStarts(datesIso);
 
@@ -279,18 +260,9 @@ rows.forEach((r, idx) => {
   csvRows.push(row.join(","));
 });
 
-const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-const url = URL.createObjectURL(blob);
-const a = document.createElement("a");
-a.href = url;
-const filename = `duration_report_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv`;
-a.download = filename;
-document.body.appendChild(a);
-a.click();
-a.remove();
-URL.revokeObjectURL(url);
+const blob = new Blob([csvRows.join("
 
-};
+")], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const filename = duration_report_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
 
 const exportSwipesCsv = () => { if (!regionObj) return; const swipesByDate = regionObj.swipes_by_date || {}; const rows = []; Object.entries(swipesByDate).forEach(([d, arr]) => { arr.forEach((s) => { rows.push({ Date: d, LocaleMessageTime: s.LocaleMessageTime || "", Swipe_Time: s.Swipe_Time || "", EmployeeID: s.EmployeeID || "", PersonGUID: s.PersonGUID || "", ObjectName1: s.ObjectName1 || "", Door: s.Door || "", PersonnelType: s.PersonnelType || "", CardNumber: s.CardNumber || "", PrimaryLocation: s.PrimaryLocation || s.Text5 || "", PartitionName2: s.PartitionName2 || "", AdmitCode: s.AdmitCode || "", Direction: s.Direction || "", CompanyName: s.CompanyName || "", }); }); });
 
@@ -321,42 +293,56 @@ rows.forEach((r) => {
   csvRows.push(line);
 });
 
-const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-const url = URL.createObjectURL(blob);
-const a = document.createElement("a");
-a.href = url;
-const filename = `swipes_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv`;
-a.download = filename;
-document.body.appendChild(a);
-a.click();
-a.remove();
-URL.revokeObjectURL(url);
+const blob = new Blob([csvRows.join("
 
-};
+")], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const filename = swipes_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
 
-// Export selected employee's swipes const exportSelectedEmployeeSwipes = () => { if (!selectedSwipes || selectedSwipes.length === 0) { alert("No swipe records to export for selected employee."); return; } const headers = [ "Date", "LocaleMessageTime", "Swipe_Time", "EmployeeID", "PersonGUID", "ObjectName1", "Door", "PersonnelType", "CardNumber", "PrimaryLocation", "PartitionName2", "AdmitCode", "Direction", "CompanyName", "DiffSeconds", "DiffHHMMSS" ]; const csvRows = [headers.map((h) => quote(h)).join(",")]; selectedSwipes.forEach((s) => { const obj = { ...s }; const line = headers.map((h) => quote(obj[h] ?? "")).join(","); csvRows.push(line); }); const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const empId = selectedEmployee?.EmployeeID || "employee"; const filename = swipes_${empId}_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
+// Export selected employee's swipes const exportSelectedEmployeeSwipes = () => { if (!selectedSwipes || selectedSwipes.length === 0) { alert("No swipe records to export for selected employee."); return; } const headers = [ "Date", "LocaleMessageTime", "Swipe_Time", "EmployeeID", "PersonGUID", "ObjectName1", "Door", "PersonnelType", "CardNumber", "PrimaryLocation", "PartitionName2", "AdmitCode", "Direction", "CompanyName", "DiffSeconds", "DiffHHMMSS", ]; const csvRows = [headers.map((h) => quote(h)).join(",")]; selectedSwipes.forEach((s) => { const obj = { ...s }; const line = headers.map((h) => quote(obj[h] ?? "")).join(","); csvRows.push(line); }); const blob = new Blob([csvRows.join(" ")], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; const empId = selectedEmployee?.EmployeeID || "employee"; const filename = swipes_${empId}_${region}_${data?.start_date || ""}_to_${data?.end_date || ""}.csv; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
 
 // --- Render helpers --- const getFilteredRows = useCallback(() => { if (!regionObj) return []; const rows = regionObj.employees || []; return rows.filter((r) => { const matchesEmployeeId = !searchEmployeeId || String(r.EmployeeID || "").toLowerCase().includes(searchEmployeeId.toLowerCase()); const matchesName = !searchEmployeeName || String(r.EmployeeName || "").toLowerCase().includes(searchEmployeeName.toLowerCase()); const matchesCard = !searchCardNumber || String(r.CardNumber || "").toLowerCase().includes(searchCardNumber.toLowerCase()); return matchesEmployeeId && matchesName && matchesCard; }); }, [regionObj, searchEmployeeId, searchEmployeeName, searchCardNumber]);
 
-// compute diffs for selected swipes when opening dialog and attach diff meta
-
 const openSwipeDialogFor = (emp) => { setSelectedEmployee(emp); const swipesByDate = regionObj?.swipes_by_date || {}; const matches = []; Object.entries(swipesByDate).forEach(([d, arr]) => { arr.forEach((s) => { const matchByEmployeeId = emp.EmployeeID && s.EmployeeID && String(s.EmployeeID) === String(emp.EmployeeID); const matchByCard = emp.CardNumber && s.CardNumber && String(s.CardNumber) === String(emp.CardNumber); const matchByPersonGuid = emp.person_uid && s.PersonGUID && String(s.PersonGUID) === String(emp.person_uid); if (matchByEmployeeId || matchByCard || matchByPersonGuid) { matches.push({ ...s, Date: d }); } }); }); matches.sort((a, b) => { const ta = a.LocaleMessageTime ? new Date(a.LocaleMessageTime).getTime() : 0; const tb = b.LocaleMessageTime ? new Date(b.LocaleMessageTime).getTime() : 0; return ta - tb; });
 
-// compute diffs (difference to previous swipe) and attach meta const withDiffs = matches.map((row, idx, arr) => { let diffSeconds = null; if (idx === 0) { diffSeconds = null; } else { const cur = row.LocaleMessageTime ? new Date(row.LocaleMessageTime).getTime() : null; const prev = arr[idx - 1].LocaleMessageTime ? new Date(arr[idx - 1].LocaleMessageTime).getTime() : null; if (cur != null && prev != null) { diffSeconds = Math.max(0, Math.floor((cur - prev) / 1000)); } else { diffSeconds = null; } } return { ...row, DiffSeconds: diffSeconds, DiffHHMMSS: diffSeconds != null ? secondsToHMS(diffSeconds) : "-", }; });
+const withDiffs = matches.map((row, idx, arr) => {
+  let diffSeconds = null;
+  if (idx === 0) {
+    diffSeconds = null;
+  } else {
+    const cur = row.LocaleMessageTime ? new Date(row.LocaleMessageTime).getTime() : null;
+    const prev = arr[idx - 1].LocaleMessageTime ? new Date(arr[idx - 1].LocaleMessageTime).getTime() : null;
+    if (cur != null && prev != null) {
+      diffSeconds = Math.max(0, Math.floor((cur - prev) / 1000));
+    } else {
+      diffSeconds = null;
+    }
+  }
+  return {
+    ...row,
+    DiffSeconds: diffSeconds,
+    DiffHHMMSS: diffSeconds != null ? secondsToHMS(diffSeconds) : "-",
+  };
+});
 
 setSelectedSwipes(withDiffs);
 
-// reset override state: const distinctDates = Array.from(new Set(withDiffs.map((m) => m.Date))).sort(); // default override date remains the earliest swipe date (but will auto-change when start swipe chosen) setOverrideDate(distinctDates.length > 0 ? distinctDates[0] : ""); setOverrideStartIndex(null); setOverrideEndIndex(null); setOverrideReason(""); setSwipeDialogOpen(true); };
+const distinctDates = Array.from(new Set(withDiffs.map((m) => m.Date))).sort();
+setOverrideDate(distinctDates.length > 0 ? distinctDates[0] : "");
+setOverrideStartIndex(null);
+setOverrideEndIndex(null);
+setOverrideReason("");
+setSwipeDialogOpen(true);
+
+};
 
 const computeOverrideDurationSeconds = () => { if (!selectedSwipes || selectedSwipes.length === 0) return 0; if (overrideStartIndex == null || overrideEndIndex == null) return 0; const sIdx = Math.min(overrideStartIndex, overrideEndIndex); const eIdx = Math.max(overrideStartIndex, overrideEndIndex); const s = selectedSwipes[sIdx]; const e = selectedSwipes[eIdx]; if (!s || !e) return 0; const sa = s.LocaleMessageTime ? new Date(s.LocaleMessageTime).getTime() : null; const eb = e.LocaleMessageTime ? new Date(e.LocaleMessageTime).getTime() : null; if (!sa || !eb) return 0; return Math.max(0, Math.floor((eb - sa) / 1000)); };
 
 const applyOverride = async () => { if (!selectedEmployee) return; if (!overrideDate) { alert("Please select a date for the override."); return; } if (overrideStartIndex == null || overrideEndIndex == null) { alert("Please select both start and end swipe entries."); return; } const sIdx = Math.min(overrideStartIndex, overrideEndIndex); const eIdx = Math.max(overrideStartIndex, overrideEndIndex); const s = selectedSwipes[sIdx]; const e = selectedSwipes[eIdx]; if (!s || !e) { alert("Invalid swipe selection."); return; } const start_ts = s.LocaleMessageTime || s.Swipe_Time; const end_ts = e.LocaleMessageTime || e.Swipe_Time; if (!start_ts || !end_ts) { alert("Selected swipe rows do not have timestamps."); return; } const seconds = computeOverrideDurationSeconds(); if (seconds <= 0) { if (!window.confirm("Computed duration is 0. Do you still want to apply the override?")) { return; } }
 
-// setOverrideApplying(true);
-
- // region permission
-
-if (!auth.hasPermission(['headcount', headcount.${region}, 'global_access'])) { alert(Access denied to apply overrides for ${region.toUpperCase()}); return; } setOverrideApplying(true);
+if (!auth.hasPermission(['headcount', `headcount.${region}`, 'global_access'])) {
+  alert(`Access denied to apply overrides for ${region.toUpperCase()}`);
+  return;
+}
+setOverrideApplying(true);
 
 try {
   await axios.post(`${API_BASE}/duration/override`, {
@@ -366,10 +352,9 @@ try {
     start_ts: start_ts,
     end_ts: end_ts,
     reason: overrideReason,
-    user: "frontend_user"
+    user: "frontend_user",
   }, { timeout: 30000 });
 
-  // Instead of refreshing whole UI, fetch only the updated employee and merge
   await fetchAndMergeEmployee({ employeeId: selectedEmployee.EmployeeID, person_uid: selectedEmployee.person_uid });
 
   setSwipeDialogOpen(false);
@@ -385,107 +370,121 @@ try {
 
 const renderSwipeSelectionControls = () => { if (!selectedSwipes || selectedSwipes.length === 0) return null;
 
-// distinct dates for the override-date dropdown const distinctDates = Array.from(new Set(selectedSwipes.map((m) => m.Date))).sort();
+const distinctDates = Array.from(new Set(selectedSwipes.map((m) => m.Date))).sort();
+const swipesAll = selectedSwipes;
 
-// We'll present start/end selects which enumerate ALL swipe records (global index into selectedSwipes), // so user can pick start on one date and end on another. const swipesAll = selectedSwipes;
+return (
+  <Box sx={{ mt: 2 }}>
+    <Grid container spacing={2} alignItems="center">
+      <Grid item xs={12} md={4}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="override-date-label">Date</InputLabel>
+          <Select
+            labelId="override-date-label"
+            label="Date"
+            value={overrideDate}
+            onChange={(e) => {
+              setOverrideDate(e.target.value);
+              setOverrideStartIndex(null);
+              setOverrideEndIndex(null);
+            }}
+          >
+            {distinctDates.map((d) => (
+              <MenuItem key={d} value={d}>{isoToDDMMYYYY(d)}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Grid>
 
-return ( <Box sx={{ mt: 2 }}> <Grid container spacing={2} alignItems="center"> <Grid item xs={12} md={4}> <FormControl fullWidth size="small"> <InputLabel id="override-date-label">Date</InputLabel> <Select labelId="override-date-label" label="Date" value={overrideDate} onChange={(e) => { setOverrideDate(e.target.value); // clear selections when changing date manually to avoid confusion setOverrideStartIndex(null); setOverrideEndIndex(null); }} > {distinctDates.map((d) => ( <MenuItem key={d} value={d}>{isoToDDMMYYYY(d)}</MenuItem> ))} </Select> </FormControl> </Grid>
+      <Grid item xs={12} md={4}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="override-start-label">Start swipe</InputLabel>
+          <Select
+            labelId="override-start-label"
+            label="Start swipe"
+            value={overrideStartIndex == null ? "" : overrideStartIndex}
+            onChange={(e) => {
+              const val = e.target.value === "" ? null : Number(e.target.value);
+              setOverrideStartIndex(val);
+              if (val !== null && swipesAll[val] && swipesAll[val].Date) {
+                setOverrideDate(swipesAll[val].Date);
+              }
+            }}
+          >
+            <MenuItem value=""><em>None</em></MenuItem>
+            {swipesAll.map((s, idx) => {
+              const timeLabel = s.LocaleMessageTime ? new Date(s.LocaleMessageTime).toLocaleString() : s.Swipe_Time;
+              return (
+                <MenuItem key={`start-${idx}`} value={idx}>
+                  {s.Date} — {timeLabel} {s.Door ? `— ${s.Door}` : ""}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
+      </Grid>
 
-<Grid item xs={12} md={4}>
-      <FormControl fullWidth size="small">
-        <InputLabel id="override-start-label">Start swipe</InputLabel>
-        <Select
-          labelId="override-start-label"
-          label="Start swipe"
-          value={overrideStartIndex == null ? "" : overrideStartIndex}
-          onChange={(e) => {
-            const val = e.target.value === "" ? null : Number(e.target.value);
-            setOverrideStartIndex(val);
-            // auto-set overrideDate to the start swipe's date (useful when spanning dates)
-            if (val !== null && selectedSwipes[val] && selectedSwipes[val].Date) {
-              setOverrideDate(selectedSwipes[val].Date);
-            }
-            // clear end selection if it was before start (optional UX decision)
-            if (overrideEndIndex !== null) {
-              // keep it — user can pick any end; we won't auto-clear to avoid annoyance
-            }
-          }}
+      <Grid item xs={12} md={4}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="override-end-label">End swipe</InputLabel>
+          <Select
+            labelId="override-end-label"
+            label="End swipe"
+            value={overrideEndIndex == null ? "" : overrideEndIndex}
+            onChange={(e) => {
+              const val = e.target.value === "" ? null : Number(e.target.value);
+              setOverrideEndIndex(val);
+              if (val !== null && (!overrideDate || overrideDate === "") && swipesAll[val] && swipesAll[val].Date) {
+                setOverrideDate(swipesAll[val].Date);
+              }
+            }}
+          >
+            <MenuItem value=""><em>None</em></MenuItem>
+            {swipesAll.map((s, idx) => {
+              const timeLabel = s.LocaleMessageTime ? new Date(s.LocaleMessageTime).toLocaleString() : s.Swipe_Time;
+              return (
+                <MenuItem key={`end-${idx}`} value={idx}>
+                  {s.Date} — {timeLabel} {s.Door ? `— ${s.Door}` : ""}
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
+      </Grid>
+
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Reason (optional)"
+          value={overrideReason}
+          onChange={(e) => setOverrideReason(e.target.value)}
+        />
+      </Grid>
+
+      <Grid item xs={12} sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+        <Button
+          variant="contained"
+          onClick={applyOverride}
+          disabled={overrideApplying || !overrideDate || overrideStartIndex == null || overrideEndIndex == null}
         >
-          <MenuItem value=""><em>None</em></MenuItem>
-          {swipesAll.map((s, idx) => {
-            const timeLabel = s.LocaleMessageTime ? new Date(s.LocaleMessageTime).toLocaleString() : s.Swipe_Time;
-            return (
-              <MenuItem key={`start-${idx}`} value={idx}>
-                {s.Date} — {timeLabel} {s.Door ? `— ${s.Door}` : ""}
-              </MenuItem>
-            );
-          })}
-        </Select>
-      </FormControl>
+          {overrideApplying ? "Applying..." : `Apply Override (${secondsToHMS(computeOverrideDurationSeconds())})`}
+        </Button>
+      </Grid>
     </Grid>
 
-    <Grid item xs={12} md={4}>
-      <FormControl fullWidth size="small">
-        <InputLabel id="override-end-label">End swipe</InputLabel>
-        <Select
-          labelId="override-end-label"
-          label="End swipe"
-          value={overrideEndIndex == null ? "" : overrideEndIndex}
-          onChange={(e) => {
-            const val = e.target.value === "" ? null : Number(e.target.value);
-            setOverrideEndIndex(val);
-            // if overrideDate not set (rare), set to end swipe date for safety
-            if (val !== null && (!overrideDate || overrideDate === "") && selectedSwipes[val] && selectedSwipes[val].Date) {
-              setOverrideDate(selectedSwipes[val].Date);
-            }
-          }}
-        >
-          <MenuItem value=""><em>None</em></MenuItem>
-          {swipesAll.map((s, idx) => {
-            const timeLabel = s.LocaleMessageTime ? new Date(s.LocaleMessageTime).toLocaleString() : s.Swipe_Time;
-            return (
-              <MenuItem key={`end-${idx}`} value={idx}>
-                {s.Date} — {timeLabel} {s.Door ? `— ${s.Door}` : ""}
-              </MenuItem>
-            );
-          })}
-        </Select>
-      </FormControl>
-    </Grid>
+    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+      Tip: start and end swipe selectors now include all swipe records for this employee across the selected range — you can pick start on one date and end on another.
+    </Typography>
+  </Box>
+);
 
-    <Grid item xs={12}>
-      <TextField
-        fullWidth
-        size="small"
-        label="Reason (optional)"
-        value={overrideReason}
-        onChange={(e) => setOverrideReason(e.target.value)}
-      />
-    </Grid>
-
-    <Grid item xs={12} sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-      <Button
-        variant="contained"
-        onClick={applyOverride}
-        disabled={overrideApplying || !overrideDate || overrideStartIndex == null || overrideEndIndex == null}
-      >
-        {overrideApplying ? "Applying..." : `Apply Override (${secondsToHMS(computeOverrideDurationSeconds())})`}
-      </Button>
-    </Grid>
-  </Grid>
-
-  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-    Tip: start and end swipe selectors now include all swipe records for this employee across the selected range — you can pick start on one date and end on another.
-  </Typography>
-</Box>
-
-); };
+};
 
 const renderTable = () => { if (!regionObj) return <Typography>No data for selected region.</Typography>;
 
 const dates = regionObj.dates || [];
 const rows = getFilteredRows();
-
 const weekStarts = computeWeekStarts(dates);
 
 return (
@@ -555,7 +554,7 @@ return (
 
 };
 
-// --- JSX UI (top controls) --- return ( <Box sx={{ p: 3, width: "100%", maxWidth: "100vw", boxSizing: "border-box", background: "linear-gradient(180deg,#f7fbff,#ffffff)", minHeight: "100vh", }} > <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}> <Box sx={{ border: "2px solid #0ea5a4", background: "linear-gradient(90deg,#f0fdfa,#e6fffa)", borderRadius: 2, px: 3, py: 1.2, width: { xs: "100%", sm: "70%", md: "50%" }, textAlign: "center", boxShadow: 1, }} > <Typography variant="h5" sx={{ fontWeight: 800, color: "#073b4c" }}> Duration Reports with Compliance & Category </Typography> </Box> </Box>
+return ( <Box sx={{ p: 3, width: "100%", maxWidth: "100vw", boxSizing: "border-box", background: "linear-gradient(180deg,#f7fbff,#ffffff)", minHeight: "100vh", }} > <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}> <Box sx={{ border: "2px solid #0ea5a4", background: "linear-gradient(90deg,#f0fdfa,#e6fffa)", borderRadius: 2, px: 3, py: 1.2, width: { xs: "100%", sm: "70%", md: "50%" }, textAlign: "center", boxShadow: 1, }} > <Typography variant="h5" sx={{ fontWeight: 800, color: "#073b4c" }}> Duration Reports with Compliance & Category </Typography> </Box> </Box>
 
 <Grid container spacing={2}>
     <Grid item xs={12}>
@@ -638,7 +637,7 @@ return (
                       type="date"
                       fullWidth
                       InputLabelProps={{ shrink: true }}
-                       value={startDate}
+                      value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       size="small"
                       inputRef={startDateRef}
@@ -838,7 +837,6 @@ return (
     </Grid>
   </Grid>
 
-  {/* Swipe dialog */}
   <Dialog open={swipeDialogOpen} onClose={() => setSwipeDialogOpen(false)} fullWidth maxWidth="xl">
     <DialogTitle>
       Swipe records for: {selectedEmployee ? `${selectedEmployee.EmployeeID || ""} — ${selectedEmployee.EmployeeName || ""}` : ""}
