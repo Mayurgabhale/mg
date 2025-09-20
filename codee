@@ -1,3 +1,23 @@
+/* at the end of app.css */
+.pune-dashboard * {
+  all: unset;
+  box-sizing: border-box;
+}
+
+.pune-dashboard table {
+  border-collapse: collapse;
+}
+
+.pune-dashboard th,
+.pune-dashboard td {
+  color: inherit;
+  font-family: inherit;
+}
+
+
+
+
+
 /* Prevent global styles from affecting the dashboard */
 .pune-dashboard * {
   all: unset; /* optional, resets inherited styles */
