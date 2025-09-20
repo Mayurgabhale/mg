@@ -1,4 +1,12 @@
 
+// Dialog table header
+<TableHead>
+  <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
+    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>Type</TableCell>
+    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>Name</TableCell>
+    <TableCell sx={{ fontWeight: "bold", color: "#1976d2" }}>Time</TableCell>
+  </TableRow>
+</TableHead>
 
 
 
