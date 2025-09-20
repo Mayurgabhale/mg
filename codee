@@ -1,76 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import './ZoneDetailsTable.css';
+// --- new mapDoorToZone ---
+function mapDoorToZone(rawDoor, rawDir) {
+  const key = normalizeZoneKey(rawDoor, rawDir);
+  const zone = doorZoneMap[key];
 
-function ZoneDetailsTable({ data = {}, searchTerm: outerSearch = '' }) {
-  const [searchTerm, setSearchTerm] = useState(outerSearch);
-
-  // 1) Sort zones by descending count (memoized)
-  const sortedEntries = useMemo(() => {
-    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
-  }, [data]);
-
-  // Keep zone labels exactly as they come from the server
-  const getZoneLabel = (zone) => zone;
-
-  // 3) Filter predicate (safe against missing names)
-  const matchesSearch = (emp) => (emp.ObjectName1 || '').toLowerCase().includes(searchTerm.trim().toLowerCase());
-
-  // 4) Handler for search input
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-
-  if (!sortedEntries.length) {
-    return <p>No zone detail data available.</p>;
+  if (!zone) {
+    if (!warnedKeys.has(key)) {
+      console.warn('⛔ Unmapped door–direction key:', key);
+      warnedKeys.add(key);
+    }
+    return 'Unknown Zone';
   }
 
-  return (
-    <div className="zone-cards">
-      <div style={{ marginBottom: '1rem', textAlign: 'right' }}>
-        <input
-          type="text"
-          placeholder="Search employee..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          style={{
-            padding: '0.4rem 0.8rem',
-            fontSize: '0.9rem',
-            borderRadius: 4,
-            border: '1px solid #ccc',
-          }}
-        />
-      </div>
-
-      {sortedEntries.map(([zone, emps]) => {
-        const filteredEmps = emps.filter(matchesSearch);
-        if (filteredEmps.length === 0) return null;
-
-        return (
-          <div key={zone} className="zone-card">
-            <div className="zone-header">
-              <h3>{getZoneLabel(zone)}</h3>
-              <span className="zone-badge">Total: {filteredEmps.length}</span>
-            </div>
-            <table className="zone-table">
-              <thead>
-                <tr>
-                  <th>Name</th><th>Swipe Time</th><th>Type</th><th>Door Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEmps.map((emp, i) => (
-                  <tr key={`${emp.EmployeeID || emp.CardNumber || i}-${i}`}>
-                    <td>{emp.ObjectName1}</td>
-                    <td>{emp.Swipe_Time}</td>
-                    <td>{emp.PersonnelType}</td>
-                    <td>{emp.door}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      })}
-    </div>
-  );
+  // IMPORTANT: return the zone exactly as defined in doorZoneMap
+  return zone;
 }
-
-export default React.memo(ZoneDetailsTable);
