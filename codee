@@ -4,6 +4,8 @@
 
 
 
+- <Route path="/monthlySummaryPage" element={<monthlySummaryPage ertStatus={liveData.monthlySummaryPage} />} />
++ <Route path="/monthlySummaryPage" element={<MonthlySummaryPage />} />
 
 
 
