@@ -1,4 +1,39 @@
 
+
+
+
+
+
+....
+
+
+// Hover effect for rows
+<TableRow
+  hover
+  key={row.id}
+  sx={{
+    "&:hover": { backgroundColor: "#f1f9ff" },
+  }}
+>
+
+
+
+......
+
+// Table header (light theme)
+<TableHead>
+  <TableRow sx={{ backgroundColor: "#e3f2fd" }}>
+    {columns.map((col) => (
+      <TableCell key={col.id} sx={{ color: "#1976d2", fontWeight: "bold" }}>
+        {col.label}
+      </TableCell>
+    ))}
+  </TableRow>
+</TableHead>
+
+
+....
+
 // Paper / Card background
 <Paper
   elevation={3}
