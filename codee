@@ -1,16 +1,57 @@
-// --- new mapDoorToZone ---
-function mapDoorToZone(rawDoor, rawDir) {
-  const key = normalizeZoneKey(rawDoor, rawDir);
-  const zone = doorZoneMap[key];
+// --- simplified per-event loop inside buildOccupancy ---
+for (const evt of allEvents) {
+  const {
+    EmployeeID, PersonGUID,
+    ObjectName1, PersonnelType,
+    CardNumber, Dateonly,
+    Swipe_Time, Direction, Door
+  } = evt;
 
-  if (!zone) {
-    if (!warnedKeys.has(key)) {
-      console.warn('⛔ Unmapped door–direction key:', key);
-      warnedKeys.add(key);
-    }
-    return 'Unknown Zone';
+  const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
+  const zoneRaw  = mapDoorToZone(Door, Direction);
+
+  // 1) If we can’t map door+direction to a valid zone, skip this event entirely.
+  if (zoneRaw === 'Unknown Zone') {
+    continue;
   }
 
-  // IMPORTANT: return the zone exactly as defined in doorZoneMap
-  return zone;
+  const zoneLower = zoneRaw.toLowerCase();
+
+  // OutDirection: eviction only for the real "Out of office"
+  if (Direction === 'OutDirection') {
+    if (zoneLower === 'out of office') {
+      uniquePeople.delete(dedupKey);
+      delete current[dedupKey];
+    } else {
+      // Keep them in headcount, update last-seen
+      uniquePeople.set(dedupKey, PersonnelType);
+      current[dedupKey] = {
+        Dateonly, Swipe_Time,
+        EmployeeID, ObjectName1, CardNumber,
+        PersonnelType,
+        zone: zoneRaw,
+        door: Door,
+        Direction
+      };
+    }
+    continue;
+  }
+
+  // InDirection → normal check-in
+  if (Direction === 'InDirection') {
+    uniquePeople.set(dedupKey, PersonnelType);
+    current[dedupKey] = {
+      Dateonly, Swipe_Time,
+      EmployeeID, ObjectName1, CardNumber,
+      PersonnelType,
+      zone: zoneRaw,
+      door: Door,
+      Direction
+    };
+    continue;
+  }
+
+  // Catch-all eviction
+  uniquePeople.delete(dedupKey);
+  delete current[dedupKey];
 }
