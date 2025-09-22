@@ -1,5 +1,3 @@
-in this table all record are disply. but we want disply only 25, afte tis create scroll bar 
-pok
 // src/components/ZoneDetailsTable.jsx
 
 import React, { useMemo } from 'react';
@@ -19,7 +17,6 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
     return <p>No zone detail data available.</p>;
   }
 
-
   return (
     <div className="zone-cards">
       {sortedEntries.map(([zone, emps]) => {
@@ -36,30 +33,33 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
               <span className="zone-badge">Total: {filteredEmps.length}</span>
             </div>
 
-            <table className="zone-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>EmployeeID</th>
-                  <th>Date</th>
-                  <th>Swipe Time</th>
-                  <th>Type</th>
-                  <th>Door Name</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEmps.map((emp, i) => (
-                  <tr key={`${emp.EmployeeID}-${i}`}>
-                    <td>{emp.ObjectName1}</td>
-                    <td>{emp.EmployeeID}</td>
-                    <td>{emp.Dateonly}</td>
-                    <td>{emp.Swipe_Time}</td>
-                    <td>{emp.PersonnelType}</td>
-                    <td>{emp.door}</td>
+            {/* Scrollable wrapper */}
+            <div className="table-container">
+              <table className="zone-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>EmployeeID</th>
+                    <th>Date</th>
+                    <th>Swipe Time</th>
+                    <th>Type</th>
+                    <th>Door Name</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredEmps.slice(0, 25).map((emp, i) => (
+                    <tr key={`${emp.EmployeeID}-${i}`}>
+                      <td>{emp.ObjectName1}</td>
+                      <td>{emp.EmployeeID}</td>
+                      <td>{emp.Dateonly}</td>
+                      <td>{emp.Swipe_Time}</td>
+                      <td>{emp.PersonnelType}</td>
+                      <td>{emp.door}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         );
       })}
@@ -67,3 +67,33 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
   );
 }
 
+
+
+
+
+....
+
+.table-container {
+  max-height: 400px; /* adjust as needed */
+  overflow-y: auto;
+  border: 1px solid #ddd;
+}
+
+.zone-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.zone-table th,
+.zone-table td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.zone-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f9f9f9;
+  z-index: 1;
+}
