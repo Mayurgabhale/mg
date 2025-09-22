@@ -1,44 +1,160 @@
-const isInFilterZone = (m, filterZone) => {
-  if (!isPresent(m)) return false;
-  const live = (getLiveLocation(m) || '').toLowerCase();
 
-  if (filterZone === 'Podium Floor') {
-    // Map red/green zone to Podium
-    return live.includes('podium') || live.includes('red zone') || live.includes('green zone');
+// src/components/ZoneDetailsTable.jsx
+
+import React, { useMemo } from 'react';
+import './ZoneDetailsTable.css';
+
+export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
+  const sortedEntries = useMemo(() => {
+    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
+  }, [data]);
+
+  const matchesSearch = (emp) =>
+    emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
+
+  if (!sortedEntries.length) {
+    return <p>No zone detail data available.</p>;
   }
 
-  if (filterZone === '2nd Floor') {
-    return live.includes('2nd');
-  }
+  return (
+    <div className="zone-cards">
+      {sortedEntries.map(([zone, emps]) => {
+        const filteredEmps = emps.filter(matchesSearch);
+        if (filteredEmps.length === 0) {
+          return null;
+        }
 
-  if (filterZone === 'Tower B') {
-    return live.includes('tower b');
-  }
+        return (
+          <div key={zone} className="zone-card">
+            <div className="zone-header">
+              <h3>{zone}</h3>
+              <span className="zone-badge">Total: {filteredEmps.length}</span>
+            </div>
 
-  return false;
-};
+            {/* Single table with sticky header */}
+            <div className="table-container">
+              <table className="zone-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>EmployeeID</th>
+                    <th>Date</th>
+                    <th>Swipe Time</th>
+                    <th>Type</th>
+                    <th>Door Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEmps.map((emp, i) => (
+                    <tr key={`${emp.EmployeeID}-${i}`}>
+                      <td>{emp.ObjectName1}</td>
+                      <td>{emp.EmployeeID}</td>
+                      <td>{emp.Dateonly}</td>
+                      <td>{emp.Swipe_Time}</td>
+                      <td>{emp.PersonnelType}</td>
+                      <td>{emp.door}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
+
+/* ZoneDetailsTable.css */
+
+/* make cards dark and text light */
+.zone-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.zone-card {
+  flex: 1 1 300px;
+  background-color: var(--wu-gray-dark);
+  border: 1px solid var(--wu-yellow);
+  border-radius: 4px;
+  color: #fff;
+  padding: 1rem;
+}
+
+.zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.zone-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--wu-yellow);
+}
+
+.zone-badge {
+  background-color: var(--wu-yellow);
+  color: #000;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+}
+
+.zone-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.zone-table th,
+.zone-table td {
+  border: 1px solid #444;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.zone-table th {
+  background-color: #333;
+  color: #fff;
+}
+
+.zone-table tbody tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
+.zone-table tbody tr:hover {
+  background-color: #3a3a3a;
+}
+/* ///////////////////// */
 
 
 
 
 
 
-.
+ 
+/* Wrapper for scrollable table */
+.table-container {
+  max-height: 600px; /* shows ~25 rows */
+  overflow-y: auto;
+  border: 1px solid #444;
+}
+
+/* Scrollable tbody */
+ .table-body-scroll {
+  max-height: 600px; 
+  overflow-y: auto;
+} 
+
+.table-body-scroll table {
+  border-collapse: collapse;
+  width: 100%;
+} 
 
 
-
-const members = filterZone
-  ? membersRaw.filter(m => isInFilterZone(m, filterZone))
-  : membersRaw;
-
-
-
-
-
-...
-.....
-..
-
-
-change this
-matchesFilterZone(getLiveLocation(m), filterZone)
