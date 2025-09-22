@@ -1,10 +1,4 @@
-in this one issue is select box, search box, and select date under text color not disply, 
-selext box abd searcg box , select date background color is white, tast way not diplsy text color and background color both are white 
-so thats way text not diplsy, correct this carefully, 
-note dont change anything just add color ok carefully
-
-
-          <Card
+<Card
   elevation={4}
   sx={{
     background: "linear-gradient(145deg, #fffbe6, #fff9db)",
@@ -24,7 +18,7 @@ note dont change anything just add color ok carefully
             labelId="region-select-label"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            sx={{ bgcolor: "#fff", borderRadius: 1 ,color:"#000"}}
+            sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
           >
             {REGIONS.map((r) => (
               <MenuItem key={r.value} value={r.value}>
@@ -44,7 +38,7 @@ note dont change anything just add color ok carefully
             value={city}
             onChange={(e) => setCity(e.target.value)}
             renderValue={(v) => v || ""}
-            sx={{ bgcolor: "#fff", borderRadius: 1 ,color:"#000"}}
+            sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
           >
             <MenuItem value="">
               <em>All</em>
@@ -68,45 +62,8 @@ note dont change anything just add color ok carefully
           placeholder="Or type manually"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          sx={{ mt: 1, bgcolor: "#fff", borderRadius: 1,color:"#000" }}
+          sx={{ mt: 1, bgcolor: "#fff", borderRadius: 1, color: "#000" }}
         />
-      </Grid>
-
-      {/* Range / Single Day toggle */}
-      <Grid
-        item
-        xs={12}
-        md={5}
-        sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
-      >
-        <Button
-          startIcon={<DateRangeIcon />}
-          variant={useRange ? "contained" : "outlined"}
-          onClick={() => setUseRange(true)}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            bgcolor: useRange ? "#FFD700" : "transparent",
-            color: useRange ? "#000" : "#444",
-            "&:hover": { bgcolor: useRange ? "#e6c200" : "#f7f7f7" },
-          }}
-        >
-          Range
-        </Button>
-        <Button
-          startIcon={<DateRangeIcon />}
-          variant={!useRange ? "contained" : "outlined"}
-          onClick={() => setUseRange(false)}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            bgcolor: !useRange ? "#FFD700" : "transparent",
-            color: !useRange ? "#000" : "#444",
-            "&:hover": { bgcolor: !useRange ? "#e6c200" : "#f7f7f7" },
-          }}
-        >
-          Single Day
-        </Button>
       </Grid>
 
       {/* Date Pickers */}
@@ -123,7 +80,7 @@ note dont change anything just add color ok carefully
               inputRef={startDateRef}
               InputLabelProps={{ shrink: true }}
               InputProps={{
-                 
+                sx: { color: "#000" },
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
@@ -136,7 +93,7 @@ note dont change anything just add color ok carefully
                   </InputAdornment>
                 ),
               }}
-              sx={{ bgcolor: "#fff", borderRadius: 1 ,color:"#0000"}}
+              sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
             />
           </Grid>
           <Grid item xs={12} md={3}>
@@ -150,6 +107,7 @@ note dont change anything just add color ok carefully
               inputRef={endDateRef}
               InputLabelProps={{ shrink: true }}
               InputProps={{
+                sx: { color: "#000" },
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
@@ -162,7 +120,7 @@ note dont change anything just add color ok carefully
                   </InputAdornment>
                 ),
               }}
-              sx={{ bgcolor: "#fff", borderRadius: 1 }}
+              sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
             />
           </Grid>
         </>
@@ -178,6 +136,7 @@ note dont change anything just add color ok carefully
             inputRef={singleDateRef}
             InputLabelProps={{ shrink: true }}
             InputProps={{
+              sx: { color: "#000" },
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
@@ -190,98 +149,10 @@ note dont change anything just add color ok carefully
                 </InputAdornment>
               ),
             }}
-            sx={{ bgcolor: "#fff", borderRadius: 1 }}
+            sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
           />
         </Grid>
       )}
-
-      {/* Run / Clear / Exports */}
-      <Grid
-        item
-        xs={12}
-        md={6}
-        sx={{ display: "flex", gap: 1, alignItems: "center" }}
-      >
-        <Button
-          variant="contained"
-          startIcon={<SearchIcon />}
-          onClick={() => fetchDurations()}
-          disabled={loading}
-          sx={{
-            bgcolor: "#1976d2",
-            "&:hover": { bgcolor: "#115293" },
-            borderRadius: 2,
-            textTransform: "none",
-          }}
-        >
-          {loading ? "Loading..." : "Run"}
-        </Button>
-
-        <Button
-          variant="outlined"
-          startIcon={<ClearIcon />}
-          onClick={() => {
-            setStartDate("");
-            setEndDate("");
-            setSingleDate("");
-            setCity("");
-            setData(null);
-            setError("");
-            setSearchEmployeeId("");
-            setSearchEmployeeName("");
-            setSearchCardNumber("");
-          }}
-          sx={{ borderRadius: 2, textTransform: "none" }}
-        >
-          Clear
-        </Button>
-
-        <Tooltip title="Export Summary CSV">
-          <span>
-            <IconButton
-              onClick={exportSummaryCsv}
-              disabled={!regionObj || (regionObj.employees || []).length === 0}
-              sx={{ color: "#e6c200" }}
-            >
-              <DownloadIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Export Full Report">
-          <span>
-            <Button
-              variant="contained"
-              onClick={exportReportCsv}
-              disabled={!regionObj || (regionObj.employees || []).length === 0}
-              sx={{
-                bgcolor: "#FFD700",
-                color: "#000",
-                "&:hover": { bgcolor: "#e6c200" },
-                borderRadius: 2,
-                textTransform: "none",
-              }}
-            >
-              Export Report
-            </Button>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Export Raw Swipes">
-          <span>
-            <Button
-              variant="outlined"
-              onClick={exportSwipesCsv}
-              disabled={
-                !regionObj || Object.keys(regionObj.swipes_by_date || {}).length === 0
-              }
-              sx={{ borderRadius: 2, textTransform: "none" }}
-            >
-              Export Swipes
-            </Button>
-          </span>
-        </Tooltip>
-      </Grid>
 
       {/* Search Fields */}
       <Grid item xs={12} md={4}>
@@ -292,7 +163,7 @@ note dont change anything just add color ok carefully
           onChange={(e) => setSearchEmployeeId(e.target.value)}
           size="small"
           helperText="Type an ID and click Run"
-          sx={{ bgcolor: "#fff", borderRadius: 1 }}
+          sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
         />
       </Grid>
       <Grid item xs={12} md={4}>
@@ -303,7 +174,7 @@ note dont change anything just add color ok carefully
           onChange={(e) => setSearchEmployeeName(e.target.value)}
           size="small"
           helperText="Type name and click Run"
-          sx={{ bgcolor: "#fff", borderRadius: 1 }}
+          sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
         />
       </Grid>
       <Grid item xs={12} md={4}>
@@ -314,10 +185,9 @@ note dont change anything just add color ok carefully
           onChange={(e) => setSearchCardNumber(e.target.value)}
           size="small"
           helperText="Search by card number"
-          sx={{ bgcolor: "#fff", borderRadius: 1 }}
+          sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
         />
       </Grid>
     </Grid>
   </CardContent>
 </Card>
-         
