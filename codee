@@ -1,27 +1,91 @@
+i want to disply all table in two two in rwo tow 
+in tis only first tow table then one table one then one then two 
+i want two two on one row not one 
+
 /* Keep table full width but scroll vertically */
 .table-container {
-  max-height: 300px; /* adjust height as needed */
+  max-height: 700px; /* adjust height as needed */
   overflow-y: auto;
   overflow-x: hidden; /* optional, prevent horizontal scroll */
   border: 1px solid #555; /* optional, subtle border */
   border-radius: 4px;
 }
 
-/* Optional: keep header sticky while scrolling */
+
+
+
 .table-container table thead th {
   position: sticky;
   top: 0;
   background-color: #333; /* match existing header color */
   z-index: 1;
 
+}
+/* make cards dark and text light */
+.zone-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.zone-card {
+  flex: 1 1 300px;
+  background-color: var(--wu-gray-dark);
+  border: 1px solid var(--wu-yellow);
+  border-radius: 4px;
+  color: #fff;
+  padding: 1rem;
+}
+
+.zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.zone-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--wu-yellow);
+}
+
+.zone-badge {
+  background-color: var(--wu-yellow);
+  color: #000;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+}
+
+.zone-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.zone-table th,
+.zone-table td {
+  border: 1px solid #444;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.zone-table th {
+  background-color: #333;
+  color: #fff;
+}
+
+.zone-table tbody tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
+.zone-table tbody tr:hover {
+  background-color: #3a3a3a;
+}
 
 
 
-
-
-
-
-
+/components/ZoneDetailsTable.jsx
 
 import React, { useMemo } from 'react';
 import './ZoneDetailsTable.css';
@@ -85,72 +149,4 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
       })}
     </div>
   );
-}
-
-
-
-
-
-/* ZoneDetailsTable.css */
-
-/* make cards dark and text light */
-.zone-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.zone-card {
-  flex: 1 1 300px;
-  background-color: var(--wu-gray-dark);
-  border: 1px solid var(--wu-yellow);
-  border-radius: 4px;
-  color: #fff;
-  padding: 1rem;
-}
-
-.zone-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.zone-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  color: var(--wu-yellow);
-}
-
-.zone-badge {
-  background-color: var(--wu-yellow);
-  color: #000;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  font-weight: bold;
-}
-
-.zone-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.zone-table th,
-.zone-table td {
-  border: 1px solid #444;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.zone-table th {
-  background-color: #333;
-  color: #fff;
-}
-
-.zone-table tbody tr:nth-child(even) {
-  background-color: #2a2a2a;
-}
-
-.zone-table tbody tr:hover {
-  background-color: #3a3a3a;
 }
