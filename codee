@@ -1,3 +1,7 @@
+in this one issue is select box, search box, and select date under text color not disply, 
+selext box abd searcg box , select date background color is white, tast way not diplsy text color and background color both are white 
+so thats way text not diplsy, correct this carefully, 
+
 <Card
   elevation={4}
   sx={{
