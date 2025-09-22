@@ -1,39 +1,291 @@
-/* Wrapper for scrollable table */
-.table-container {
-  max-height: 600px; /* shows ~25 rows */
-  overflow-y: auto;
-  border: 1px solid #444;
-}
+ <Grid container spacing={2} sx={{backgroundColor: "#ffffff"}}>
+        <Grid item xs={12} sx={{backgroundColor: "#ffffff", color:"#e02500"}}>
+          <Card elevation={3} sx={{backgroundColor: "#ffffff", color:"#0ff739"}}>
+            <CardContent sx={{backgroundColor: "#ffffff", color:"##0546eb"}}>
+              <Grid container spacing={2} alignItems="center" sx={{backgroundColor: "#ffffff", color:"##0546eb"}}>
+                <Grid item xs={12} md={2} sx={{backgroundColor: "#ffffff", color:"##0546eb"}}>
+                  <FormControl fullWidth size="small" >
+                    <InputLabel id="region-select-label">Region</InputLabel>
+                    <Select
+                      labelId="region-select-label"
+                      label="Region"
+                      value={region}
+                      onChange={(e) => setRegion(e.target.value)}
+                    >
+                      {REGIONS.map((r) => (
+                        <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
 
-/* Table */
-.zone-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+                <Grid item xs={12} md={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="city-select-label">City / Partition </InputLabel>
+                    <Select
+                      labelId="city-select-label"
+                      label="City / Partition (optional)"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      renderValue={(v) => v || ""}
+                    >
+                      <MenuItem value=""><em>All</em></MenuItem>
+                      {citiesForRegion && citiesForRegion.length > 0 ? (
+                        citiesForRegion.map((c, idx) => (
+                          <MenuItem key={idx} value={c}>{c}</MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled value="">
+                          No predefined cities (you can type in the input below instead)
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Or type to override / fuzzy-match"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    sx={{ mt: 1 }}
+                  />
+                </Grid>
 
-.zone-table th,
-.zone-table td {
-  border: 1px solid #444;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  text-align: left;
-  min-width: 100px; /* helps keep alignment consistent */
-}
+                <Grid item xs={12} md={5} sx={{ display: "flex", gap: 1, justifyContent: "flex-end", alignItems: "center" }}>
+                  <Button
+                    startIcon={<DateRangeIcon />}
+                    variant={useRange ? "contained" : "outlined"}
+                    onClick={() => setUseRange(true)}
+                    color="warning"
+                  >
+                    Range
+                  </Button>
+                  <Button
+                    startIcon={<DateRangeIcon />}
+                    variant={!useRange ? "contained" : "outlined"}
+                    onClick={() => setUseRange(false)}
+                    color="warning"
+                  >
+                    Single Day
+                  </Button>
+                </Grid>
 
-/* Sticky header */
-.zone-table thead th {
-  position: sticky;
-  top: 0;
-  background-color: #333;
-  color: #fff;
-  z-index: 2;
-}
+                {useRange ? (
+                  <>
+                    <Grid item xs={12} md={3}>
+                      <FormControl fullWidth size="small">
+                        <TextField
+                          label="Start date"
+                          type="date"
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          size="small"
+                          inputRef={startDateRef}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openNativeDatePicker(startDateRef)}
+                                  sx={{ color: "#FFD700" }}
+                                >
+                                  <DateRangeIcon />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{ bgcolor: "#30302e" }}
+                        />
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <FormControl fullWidth size="small">
+                        <TextField
+                          label="End date"
+                          type="date"
+                          fullWidth
+                          InputLabelProps={{ shrink: true }}
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          size="small"
+                          inputRef={endDateRef}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => openNativeDatePicker(endDateRef)}
+                                  sx={{ color: "#FFD700" }}
+                                >
+                                  <DateRangeIcon />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{ bgcolor: "#30302e" }}
+                        />
+                      </FormControl>
+                    </Grid>
+                  </>
+                ) : (
+                  <Grid item xs={12} md={3}>
+                    <FormControl fullWidth size="small">
+                      <TextField
+                        label="Date"
+                        type="date"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        value={singleDate}
+                        onChange={(e) => setSingleDate(e.target.value)}
+                        size="small"
+                        inputRef={singleDateRef}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                size="small"
+                                onClick={() => openNativeDatePicker(singleDateRef)}
+                                sx={{ color: "#FFD700" }}
+                              >
+                                <DateRangeIcon />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{ bgcolor: "transparent" }}
+                      />
+                    </FormControl>
+                  </Grid>
+                )}
 
-/* Row striping + hover */
-.zone-table tbody tr:nth-child(even) {
-  background-color: #2a2a2a;
-}
+                <Grid item xs={12} md={6} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<SearchIcon />}
+                    onClick={() => fetchDurations()}
+                    disabled={loading}
+                    color="primary"
+                  >
+                    {loading ? "Loading..." : "Run"}
+                  </Button>
 
-.zone-table tbody tr:hover {
-  background-color: #3a3a3a;
-}
+                  <Button
+                    variant="outlined"
+                    startIcon={<ClearIcon />}
+                    onClick={() => {
+                      setStartDate("");
+                      setEndDate("");
+                      setSingleDate("");
+                      setCity("");
+                      setData(null);
+                      setError("");
+                      setSearchEmployeeId("");
+                      setSearchEmployeeName("");
+                      setSearchCardNumber("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+
+                  <Tooltip title="Export Summary CSV (per-person)">
+                    <span>
+                      <IconButton onClick={exportSummaryCsv} disabled={!regionObj || (regionObj.employees || []).length === 0}>
+                        <DownloadIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+
+                  <Tooltip title="Export full report (Sr.No, ... Compliance)">
+                    <span>
+                      <Button variant="contained" onClick={exportReportCsv} disabled={!regionObj || (regionObj.employees || []).length === 0}>
+                        Export Report
+                      </Button>
+                    </span>
+                  </Tooltip>
+
+                  <Tooltip title="Export raw swipes for this region/date range">
+                    <span>
+                      <Button variant="outlined" onClick={exportSwipesCsv} disabled={!regionObj || Object.keys(regionObj.swipes_by_date || {}).length === 0}>
+                        Export Swipes
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Search Employee ID"
+                    value={searchEmployeeId}
+                    onChange={(e) => setSearchEmployeeId(e.target.value)}
+                    size="small"
+                    helperText="Type an ID and click Run to fetch only that employee (server-side filter)"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Search Employee Name"
+                    value={searchEmployeeName}
+                    onChange={(e) => setSearchEmployeeName(e.target.value)}
+                    size="small"
+                    helperText="Type name and click Run to fetch only matching employees"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Search Card Number"
+                    value={searchCardNumber}
+                    onChange={(e) => setSearchCardNumber(e.target.value)}
+                    size="small"
+                    helperText="Search card number (server-side filter)"
+                  />
+                </Grid>
+
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          {/* <Paper sx={{ p: 2 }}> */}
+          <Paper
+            elevation={3}
+            sx={{
+              padding: 2,
+              marginBottom: 3,
+              borderRadius: 3,
+              backgroundColor: "#ffffff",
+              boxShadow: "0px 2px 8px rgba(0,0,0,0.06)",
+              color:"#000"
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {data ? `Showing ${region.toUpperCase()} — ${data.start_date} → ${data.end_date}` : "No results yet"}
+              </Typography>
+            </Box>
+
+            {loading && (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            )}
+
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+
+            {!loading && !error && (
+              <Box sx={{ mt: 2 }}>
+                {renderTable()}
+              </Box>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
