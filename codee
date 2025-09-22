@@ -1,3 +1,44 @@
+.zone-cards {
+  display: grid;
+  grid-template-columns: 1fr; /* default: single column on small screens */
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  /* Two columns from tablets/laptops up */
+  .zone-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.zone-card {
+  background-color: var(--wu-gray-dark);
+  border: 1px solid var(--wu-yellow);
+  border-radius: 4px;
+  color: #fff;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-container {
+  max-height: 700px; /* vertical scroll if table too tall */
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+.table-container table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #333;
+  z-index: 1;
+}
+
+
+
+...
 i want to disply all table in two two in rwo tow 
 in tis only first tow table then one table one then one then two 
 i want two two on one row not one 
