@@ -3,6 +3,7 @@ selext box abd searcg box , select date background color is white, tast way not 
 so thats way text not diplsy, correct this carefully, 
 note dont change anything just add color ok carefully
 
+
           <Card
   elevation={4}
   sx={{
@@ -23,7 +24,7 @@ note dont change anything just add color ok carefully
             labelId="region-select-label"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            sx={{ bgcolor: "#fff", borderRadius: 1 }}
+            sx={{ bgcolor: "#fff", borderRadius: 1 ,color:"#000"}}
           >
             {REGIONS.map((r) => (
               <MenuItem key={r.value} value={r.value}>
@@ -43,7 +44,7 @@ note dont change anything just add color ok carefully
             value={city}
             onChange={(e) => setCity(e.target.value)}
             renderValue={(v) => v || ""}
-            sx={{ bgcolor: "#fff", borderRadius: 1 }}
+            sx={{ bgcolor: "#fff", borderRadius: 1 ,color:"#000"}}
           >
             <MenuItem value="">
               <em>All</em>
@@ -67,7 +68,7 @@ note dont change anything just add color ok carefully
           placeholder="Or type manually"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          sx={{ mt: 1, bgcolor: "#fff", borderRadius: 1 }}
+          sx={{ mt: 1, bgcolor: "#fff", borderRadius: 1,color:"#000" }}
         />
       </Grid>
 
@@ -122,6 +123,7 @@ note dont change anything just add color ok carefully
               inputRef={startDateRef}
               InputLabelProps={{ shrink: true }}
               InputProps={{
+                 
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
@@ -134,7 +136,7 @@ note dont change anything just add color ok carefully
                   </InputAdornment>
                 ),
               }}
-              sx={{ bgcolor: "#fff", borderRadius: 1 }}
+              sx={{ bgcolor: "#fff", borderRadius: 1 ,color:"#0000"}}
             />
           </Grid>
           <Grid item xs={12} md={3}>
@@ -318,3 +320,4 @@ note dont change anything just add color ok carefully
     </Grid>
   </CardContent>
 </Card>
+         
