@@ -1,6 +1,69 @@
+in this table all record are disply. but we want disply only 25, afte tis create scroll bar 
+pok
+// src/components/ZoneDetailsTable.jsx
 
-      <Grid container spacing={2} sx={{backgroundColor: "#ffffff"}}>
-        <Grid item xs={12}>
-          <Card elevation={3}>
-            <CardContent sx={{backgroundColor: "#ffffff"}}>
-              <Grid container spacing={2} alignItems="center">
+import React, { useMemo } from 'react';
+import './ZoneDetailsTable.css';
+
+export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
+  // 1) Sort zones by descending count
+  const sortedEntries = useMemo(() => {
+    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
+  }, [data]);
+
+  // 2) Filter predicate (case‐insensitive)
+  const matchesSearch = (emp) =>
+    emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
+
+  if (!sortedEntries.length) {
+    return <p>No zone detail data available.</p>;
+  }
+
+
+  return (
+    <div className="zone-cards">
+      {sortedEntries.map(([zone, emps]) => {
+        // 3) Filter employees in this zone by searchTerm
+        const filteredEmps = emps.filter(matchesSearch);
+        if (filteredEmps.length === 0) {
+          return null;
+        }
+
+        return (
+          <div key={zone} className="zone-card">
+            <div className="zone-header">
+              <h3>{zone}</h3>
+              <span className="zone-badge">Total: {filteredEmps.length}</span>
+            </div>
+
+            <table className="zone-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>EmployeeID</th>
+                  <th>Date</th>
+                  <th>Swipe Time</th>
+                  <th>Type</th>
+                  <th>Door Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmps.map((emp, i) => (
+                  <tr key={`${emp.EmployeeID}-${i}`}>
+                    <td>{emp.ObjectName1}</td>
+                    <td>{emp.EmployeeID}</td>
+                    <td>{emp.Dateonly}</td>
+                    <td>{emp.Swipe_Time}</td>
+                    <td>{emp.PersonnelType}</td>
+                    <td>{emp.door}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
