@@ -1,7 +1,3 @@
-in this one issue is select box, search box, and select date under text color not disply, 
-selext box abd searcg box , select date background color is white, tast way not diplsy text color and background color both are white 
-so thats way text not diplsy, correct this carefully, 
-
 <Card
   elevation={4}
   sx={{
@@ -17,12 +13,19 @@ so thats way text not diplsy, correct this carefully,
       {/* Region */}
       <Grid item xs={12} md={2}>
         <FormControl fullWidth size="small">
-          <InputLabel id="region-select-label">Region</InputLabel>
+          <InputLabel id="region-select-label" sx={{ color: "#333" }}>
+            Region
+          </InputLabel>
           <Select
             labelId="region-select-label"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            sx={{ bgcolor: "#fff", borderRadius: 1 }}
+            sx={{
+              bgcolor: "#fff",
+              borderRadius: 1,
+              color: "#000", // text inside select
+              "& .MuiSvgIcon-root": { color: "#444" }, // dropdown arrow
+            }}
           >
             {REGIONS.map((r) => (
               <MenuItem key={r.value} value={r.value}>
@@ -36,13 +39,20 @@ so thats way text not diplsy, correct this carefully,
       {/* City */}
       <Grid item xs={12} md={3}>
         <FormControl fullWidth size="small">
-          <InputLabel id="city-select-label">City / Partition</InputLabel>
+          <InputLabel id="city-select-label" sx={{ color: "#333" }}>
+            City / Partition
+          </InputLabel>
           <Select
             labelId="city-select-label"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             renderValue={(v) => v || ""}
-            sx={{ bgcolor: "#fff", borderRadius: 1 }}
+            sx={{
+              bgcolor: "#fff",
+              borderRadius: 1,
+              color: "#000",
+              "& .MuiSvgIcon-root": { color: "#444" },
+            }}
           >
             <MenuItem value="">
               <em>All</em>
@@ -60,54 +70,24 @@ so thats way text not diplsy, correct this carefully,
             )}
           </Select>
         </FormControl>
+
         <TextField
           fullWidth
           size="small"
           placeholder="Or type manually"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          sx={{ mt: 1, bgcolor: "#fff", borderRadius: 1 }}
+          sx={{
+            mt: 1,
+            bgcolor: "#fff",
+            borderRadius: 1,
+            "& .MuiInputBase-input": { color: "#000" },
+            "& .MuiInputLabel-root": { color: "#333" },
+          }}
         />
       </Grid>
 
-      {/* Range / Single Day toggle */}
-      <Grid
-        item
-        xs={12}
-        md={5}
-        sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
-      >
-        <Button
-          startIcon={<DateRangeIcon />}
-          variant={useRange ? "contained" : "outlined"}
-          onClick={() => setUseRange(true)}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            bgcolor: useRange ? "#FFD700" : "transparent",
-            color: useRange ? "#000" : "#444",
-            "&:hover": { bgcolor: useRange ? "#e6c200" : "#f7f7f7" },
-          }}
-        >
-          Range
-        </Button>
-        <Button
-          startIcon={<DateRangeIcon />}
-          variant={!useRange ? "contained" : "outlined"}
-          onClick={() => setUseRange(false)}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            bgcolor: !useRange ? "#FFD700" : "transparent",
-            color: !useRange ? "#000" : "#444",
-            "&:hover": { bgcolor: !useRange ? "#e6c200" : "#f7f7f7" },
-          }}
-        >
-          Single Day
-        </Button>
-      </Grid>
-
-      {/* Date Pickers */}
+      {/* Date Pickers (fix text color) */}
       {useRange ? (
         <>
           <Grid item xs={12} md={3}>
@@ -119,8 +99,9 @@ so thats way text not diplsy, correct this carefully,
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               inputRef={startDateRef}
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true, style: { color: "#333" } }}
               InputProps={{
+                style: { color: "#000" },
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
@@ -145,8 +126,9 @@ so thats way text not diplsy, correct this carefully,
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               inputRef={endDateRef}
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true, style: { color: "#333" } }}
               InputProps={{
+                style: { color: "#000" },
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
@@ -173,8 +155,9 @@ so thats way text not diplsy, correct this carefully,
             value={singleDate}
             onChange={(e) => setSingleDate(e.target.value)}
             inputRef={singleDateRef}
-            InputLabelProps={{ shrink: true }}
+            InputLabelProps={{ shrink: true, style: { color: "#333" } }}
             InputProps={{
+              style: { color: "#000" },
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
@@ -192,95 +175,7 @@ so thats way text not diplsy, correct this carefully,
         </Grid>
       )}
 
-      {/* Run / Clear / Exports */}
-      <Grid
-        item
-        xs={12}
-        md={6}
-        sx={{ display: "flex", gap: 1, alignItems: "center" }}
-      >
-        <Button
-          variant="contained"
-          startIcon={<SearchIcon />}
-          onClick={() => fetchDurations()}
-          disabled={loading}
-          sx={{
-            bgcolor: "#1976d2",
-            "&:hover": { bgcolor: "#115293" },
-            borderRadius: 2,
-            textTransform: "none",
-          }}
-        >
-          {loading ? "Loading..." : "Run"}
-        </Button>
-
-        <Button
-          variant="outlined"
-          startIcon={<ClearIcon />}
-          onClick={() => {
-            setStartDate("");
-            setEndDate("");
-            setSingleDate("");
-            setCity("");
-            setData(null);
-            setError("");
-            setSearchEmployeeId("");
-            setSearchEmployeeName("");
-            setSearchCardNumber("");
-          }}
-          sx={{ borderRadius: 2, textTransform: "none" }}
-        >
-          Clear
-        </Button>
-
-        <Tooltip title="Export Summary CSV">
-          <span>
-            <IconButton
-              onClick={exportSummaryCsv}
-              disabled={!regionObj || (regionObj.employees || []).length === 0}
-              sx={{ color: "#e6c200" }}
-            >
-              <DownloadIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Export Full Report">
-          <span>
-            <Button
-              variant="contained"
-              onClick={exportReportCsv}
-              disabled={!regionObj || (regionObj.employees || []).length === 0}
-              sx={{
-                bgcolor: "#FFD700",
-                color: "#000",
-                "&:hover": { bgcolor: "#e6c200" },
-                borderRadius: 2,
-                textTransform: "none",
-              }}
-            >
-              Export Report
-            </Button>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Export Raw Swipes">
-          <span>
-            <Button
-              variant="outlined"
-              onClick={exportSwipesCsv}
-              disabled={
-                !regionObj || Object.keys(regionObj.swipes_by_date || {}).length === 0
-              }
-              sx={{ borderRadius: 2, textTransform: "none" }}
-            >
-              Export Swipes
-            </Button>
-          </span>
-        </Tooltip>
-      </Grid>
-
-      {/* Search Fields */}
+      {/* Search Fields (fix text color) */}
       <Grid item xs={12} md={4}>
         <TextField
           fullWidth
@@ -289,7 +184,13 @@ so thats way text not diplsy, correct this carefully,
           onChange={(e) => setSearchEmployeeId(e.target.value)}
           size="small"
           helperText="Type an ID and click Run"
-          sx={{ bgcolor: "#fff", borderRadius: 1 }}
+          sx={{
+            bgcolor: "#fff",
+            borderRadius: 1,
+            "& .MuiInputBase-input": { color: "#000" },
+            "& .MuiInputLabel-root": { color: "#333" },
+            "& .MuiFormHelperText-root": { color: "#666" },
+          }}
         />
       </Grid>
       <Grid item xs={12} md={4}>
@@ -300,7 +201,13 @@ so thats way text not diplsy, correct this carefully,
           onChange={(e) => setSearchEmployeeName(e.target.value)}
           size="small"
           helperText="Type name and click Run"
-          sx={{ bgcolor: "#fff", borderRadius: 1 }}
+          sx={{
+            bgcolor: "#fff",
+            borderRadius: 1,
+            "& .MuiInputBase-input": { color: "#000" },
+            "& .MuiInputLabel-root": { color: "#333" },
+            "& .MuiFormHelperText-root": { color: "#666" },
+          }}
         />
       </Grid>
       <Grid item xs={12} md={4}>
@@ -311,7 +218,13 @@ so thats way text not diplsy, correct this carefully,
           onChange={(e) => setSearchCardNumber(e.target.value)}
           size="small"
           helperText="Search by card number"
-          sx={{ bgcolor: "#fff", borderRadius: 1 }}
+          sx={{
+            bgcolor: "#fff",
+            borderRadius: 1,
+            "& .MuiInputBase-input": { color: "#000" },
+            "& .MuiInputLabel-root": { color: "#333" },
+            "& .MuiFormHelperText-root": { color: "#666" },
+          }}
         />
       </Grid>
     </Grid>
