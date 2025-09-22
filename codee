@@ -64,3 +64,19 @@ return filterZone
 +      : members;
 
 
+
+
+...
+...
+..
+
+const filtered = filterZone
+-      ? raw.filter(m => isPresent(m) &&
+-        (matchesFilterZone(getLiveLocation(m), filterZone) ||
+-          matchesFilterZone(getBaseLocation(m), filterZone) ||
+-          matchesFilterZone(baseLocationByRole['ERT Team Leader'], filterZone)))
+-      : raw;
++      ? raw.filter(m => isPresent(m) &&
++          matchesFilterZone(getLiveLocation(m), filterZone))
++      : raw;
+
