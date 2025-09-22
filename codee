@@ -1,65 +1,132 @@
-/* Container around the two table "cards" */
-.tables-row {
-  display: grid;
-  grid-template-columns: 1fr;   /* default: single column (mobile) */
-  gap: 16px;                   /* spacing between cards */
-  align-items: start;          /* top-align columns */
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+import React, { useMemo } from 'react';
+import './ZoneDetailsTable.css';
+
+export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
+  const sortedEntries = useMemo(() => {
+    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
+  }, [data]);
+
+  const matchesSearch = (emp) =>
+    emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
+
+  if (!sortedEntries.length) {
+    return <p>No zone detail data available.</p>;
+  }
+
+  return (
+    <div className="zone-cards">
+      {sortedEntries.map(([zone, emps]) => {
+        const filteredEmps = emps.filter(matchesSearch);
+        if (filteredEmps.length === 0) {
+          return null;
+        }
+
+        return (
+          <div key={zone} className="zone-card">
+            <div className="zone-header">
+              <h3>{zone}</h3>
+              <span className="zone-badge">Total: {filteredEmps.length}</span>
+            </div>
+
+            {/* Single table with sticky header */}
+            <div className="table-container">
+              <table className="zone-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>EmployeeID</th>
+                    <th>Date</th>
+                    <th>Swipe Time</th>
+                    <th>Type</th>
+                    <th>Door Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEmps.map((emp, i) => (
+                    <tr key={`${emp.EmployeeID}-${i}`}>
+                      <td>{emp.ObjectName1}</td>
+                      <td>{emp.EmployeeID}</td>
+                      <td>{emp.Dateonly}</td>
+                      <td>{emp.Swipe_Time}</td>
+                      <td>{emp.PersonnelType}</td>
+                      <td>{emp.door}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-/* Each table card (acts like a column) */
-.table-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-  padding: 12px;
+
+
+
+
+/* ZoneDetailsTable.css */
+
+/* make cards dark and text light */
+.zone-cards {
   display: flex;
-  flex-direction: column;
-  min-height: 120px; /* ensures visible card even if empty */
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-/* Make table inside card scroll if it's too tall */
-.table-card .table-wrapper {
-  overflow: auto;
-  max-height: 60vh; /* prevents extremely tall tables — adjust as needed */
+.zone-card {
+  flex: 1 1 300px;
+  background-color: var(--wu-gray-dark);
+  border: 1px solid var(--wu-yellow);
+  border-radius: 4px;
+  color: #fff;
+  padding: 1rem;
 }
 
-/* Responsive breakpoint: show two columns on laptop and bigger */
-/* Use 992px (Bootstrap lg) as laptop breakpoint. Change if you prefer 1024px. */
-@media (min-width: 992px) {
-  .tables-row {
-    grid-template-columns: 1fr 1fr; /* two equal columns */
-    gap: 20px;
-  }
+.zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
-/* Optional: tighter layout on very large screens */
-@media (min-width: 1400px) {
-  .tables-row {
-    gap: 24px;
-  }
+.zone-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--wu-yellow);
 }
 
-/* Accessibility / visual polish */
-.table-card h5 {
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  line-height: 1.2;
+.zone-badge {
+  background-color: var(--wu-yellow);
+  color: #000;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
 }
 
-/* ensure action buttons stay at the bottom if present */
-.table-card .card-footer {
-  margin-top: auto;
-  display:flex;
-  justify-content: flex-end;
-  gap: 8px;
+.zone-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-/* Small screen tweaks (optional) */
-@media (max-width: 575px) {
-  .table-card { padding: 10px; }
+.zone-table th,
+.zone-table td {
+  border: 1px solid #444;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.zone-table th {
+  background-color: #333;
+  color: #fff;
+}
+
+.zone-table tbody tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
+.zone-table tbody tr:hover {
+  background-color: #3a3a3a;
 }
