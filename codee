@@ -1,65 +1,39 @@
-// src/components/ZoneDetailsTable.jsx
+/* Wrapper for scrollable table */
+.table-container {
+  max-height: 600px; /* shows ~25 rows */
+  overflow-y: auto;
+  border: 1px solid #444;
+}
 
-import React, { useMemo } from 'react';
-import './ZoneDetailsTable.css';
+/* Table */
+.zone-table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
-  const sortedEntries = useMemo(() => {
-    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
-  }, [data]);
+.zone-table th,
+.zone-table td {
+  border: 1px solid #444;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  text-align: left;
+  min-width: 100px; /* helps keep alignment consistent */
+}
 
-  const matchesSearch = (emp) =>
-    emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
+/* Sticky header */
+.zone-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #333;
+  color: #fff;
+  z-index: 2;
+}
 
-  if (!sortedEntries.length) {
-    return <p>No zone detail data available.</p>;
-  }
+/* Row striping + hover */
+.zone-table tbody tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
 
-  return (
-    <div className="zone-cards">
-      {sortedEntries.map(([zone, emps]) => {
-        const filteredEmps = emps.filter(matchesSearch);
-        if (filteredEmps.length === 0) {
-          return null;
-        }
-
-        return (
-          <div key={zone} className="zone-card">
-            <div className="zone-header">
-              <h3>{zone}</h3>
-              <span className="zone-badge">Total: {filteredEmps.length}</span>
-            </div>
-
-            {/* Single table with sticky header */}
-            <div className="table-container">
-              <table className="zone-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>EmployeeID</th>
-                    <th>Date</th>
-                    <th>Swipe Time</th>
-                    <th>Type</th>
-                    <th>Door Name</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEmps.map((emp, i) => (
-                    <tr key={`${emp.EmployeeID}-${i}`}>
-                      <td>{emp.ObjectName1}</td>
-                      <td>{emp.EmployeeID}</td>
-                      <td>{emp.Dateonly}</td>
-                      <td>{emp.Swipe_Time}</td>
-                      <td>{emp.PersonnelType}</td>
-                      <td>{emp.door}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+.zone-table tbody tr:hover {
+  background-color: #3a3a3a;
 }
