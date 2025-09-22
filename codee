@@ -1,4 +1,268 @@
-// Add near the other exports in src/services/occupancy.service.js
+ C:\Users\W0024618\Desktop\laca-occupancy-backend> npm run dev
+
+> laca-occupancy-backend@1.0.0 dev
+> nodemon src/server.js
+
+[nodemon] 3.1.10
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node src/server.js`
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node src/server.js`
+[nodemon] restarting due to changes...
+[nodemon] restarting due to changes...
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] starting `node src/server.js`
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node src/server.js`
+[nodemon] restarting due to changes...
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] starting `node src/server.js`
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node src/server.js`
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] app crashed - waiting for file changes before starting...
+[nodemon] restarting due to changes...
+[nodemon] starting `node src/server.js`
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'luxon'
+Require stack:
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+- C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:14:22)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\services\\occupancy.service.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\controllers\\occupancy.controller.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\routes\\occupancy.routes.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\app.js',
+    'C:\\Users\\W0024618\\Desktop\\laca-occupancy-backend\\src\\server.js'
+  ]
+}
+
+Node.js v22.17.0
+[nodemon] app crashed - waiting for file changes before starting...
+
+// src/services/occupancy.service.js
+
+const { poolPromise, sql } = require('../config/db');
+const partitionList = [
+  'AR.Cordoba', 
+  'BR.Sao Paulo',
+  'CR.Costa Rica Partition',
+  'MX.Mexico City',
+  'PA.Panama City',
+  'PE.Lima'
+];
+
 
 const { DateTime } = require('luxon'); // add at top of file if not already present
 
@@ -11,6 +275,184 @@ const partitionTimezoneMap = {
   'PA.Panama City': 'America/Panama',
   'PE.Lima': 'America/Lima'
 };
+
+
+
+
+/**
+ * Live occupancy (today) query unchanged.
+ */
+exports.fetchLiveOccupancy = async () => {
+  const pool = await poolPromise;
+  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
+
+  const query = `
+    WITH CombinedQuery AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2            AS Door,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor')
+            THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END                       AS EmployeeID,
+        t2.text5                  AS Text5,
+        t1.PartitionName2         AS PartitionName2,
+        t1.ObjectIdentity1        AS PersonGUID,
+        t3.Name                   AS PersonnelType,
+        t2.Text4                   AS CompanyName,   -- ✅ company
+        t2.Text5                   AS PrimaryLocation, -- ✅ location
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                         AS CardNumber,
+        t5a.value                 AS AdmitCode,
+        t5d.value                 AS Direction
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
+        ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+        ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+      
+        WHERE
+       t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 IN (${partitionsSql})
+        AND CONVERT(
+            DATE,
+            DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        )
+          = CONVERT(
+              DATE,
+              DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE())
+            )        
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      Door,
+      PersonnelType,
+      CardNumber,
+      Text5,
+      PartitionName2,
+      AdmitCode,
+      Direction,
+      CompanyName,
+      PrimaryLocation
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const result = await pool.request().query(query);
+  return result.recordset;
+};
+
+
+/**
+ * Core raw‐data fetch for the past N days, all or by location.
+ */
+exports.fetchHistoricalData = async ({ days = 7, location = null }) => {
+  const pool = await poolPromise;
+  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
+  const locationFilter = location
+    ? `AND t1.PartitionName2 = @location`
+    : `AND t1.PartitionName2 IN (${partitionsSql})`;
+
+  const query = `
+    WITH Hist AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2       AS Door,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END                   AS EmployeeID,
+        t2.text5             AS Text5,
+        t1.PartitionName2    AS PartitionName2,
+        t1.ObjectIdentity1   AS PersonGUID,
+        t3.Name              AS PersonnelType,
+        t2.Text4                   AS CompanyName,   -- ✅ company
+        t2.Text5                   AS PrimaryLocation, -- ✅ location
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                     AS CardNumber,
+        t5a.value            AS AdmitCode,
+        t5d.value            AS Direction,
+        CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) AS SwipeDate
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
+        ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+        ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+     
+       WHERE
+        t1.MessageType = 'CardAdmitted'
+        ${locationFilter}
+        AND CONVERT(
+            DATE,
+            DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        )
+          >= DATEADD(
+              DAY,
+              -${days},
+              CONVERT(
+                DATE,
+                DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE())
+              )
+            )
+
+    )
+
+    SELECT *
+    FROM Hist
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const req = pool.request();
+  if (location) req.input('location', sql.NVarChar, location);
+  const result = await req.query(query);
+  return result.recordset;
+};
+
+
+
+
+
+// ////////////////////////////////////////////////////
+
+
 
 /**
  * Fetch occupancy snapshot for a specific date+time.
@@ -123,98 +565,22 @@ exports.fetchSnapshotAtDateTime = async ({ date, time, location = null }) => {
   return { rows: result.recordset, atDtISO: atDt.toISO(), atDtZone: tz };
 };
 
+// ////////////////////////////////////////////////////
 
 
-
-
-
-
-.......
-
-....
-
-
-
-
-// Add to src/controllers/occupancy.controller.js near other exports
-
-exports.getSnapshotAtDateTime = async (req, res) => {
-  try {
-    const { date, time, location } = req.query;
-    if (!date || !time) {
-      return res.status(400).json({
-        success: false,
-        message: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]&location=<optional partition>'
-      });
-    }
-
-    // validate formats (same regex style used elsewhere)
-    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
-    if (!dateMatch) {
-      return res.status(400).json({ success:false, message: 'invalid "date" format; expected YYYY-MM-DD' });
-    }
-    if (!timeMatch) {
-      return res.status(400).json({ success:false, message: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
-    }
-
-    // fetch raw rows
-    const svcRes = await service.fetchSnapshotAtDateTime({ date, time, location });
-    const rows = svcRes.rows || [];
-    const asOfLocal = svcRes.atDtISO;
-    const asOfZone = svcRes.atDtZone || 'utc';
-
-    // convert LocaleMessageTime to ISO string and filter to requested local date (YYYY-MM-DD)
-    const filtered = rows.map(r => {
-      // LocaleMessageTime from SQL may be a Date or string; normalize to ISO
-      const lmt = r.LocaleMessageTime instanceof Date ? r.LocaleMessageTime.toISOString() : (r.LocaleMessageTime || null);
-      return { ...r, LocaleMessageTime: lmt };
-    }).filter(r => {
-      if (!r.LocaleMessageTime) return false;
-      return r.LocaleMessageTime.slice(0,10) === date;
-    });
-
-    // compute unique visited-up-to-snapshot counts (first swipe per PersonGUID on that date)
-    const firstByPerson = {};
-    filtered.forEach(r => {
-      const prev = firstByPerson[r.PersonGUID];
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
-        firstByPerson[r.PersonGUID] = r;
-      }
-    });
-    const visitedRecs = Object.values(firstByPerson);
-    const visitedCounts = { total: 0, Employee: 0, Contractor: 0, TempBadge: 0 };
-    visitedRecs.forEach(r => {
-      visitedCounts.total++;
-      if (isTempBadgeType(r.PersonnelType)) visitedCounts.TempBadge++;
-      else if (isEmployeeType(r.PersonnelType)) visitedCounts.Employee++;
-      else visitedCounts.Contractor++;
-    });
-
-    return res.json({
-      success: true,
-      asOfLocal,          // ISO in requested partition zone
-      asOfZone,
-      asOfUTC: `${date}T${String(timeMatch[1]).padStart(2,'0')}:${String(timeMatch[2]).padStart(2,'0')}:${String(timeMatch[3] || '00').padStart(2,'0')}Z`,
-      totalRecords: filtered.length,
-      totalVisitedToday: visitedCounts.total,
-      visitedByType: visitedCounts,
-      data: filtered
-    });
-
-  } catch (err) {
-    console.error('getSnapshotAtDateTime error:', err);
-    return res.status(500).json({ success: false, message: 'Snapshot fetch failed' });
-  }
+/**
+ * Public wrapper: always last 7 days, all or by location.
+ */
+exports.fetchHistoricalOccupancy = async (location) => {
+  return exports.fetchHistoricalData({ days: 7, location: location || null });
 };
 
+module.exports.partitionList = partitionList;
 
 
 
 
 
-.......
-// example: in your routes file
-// GET /api/occupancy-at-time?date=YYYY-MM-DD&time=HH:MM[:SS]&location=MX.Mexico City
-router.get('/api/occupancy-at-time', occupancyController.getSnapshotAtDateTime);
+
+
+
