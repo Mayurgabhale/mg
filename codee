@@ -1,3 +1,7 @@
+writ now in tables main row disply 135 or 200
+but i want to show showy only 25 row for each or create scroll  bar for each table row is greate than 25 ok 
+i measn creat scroll bar for each table. 
+
 // src/components/ZoneDetailsTable.jsx
 
 import React, { useMemo } from 'react';
@@ -17,6 +21,7 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
     return <p>No zone detail data available.</p>;
   }
 
+
   return (
     <div className="zone-cards">
       {sortedEntries.map(([zone, emps]) => {
@@ -33,33 +38,30 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
               <span className="zone-badge">Total: {filteredEmps.length}</span>
             </div>
 
-            {/* Scrollable wrapper */}
-            <div className="table-container">
-              <table className="zone-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>EmployeeID</th>
-                    <th>Date</th>
-                    <th>Swipe Time</th>
-                    <th>Type</th>
-                    <th>Door Name</th>
+            <table className="zone-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>EmployeeID</th>
+                  <th>Date</th>
+                  <th>Swipe Time</th>
+                  <th>Type</th>
+                  <th>Door Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmps.map((emp, i) => (
+                  <tr key={`${emp.EmployeeID}-${i}`}>
+                    <td>{emp.ObjectName1}</td>
+                    <td>{emp.EmployeeID}</td>
+                    <td>{emp.Dateonly}</td>
+                    <td>{emp.Swipe_Time}</td>
+                    <td>{emp.PersonnelType}</td>
+                    <td>{emp.door}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredEmps.slice(0, 25).map((emp, i) => (
-                    <tr key={`${emp.EmployeeID}-${i}`}>
-                      <td>{emp.ObjectName1}</td>
-                      <td>{emp.EmployeeID}</td>
-                      <td>{emp.Dateonly}</td>
-                      <td>{emp.Swipe_Time}</td>
-                      <td>{emp.PersonnelType}</td>
-                      <td>{emp.door}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         );
       })}
@@ -68,32 +70,3 @@ export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
 }
 
 
-
-
-
-....
-
-.table-container {
-  max-height: 400px; /* adjust as needed */
-  overflow-y: auto;
-  border: 1px solid #ddd;
-}
-
-.zone-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.zone-table th,
-.zone-table td {
-  padding: 8px;
-  border: 1px solid #ddd;
-  text-align: left;
-}
-
-.zone-table thead th {
-  position: sticky;
-  top: 0;
-  background: #f9f9f9;
-  z-index: 1;
-}
