@@ -1,297 +1,246 @@
-Create this light theme more attractive and professional design and better layout format
-Don't change any code or code logic just only update design ok carefully
-Select box text not display check also this
+<Grid container spacing={2} sx={{ backgroundColor: "#f9fafb" }}>
+  <Grid item xs={12}>
+    <Card
+      elevation={2}
+      sx={{
+        backgroundColor: "#ffffff",
+        borderRadius: 2,
+        border: "1px solid #e0e0e0",
+      }}
+    >
+      <CardContent>
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          sx={{ backgroundColor: "#ffffff" }}
+        >
+          {/* Region */}
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="region-select-label">Region</InputLabel>
+              <Select
+                labelId="region-select-label"
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+              >
+                {REGIONS.map((r) => (
+                  <MenuItem key={r.value} value={r.value}>
+                    {r.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
 
-
-
- <Grid container spacing={2} sx={{backgroundColor: "#ffffff"}}>
-        <Grid item xs={12} sx={{backgroundColor: "#ffffff", color:"#e02500"}}>
-          <Card elevation={3} sx={{backgroundColor: "#ffffff", color:"#0ff739"}}>
-            <CardContent sx={{backgroundColor: "#ffffff", color:"##0546eb"}}>
-              <Grid container spacing={2} alignItems="center" sx={{backgroundColor: "#ffffff", color:"##0546eb"}}>
-                <Grid item xs={12} md={2} sx={{backgroundColor: "#ffffff", color:"##0546eb"}}>
-                  <FormControl fullWidth size="small" >
-                    <InputLabel id="region-select-label">Region</InputLabel>
-                    <Select
-                      labelId="region-select-label"
-                      label="Region"
-                      value={region}
-                      onChange={(e) => setRegion(e.target.value)}
-                    >
-                      {REGIONS.map((r) => (
-                        <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} md={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="city-select-label">City / Partition </InputLabel>
-                    <Select
-                      labelId="city-select-label"
-                      label="City / Partition (optional)"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      renderValue={(v) => v || ""}
-                    >
-                      <MenuItem value=""><em>All</em></MenuItem>
-                      {citiesForRegion && citiesForRegion.length > 0 ? (
-                        citiesForRegion.map((c, idx) => (
-                          <MenuItem key={idx} value={c}>{c}</MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled value="">
-                          No predefined cities (you can type in the input below instead)
-                        </MenuItem>
-                      )}
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Or type to override / fuzzy-match"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    sx={{ mt: 1 }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={5} sx={{ display: "flex", gap: 1, justifyContent: "flex-end", alignItems: "center" }}>
-                  <Button
-                    startIcon={<DateRangeIcon />}
-                    variant={useRange ? "contained" : "outlined"}
-                    onClick={() => setUseRange(true)}
-                    color="warning"
-                  >
-                    Range
-                  </Button>
-                  <Button
-                    startIcon={<DateRangeIcon />}
-                    variant={!useRange ? "contained" : "outlined"}
-                    onClick={() => setUseRange(false)}
-                    color="warning"
-                  >
-                    Single Day
-                  </Button>
-                </Grid>
-
-                {useRange ? (
-                  <>
-                    <Grid item xs={12} md={3}>
-                      <FormControl fullWidth size="small">
-                        <TextField
-                          label="Start date"
-                          type="date"
-                          fullWidth
-                          InputLabelProps={{ shrink: true }}
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          size="small"
-                          inputRef={startDateRef}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openNativeDatePicker(startDateRef)}
-                                  sx={{ color: "#FFD700" }}
-                                >
-                                  <DateRangeIcon />
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{ bgcolor: "#30302e" }}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <FormControl fullWidth size="small">
-                        <TextField
-                          label="End date"
-                          type="date"
-                          fullWidth
-                          InputLabelProps={{ shrink: true }}
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          size="small"
-                          inputRef={endDateRef}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openNativeDatePicker(endDateRef)}
-                                  sx={{ color: "#FFD700" }}
-                                >
-                                  <DateRangeIcon />
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{ bgcolor: "#30302e" }}
-                        />
-                      </FormControl>
-                    </Grid>
-                  </>
+          {/* City */}
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="city-select-label">City / Partition</InputLabel>
+              <Select
+                labelId="city-select-label"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                renderValue={(v) => v || "All"}
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                {citiesForRegion?.length > 0 ? (
+                  citiesForRegion.map((c, idx) => (
+                    <MenuItem key={idx} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))
                 ) : (
-                  <Grid item xs={12} md={3}>
-                    <FormControl fullWidth size="small">
-                      <TextField
-                        label="Date"
-                        type="date"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={singleDate}
-                        onChange={(e) => setSingleDate(e.target.value)}
-                        size="small"
-                        inputRef={singleDateRef}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                size="small"
-                                onClick={() => openNativeDatePicker(singleDateRef)}
-                                sx={{ color: "#FFD700" }}
-                              >
-                                <DateRangeIcon />
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{ bgcolor: "transparent" }}
-                      />
-                    </FormControl>
-                  </Grid>
+                  <MenuItem disabled value="">
+                    No predefined cities
+                  </MenuItem>
                 )}
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Or type to override / fuzzy-match"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              sx={{ mt: 1 }}
+            />
+          </Grid>
 
-                <Grid item xs={12} md={6} sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                  <Button
-                    variant="contained"
-                    startIcon={<SearchIcon />}
-                    onClick={() => fetchDurations()}
-                    disabled={loading}
-                    color="primary"
-                  >
-                    {loading ? "Loading..." : "Run"}
-                  </Button>
-
-                  <Button
-                    variant="outlined"
-                    startIcon={<ClearIcon />}
-                    onClick={() => {
-                      setStartDate("");
-                      setEndDate("");
-                      setSingleDate("");
-                      setCity("");
-                      setData(null);
-                      setError("");
-                      setSearchEmployeeId("");
-                      setSearchEmployeeName("");
-                      setSearchCardNumber("");
-                    }}
-                  >
-                    Clear
-                  </Button>
-
-                  <Tooltip title="Export Summary CSV (per-person)">
-                    <span>
-                      <IconButton onClick={exportSummaryCsv} disabled={!regionObj || (regionObj.employees || []).length === 0}>
-                        <DownloadIcon />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-
-                  <Tooltip title="Export full report (Sr.No, ... Compliance)">
-                    <span>
-                      <Button variant="contained" onClick={exportReportCsv} disabled={!regionObj || (regionObj.employees || []).length === 0}>
-                        Export Report
-                      </Button>
-                    </span>
-                  </Tooltip>
-
-                  <Tooltip title="Export raw swipes for this region/date range">
-                    <span>
-                      <Button variant="outlined" onClick={exportSwipesCsv} disabled={!regionObj || Object.keys(regionObj.swipes_by_date || {}).length === 0}>
-                        Export Swipes
-                      </Button>
-                    </span>
-                  </Tooltip>
-                </Grid>
-
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Search Employee ID"
-                    value={searchEmployeeId}
-                    onChange={(e) => setSearchEmployeeId(e.target.value)}
-                    size="small"
-                    helperText="Type an ID and click Run to fetch only that employee (server-side filter)"
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Search Employee Name"
-                    value={searchEmployeeName}
-                    onChange={(e) => setSearchEmployeeName(e.target.value)}
-                    size="small"
-                    helperText="Type name and click Run to fetch only matching employees"
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Search Card Number"
-                    value={searchCardNumber}
-                    onChange={(e) => setSearchCardNumber(e.target.value)}
-                    size="small"
-                    helperText="Search card number (server-side filter)"
-                  />
-                </Grid>
-
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12}>
-          {/* <Paper sx={{ p: 2 }}> */}
-          <Paper
-            elevation={3}
-            sx={{
-              padding: 2,
-              marginBottom: 3,
-              borderRadius: 3,
-              backgroundColor: "#ffffff",
-              boxShadow: "0px 2px 8px rgba(0,0,0,0.06)",
-              color:"#000"
-            }}
+          {/* Range / Single Day Toggle */}
+          <Grid
+            item
+            xs={12}
+            md={5}
+            sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}
           >
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                {data ? `Showing ${region.toUpperCase()} — ${data.start_date} → ${data.end_date}` : "No results yet"}
-              </Typography>
-            </Box>
+            <Button
+              startIcon={<DateRangeIcon />}
+              variant={useRange ? "contained" : "outlined"}
+              onClick={() => setUseRange(true)}
+              color="primary"
+            >
+              Range
+            </Button>
+            <Button
+              startIcon={<DateRangeIcon />}
+              variant={!useRange ? "contained" : "outlined"}
+              onClick={() => setUseRange(false)}
+              color="primary"
+            >
+              Single Day
+            </Button>
+          </Grid>
 
-            {loading && (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                <CircularProgress />
-              </Box>
-            )}
+          {/* Dates */}
+          {useRange ? (
+            <>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  label="Start Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  label="End Date"
+                  type="date"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  size="small"
+                />
+              </Grid>
+            </>
+          ) : (
+            <Grid item xs={12} md={3}>
+              <TextField
+                label="Date"
+                type="date"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={singleDate}
+                onChange={(e) => setSingleDate(e.target.value)}
+                size="small"
+              />
+            </Grid>
+          )}
 
-            {error && (
-              <Typography color="error" sx={{ mt: 2 }}>
-                {error}
-              </Typography>
-            )}
+          {/* Buttons */}
+          <Grid
+            item
+            xs={12}
+            md={6}
+            sx={{ display: "flex", gap: 1, alignItems: "center" }}
+          >
+            <Button
+              variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={fetchDurations}
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "Run"}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ClearIcon />}
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+                setSingleDate("");
+                setCity("");
+                setData(null);
+                setError("");
+                setSearchEmployeeId("");
+                setSearchEmployeeName("");
+                setSearchCardNumber("");
+              }}
+            >
+              Clear
+            </Button>
+            <Tooltip title="Export Summary CSV">
+              <span>
+                <IconButton
+                  onClick={exportSummaryCsv}
+                  disabled={!regionObj || (regionObj.employees || []).length === 0}
+                >
+                  <DownloadIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Grid>
 
-            {!loading && !error && (
-              <Box sx={{ mt: 2 }}>
-                {renderTable()}
-              </Box>
-            )}
-          </Paper>
+          {/* Search Filters */}
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Search Employee ID"
+              value={searchEmployeeId}
+              onChange={(e) => setSearchEmployeeId(e.target.value)}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Search Employee Name"
+              value={searchEmployeeName}
+              onChange={(e) => setSearchEmployeeName(e.target.value)}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Search Card Number"
+              value={searchCardNumber}
+              onChange={(e) => setSearchCardNumber(e.target.value)}
+              size="small"
+            />
+          </Grid>
         </Grid>
-      </Grid>
+      </CardContent>
+    </Card>
+  </Grid>
+
+  {/* Results Table */}
+  <Grid item xs={12}>
+    <Paper
+      elevation={2}
+      sx={{
+        padding: 2,
+        borderRadius: 2,
+        backgroundColor: "#ffffff",
+        boxShadow: "0px 2px 6px rgba(0,0,0,0.08)",
+      }}
+    >
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+        {data
+          ? `Showing ${region.toUpperCase()} — ${data.start_date} → ${data.end_date}`
+          : "No results yet"}
+      </Typography>
+
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      {!loading && !error && <Box sx={{ mt: 2 }}>{renderTable()}</Box>}
+    </Paper>
+  </Grid>
+</Grid>
