@@ -208,3 +208,13 @@ exports.getSnapshotAtDateTime = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Snapshot fetch failed' });
   }
 };
+
+
+
+
+
+
+.......
+// example: in your routes file
+// GET /api/occupancy-at-time?date=YYYY-MM-DD&time=HH:MM[:SS]&location=MX.Mexico City
+router.get('/api/occupancy-at-time', occupancyController.getSnapshotAtDateTime);
