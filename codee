@@ -1,3 +1,27 @@
+/* Keep table full width but scroll vertically */
+.table-container {
+  max-height: 300px; /* adjust height as needed */
+  overflow-y: auto;
+  overflow-x: hidden; /* optional, prevent horizontal scroll */
+  border: 1px solid #555; /* optional, subtle border */
+  border-radius: 4px;
+}
+
+/* Optional: keep header sticky while scrolling */
+.table-container table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #333; /* match existing header color */
+  z-index: 1;
+
+
+
+
+
+
+
+
+
 
 import React, { useMemo } from 'react';
 import './ZoneDetailsTable.css';
