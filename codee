@@ -1,4 +1,23 @@
 
+
+.table-container {
+  max-height: 300px; /* adjust height as needed */
+  overflow-y: auto;
+  border: 1px solid #ddd; /* optional: to distinguish scroll area */
+}
+
+/* Keep table header sticky if desired */
+.zone-table thead {
+  position: sticky;
+  top: 0;
+  background-color: #f9f9f9;
+  z-index: 1;
+}
+
+
+
+
+....
 import React, { useMemo } from 'react';
 import './ZoneDetailsTable.css';
 
