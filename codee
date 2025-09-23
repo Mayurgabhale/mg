@@ -1,4 +1,50 @@
 
+
+export default function Dashboard() {
+  // ✅ get live feed
+  const { data: liveData, loading, error } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+  const navigate = useNavigate();
+
+  // ✅ snapshot / mode state
+  const [data, setData] = useState(null);      // current dataset (live or snapshot)
+  const [mode, setMode] = useState('live');    // 'live' or 'snapshot'
+
+  // ✅ keep live data flowing into UI when in live mode
+  useEffect(() => {
+    if (mode === 'live' && liveData) {
+      setData(liveData);
+    }
+  }, [liveData, mode]);
+
+  // ✅ handlers passed to Header
+  const handleSnapshot = (snapshotJson) => {
+    setData(snapshotJson);
+    setMode('snapshot');
+  };
+
+  const handleLive = () => {
+    setMode('live');
+    setData(liveData);
+  };
+
+  useEffect(() => {
+    if (data) {
+      setLastUpdate(new Date().toLocaleTimeString());
+    }
+  }, [data]);
+
+  // ... rest of Dashboard return JSX
+}
+
+
+
+
+
+
+
+
+
 - {/* <Header /> */}
 - <Header onSnapshot={handleSnapshot} onLive={handleLive} />
 + <Header onSnapshot={handleSnapshot} onLive={handleLive} />
