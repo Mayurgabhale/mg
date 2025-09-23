@@ -1,4 +1,14 @@
 
+- {/* <Header /> */}
+- <Header onSnapshot={handleSnapshot} onLive={handleLive} />
++ <Header onSnapshot={handleSnapshot} onLive={handleLive} />
+
+
+
+
+
+
+.....
 - export default function Dashboard() {
 -   const { data, loading, error } = useLiveOccupancy(1000);
 + export default function Dashboard() {
