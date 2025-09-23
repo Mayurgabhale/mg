@@ -1,9 +1,374 @@
-PS C:\Users\W0024618\Desktop\swipeData> curl -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total}s  time_starttransfer: %{time_starttransfer}s\n" http://10.199.22.57:3011/
-Invoke-WebRequest : Missing an argument for parameter 'SessionVariable'. Specify a parameter of type 'System.String' and try again.
-At line:1 char:19
-+ curl -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total} ...
-+                   ~~
-    + CategoryInfo          : InvalidArgument: (:) [Invoke-WebRequest], ParameterBindingException
-    + FullyQualifiedErrorId : MissingArgument,Microsoft.PowerShell.Commands.InvokeWebRequestCommand
- c
-url -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total}s  time_starttransfer: %{time_starttransfer}s\n" http://10.199.22.57:3011/
+http://10.199.22.57:3011/
+ocal metrics
+Largest Contentful Paint (LCP)
+0.46 s
+Your local LCP value of 0.46 s is good.
+LCP element
+div
+Cumulative Layout Shift (CLS)
+0.29
+Your local CLS value of 0.29 is poor.
+Worst cluster
+1 shift
+Interaction to Next Paint (INP)
+0 ms
+Your local INP value of 0 ms is good.
+INP interaction
+pointer
+Learn more about local and field metrics
+Interactions
+Layout shifts
+
+Layout shift score: 0.2891
+div.col-md-4
+footer
+div.mb-4.shadow-sm.border.card
+div.mb-4.shadow-lg.border.personnel-card.card
+div.col-md-4
+
+this is on server.
+
+first::
+
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\PersonnelDonutChart.jsx
+import React from "react";
+import { Card } from "react-bootstrap";
+import {
+  FaUserTie,
+  FaUserShield,
+  FaUserCog,
+  FaUserClock,
+  FaUserFriends,
+  FaUserTimes,
+} from "react-icons/fa";
+import "./PersonnelDonutChart.css"; // Custom 3D styles
+
+// Brand colors (vibrant, 3D friendly)
+const COLORS = {
+  Employee: "linear-gradient(135deg, #32CD32, #228B22)", // Blue
+  Visitor: "linear-gradient(135deg, #FF6F61, #CC3A30)", // Coral Red
+  Contractor: "linear-gradient(135deg, #1E90FF, #0066CC)", // Green
+  "Property Management": "linear-gradient(135deg, #FFD700, #E6AC00)", // Gold
+  "Temp Badge": "linear-gradient(135deg, #8A2BE2, #551A8B)", // Purple
+  "Terminated Personnel": "linear-gradient(135deg,rgb(233, 35, 190),rgb(179, 40, 229))", // Purple
+};
+// Icon mapping for each category
+const ICONS = {
+  Employee: <FaUserTie />,
+  Visitor: <FaUserFriends />,
+  Contractor: <FaUserCog />,
+  "Property Management": <FaUserShield />,
+  "Temp Badge": <FaUserClock />,
+  "Terminated Personnel": <FaUserTimes  />,
+};
+export default function PersonnelPeopleGrid({ data = [] }) {
+  const total = data.reduce((sum, e) => sum + e.count, 0);
+
+  if (!data.length || total === 0) {
+    return (
+      <Card body className="bg-dark text-white p-4 text-center">
+        No personnel data available
+      </Card>
+    );
+  }
+  // ✅ Sort data by count descending
+  const sorted = [...data].sort((a, b) => b.count - a.count);
+  return (
+    <Card className="mb-4 shadow-lg border personnel-card">
+      <Card.Header className="bg-dark text-warning text-center fw-bold"style={{
+          borderBottom: "2px solid var(--wu-yellow)",
+        }} >
+        <h5 className="mb-0">Personnel Type Headcount</h5>
+      </Card.Header>
+      <Card.Body
+        className="p-4 bg-dark d-flex flex-wrap justify-content-center"
+        style={{ gap: "1.5rem", height: "50vh",}}>
+        {sorted.map((item) => (
+          <div
+            key={item.personnelType}
+            className="personnel-block"
+            style={{ background: COLORS[item.personnelType] }}
+          >
+            <div className="personnel-icon">{ICONS[item.personnelType]}</div>
+            <div className="personnel-type">{item.personnelType}</div>
+            <div className="personnel-count">{item.count}</div>
+          </div>
+        ))}
+      </Card.Body>
+    </Card>
+  );
+}
+
+
+
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList,
+} from "recharts";
+import { Card } from "react-bootstrap";
+// Gradients/solid colors for known zones
+
+const ZONE_GRADIENTS = {
+  "Red Zone": ["#FF0000", "#D22B2B"],
+  "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
+  "Yellow Zone": ["#FFDE21", "#FFBF00"],
+  "Yellow Zone - Outer Area": ["#FFDE21", "#FFBF00"],
+  "Orange Zone": ["#E3963E", "#FFC966"],
+  "Orange Zone - Outer Area": ["#E3963E", "#FFC966"],
+  "Green Zone": ["#009E60", "#50C878"],
+  "Reception Area": ["#E0CCFF", "#F4E6FF"],
+  "Assembly Area": ["#FE6F5E", "#A366FF"],
+  "Tower B": ["#E68FAC", "#99BBFF"],
+  "2nd Floor, Pune": ["#FF6F61", "#FFA28F"],
+};
+
+const SOLID_COLORS = [
+  "#FFD100",
+  "#009E60",
+  "#FF6F61",
+  "#58595B",
+  "#FFB800",
+  "#C75D00",
+];
+
+export default function SummaryChart({ summary = [] }) {
+  if (!summary.length) {
+    return <Card body>No zone data available</Card>;
+  }
+
+  // 🔹 Sort zones by headcount (descending)
+  const sortedData = [...summary].sort((a, b) => b.count - a.count);
+  // Custom tooltip
+
+
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+    const { zone, count } = payload[0].payload;
+    return (
+      <div
+        style={{
+          backgroundColor: "#000",
+          border: "1px solid var(--wu-yellow)",
+          borderRadius: 4,
+          padding: "8px",
+          color: "#FFD100",
+          fontSize: "0.9rem",
+        }}
+      >
+        <div>
+          <strong>{zone}</strong> {/* ✅ already mapped */}
+        </div>
+        <div>Headcount: {count}</div>
+      </div>
+    );
+  };
+
+
+  // 🔹 Helper: map special zone names to display-friendly ones
+  const mapZoneName = (name) => {
+    if (name === "Red Zone - Outer Area") return "East Outdoor Area";
+    if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
+    return name;
+  };
+
+  // 🔹 Shorten long zone names (after mapping)
+  const shortenName = (name) => {
+    const mapped = mapZoneName(name);
+    if (mapped.length > 18) {
+      return mapped.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
+    }
+    return mapped;
+  };
+
+
+  return (
+    <Card
+      className="mb-4 shadow-sm border"
+      style={{ borderColor: "var(--wu-yellow)" }}
+    >
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{
+          fontSize: "1.2rem",
+          borderBottom: "2px solid var(--wu-yellow)",
+        }}
+      >
+        Western Union - Pune Zone-wise Headcount
+      </Card.Header>
+
+      <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}>
+        <ResponsiveContainer width="100%" height="100%">
+
+
+
+          <BarChart
+            layout="vertical"
+            data={sortedData.map((z) => ({
+              ...z,
+              zone: mapZoneName(z.zone), // ✅ use mapped name
+              shortZone: shortenName(z.zone),
+            }))}
+            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
+          >
+
+            <XAxis type="number" tick={{ fill: "#FFD100" }} />
+            <YAxis
+              dataKey="shortZone"
+              type="category"
+              tick={{ fill: "#FFD100", fontWeight: "bold" }}
+              width={150}
+            />
+            <Tooltip content={renderTooltip} />
+
+            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
+              {sortedData.map((entry, idx) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                const color = grad
+                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
+                  : SOLID_COLORS[idx % SOLID_COLORS.length];
+                return <Cell key={`cell-${idx}`} fill={color} />;
+              })}
+
+              <LabelList
+                dataKey="count"
+                position="inside"
+                style={{
+                  fill: "#fff",
+                  fontWeight: "bold",
+                  fontSize: "0.9rem",
+                }}
+              />
+            </Bar>
+
+            <defs>
+              {sortedData.map((entry) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                if (!grad) return null;
+                return (
+                  <linearGradient
+                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
+                    key={entry.zone}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="0"
+                  >
+                    <stop offset="0%" stopColor={grad[0]} />
+                    <stop offset="100%" stopColor={grad[1]} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  );
+}
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\pages\DashboardHome.jsx
+import React, { useMemo } from 'react';
+import { Container, Row, Col } from 'react-bootstrap';
+
+import SummaryCards        from '../components/SummaryCards';
+import FloorOccupancyChart from '../components/FloorOccupancyChart';
+import SummaryChart        from '../components/SummaryChart';
+import PersonnelDonutChart from '../components/PersonnelDonutChart';
+import LoadingSpinner      from '../components/LoadingSpinner';
+
+function DashboardHome({
+  summaryData,
+  detailsData,
+  floorData,
+  zoneBreakdown,
+  personnelBreakdown,
+  totalVisitedToday,
+  personnelSummary,
+  visitedToday,
+  ertStatus
+}) {
+  const employees      = personnelSummary?.employees   ?? 0;
+  const contractors    = personnelSummary?.contractors ?? 0;
+  const totalOccupancy = employees + contractors;
+
+  // Memoize donut-chart data so it only recalculates when personnelBreakdown changes
+  const chartData = useMemo(() =>
+    (personnelBreakdown || []).map(({ personnelType, count }) => ({ personnelType, count })),
+    [personnelBreakdown]
+  );
+
+  // ✅ Loading condition: if critical data is missing
+  const isLoading =
+    (!summaryData || summaryData.length === 0) &&
+    (!floorData || floorData.length === 0) &&
+    (!personnelBreakdown || personnelBreakdown.length === 0);
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading dashboard..." />;
+  }
+
+  return (
+    <Container fluid className="py-4">
+      <SummaryCards
+        totalOccupancy={totalOccupancy}
+        employeeCount={employees}
+        contractorCount={contractors}
+        totalVisitedToday={totalVisitedToday}
+        employeesVisitedToday={visitedToday?.employees   ?? 0}
+        contractorsVisitedToday={visitedToday?.contractors ?? 0}
+      />
+
+      <Row className="g-4">
+        <Col md={4} style={{ minHeight: 300 }}>
+          <FloorOccupancyChart data={floorData} />
+        </Col>
+
+        <Col md={4} style={{ minHeight: 300 }}>
+          <SummaryChart summary={summaryData} />
+        </Col>
+
+        <Col md={4} style={{ minHeight: 300 }}>
+          <PersonnelDonutChart data={chartData} />
+        </Col>
+      </Row>
+
+      <footer style={{
+        backgroundColor: '#000',
+        color: '#FFC72C',
+        padding: '1.5rem 0',
+        textAlign: 'center',
+        marginTop: '0rem',
+        borderTop: '2px solid #FFC72C',
+        fontSize: '0.95rem',
+        lineHeight: '1.6',
+        minHeight: 120 // reserve space to reduce layout shifts
+      }}>
+        <div><strong>Global Security Operations Center</strong><br/>
+          Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
+        </div>
+        <div style={{ marginTop: '0.75rem' }}>
+          Contact us:&nbsp;
+          <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+             style={{ color: '#FFC72C', textDecoration: 'underline' }}>
+            GSOC Mail
+          </a>&nbsp;|&nbsp;
+          Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
+    </Container>
+  );
+}
+
+// Memoize whole page so it only re-renders when its props actually change
+export default React.memo(DashboardHome);
+
