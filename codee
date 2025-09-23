@@ -1,3 +1,8 @@
+# inside /src/components
+mv loadingSpinner.jsx LoadingSpinner.jsx
+
+
+
 Already included file name 'c:/Users/W0024618/Desktop/swipeData/client/src/components/LoadingSpinner.jsx' differs from file name 'c:/Users/W0024618/Desktop/swipeData/client/src/components/loadingSpinner.jsx' only in casing.
   The file is in the program because:
     Imported via '../components/LoadingSpinner' from file 'c:/Users/W0024618/Desktop/swipeData/client/src/pages/DashboardHome.jsx'
