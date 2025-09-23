@@ -1,7 +1,7 @@
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\LoadingSpinner.jsx
 import React from "react";
 
-export default function loadingspinner({ size = 100, message }) {
+export default function LoadingSpinner({ size = 100, message }) {
   return (
     <div
       style={{
@@ -55,4 +55,3 @@ export default function loadingspinner({ size = 100, message }) {
     </div>
   );
 }
-
