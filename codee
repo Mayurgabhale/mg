@@ -1,4 +1,5 @@
-<Card.Body
-  className="p-4 bg-dark d-flex flex-wrap justify-content-center"
-  style={{ gap: "1.5rem", minHeight: 300 }}
->
+import React, { useMemo, lazy, Suspense } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+const FloorOccupancyChart = lazy(() => import('../components/FloorOccupancyChart'));
+const SummaryChart = lazy(() => import('../components/SummaryChart'));
+const PersonnelDonutChart = lazy(() => import('../components/PersonnelDonutChart'));
