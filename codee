@@ -1,19 +1,7 @@
-# inside /src/components
-mv loadingSpinner.jsx LoadingSpinner.jsx
-
-
-
-Already included file name 'c:/Users/W0024618/Desktop/swipeData/client/src/components/LoadingSpinner.jsx' differs from file name 'c:/Users/W0024618/Desktop/swipeData/client/src/components/loadingSpinner.jsx' only in casing.
-  The file is in the program because:
-    Imported via '../components/LoadingSpinner' from file 'c:/Users/W0024618/Desktop/swipeData/client/src/pages/DashboardHome.jsx'
-    Root file specified for compilationts(1261)
-module "c:/Users/W0024618/Desktop/swipeData/client/src/components/LoadingSpinner"
-
-
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\LoadingSpinner.jsx
 import React from "react";
 
-export default function LoadingSpinner({ size = 100, message }) {
+export default function loadingspinner({ size = 100, message }) {
   return (
     <div
       style={{
