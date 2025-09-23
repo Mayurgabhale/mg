@@ -10,7 +10,7 @@ export default function LoadingSpinner({ size = 120, message }) {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "90vh",
-        backgroundColor: "#000", // dark background for contrast
+        backgroundColor: "#000", // optional dark overlay for contrast
       }}
     >
       {/* Spinner */}
@@ -26,7 +26,6 @@ export default function LoadingSpinner({ size = 120, message }) {
             fontWeight: "bold",
             textAlign: "center",
             fontFamily: "Arial, sans-serif",
-            textShadow: "0 0 5px #FFC72C, 0 0 10px #FFDD00",
           }}
         >
           {message}
@@ -39,8 +38,6 @@ export default function LoadingSpinner({ size = 120, message }) {
           position: relative;
           width: 100px;
           height: 100px;
-          transform: scale(1);
-          animation: pulse 1.5s ease-in-out infinite alternate;
         }
 
         /* Outer ring */
@@ -52,7 +49,7 @@ export default function LoadingSpinner({ size = 120, message }) {
           border: 8px solid rgba(255, 199, 44, 0.3);
           border-top-color: #FFC72C;
           border-radius: 50%;
-          animation: spin 1.5s linear infinite, glowPulse 1.5s ease-in-out infinite alternate;
+          animation: spin 1.5s linear infinite;
         }
 
         /* Inner ring */
@@ -64,10 +61,9 @@ export default function LoadingSpinner({ size = 120, message }) {
           border: 4px solid rgba(255, 199, 44, 0.2);
           border-top-color: #FFDD00;
           border-radius: 50%;
-          animation: spinReverse 1s linear infinite, glowPulse 1s ease-in-out infinite alternate;
+          animation: spinReverse 1s linear infinite;
         }
 
-        /* Rotation animations */
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -76,20 +72,6 @@ export default function LoadingSpinner({ size = 120, message }) {
         @keyframes spinReverse {
           0% { transform: rotate(360deg); }
           100% { transform: rotate(0deg); }
-        }
-
-        /* Glow pulsing */
-        @keyframes glowPulse {
-          0% { box-shadow: 0 0 5px #FFC72C; }
-          50% { box-shadow: 0 0 15px #FFDD00; }
-          100% { box-shadow: 0 0 5px #FFC72C; }
-        }
-
-        /* Scaling pulse for entire spinner */
-        @keyframes pulse {
-          0% { transform: scale(0.95); }
-          50% { transform: scale(1.05); }
-          100% { transform: scale(0.95); }
         }
       `}</style>
     </div>
