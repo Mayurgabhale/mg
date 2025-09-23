@@ -1,26 +1,28 @@
-Local metrics
-Largest Contentful Paint (LCP)
-0.35 s
-Your local LCP value of 0.35 s is good.
-LCP element
-div
-Cumulative Layout Shift (CLS)
-0.29
-Your local CLS value of 0.29 is poor.
-Worst cluster
-1 shift
-Interaction to Next Paint (INP)
--
-Interact with the page to measure INP.
-Learn more about local and field metrics
-Interactions
-Layout shifts
+first we want ot add loaind spinner for my dashboard 
+this is deisng 
+C:\Users\W0024618\Desktop\swipeData\client\src\components\loadingSpinner.jsx
+<span class="loader"></span>
 
-Layout shift score: 0.0002
-div.ms-auto.align-items-center.navbar-nav
-Layout shift score: 0.2929
-div.col-md-4
-footer
-div.mb-4.shadow-sm.border.card
-div.mb-4.shadow-lg.border.personnel-card.card
-div.col-md-4
+
+.loader {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.loader:before , .loader:after{
+  content: '';
+  border-radius: 50%;
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.3) inset;
+}
+.loader:after {
+  box-shadow: 0 2px 0 #FF3D00 inset;
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  0% {  transform: rotate(0)}
+  100% { transform: rotate(360deg)}
+}
