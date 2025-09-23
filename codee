@@ -1,1 +1,9 @@
-curl -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total}s  time_starttransfer: %{time_starttransfer}s\n" http://10.199.22.57:3011/
+PS C:\Users\W0024618\Desktop\swipeData> curl -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total}s  time_starttransfer: %{time_starttransfer}s\n" http://10.199.22.57:3011/
+Invoke-WebRequest : Missing an argument for parameter 'SessionVariable'. Specify a parameter of type 'System.String' and try again.
+At line:1 char:19
++ curl -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total} ...
++                   ~~
+    + CategoryInfo          : InvalidArgument: (:) [Invoke-WebRequest], ParameterBindingException
+    + FullyQualifiedErrorId : MissingArgument,Microsoft.PowerShell.Commands.InvokeWebRequestCommand
+ c
+url -o /dev/null -s -w "HTTP %{http_code}  time_total: %{time_total}s  time_starttransfer: %{time_starttransfer}s\n" http://10.199.22.57:3011/
