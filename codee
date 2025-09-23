@@ -1,3 +1,349 @@
+Compiled with problems:
+×
+ERROR
+[eslint] 
+src\App.js
+  Line 1106:26:  React Hook "useRef" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
+  Line 1107:34:  React Hook "useRef" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
+
+Search for the keywords to learn more about each error.
+
+
+
+// src/App.js
+import React, { useEffect, useState, useRef } from 'react';
+import { Container, Navbar, Nav, Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
+import ZoneDetailsTable from './components/ZoneDetailsTable';
+import DashboardHome from './pages/DashboardHome';
+import ErtPage from './pages/ErtPage';
+
+import './App.css';
+
+function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
+  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
+
+  useEffect(() => {
+    if (currentTimestamp) setLocal(isoToInput(currentTimestamp));
+    else setLocal('');
+  }, [currentTimestamp]);
+
+  function handleApply() {
+    if (!local) return;
+
+    // Convert selected local datetime to a Date object
+    const selected = new Date(local);
+    const now = new Date();
+
+    if (selected > now) {
+      window.alert("Please select a relevant time — snapshot cannot be in the future");
+      return;
+    }
+
+    const [datePart, timePart] = local.split('T');
+    onApply(datePart, timePart);
+  }
+
+  function handleLive() {
+    setLocal('');
+    onLive();
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
+      <InputGroup>
+        <FormControl
+          type="datetime-local"
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          placeholder="Select date & time"
+        />
+      </InputGroup>
+
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
+          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
+        </Button>
+        <Button variant="warning" onClick={handleLive} disabled={loading}>
+          Live
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function isoToInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const year = d.getFullYear();        // local year
+  const month = pad(d.getMonth() + 1); // local month
+  const day = pad(d.getDate());        // local day
+  const hours = pad(d.getHours());     // local hours
+  const minutes = pad(d.getMinutes()); // local minutes
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// -----------------------------
+// ZoneDetailsPage
+// -----------------------------
+function ZoneDetailsPage({ detailsData }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  return (
+    <>
+      <div
+        className="d-flex justify-content-between align-items-center mb-2"
+        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
+      >
+        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+      </div>
+      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+    </>
+  );
+}
+
+// -----------------------------
+// Main App
+// -----------------------------
+function App() {
+  const location = useLocation();
+  const headerText = location.pathname === '/ert'
+    ? 'Emergency Response Team — Western Union Pune'
+    : 'Live Occupancy — Western Union Pune';
+
+  // ---------- CONFIG: API base URL ----------
+  const API_BASE = (process.env.REACT_APP_API_BASE_URL)
+    || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : window.location.origin);
+  const API_ORIGIN = API_BASE.replace(/\/$/, '');
+  // ------------------------------------------
+
+  const [liveData, setLiveData] = useState({
+    summary: [],
+    details: {},
+    floorBreakdown: [],
+    zoneBreakdown: [],
+    personnelBreakdown: [],
+    totalVisitedToday: 0,
+    personnelSummary: { employees: 0, contractors: 0 },
+    visitedToday: { employees: 0, contractors: 0, total: 0 },
+    ertStatus: {}
+  });
+
+  const [timeTravelMode, setTimeTravelMode] = useState(false);
+  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
+  const [timeTravelLoading, setTimeTravelLoading] = useState(false);
+
+  const esRef = useRef(null);
+
+  // SSE: runs only when NOT time-traveling
+  useEffect(() => {
+    if (timeTravelMode) {
+      if (esRef.current) {
+        try { esRef.current.close(); } catch (e) { /* ignore */ }
+        esRef.current = null;
+      }
+      return;
+    }
+
+    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
+    console.debug('[SSE] connecting to', esUrl);
+    const es = new EventSource(esUrl);
+    esRef.current = es;
+
+
+
+    const sseBufferRef = useRef(null);
+    const sseFlushScheduledRef = useRef(false);
+
+    es.onopen = () => console.debug('[SSE] open', esUrl);
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        setLiveData({
+          summary: Array.isArray(p.summary) ? p.summary : [],
+          details: p.details || {},
+          floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+          zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+          personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+          totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+          ertStatus: p.ertStatus || {}
+        });
+      } catch (err) {
+        console.error('[SSE] parse error', err, e.data);
+      }
+    };
+
+    es.onerror = (err) => {
+      console.error('[SSE] error', err);
+      try { es.close(); } catch (e) { }
+      esRef.current = null;
+    };
+
+    return () => {
+      try { es.close(); } catch (e) { }
+      esRef.current = null;
+    };
+  }, [timeTravelMode, API_ORIGIN]);
+
+  // Helper: unify payload set
+  function setPayload(p) {
+    setLiveData({
+      summary: Array.isArray(p.summary) ? p.summary : [],
+      details: p.details || {},
+      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+      totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+      visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+      ertStatus: p.ertStatus || {}
+    });
+  }
+
+  // Fetch a historical snapshot
+  async function fetchSnapshot(dateStr, timeStr) {
+    setTimeTravelLoading(true);
+    const safeTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+    const url = `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(safeTime)}`;
+    console.debug('[TimeTravel] fetching', url);
+    try {
+      const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
+        window.alert(`Failed to load snapshot (${resp.status}). See console for details.`);
+        throw new Error(`Server returned ${resp.status}`);
+      }
+
+      const p = await resp.json();
+      setPayload(p);
+      setTimeTravelMode(true);
+      setTimeTravelTimestamp(p?.asOfLocal || `${dateStr} ${safeTime}`);
+    } catch (err) {
+      console.error('Failed to fetch snapshot', err);
+      if (!err.message.includes('Server returned')) {
+        window.alert('Failed to load snapshot. See console for details.');
+      }
+    } finally {
+      setTimeTravelLoading(false);
+    }
+  }
+
+  // Return to live mode
+  async function clearTimeTravel() {
+    setTimeTravelLoading(true);
+    try {
+      setTimeTravelMode(false);
+      setTimeTravelTimestamp(null);
+      try {
+        const url = `${API_ORIGIN}/api/current-occupancy`;
+        const resp = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (resp.ok) {
+          const p = await resp.json();
+          setPayload(p);
+        } else {
+          console.debug('[TimeTravel] current-occupancy not available', resp.status);
+        }
+      } catch (e) {
+        console.debug('[TimeTravel] current-occupancy fetch failed (ignored)', e);
+      }
+    } finally {
+      setTimeTravelLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
+        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
+        <Nav className="ms-auto align-items-center">
+          <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
+            <TimeTravelControl
+              currentTimestamp={timeTravelTimestamp}
+              onApply={(date, time) => fetchSnapshot(date, time)}
+              onLive={() => clearTimeTravel()}
+              loading={timeTravelLoading}
+            />
+          </div>
+
+          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
+          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
+          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
+          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
+          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun /></Nav.Link>
+        </Nav>
+      </Navbar>
+
+      <Container fluid className="mt-2">
+        {timeTravelMode && (
+          <div style={{
+            background: '#434d44',
+            color: '#FFF',
+            padding: '8px 16px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderLeft: '4px solid rgb(0, 255, 21)',
+            marginBottom: 8
+          }}>
+            <div>
+              Viewing historical snapshot for:&nbsp;
+              <strong>{new Date(timeTravelTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</strong>
+            </div>
+            <div>
+              <button className="btn btn-sm btn-outline-warning" onClick={() => clearTimeTravel()} disabled={timeTravelLoading}>
+                Return to Live
+              </button>
+            </div>
+          </div>
+        )}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <DashboardHome
+                summaryData={liveData.summary}
+                detailsData={liveData.details}
+                floorData={liveData.floorBreakdown}
+                zoneBreakdown={liveData.zoneBreakdown}
+                personnelBreakdown={liveData.personnelBreakdown}
+                totalVisitedToday={liveData.totalVisitedToday}
+                personnelSummary={liveData.personnelSummary}
+                visitedToday={liveData.visitedToday}
+                ertStatus={liveData.ertStatus}
+              />
+            }
+          />
+          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+          <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
+
+        </Routes>
+      </Container>
+    </>
+  );
+}
+export default function WrappedApp() {
+  return (
+    <BrowserRouter>
+      <div className="dark-theme">
+        <App />
+      </div>
+    </BrowserRouter>
+  );
+}
+
 const sseBufferRef = useRef(null);
 const sseFlushScheduledRef = useRef(false);
 
