@@ -1,4 +1,17 @@
 
+- export default function Dashboard() {
+-   const { data, loading, error } = useLiveOccupancy(1000);
++ export default function Dashboard() {
++   const { data: liveData, loading, error } = useLiveOccupancy(1000);
+
+
+
+
+
+
+
+
+
 - <Button variant="outlined" onClick={() => setLocalDT('')}>
 -   Live
 - </Button>
