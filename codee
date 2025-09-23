@@ -1,5 +1,4 @@
-<Card.Body style={{ minHeight: 300, height: "100%", backgroundColor: "#1a1a1a" }}>
-  <ResponsiveContainer width="100%" height="100%">
-    ...
-  </ResponsiveContainer>
-</Card.Body>
+<Card.Body
+  className="p-4 bg-dark d-flex flex-wrap justify-content-center"
+  style={{ gap: "1.5rem", minHeight: 300 }}
+>
