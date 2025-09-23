@@ -1,3 +1,22 @@
+
+- <Button variant="outlined" onClick={() => setLocalDT('')}>
+-   Live
+- </Button>
++ <Button
++   variant="outlined"
++   onClick={() => {
++     setLocalDT('');
++     if (onLive) onLive();
++   }}
++ >
++   Live
++ </Button>
+
+
+
+
+
+
 see both files carefully, and chekc missin and what is add 
 // C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\Header.jsx
 
