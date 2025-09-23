@@ -1,6 +1,287 @@
+see both files carefully, and chekc missin and what is add 
+// C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\Header.jsx
+
+import React, { useEffect, useState } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  IconButton,
+  Button,
+  TextField
+} from '@mui/material';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+
+import WuLogo from '../assets/wu-logo.png';
+import CostaRicaFlag from '../assets/flags/costa-rica.png';
+import ArgentinaFlag from '../assets/flags/argentina.png';
+import MexicoFlag from '../assets/flags/mexico.png';
+import PeruFlag from '../assets/flags/peru.png';
+import BrazilFlag from '../assets/flags/brazil.png';
+import PanamaFlag from '../assets/flags/panama.png';
+import LacaFlag from '../assets/laca-flag.png';
+
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+import { Nav } from 'react-bootstrap';
+
+import { DateTime } from 'luxon'; // ✅ for timezone handling
+
+const displayNameMap = {
+  'CR.Costa Rica Partition': 'Costa Rica',
+  'MX.Mexico City': 'Mexico',
+  'AR.Cordoba': 'Cordoba',
+  'PA.Panama City': 'Panama',
+  'PE.Lima': 'Lima',
+  'BR.Sao Paulo': 'Sao Paulo'
+};
+
+// ✅ Partition → IANA timezone (same as backend)
+const partitionTimezoneMap = {
+  'AR.Cordoba': 'America/Argentina/Cordoba',
+  'BR.Sao Paulo': 'America/Sao_Paulo',
+  'CR.Costa Rica Partition': 'America/Costa_Rica',
+  'MX.Mexico City': 'America/Mexico_City',
+  'PA.Panama City': 'America/Panama',
+  'PE.Lima': 'America/Lima'
+};
+
+
+
+export default function Header() {
+  const navigate = useNavigate();
+  const loc = useLocation();
+  const { data } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+
+  // time travel state
+  const [localDT, setLocalDT] = useState('');
+
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  const parts = loc.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
+
+  const flagMap = {
+    'CR.Costa Rica Partition': CostaRicaFlag,
+    'AR.Cordoba': ArgentinaFlag,
+    'MX.Mexico City': MexicoFlag,
+    'PE.Lima': PeruFlag,
+    'BR.Sao Paulo': BrazilFlag,
+    'PA.Panama City': PanamaFlag,
+  };
+  const selectedFlag = flagMap[currentPartition] || LacaFlag;
+
+  const makePartitionPath = suffix => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
+
+  const handlePartitionChange = newPartition => {
+    if (!newPartition) return navigate('/');
+    const base = `/partition/${encodeURIComponent(newPartition)}`;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
+    navigate(full);
+  };
+
+  // ✅ Apply snapshot (with timezone awareness)
+  const handleApplySnapshot = async () => {
+    if (!localDT) {
+      alert('Select a date/time first.');
+      return;
+    }
+    if (!currentPartition) {
+      alert('Select a partition first.');
+      return;
+    }
+
+    const tz = partitionTimezoneMap[currentPartition] || 'UTC';
+    const atDt = DateTime.fromISO(localDT, { zone: tz });
+    if (!atDt.isValid) {
+      alert('Invalid date/time');
+      return;
+    }
+
+    // prevent selecting a future time
+    if (atDt > DateTime.now().setZone(tz)) {
+      alert('Cannot pick a future time.');
+      return;
+    }
+
+    const dateStr = atDt.toFormat('yyyy-LL-dd');
+    const timeStr = atDt.toFormat('HH:mm:ss');
+
+    const url = `/api/occupancy-at-time?date=${dateStr}&time=${timeStr}&location=${encodeURIComponent(currentPartition)}`;
+    console.log('[Header] Fetching snapshot', url);
+
+    try {
+      const resp = await fetch(url);
+      const json = await resp.json();
+      console.log('Snapshot result:', json);
+      // TODO: optionally lift this state up with a callback (props) if App needs it
+    } catch (err) {
+      console.error('Snapshot fetch failed', err);
+      alert('Snapshot fetch failed, check console.');
+    }
+  };
+
+  return (
+    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+      <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Left side */}
+        <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
+          <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
+          <Typography variant="h6" sx={{ fontWeight: 600, mr: 3 }}>
+            Western Union – LACA
+            {currentPartition && <> • {displayNameMap[currentPartition] || currentPartition}</>}
+          </Typography>
+
+          {/* Icons */}
+          <IconButton size="large" color="inherit"
+            onClick={() => navigate(currentPartition ? `/partition/${encodeURIComponent(currentPartition)}` : '/')}>
+            <HomeIcon sx={{ color: '#4caf50' }} />
+          </IconButton>
+          <IconButton size="large" color="inherit"
+            onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
+            <HistoryIcon sx={{ color: '#F88379' }} />
+          </IconButton>
+          <IconButton size="large" color="inherit"
+            onClick={() => {
+              const target = currentPartition
+                ? makePartitionPath('details')
+                : '/partition/CR.Costa%20Rica%20Partition/details';
+              navigate(target);
+            }}>
+            <ListAltIcon sx={{ color: '#2196f3' }} />
+          </IconButton>
+          <Nav.Link as={Link} to="/ErtPage" className="nav-item-infographic">
+            ERT Overview
+          </Nav.Link>
+        </Box>
+
+        {/* Right side: Time travel + Selector + Flag */}
+        <Box display="flex" alignItems="center" gap={2}>
+          {/* time travel input */}
+          <TextField
+            type="datetime-local"
+            size="small"
+            value={localDT}
+            onChange={e => setLocalDT(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <Button variant="contained" color="secondary" onClick={handleApplySnapshot}>
+            Apply
+          </Button>
+          <Button variant="outlined" onClick={() => setLocalDT('')}>
+            Live
+          </Button>
+
+          {/* Partition select */}
+          <Select
+            size="small"
+            value={currentPartition}
+            displayEmpty
+            onChange={e => handlePartitionChange(e.target.value)}
+            sx={{ bgcolor: 'background.paper', minWidth: 150 }}
+          >
+            <MenuItem value="">— Select Partition —</MenuItem>
+            {partitionList.map(p => (
+              <MenuItem key={p} value={p}>
+                {displayNameMap[p] || p}
+              </MenuItem>
+            ))}
+          </Select>
+          <Box component="img" src={selectedFlag} alt="Flag" sx={{ height: 50 }} />
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+
+
+// src/pages/Dashboard.jsx
+
+import React, { useEffect, useState } from 'react';
+import { Container, Box, Typography, Skeleton, Fade } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+
+// Flags
+import CostaRicaFlag from '../assets/flags/costa-rica.png';
+import ArgentinaFlag from '../assets/flags/argentina.png';
+import MexicoFlag from '../assets/flags/mexico.png';
+import PeruFlag from '../assets/flags/peru.png';
+import BrazilFlag from '../assets/flags/brazil.png';
+import PanamaFlag from '../assets/flags/panama.png';
+
+import Header from '../components/Header';
+import SummaryCard from '../components/SummaryCard';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+import { partitionList } from '../services/occupancy.service';
+// import seatCapacities from '../data/seatCapacities';
+import seatCapacities from '../data/seatCapacities';
+import buildingCapacities from '../data/buildingCapacities';
+import CompositeChartCard from '../components/CompositeChartCard';
+import LineChartCard from '../components/LineChartCard';
+import PieChartCard from '../components/PieChartCard';
+import Footer from '../components/Footer';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+const displayNameMap = {
+  'CR.Costa Rica Partition': 'Costa Rica',
+  'AR.Cordoba': 'Argentina',
+  'MX.Mexico City': 'Mexico',
+  'PE.Lima': 'Peru',
+  'BR.Sao Paulo': 'Brazil',
+  'PA.Panama City': 'Panama'
+};
+
+const colorsMap = {
+  'CR.Costa Rica Partition': ['#FFD666', '#fcf3cf', '#2ecc71', '#ec7063', '#ec7063'],
+  'AR.Cordoba': ['#FFE599', '#fcf3cf', '#2ecc71', '#ec7063'],
+  'MX.Mexico City': ['#FFD666', '#fcf3cf', '#2ecc71', '#ec7063'],
+  'PE.Lima': ['#FFF2CC', '#fcf3cf', '#2ecc71', '#ec7063'],
+  'BR.Sao Paulo': ['#FFD666', '#fcf3cf', '#2ecc71', '#ec7063'],
+  'PA.Panama City': ['#FFE599', '#fcf3cf', '#2ecc71', '#ec7063'],
+};
+
+const widgetMap = {
+  'CR.Costa Rica Partition': 'composite',
+  'AR.Cordoba': 'line',
+  'BR.Sao Paulo': 'pie',
+  'MX.Mexico City': 'pie',
+  'PE.Lima': 'pie',
+  'PA.Panama City': 'pie',
+};
+
+const palette15 = [
+  '#FFC107', '#E57373', '#4CAF50', '#FFEB3B', '#FFD666',
+  '#D84315', '#3F51B5', '#9C27B0', '#00BCD4', '#8BC34A',
+  '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'
+];
+
 // inside Dashboard component
 const [data, setData] = useState(null);
 const [mode, setMode] = useState('live');
+
+
 
 const handleSnapshot = snapshotJson => {
   setData(snapshotJson);
@@ -12,5 +293,319 @@ const handleLive = () => {
   setData(liveData);
 };
 
-// in return JSX
-<Header onSnapshot={handleSnapshot} onLive={handleLive} />
+
+export default function Dashboard() {
+  const { data, loading, error } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (data) {
+      setLastUpdate(new Date().toLocaleTimeString());
+    }
+  }, [data]);
+
+  if (error) {
+    return (
+      <Box width="100vw%" py={4}>
+        <Typography color="error" align="center">
+          Error loading live data
+        </Typography>
+      </Box>
+    );
+  }
+
+  const regions = data?.realtime || {};
+  const flagMap = {
+    'CR.Costa Rica Partition': CostaRicaFlag,
+    'AR.Cordoba': ArgentinaFlag,
+    'MX.Mexico City': MexicoFlag,
+    'PE.Lima': PeruFlag,
+    'BR.Sao Paulo': BrazilFlag,
+    'PA.Panama City': PanamaFlag,
+  };
+
+  const partitions = partitionList.map(name => {
+    const key = Object.keys(regions).find(k => k.includes(name));
+    const p = key ? regions[key] : {};
+    return {
+      name,
+      total: p.total || 0,
+      Employee: p.Employee || 0,
+      Contractor: p.Contractor || 0,
+      floors: p.floors || {},
+      flag: flagMap[name], // ✅ Assign the correct flag here
+    };
+  }).sort((a, b) => b.total - a.total);
+
+  const todayTot = data?.today?.total ?? 0;
+  const todayEmp = data?.today?.Employee ?? 0;
+  const todayCont = data?.today?.Contractor ?? 0;
+  const realtimeTot = partitions.reduce((sum, p) => sum + p.total, 0);
+  const realtimeEmp = partitions.reduce((sum, p) => sum + p.Employee, 0);
+  const realtimeCont = partitions.reduce((sum, p) => sum + p.Contractor, 0);
+  const crPartition = partitions.find(p => p.name === 'CR.Costa Rica Partition');
+  const arPartition = partitions.find(p => p.name === 'AR.Cordoba');
+  const smallOnes = partitions.filter(p =>
+    ['MX.Mexico City', 'BR.Sao Paulo', 'PE.Lima', 'PA.Panama City'].includes(p.name)
+  );
+
+if (loading) {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        bgcolor: 'rgba(0, 0, 0, 0.85)',
+        zIndex: 9999,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',}}>
+      <LoadingSpinner />
+    </Box>
+  );
+}
+  return (
+    <>
+      {/* <Header /> */}
+      <Header onSnapshot={handleSnapshot} onLive={handleLive} />
+      <Container
+        maxWidth={false}
+        disableGutters
+        // sx={{ py: 3, px: 2, background: 'rgba(0, 0, 0, 0.93)' }}
+        sx={{
+          py: 0,
+          px: 2,
+          background: 'linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)',
+          color: '#f5f5f5',
+          // minHeight: '100vh'
+        }}>
+
+        {/* Last updated */}
+        <Typography
+          variant="caption"
+          sx={{ color: 'white', mb: 1, opacity: data ? 1 : 0, transition: 'opacity 0.6s' }}
+        >
+          {/* Last updated: {lastUpdate} */}
+        </Typography>
+
+        {/* Top six summary cards */}
+        <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+          {[
+            {
+              title: "Today's Total Headcount",
+
+              color: '#FFE599',
+              value: todayTot,
+              icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+              border: '#FFB300',
+
+            },
+            {
+              title: "Today's Employees Count",
+              value: todayEmp,
+              icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+              border: '#8BC34A'
+            },
+            {
+              title: "Today's Contractors Count",
+              value: todayCont,
+              icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+              border: '#E57373'
+            },
+            {
+              title: "Realtime Headcount",
+              value: realtimeTot,
+              icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+              border: '#FFD180'
+            },
+            {
+              title: "Realtime Employees Count",
+              value: realtimeEmp,
+              icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+              border: '#AED581'
+            },
+            {
+              title: "Realtime Contractors Count",
+              value: realtimeCont,
+              icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+              border: '#E57373'
+            }
+          ].map(c => (
+            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+              <SummaryCard
+                title={c.title}
+                total={c.value}
+                stats={[]}
+                icon={c.icon}
+                sx={{ height: 140, border: `2px solid ${c.border}` }}
+              />
+            </Box>
+          ))}
+        </Box>
+
+        {/* Partition cards */}
+        {/* Region Cards */}
+        <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
+          {loading
+            ? <Skeleton variant="rectangular" width="90%" height={200} />
+            :
+            partitions.map((p, index) => (
+              <Box
+                key={p.name}
+                sx={{ flex: '1 1 calc(16.66% - 8px)' }}
+              >
+                <SummaryCard
+                  title={
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: '#FFC107',  // Change this to your desired color
+                        fontSize: '1.3rem'
+                      }}
+                    >
+                      {p.name.replace(/^.*\./, '')}
+                    </Typography>
+                  }
+                  total={p.total}
+                  stats={[
+                    { label: 'Employees', value: p.Employee, color: '#40E0D0' },
+                    { label: 'Contractors', value: p.Contractor, color: 'green' }
+                  ]}
+                  sx={{
+                    width: '100%',
+                    border: `2px solid ${palette15[index % palette15.length]}`
+                  }}
+                  icon={
+                    <Box
+                      component="img"
+                      src={p.flag}
+                      sx={{ width: 48, height: 32 }}
+                    />
+                  }
+                />
+              </Box>
+            ))
+          }
+
+        </Box>
+
+        {/* Partition detail widgets: 3 in one row */}
+        {loading ? (
+          <Skeleton variant="rectangular" width="100%" height={500} />
+        ) : (
+          <Box mt={4} display="flex" gap={2} justifyContent="space-between" flexWrap="wrap">
+
+            {/* 1) Costa Rica composite */}
+            <Box
+              sx={{
+                flex: '1 1 32%',
+                minWidth: 280,
+                border: '1px solid #FFE599',
+                borderRadius: 2,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
+                '&:hover': { transform: 'scale(1.02)' },
+                overflow: 'hidden',
+                transition: 'transform 0.3s'
+              }}
+            >
+              {crPartition.total === 0
+                ? <Typography align="center" sx={{ py: 4, color: 'white' }}>
+                  No realtime employee data
+                </Typography>
+                : <CompositeChartCard
+                  title="Costa Rica"
+                  data={Object.entries(crPartition.floors).map(([f, c]) => ({
+                    name: f.trim(), headcount: c,
+                    // capacity: seatCapacities[`Costa Rica-${f.trim()}`]||0
+                    capacity: buildingCapacities[f.trim()] || 0
+                  }))}
+                  barColor={palette15[0]}
+                  lineColor={palette15[1]}
+                  height={350}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                />
+              }
+            </Box>
+
+            {/* 2) Argentina line */}
+            <Box
+              sx={{
+                flex: '1 1 32%',
+                minWidth: 280,
+                border: '1px solid #FFE599',
+                borderRadius: 2,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
+                '&:hover': { transform: 'scale(1.02)' },
+                overflow: 'hidden',
+                transition: 'transform 0.3s'
+              }}
+            >
+              {arPartition.total === 0
+                ? <Typography align="center" sx={{ py: 4, color: 'white' }}>
+                  No realtime employee data
+                </Typography>
+                : <LineChartCard
+                  title="Argentina"
+                  data={Object.entries(arPartition.floors).map(([f, c]) => ({
+                    name: f.trim(), headcount: c,
+                    capacity: seatCapacities[`Argentina-${f.trim()}`] || 0
+                  }))}
+                  totalCapacity={450}
+                  lineColor1={palette15[2]}
+                  lineColor2={palette15[3]}
+                  height={350}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                />
+              }
+            </Box>
+
+            {/* 3) Combined Pie */}
+            <Box
+              sx={{
+                flex: '1 1 32%',
+                minWidth: 280,
+                border: '1px solid #FFE599',
+                borderRadius: 2,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
+                '&:hover': { transform: 'scale(1.02)' },
+                overflow: 'hidden',
+                transition: 'transform 0.3s'
+              }}
+            >
+
+              <PieChartCard
+                title="Latin America"
+                data={smallOnes.map(p => ({
+                  name: displayNameMap[p.name],
+                  value: p.total,
+                  emp: p.Employee,
+                  cont: p.Contractor
+                }))}
+                colors={[
+                  palette15[4], palette15[5],
+                  palette15[6], palette15[7]
+                ]}
+                height={350}
+                showZeroSlice={true}
+                animationDuration={1500}
+                totalSeats={
+                  smallOnes.reduce(
+                    (sum, p) => sum + seatCapacities[displayNameMap[p.name]],
+                    0
+                  )
+                }
+              />
+            </Box>
+          </Box>
+        )}
+      </Container>
+      <Footer />
+    </>
+  );
+}
