@@ -1,4 +1,3 @@
-how to do in this know 
 // C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\Header.jsx
 
 import React, { useEffect, useState } from 'react';
@@ -9,7 +8,9 @@ import {
   Typography,
   Select,
   MenuItem,
-  IconButton
+  IconButton,
+  Button,
+  TextField
 } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -28,8 +29,9 @@ import LacaFlag from '../assets/laca-flag.png';
 
 import { partitionList } from '../services/occupancy.service';
 import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+import { Nav } from 'react-bootstrap';
 
-import { Nav } from 'react-bootstrap'; // ✅ Add this
+import { DateTime } from 'luxon'; // ✅ for timezone handling
 
 const displayNameMap = {
   'CR.Costa Rica Partition': 'Costa Rica',
@@ -40,12 +42,25 @@ const displayNameMap = {
   'BR.Sao Paulo': 'Sao Paulo'
 };
 
+// ✅ Partition → IANA timezone (same as backend)
+const partitionTimezoneMap = {
+  'AR.Cordoba': 'America/Argentina/Cordoba',
+  'BR.Sao Paulo': 'America/Sao_Paulo',
+  'CR.Costa Rica Partition': 'America/Costa_Rica',
+  'MX.Mexico City': 'America/Mexico_City',
+  'PA.Panama City': 'America/Panama',
+  'PE.Lima': 'America/Lima'
+};
+
 export default function Header() {
   const navigate = useNavigate();
   const loc = useLocation();
-  // live‐update timer in header
   const { data } = useLiveOccupancy(1000);
   const [lastUpdate, setLastUpdate] = useState('');
+
+  // time travel state
+  const [localDT, setLocalDT] = useState('');
+
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
@@ -83,33 +98,59 @@ export default function Header() {
     navigate(full);
   };
 
+  // ✅ Apply snapshot (with timezone awareness)
+  const handleApplySnapshot = async () => {
+    if (!localDT) {
+      alert('Select a date/time first.');
+      return;
+    }
+    if (!currentPartition) {
+      alert('Select a partition first.');
+      return;
+    }
+
+    const tz = partitionTimezoneMap[currentPartition] || 'UTC';
+    const atDt = DateTime.fromISO(localDT, { zone: tz });
+    if (!atDt.isValid) {
+      alert('Invalid date/time');
+      return;
+    }
+
+    // prevent selecting a future time
+    if (atDt > DateTime.now().setZone(tz)) {
+      alert('Cannot pick a future time.');
+      return;
+    }
+
+    const dateStr = atDt.toFormat('yyyy-LL-dd');
+    const timeStr = atDt.toFormat('HH:mm:ss');
+
+    const url = `/api/occupancy-at-time?date=${dateStr}&time=${timeStr}&location=${encodeURIComponent(currentPartition)}`;
+    console.log('[Header] Fetching snapshot', url);
+
+    try {
+      const resp = await fetch(url);
+      const json = await resp.json();
+      console.log('Snapshot result:', json);
+      // TODO: optionally lift this state up with a callback (props) if App needs it
+    } catch (err) {
+      console.error('Snapshot fetch failed', err);
+      alert('Snapshot fetch failed, check console.');
+    }
+  };
+
   return (
     <AppBar position="static" color="primary" sx={{ mb: 2 }}>
       <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* Left: Logo, Title, Nav */}
+        {/* Left side */}
         <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
           <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
-
           <Typography variant="h6" sx={{ fontWeight: 600, mr: 3 }}>
             Western Union – LACA
             {currentPartition && <> • {displayNameMap[currentPartition] || currentPartition}</>}
           </Typography>
 
-          {/* Live update timer */}
-          <Typography
-            variant="caption"
-            sx={{
-              color: '#FFC72C',
-              ml: 2,
-              gap: 20,
-              fontStyle: 'Aptos Narrow',
-              opacity: data ? 1 : 0,
-              transition: 'opacity 0.8s'
-            }}
-          >
-            {/* {lastUpdate} */}
-          </Typography>
-          {/* Home/History/Details icons */}
+          {/* Icons */}
           <IconButton size="large" color="inherit"
             onClick={() => navigate(currentPartition ? `/partition/${encodeURIComponent(currentPartition)}` : '/')}>
             <HomeIcon sx={{ color: '#4caf50' }} />
@@ -118,7 +159,6 @@ export default function Header() {
             onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
             <HistoryIcon sx={{ color: '#F88379' }} />
           </IconButton>
-          {/* Details icon always shown; defaults to Costa Rica if no partition yet */}
           <IconButton size="large" color="inherit"
             onClick={() => {
               const target = currentPartition
@@ -128,21 +168,35 @@ export default function Header() {
             }}>
             <ListAltIcon sx={{ color: '#2196f3' }} />
           </IconButton>
-
           <Nav.Link as={Link} to="/ErtPage" className="nav-item-infographic">
             ERT Overview
           </Nav.Link>
-
         </Box>
 
-        {/* Right: Selector + Flag */}
-        <Box display="flex" alignItems="center">
+        {/* Right side: Time travel + Selector + Flag */}
+        <Box display="flex" alignItems="center" gap={2}>
+          {/* time travel input */}
+          <TextField
+            type="datetime-local"
+            size="small"
+            value={localDT}
+            onChange={e => setLocalDT(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+          <Button variant="contained" color="secondary" onClick={handleApplySnapshot}>
+            Apply
+          </Button>
+          <Button variant="outlined" onClick={() => setLocalDT('')}>
+            Live
+          </Button>
+
+          {/* Partition select */}
           <Select
             size="small"
             value={currentPartition}
             displayEmpty
             onChange={e => handlePartitionChange(e.target.value)}
-            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
+            sx={{ bgcolor: 'background.paper', minWidth: 150 }}
           >
             <MenuItem value="">— Select Partition —</MenuItem>
             {partitionList.map(p => (
