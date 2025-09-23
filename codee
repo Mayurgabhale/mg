@@ -1,6 +1,4 @@
-
 // C:\Users\W0024618\Desktop\swipeData\client\src\pages\DashboardHome.jsx
-
 import React, { useMemo } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 
@@ -8,7 +6,7 @@ import SummaryCards        from '../components/SummaryCards';
 import FloorOccupancyChart from '../components/FloorOccupancyChart';
 import SummaryChart        from '../components/SummaryChart';
 import PersonnelDonutChart from '../components/PersonnelDonutChart';
-// import LoadingSpinner      from '../components/LoadingSpinner';
+import LoadingSpinner      from '../components/LoadingSpinner';
 
 function DashboardHome({
   summaryData,
@@ -31,6 +29,16 @@ function DashboardHome({
     [personnelBreakdown]
   );
 
+  // ✅ Loading condition: if critical data is missing
+  const isLoading =
+    (!summaryData || summaryData.length === 0) &&
+    (!floorData || floorData.length === 0) &&
+    (!personnelBreakdown || personnelBreakdown.length === 0);
+
+  if (isLoading) {
+    return <LoadingSpinner message="Loading dashboard..." />;
+  }
+
   return (
     <Container fluid className="py-4">
       <SummaryCards
@@ -43,15 +51,15 @@ function DashboardHome({
       />
 
       <Row className="g-4">
-        <Col md={4}>
+        <Col md={4} style={{ minHeight: 300 }}>
           <FloorOccupancyChart data={floorData} />
         </Col>
 
-        <Col md={4}>
+        <Col md={4} style={{ minHeight: 300 }}>
           <SummaryChart summary={summaryData} />
         </Col>
 
-        <Col md={4}>
+        <Col md={4} style={{ minHeight: 300 }}>
           <PersonnelDonutChart data={chartData} />
         </Col>
       </Row>
@@ -64,7 +72,8 @@ function DashboardHome({
         marginTop: '0rem',
         borderTop: '2px solid #FFC72C',
         fontSize: '0.95rem',
-        lineHeight: '1.6'
+        lineHeight: '1.6',
+        minHeight: 120 // reserve space to reduce layout shifts
       }}>
         <div><strong>Global Security Operations Center</strong><br/>
           Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
@@ -84,4 +93,3 @@ function DashboardHome({
 
 // Memoize whole page so it only re-renders when its props actually change
 export default React.memo(DashboardHome);
-
