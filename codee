@@ -1,209 +1,159 @@
-// GET /api/occupancy-at-time?date=YYYY-MM-DD&time=HH:MM[:SS]&location=MX.Mexico City
-router.get('/occupancy-at-time', controller.getSnapshotAtDateTime);
+how to do in this know 
+// C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\Header.jsx
 
+import React, { useEffect, useState } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  IconButton
+} from '@mui/material';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
-const { DateTime } = require('luxon'); // add at top of file if not already present
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 
-// Simple map from partition name -> IANA timezone. Update if you have a canonical map.
-const partitionTimezoneMap = {
-  'AR.Cordoba': 'America/Argentina/Cordoba',
-  'BR.Sao Paulo': 'America/Sao_Paulo',
-  'CR.Costa Rica Partition': 'America/Costa_Rica',
-  'MX.Mexico City': 'America/Mexico_City',
-  'PA.Panama City': 'America/Panama',
-  'PE.Lima': 'America/Lima'
+import WuLogo from '../assets/wu-logo.png';
+import CostaRicaFlag from '../assets/flags/costa-rica.png';
+import ArgentinaFlag from '../assets/flags/argentina.png';
+import MexicoFlag from '../assets/flags/mexico.png';
+import PeruFlag from '../assets/flags/peru.png';
+import BrazilFlag from '../assets/flags/brazil.png';
+import PanamaFlag from '../assets/flags/panama.png';
+import LacaFlag from '../assets/laca-flag.png';
+
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+import { Nav } from 'react-bootstrap'; // ✅ Add this
+
+const displayNameMap = {
+  'CR.Costa Rica Partition': 'Costa Rica',
+  'MX.Mexico City': 'Mexico',
+  'AR.Cordoba': 'Cordoba',
+  'PA.Panama City': 'Panama',
+  'PE.Lima': 'Lima',
+  'BR.Sao Paulo': 'Sao Paulo'
 };
 
-/**
- * Fetch occupancy snapshot for a specific date+time.
- * - date: 'YYYY-MM-DD'
- * - time: 'HH:MM' or 'HH:MM:SS'
- * - location: optional partition name (must match one in partitionList)
- *
- * Returns an array of raw rows (same shape as fetchLiveOccupancy / fetchHistoricalData),
- * where each row includes LocaleMessageTime (as a SQL datetime -> JS Date).
- */
-exports.fetchSnapshotAtDateTime = async ({ date, time, location = null }) => {
-  // validate simple formats (caller should already validate, but keep defensive)
-  if (!date || !time) throw new Error('missing date or time');
+export default function Header() {
+  const navigate = useNavigate();
+  const loc = useLocation();
+  // live‐update timer in header
+  const { data } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
 
-  // choose timezone for the requested partition (default to UTC if unknown)
-  const tz = location && partitionTimezoneMap[location]
-    ? partitionTimezoneMap[location]
-    : 'utc';
+  const parts = loc.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
 
-  // build a Luxon DateTime in that timezone
-  const dtMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
-  if (!dtMatch || !timeMatch) {
-    throw new Error('invalid date/time format');
-  }
-  const year = Number(dtMatch[1]);
-  const month = Number(dtMatch[2]);
-  const day = Number(dtMatch[3]);
-  const hour = Number(timeMatch[1]);
-  const minute = Number(timeMatch[2]);
-  const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
+  const flagMap = {
+    'CR.Costa Rica Partition': CostaRicaFlag,
+    'AR.Cordoba': ArgentinaFlag,
+    'MX.Mexico City': MexicoFlag,
+    'PE.Lima': PeruFlag,
+    'BR.Sao Paulo': BrazilFlag,
+    'PA.Panama City': PanamaFlag,
+  };
+  const selectedFlag = flagMap[currentPartition] || LacaFlag;
 
-  const atDt = DateTime.fromObject(
-    { year, month, day, hour, minute, second, millisecond: 0 },
-    { zone: tz }
+  const makePartitionPath = suffix => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
+
+  const handlePartitionChange = newPartition => {
+    if (!newPartition) return navigate('/');
+    const base = `/partition/${encodeURIComponent(newPartition)}`;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
+    navigate(full);
+  };
+
+  return (
+    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+      <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Left: Logo, Title, Nav */}
+        <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
+          <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
+
+          <Typography variant="h6" sx={{ fontWeight: 600, mr: 3 }}>
+            Western Union – LACA
+            {currentPartition && <> • {displayNameMap[currentPartition] || currentPartition}</>}
+          </Typography>
+
+          {/* Live update timer */}
+          <Typography
+            variant="caption"
+            sx={{
+              color: '#FFC72C',
+              ml: 2,
+              gap: 20,
+              fontStyle: 'Aptos Narrow',
+              opacity: data ? 1 : 0,
+              transition: 'opacity 0.8s'
+            }}
+          >
+            {/* {lastUpdate} */}
+          </Typography>
+          {/* Home/History/Details icons */}
+          <IconButton size="large" color="inherit"
+            onClick={() => navigate(currentPartition ? `/partition/${encodeURIComponent(currentPartition)}` : '/')}>
+            <HomeIcon sx={{ color: '#4caf50' }} />
+          </IconButton>
+          <IconButton size="large" color="inherit"
+            onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
+            <HistoryIcon sx={{ color: '#F88379' }} />
+          </IconButton>
+          {/* Details icon always shown; defaults to Costa Rica if no partition yet */}
+          <IconButton size="large" color="inherit"
+            onClick={() => {
+              const target = currentPartition
+                ? makePartitionPath('details')
+                : '/partition/CR.Costa%20Rica%20Partition/details';
+              navigate(target);
+            }}>
+            <ListAltIcon sx={{ color: '#2196f3' }} />
+          </IconButton>
+
+          <Nav.Link as={Link} to="/ErtPage" className="nav-item-infographic">
+            ERT Overview
+          </Nav.Link>
+
+        </Box>
+
+        {/* Right: Selector + Flag */}
+        <Box display="flex" alignItems="center">
+          <Select
+            size="small"
+            value={currentPartition}
+            displayEmpty
+            onChange={e => handlePartitionChange(e.target.value)}
+            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
+          >
+            <MenuItem value="">— Select Partition —</MenuItem>
+            {partitionList.map(p => (
+              <MenuItem key={p} value={p}>
+                {displayNameMap[p] || p}
+              </MenuItem>
+            ))}
+          </Select>
+          <Box component="img" src={selectedFlag} alt="Flag" sx={{ height: 50 }} />
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
-
-  if (!atDt.isValid) {
-    throw new Error('invalid date+time combination');
-  }
-
-  // Convert to UTC Date for SQL parameter (SQL stores MessageUTC)
-  const untilUtc = atDt.toUTC().toJSDate();
-
-  const pool = await poolPromise;
-  const req = pool.request();
-  req.input('until', sql.DateTime, untilUtc);
-
-  // partition filter: either single partition param or use configured partitionList
-  let partitionFilterSql = `t1.PartitionName2 IN (${partitionList.map(p => `'${p.replace("'", "''")}'`).join(',')})`;
-  if (location) {
-    partitionFilterSql = `t1.PartitionName2 = @location`;
-    req.input('location', sql.NVarChar, location);
-  }
-
-  // Query: compute LocaleMessageTime same as other service functions, but filter by MessageUTC window
-  const q = `
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.MessageUTC,
-        t1.ObjectName1,
-        t1.ObjectName2            AS Door,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END                       AS EmployeeID,
-        t2.text5                  AS Text5,
-        t1.PartitionName2         AS PartitionName2,
-        t1.ObjectIdentity1        AS PersonGUID,
-        t3.Name                   AS PersonnelType,
-        t2.Text4                  AS CompanyName,
-        t2.Text5                  AS PrimaryLocation,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        )                         AS CardNumber,
-        t5a.value                 AS AdmitCode,
-        t5d.value                 AS Direction
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
-        ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
-        ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) AS sc
-        ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND ${partitionFilterSql}
-        AND t1.MessageUTC <= @until
-        AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
-    )
-    SELECT *
-    FROM CombinedQuery
-    ORDER BY MessageUTC ASC;
-  `;
-
-  const result = await req.query(q);
-  return { rows: result.recordset, atDtISO: atDt.toISO(), atDtZone: tz };
-};
-
-
-
-exports.getSnapshotAtDateTime = async (req, res) => {
-  try {
-    const { date, time, location } = req.query;
-    if (!date || !time) {
-      return res.status(400).json({
-        success: false,
-        message: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]&location=<optional partition>'
-      });
-    }
-
-    // validate formats (same regex style used elsewhere)
-    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
-    if (!dateMatch) {
-      return res.status(400).json({ success:false, message: 'invalid "date" format; expected YYYY-MM-DD' });
-    }
-    if (!timeMatch) {
-      return res.status(400).json({ success:false, message: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
-    }
-
-    // fetch raw rows
-    const svcRes = await service.fetchSnapshotAtDateTime({ date, time, location });
-    const rows = svcRes.rows || [];
-    const asOfLocal = svcRes.atDtISO;
-    const asOfZone = svcRes.atDtZone || 'utc';
-
-    // convert LocaleMessageTime to ISO string and filter to requested local date (YYYY-MM-DD)
-    const filtered = rows.map(r => {
-      // LocaleMessageTime from SQL may be a Date or string; normalize to ISO
-      const lmt = r.LocaleMessageTime instanceof Date ? r.LocaleMessageTime.toISOString() : (r.LocaleMessageTime || null);
-      return { ...r, LocaleMessageTime: lmt };
-    }).filter(r => {
-      if (!r.LocaleMessageTime) return false;
-      return r.LocaleMessageTime.slice(0,10) === date;
-    });
-
-    // compute unique visited-up-to-snapshot counts (first swipe per PersonGUID on that date)
-    const firstByPerson = {};
-    filtered.forEach(r => {
-      const prev = firstByPerson[r.PersonGUID];
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
-        firstByPerson[r.PersonGUID] = r;
-      }
-    });
-    const visitedRecs = Object.values(firstByPerson);
-    const visitedCounts = { total: 0, Employee: 0, Contractor: 0, TempBadge: 0 };
-    visitedRecs.forEach(r => {
-      visitedCounts.total++;
-      if (isTempBadgeType(r.PersonnelType)) visitedCounts.TempBadge++;
-      else if (isEmployeeType(r.PersonnelType)) visitedCounts.Employee++;
-      else visitedCounts.Contractor++;
-    });
-
-    return res.json({
-      success: true,
-      asOfLocal,          // ISO in requested partition zone
-      asOfZone,
-      asOfUTC: `${date}T${String(timeMatch[1]).padStart(2,'0')}:${String(timeMatch[2]).padStart(2,'0')}:${String(timeMatch[3] || '00').padStart(2,'0')}Z`,
-      // totalRecords: filtered.length,
-      totalVisitedToday: visitedCounts.total,
-      visitedByType: visitedCounts,
-      data: visitedRecs
-    });
-
-  } catch (err) {
-    console.error('getSnapshotAtDateTime error:', err);
-    return res.status(500).json({ success: false, message: 'Snapshot fetch failed' });
-  }
-};
-
-
-
-
-
-
-
-
-
-
+}
