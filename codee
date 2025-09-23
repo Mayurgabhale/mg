@@ -1,9 +1,7 @@
-i want to create this loadin spinne more atractive, 
-for western union dashboard 
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\LoadingSpinner.jsx
 import React from "react";
 
-export default function LoadingSpinner({ size = 100, message }) {
+export default function LoadingSpinner({ size = 120, message }) {
   return (
     <div
       style={{
@@ -12,46 +10,86 @@ export default function LoadingSpinner({ size = 100, message }) {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "90vh",
+        backgroundColor: "#000", // dark background for contrast
       }}
     >
       {/* Spinner */}
-      <span
-        className="loader"
-        style={{ width: size, height: size }}
-      ></span>
+      <div className="wu-spinner" style={{ width: size, height: size }}></div>
 
       {/* Optional message */}
       {message && (
-        <div style={{ marginTop: "1rem", color: "#555", fontSize: "1rem" }}>
+        <div
+          style={{
+            marginTop: "1rem",
+            color: "#FFC72C",
+            fontSize: "1.2rem",
+            fontWeight: "bold",
+            textAlign: "center",
+            fontFamily: "Arial, sans-serif",
+            textShadow: "0 0 5px #FFC72C, 0 0 10px #FFDD00",
+          }}
+        >
           {message}
         </div>
       )}
 
-      {/* Inject styles directly */}
+      {/* Spinner styles */}
       <style>{`
-        .loader {
+        .wu-spinner {
           position: relative;
           width: 100px;
           height: 100px;
+          transform: scale(1);
+          animation: pulse 1.5s ease-in-out infinite alternate;
         }
 
-        .loader:before,
-        .loader:after {
+        /* Outer ring */
+        .wu-spinner:before {
           content: '';
-          border-radius: 50%;
+          box-sizing: border-box;
           position: absolute;
           inset: 0;
-          box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.3) inset;
+          border: 8px solid rgba(255, 199, 44, 0.3);
+          border-top-color: #FFC72C;
+          border-radius: 50%;
+          animation: spin 1.5s linear infinite, glowPulse 1.5s ease-in-out infinite alternate;
         }
 
-        .loader:after {
-          box-shadow: 0 2px 0 #FFDD00 inset;
-          animation: rotate 2s linear infinite;
+        /* Inner ring */
+        .wu-spinner:after {
+          content: '';
+          box-sizing: border-box;
+          position: absolute;
+          inset: 15%;
+          border: 4px solid rgba(255, 199, 44, 0.2);
+          border-top-color: #FFDD00;
+          border-radius: 50%;
+          animation: spinReverse 1s linear infinite, glowPulse 1s ease-in-out infinite alternate;
         }
 
-        @keyframes rotate {
-          0% { transform: rotate(0); }
+        /* Rotation animations */
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spinReverse {
+          0% { transform: rotate(360deg); }
+          100% { transform: rotate(0deg); }
+        }
+
+        /* Glow pulsing */
+        @keyframes glowPulse {
+          0% { box-shadow: 0 0 5px #FFC72C; }
+          50% { box-shadow: 0 0 15px #FFDD00; }
+          100% { box-shadow: 0 0 5px #FFC72C; }
+        }
+
+        /* Scaling pulse for entire spinner */
+        @keyframes pulse {
+          0% { transform: scale(0.95); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(0.95); }
         }
       `}</style>
     </div>
