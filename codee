@@ -1,56 +1,24 @@
-react-dom-client.development.js:3077 Received `true` for a non-boolean attribute `jsx`.
-
-If you want to write it to the DOM, pass a string instead: jsx="true" or jsx={value.toString()}.
-validateProperty	@	react-dom-client.development.js:3077
-warnUnknownProperties	@	react-dom-client.development.js:3153
-validatePropertiesInDevelopment	@	react-dom-client.development.js:17115
-setInitialProperties	@	react-dom-client.development.js:17741
-completeWork	@	react-dom-client.development.js:11390
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-completeUnitOfWork	@	react-dom-client.development.js:15268
-performUnitOfWork	@	react-dom-client.development.js:15148
-workLoopSync	@	react-dom-client.development.js:14956
-renderRootSync	@	react-dom-client.development.js:14936
-performWorkOnRoot	@	react-dom-client.development.js:14417
-performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
-performWorkUntilDeadline	@	scheduler.development.js:45
-<style>		
-exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
-App	@	App.js:530
-react-stack-bottom-frame	@	react-dom-client.development.js:23863
-renderWithHooksAgain	@	react-dom-client.development.js:5629
-renderWithHooks	@	react-dom-client.development.js:5541
-updateFunctionComponent	@	react-dom-client.development.js:8897
-beginWork	@	react-dom-client.development.js:10522
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-performUnitOfWork	@	react-dom-client.development.js:15130
-workLoopSync	@	react-dom-client.development.js:14956
-renderRootSync	@	react-dom-client.development.js:14936
-performWorkOnRoot	@	react-dom-client.development.js:14417
-performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
-performWorkUntilDeadline	@	scheduler.development.js:45
-<App>		
-exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
-WrappedApp	@	App.js:583
-react-stack-bottom-frame	@	react-dom-client.development.js:23863
-renderWithHooksAgain	@	react-dom-client.development.js:5629
-renderWithHooks	@	react-dom-client.development.js:5541
-updateFunctionComponent	@	react-dom-client.development.js:8897
-beginWork	@	react-dom-client.development.js:10522
-runWithFiberInDEV	@	react-dom-client.development.js:1518
-performUnitOfWork	@	react-dom-client.development.js:15130
-workLoopSync	@	react-dom-client.development.js:14956
-renderRootSync	@	react-dom-client.development.js:14936
-performWorkOnRoot	@	react-dom-client.development.js:14417
-performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
-performWorkUntilDeadline	@	scheduler.development.js:45
-<WrappedApp>		
-exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
-./src/index.js	@	index.js:10
-options.factory	@	react refresh:37
-__webpack_require__	@	bootstrap:22
-(anonymous)	@	startup:7
-(anonymous)	@	startup:7
-
-﻿
-
+  {/* Footer — reserved space to reduce layout shift */}
+      <footer style={{
+        backgroundColor: '#000',
+        color: '#FFC72C',
+        padding: '1.5rem 0',
+        textAlign: 'center',
+        marginTop: '0rem',
+        borderTop: '2px solid #FFC72C',
+        fontSize: '0.95rem',
+        lineHeight: '1.6',
+        minHeight: 120
+      }}>
+        <div><strong>Global Security Operations Center</strong><br />
+          Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
+        </div>
+        <div style={{ marginTop: '0.75rem' }}>
+          Contact us:&nbsp;
+          <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+             style={{ color: '#FFC72C', textDecoration: 'underline' }}>
+            GSOC Mail
+          </a>&nbsp;|&nbsp;
+          Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
