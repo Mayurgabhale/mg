@@ -1,18 +1,35 @@
-see this this issue is in this files or other fiels to take more time to opne dashboard, 
-i means page teking more time ot loading, 
-suggent me how to improve page loading perfomrnce 
-
 // src/App.js
-import React, { useEffect, useState, useRef } from 'react';
-import { Container, Navbar, Nav, Button, InputGroup, FormControl, Spinner } from 'react-bootstrap';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense,
+  useMemo
+} from 'react';
+import {
+  Container,
+  Navbar,
+  Nav,
+  Button,
+  InputGroup,
+  FormControl,
+  Spinner
+} from 'react-bootstrap';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { FaSun } from 'react-icons/fa';
-import ZoneDetailsTable from './components/ZoneDetailsTable';
-import DashboardHome from './pages/DashboardHome';
-import ErtPage from './pages/ErtPage';
 
 import './App.css';
 
+// ✅ Lazy load pages (faster initial load)
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
+const ErtPage = lazy(() => import('./pages/ErtPage'));
+const ZoneDetailsTable = lazy(() => import('./components/ZoneDetailsTable'));
+
+// -----------------------------
+// TimeTravelControl
+// -----------------------------
 function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
   const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
 
@@ -21,10 +38,9 @@ function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
     else setLocal('');
   }, [currentTimestamp]);
 
-  function handleApply() {
+  const handleApply = useCallback(() => {
     if (!local) return;
 
-    // Convert selected local datetime to a Date object
     const selected = new Date(local);
     const now = new Date();
 
@@ -35,12 +51,12 @@ function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
 
     const [datePart, timePart] = local.split('T');
     onApply(datePart, timePart);
-  }
+  }, [local, onApply]);
 
-  function handleLive() {
+  const handleLive = useCallback(() => {
     setLocal('');
     onLive();
-  }
+  }, [onLive]);
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
@@ -65,25 +81,19 @@ function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
   );
 }
 
-
 function pad(n) { return String(n).padStart(2, '0'); }
-
 function isoToInput(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  const year = d.getFullYear();        // local year
-  const month = pad(d.getMonth() + 1); // local month
-  const day = pad(d.getDate());        // local day
-  const hours = pad(d.getHours());     // local hours
-  const minutes = pad(d.getMinutes()); // local minutes
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 // -----------------------------
-// ZoneDetailsPage
+// ZoneDetailsPage (memoized)
 // -----------------------------
-function ZoneDetailsPage({ detailsData }) {
+const ZoneDetailsPage = React.memo(function ZoneDetailsPage({ detailsData }) {
   const [searchTerm, setSearchTerm] = useState('');
+
   return (
     <>
       <div
@@ -96,13 +106,22 @@ function ZoneDetailsPage({ detailsData }) {
           placeholder="Search employee..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+          style={{
+            flexGrow: 1,
+            maxWidth: 300,
+            padding: '0.4rem 0.8rem',
+            fontSize: '1rem',
+            borderRadius: 4,
+            border: '1px solid #ccc'
+          }}
         />
       </div>
-      <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+      <Suspense fallback={<div>Loading details…</div>}>
+        <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+      </Suspense>
     </>
   );
-}
+});
 
 // -----------------------------
 // Main App
@@ -139,60 +158,7 @@ function App() {
   const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
   const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
-
-  // // SSE: runs only when NOT time-traveling
-  // useEffect(() => {
-  //   if (timeTravelMode) {
-  //     if (esRef.current) {
-  //       try { esRef.current.close(); } catch (e) { /* ignore */ }
-  //       esRef.current = null;
-  //     }
-  //     return;
-  //   }
-
-  //   const esUrl = `${API_ORIGIN}/api/live-occupancy`;
-  //   console.debug('[SSE] connecting to', esUrl);
-  //   const es = new EventSource(esUrl);
-  //   esRef.current = es;
-
-
-
-
-  //   es.onopen = () => console.debug('[SSE] open', esUrl);
-  //   es.onmessage = (e) => {
-  //     try {
-  //       const p = JSON.parse(e.data);
-  //       setLiveData({
-  //         summary: Array.isArray(p.summary) ? p.summary : [],
-  //         details: p.details || {},
-  //         floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-  //         zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-  //         personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-  //         totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-  //         personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-  //         visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-  //         ertStatus: p.ertStatus || {}
-  //       });
-  //     } catch (err) {
-  //       console.error('[SSE] parse error', err, e.data);
-  //     }
-  //   };
-
-  //   es.onerror = (err) => {
-  //     console.error('[SSE] error', err);
-  //     try { es.close(); } catch (e) { }
-  //     esRef.current = null;
-  //   };
-
-  //   return () => {
-  //     try { es.close(); } catch (e) { }
-  //     esRef.current = null;
-  //   };
-  // }, [timeTravelMode, API_ORIGIN]);
-
-
-
-
+  // SSE with throttling
   useEffect(() => {
     if (timeTravelMode) {
       if (esRef.current) esRef.current.close();
@@ -214,7 +180,7 @@ function App() {
           setTimeout(() => {
             setLiveData(sseBufferRef.current);
             sseFlushScheduledRef.current = false;
-          }, 300); // throttle updates
+          }, 500); // throttle updates to every 0.5s
         }
       } catch (err) {
         console.error('[SSE] parse error', err);
@@ -233,11 +199,8 @@ function App() {
     };
   }, [timeTravelMode, API_ORIGIN]);
 
-
-  // ///////////////////////////////////////////
-  // ///////////////////////////////////////////
-  // Helper: unify payload set
-  function setPayload(p) {
+  // Unified payload setter
+  const setPayload = useCallback((p) => {
     setLiveData({
       summary: Array.isArray(p.summary) ? p.summary : [],
       details: p.details || {},
@@ -249,14 +212,14 @@ function App() {
       visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
       ertStatus: p.ertStatus || {}
     });
-  }
+  }, []);
 
   // Fetch a historical snapshot
-  async function fetchSnapshot(dateStr, timeStr) {
+  const fetchSnapshot = useCallback(async (dateStr, timeStr) => {
     setTimeTravelLoading(true);
     const safeTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
     const url = `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(safeTime)}`;
-    console.debug('[TimeTravel] fetching', url);
+
     try {
       const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!resp.ok) {
@@ -278,30 +241,24 @@ function App() {
     } finally {
       setTimeTravelLoading(false);
     }
-  }
+  }, [API_ORIGIN, setPayload]);
 
   // Return to live mode
-  async function clearTimeTravel() {
+  const clearTimeTravel = useCallback(async () => {
     setTimeTravelLoading(true);
     try {
       setTimeTravelMode(false);
       setTimeTravelTimestamp(null);
-      try {
-        const url = `${API_ORIGIN}/api/current-occupancy`;
-        const resp = await fetch(url, { headers: { Accept: 'application/json' } });
-        if (resp.ok) {
-          const p = await resp.json();
-          setPayload(p);
-        } else {
-          console.debug('[TimeTravel] current-occupancy not available', resp.status);
-        }
-      } catch (e) {
-        console.debug('[TimeTravel] current-occupancy fetch failed (ignored)', e);
+      const url = `${API_ORIGIN}/api/current-occupancy`;
+      const resp = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (resp.ok) {
+        const p = await resp.json();
+        setPayload(p);
       }
     } finally {
       setTimeTravelLoading(false);
     }
-  }
+  }, [API_ORIGIN, setPayload]);
 
   return (
     <>
@@ -311,8 +268,8 @@ function App() {
           <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
             <TimeTravelControl
               currentTimestamp={timeTravelTimestamp}
-              onApply={(date, time) => fetchSnapshot(date, time)}
-              onLive={() => clearTimeTravel()}
+              onApply={fetchSnapshot}
+              onLive={clearTimeTravel}
               loading={timeTravelLoading}
             />
           </div>
@@ -342,37 +299,44 @@ function App() {
               <strong>{new Date(timeTravelTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</strong>
             </div>
             <div>
-              <button className="btn btn-sm btn-outline-warning" onClick={() => clearTimeTravel()} disabled={timeTravelLoading}>
+              <button
+                className="btn btn-sm btn-outline-warning"
+                onClick={clearTimeTravel}
+                disabled={timeTravelLoading}
+              >
                 Return to Live
               </button>
             </div>
           </div>
         )}
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <DashboardHome
-                summaryData={liveData.summary}
-                detailsData={liveData.details}
-                floorData={liveData.floorBreakdown}
-                zoneBreakdown={liveData.zoneBreakdown}
-                personnelBreakdown={liveData.personnelBreakdown}
-                totalVisitedToday={liveData.totalVisitedToday}
-                personnelSummary={liveData.personnelSummary}
-                visitedToday={liveData.visitedToday}
-                ertStatus={liveData.ertStatus}
-              />
-            }
-          />
-          <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-          <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
 
-        </Routes>
+        <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <DashboardHome
+                  summaryData={liveData.summary}
+                  detailsData={liveData.details}
+                  floorData={liveData.floorBreakdown}
+                  zoneBreakdown={liveData.zoneBreakdown}
+                  personnelBreakdown={liveData.personnelBreakdown}
+                  totalVisitedToday={liveData.totalVisitedToday}
+                  personnelSummary={liveData.personnelSummary}
+                  visitedToday={liveData.visitedToday}
+                  ertStatus={liveData.ertStatus}
+                />
+              }
+            />
+            <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+            <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
+          </Routes>
+        </Suspense>
       </Container>
     </>
   );
 }
+
 export default function WrappedApp() {
   return (
     <BrowserRouter>
