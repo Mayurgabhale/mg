@@ -1,79 +1,90 @@
-this iss dashboard home code, performance improve
-
-// C:\Users\W0024618\Desktop\swipeData\client\src\pages\DashboardHome.jsx
-import React, { useMemo, lazy } from 'react';
+// src/pages/DashboardHome.jsx
+import React, { useMemo, lazy, Suspense, useDeferredValue } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 
-import SummaryCards        from '../components/SummaryCards';
-// import FloorOccupancyChart from '../components/FloorOccupancyChart';
-// import SummaryChart        from '../components/SummaryChart';
-// import PersonnelDonutChart from '../components/PersonnelDonutChart';
-import LoadingSpinner      from '../components/LoadingSpinner';
+import SummaryCards from '../components/SummaryCards';
+import LoadingSpinner from '../components/LoadingSpinner';
 
+// lazy-load charts (prefetch so browser can warm the chunk after idle)
+const FloorOccupancyChart = lazy(() => import(
+  /* webpackChunkName: "floor-chart", webpackPrefetch: true */ '../components/FloorOccupancyChart'
+));
+const SummaryChart = lazy(() => import(
+  /* webpackChunkName: "summary-chart", webpackPrefetch: true */ '../components/SummaryChart'
+));
+const PersonnelDonutChart = lazy(() => import(
+  /* webpackChunkName: "personnel-donut", webpackPrefetch: true */ '../components/PersonnelDonutChart'
+));
 
-
-
-const FloorOccupancyChart = lazy(() => import('../components/FloorOccupancyChart'));
-const SummaryChart = lazy(() => import('../components/SummaryChart'));
-const PersonnelDonutChart = lazy(() => import('../components/PersonnelDonutChart'));
-
+/**
+ * DashboardHome
+ * - Always render SummaryCards immediately (fast first meaningful paint)
+ * - Defer heavy chart rendering with useDeferredValue + Suspense fallbacks
+ * - Memoize chart data so children only get new props when the source changes
+ */
 function DashboardHome({
-  summaryData,
+  summaryData = [],
   detailsData,
-  floorData,
+  floorData = [],
   zoneBreakdown,
-  personnelBreakdown,
-  totalVisitedToday,
-  personnelSummary,
-  visitedToday,
+  personnelBreakdown = [],
+  totalVisitedToday = 0,
+  personnelSummary = { employees: 0, contractors: 0 },
+  visitedToday = {},
   ertStatus
 }) {
-  const employees      = personnelSummary?.employees   ?? 0;
-  const contractors    = personnelSummary?.contractors ?? 0;
+  // small cheap derived numbers shown in SummaryCards (fast)
+  const employees = personnelSummary?.employees ?? 0;
+  const contractors = personnelSummary?.contractors ?? 0;
   const totalOccupancy = employees + contractors;
 
-  // Memoize donut-chart data so it only recalculates when personnelBreakdown changes
-  const chartData = useMemo(() =>
-    (personnelBreakdown || []).map(({ personnelType, count }) => ({ personnelType, count })),
-    [personnelBreakdown]
-  );
+  // memoize chart input transforms (cheap => prevents child re-render unless source changes)
+  const chartData = useMemo(() => {
+    return (personnelBreakdown || []).map(({ personnelType, count }) => ({ personnelType, count }));
+  }, [personnelBreakdown]);
 
-  // ✅ Loading condition: if critical data is missing
+  // useDeferredValue prevents urgent UI (summary cards) from being blocked by chart updates
+  const deferredChartData = useDeferredValue(chartData);
+  const deferredFloorData = useDeferredValue(floorData || []);
+  const deferredSummary = useDeferredValue(summaryData || []);
 
-  const isLoading =
-    (!summaryData || summaryData.length === 0) &&
-    (!floorData || floorData.length === 0) &&
-    (!personnelBreakdown || personnelBreakdown.length === 0);
-
-  if (isLoading) {
-    return <LoadingSpinner message="Loading dashboard..." />;
-  }
+  // NOTE: Do NOT block entire page on charts. Always show summary cards immediately.
+  // Charts will show loading placeholders until their lazy chunks and data are ready.
 
   return (
     <Container fluid className="py-4">
+      {/* Summary: first meaningful paint (always show with minimal compute) */}
       <SummaryCards
         totalOccupancy={totalOccupancy}
         employeeCount={employees}
         contractorCount={contractors}
         totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees   ?? 0}
+        employeesVisitedToday={visitedToday?.employees ?? 0}
         contractorsVisitedToday={visitedToday?.contractors ?? 0}
       />
 
-      <Row className="g-4">
+      {/* Charts row — lazy rendered with Suspense fallback */}
+      <Row className="g-4" style={{ marginTop: 12 }}>
         <Col md={4} style={{ minHeight: 300 }}>
-          <FloorOccupancyChart data={floorData} />
+          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
+            <FloorOccupancyChart data={deferredFloorData} />
+          </Suspense>
         </Col>
 
         <Col md={4} style={{ minHeight: 300 }}>
-          <SummaryChart summary={summaryData} />
+          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
+            <SummaryChart summary={deferredSummary} />
+          </Suspense>
         </Col>
 
         <Col md={4} style={{ minHeight: 300 }}>
-          <PersonnelDonutChart data={chartData} />
+          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
+            <PersonnelDonutChart data={deferredChartData} />
+          </Suspense>
         </Col>
       </Row>
 
+      {/* Footer — reserved space to reduce layout shift */}
       <footer style={{
         backgroundColor: '#000',
         color: '#FFC72C',
@@ -83,9 +94,9 @@ function DashboardHome({
         borderTop: '2px solid #FFC72C',
         fontSize: '0.95rem',
         lineHeight: '1.6',
-        minHeight: 120 // reserve space to reduce layout shifts
+        minHeight: 120
       }}>
-        <div><strong>Global Security Operations Center</strong><br/>
+        <div><strong>Global Security Operations Center</strong><br />
           Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
         </div>
         <div style={{ marginTop: '0.75rem' }}>
@@ -101,5 +112,4 @@ function DashboardHome({
   );
 }
 
-// Memoize whole page so it only re-renders when its props actually change
 export default React.memo(DashboardHome);
