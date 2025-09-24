@@ -1,83 +1,176 @@
-<Navbar bg="dark" variant="dark" expand="lg" className="px-3">
-  <Navbar.Brand as={Link} to="/" className="wu-brand">
-    {headerText}
-  </Navbar.Brand>
 
-  <Navbar.Toggle aria-controls="main-navbar" />
-  <Navbar.Collapse id="main-navbar">
-    <Nav className="ms-auto align-items-center gap-2">
-      <div className="time-travel-wrapper me-2">
-        <TimeTravelControl
-          currentTimestamp={timeTravelTimestamp}
-          onApply={fetchSnapshot}
-          onLive={clearTimeTravel}
-          loading={timeTravelLoading}
-        />
+
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList,
+} from "recharts";
+import { Card } from "react-bootstrap";
+// Gradients/solid colors for known zones
+
+const ZONE_GRADIENTS = {
+  "Red Zone": ["#FF0000", "#D22B2B"],
+  "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
+  "Yellow Zone": ["#FFDE21", "#FFBF00"],
+  "Yellow Zone - Outer Area": ["#FFDE21", "#FFBF00"],
+  "Orange Zone": ["#E3963E", "#FFC966"],
+  "Orange Zone - Outer Area": ["#E3963E", "#FFC966"],
+  "Green Zone": ["#009E60", "#50C878"],
+  "Reception Area": ["#E0CCFF", "#F4E6FF"],
+  "Assembly Area": ["#FE6F5E", "#A366FF"],
+  "Tower B": ["#E68FAC", "#99BBFF"],
+  "2nd Floor, Pune": ["#FF6F61", "#FFA28F"],
+};
+
+const SOLID_COLORS = [
+  "#FFD100",
+  "#009E60",
+  "#FF6F61",
+  "#58595B",
+  "#FFB800",
+  "#C75D00",
+];
+
+export default function SummaryChart({ summary = [] }) {
+  if (!summary.length) {
+    return <Card body>No zone data available</Card>;
+  }
+
+  // 🔹 Sort zones by headcount (descending)
+  const sortedData = [...summary].sort((a, b) => b.count - a.count);
+  // Custom tooltip
+
+
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+    const { zone, count } = payload[0].payload;
+    return (
+      <div
+        style={{
+          backgroundColor: "#000",
+          border: "1px solid var(--wu-yellow)",
+          borderRadius: 4,
+          padding: "8px",
+          color: "#FFD100",
+          fontSize: "0.9rem",
+        }}
+      >
+        <div>
+          <strong>{zone}</strong> {/* ✅ already mapped */}
+        </div>
+        <div>Headcount: {count}</div>
       </div>
-
-      <Nav.Link as={Link} to="/" className="nav-item-infographic">
-        <i className="bi bi-house"></i>
-      </Nav.Link>
-      <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic">
-        <i className="bi bi-clock-history"></i>
-      </Nav.Link>
-      <Nav.Link as={Link} to="/details" className="nav-item-infographic">
-        <i className="fa-solid fa-calendar-day"></i>
-      </Nav.Link>
-      <Nav.Link as={Link} to="/ert" className="nav-item-infographic">
-        ERT Overview
-      </Nav.Link>
-      <Nav.Link className="theme-toggle-icon" title="Dark mode only">
-        <FaSun />
-      </Nav.Link>
-    </Nav>
-  </Navbar.Collapse>
-</Navbar>
+    );
+  };
 
 
+  // 🔹 Helper: map special zone names to display-friendly ones
+  const mapZoneName = (name) => {
+    if (name === "Red Zone - Outer Area") return "East Outdoor Area";
+    if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
+    return name;
+  };
+
+  // 🔹 Shorten long zone names (after mapping)
+  const shortenName = (name) => {
+    const mapped = mapZoneName(name);
+    if (mapped.length > 18) {
+      return mapped.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
+    }
+    return mapped;
+  };
 
 
-....
+  return (
+    <Card
+      className="mb-4 shadow-sm border"
+      style={{ borderColor: "var(--wu-yellow)" }}
+    >
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{
+          fontSize: "1.2rem",
+          borderBottom: "2px solid var(--wu-yellow)",
+        }}
+      >
+        Western Union - Pune Zone-wise Headcount
+      </Card.Header>
+
+      {/* <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}> */}
+      <Card.Body style={{height: "500px", backgroundColor: "#1a1a1a" }}>
+      {/* <Card.Body style={{ minHeight: 300, height: "100%", backgroundColor: "#1a1a1a" }}> */}
+        <ResponsiveContainer width="100%" height="100%">
 
 
-/* Brand text scales */
-.wu-brand {
-  font-size: clamp(1rem, 1.5vw, 1.4rem);
-  white-space: normal;
-}
 
-/* Navbar link icons spacing */
-.nav-item-infographic {
-  font-size: 1.1rem;
-  padding: 0.4rem;
-}
+          <BarChart
+            layout="vertical"
+            data={sortedData.map((z) => ({
+              ...z,
+              zone: mapZoneName(z.zone), // ✅ use mapped name
+              shortZone: shortenName(z.zone),
+            }))}
+            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
+          >
 
-.theme-toggle-icon {
-  font-size: 1.25rem;
-}
+            <XAxis type="number" tick={{ fill: "#FFD100" }} />
+            <YAxis
+              dataKey="shortZone"
+              type="category"
+              tick={{ fill: "#FFD100", fontWeight: "bold" }}
+              width={150}
+            />
+            <Tooltip content={renderTooltip} />
 
-/* --- Breakpoints --- */
+            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
+              {sortedData.map((entry, idx) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                const color = grad
+                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
+                  : SOLID_COLORS[idx % SOLID_COLORS.length];
+                return <Cell key={`cell-${idx}`} fill={color} />;
+              })}
 
-/* Mobile (<576px) */
-@media (max-width: 575.98px) {
-  .time-travel-wrapper {
-    width: 100%;   /* full width input */
-    margin-bottom: 0.75rem;
-  }
-}
+              <LabelList
+                dataKey="count"
+                position="inside"
+                style={{
+                  fill: "#fff",
+                  fontWeight: "bold",
+                  fontSize: "0.9rem",
+                }}
+              />
+            </Bar>
 
-/* Tablet (≥576px and <992px) */
-@media (min-width: 576px) and (max-width: 991.98px) {
-  .time-travel-wrapper {
-    flex: 1;       /* grow nicely */
-    min-width: 280px;
-  }
-}
-
-/* Laptop & Desktop (≥992px) */
-@media (min-width: 992px) {
-  .time-travel-wrapper {
-    min-width: 340px;
-    margin-bottom: 0;
-  }
+            <defs>
+              {sortedData.map((entry) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                if (!grad) return null;
+                return (
+                  <linearGradient
+                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
+                    key={entry.zone}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="0"
+                  >
+                    <stop offset="0%" stopColor={grad[0]} />
+                    <stop offset="100%" stopColor={grad[1]} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  );
 }
