@@ -1,22 +1,26 @@
-.footer {
-  background-color: #000;
-  color: #FFC72C;
-  padding: 1.5rem 0;
-  text-align: center;
-  border-top: 2px solid #FFC72C;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  min-height: 120px;
-
-  /* Stick to bottom */
-  position: relative; /* default relative */
-  margin-top: auto;   /* push footer down in flex container */
-}
-
-.footer-contact a {
-  color: #FFC72C;
-  text-decoration: underline;
-}
-.footer-contact span {
-  color: #FFC72C;
-}
+ {/* Footer — reserved space to reduce layout shift */}
+      <footer style={{
+       backgroundColor: '#000',
+    color: '#FFC72C',
+    padding: '1.5rem 0',
+    textAlign: 'center',
+    borderTop: '2px solid #FFC72C',
+    fontSize: '0.95rem',
+    lineHeight: '1.6',
+    minHeight: 120,
+   position:'relative',
+   marginTop:'auto'
+    
+      }}>
+        <div><strong>Global Security Operations Center</strong><br />
+          Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
+        </div>
+        <div style={{ marginTop: '0.75rem' }}>
+          Contact us:&nbsp;
+          <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
+             style={{ color: '#FFC72C', textDecoration: 'underline' }}>
+            GSOC Mail
+          </a>&nbsp;|&nbsp;
+          Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+        </div>
+      </footer>
