@@ -1,12 +1,4 @@
-Compiled with problems:
-×
-ERROR
-[eslint] 
-src\components\SummaryChart.jsx
-  Line 1186:25:  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
 
-Search for the keywords to learn more about each error.
-// C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
 import React, { useMemo } from "react";
 import {
   BarChart,
@@ -45,13 +37,8 @@ const SOLID_COLORS = [
 ];
 
 export default function SummaryChart({ summary = [] }) {
-  if (!summary.length) {
-    return <Card body>No zone data available</Card>;
-  }
-
-  // ✅ Pre-compute only when summary changes
+  // ✅ Always call hooks, even if summary is empty
   const processedData = useMemo(() => {
-    // map + sort in one pass
     const mapZoneName = (name) => {
       if (name === "Red Zone - Outer Area") return "East Outdoor Area";
       if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
@@ -74,7 +61,7 @@ export default function SummaryChart({ summary = [] }) {
       }));
   }, [summary]);
 
-  // ✅ Tooltip (memoized inline function is fine since small)
+  // ✅ Tooltip
   const renderTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const { zone, count } = payload[0].payload;
@@ -94,6 +81,11 @@ export default function SummaryChart({ summary = [] }) {
       </div>
     );
   };
+
+  // ✅ After hooks, handle empty state
+  if (!summary.length) {
+    return <Card body>No zone data available</Card>;
+  }
 
   return (
     <Card
