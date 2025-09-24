@@ -1,90 +1,56 @@
-<Modal
-  show={showAllRejectionsModal}
-  onHide={() => setShowAllRejectionsModal(false)}
-  size="lg"
-  centered
->
-  <Modal.Header closeButton>
-    <Modal.Title>All Rejections Today</Modal.Title>
-  </Modal.Header>
+react-dom-client.development.js:3077 Received `true` for a non-boolean attribute `jsx`.
 
-  <Modal.Body style={{ maxHeight: '60vh', overflowY: 'auto', padding: '0.5rem 1rem' }}>
-    {(!rejectionAllDetailsToday || rejectionAllDetailsToday.length === 0) ? (
-      <div>No rejections recorded today</div>
-    ) : (
-      <div style={{ overflowX: 'auto' }}>
-        <Table striped bordered hover size="sm" className="mb-0">
-          <thead>
-            <tr>
-              <th>Sr.no</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Name</th>
-              <th>EmployeeID</th>
-              <th>CardNumber</th>
-              <th>PersonnelType</th>
-              <th>Door</th>
-              <th>RejectionType</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rejectionAllDetailsToday.map((r, i) => {
-              let localDate = '';
-              let localTime = '';
-              try {
-                if (r.LocaleMessageTime) {
-                  const dt = new Date(r.LocaleMessageTime);
-                  localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-                  localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
-                } else if (r.DateOnly) {
-                  localDate = (typeof r.DateOnly === 'string'
-                    ? r.DateOnly.slice(0, 10)
-                    : new Date(r.DateOnly).toISOString().slice(0, 10)
-                  );
-                  localTime = r.SwipeTime || '';
-                }
-              } catch (e) {
-                localDate = (r.DateOnly || '').slice(0, 10);
-                localTime = r.SwipeTime || '';
-              }
+If you want to write it to the DOM, pass a string instead: jsx="true" or jsx={value.toString()}.
+validateProperty	@	react-dom-client.development.js:3077
+warnUnknownProperties	@	react-dom-client.development.js:3153
+validatePropertiesInDevelopment	@	react-dom-client.development.js:17115
+setInitialProperties	@	react-dom-client.development.js:17741
+completeWork	@	react-dom-client.development.js:11390
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+completeUnitOfWork	@	react-dom-client.development.js:15268
+performUnitOfWork	@	react-dom-client.development.js:15148
+workLoopSync	@	react-dom-client.development.js:14956
+renderRootSync	@	react-dom-client.development.js:14936
+performWorkOnRoot	@	react-dom-client.development.js:14417
+performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
+performWorkUntilDeadline	@	scheduler.development.js:45
+<style>		
+exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
+App	@	App.js:530
+react-stack-bottom-frame	@	react-dom-client.development.js:23863
+renderWithHooksAgain	@	react-dom-client.development.js:5629
+renderWithHooks	@	react-dom-client.development.js:5541
+updateFunctionComponent	@	react-dom-client.development.js:8897
+beginWork	@	react-dom-client.development.js:10522
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+performUnitOfWork	@	react-dom-client.development.js:15130
+workLoopSync	@	react-dom-client.development.js:14956
+renderRootSync	@	react-dom-client.development.js:14936
+performWorkOnRoot	@	react-dom-client.development.js:14417
+performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
+performWorkUntilDeadline	@	scheduler.development.js:45
+<App>		
+exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
+WrappedApp	@	App.js:583
+react-stack-bottom-frame	@	react-dom-client.development.js:23863
+renderWithHooksAgain	@	react-dom-client.development.js:5629
+renderWithHooks	@	react-dom-client.development.js:5541
+updateFunctionComponent	@	react-dom-client.development.js:8897
+beginWork	@	react-dom-client.development.js:10522
+runWithFiberInDEV	@	react-dom-client.development.js:1518
+performUnitOfWork	@	react-dom-client.development.js:15130
+workLoopSync	@	react-dom-client.development.js:14956
+renderRootSync	@	react-dom-client.development.js:14936
+performWorkOnRoot	@	react-dom-client.development.js:14417
+performWorkOnRootViaSchedulerTask	@	react-dom-client.development.js:16216
+performWorkUntilDeadline	@	scheduler.development.js:45
+<WrappedApp>		
+exports.jsxDEV	@	react-jsx-dev-runtime.development.js:336
+./src/index.js	@	index.js:10
+options.factory	@	react refresh:37
+__webpack_require__	@	bootstrap:22
+(anonymous)	@	startup:7
+(anonymous)	@	startup:7
 
-              return (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td>{localDate}</td>
-                  <td>{localTime}</td>
-                  <td>{r.ObjectName1}</td>
-                  <td>{r.EmployeeID}</td>
-                  <td>{r.CardNumber || '—'}</td>
-                  <td>{r.PersonnelType || '—'}</td>
-                  <td style={{ maxWidth: 200, wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
-                  <td>{r.RejectionType || '—'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      </div>
-    )}
-  </Modal.Body>
+﻿
 
-  <Modal.Footer>
-    <Button
-      style={{
-        background: '#FFC72C',
-        borderColor: '#FFC72C',
-        color: '#000',
-        fontWeight: 600
-      }}
-      onClick={() => exportRejectionsToExcel(
-        rejectionAllDetailsToday,
-        `all-rejections-${new Date().toISOString().slice(0, 10)}.xlsx`
-      )}
-    >
-      Export Excel
-    </Button>
-    <Button variant="secondary" onClick={() => setShowAllRejectionsModal(false)}>
-      Close
-    </Button>
-  </Modal.Footer>
-</Modal>
