@@ -1,115 +1,66 @@
-// src/pages/DashboardHome.jsx
-import React, { useMemo, lazy, Suspense, useDeferredValue } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
 
-import SummaryCards from '../components/SummaryCards';
-import LoadingSpinner from '../components/LoadingSpinner';
+// src/components/ZoneDetailsTable.jsx
 
-// lazy-load charts (prefetch so browser can warm the chunk after idle)
-const FloorOccupancyChart = lazy(() => import(
-  /* webpackChunkName: "floor-chart", webpackPrefetch: true */ '../components/FloorOccupancyChart'
-));
-const SummaryChart = lazy(() => import(
-  /* webpackChunkName: "summary-chart", webpackPrefetch: true */ '../components/SummaryChart'
-));
-const PersonnelDonutChart = lazy(() => import(
-  /* webpackChunkName: "personnel-donut", webpackPrefetch: true */ '../components/PersonnelDonutChart'
-));
+import React, { useMemo } from 'react';
+import './ZoneDetailsTable.css';
 
-/**
- * DashboardHome
- * - Always render SummaryCards immediately (fast first meaningful paint)
- * - Defer heavy chart rendering with useDeferredValue + Suspense fallbacks
- * - Memoize chart data so children only get new props when the source changes
- */
-function DashboardHome({
-  summaryData = [],
-  detailsData,
-  floorData = [],
-  zoneBreakdown,
-  personnelBreakdown = [],
-  totalVisitedToday = 0,
-  personnelSummary = { employees: 0, contractors: 0 },
-  visitedToday = {},
-  ertStatus
-}) {
-  // small cheap derived numbers shown in SummaryCards (fast)
-  const employees = personnelSummary?.employees ?? 0;
-  const contractors = personnelSummary?.contractors ?? 0;
-  const totalOccupancy = employees + contractors;
+export default function ZoneDetailsTable({ data = {}, searchTerm = '' }) {
+  const sortedEntries = useMemo(() => {
+    return Object.entries(data).sort(([, aList], [, bList]) => bList.length - aList.length);
+  }, [data]);
 
-  // memoize chart input transforms (cheap => prevents child re-render unless source changes)
-  const chartData = useMemo(() => {
-    return (personnelBreakdown || []).map(({ personnelType, count }) => ({ personnelType, count }));
-  }, [personnelBreakdown]);
+  const matchesSearch = (emp) =>
+    emp.ObjectName1.toLowerCase().includes(searchTerm.trim().toLowerCase());
 
-  // useDeferredValue prevents urgent UI (summary cards) from being blocked by chart updates
-  const deferredChartData = useDeferredValue(chartData);
-  const deferredFloorData = useDeferredValue(floorData || []);
-  const deferredSummary = useDeferredValue(summaryData || []);
-
-  // NOTE: Do NOT block entire page on charts. Always show summary cards immediately.
-  // Charts will show loading placeholders until their lazy chunks and data are ready.
+  if (!sortedEntries.length) {
+    return <p>No zone detail data available.</p>;
+  }
 
   return (
-    <Container fluid className="py-4">
-      {/* Summary: first meaningful paint (always show with minimal compute) */}
-      <SummaryCards
-        totalOccupancy={totalOccupancy}
-        employeeCount={employees}
-        contractorCount={contractors}
-        totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees ?? 0}
-        contractorsVisitedToday={visitedToday?.contractors ?? 0}
-      />
+    <div className="zone-cards">
+      {sortedEntries.map(([zone, emps]) => {
+        const filteredEmps = emps.filter(matchesSearch);
+        if (filteredEmps.length === 0) {
+          return null;
+        }
 
-      {/* Charts row — lazy rendered with Suspense fallback */}
-      <Row className="g-4" style={{ marginTop: 12 }}>
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <FloorOccupancyChart data={deferredFloorData} />
-          </Suspense>
-        </Col>
+        return (
+          <div key={zone} className="zone-card">
+            <div className="zone-header">
+              <h3>{zone}</h3>
+              <span className="zone-badge">Total: {filteredEmps.length}</span>
+            </div>
 
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <SummaryChart summary={deferredSummary} />
-          </Suspense>
-        </Col>
-
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <PersonnelDonutChart data={deferredChartData} />
-          </Suspense>
-        </Col>
-      </Row>
-
-      {/* Footer — reserved space to reduce layout shift */}
-      <footer style={{
-        backgroundColor: '#000',
-        color: '#FFC72C',
-        padding: '1.5rem 0',
-        textAlign: 'center',
-        marginTop: '0rem',
-        borderTop: '2px solid #FFC72C',
-        fontSize: '0.95rem',
-        lineHeight: '1.6',
-        minHeight: 120
-      }}>
-        <div><strong>Global Security Operations Center</strong><br />
-          Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
-        </div>
-        <div style={{ marginTop: '0.75rem' }}>
-          Contact us:&nbsp;
-          <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-             style={{ color: '#FFC72C', textDecoration: 'underline' }}>
-            GSOC Mail
-          </a>&nbsp;|&nbsp;
-          Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-        </div>
-      </footer>
-    </Container>
+            {/* Single table with sticky header */}
+            <div className="table-container">
+              <table className="zone-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>EmployeeID</th>
+                    <th>Date</th>
+                    <th>Swipe Time</th>
+                    <th>Type</th>
+                    <th>Door Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEmps.map((emp, i) => (
+                    <tr key={`${emp.EmployeeID}-${i}`}>
+                      <td>{emp.ObjectName1}</td>
+                      <td>{emp.EmployeeID}</td>
+                      <td>{emp.Dateonly}</td>
+                      <td>{emp.Swipe_Time}</td>
+                      <td>{emp.PersonnelType}</td>
+                      <td>{emp.door}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
-
-export default React.memo(DashboardHome);
