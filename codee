@@ -1,7 +1,5 @@
-
-
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
-import React from "react";
+import React, { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -13,8 +11,8 @@ import {
   LabelList,
 } from "recharts";
 import { Card } from "react-bootstrap";
-// Gradients/solid colors for known zones
 
+// Gradients/solid colors for known zones
 const ZONE_GRADIENTS = {
   "Red Zone": ["#FF0000", "#D22B2B"],
   "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
@@ -43,13 +41,34 @@ export default function SummaryChart({ summary = [] }) {
     return <Card body>No zone data available</Card>;
   }
 
-  // 🔹 Sort zones by headcount (descending)
-  const sortedData = [...summary].sort((a, b) => b.count - a.count);
-  // Custom tooltip
+  // ✅ Pre-compute only when summary changes
+  const processedData = useMemo(() => {
+    // map + sort in one pass
+    const mapZoneName = (name) => {
+      if (name === "Red Zone - Outer Area") return "East Outdoor Area";
+      if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
+      return name;
+    };
 
+    const shortenName = (name) => {
+      const mapped = mapZoneName(name);
+      return mapped.length > 18
+        ? mapped.split(" ").slice(0, 2).join(" ") + "..."
+        : mapped;
+    };
 
+    return [...summary]
+      .sort((a, b) => b.count - a.count)
+      .map((z) => ({
+        ...z,
+        zone: mapZoneName(z.zone),
+        shortZone: shortenName(z.zone),
+      }));
+  }, [summary]);
+
+  // ✅ Tooltip (memoized inline function is fine since small)
   const renderTooltip = ({ active, payload }) => {
-    if (!active || !payload || !payload.length) return null;
+    if (!active || !payload?.length) return null;
     const { zone, count } = payload[0].payload;
     return (
       <div
@@ -62,31 +81,11 @@ export default function SummaryChart({ summary = [] }) {
           fontSize: "0.9rem",
         }}
       >
-        <div>
-          <strong>{zone}</strong> {/* ✅ already mapped */}
-        </div>
+        <div><strong>{zone}</strong></div>
         <div>Headcount: {count}</div>
       </div>
     );
   };
-
-
-  // 🔹 Helper: map special zone names to display-friendly ones
-  const mapZoneName = (name) => {
-    if (name === "Red Zone - Outer Area") return "East Outdoor Area";
-    if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
-    return name;
-  };
-
-  // 🔹 Shorten long zone names (after mapping)
-  const shortenName = (name) => {
-    const mapped = mapZoneName(name);
-    if (mapped.length > 18) {
-      return mapped.split(" ").slice(0, 2).join(" ") + "..."; // take first 2 words
-    }
-    return mapped;
-  };
-
 
   return (
     <Card
@@ -103,23 +102,13 @@ export default function SummaryChart({ summary = [] }) {
         Western Union - Pune Zone-wise Headcount
       </Card.Header>
 
-      {/* <Card.Body style={{ height: "50vh", backgroundColor: "#1a1a1a" }}> */}
-      <Card.Body style={{height: "500px", backgroundColor: "#1a1a1a" }}>
-      {/* <Card.Body style={{ minHeight: 300, height: "100%", backgroundColor: "#1a1a1a" }}> */}
+      <Card.Body style={{ height: 500, backgroundColor: "#1a1a1a" }}>
         <ResponsiveContainer width="100%" height="100%">
-
-
-
           <BarChart
             layout="vertical"
-            data={sortedData.map((z) => ({
-              ...z,
-              zone: mapZoneName(z.zone), // ✅ use mapped name
-              shortZone: shortenName(z.zone),
-            }))}
+            data={processedData}
             margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
           >
-
             <XAxis type="number" tick={{ fill: "#FFD100" }} />
             <YAxis
               dataKey="shortZone"
@@ -130,7 +119,7 @@ export default function SummaryChart({ summary = [] }) {
             <Tooltip content={renderTooltip} />
 
             <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
-              {sortedData.map((entry, idx) => {
+              {processedData.map((entry, idx) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
                 const color = grad
                   ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
@@ -150,7 +139,7 @@ export default function SummaryChart({ summary = [] }) {
             </Bar>
 
             <defs>
-              {sortedData.map((entry) => {
+              {processedData.map((entry) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
                 if (!grad) return null;
                 return (
