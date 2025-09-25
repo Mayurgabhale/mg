@@ -1,91 +1,89 @@
+<Modal
+  show={showAllRejectionsModal}
+  onHide={() => setShowAllRejectionsModal(false)}
+  size="lg"
+  centered
+>
+  <Modal.Header closeButton>
+    <Modal.Title>All Rejections Today</Modal.Title>
+  </Modal.Header>
 
-      <Modal
-        show={showAllRejectionsModal}
-        onHide={() => setShowAllRejectionsModal(false)}
-        size="lg"
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>All Rejections Today</Modal.Title>
-        </Modal.Header>
+  <Modal.Body style={{ maxHeight: '60vh', overflowY: 'auto', padding: '0.5rem 1rem' }}>
+    {(!rejectionAllDetailsToday || rejectionAllDetailsToday.length === 0) ? (
+      <div>No rejections recorded today</div>
+    ) : (
+      <div style={{ overflowX: 'auto' }}>
+        <Table striped bordered hover size="sm" className="mb-0" style={{ tableLayout: 'fixed', width: '100%' }}>
+          <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 1 }}>
+            <tr>
+              {['Sr.no','Date','Time','Name','EmployeeID','CardNumber','PersonnelType','Door','RejectionType'].map((col) => (
+                <th
+                  key={col}
+                  style={{
+                    minWidth: 100,
+                    maxWidth: 200,
+                    textAlign: 'center',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rejectionAllDetailsToday.map((r, i) => {
+              let localDate = '', localTime = '';
+              try {
+                if (r.LocaleMessageTime) {
+                  const dt = new Date(r.LocaleMessageTime);
+                  localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                  localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
+                } else if (r.DateOnly) {
+                  localDate = (typeof r.DateOnly === 'string' ? r.DateOnly.slice(0, 10) : new Date(r.DateOnly).toISOString().slice(0, 10));
+                  localTime = r.SwipeTime || '';
+                }
+              } catch (e) {}
 
-        <Modal.Body style={{ maxHeight: '60vh', overflowY: 'auto', padding: '0.5rem 1rem' }}>
-          {(!rejectionAllDetailsToday || rejectionAllDetailsToday.length === 0) ? (
-            <div>No rejections recorded today</div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <Table striped bordered hover size="sm" className="mb-0">
-                <thead>
-                  <tr>
-                    <th>Sr.no</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Name</th>
-                    <th>EmployeeID</th>
-                    <th>CardNumber</th>
-                    <th>PersonnelType</th>
-                    <th>Door</th>
-                    <th>RejectionType</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rejectionAllDetailsToday.map((r, i) => {
-                    let localDate = '';
-                    let localTime = '';
-                    try {
-                      if (r.LocaleMessageTime) {
-                        const dt = new Date(r.LocaleMessageTime);
-                        localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-                        localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
-                      } else if (r.DateOnly) {
-                        localDate = (typeof r.DateOnly === 'string'
-                          ? r.DateOnly.slice(0, 10)
-                          : new Date(r.DateOnly).toISOString().slice(0, 10)
-                        );
-                        localTime = r.SwipeTime || '';
-                      }
-                    } catch (e) {
-                      localDate = (r.DateOnly || '').slice(0, 10);
-                      localTime = r.SwipeTime || '';
-                    }
+              return (
+                <tr key={i}>
+                  <td>{i + 1}</td>
+                  <td>{localDate}</td>
+                  <td>{localTime}</td>
+                  <td>{r.ObjectName1 || '—'}</td>
+                  <td>{r.EmployeeID || '—'}</td>
+                  <td>{r.CardNumber || '—'}</td>
+                  <td>{r.PersonnelType || '—'}</td>
+                  <td style={{ wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
+                  <td>{r.RejectionType || '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </div>
+    )}
+  </Modal.Body>
 
-                    return (
-                      <tr key={i}>
-                        <td>{i + 1}</td>
-                        <td>{localDate}</td>
-                        <td>{localTime}</td>
-                        <td>{r.ObjectName1}</td>
-                        <td>{r.EmployeeID}</td>
-                        <td>{r.CardNumber || '—'}</td>
-                        <td>{r.PersonnelType || '—'}</td>
-                        <td style={{ maxWidth: 200, wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
-                        <td>{r.RejectionType || '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button
-            style={{
-              background: '#FFC72C',
-              borderColor: '#FFC72C',
-              color: '#000',
-              fontWeight: 600
-            }}
-            onClick={() => exportRejectionsToExcel(
-              rejectionAllDetailsToday,
-              `all-rejections-${new Date().toISOString().slice(0, 10)}.xlsx`
-            )}
-          >
-            Export Excel
-          </Button>
-          <Button variant="secondary" onClick={() => setShowAllRejectionsModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+  <Modal.Footer>
+    <Button
+      style={{
+        background: '#FFC72C',
+        borderColor: '#FFC72C',
+        color: '#000',
+        fontWeight: 600
+      }}
+      onClick={() => exportRejectionsToExcel(
+        rejectionAllDetailsToday,
+        `all-rejections-${new Date().toISOString().slice(0, 10)}.xlsx`
+      )}
+    >
+      Export Excel
+    </Button>
+    <Button variant="secondary" onClick={() => setShowAllRejectionsModal(false)}>
+      Close
+    </Button>
+  </Modal.Footer>
+</Modal>
