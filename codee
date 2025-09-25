@@ -1,117 +1,94 @@
-summaryMap[key] = (summaryMap[key] || 0) + 1;
+// --- fetch rejections and keep only today's (Denver) records ---
+useEffect(() => {
+  let mounted = true;
 
+  async function loadRejectionsTodayOnly() {
+    setRejectionsLoading(true);
+    try {
+      const res = await fetch('/api/rejections');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
 
+      // today in Denver (YYYY-MM-DD)
+      const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
 
+      // collect today's details (flat)
+      let detailsToday = [];
+      const summaryMap = {};
 
-const derived = deriveFloorFromRecord(d) || 'Unknown';
-const key = normalizeFloorName(derived) || 'Unknown';
-detailsByFloor[key] = detailsByFloor[key] || [];
-detailsByFloor[key].push(d);
-
-
-
-// derive floor per record and increment summary
-detailsToday.forEach(d => {
-  const derived = deriveFloorFromRecord(d) || 'Unknown';
-  const norm = normalizeFloorName(derived);
-  summaryMap[norm] = (summaryMap[norm] || 0) + 1;
-
-  detailsByFloor[norm] = detailsByFloor[norm] || [];
-  detailsByFloor[norm].push(d);
-});
-
-
-  // --- fetch rejections and keep only today's (Denver) records ---
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadRejectionsTodayOnly() {
-      setRejectionsLoading(true);
-      try {
-        const res = await fetch('/api/rejections');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = await res.json();
-
-        // today in Denver (YYYY-MM-DD)
-        const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-
-        // collect today's details (flat)
-        let detailsToday = [];
-        const summaryMap = {};
-
-        // Prefer backend dateWise (aggregates) for counts if available
-        if (Array.isArray(payload.dateWise)) {
-          const dayObj = payload.dateWise.find(d => d.date === todayDenver);
-          if (dayObj && Array.isArray(dayObj.floors)) {
-            dayObj.floors.forEach(f => {
-              const key = normalizeFloorName(f.floor || '');
-              if (!key) return;
-              summaryMap[key] = Number(f.rejectionCount || 0);
-            });
-          }
-          // build detailsToday from payload.details so we can populate modal content
-          if (Array.isArray(payload.details)) {
-            detailsToday = payload.details.filter(d => {
-              const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
-              if (!raw) return false;
-              try {
-                const dt = new Date(raw);
-                const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-                return dtStr === todayDenver;
-              } catch (e) {
-                return String(raw).slice(0, 10) === todayDenver;
-              }
-            });
-          }
-        } else {
-          // fallback: filter details for today and aggregate counts
-          if (Array.isArray(payload.details)) {
-            detailsToday = payload.details.filter(d => {
-              const raw = d.LocaleMessageTime || d.DateOnly || d.LocaleMessageTime;
-              if (!raw) return false;
-              try {
-                const dt = new Date(raw);
-                const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-                return dtStr === todayDenver;
-              } catch (e) {
-                return String(raw).slice(0, 10) === todayDenver;
-              }
-            });
-
-            // derive floor per record and increment summary
-            detailsToday.forEach(d => {
-              const derived = deriveFloorFromRecord(d) || 'Unknown';
-              const key = normalizeFloorName(derived);
-              summaryMap[key] = (summaryMap[key] || 0) + 1;
-            });
-          }
+      // Prefer backend dateWise (aggregates) for counts if available
+      if (Array.isArray(payload.dateWise)) {
+        const dayObj = payload.dateWise.find(d => d.date === todayDenver);
+        if (dayObj && Array.isArray(dayObj.floors)) {
+          dayObj.floors.forEach(f => {
+            const norm = normalizeFloorName(f.floor || '');
+            if (!norm) return;
+            summaryMap[norm] = Number(f.rejectionCount || 0);
+          });
         }
-
-        // group detailsToday by normalized floor (derive floor if missing)
-        const detailsByFloor = {};
-        detailsToday.forEach(d => {
-          const derived = deriveFloorFromRecord(d) || 'Unknown';
-          const key = normalizeFloorName(derived) || 'Unknown';
-          detailsByFloor[key] = detailsByFloor[key] || [];
-          detailsByFloor[key].push(d);
-        });
-
-        if (!mounted) return;
-        setRejectionSummaryMap(summaryMap);
-        setRejectionDetails(detailsByFloor);
-        setRejectionAllDetailsToday(detailsToday);
-      } catch (err) {
-        console.error('Failed to load rejections:', err);
-        if (mounted) {
-          setRejectionSummaryMap({});
-          setRejectionDetails({});
-          setRejectionAllDetailsToday([]);
+        // build detailsToday from payload.details so we can populate modal content
+        if (Array.isArray(payload.details)) {
+          detailsToday = payload.details.filter(d => {
+            const raw = d.LocaleMessageTime || d.DateOnly;
+            if (!raw) return false;
+            try {
+              const dt = new Date(raw);
+              const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+              return dtStr === todayDenver;
+            } catch (e) {
+              return String(raw).slice(0, 10) === todayDenver;
+            }
+          });
         }
-      } finally {
-        if (mounted) setRejectionsLoading(false);
+      } else {
+        // fallback: filter details for today and aggregate counts
+        if (Array.isArray(payload.details)) {
+          detailsToday = payload.details.filter(d => {
+            const raw = d.LocaleMessageTime || d.DateOnly;
+            if (!raw) return false;
+            try {
+              const dt = new Date(raw);
+              const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+              return dtStr === todayDenver;
+            } catch (e) {
+              return String(raw).slice(0, 10) === todayDenver;
+            }
+          });
+
+          // derive floor per record and increment summary (normalized keys only)
+          detailsToday.forEach(d => {
+            const derived = deriveFloorFromRecord(d) || 'Unknown';
+            const norm = normalizeFloorName(derived) || 'Unknown';
+            summaryMap[norm] = (summaryMap[norm] || 0) + 1;
+          });
+        }
       }
-    }
 
-    loadRejectionsTodayOnly();
-    return () => { mounted = false; };
-  }, []);
+      // group detailsToday by normalized floor (derive floor if missing)
+      const detailsByFloor = {};
+      detailsToday.forEach(d => {
+        const derived = deriveFloorFromRecord(d) || 'Unknown';
+        const norm = normalizeFloorName(derived) || 'Unknown';
+        detailsByFloor[norm] = detailsByFloor[norm] || [];
+        detailsByFloor[norm].push(d);
+      });
+
+      if (!mounted) return;
+      setRejectionSummaryMap(summaryMap);
+      setRejectionDetails(detailsByFloor);
+      setRejectionAllDetailsToday(detailsToday);
+    } catch (err) {
+      console.error('Failed to load rejections:', err);
+      if (mounted) {
+        setRejectionSummaryMap({});
+        setRejectionDetails({});
+        setRejectionAllDetailsToday([]);
+      }
+    } finally {
+      if (mounted) setRejectionsLoading(false);
+    }
+  }
+
+  loadRejectionsTodayOnly();
+  return () => { mounted = false; };
+}, []);
