@@ -16,6 +16,7 @@ function normalizeZoneKey(rawDoor, rawDir) {
   let door = String(rawDoor || '').trim();
   door = door.replace(/_[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
   door = door.replace(/\s+/g, ' ').toUpperCase();
+
   const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
   return `${door}___${dir}`;
 }
