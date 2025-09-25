@@ -1,12 +1,3 @@
-// Add near other modal/loading state
-const [rejectionModalLoading, setRejectionModalLoading] = useState(false);
-
-......
-
-
-
-
-
 const handleRejectionCellClick = async (normFloor, displayFloor) => {
   setRejectionModalLoading(true);
   let list = rejectionDetails[normFloor] || [];
