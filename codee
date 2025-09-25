@@ -1,102 +1,165 @@
-// --- fetch rejections and keep only today's (Denver) records ---
-useEffect(() => {
-  let mounted = true;
+in this data are not disply correct format i means 
+this table are disply very big in this only 3 records that time very big but when record are 10 or 20 that time is very and very big  will disply;
+so write correcu  desing for this table, i measn creat scroll bar, and equal size for column 
 
-  async function loadRejectionsTodayOnly() {
-    setRejectionsLoading(true);
-    try {
-      const res = await fetch('/api/rejections');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const payload = await res.json();
+{/* Rejection details modal (today) */}
+      <Modal show={showRejectionModal} onHide={() => setShowRejectionModal(false)} size="lg" centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Rejections Today - {selectedRejectionFloor}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedRejectionList.length === 0 ? (
+            <div>No rejections recorded today for {selectedRejectionFloor}</div>
+          ) : (
+            <Table striped bordered hover size="sm">
+              <thead>
+                <tr>
+                  <th>Sr.no</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Name</th>
+                  <th>EmployeeID</th>
+                  <th>CardNumber</th>
+                  <th>PersonnelType</th>
+                  <th>Door</th>
+                  <th>RejectionType</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedRejectionList.map((r, i) => {
+                  let localDate = '';
+                  let localTime = '';
+                  try {
+                    if (r.LocaleMessageTime) {
+                      const dt = new Date(r.LocaleMessageTime);
+                      localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                      localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
+                    } else if (r.DateOnly) {
+                      localDate = (typeof r.DateOnly === 'string' ? r.DateOnly.slice(0, 10) : new Date(r.DateOnly).toISOString().slice(0, 10));
+                      localTime = r.SwipeTime || '';
+                    }
+                  } catch (e) {
+                    localDate = (r.DateOnly || '').slice(0, 10);
+                    localTime = r.SwipeTime || '';
+                  }
 
-      // today in Denver (YYYY-MM-DD)
-      const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                  return (
+                    <tr key={i}>
+                      <td>{i + 1}</td>
+                      <td>{localDate}</td>
+                      <td>{localTime}</td>
+                      <td>{r.ObjectName1}</td>
+                      <td>{r.EmployeeID}</td>
+                      <td>{r.CardNumber || '—'}</td>
+                      <td>{r.PersonnelType || '—'}</td>
+                      <td style={{ maxWidth: 280, wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
+                      <td>{r.RejectionType || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            style={{ background: '#FFC72C', borderColor: '#FFC72C', color: '#000', fontWeight: 600 }}
+            onClick={() => exportRejectionsToExcel(selectedRejectionList, `rejections-${(selectedRejectionFloor || 'floor').replace(/\s+/g, '_')}-${new Date().toISOString().slice(0, 10)}.xlsx`)}
+          >
+            Export Excel
+          </Button>
+          <Button variant="secondary" onClick={() => setShowRejectionModal(false)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
 
-      // helper to check if a detail is for today
-      const isDetailToday = (d, todayDenver) => {
-        if (!d) return false;
 
-        if (d.DateOnly) {
-          try {
-            const dateOnlyStr = (typeof d.DateOnly === 'string')
-              ? d.DateOnly.slice(0, 10)
-              : new Date(d.DateOnly).toISOString().slice(0, 10);
-            return dateOnlyStr === todayDenver;
-          } catch {
-            return String(d.DateOnly).slice(0, 10) === todayDenver;
-          }
-        }
+      <Modal
+        show={showAllRejectionsModal}
+        onHide={() => setShowAllRejectionsModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>All Rejections Today</Modal.Title>
+        </Modal.Header>
 
-        if (d.LocaleMessageTime) {
-          try {
-            const dt = new Date(d.LocaleMessageTime);
-            const dtStr = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-            return dtStr === todayDenver;
-          } catch {
-            return String(d.LocaleMessageTime).slice(0, 10) === todayDenver;
-          }
-        }
+        <Modal.Body style={{ maxHeight: '60vh', overflowY: 'auto', padding: '0.5rem 1rem' }}>
+          {(!rejectionAllDetailsToday || rejectionAllDetailsToday.length === 0) ? (
+            <div>No rejections recorded today</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <Table striped bordered hover size="sm" className="mb-0">
+                <thead>
+                  <tr>
+                    <th>Sr.no</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Name</th>
+                    <th>EmployeeID</th>
+                    <th>CardNumber</th>
+                    <th>PersonnelType</th>
+                    <th>Door</th>
+                    <th>RejectionType</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rejectionAllDetailsToday.map((r, i) => {
+                    let localDate = '';
+                    let localTime = '';
+                    try {
+                      if (r.LocaleMessageTime) {
+                        const dt = new Date(r.LocaleMessageTime);
+                        localDate = dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+                        localTime = dt.toLocaleTimeString('en-GB', { timeZone: 'America/Denver' });
+                      } else if (r.DateOnly) {
+                        localDate = (typeof r.DateOnly === 'string'
+                          ? r.DateOnly.slice(0, 10)
+                          : new Date(r.DateOnly).toISOString().slice(0, 10)
+                        );
+                        localTime = r.SwipeTime || '';
+                      }
+                    } catch (e) {
+                      localDate = (r.DateOnly || '').slice(0, 10);
+                      localTime = r.SwipeTime || '';
+                    }
 
-        return false;
-      };
+                    return (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td>{localDate}</td>
+                        <td>{localTime}</td>
+                        <td>{r.ObjectName1}</td>
+                        <td>{r.EmployeeID}</td>
+                        <td>{r.CardNumber || '—'}</td>
+                        <td>{r.PersonnelType || '—'}</td>
+                        <td style={{ maxWidth: 200, wordBreak: 'break-word' }}>{r.Door || r.Location || '—'}</td>
+                        <td>{r.RejectionType || '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Modal.Body>
 
-      // collect today's details (flat)
-      let detailsToday = [];
-      const summaryMap = {};
-
-      // Prefer backend dateWise (aggregates) for counts if available
-      if (Array.isArray(payload.dateWise)) {
-        const dayObj = payload.dateWise.find(d => d.date === todayDenver);
-        if (dayObj && Array.isArray(dayObj.floors)) {
-          dayObj.floors.forEach(f => {
-            const key = normalizeFloorName(f.floor || '');
-            if (!key) return;
-            summaryMap[key] = Number(f.rejectionCount || 0);
-          });
-        }
-        // build detailsToday from payload.details so we can populate modal content
-        if (Array.isArray(payload.details)) {
-          detailsToday = payload.details.filter(d => isDetailToday(d, todayDenver));
-        }
-      } else {
-        // fallback: filter details for today and aggregate counts
-        if (Array.isArray(payload.details)) {
-          detailsToday = payload.details.filter(d => isDetailToday(d, todayDenver));
-
-          // derive floor per record and increment summary
-          detailsToday.forEach(d => {
-            const derived = deriveFloorFromRecord(d) || 'Unknown';
-            const key = normalizeFloorName(derived);
-            summaryMap[key] = (summaryMap[key] || 0) + 1;
-          });
-        }
-      }
-
-      // group detailsToday by normalized floor (derive floor if missing)
-      const detailsByFloor = {};
-      detailsToday.forEach(d => {
-        const derived = deriveFloorFromRecord(d) || 'Unknown';
-        const key = normalizeFloorName(derived) || 'Unknown';
-        detailsByFloor[key] = detailsByFloor[key] || [];
-        detailsByFloor[key].push(d);
-      });
-
-      if (!mounted) return;
-      setRejectionSummaryMap(summaryMap);
-      setRejectionDetails(detailsByFloor);
-      setRejectionAllDetailsToday(detailsToday);
-    } catch (err) {
-      console.error('Failed to load rejections:', err);
-      if (mounted) {
-        setRejectionSummaryMap({});
-        setRejectionDetails({});
-        setRejectionAllDetailsToday([]);
-      }
-    } finally {
-      if (mounted) setRejectionsLoading(false);
-    }
-  }
-
-  loadRejectionsTodayOnly();
-  return () => { mounted = false; };
-}, []);
+        <Modal.Footer>
+          <Button
+            style={{
+              background: '#FFC72C',
+              borderColor: '#FFC72C',
+              color: '#000',
+              fontWeight: 600
+            }}
+            onClick={() => exportRejectionsToExcel(
+              rejectionAllDetailsToday,
+              `all-rejections-${new Date().toISOString().slice(0, 10)}.xlsx`
+            )}
+          >
+            Export Excel
+          </Button>
+          <Button variant="secondary" onClick={() => setShowAllRejectionsModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
