@@ -1,65 +1,136 @@
-  <Container fluid className="py-4">
-      {/* Summary: first meaningful paint (always show with minimal compute) */}
-      <SummaryCards
-        totalOccupancy={totalOccupancy}
-        employeeCount={employees}
-        contractorCount={contractors}
-        totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees ?? 0}
-        contractorsVisitedToday={visitedToday?.contractors ?? 0}
-      />
+in server.js file some code are missing so chekc this   liveOccupancyRoutes.js and this file occupancyDenverRoutes.js 
+and writ correct code for server.js files ok carefully, just update new code dont change anythigns ok 
 
-      {/* Charts row — lazy rendered with Suspense fallback */}
-      <Row className="g-4" style={{ marginTop: 12 }}>
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <FloorOccupancyChart data={deferredFloorData} />
-          </Suspense>
-        </Col>
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\server.js
+// server.js
+const express = require('express');
+const cors    = require('cors');
+const path    = require('path');
 
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <SummaryChart summary={deferredSummary} />
-          </Suspense>
-        </Col>
 
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <PersonnelDonutChart data={deferredChartData} />
-          </Suspense>
-        </Col>
-      </Row>
+const employeeRoutes        = require('./routes/employeeRoutes');
+const liveOccupancyRoutes   = require('./routes/liveOccupancyRoutes');
+const occupancyDenverRoutes = require('./routes/occupancyDenverRoutes');
 
-     
-{/* Footer — always at the bottom */}
-<footer style={{
-  backgroundColor: '#000',
-  color: '#FFC72C',
-  padding: '1.5rem 0',
-  textAlign: 'center',
-  borderTop: '2px solid #FFC72C',
-  fontSize: '0.95rem',
-  lineHeight: '1.6',
-  minHeight: 120,
-  position: 'fixed',   // fix at bottom
-  left: 0,             // full width
-  bottom: 0,
-  width: '100%',
-  zIndex: 1000,
-           marginTop: '1rem'
-}}>
-  <div>
-    <strong>Global Security Operations Center</strong><br />
-    Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
-  </div>
-  <div style={{ marginTop: '0.75rem' }}>
-    Contact us:&nbsp;
-    <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-       style={{ color: '#FFC72C', textDecoration: 'underline' }}>
-      GSOC Mail
-    </a>&nbsp;|&nbsp;
-    Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-  </div>
-</footer>
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-    </Container>
+
+// --- middleware to disable proxy buffering for SSE endpoints ---
+const noBuffering = (req, res, next) => {
+  // Nginx or other proxies honor this header to stream chunks immediately
+  res.set('X-Accel-Buffering', 'no');
+  next();
+};
+
+
+// simple sanity-check
+app.get('/ping', (req, res) => res.send('pong'));
+
+
+
+
+app.use('/api', employeeRoutes);
+
+// Pune SSE (live occupancy)
+app.use(
+  '/api',
+  noBuffering,
+  liveOccupancyRoutes
+);
+
+// Denver SSE (live occupancy)
+
+app.use(
+  '/api',
+  noBuffering,
+  occupancyDenverRoutes
+);
+
+
+
+// debug: list registered endpoints
+if (app._router && Array.isArray(app._router.stack)) {
+  console.log('\n📋 Registered endpoints:');
+  app._router.stack.forEach(layer => {
+    if (layer.route && layer.route.path) {
+      const methods = Object
+        // .keys(layer.route.methods)
+        // .map(m => m.toUpperCase())
+        // .join(',');
+
+        .keys(layer.route.methods)
+        .map(m => m.toUpperCase())
+        .join(',');
+
+      console.log(`  ${methods}\t${layer.route.path}`);
+    }
+  });
+}
+
+// serve React build (if any)
+const buildPath = path.join(__dirname, '..', 'client', 'build');
+app.use(express.static(buildPath));
+
+// health check
+app.get('/health', (req, res) => res.send('OK'));
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+
+
+
+
+____________________________________________________________________________________________
+
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\liveOccupancyRoutes.js
+const express = require('express');
+const router  = express.Router();
+const {
+  getLiveOccupancy,
+ 
+ getPuneSnapshotAtDateTime
+} = require('../controllers/liveOccupancyController');
+
+router.get('/live-occupancy', getLiveOccupancy);
+
+
+// New snapshot endpoint
+router.get('/occupancy-at-time-pune', getPuneSnapshotAtDateTime);
+
+
+
+
+
+
+module.exports = router;
+
+
+_____________________________________________________________________________\
+
+// routes/occupancyDenverRoutes.js
+const express = require('express');
+const router = express.Router();
+
+const { getDenverLiveOccupancy, getDenverSnapshotAtDateTime } = require('../controllers/denverLiveOccupancyController');
+const { getDenverInOutInconsistency } = require('../controllers/denverInOutInconsistencyController');
+
+const { getRejections } = require("../controllers/denverRejection");
+
+// Denver live occupancy
+router.get('/live-occupancy-denver', getDenverLiveOccupancy);
+
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
+
+// Denver snapshot endpoint
+router.get('/occupancy-at-time-denver', getDenverSnapshotAtDateTime);
+
+
+router.get("/rejections", getRejections);
+
+
+module.exports = router;
+
+
