@@ -1,1 +1,21 @@
 summaryMap[key] = (summaryMap[key] || 0) + 1;
+
+
+
+
+const derived = deriveFloorFromRecord(d) || 'Unknown';
+const key = normalizeFloorName(derived) || 'Unknown';
+detailsByFloor[key] = detailsByFloor[key] || [];
+detailsByFloor[key].push(d);
+
+
+
+// derive floor per record and increment summary
+detailsToday.forEach(d => {
+  const derived = deriveFloorFromRecord(d) || 'Unknown';
+  const norm = normalizeFloorName(derived);
+  summaryMap[norm] = (summaryMap[norm] || 0) + 1;
+
+  detailsByFloor[norm] = detailsByFloor[norm] || [];
+  detailsByFloor[norm].push(d);
+});
