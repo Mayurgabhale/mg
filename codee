@@ -1,5 +1,17 @@
-in server.js file some code are missing so chekc this   liveOccupancyRoutes.js and this file occupancyDenverRoutes.js 
-and writ correct code for server.js files ok carefully, just update new code dont change anythigns ok 
+in server.js file  this is not 
+
+// New snapshot endpoint
+router.get('/occupancy-at-time-pune', getPuneSnapshotAtDateTime); this and 
+this 
+// Denver in/out inconsistency trends
+router.get('/inout-inconsistency-denver', getDenverInOutInconsistency);
+
+// Denver snapshot endpoint
+router.get('/occupancy-at-time-denver', getDenverSnapshotAtDateTime);
+
+
+router.get("/rejections", getRejections);
+********************************************************
 
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\server.js
 // server.js
@@ -79,10 +91,7 @@ app.get('/health', (req, res) => res.send('OK'));
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
 
-
-
-
-____________________________________________________________________________________________
+_____________________________________________________________
 
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes\liveOccupancyRoutes.js
 const express = require('express');
@@ -99,15 +108,8 @@ router.get('/live-occupancy', getLiveOccupancy);
 // New snapshot endpoint
 router.get('/occupancy-at-time-pune', getPuneSnapshotAtDateTime);
 
-
-
-
-
-
 module.exports = router;
 
-
-_____________________________________________________________________________\
 
 // routes/occupancyDenverRoutes.js
 const express = require('express');
@@ -132,5 +134,8 @@ router.get("/rejections", getRejections);
 
 
 module.exports = router;
+
+
+
 
 
