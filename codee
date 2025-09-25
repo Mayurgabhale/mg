@@ -1,3 +1,35 @@
+  <Container fluid className="py-4">
+      {/* Summary: first meaningful paint (always show with minimal compute) */}
+      <SummaryCards
+        totalOccupancy={totalOccupancy}
+        employeeCount={employees}
+        contractorCount={contractors}
+        totalVisitedToday={totalVisitedToday}
+        employeesVisitedToday={visitedToday?.employees ?? 0}
+        contractorsVisitedToday={visitedToday?.contractors ?? 0}
+      />
+
+      {/* Charts row — lazy rendered with Suspense fallback */}
+      <Row className="g-4" style={{ marginTop: 12 }}>
+        <Col md={4} style={{ minHeight: 300 }}>
+          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
+            <FloorOccupancyChart data={deferredFloorData} />
+          </Suspense>
+        </Col>
+
+        <Col md={4} style={{ minHeight: 300 }}>
+          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
+            <SummaryChart summary={deferredSummary} />
+          </Suspense>
+        </Col>
+
+        <Col md={4} style={{ minHeight: 300 }}>
+          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
+            <PersonnelDonutChart data={deferredChartData} />
+          </Suspense>
+        </Col>
+      </Row>
+
      
 {/* Footer — always at the bottom */}
 <footer style={{
@@ -29,3 +61,5 @@
     Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
   </div>
 </footer>
+
+    </Container>
