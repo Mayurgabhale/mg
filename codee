@@ -1,16 +1,94 @@
-// robust helper: get YYYY-MM-DD for Denver from many possible raw date formats
-function extractIsoDate(raw) {
-  if (!raw) return '';
-  if (typeof raw !== 'string') raw = String(raw);
-  // if raw already contains YYYY-MM-DD return that
-  const m = raw.match(/(\d{4}-\d{2}-\d{2})/);
-  if (m) return m[1];
-  // fallback to parsing and convert to Denver date
+async function loadRejectionsTodayOnly() {
+  setRejectionsLoading(true);
   try {
-    const dt = new Date(raw);
-    if (isNaN(dt.getTime())) return '';
-    return dt.toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
-  } catch (e) {
-    return '';
+    const res = await fetch('/api/rejections');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const payload = await res.json();
+
+    // debug: see exactly what backend returned
+    console.info('[rejections] payload:', payload);
+
+    // today in Denver (YYYY-MM-DD)
+    const todayDenver = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' });
+    console.info('[rejections] todayDenver:', todayDenver);
+
+    let detailsToday = [];
+    const summaryMap = {};
+
+    // If backend gives aggregates (dateWise), populate summaryMap first
+    if (Array.isArray(payload.dateWise)) {
+      const dayObj = payload.dateWise.find(d => d.date === todayDenver);
+      if (dayObj && Array.isArray(dayObj.floors)) {
+        dayObj.floors.forEach(f => {
+          const key = normalizeFloorName(f.floor || '');
+          if (!key) return;
+          summaryMap[key] = Number(f.rejectionCount || 0);
+        });
+      }
+    }
+
+    // If payload.details exists, filter it robustly to today's Denver date
+    if (Array.isArray(payload.details) && payload.details.length > 0) {
+      detailsToday = payload.details.filter(d => {
+        const raw = d.LocaleMessageTime || d.DateOnly || d.MessageTime || '';
+        const recDate = extractIsoDate(raw);
+        return recDate === todayDenver;
+      });
+
+      // now derive floor for each record to build the grouped map and ensure counts match
+      detailsToday.forEach(d => {
+        const derived = deriveFloorFromRecord(d) || 'Unknown';
+        const key = normalizeFloorName(derived);
+        summaryMap[key] = (summaryMap[key] || 0) + 1;
+      });
+    } else {
+      // If no details but dateWise gave counts, create placeholder records so modal shows something
+      if (Array.isArray(payload.dateWise)) {
+        const dayObj = payload.dateWise.find(d => d.date === todayDenver);
+        if (dayObj && Array.isArray(dayObj.floors)) {
+          dayObj.floors.forEach(f => {
+            const key = normalizeFloorName(f.floor || '');
+            const count = Number(f.rejectionCount || 0);
+            if (count > 0) {
+              for (let i = 0; i < count; i++) {
+                detailsToday.push({
+                  DateOnly: todayDenver,
+                  LocaleMessageTime: `${todayDenver}T00:00:00Z`,
+                  ObjectName1: '(details missing)',
+                  EmployeeID: '',
+                  CardNumber: '',
+                  PersonnelType: '',
+                  Door: f.floor || '',
+                  RejectionType: 'Aggregate (details not provided)'
+                });
+              }
+            }
+          });
+        }
+      }
+    }
+
+    // group detailsToday by normalized floor
+    const detailsByFloor = {};
+    detailsToday.forEach(d => {
+      const derived = deriveFloorFromRecord(d) || 'Unknown';
+      const key = normalizeFloorName(derived) || 'Unknown';
+      detailsByFloor[key] = detailsByFloor[key] || [];
+      detailsByFloor[key].push(d);
+    });
+
+    if (!mounted) return;
+    setRejectionSummaryMap(summaryMap);
+    setRejectionDetails(detailsByFloor);
+    setRejectionAllDetailsToday(detailsToday);
+  } catch (err) {
+    console.error('Failed to load rejections:', err);
+    if (mounted) {
+      setRejectionSummaryMap({});
+      setRejectionDetails({});
+      setRejectionAllDetailsToday([]);
+    }
+  } finally {
+    if (mounted) setRejectionsLoading(false);
   }
 }
