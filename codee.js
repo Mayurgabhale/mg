@@ -1,42 +1,43 @@
- <Box
-  sx={{
-    border: "none",
-    background: "linear-gradient(145deg, #ffffff, #f9f9f9)", // light modern background
-    borderRadius: 3,
-    px: 4,
-    py: 3,
-    width: { xs: "100%", sm: "80%", md: "100%" },
-    textAlign: "center",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)", // softer shadow
-  }}
->
-  <Typography
-    variant="h4"
-    gutterBottom
-    sx={{
-      background: "linear-gradient(90deg, #1976d2, #42a5f5)", // gradient text
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-      fontWeight: "bold",
-      display: "inline-block",
-      paddingBottom: "6px",
-      borderBottom: "3px solid #1976d2", // matches text gradient
-      letterSpacing: "0.7px",
-      textShadow: "1px 1px 3px rgba(0,0,0,0.15)",
-    }}
-  >
-    Duration Reports with Compliance & Category
-  </Typography>
-
-  <Typography
-    variant="subtitle1"
-    sx={{
-      color: "#555",
-      mt: 1,
-      fontSize: "1rem",
-      fontStyle: "italic",
-    }}
-  >
-    Insights and metrics at a glance
-  </Typography>
-</Box>
+   {/* City */}
+                <Grid item xs={12} md={3}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="city-select-label">City / Partition</InputLabel>
+                    <Select
+                      labelId="city-select-label"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      renderValue={(v) => v || ""}
+                      sx={{ bgcolor: "#fff", borderRadius: 1, color: "#000" }}
+                    >
+                      <MenuItem value="">
+                        <em>All</em>
+                      </MenuItem>
+                      {citiesForRegion?.length > 0 ? (
+                        citiesForRegion.map((c, idx) => (
+                          <MenuItem key={idx} value={c}>
+                            {c}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled value="">
+                          No predefined cities (type manually below)
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Or type manually"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    sx={{
+                      mt: 1,
+                      borderRadius: 1,
+                      "& .MuiInputBase-input": {
+                        color: "#000000", 
+                        backgroundColor: "white",
+                      },
+                    }}
+                  />
+                </Grid>
