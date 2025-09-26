@@ -1,15 +1,5 @@
-when i upload these all code on window server,
-  that time it take to much or more and more time to disply data in frontend,
-  minium 15 50 20 minitue it take time to loading the web,
-  i dont understand excaly where is the issue , why data is gettning that much time to load the page,
-  if issue is compnents file then i give al one by one compnents fils 
-you just write the correct ok. 
-  
-// /////////////////////  performance improve //////////////////////////////////////////
-
-
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -22,7 +12,7 @@ import {
 } from "recharts";
 import { Card } from "react-bootstrap";
 
-// Gradients/solid colors for known zones
+/* Static maps (kept outside the component so they are stable across renders) */
 const ZONE_GRADIENTS = {
   "Red Zone": ["#FF0000", "#D22B2B"],
   "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
@@ -46,9 +36,23 @@ const SOLID_COLORS = [
   "#C75D00",
 ];
 
-export default function SummaryChart({ summary = [] }) {
-  // ✅ Always call hooks, even if summary is empty
+/* Utility: stable slug for SVG ids (lowercase, alphanum, dash) */
+const slugify = (s = "") =>
+  String(s)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-_]/g, "");
+
+/* Component */
+function SummaryChart({ summary = [] }) {
+  /**
+   * Heavy transformations are memoized and only recomputed when `summary` ref changes.
+   * This prevents pointless recalculation on parent updates.
+   */
   const processedData = useMemo(() => {
+    if (!Array.isArray(summary) || summary.length === 0) return [];
+
     const mapZoneName = (name) => {
       if (name === "Red Zone - Outer Area") return "East Outdoor Area";
       if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
@@ -62,19 +66,40 @@ export default function SummaryChart({ summary = [] }) {
         : mapped;
     };
 
+    // Defensive copy -> sort a copy so original prop isn't mutated
     return [...summary]
-      .sort((a, b) => b.count - a.count)
-      .map((z) => ({
-        ...z,
-        zone: mapZoneName(z.zone),
-        shortZone: shortenName(z.zone),
-      }));
+      .sort((a, b) => (b.count || 0) - (a.count || 0))
+      .map((z) => {
+        const fullZone = mapZoneName(z.zone);
+        return {
+          ...z,
+          zone: fullZone,
+          shortZone: shortenName(fullZone),
+        };
+      });
   }, [summary]);
 
-  // ✅ Tooltip
-  const renderTooltip = ({ active, payload }) => {
+  /* Precompute gradient ids and colors so JSX rendering is very cheap */
+  const gradientIdMap = useMemo(() => {
+    const map = {};
+    for (const entry of processedData) {
+      const grad = ZONE_GRADIENTS[entry.zone];
+      if (grad) map[entry.zone] = `grad-${slugify(entry.zone)}`;
+    }
+    return map;
+  }, [processedData]);
+
+  const fills = useMemo(() => {
+    return processedData.map((entry, idx) => {
+      const gradId = gradientIdMap[entry.zone];
+      return gradId ? `url(#${gradId})` : SOLID_COLORS[idx % SOLID_COLORS.length];
+    });
+  }, [processedData, gradientIdMap]);
+
+  /* Memoize tooltip renderer so it's a stable reference across renders */
+  const renderTooltip = useCallback(({ active, payload }) => {
     if (!active || !payload?.length) return null;
-    const { zone, count } = payload[0].payload;
+    const { zone, count } = payload[0].payload || {};
     return (
       <div
         style={{
@@ -86,22 +111,20 @@ export default function SummaryChart({ summary = [] }) {
           fontSize: "0.9rem",
         }}
       >
-        <div><strong>{zone}</strong></div>
+        <div>
+          <strong>{zone}</strong>
+        </div>
         <div>Headcount: {count}</div>
       </div>
     );
-  };
+  }, []);
 
-  // ✅ After hooks, handle empty state
-  if (!summary.length) {
+  if (!processedData.length) {
     return <Card body>No zone data available</Card>;
   }
 
   return (
-    <Card
-      className="mb-4 shadow-sm border"
-      style={{ borderColor: "var(--wu-yellow)" }}
-    >
+    <Card className="mb-4 shadow-sm border" style={{ borderColor: "var(--wu-yellow)" }}>
       <Card.Header
         className="bg-dark text-warning text-center fw-bold"
         style={{
@@ -129,13 +152,9 @@ export default function SummaryChart({ summary = [] }) {
             <Tooltip content={renderTooltip} />
 
             <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
-              {processedData.map((entry, idx) => {
-                const grad = ZONE_GRADIENTS[entry.zone];
-                const color = grad
-                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
-                  : SOLID_COLORS[idx % SOLID_COLORS.length];
-                return <Cell key={`cell-${idx}`} fill={color} />;
-              })}
+              {processedData.map((entry, idx) => (
+                <Cell key={`cell-${idx}-${entry.zone}`} fill={fills[idx]} />
+              ))}
 
               <LabelList
                 dataKey="count"
@@ -148,19 +167,14 @@ export default function SummaryChart({ summary = [] }) {
               />
             </Bar>
 
+            {/* Only render defs for zones that have gradients */}
             <defs>
               {processedData.map((entry) => {
                 const grad = ZONE_GRADIENTS[entry.zone];
-                if (!grad) return null;
+                const id = gradientIdMap[entry.zone];
+                if (!grad || !id) return null;
                 return (
-                  <linearGradient
-                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
-                    key={entry.zone}
-                    x1="0"
-                    y1="0"
-                    x2="1"
-                    y2="0"
-                  >
+                  <linearGradient id={id} key={id} x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor={grad[0]} />
                     <stop offset="100%" stopColor={grad[1]} />
                   </linearGradient>
@@ -173,3 +187,5 @@ export default function SummaryChart({ summary = [] }) {
     </Card>
   );
 }
+
+export default React.memo(SummaryChart);
