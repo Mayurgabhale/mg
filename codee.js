@@ -1,5 +1,10 @@
-
-
+when i upload these all code on window server,
+  that time it take to much or more and more time to disply data in frontend,
+  minium 15 50 20 minitue it take time to loading the web,
+  i dont understand excaly where is the issue , why data is gettning that much time to load the page,
+  if issue is compnents file then i give al one by one compnents fils 
+you just write the correct ok. 
+  
 // /////////////////////  performance improve //////////////////////////////////////////
 
 
