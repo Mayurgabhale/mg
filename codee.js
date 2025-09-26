@@ -1,127 +1,170 @@
 
 
-// page performance improve code here 
+// /////////////////////  performance improve //////////////////////////////////////////
 
 
-// src/pages/DashboardHome.jsx
-import React, { useMemo, lazy, Suspense, useDeferredValue } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\SummaryChart.jsx
+import React, { useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList,
+} from "recharts";
+import { Card } from "react-bootstrap";
 
-import SummaryCards from '../components/SummaryCards';
-import LoadingSpinner from '../components/LoadingSpinner';
+// Gradients/solid colors for known zones
+const ZONE_GRADIENTS = {
+  "Red Zone": ["#FF0000", "#D22B2B"],
+  "Red Zone - Outer Area": ["#FF0000", "#D22B2B"],
+  "Yellow Zone": ["#FFDE21", "#FFBF00"],
+  "Yellow Zone - Outer Area": ["#FFDE21", "#FFBF00"],
+  "Orange Zone": ["#E3963E", "#FFC966"],
+  "Orange Zone - Outer Area": ["#E3963E", "#FFC966"],
+  "Green Zone": ["#009E60", "#50C878"],
+  "Reception Area": ["#E0CCFF", "#F4E6FF"],
+  "Assembly Area": ["#FE6F5E", "#A366FF"],
+  "Tower B": ["#E68FAC", "#99BBFF"],
+  "2nd Floor, Pune": ["#FF6F61", "#FFA28F"],
+};
 
-// lazy-load charts (prefetch so browser can warm the chunk after idle)
-const FloorOccupancyChart = lazy(() => import(
-  /* webpackChunkName: "floor-chart", webpackPrefetch: true */ '../components/FloorOccupancyChart'
-));
-const SummaryChart = lazy(() => import(
-  /* webpackChunkName: "summary-chart", webpackPrefetch: true */ '../components/SummaryChart'
-));
-const PersonnelDonutChart = lazy(() => import(
-  /* webpackChunkName: "personnel-donut", webpackPrefetch: true */ '../components/PersonnelDonutChart'
-));
+const SOLID_COLORS = [
+  "#FFD100",
+  "#009E60",
+  "#FF6F61",
+  "#58595B",
+  "#FFB800",
+  "#C75D00",
+];
 
-/**
- * DashboardHome
- * - Always render SummaryCards immediately (fast first meaningful paint)
- * - Defer heavy chart rendering with useDeferredValue + Suspense fallbacks
- * - Memoize chart data so children only get new props when the source changes
- */
-function DashboardHome({
-  summaryData = [],
-  detailsData,
-  floorData = [],
-  zoneBreakdown,
-  personnelBreakdown = [],
-  totalVisitedToday = 0,
-  personnelSummary = { employees: 0, contractors: 0 },
-  visitedToday = {},
-  ertStatus
-}) {
-  // small cheap derived numbers shown in SummaryCards (fast)
-  const employees = personnelSummary?.employees ?? 0;
-  const contractors = personnelSummary?.contractors ?? 0;
-  const totalOccupancy = employees + contractors;
+export default function SummaryChart({ summary = [] }) {
+  // ✅ Always call hooks, even if summary is empty
+  const processedData = useMemo(() => {
+    const mapZoneName = (name) => {
+      if (name === "Red Zone - Outer Area") return "East Outdoor Area";
+      if (name === "Orange Zone - Outer Area") return "West Outdoor Area";
+      return name;
+    };
 
-  // memoize chart input transforms (cheap => prevents child re-render unless source changes)
-  const chartData = useMemo(() => {
-    return (personnelBreakdown || []).map(({ personnelType, count }) => ({ personnelType, count }));
-  }, [personnelBreakdown]);
+    const shortenName = (name) => {
+      const mapped = mapZoneName(name);
+      return mapped.length > 18
+        ? mapped.split(" ").slice(0, 2).join(" ") + "..."
+        : mapped;
+    };
 
-  // useDeferredValue prevents urgent UI (summary cards) from being blocked by chart updates
-  const deferredChartData = useDeferredValue(chartData);
-  const deferredFloorData = useDeferredValue(floorData || []);
-  const deferredSummary = useDeferredValue(summaryData || []);
+    return [...summary]
+      .sort((a, b) => b.count - a.count)
+      .map((z) => ({
+        ...z,
+        zone: mapZoneName(z.zone),
+        shortZone: shortenName(z.zone),
+      }));
+  }, [summary]);
 
-  // NOTE: Do NOT block entire page on charts. Always show summary cards immediately.
-  // Charts will show loading placeholders until their lazy chunks and data are ready.
+  // ✅ Tooltip
+  const renderTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const { zone, count } = payload[0].payload;
+    return (
+      <div
+        style={{
+          backgroundColor: "#000",
+          border: "1px solid var(--wu-yellow)",
+          borderRadius: 4,
+          padding: "8px",
+          color: "#FFD100",
+          fontSize: "0.9rem",
+        }}
+      >
+        <div><strong>{zone}</strong></div>
+        <div>Headcount: {count}</div>
+      </div>
+    );
+  };
+
+  // ✅ After hooks, handle empty state
+  if (!summary.length) {
+    return <Card body>No zone data available</Card>;
+  }
 
   return (
-    <Container fluid className="py-4">
-      {/* Summary: first meaningful paint (always show with minimal compute) */}
-      <SummaryCards
-        totalOccupancy={totalOccupancy}
-        employeeCount={employees}
-        contractorCount={contractors}
-        totalVisitedToday={totalVisitedToday}
-        employeesVisitedToday={visitedToday?.employees ?? 0}
-        contractorsVisitedToday={visitedToday?.contractors ?? 0}
-      />
+    <Card
+      className="mb-4 shadow-sm border"
+      style={{ borderColor: "var(--wu-yellow)" }}
+    >
+      <Card.Header
+        className="bg-dark text-warning text-center fw-bold"
+        style={{
+          fontSize: "1.2rem",
+          borderBottom: "2px solid var(--wu-yellow)",
+        }}
+      >
+        Western Union - Pune Zone-wise Headcount
+      </Card.Header>
 
-      {/* Charts row — lazy rendered with Suspense fallback */}
-      <Row className="g-4" style={{ marginTop: 12 }}>
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <FloorOccupancyChart data={deferredFloorData} />
-          </Suspense>
-        </Col>
+      <Card.Body style={{ height: 500, backgroundColor: "#1a1a1a" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            layout="vertical"
+            data={processedData}
+            margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
+          >
+            <XAxis type="number" tick={{ fill: "#FFD100" }} />
+            <YAxis
+              dataKey="shortZone"
+              type="category"
+              tick={{ fill: "#FFD100", fontWeight: "bold" }}
+              width={150}
+            />
+            <Tooltip content={renderTooltip} />
 
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <SummaryChart summary={deferredSummary} />
-          </Suspense>
-        </Col>
+            <Bar dataKey="count" radius={[8, 8, 8, 8]} minPointSize={24}>
+              {processedData.map((entry, idx) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                const color = grad
+                  ? `url(#grad-${entry.zone.replace(/\s+/g, "-")})`
+                  : SOLID_COLORS[idx % SOLID_COLORS.length];
+                return <Cell key={`cell-${idx}`} fill={color} />;
+              })}
 
-        <Col md={4} style={{ minHeight: 300 }}>
-          <Suspense fallback={<div style={{height: '100%', display:'flex', alignItems:'center', justifyContent:'center'}}><LoadingSpinner message="Loading chart…" small /></div>}>
-            <PersonnelDonutChart data={deferredChartData} />
-          </Suspense>
-        </Col>
-      </Row>
+              <LabelList
+                dataKey="count"
+                position="inside"
+                style={{
+                  fill: "#fff",
+                  fontWeight: "bold",
+                  fontSize: "0.9rem",
+                }}
+              />
+            </Bar>
 
-     
-{/* Footer — always at the bottom */}
-<footer style={{
-  backgroundColor: '#000',
-  color: '#FFC72C',
-  padding: '1.5rem 0',
-  textAlign: 'center',
-  borderTop: '2px solid #FFC72C',
-  fontSize: '0.95rem',
-  lineHeight: '1.6',
-  minHeight: 120,
-  // position: 'fixed',   // fix at bottom
-  left: 0,             // full width
-  bottom: 0,
-  width: '100%',
-  zIndex: 1000         // ensures it’s on top of other content
-}}>
-  <div>
-    <strong>Global Security Operations Center</strong><br />
-    Live HeadCount against Occupancy dashboard for Western Union Pune — Real-time occupancy, floor activity, and personnel insights.
-  </div>
-  <div style={{ marginTop: '0.75rem' }}>
-    Contact us:&nbsp;
-    <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com"
-       style={{ color: '#FFC72C', textDecoration: 'underline' }}>
-      GSOC Mail
-    </a>&nbsp;|&nbsp;
-    Landline:&nbsp;<span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
-  </div>
-</footer>
-
-    </Container>
+            <defs>
+              {processedData.map((entry) => {
+                const grad = ZONE_GRADIENTS[entry.zone];
+                if (!grad) return null;
+                return (
+                  <linearGradient
+                    id={`grad-${entry.zone.replace(/\s+/g, "-")}`}
+                    key={entry.zone}
+                    x1="0"
+                    y1="0"
+                    x2="1"
+                    y2="0"
+                  >
+                    <stop offset="0%" stopColor={grad[0]} />
+                    <stop offset="100%" stopColor={grad[1]} />
+                  </linearGradient>
+                );
+              })}
+            </defs>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
   );
 }
-
-export default React.memo(DashboardHome);
