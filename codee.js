@@ -1,38 +1,4 @@
-<Grid item xs={12} md={3}>
-  <TextField
-    label="Start Date"
-    type="date"
-    fullWidth
-    size="small"
-    value={startDate}
-    onChange={(e) => setStartDate(e.target.value)}
-    inputRef={startDateRef}
-    InputLabelProps={{ shrink: true }}
-    InputProps={{
-      sx: { color: "#000" }, // text color inside input
-      endAdornment: (
-        <InputAdornment position="end">
-          <IconButton
-            size="small"
-            onClick={() => openNativeDatePicker(startDateRef)}
-            sx={{ color: "#e6c200" }}
-          >
-            <DateRangeIcon />
-          </IconButton>
-        </InputAdornment>
-      ),
-    }}
-    sx={{
-      bgcolor: "#fff",
-      borderRadius: 1,
-      color: "#000",
-      "& .MuiInputLabel-root": {
-        color: "#1976d2", // <-- label color
-        fontWeight: "bold",
-      },
-      "& .Mui-focused .MuiInputLabel-root": {
-        color: "#e6c200", // <-- label color when focused
-      },
-    }}
-  />
-</Grid>
+chunk-PPVFY42G.js?v=a96f9ddc:21580 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+chunk-SKHEGRPX.js?v=a96f9ddc:39 Uncaught TypeError: createTheme_default is not a function
+    at chunk-SKHEGRPX.js?v=a96f9ddc:39:20
+(anonymous) @ chunk-SKHEGRPX.js?v=a96f9ddc:39
