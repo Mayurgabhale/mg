@@ -1,23 +1,6 @@
-<Grid item xs={12} md={4}>
-  <TextField
-    fullWidth
-    label="Search Employee ID"
-    value={searchEmployeeId}
-    onChange={(e) => setSearchEmployeeId(e.target.value)}
-    size="small"
-    helperText="Type an ID and click Run"
-    sx={{
-      backgroundColor: "white",
-      borderRadius: 1,
-      "& .MuiInputBase-input": {
-        color: "black", // Text color
-      },
-      "& .MuiInputLabel-root": {
-        color: "black", // Label color
-      },
-      "& .MuiFormHelperText-root": {
-        color: "black", // Helper text color
-      },
-    }}
-  />
-</Grid>
+const tableSx = {
+    "& th, & td": { border: "1px solid rgba(0,0,0,0.12)" },
+    "& thead th": { backgroundColor: "#FFD700", fontWeight: 900,  },
+    "& tbody tr": { backgroundColor: "transparent" },
+    "& tbody tr:hover": { backgroundColor: "rgba(255, 204, 0, 0.12)" },
+  };
