@@ -1,75 +1,17 @@
-
-PS C:\Users\W0024618\Desktop\apac-occupancy-backend> node server.js
-🚀 APAC server listening on port 3007
-✅ MSSQL (APAC) connected
-PS C:\Users\W0024618\Desktop\apac-occupancy-backend> node server.js
-🚀 APAC server listening on port 3007
-✅ MSSQL (APAC) connected
-RequestError: The multi-part identifier "t_xml.XmlMessage" could not be bound.
-    at handleError (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:518:28)
-    at Connection.emit (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
-    at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\handler.js:284:21)
-    at Readable.<anonymous> (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-    at Readable.emit (node:events:518:28)
-    at addChunk (node:internal/streams/readable:561:12)
-    at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
-    at Readable.push (node:internal/streams/readable:393:5)
-    at nextAsync (node:internal/streams/from:194:22) {
-  code: 'EREQUEST',
-  originalError: Error: The multi-part identifier "t_xml.XmlMessage" could not be bound.
-      at handleError (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:518:28)
-      at Connection.emit (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
-      at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\handler.js:284:21)
-      at Readable.<anonymous> (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
-      at Readable.emit (node:events:518:28)
-      at addChunk (node:internal/streams/readable:561:12)
-      at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
-      at Readable.push (node:internal/streams/readable:393:5)
-      at nextAsync (node:internal/streams/from:194:22) {
-    info: ErrorMessageToken {
-      name: 'ERROR',
-      handlerName: 'onErrorMessage',
-      number: 4104,
-      state: 1,
-      class: 16,
-      message: 'The multi-part identifier "t_xml.XmlMessage" could not be bound.',
-      serverName: 'SRVWUPNQ0986V',
-      procName: '',
-      lineNumber: 36
-    }
-  },
-  number: 4104,
-  lineNumber: 36,
-  state: 1,
-  class: 16,
-  serverName: 'SRVWUPNQ0986V',
-  procName: '',
-  precedingErrors: []
-}
-exports.fetchHistoricalOccupancy = async (location) =>
-exports.fetchHistoricalData({ location: location || null });
-
 exports.fetchHistoricalData = async ({ location = null }) => {
   const pool = await poolPromise;
 
-  // 1) Get the last 2 ACVSUJournal_* DB names only (avoid enumerating ALL databases)
   const dbResult = await pool.request().query(`
     SELECT TOP (2) name
     FROM sys.databases
     WHERE name LIKE 'ACVSUJournal[_]%'
     ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT) DESC
   `);
-  const databases = dbResult.recordset.map(r => r.name).reverse(); // keep ascending order like your old logic (older, newest)
+  const databases = dbResult.recordset.map(r => r.name).reverse();
   if (databases.length === 0) {
     throw new Error("No ACVSUJournal_* databases found.");
   }
 
-  // 2) Build a SQL fragment to narrow scans by ObjectName2 / PartitionName2 when possible.
-  // This maps the same patterns you used in the original SELECT's COALESCE CASE.
-  // When `location` is provided, we attempt to filter by the relevant pattern for that single location.
-  // When null, we restrict to the set of partitions you previously used.
   const locationPatterns = {
     'Taguig City': "(t1.ObjectName2 LIKE 'APAC_PI%')",
     'Quezon City': "(t1.ObjectName2 LIKE 'APAC_PH%')",
@@ -86,34 +28,20 @@ exports.fetchHistoricalData = async ({ location = null }) => {
   let perDbWhereClause = '';
 
   if (location) {
-    // If location matches one of the known partitions, use pattern to push down filter.
     if (locationPatterns[location]) {
       perDbWhereClause = `AND ${locationPatterns[location]}`;
     } else {
-      // fallback: if unknown location string is passed, use the PartitionName2 equality check (still helps).
       perDbWhereClause = `AND t1.PartitionName2 = @location`;
     }
   } else {
-    // restrict to the small set of partitions we care about (push filter into each DB query)
-    // Use both ObjectName2 patterns and PartitionName2 fallback to catch both forms.
     const patterns = [
-      "t1.ObjectName2 LIKE 'APAC_PI%'",   // Taguig City
-      "t1.ObjectName2 LIKE 'APAC_PH%'",   // Quezon City
-      "t1.ObjectName2 LIKE '%PUN%'",      // Pune
-      "t1.ObjectName2 LIKE 'APAC_JPN%'",  // JP.Tokyo
-      "t1.ObjectName2 LIKE 'APAC_MY%'",   // MY.Kuala Lumpur
-      "t1.ObjectName2 LIKE 'APAC_HYD%'"   // IN.HYD
+      "t1.ObjectName2 LIKE 'APAC_PI%'", "t1.ObjectName2 LIKE 'APAC_PH%'", "t1.ObjectName2 LIKE '%PUN%'", "t1.ObjectName2 LIKE 'APAC_JPN%'", "t1.ObjectName2 LIKE 'APAC_MY%'", "t1.ObjectName2 LIKE 'APAC_HYD%'"
     ];
     const partitionEquals = defaultPartitionsList.map(p => `t1.PartitionName2 = '${p.replace("'", "''")}'`);
     perDbWhereClause = `AND ( ${patterns.join(' OR ')} OR ${partitionEquals.join(' OR ')} )`;
   }
 
-  // 3) For each selected DB, build a per-db query and run them in parallel.
-  // We avoid a giant UNION ALL in SQL Server which can cause long compile/scan times.
-  // We parse the XML once per-row via OUTER APPLY to get CardNumber, and select only required columns.
   const perDbQueries = databases.map(db => {
-    // per-db SQL - keep same projected columns and same PartitionNameFriendly CASE as before
-    // Note: use OUTER APPLY to parse Xml once per row and to fetch shredded values efficiently
     return `
       SELECT
         DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
@@ -139,17 +67,20 @@ exports.fetchHistoricalData = async ({ location = null }) => {
         COALESCE(
           xmlvals.CardValue,
           xmlvals.CHUIDValue,
-          sc.value
+          scVal.value
         ) AS CardNumber,
         t5d.value AS Direction
       FROM ${db}.dbo.ACVSUJournalLog t1
       JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
       JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
 
-      -- parse XML once per row
+      -- bring t_xml into scope before using it in OUTER APPLY
+      LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
+        ON t1.XmlGUID = t_xml.GUID
+
+      -- parse XML once per row (t_xml is now available)
       OUTER APPLY (
-        SELECT
-          TRY_CAST(t_xml.XmlMessage AS XML) AS xm
+        SELECT TRY_CAST(t_xml.XmlMessage AS XML) AS xm
       ) AS parsed
 
       OUTER APPLY (
@@ -162,59 +93,35 @@ exports.fetchHistoricalData = async ({ location = null }) => {
         ON t1.XmlGUID = t5d.GUID 
         AND t5d.Value IN ('InDirection','OutDirection')
 
-      LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-
-      LEFT JOIN (
-        SELECT TOP (1) GUID, value
-        FROM ${db}.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) AS sc
-        ON t1.XmlGUID = sc.GUID
+      -- correlated OUTER APPLY to fetch first Card/CHUID shred value for this row (avoids unbound/ambig joins)
+      OUTER APPLY (
+        SELECT TOP (1) s.value
+        FROM ${db}.dbo.ACVSUJournalLogxmlShred s
+        WHERE s.GUID = t1.XmlGUID AND s.Name IN ('Card','CHUID')
+      ) AS scVal(value)
 
       WHERE t1.MessageType = 'CardAdmitted'
         ${perDbWhereClause}
     `;
   });
 
-  // 4) Execute all per-db queries in parallel (each using its own request)
   const queryPromises = perDbQueries.map(q => {
     const req = pool.request();
     if (location && !locationPatterns[location]) {
-      // only bind `@location` when we will use it (the case when unknown location string passed)
       req.input('location', sql.NVarChar, location);
     }
     return req.query(q);
   });
 
-  // Await all queries concurrently and merge results client-side
   const results = await Promise.all(queryPromises);
   const rows = results.flatMap(r => r.recordset);
 
-  // 5) Apply the outerFilter if `location` was provided but matched a known pattern that we used
-  // to pushdown the filter earlier. When the location was a pattern-mapped value we already applied
-  // the equivalent filter in SQL; but to be identical to original behavior we can additionally
-  // do a final JS-level filter using PartitionNameFriendly when the caller explicitly passed `location`.
   let finalRows = rows;
   if (location) {
-    // keep exactly same behavior as original: filter by PartitionNameFriendly = @location
     finalRows = rows.filter(r => r.PartitionNameFriendly === location);
-  } else {
-    // when no location provided, original used outer filter: WHERE PartitionNameFriendly IN (the set)
-    // we already pushed a similar filter into SQL, so no-op here.
   }
 
-  // 6) Sort on LocaleMessageTime ASC (your original final ORDER BY)
   finalRows.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
 
   return finalRows;
 };
-
-
-
-exports.fetchHistoricalOccupancy = async (location) =>
-  exports.fetchHistoricalData({ location: location || null });
-
-
-
-
