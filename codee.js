@@ -1,4 +1,56 @@
-// (Assumes `poolPromise` and `sql` are in scope as they were before)
+
+PS C:\Users\W0024618\Desktop\apac-occupancy-backend> node server.js
+🚀 APAC server listening on port 3007
+✅ MSSQL (APAC) connected
+PS C:\Users\W0024618\Desktop\apac-occupancy-backend> node server.js
+🚀 APAC server listening on port 3007
+✅ MSSQL (APAC) connected
+RequestError: The multi-part identifier "t_xml.XmlMessage" could not be bound.
+    at handleError (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\mssql\lib\tedious\request.js:384:15)
+    at Connection.emit (node:events:518:28)
+    at Connection.emit (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
+    at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\handler.js:284:21)
+    at Readable.<anonymous> (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+    at Readable.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
+    at Readable.push (node:internal/streams/readable:393:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: The multi-part identifier "t_xml.XmlMessage" could not be bound.
+      at handleError (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\mssql\lib\tedious\request.js:382:19)
+      at Connection.emit (node:events:518:28)
+      at Connection.emit (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
+      at RequestTokenHandler.onErrorMessage (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\handler.js:284:21)
+      at Readable.<anonymous> (C:\Users\W0024618\Desktop\apac-occupancy-backend\node_modules\tedious\lib\token\token-stream-parser.js:19:33)
+      at Readable.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:538:3)
+      at Readable.push (node:internal/streams/readable:393:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 4104,
+      state: 1,
+      class: 16,
+      message: 'The multi-part identifier "t_xml.XmlMessage" could not be bound.',
+      serverName: 'SRVWUPNQ0986V',
+      procName: '',
+      lineNumber: 36
+    }
+  },
+  number: 4104,
+  lineNumber: 36,
+  state: 1,
+  class: 16,
+  serverName: 'SRVWUPNQ0986V',
+  procName: '',
+  precedingErrors: []
+}
+exports.fetchHistoricalOccupancy = async (location) =>
+exports.fetchHistoricalData({ location: location || null });
+
 exports.fetchHistoricalData = async ({ location = null }) => {
   const pool = await poolPromise;
 
@@ -157,3 +209,12 @@ exports.fetchHistoricalData = async ({ location = null }) => {
 
   return finalRows;
 };
+
+
+
+exports.fetchHistoricalOccupancy = async (location) =>
+  exports.fetchHistoricalData({ location: location || null });
+
+
+
+
