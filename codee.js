@@ -1,40 +1,52 @@
-async function fetchNewEvents(since) {
-  let pool;
-  try {
-    // IMPORTANT: use denver.getPool() (not denver.poolPromise)
-    pool = await denver.getPool();
-  } catch (err) {
-    console.error('❌ Failed to get Denver pool in fetchNewEvents():', err);
-    return [];
-  }
-  if (!pool) {
-    console.warn('⚠️ fetchNewEvents: no pool available, returning empty');
-    return [];
-  }
+const EventEmitter = require('events');
+const updates = new EventEmitter();
+let latestSnapshot = null;
+let denverBackgroundStarted = false;
 
-  const req = pool.request();
-  req.input('since', sql.DateTime2, since);
+function startDenverBackgroundWorker() {
+  if (denverBackgroundStarted) return;
+  denverBackgroundStarted = true;
 
-  const queryText = `...`; // paste the same long query you already have
+  (async () => {
+    console.log('[DENVER-BG] starting background poller');
+    let lastSeen = new Date(Date.now() - 60 * 1000); // small lookback to avoid gaps
+    const eventsBuffer = [];
+    let consecutiveErrors = 0;
 
-  const t0 = Date.now();
-  try {
-    const { recordset } = await safeQueryWithTimeout(req, queryText, 20_000); // 20s timeout
-    const took = Date.now() - t0;
-    console.log(`[DENVER] fetchNewEvents: got ${recordset ? recordset.length : 0} rows (took ${took}ms)`);
-    return recordset || [];
-  } catch (err) {
-    console.error('❌ fetchNewEvents query error — resetting Denver pool and returning empty:', err);
-    try {
-      // Close pool to free resources; next getDenverPool will reconnect
-      if (pool && typeof pool.close === 'function') {
-        try { await pool.close(); } catch (e) { /* ignore */ }
+    while (true) {
+      try {
+        const fresh = await fetchNewEvents(lastSeen);
+        if (fresh && fresh.length) {
+          const lastEvt = fresh[fresh.length - 1];
+          lastSeen = lastEvt && lastEvt.LocaleMessageTime ? new Date(lastEvt.LocaleMessageTime) : new Date();
+          eventsBuffer.push(...fresh);
+          // prune buffer to today's Denver date
+          const todayDenver = DateTime.now().setZone('America/Denver').toISODate();
+          for (let i = eventsBuffer.length - 1; i >= 0; i--) {
+            if (!eventsBuffer[i].Dateonly || eventsBuffer[i].Dateonly !== todayDenver) eventsBuffer.splice(i, 1);
+          }
+        }
+
+        // Build snapshot using your existing builder
+        const payload = buildOccupancyForToday(eventsBuffer, fresh || [], null);
+        latestSnapshot = payload;
+        updates.emit('update', payload);
+
+        consecutiveErrors = 0;
+      } catch (err) {
+        consecutiveErrors++;
+        console.error('[DENVER-BG] polling error:', err);
+        // Reset the pool so the next cycle will re-create it
+        try { denver.poolPromise = null; } catch (e) { /* ignore */ }
+        if (consecutiveErrors > 3) {
+          await new Promise(r => setTimeout(r, 5000));
+        }
       }
-    } catch (e) { /* ignore */ }
 
-    // set the exported promise to null so new callers will recreate
-    try { denver._forceReset = true; } catch (e) { /* ignore */ }
-
-    return [];
-  }
+      await new Promise(r => setTimeout(r, 1000)); // 1s cadence (tune if needed)
+    }
+  })().catch(err => {
+    console.error('[DENVER-BG] background worker crashed:', err);
+    denverBackgroundStarted = false;
+  });
 }
