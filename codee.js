@@ -1,214 +1,109 @@
-right knwo data is stukking,
-i want ot fetch data every seconds ok 
-rad below all filse carefullym and write correct 
-// client-denver/src/App.js
-// src/App.js
-import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
-import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-import OverlayTrigger from "react-bootstrap/OverlayTrigger";
-import Tooltip from "react-bootstrap/Tooltip";
-import './App.css';
+Server running at http://localhost:5000
+✅ MSSQL pool connected
+✅ Denver MSSQL pool connected
+[DENVER] SSE client disconnected, cleared timers
+❌ MSSQL global error: TimeoutError: operation timed out for an unknown reason
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+❌ MSSQL pool error: TimeoutError: operation timed out for an unknown reason
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
 
-// Lazy load pages
-const DashboardHome = lazy(() => import('./pages/DashboardHome'));
-const FloorDetailsPage = lazy(() => import('./pages/FloorDetailsPage'));
-const DenverInOutInconsistencyPage = lazy(() => import('./pages/DenverInOutInconsistency'));
+TimeoutError: operation timed out for an unknown reason
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
 
-export default function App() {
-  const [state, setState] = useState({
-    floorData: [],
-    personnelBreakdown: [],
-    totalVisitedToday: 0,
-    personnelSummary: { employees: 0, contractors: 0 },
-    visitedToday: { employees: 0, contractors: 0, total: 0 },
-    floorInOutSummary: [],
-    liveVisitedOccupants: [],
-    visitedOccupants: [],
-    inOutData: null,
-    loadingInOut: true,
-    inOutError: null,
-    snapshotMode: false,
-    snapshotTime: '',
-    snapshotDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' }),
-    snapshotLoading: false,
-    snapshotError: null,
-    snapshotData: null
+Node.js v22.17.0
+PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\config\db.js
+const sql    = require('mssql');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const config = {
+  server:   process.env.DB_SERVER,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  connectionTimeout: 30000,    // 30 s to establish
+  requestTimeout:    0,        // no timeout on individual queries
+  pool: {
+    max:                  100,
+    min:                   0,
+
+    // Use maximum 32-bit signed‐int (~24.8 days) so Node/tarn doesn't overflow
+    idleTimeoutMillis:    2147483647,
+    acquireTimeoutMillis: 2147483647
+  },
+  options: {
+    encrypt:               true,
+    trustServerCertificate: true
+  }
+};
+
+let poolPromise = null;
+
+async function getPool(attempts = 10) {
+  if (poolPromise) return poolPromise;
+
+  poolPromise = (async () => {
+    try {
+      const pool = await sql.connect(config);
+      console.log('✅ MSSQL pool connected');
+
+      // attach pool-level error listener so we can reset and attempt reconnects
+      pool.on('error', err => {
+        console.error('❌ MSSQL pool error:', err);
+        // Reset promise so next getPool() tries to reconnect
+        poolPromise = null;
+      });
+
+      return pool;
+    } catch (err) {
+      console.error('❌ MSSQL pool connection failed:', err);
+      poolPromise = null;
+      if (attempts > 0) {
+        console.log(`⏳ Retrying MSSQL connect (${attempts} left)…`);
+        await new Promise(res => setTimeout(res, 3000));
+        return getPool(attempts - 1);
+      }
+      throw err;
+    }
+  })();
+
+  // Global sql error: log but do not crash the process
+  sql.on('error', err => {
+    console.error('❌ MSSQL global error:', err);
+    // Consider resetting poolPromise only for fatal errors:
+    // poolPromise = null;
   });
 
-  // SSE for live occupancy
-  useEffect(() => {
-    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-
-    es.onmessage = e => {
-      try {
-        const p = JSON.parse(e.data);
-        setState(prev => ({
-          ...prev,
-          floorData: p.floorBreakdown || [],
-          personnelBreakdown: p.personnelBreakdown || [],
-          totalVisitedToday: p.totalVisitedToday || 0,
-          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-          floorInOutSummary: p.floorInOutSummary || [],
-          liveVisitedOccupants: p.visitedOccupants || [],
-          visitedOccupants: prev.snapshotMode ? prev.visitedOccupants : (p.visitedOccupants || [])
-        }));
-      } catch (err) {
-        console.error('SSE parse error:', err);
-      }
-    };
-
-    es.onerror = err => {
-      console.error('SSE error:', err);
-      es.close();
-    };
-
-    return () => es.close();
-  }, []);
-
-  // Fetch in/out inconsistency once
-  useEffect(() => {
-    fetch('http://localhost:5000/api/inout-inconsistency-denver')
-      .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status} - ${res.statusText}`))
-      .then(data => setState(prev => ({ ...prev, inOutData: data.floorInconsistency || [], loadingInOut: false })))
-      .catch(err => setState(prev => ({ ...prev, inOutError: err.toString(), loadingInOut: false })));
-  }, []);
-
-  // Snapshot handlers
-  const handleSnapshotTimeChange = e => setState(prev => ({ ...prev, snapshotTime: e.target.value, snapshotError: null }));
-  const handleSnapshotDateChange = e => setState(prev => ({ ...prev, snapshotDate: e.target.value, snapshotError: null }));
-
-  function getDenverNowIsoString() {
-    const fmt = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Denver',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    });
-    const parts = fmt.formatToParts(new Date());
-    const m = {};
-    parts.forEach(p => { if (p.type !== 'literal') m[p.type] = p.value; });
-    return `${m.year}-${m.month}-${m.day}T${m.hour}:${m.minute}:${m.second}`;
-  }
-
-  const applySnapshot = async () => {
-    const { snapshotTime, snapshotDate } = state;
-    if (!snapshotTime || !snapshotDate) {
-      setState(prev => ({ ...prev, snapshotError: 'Select date and time first.' }));
-      return;
-    }
-
-    const timeForApi = snapshotTime.length === 5 ? `${snapshotTime}:00` : snapshotTime;
-    const snapshotIso = `${snapshotDate}T${timeForApi}`;
-    const nowDenverIso = getDenverNowIsoString();
-
-    if (snapshotIso > nowDenverIso) {
-      const msg = 'Snapshot cannot be in the future.';
-      setState(prev => ({ ...prev, snapshotError: msg }));
-      return;
-    }
-
-    setState(prev => ({ ...prev, snapshotLoading: true, snapshotError: null }));
-    try {
-      const resp = await fetch(`http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`);
-      if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
-      const json = await resp.json();
-      setState(prev => ({
-        ...prev,
-        snapshotData: json,
-        visitedOccupants: json.visitedOccupants || [],
-        snapshotMode: true
-      }));
-    } catch (err) {
-      setState(prev => ({ ...prev, snapshotError: err.message || 'Failed to fetch snapshot', snapshotData: null, snapshotMode: false }));
-    } finally {
-      setState(prev => ({ ...prev, snapshotLoading: false }));
-    }
-  };
-
-  const clearSnapshot = () => {
-    setState(prev => ({
-      ...prev,
-      snapshotMode: false,
-      snapshotData: null,
-      snapshotTime: '',
-      snapshotError: null,
-      snapshotLoading: false,
-      visitedOccupants: prev.liveVisitedOccupants
-    }));
-  };
-
-  // Memoized active data
-  const activeFloorData = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.floorBreakdown || [] : state.floorData, [state.snapshotMode, state.snapshotData, state.floorData]);
-  const activePersonnelBreakdown = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.personnelBreakdown || [] : state.personnelBreakdown, [state.snapshotMode, state.snapshotData, state.personnelBreakdown]);
-  const activeVisitedOccupants = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.visitedOccupants || [] : state.visitedOccupants, [state.snapshotMode, state.snapshotData, state.visitedOccupants]);
-  const activeTotalVisitedToday = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.totalVisitedToday || 0 : state.totalVisitedToday, [state.snapshotMode, state.snapshotData, state.totalVisitedToday]);
-  const activePersonnelSummary = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.personnelSummary || { employees: 0, contractors: 0 } : state.personnelSummary, [state.snapshotMode, state.snapshotData, state.personnelSummary]);
-  const activeVisitedToday = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 } : state.visitedToday, [state.snapshotMode, state.snapshotData, state.visitedToday]);
-  const activeFloorInOutSummary = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.floorInOutSummary || [] : state.floorInOutSummary, [state.snapshotMode, state.snapshotData, state.floorInOutSummary]);
-
-  let snapshotLabel = null;
-  if (state.snapshotMode && state.snapshotData) {
-    const asOfLocal = state.snapshotData.asOfLocal || state.snapshotData.asOf || state.snapshotData.asOfUTC;
-    const formatted = asOfLocal ? new Date(asOfLocal).toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${state.snapshotDate} ${state.snapshotTime}`;
-    snapshotLabel = <div style={{ background: '#363d37', color: '#FFF', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid rgb(11,248,3)', marginBottom: 8 }}> Snapshot: {formatted} (Denver) </div>;
-  }
-
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
-          <Navbar.Brand as={Link} to="/" className="wu-brand">Live Occupancy — Western Union Denver</Navbar.Brand>
-          <Nav className="ms-auto align-items-center">
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-dashboard">Dashboard</Tooltip>}>
-              <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
-            </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-history">History</Tooltip>}>
-              <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
-            </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-details">Details</Tooltip>}>
-              <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
-            </OverlayTrigger>
-            <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
-              <InputGroup>
-                <Form.Control type="date" value={state.snapshotDate} onChange={handleSnapshotDateChange} style={{ maxWidth: 150 }} />
-                <Form.Control type="time" step="1" value={state.snapshotTime} onChange={handleSnapshotTimeChange} style={{ maxWidth: 120 }} />
-                <Button variant="outline-light" onClick={applySnapshot} disabled={state.snapshotLoading}>{state.snapshotLoading ? 'Loading…' : 'Apply'}</Button>
-                <Button variant="outline-secondary" onClick={clearSnapshot} className="ms-1">Clear</Button>
-              </InputGroup>
-            </Form>
-            <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun color="#FFC72C" /></Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Container fluid className="mt-4">
-          {snapshotLabel}
-          {state.snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{state.snapshotError}</span>}
-
-          <Suspense fallback={<div>Loading dashboard...</div>}>
-            <Routes>
-              <Route path="/" element={
-                <DashboardHome
-                  personnelSummary={activePersonnelSummary}
-                  totalVisitedToday={activeTotalVisitedToday}
-                  visitedToday={activeVisitedToday}
-                  visitedOccupants={activeVisitedOccupants}
-                  floorData={activeFloorData}
-                  personnelBreakdown={activePersonnelBreakdown}
-                  floorInOutSummary={activeFloorInOutSummary}
-                  rejectionSnapshot={state.snapshotMode && state.snapshotData ? state.snapshotData.rejections || state.snapshotData.rejectionAllDetailsToday || [] : null}
-                />
-              } />
-              <Route path="/floor-details" element={<FloorDetailsPage floorData={activeFloorData} floorInOutSummary={activeFloorInOutSummary} visitedOccupants={activeVisitedOccupants} />} />
-              <Route path="/inout-inconsistency-denver" element={<DenverInOutInconsistencyPage data={state.inOutData} loading={state.loadingInOut} error={state.inOutError} />} />
-            </Routes>
-          </Suspense> {/* <-- Fixed: Suspense properly closed */}
-        </Container>
-      </div>
-    </BrowserRouter>
-  );
+  return poolPromise;
 }
+
+// Keep‐alive ping every 5 minutes
+setInterval(async () => {
+  try {
+    const pool = await getPool();
+    await pool.request().query('SELECT 1');
+    // console.log('🔄 MSSQL keep‐alive succeeded');
+  } catch (err) {
+    console.error('⚠️ MSSQL keep‐alive ping failed:', err);
+    // poolPromise stays intact so we keep using the same pool
+  }
+}, 5 * 60 * 1000);
+
+module.exports = { sql, getPool };
 
 
 // config/siteConfig.js
@@ -291,11 +186,16 @@ setInterval(async () => {
   try {
     const pool = await getDenverPool();
     if (pool) {
-      await pool.request().query('SELECT 1');
-      // console.log('🔄 Denver keep-alive succeeded');
+      try {
+        await pool.request().query('SELECT 1'); // keepalive
+        // console.log('🔄 Denver keep-alive succeeded');
+      } catch (err) {
+        console.warn('⚠️ Denver keep-alive query failed, resetting poolPromise:', err);
+        denverPoolPromise = null;
+      }
     }
   } catch (err) {
-    console.error('⚠️ Denver keep-alive failed, resetting poolPromise:', err);
+    console.error('⚠️ Denver keep-alive failed to get pool:', err);
     denverPoolPromise = null;
   }
 }, 5 * 60 * 1000);
@@ -313,8 +213,8 @@ module.exports = {
   }
 };
 
-
------------------------------
+=========================================
+  
 // controllers/denverLiveOccupancyController.js
 
 const { DateTime }       = require('luxon');
@@ -349,6 +249,7 @@ function stripTimeSuffix(doorRaw) {
   return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
 }
 
+
 function isSameDenverDate(dateOnly, referenceDt = null) {
   if (!dateOnly) return false;
   const swipeDate = DateTime.fromISO(dateOnly, { zone: 'America/Denver' }).toFormat('yyyy-LL-dd');
@@ -368,60 +269,67 @@ async function fetchNewEvents(since) {
   }
   if (!pool) return [];
 
-  const req = pool.request();
-  req.input('since', sql.DateTime2, since);
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
+  try {
+    const req = pool.request();
+    req.input('since', sql.DateTime2, since);
+    // If a pool is present but the underlying connections are unhealthy,
+    // this query can still throw (tarn acquire timeout). Catch that below.
+    const { recordset } = await req.query(`
+      WITH CombinedQuery AS (
+        SELECT
+          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+          t1.ObjectName1,
+          CASE
+            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+            ELSE CAST(t2.Int1 AS NVARCHAR)
+          END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
+            sc.value
+          ) AS CardNumber,
+          t5a.value AS AdmitCode,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+        LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
+          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
+          ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType   = 'CardAdmitted'
+          AND t1.ObjectName2 LIKE '%HQ%'
+          AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >= @since
+      )
       SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]' ,'varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-      LEFT JOIN ACVSCore.Access.Personnel     t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType   = 'CardAdmitted'
-        AND t1.ObjectName2 LIKE '%HQ%'
-        AND DATEADD(MINUTE,-1* t1.MessageLocaleOffset, t1.MessageUTC) >=@since
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
-      CardNumber, AdmitCode, Direction, Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
+        LocaleMessageTime,
+        CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+        CONVERT(VARCHAR(8),  LocaleMessageTime, 108) AS Swipe_Time,
+        EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+        CardNumber, AdmitCode, Direction, Door
+      FROM CombinedQuery
+      ORDER BY LocaleMessageTime ASC;
+    `);
+    return recordset || [];
+  } catch (err) {
+    console.error('❌ fetchNewEvents query error — resetting Denver poolPromise:', err);
+    // Reset pool so next attempt will re-establish
+    try { denver.poolPromise = null; } catch (e) { /* ignore */ }
+    return [];
+  }
 }
 
-// fetch events in 24h window ending at `until`
+// --- safer fetchEventsWindowUntil ---
 async function fetchEventsWindowUntil(until) {
   let pool;
   try {
@@ -432,49 +340,54 @@ async function fetchEventsWindowUntil(until) {
   }
   if (!pool) return [];
 
-  const req = pool.request();
-  req.input('until', sql.DateTime2, until);
+  try {
+    const req = pool.request();
+    req.input('until', sql.DateTime2, until);
 
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
+    const { recordset } = await req.query(`
+      WITH CombinedQuery AS (
+        SELECT
+          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+          t1.ObjectName1,
+          CASE WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          COALESCE(TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'), sc.value) AS CardNumber,
+          t5a.value AS AdmitCode,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door
+        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
+        LEFT JOIN ACVSCore.Access.Personnel t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
+        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
+        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType = 'CardAdmitted'
+          AND t1.ObjectName2 LIKE '%HQ%'
+          AND DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) <= @until
+          AND DATEADD(HOUR, -24, @until) < DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC)
+      )
       SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'), sc.value) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-      LEFT JOIN ACVSCore.Access.Personnel t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.ObjectName2 LIKE '%HQ%'
-        AND DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) <= @until
-        AND DATEADD(HOUR, -24, @until) < DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC)
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID, PersonGUID, ObjectName1, PersonnelType,
-      CardNumber, AdmitCode, Direction, Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
+        LocaleMessageTime,
+        CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+        CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+        EmployeeID, PersonGUID, ObjectName1, PersonnelType,
+        CardNumber, AdmitCode, Direction, Door
+      FROM CombinedQuery
+      ORDER BY LocaleMessageTime ASC;
+    `);
+    return recordset || [];
+  } catch (err) {
+    console.error('❌ fetchEventsWindowUntil query error — resetting Denver poolPromise:', err);
+    try { denver.poolPromise = null; } catch (e) { /* ignore */ }
+    return [];
+  }
 }
 
 // --- ONLY endpoint: Snapshot endpoint for Denver with date + time ---
@@ -532,6 +445,10 @@ exports.getDenverSnapshotAtDateTime = async (req, res) => {
   }
 };
 
+
+// --------------------------
+// helper: computeVisitedToday using optional reference date
+// Counts any swipe (In or Out) on the same Denver date and up to referenceDt (if provided).
 function computeVisitedToday(allEvents, referenceDt = null) {
   const seen = new Map(); // key -> PersonnelType
 
@@ -794,11 +711,6 @@ const visitedOccupants = relevantEvents
   };
 }
 
-
-
-
-
-
 // Live SSE endpoint with heartbeat + non-overlap + logging
 exports.getDenverLiveOccupancy = async (req, res) => {
   try {
@@ -908,15 +820,548 @@ exports.getDenverLiveOccupancy = async (req, res) => {
     }
   };
 
-  // run initial push, then interval
   await push();
-  const timer = setInterval(push, 2000); // 2s interval and non-overlap guarded
-
+  const timer = setInterval(push, 1000); // 1s interval (user requested)
+  
   req.on('close', () => {
     clearInterval(timer);
     clearInterval(heartbeat);
     console.log('[DENVER] SSE client disconnected, cleared timers');
   });
 };
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
+const { DateTime }   = require('luxon');
+// const { poolConnect, pool, sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
+
+const doorZoneMap    = require('../data/doorZoneMap');
+const zoneFloorMap   = require('../data/zoneFloorMap');
+
+const ertMembers = require('../data/puneErtMembers.json');
+
+// track which door→zone keys we've already warned on
+const warnedKeys = new Set();
+
+//update
+function getTodayString() {
+  return DateTime.now()
+    .setZone('Asia/Kolkata')
+    .toFormat('yyyy-LL-dd');
+}
+
+function normalizeZoneKey(rawDoor, rawDir) {
+  // 1) Ensure it’s a string and trim whitespace
+  let door = String(rawDoor || '').trim();
+
+  // 2) Strip any "_HH:MM:SS" or "_XX:XX:XX" suffix (hex codes or times at end)
+  door = door.replace(/_[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
+
+  // 3) Collapse multiple spaces into one, then uppercase
+  door = door.replace(/\s+/g, ' ').toUpperCase();
+
+  // 4) Pick the direction token exactly as doorZoneMap expects
+  const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
+
+  return `${door}___${dir}`;
+}
+
+/** Normalize "Last, First" or "First Last" → lowercase "first last" */
+function normalizePersonName(raw) {
+  let n = String(raw || '').trim();
+  if (n.includes(',')) {
+    const [last, rest] = n.split(',', 2);
+    n = `${rest.trim()} ${last.trim()}`;
+  }
+  return n.toLowerCase();
+}
+// --- new mapDoorToZone ---
+function mapDoorToZone(rawDoor, rawDir) {
+  const key = normalizeZoneKey(rawDoor, rawDir);
+  const zone = doorZoneMap[key];
+
+  if (!zone) {
+    if (!warnedKeys.has(key)) {
+      console.warn('⛔ Unmapped door–direction key:', key);
+      warnedKeys.add(key);
+    }
+    return 'Unknown Zone';
+  }
+
+  // IMPORTANT: return the zone exactly as defined in doorZoneMap
+  return zone;
+}
 
 
+async function fetchNewEvents(since) {
+  // await the shared pool promise instead of poolConnect
+  const pool = await getPool();
+  const req  = pool.request();
+  req.input('since', sql.DateTime2, since);
+
+// console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
+       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+       
+        t1.ObjectName1,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END AS EmployeeID,
+        t1.ObjectIdentity1 AS PersonGUID,
+        t3.Name AS PersonnelType,
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        ) AS CardNumber,
+        t5a.value AS AdmitCode,
+        t5d.value AS Direction,
+        t1.ObjectName2 AS Door
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) sc ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType     = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) >@since
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      PersonnelType,
+      CardNumber,
+      AdmitCode,
+      Direction,
+      Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
+
+  // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
+    // recordset.map(r => r.LocaleMessageTime.toISOString()));
+
+  return recordset;
+}
+
+async function buildOccupancy(allEvents) {
+  const current      = {};
+  const uniquePeople = new Map();
+// --- simplified per-event loop inside buildOccupancy ---
+for (const evt of allEvents) {
+  const {
+    EmployeeID, PersonGUID,
+    ObjectName1, PersonnelType,
+    CardNumber, Dateonly,
+    Swipe_Time, Direction, Door
+  } = evt;
+
+  const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
+  const zoneRaw  = mapDoorToZone(Door, Direction);
+
+  // 1) If we can’t map door+direction to a valid zone, skip this event entirely.
+  if (zoneRaw === 'Unknown Zone') {
+    continue;
+  }
+
+  const zoneLower = zoneRaw.toLowerCase();
+
+  // OutDirection: eviction only for the real "Out of office"
+  if (Direction === 'OutDirection') {
+    if (zoneLower === 'out of office') {
+      uniquePeople.delete(dedupKey);
+      delete current[dedupKey];
+    } else {
+      // Keep them in headcount, update last-seen
+      uniquePeople.set(dedupKey, PersonnelType);
+      current[dedupKey] = {
+        Dateonly, Swipe_Time,
+        EmployeeID, ObjectName1, CardNumber,
+        PersonnelType,
+        zone: zoneRaw,
+        door: Door,
+        Direction
+      };
+    }
+    continue;
+  }
+
+  // InDirection → normal check-in
+  if (Direction === 'InDirection') {
+    uniquePeople.set(dedupKey, PersonnelType);
+    current[dedupKey] = {
+      Dateonly, Swipe_Time,
+      EmployeeID, ObjectName1, CardNumber,
+      PersonnelType,
+      zone: zoneRaw,
+      door: Door,
+      Direction
+    };
+    continue;
+  }
+  // Catch-all eviction
+  uniquePeople.delete(dedupKey);
+  delete current[dedupKey];
+}
+
+// live headcounts (only from uniquePeople, which has already evicted all true out-of-office)
+  let employeeCount   = 0;
+  let contractorCount = 0;
+  for (const pt of uniquePeople.values()) {
+    if (['Employee','Terminated Personnel'].includes(pt)) employeeCount++;
+    else contractorCount++;
+  }
+
+  // Build zone→people map, but filter out any out-of-office at this final step too
+  const zoneMap = {};
+  for (const emp of Object.values(current)) {
+    const zKey = emp.zone.toLowerCase();
+    if (zKey === 'out of office') continue;
+    zoneMap[emp.zone] = zoneMap[emp.zone] || [];
+    zoneMap[emp.zone].push(emp);
+  }
+
+  // zoneDetails
+  const zoneDetails = Object.fromEntries(
+    Object.entries(zoneMap).map(([zone, emps]) => {
+      const byType = emps.reduce((acc, e) => {
+        acc[e.PersonnelType] = (acc[e.PersonnelType]||0) + 1;
+        return acc;
+      }, {});
+      return [ zone, { total: emps.length, byPersonnelType: byType, employees: emps } ];
+    })
+  );
+
+  // floorBreakdown
+  const floorMap = {};
+  for (const [zone, data] of Object.entries(zoneDetails)) {
+    const floor = zoneFloorMap[zone] || 'Unknown Floor';
+    floorMap[floor] = floorMap[floor] || { total: 0, byPersonnelType: {} };
+    floorMap[floor].total += data.total;
+    for (const [pt, c] of Object.entries(data.byPersonnelType)) {
+      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt]||0) + c;
+    }
+  }
+
+
+  const ertStatus = Object.fromEntries(
+    Object.entries(ertMembers).map(([role, members]) => {
+      const list = members.map(m => {
+        // pick the correct name field (JSON uses "Name")
+        const rawName = m.name || m.Name;
+        const expected = normalizePersonName(rawName);
+
+        // find a matching swipe in current[]
+        const matchEvt = Object.values(current).find(e => {
+          return normalizePersonName(e.ObjectName1) === expected;
+        });
+        return {
+          ...m,
+          present: !!matchEvt,
+          zone:    matchEvt ? matchEvt.zone : null
+        };
+     });
+      return [ role, list ];
+    })
+  );
+
+  return {
+    asOf:             new Date().toISOString(),
+    summary:          Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
+    zoneBreakdown:    Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
+    floorBreakdown:   Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
+    details:          zoneMap,
+    personnelSummary: { employees: employeeCount, contractors: contractorCount },
+     ertStatus,
+  
+  personnelBreakdown: (() => {
+    const map = new Map();
+    // uniquePeople: Map<dedupKey, PersonnelType>
+    for (const pt of uniquePeople.values()) {
+      map.set(pt, (map.get(pt) || 0) + 1);
+    }
+    return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
+  })(),
+  };
+}
+function buildVisitedToday(allEvents, asOf) {
+  // Determine "today" in Asia/Kolkata:
+  let today;
+  if (asOf) {
+    // Accept Luxon DateTime, JS Date, or plain yyyy-MM-dd string
+    if (typeof asOf === 'string') {
+      today = asOf; // assume already 'yyyy-LL-dd'
+    } else if (asOf instanceof Date) {
+      today = DateTime.fromJSDate(asOf, { zone: 'Asia/Kolkata' }).toFormat('yyyy-LL-dd');
+    } else if (asOf && typeof asOf.toFormat === 'function') {
+      // assume Luxon DateTime
+      today = asOf.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    } else {
+      // fallback to now
+      today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    }
+  } else {
+    // default behaviour: "today" is now in Kolkata
+    today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  }
+
+  // Use evt.Dateonly (already “yyyy-MM-dd” in local zone) to pick out today's InDirection swipes
+  const todayIns = allEvents.filter(evt => {
+    return (
+      evt.Direction === 'InDirection' &&
+      evt.Dateonly === today
+    );
+  });
+
+  // Dedupe by PersonGUID → keep the latest swipe
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID; // same as original logic
+    const prev = dedup.get(key);
+    // Compare LocaleMessageTime lexicographically is fine for ISO strings; keep original behavior
+    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) {
+      dedup.set(key, e);
+    }
+  }
+
+  const finalList = Array.from(dedup.values());
+
+  // Separate employees vs contractors (preserve original classification list)
+  const employees = finalList.filter(e =>
+    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
+      .includes(e.PersonnelType)
+  ).length;
+  const contractors = finalList.length - employees;
+
+  return { employees, contractors, total: finalList.length };
+}
+
+
+
+/** Server‐Sent‐Events endpoint */
+exports.getLiveOccupancy = async (req, res) => {
+  try {
+    // wait for the shared pool to be ready
+    await getPool();
+
+    res.writeHead(200, {
+      'Content-Type':  'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection':    'keep-alive'
+    });
+    res.write('\n');
+
+    // pull last 24h on startup
+    // let lastSeen = new Date(Date.now() - 24*60*60*1000);
+    let lastSeen = new Date();
+    const events = [];
+
+    const push = async () => {
+
+
+
+
+    // Option B: Recompute date from the JS timestamp in Asia/Kolkata:
+    const todayKolkata = DateTime.now().setZone('Asia/Kolkata').toISODate();
+    for (let i = events.length - 1; i >= 0; i--) {
+      const ts = DateTime.fromJSDate(events[i].LocaleMessageTime, { zone: 'utc' })
+                     .setZone('Asia/Kolkata')
+                     .toISODate();
+      if (ts !== todayKolkata) {
+        events.splice(i, 1);
+      }
+    }
+
+
+//  console.log('🔄 [PUSH] Running at:', new Date().toISOString());
+  // console.log('🔍 Last seen swipe time:', lastSeen);
+
+
+      const fresh = await fetchNewEvents(lastSeen);
+
+      //  console.log('📥 New events fetched:', fresh.length);
+
+      if (fresh.length) {
+        // lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
+         lastSeen = new Date();
+        events.push(...fresh);
+      }
+      // build occupancy + today counts
+      const occupancy  = await buildOccupancy(events);
+      const todayStats = buildVisitedToday(events);
+
+      occupancy.totalVisitedToday = todayStats.total;
+      occupancy.visitedToday      = {
+        employees:   todayStats.employees,
+        contractors: todayStats.contractors,
+        total:       todayStats.total
+      };
+      const sid = Date.now();
+      res.write(`id: ${sid}\n`);
+      res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
+
+    
+      if (typeof res.flush === 'function') {
+        res.flush();
+      }
+
+     };
+    await push();
+    const timer = setInterval(push, 2000);
+    req.on('close', () => clearInterval(timer));
+
+  } catch (err) {
+    console.error('Live occupancy SSE error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+};
+
+
+
+// GET /api/occupancy-at-time-pune?date=YYYY-MM-DD&time=HH:MM[:SS]
+exports.getPuneSnapshotAtDateTime = async (req, res) => {
+  try {
+    const { date, time } = req.query;
+    if (!date || !time) {
+      return res.status(400).json({
+        error: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]'
+      });
+    }
+
+    // Validate date
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!dateMatch) {
+      return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
+    }
+
+    // Validate time
+    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
+    if (!timeMatch) {
+      return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+    }
+
+    const year   = Number(dateMatch[1]);
+    const month  = Number(dateMatch[2]);
+    const day    = Number(dateMatch[3]);
+    const hour   = Number(timeMatch[1]);
+    const minute = Number(timeMatch[2]);
+    const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
+
+    // Build Pune-local datetime
+    const atDt = DateTime.fromObject(
+      { year, month, day, hour, minute, second, millisecond: 0 },
+      { zone: 'Asia/Kolkata' }
+    );
+
+    if (!atDt.isValid) {
+      return res.status(400).json({ error: 'invalid date+time combination' });
+    }
+
+    // Convert to UTC for SQL boundary
+    const untilUtc = atDt.setZone('utc').toJSDate();
+
+    // -----------------
+    // Step 1: fetch events in 24h window ending at atDt
+    const pool = await getPool();
+    const reqDb = pool.request();
+    reqDb.input('until', sql.DateTime2, untilUtc);
+
+    const { recordset } = await reqDb.query(`
+      WITH CombinedQuery AS (
+        SELECT
+          t1.MessageUTC,   -- always UTC
+          t1.ObjectName1,
+          CASE
+            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+            ELSE CAST(t2.Int1 AS NVARCHAR)
+          END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+            sc.value
+          ) AS CardNumber,
+          t5a.value AS AdmitCode,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType     = 'CardAdmitted'
+          AND t1.PartitionName2 = 'APAC.Default'
+          AND t1.MessageUTC <= @until
+          AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
+      )
+      SELECT *
+      FROM CombinedQuery
+      ORDER BY MessageUTC ASC;
+    `);
+
+    // -----------------
+    // Step 2: convert UTC → Asia/Kolkata
+    const events = recordset.map(e => {
+      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' })
+                            .setZone('Asia/Kolkata');
+      return {
+        ...e,
+        LocaleMessageTime: local.toISO(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
+      };
+    });
+
+    // -----------------
+    // Step 3: filter only same Pune date
+    const targetDate = atDt.toFormat('yyyy-LL-dd');
+    const filtered = events.filter(e => e.Dateonly === targetDate);
+
+    // Step 4: build occupancy snapshot
+    const occupancy = await buildOccupancy(filtered);
+    const visitedStats = buildVisitedToday(filtered, atDt);  // this add new code as per function buildVisitedToday change 📝 📝
+
+    // ---- Output timestamps ----
+    occupancy.asOfLocal = atDt.toISO(); // Pune-local with offset
+    occupancy.asOfUTC   = `${date}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}Z`;
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = visitedStats;
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('getPuneSnapshotAtDateTime error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
