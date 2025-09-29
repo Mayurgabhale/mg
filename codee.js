@@ -1,410 +1,429 @@
-[eslint]
-src\App.js
-  Line 431:3:  'useMemo' is defined but never used  no-unused-vars
+we are join two database, 
+in this this api taking too much time to load
+how to improve this time, 
+i want to load api within 2 to 5 seconds ok 
+check below code and how to imprve the performance of api 
+http://localhost:3007/api/occupancy/history
 
-Search for the keywords to learn more about each warning.
-To ignore, add // eslint-disable-next-line to the line before.
+exports.fetchHistoricalOccupancy = async (location) =>
+  exports.fetchHistoricalData({ location: location || null });
 
-WARNING in [eslint]
-src\App.js
-  Line 431:3:  'useMemo' is defined but never used  no-unused-vars
+exports.fetchHistoricalData = async ({ location = null }) => {
+  const pool = await poolPromise;
 
-webpack compiled with 1 warning
-(node:5088) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
-Proxy error: Could not proxy request /main.4611da5e02db2d72ba54.hot-update.json from 10.199.22.57:3011 to http://localhost:5000/.
-See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ETIMEDOUT).
+  // 1. Get all ACVSUJournal_* database names dynamically
+  const dbResult = await pool.request().query(`
+    SELECT name 
+    FROM sys.databases
+    WHERE name LIKE 'ACVSUJournal[_]%'
+    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
+  `);
+
+  // Map DBs and pick last 2 only
+  const databases = dbResult.recordset.map(r => r.name);
+  const selectedDbs = databases.slice(-2); // newest and previous
+
+  if (selectedDbs.length === 0) {
+    throw new Error("No ACVSUJournal_* databases found.");
+  }
+
+  // 2. Outer filter
+  const outerFilter = location
+    ? `WHERE PartitionNameFriendly = @location`
+    : `WHERE PartitionNameFriendly IN (${quoteList([
+        'Pune','Quezon City','JP.Tokyo','MY.Kuala Lumpur','Taguig City','IN.HYD'
+      ])})`;
+
+  // 3. Build UNION ALL query across selected DBs only
+  const unionQueries = selectedDbs.map(db => `
+    SELECT
+      DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+      t1.ObjectName1,
+      t1.ObjectName2               AS Door,
+      CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+      t3.Name                      AS PersonnelType,
+      t1.ObjectIdentity1           AS PersonGUID,
+     t2.Text4                   AS CompanyName,   -- ✅ company
+     t2.Text5                   AS PrimaryLocation, -- ✅ location
+      COALESCE(
+        CASE
+          WHEN t1.ObjectName2 LIKE 'APAC_PI%'   THEN 'Taguig City'
+          WHEN t1.ObjectName2 LIKE 'APAC_PH%'   THEN 'Quezon City'
+          WHEN t1.ObjectName2 LIKE '%PUN%'      THEN 'Pune'
+          WHEN t1.ObjectName2 LIKE 'APAC_JPN%'  THEN 'JP.Tokyo'
+          WHEN t1.ObjectName2 LIKE 'APAC_MY%'   THEN 'MY.Kuala Lumpur'
+          WHEN t1.ObjectName2 LIKE 'APAC_HYD%'   THEN 'IN.HYD'
+          ELSE t1.PartitionName2
+        END,
+        'APAC.Default'
+      ) AS PartitionNameFriendly,
 
 
+      
+      COALESCE(
+        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+        sc.value
+      ) AS CardNumber,
+      t5d.value AS Direction
+    FROM ${db}.dbo.ACVSUJournalLog t1
+    JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
+    JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
+
+    LEFT JOIN ${db}.dbo.ACVSUJournalLogxmlShred t5d
+      ON t1.XmlGUID = t5d.GUID 
+      AND t5d.Value IN ('InDirection','OutDirection')
+
+    LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
+      ON t1.XmlGUID = t_xml.GUID
+
+    LEFT JOIN (
+      SELECT GUID, value
+      FROM ${db}.dbo.ACVSUJournalLogxmlShred
+      WHERE Name IN ('Card','CHUID')
+    ) AS sc
+      ON t1.XmlGUID = sc.GUID
+    WHERE t1.MessageType = 'CardAdmitted'
+  `).join('\nUNION ALL\n');
+
+  // 4. Final query
+  const query = `
+    WITH Hist AS (
+      ${unionQueries}
+    )
+    SELECT *
+    FROM Hist
+    ${outerFilter}
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const req = pool.request();
+  if (location) {
+    req.input('location', sql.NVarChar, location);
+  }
+  const result = await req.query(query);
+  return result.recordset;
+};
+
+// keep this for occupancy
+exports.fetchHistoricalOccupancy = async (location) =>
+  exports.fetchHistoricalData({ location: location || null });
+
+------------------------------------
+  
 
 
+//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\controllers\occupancy.controller.js
+
+const service = require('../services/occupancy.service');
+
+const {
+  doorMap,
+  normalizedDoorZoneMap,
+  doorZoneMap,
+  zoneFloorMap,
+  normalizeDoorName
+} = require('../utils/doorMap');
 
 
-
-// src/App.js
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  lazy,
-  Suspense,
-  useMemo
-} from 'react';
-import {
-  Container,
-  Navbar,
-  Nav,
-  Button,
-  InputGroup,
-  FormControl,
-  Spinner
-} from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-
-import './App.css';
-
-// ✅ Lazy load pages (faster initial load)
-const DashboardHome = lazy(() => import('./pages/DashboardHome'));
-const ErtPage = lazy(() => import('./pages/ErtPage'));
-const ZoneDetailsTable = lazy(() => import('./components/ZoneDetailsTable'));
-
-// -----------------------------
-// TimeTravelControl
-// -----------------------------
-function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
-  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
-
-  useEffect(() => {
-    if (currentTimestamp) setLocal(isoToInput(currentTimestamp));
-    else setLocal('');
-  }, [currentTimestamp]);
-
-  const handleApply = useCallback(() => {
-    if (!local) return;
-
-    const selected = new Date(local);
-    const now = new Date();
-
-    if (selected > now) {
-      window.alert("Please select a relevant time — snapshot cannot be in the future");
-      return;
-    }
-
-    const [datePart, timePart] = local.split('T');
-    onApply(datePart, timePart);
-  }, [local, onApply]);
-
-  const handleLive = useCallback(() => {
-    setLocal('');
-    onLive();
-  }, [onLive]);
-
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
-      <InputGroup>
-        <FormControl
-          type="datetime-local"
-          value={local}
-          onChange={(e) => setLocal(e.target.value)}
-          placeholder="Select date & time"
-        />
-      </InputGroup>
-
-      <div style={{ display: 'flex', gap: 6 }}>
-        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
-          {loading ? <><Spinner animation="border" size="sm" />&nbsp;Applying</> : 'Apply'}
-        </Button>
-        <Button variant="warning" onClick={handleLive} disabled={loading}>
-          Live
-        </Button>
-      </div>
-    </div>
-  );
+function isEmployeeType(pt) {
+  return ['Employee', 'Terminated Employee', 'Terminated Personnel'].includes(pt);
 }
 
-function pad(n) { return String(n).padStart(2, '0'); }
-function isoToInput(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+function lookupFloor(partition, rawDoor, direction, unmapped) {
+  const norm = normalizeDoorName(rawDoor);
+  const key = `${norm}___${direction}`;
+
+  // 1) Try normalized lookup
+  const zone = normalizedDoorZoneMap[key];
+  if (zone) {
+    const f = zoneFloorMap[zone];
+    // if zone has a known floor -> return it
+    if (f) return f;
+    // zone exists but has no floor (e.g. "Out of office") -> treat as known but Unknown floor
+    // return immediately to avoid falling back to per-partition doorMap and marking as unmapped
+    return 'Unknown';
+  }
+
+
+
+
+  // 2) Fallback to per-partition doorMap
+  const entry = doorMap.find(d =>
+    d.normalizedDoor === norm && d.partition === partition
+  );
+  if (entry) {
+    const fl = direction === 'InDirection'
+      ? entry.inDirectionFloor
+      : entry.outDirectionFloor;
+    if (fl) return fl;
+  }
+
+  // 3) Nothing matched → record & return Unknown
+  unmapped.add(`${partition}|${rawDoor}`);
+  return 'Unknown';
 }
 
-// -----------------------------
-// ZoneDetailsPage (memoized)
-// -----------------------------
-const ZoneDetailsPage = React.memo(function ZoneDetailsPage({ detailsData }) {
-  const [searchTerm, setSearchTerm] = useState('');
 
-  return (
-    <>
-      <div
-        className="d-flex justify-content-between align-items-center mb-2"
-        style={{ flexWrap: 'wrap', gap: '0.5rem' }}
-      >
-        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
-        <input
-          type="text"
-          placeholder="Search employee..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            flexGrow: 1,
-            maxWidth: 300,
-            padding: '0.4rem 0.8rem',
-            fontSize: '1rem',
-            borderRadius: 4,
-            border: '1px solid #ccc'
-          }}
-        />
-      </div>
-      <Suspense fallback={<div>Loading details…</div>}>
-        <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
-      </Suspense>
-    </>
-  );
-});
 
-// -----------------------------
-// Main App
-// -----------------------------
-function App() {
-  const esRef = useRef(null);
-  const sseBufferRef = useRef(null);
-  const sseFlushScheduledRef = useRef(false);
+function mapDoorToZone(rawDoor, rawDir) {
+  const key = normalizeDoorName(rawDoor) + '___' + (rawDir === 'InDirection' ? 'InDirection' : 'OutDirection');
+  const zone = normalizedDoorZoneMap[key];
+  if (!zone) return 'Unknown Zone';
+  // for OutDirection that aren’t true “Out of office”, strip trailing “ Zone”
+  if (rawDir === 'OutDirection' && zone !== 'Out of office') {
+    return zone.replace(/\s+Zone$/i, '');
+  }
+  return zone;
+}
 
-  const location = useLocation();
-  const headerText = location.pathname === '/ert'
-    ? 'Emergency Response Team — Western Union Pune'
-    : 'Live Occupancy — Western Union Pune';
 
-  // ---------- CONFIG: API base URL ----------
-  const API_BASE = (process.env.REACT_APP_API_BASE_URL)
-    || (process.env.NODE_ENV === 'development' ? 'http://10.199.22.57:3010' : window.location.origin);
-  const API_ORIGIN = API_BASE.replace(/\/$/, '');
-  // ------------------------------------------
 
-  const [liveData, setLiveData] = useState({
-    summary: [],
-    details: {},
-    floorBreakdown: [],
-    zoneBreakdown: [],
-    personnelBreakdown: [],
-    totalVisitedToday: 0,
-    personnelSummary: { employees: 0, contractors: 0 },
-    visitedToday: { employees: 0, contractors: 0, total: 0 },
-    ertStatus: {}
-  });
+exports.getLiveOccupancy = async (req, res) => {
+  try {
+    const data = await service.fetchLiveOccupancy();
+    res.json({ success: true, count: data.length, data });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: 'Live fetch failed' });
+  }
+};
 
-  const [timeTravelMode, setTimeTravelMode] = useState(false);
-  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
-  const [timeTravelLoading, setTimeTravelLoading] = useState(false);
+exports.getLiveSummary = async (req, res) => {
+  try {
+    const swipes = await service.fetchLiveOccupancy();
 
-  // SSE with throttling
-  useEffect(() => {
-    if (timeTravelMode) {
-      if (esRef.current) esRef.current.close();
-      esRef.current = null;
-      return;
-    }
-
-    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
-    const es = new EventSource(esUrl);
-    esRef.current = es;
-
-    es.onmessage = (e) => {
-      try {
-        const p = JSON.parse(e.data);
-        sseBufferRef.current = p;
-
-        if (!sseFlushScheduledRef.current) {
-          sseFlushScheduledRef.current = true;
-          setTimeout(() => {
-            setLiveData(sseBufferRef.current);
-            sseFlushScheduledRef.current = false;
-          }, 500); // throttle updates to every 0.5s
-        }
-      } catch (err) {
-        console.error('[SSE] parse error', err);
+    // first swipe per person = TODAY
+    const first = {};
+    swipes.forEach(r => {
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!first[r.PersonGUID] || t < new Date(first[r.PersonGUID].LocaleMessageTime).getTime()) {
+        first[r.PersonGUID] = r;
       }
-    };
-
-    es.onerror = (err) => {
-      console.error('[SSE] error', err);
-      es.close();
-      esRef.current = null;
-    };
-
-    return () => {
-      es.close();
-      esRef.current = null;
-    };
-  }, [timeTravelMode, API_ORIGIN]);
-
-  // Unified payload setter
-  const setPayload = useCallback((p) => {
-    setLiveData({
-      summary: Array.isArray(p.summary) ? p.summary : [],
-      details: p.details || {},
-      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-      totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-      visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-      ertStatus: p.ertStatus || {}
     });
-  }, []);
+    const today = { total: 0, Employee: 0, Contractor: 0 };
+    Object.values(first).forEach(r => {
+      today.total++;
+      if (isEmployeeType(r.PersonnelType)) today.Employee++;
+      else today.Contractor++;
+    });
 
-  // Fetch a historical snapshot
-  const fetchSnapshot = useCallback(async (dateStr, timeStr) => {
-    setTimeTravelLoading(true);
-    const safeTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
-    const url = `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(safeTime)}`;
+    // last swipe per person for realtime
+    const last = {};
+    swipes.forEach(r => {
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!last[r.PersonGUID] || t > new Date(last[r.PersonGUID].LocaleMessageTime).getTime()) {
+        last[r.PersonGUID] = r;
+      }
+    });
 
-    try {
-      const resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-      if (!resp.ok) {
-        const body = await resp.text().catch(() => '');
-        console.error(`[TimeTravel] error ${resp.status} from ${url}`, body);
-        window.alert(`Failed to load snapshot (${resp.status}). See console for details.`);
-        throw new Error(`Server returned ${resp.status}`);
+    const realtime = {};
+    const unmapped = new Set();
+
+
+    const enriched = Object.values(last).map(r => {
+      // determine zone (try normalized lookup + fallback)
+      const zone = mapDoorToZone(r.Door, r.Direction);
+
+      // lookupFloor returns 'Unknown' for unmapped (and adds to unmapped set)
+      const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmapped);
+
+      return {
+        ...r,
+        // keep Unknown Zone as null, keep actual zone strings (including "Out of office")
+        Zone: zone === 'Unknown Zone' ? null : zone,
+        Floor: floor === 'Unknown' ? null : floor
+
+      };
+    });
+
+    // Strictly remove "Out of office" records from details (and from counting below)
+    const details = enriched.filter(r => r.Zone !== 'Out of office');
+
+    // Counting loop (keeps Pune special logic but enforces strict drop on "Out of office")
+    Object.values(last).forEach(r => {
+      const p = r.PartitionName2;
+
+      // determine zone again for each record (use mapDoorToZone to be consistent)
+      const zoneRaw = mapDoorToZone(r.Door, r.Direction);
+
+      // STRICT RULE: if zone resolved to exact "Out of office" -> skip counting
+      if (zoneRaw === 'Out of office') return;
+
+      // Unknown keys → drop
+      if (zoneRaw === 'Unknown Zone') return;
+
+      // ensure bucket exists when we decide to count
+      const ensureBucket = (part) => {
+        if (!realtime[part]) realtime[part] = { total: 0, Employee: 0, Contractor: 0, floors: {}, zones: {} };
+      };
+
+
+      if (r.Direction === 'OutDirection') {
+        // allow certain valid OutDirection zones (Assembly Area, Reception Area, ...)
+        const allowedOutZones = new Set(['Assembly Area', 'Reception Area']);
+        if (!zoneRaw.endsWith('Outer Area') && !allowedOutZones.has(zoneRaw)) {
+          return;
+        }
+
+        // safe to count
+        ensureBucket(p);
+        realtime[p].total++;
+        if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+        else realtime[p].Contractor++;
+
+        // floor bucket
+        const fl = lookupFloor(p, r.Door, r.Direction, unmapped);
+        if (fl !== 'Unknown') {
+          realtime[p].floors[fl] = (realtime[p].floors[fl] || 0) + 1;
+        }
+
+        // zone bucket (clean trailing " Zone" for OutDirection cases where appropriate)
+        const z = (r.Direction === 'OutDirection' && zoneRaw !== 'Out of office')
+          ? zoneRaw.replace(/\s+Zone$/i, '')
+          : zoneRaw;
+        if (z) realtime[p].zones[z] = (realtime[p].zones[z] || 0) + 1;
+
+        return;
       }
 
-      const p = await resp.json();
-      setPayload(p);
-      setTimeTravelMode(true);
-      setTimeTravelTimestamp(p?.asOfLocal || `${dateStr} ${safeTime}`);
-    } catch (err) {
-      console.error('Failed to fetch snapshot', err);
-      if (!err.message.includes('Server returned')) {
-        window.alert('Failed to load snapshot. See console for details.');
+      // ── All other partitions (existing logic) ──
+      // fallback logic to determine zone (keeps previous behaviour if normalized lookup not present)
+      const normKey = normalizeDoorName(r.Door) + '___' + r.Direction;
+      let zone = normalizedDoorZoneMap[normKey];
+      if (!zone) {
+        const entry = doorMap.find(d =>
+          d.normalizedDoor === normalizeDoorName(r.Door) &&
+          d.partition === p
+        );
+        zone = entry
+          ? (r.Direction === 'InDirection'
+            ? normalizedDoorZoneMap[`${entry.normalizedDoor}___InDirection`]
+            : normalizedDoorZoneMap[`${entry.normalizedDoor}___OutDirection`])
+          : null;
       }
-    } finally {
-      setTimeTravelLoading(false);
-    }
-  }, [API_ORIGIN, setPayload]);
 
-  // Return to live mode
-  const clearTimeTravel = useCallback(async () => {
-    setTimeTravelLoading(true);
-    try {
-      setTimeTravelMode(false);
-      setTimeTravelTimestamp(null);
-      const url = `${API_ORIGIN}/api/current-occupancy`;
-      const resp = await fetch(url, { headers: { Accept: 'application/json' } });
-      if (resp.ok) {
-        const p = await resp.json();
-        setPayload(p);
+      // if resolved zone (via fallback) is "Out of office" → skip (strict)
+      if (zone === 'Out of office') return;
+      if (!zone && zone !== null) {
+        // keep going — zone could be null if no mapping found, but Unknown Zone was handled above
       }
-    } finally {
-      setTimeTravelLoading(false);
-    }
-  }, [API_ORIGIN, setPayload]);
 
-  return (
-    <>
+      // ok to count
+      ensureBucket(p);
+      realtime[p].total++;
+      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+      else realtime[p].Contractor++;
 
-      {/* <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
-        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
-        <Nav className="ms-auto align-items-center">
-          <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
-            <TimeTravelControl
-              currentTimestamp={timeTravelTimestamp}
-              onApply={fetchSnapshot}
-              onLive={clearTimeTravel}
-              loading={timeTravelLoading}
-            />
-          </div>
+      const fl = lookupFloor(p, r.Door, r.Direction, unmapped);
+      if (fl !== 'Unknown') {
+        realtime[p].floors[fl] = (realtime[p].floors[fl] || 0) + 1;
+      }
 
-          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
-          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
-          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
-          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
-          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun /></Nav.Link>
-        </Nav>
-      </Navbar> */}
+      const z = zone ? (r.Direction === 'OutDirection' && zone !== 'Out of office' ? zone.replace(/\s+Zone$/i, '') : zone) : null;
+      if (z) realtime[p].zones[z] = (realtime[p].zones[z] || 0) + 1;
+    });
 
-      {/* responsive */}
+    // Log to server console for quick dev feedback:
+    if (unmapped.size) console.warn('Unmapped doors:', Array.from(unmapped));
+
+    res.json({
+      success: true,
+      today,
+      realtime,
+      // expose the raw list of partition|door keys that had no mapping:
+      unmapped: Array.from(unmapped),
+      details    // enriched details with Zone & Floor, with "Out of office" removed
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: 'Summary failed' });
+  }
+};
 
 
-      <Navbar bg="dark" variant="dark" expand="lg" className="px-3">
-        <Navbar.Brand as={Link} to="/" className="wu-brand">
-          {headerText}
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="main-navbar" />
-        <Navbar.Collapse id="main-navbar">
-          <Nav className="ms-auto align-items-center gap-2">
-            <div className="time-travel-wrapper me-2">
-              <TimeTravelControl
-                currentTimestamp={timeTravelTimestamp}
-                onApply={fetchSnapshot}
-                onLive={clearTimeTravel}
-                loading={timeTravelLoading}
-              />
-            </div>
-            <Nav.Link as={Link} to="/" className="nav-item-infographic">
-              <i className="bi bi-house"></i>
-            </Nav.Link>
-            <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic">
-              <i className="bi bi-clock-history"></i>
-            </Nav.Link>
-            <Nav.Link as={Link} to="/details" className="nav-item-infographic">
-              <i className="fa-solid fa-calendar-day"></i>
-            </Nav.Link>
-            <Nav.Link as={Link} to="/ert" className="nav-item-infographic">
-              ERT Overview
-            </Nav.Link>
-            <Nav.Link className="theme-toggle-icon" title="Dark mode only">
-              <FaSun />
-            </Nav.Link>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-      {/* responsive */}
-      <Container fluid className="mt-2">
-        {timeTravelMode && (
-          <div style={{
-            background: '#434d44',
-            color: '#FFF',
-            padding: '8px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderLeft: '4px solid rgb(0, 255, 21)',
-            marginBottom: 8
-          }}>
-            <div>
-              Viewing historical snapshot for:&nbsp;
-              <strong>{new Date(timeTravelTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</strong>
-            </div>
-            <div>
-              <button
-                className="btn btn-sm btn-outline-warning"
-                onClick={clearTimeTravel}
-                disabled={timeTravelLoading}
-              >
-                Return to Live
-              </button>
-            </div>
-          </div>
-        )}
 
-        <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <DashboardHome
-                  summaryData={liveData.summary}
-                  detailsData={liveData.details}
-                  floorData={liveData.floorBreakdown}
-                  zoneBreakdown={liveData.zoneBreakdown}
-                  personnelBreakdown={liveData.personnelBreakdown}
-                  totalVisitedToday={liveData.totalVisitedToday}
-                  personnelSummary={liveData.personnelSummary}
-                  visitedToday={liveData.visitedToday}
-                  ertStatus={liveData.ertStatus}
-                />
-              }
-            />
-            <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-            <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
-          </Routes>
-        </Suspense>
-      </Container>
 
-     
-    </>
-  );
-}
 
-export default function WrappedApp() {
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <App />
-      </div>
-    </BrowserRouter>
-  );
-}
+//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\controllers\occupancy.controller.js
+
+exports.getHistoricalOccupancy = async (req, res) => {
+  const location = req.params.location || null;
+  try {
+    // 1) Pull in rows — each now has non-null PartitionNameFriendly
+    const raw = await service.fetchHistoricalOccupancy(location);
+
+    // 2) Dedupe to first swipe per person per day
+    const byDate = raw.reduce((acc, r) => {
+      // force into a "YYYY-MM-DD" string
+      const date = new Date(r.LocaleMessageTime).toISOString().slice(0, 10);
+      acc[date] = acc[date] || {};
+      if (
+        !acc[date][r.PersonGUID] ||
+        new Date(r.LocaleMessageTime) < new Date(acc[date][r.PersonGUID].LocaleMessageTime)
+      ) {
+        acc[date][r.PersonGUID] = r;
+      }
+      return acc;
+    }, {});
+
+
+
+
+
+
+    const summaryByDate = [];
+    const details = [];
+
+    // 3) Build summaries
+    Object.keys(byDate).sort().forEach(date => {
+      const recs = Object.values(byDate[date]);
+      details.push(...recs);
+
+      // region totals
+      const region = { total: 0, Employee: 0, Contractor: 0 };
+      // per-partition buckets
+      const partitions = {};
+
+      recs.forEach(r => {
+        // increment region
+        region.total++;
+        if (isEmployeeType(r.PersonnelType)) region.Employee++;
+        else region.Contractor++;
+
+        // only build partitions if we're not filtering to a single location
+        if (!location) {
+          // use the friendly name (guaranteed non-null!), with fallback
+          const key = r.PartitionNameFriendly || 'APAC.Default';
+          if (!partitions[key]) {
+            partitions[key] = { total: 0, Employee: 0, Contractor: 0 };
+          }
+          partitions[key].total++;
+          if (isEmployeeType(r.PersonnelType)) partitions[key].Employee++;
+          else partitions[key].Contractor++;
+        }
+      });
+
+      summaryByDate.push({
+        date,
+        day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' }),
+        region: location
+          ? { name: location, ...region }
+          : { name: 'APAC', ...region },
+        // if location is provided, you can still emit an empty object (`{}`) or skip:
+        partitions: location ? {} : partitions
+      });
+    });
+
+    // 4) Return
+    res.json({ success: true, summaryByDate, details });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success: false, message: 'Historical failed' });
+  }
+};
+
+
+
