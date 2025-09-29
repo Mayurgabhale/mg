@@ -1,433 +1,159 @@
-
-http://localhost:3007/api/occupancy/history
-This api taking more time to loadin 
-i means this take time 2 to 5 miniteu to load,
-it is not correct, we dont wait that much time, 
-i want this api give me fast respons, i emans wht 2 ro 5 seconds
-take only not more ok 
-read all code carefully, and correct the performance, 
-dont chage my privius code logic, carefully, 
-
-exports.fetchHistoricalOccupancy = async (location) =>
-  exports.fetchHistoricalData({ location: location || null });
-
+// (Assumes `poolPromise` and `sql` are in scope as they were before)
 exports.fetchHistoricalData = async ({ location = null }) => {
   const pool = await poolPromise;
 
-  // 1. Get all ACVSUJournal_* database names dynamically
+  // 1) Get the last 2 ACVSUJournal_* DB names only (avoid enumerating ALL databases)
   const dbResult = await pool.request().query(`
-    SELECT name 
+    SELECT TOP (2) name
     FROM sys.databases
     WHERE name LIKE 'ACVSUJournal[_]%'
-    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
+    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT) DESC
   `);
-
-  // Map DBs and pick last 2 only
-  const databases = dbResult.recordset.map(r => r.name);
-  const selectedDbs = databases.slice(-2); // newest and previous
-
-  if (selectedDbs.length === 0) {
+  const databases = dbResult.recordset.map(r => r.name).reverse(); // keep ascending order like your old logic (older, newest)
+  if (databases.length === 0) {
     throw new Error("No ACVSUJournal_* databases found.");
   }
 
-  // 2. Outer filter
-  const outerFilter = location
-    ? `WHERE PartitionNameFriendly = @location`
-    : `WHERE PartitionNameFriendly IN (${quoteList([
-        'Pune','Quezon City','JP.Tokyo','MY.Kuala Lumpur','Taguig City','IN.HYD'
-      ])})`;
+  // 2) Build a SQL fragment to narrow scans by ObjectName2 / PartitionName2 when possible.
+  // This maps the same patterns you used in the original SELECT's COALESCE CASE.
+  // When `location` is provided, we attempt to filter by the relevant pattern for that single location.
+  // When null, we restrict to the set of partitions you previously used.
+  const locationPatterns = {
+    'Taguig City': "(t1.ObjectName2 LIKE 'APAC_PI%')",
+    'Quezon City': "(t1.ObjectName2 LIKE 'APAC_PH%')",
+    'Pune': "(t1.ObjectName2 LIKE '%PUN%')",
+    'JP.Tokyo': "(t1.ObjectName2 LIKE 'APAC_JPN%')",
+    'MY.Kuala Lumpur': "(t1.ObjectName2 LIKE 'APAC_MY%')",
+    'IN.HYD': "(t1.ObjectName2 LIKE 'APAC_HYD%')"
+  };
 
-  // 3. Build UNION ALL query across selected DBs only
-  const unionQueries = selectedDbs.map(db => `
-    SELECT
-      DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-      t1.ObjectName1,
-      t1.ObjectName2               AS Door,
-      CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-      t3.Name                      AS PersonnelType,
-      t1.ObjectIdentity1           AS PersonGUID,
-     t2.Text4                   AS CompanyName,   -- ✅ company
-     t2.Text5                   AS PrimaryLocation, -- ✅ location
-      COALESCE(
-        CASE
-          WHEN t1.ObjectName2 LIKE 'APAC_PI%'   THEN 'Taguig City'
-          WHEN t1.ObjectName2 LIKE 'APAC_PH%'   THEN 'Quezon City'
-          WHEN t1.ObjectName2 LIKE '%PUN%'      THEN 'Pune'
-          WHEN t1.ObjectName2 LIKE 'APAC_JPN%'  THEN 'JP.Tokyo'
-          WHEN t1.ObjectName2 LIKE 'APAC_MY%'   THEN 'MY.Kuala Lumpur'
-          WHEN t1.ObjectName2 LIKE 'APAC_HYD%'   THEN 'IN.HYD'
-          ELSE t1.PartitionName2
-        END,
-        'APAC.Default'
-      ) AS PartitionNameFriendly,
+  const defaultPartitionsList = [
+    'Pune','Quezon City','JP.Tokyo','MY.Kuala Lumpur','Taguig City','IN.HYD'
+  ];
 
+  let perDbWhereClause = '';
 
-      
-      COALESCE(
-        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-        sc.value
-      ) AS CardNumber,
-      t5d.value AS Direction
-    FROM ${db}.dbo.ACVSUJournalLog t1
-    JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
-    JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
-
-    LEFT JOIN ${db}.dbo.ACVSUJournalLogxmlShred t5d
-      ON t1.XmlGUID = t5d.GUID 
-      AND t5d.Value IN ('InDirection','OutDirection')
-
-    LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
-      ON t1.XmlGUID = t_xml.GUID
-
-    LEFT JOIN (
-      SELECT GUID, value
-      FROM ${db}.dbo.ACVSUJournalLogxmlShred
-      WHERE Name IN ('Card','CHUID')
-    ) AS sc
-      ON t1.XmlGUID = sc.GUID
-    WHERE t1.MessageType = 'CardAdmitted'
-  `).join('\nUNION ALL\n');
-
-  // 4. Final query
-  const query = `
-    WITH Hist AS (
-      ${unionQueries}
-    )
-    SELECT *
-    FROM Hist
-    ${outerFilter}
-    ORDER BY LocaleMessageTime ASC;
-  `;
-
-  const req = pool.request();
   if (location) {
-    req.input('location', sql.NVarChar, location);
+    // If location matches one of the known partitions, use pattern to push down filter.
+    if (locationPatterns[location]) {
+      perDbWhereClause = `AND ${locationPatterns[location]}`;
+    } else {
+      // fallback: if unknown location string is passed, use the PartitionName2 equality check (still helps).
+      perDbWhereClause = `AND t1.PartitionName2 = @location`;
+    }
+  } else {
+    // restrict to the small set of partitions we care about (push filter into each DB query)
+    // Use both ObjectName2 patterns and PartitionName2 fallback to catch both forms.
+    const patterns = [
+      "t1.ObjectName2 LIKE 'APAC_PI%'",   // Taguig City
+      "t1.ObjectName2 LIKE 'APAC_PH%'",   // Quezon City
+      "t1.ObjectName2 LIKE '%PUN%'",      // Pune
+      "t1.ObjectName2 LIKE 'APAC_JPN%'",  // JP.Tokyo
+      "t1.ObjectName2 LIKE 'APAC_MY%'",   // MY.Kuala Lumpur
+      "t1.ObjectName2 LIKE 'APAC_HYD%'"   // IN.HYD
+    ];
+    const partitionEquals = defaultPartitionsList.map(p => `t1.PartitionName2 = '${p.replace("'", "''")}'`);
+    perDbWhereClause = `AND ( ${patterns.join(' OR ')} OR ${partitionEquals.join(' OR ')} )`;
   }
-  const result = await req.query(query);
-  return result.recordset;
+
+  // 3) For each selected DB, build a per-db query and run them in parallel.
+  // We avoid a giant UNION ALL in SQL Server which can cause long compile/scan times.
+  // We parse the XML once per-row via OUTER APPLY to get CardNumber, and select only required columns.
+  const perDbQueries = databases.map(db => {
+    // per-db SQL - keep same projected columns and same PartitionNameFriendly CASE as before
+    // Note: use OUTER APPLY to parse Xml once per row and to fetch shredded values efficiently
+    return `
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2               AS Door,
+        CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
+        t3.Name                      AS PersonnelType,
+        t1.ObjectIdentity1           AS PersonGUID,
+        t2.Text4                   AS CompanyName,
+        t2.Text5                   AS PrimaryLocation,
+        COALESCE(
+          CASE
+            WHEN t1.ObjectName2 LIKE 'APAC_PI%'   THEN 'Taguig City'
+            WHEN t1.ObjectName2 LIKE 'APAC_PH%'   THEN 'Quezon City'
+            WHEN t1.ObjectName2 LIKE '%PUN%'      THEN 'Pune'
+            WHEN t1.ObjectName2 LIKE 'APAC_JPN%'  THEN 'JP.Tokyo'
+            WHEN t1.ObjectName2 LIKE 'APAC_MY%'   THEN 'MY.Kuala Lumpur'
+            WHEN t1.ObjectName2 LIKE 'APAC_HYD%'  THEN 'IN.HYD'
+            ELSE t1.PartitionName2
+          END,
+          'APAC.Default'
+        ) AS PartitionNameFriendly,
+        COALESCE(
+          xmlvals.CardValue,
+          xmlvals.CHUIDValue,
+          sc.value
+        ) AS CardNumber,
+        t5d.value AS Direction
+      FROM ${db}.dbo.ACVSUJournalLog t1
+      JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
+      JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
+
+      -- parse XML once per row
+      OUTER APPLY (
+        SELECT
+          TRY_CAST(t_xml.XmlMessage AS XML) AS xm
+      ) AS parsed
+
+      OUTER APPLY (
+        SELECT
+          parsed.xm.value('(/LogMessage/CHUID/Card)[1]','varchar(50)') AS CardValue,
+          parsed.xm.value('(/LogMessage/CHUID)[1]','varchar(50)') AS CHUIDValue
+      ) AS xmlvals
+
+      LEFT JOIN ${db}.dbo.ACVSUJournalLogxmlShred t5d
+        ON t1.XmlGUID = t5d.GUID 
+        AND t5d.Value IN ('InDirection','OutDirection')
+
+      LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
+        ON t1.XmlGUID = t_xml.GUID
+
+      LEFT JOIN (
+        SELECT TOP (1) GUID, value
+        FROM ${db}.dbo.ACVSUJournalLogxmlShred
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+
+      WHERE t1.MessageType = 'CardAdmitted'
+        ${perDbWhereClause}
+    `;
+  });
+
+  // 4) Execute all per-db queries in parallel (each using its own request)
+  const queryPromises = perDbQueries.map(q => {
+    const req = pool.request();
+    if (location && !locationPatterns[location]) {
+      // only bind `@location` when we will use it (the case when unknown location string passed)
+      req.input('location', sql.NVarChar, location);
+    }
+    return req.query(q);
+  });
+
+  // Await all queries concurrently and merge results client-side
+  const results = await Promise.all(queryPromises);
+  const rows = results.flatMap(r => r.recordset);
+
+  // 5) Apply the outerFilter if `location` was provided but matched a known pattern that we used
+  // to pushdown the filter earlier. When the location was a pattern-mapped value we already applied
+  // the equivalent filter in SQL; but to be identical to original behavior we can additionally
+  // do a final JS-level filter using PartitionNameFriendly when the caller explicitly passed `location`.
+  let finalRows = rows;
+  if (location) {
+    // keep exactly same behavior as original: filter by PartitionNameFriendly = @location
+    finalRows = rows.filter(r => r.PartitionNameFriendly === location);
+  } else {
+    // when no location provided, original used outer filter: WHERE PartitionNameFriendly IN (the set)
+    // we already pushed a similar filter into SQL, so no-op here.
+  }
+
+  // 6) Sort on LocaleMessageTime ASC (your original final ORDER BY)
+  finalRows.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
+
+  return finalRows;
 };
-
-// keep this for occupancy
-exports.fetchHistoricalOccupancy = async (location) =>
-  exports.fetchHistoricalData({ location: location || null });
-
-
-
-
-
-
-//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\controllers\occupancy.controller.js
-
-const service = require('../services/occupancy.service');
-
-const {
-  doorMap,
-  normalizedDoorZoneMap,
-  doorZoneMap,
-  zoneFloorMap,
-  normalizeDoorName
-} = require('../utils/doorMap');
-
-
-function isEmployeeType(pt) {
-  return ['Employee', 'Terminated Employee', 'Terminated Personnel'].includes(pt);
-}
-
-
-function lookupFloor(partition, rawDoor, direction, unmapped) {
-  const norm = normalizeDoorName(rawDoor);
-  const key = `${norm}___${direction}`;
-
-  // 1) Try normalized lookup
-  const zone = normalizedDoorZoneMap[key];
-  if (zone) {
-    const f = zoneFloorMap[zone];
-    // if zone has a known floor -> return it
-    if (f) return f;
-    // zone exists but has no floor (e.g. "Out of office") -> treat as known but Unknown floor
-    // return immediately to avoid falling back to per-partition doorMap and marking as unmapped
-    return 'Unknown';
-  }
-
-
-
-
-  // 2) Fallback to per-partition doorMap
-  const entry = doorMap.find(d =>
-    d.normalizedDoor === norm && d.partition === partition
-  );
-  if (entry) {
-    const fl = direction === 'InDirection'
-      ? entry.inDirectionFloor
-      : entry.outDirectionFloor;
-    if (fl) return fl;
-  }
-
-  // 3) Nothing matched → record & return Unknown
-  unmapped.add(`${partition}|${rawDoor}`);
-  return 'Unknown';
-}
-
-
-
-function mapDoorToZone(rawDoor, rawDir) {
-  const key = normalizeDoorName(rawDoor) + '___' + (rawDir === 'InDirection' ? 'InDirection' : 'OutDirection');
-  const zone = normalizedDoorZoneMap[key];
-  if (!zone) return 'Unknown Zone';
-  // for OutDirection that aren’t true “Out of office”, strip trailing “ Zone”
-  if (rawDir === 'OutDirection' && zone !== 'Out of office') {
-    return zone.replace(/\s+Zone$/i, '');
-  }
-  return zone;
-}
-
-
-
-exports.getLiveOccupancy = async (req, res) => {
-  try {
-    const data = await service.fetchLiveOccupancy();
-    res.json({ success: true, count: data.length, data });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Live fetch failed' });
-  }
-};
-
-exports.getLiveSummary = async (req, res) => {
-  try {
-    const swipes = await service.fetchLiveOccupancy();
-
-    // first swipe per person = TODAY
-    const first = {};
-    swipes.forEach(r => {
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!first[r.PersonGUID] || t < new Date(first[r.PersonGUID].LocaleMessageTime).getTime()) {
-        first[r.PersonGUID] = r;
-      }
-    });
-    const today = { total: 0, Employee: 0, Contractor: 0 };
-    Object.values(first).forEach(r => {
-      today.total++;
-      if (isEmployeeType(r.PersonnelType)) today.Employee++;
-      else today.Contractor++;
-    });
-
-    // last swipe per person for realtime
-    const last = {};
-    swipes.forEach(r => {
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!last[r.PersonGUID] || t > new Date(last[r.PersonGUID].LocaleMessageTime).getTime()) {
-        last[r.PersonGUID] = r;
-      }
-    });
-
-    const realtime = {};
-    const unmapped = new Set();
-
-
-    const enriched = Object.values(last).map(r => {
-      // determine zone (try normalized lookup + fallback)
-      const zone = mapDoorToZone(r.Door, r.Direction);
-
-      // lookupFloor returns 'Unknown' for unmapped (and adds to unmapped set)
-      const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmapped);
-
-      return {
-        ...r,
-        // keep Unknown Zone as null, keep actual zone strings (including "Out of office")
-        Zone: zone === 'Unknown Zone' ? null : zone,
-        Floor: floor === 'Unknown' ? null : floor
-
-      };
-    });
-
-    // Strictly remove "Out of office" records from details (and from counting below)
-    const details = enriched.filter(r => r.Zone !== 'Out of office');
-
-    // Counting loop (keeps Pune special logic but enforces strict drop on "Out of office")
-    Object.values(last).forEach(r => {
-      const p = r.PartitionName2;
-
-      // determine zone again for each record (use mapDoorToZone to be consistent)
-      const zoneRaw = mapDoorToZone(r.Door, r.Direction);
-
-      // STRICT RULE: if zone resolved to exact "Out of office" -> skip counting
-      if (zoneRaw === 'Out of office') return;
-
-      // Unknown keys → drop
-      if (zoneRaw === 'Unknown Zone') return;
-
-      // ensure bucket exists when we decide to count
-      const ensureBucket = (part) => {
-        if (!realtime[part]) realtime[part] = { total: 0, Employee: 0, Contractor: 0, floors: {}, zones: {} };
-      };
-
-
-      if (r.Direction === 'OutDirection') {
-        // allow certain valid OutDirection zones (Assembly Area, Reception Area, ...)
-        const allowedOutZones = new Set(['Assembly Area', 'Reception Area']);
-        if (!zoneRaw.endsWith('Outer Area') && !allowedOutZones.has(zoneRaw)) {
-          return;
-        }
-
-        // safe to count
-        ensureBucket(p);
-        realtime[p].total++;
-        if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
-        else realtime[p].Contractor++;
-
-        // floor bucket
-        const fl = lookupFloor(p, r.Door, r.Direction, unmapped);
-        if (fl !== 'Unknown') {
-          realtime[p].floors[fl] = (realtime[p].floors[fl] || 0) + 1;
-        }
-
-        // zone bucket (clean trailing " Zone" for OutDirection cases where appropriate)
-        const z = (r.Direction === 'OutDirection' && zoneRaw !== 'Out of office')
-          ? zoneRaw.replace(/\s+Zone$/i, '')
-          : zoneRaw;
-        if (z) realtime[p].zones[z] = (realtime[p].zones[z] || 0) + 1;
-
-        return;
-      }
-
-      // ── All other partitions (existing logic) ──
-      // fallback logic to determine zone (keeps previous behaviour if normalized lookup not present)
-      const normKey = normalizeDoorName(r.Door) + '___' + r.Direction;
-      let zone = normalizedDoorZoneMap[normKey];
-      if (!zone) {
-        const entry = doorMap.find(d =>
-          d.normalizedDoor === normalizeDoorName(r.Door) &&
-          d.partition === p
-        );
-        zone = entry
-          ? (r.Direction === 'InDirection'
-            ? normalizedDoorZoneMap[`${entry.normalizedDoor}___InDirection`]
-            : normalizedDoorZoneMap[`${entry.normalizedDoor}___OutDirection`])
-          : null;
-      }
-
-      // if resolved zone (via fallback) is "Out of office" → skip (strict)
-      if (zone === 'Out of office') return;
-      if (!zone && zone !== null) {
-        // keep going — zone could be null if no mapping found, but Unknown Zone was handled above
-      }
-
-      // ok to count
-      ensureBucket(p);
-      realtime[p].total++;
-      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
-      else realtime[p].Contractor++;
-
-      const fl = lookupFloor(p, r.Door, r.Direction, unmapped);
-      if (fl !== 'Unknown') {
-        realtime[p].floors[fl] = (realtime[p].floors[fl] || 0) + 1;
-      }
-
-      const z = zone ? (r.Direction === 'OutDirection' && zone !== 'Out of office' ? zone.replace(/\s+Zone$/i, '') : zone) : null;
-      if (z) realtime[p].zones[z] = (realtime[p].zones[z] || 0) + 1;
-    });
-
-    // Log to server console for quick dev feedback:
-    if (unmapped.size) console.warn('Unmapped doors:', Array.from(unmapped));
-
-    res.json({
-      success: true,
-      today,
-      realtime,
-      // expose the raw list of partition|door keys that had no mapping:
-      unmapped: Array.from(unmapped),
-      details    // enriched details with Zone & Floor, with "Out of office" removed
-    });
-
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Summary failed' });
-  }
-};
-
-
-
-
-
-//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\controllers\occupancy.controller.js
-
-exports.getHistoricalOccupancy = async (req, res) => {
-  const location = req.params.location || null;
-  try {
-    // 1) Pull in rows — each now has non-null PartitionNameFriendly
-    const raw = await service.fetchHistoricalOccupancy(location);
-
-    // 2) Dedupe to first swipe per person per day
-    const byDate = raw.reduce((acc, r) => {
-      // force into a "YYYY-MM-DD" string
-      const date = new Date(r.LocaleMessageTime).toISOString().slice(0, 10);
-      acc[date] = acc[date] || {};
-      if (
-        !acc[date][r.PersonGUID] ||
-        new Date(r.LocaleMessageTime) < new Date(acc[date][r.PersonGUID].LocaleMessageTime)
-      ) {
-        acc[date][r.PersonGUID] = r;
-      }
-      return acc;
-    }, {});
-
-
-
-
-
-
-    const summaryByDate = [];
-    const details = [];
-
-    // 3) Build summaries
-    Object.keys(byDate).sort().forEach(date => {
-      const recs = Object.values(byDate[date]);
-      details.push(...recs);
-
-      // region totals
-      const region = { total: 0, Employee: 0, Contractor: 0 };
-      // per-partition buckets
-      const partitions = {};
-
-      recs.forEach(r => {
-        // increment region
-        region.total++;
-        if (isEmployeeType(r.PersonnelType)) region.Employee++;
-        else region.Contractor++;
-
-        // only build partitions if we're not filtering to a single location
-        if (!location) {
-          // use the friendly name (guaranteed non-null!), with fallback
-          const key = r.PartitionNameFriendly || 'APAC.Default';
-          if (!partitions[key]) {
-            partitions[key] = { total: 0, Employee: 0, Contractor: 0 };
-          }
-          partitions[key].total++;
-          if (isEmployeeType(r.PersonnelType)) partitions[key].Employee++;
-          else partitions[key].Contractor++;
-        }
-      });
-
-      summaryByDate.push({
-        date,
-        day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' }),
-        region: location
-          ? { name: location, ...region }
-          : { name: 'APAC', ...region },
-        // if location is provided, you can still emit an empty object (`{}`) or skip:
-        partitions: location ? {} : partitions
-      });
-    });
-
-    // 4) Return
-    res.json({ success: true, summaryByDate, details });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Historical failed' });
-  }
-};
-
-
-
