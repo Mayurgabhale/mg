@@ -1156,6 +1156,7 @@ function buildVisitedToday(allEvents, asOf) {
 
 
 
+
 /** Server‐Sent‐Events endpoint */
 exports.getLiveOccupancy = async (req, res) => {
   try {
