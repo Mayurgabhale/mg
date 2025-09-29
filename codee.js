@@ -1,37 +1,65 @@
+// Put these near the top of the module (once)
+const RESULT_CACHE_TTL_MS = 30 * 1000; // 30s — tune as needed
+const DBLIST_CACHE_TTL_MS = 60 * 1000;  // 60s — tune as needed
 
-Dont change anything in this code loguc, just i want to improve the code perfomrce,
-  api is taking more time to load the so i want to api is get data wihtin 2 or 5 seond only 
-more carefully, 
+// simple in-memory caches
+const _resultCache = new Map(); // key -> { ts, data }
+let _cachedDbList = null;
+let _cachedDbListTs = 0;
+
+/**
+ * Keep the same exported wrapper
+ */
 exports.fetchHistoricalOccupancy = async (location) =>
   exports.fetchHistoricalData({ location: location || null });
 
+/**
+ * Replacement fetchHistoricalData that preserves your SQL logic exactly
+ * but adds: 1) result-level caching and 2) sys.databases caching + timing logs.
+ */
 exports.fetchHistoricalData = async ({ location = null }) => {
   const pool = await poolPromise;
 
-  // 1. Get all ACVSUJournal_* database names dynamically
-  const dbResult = await pool.request().query(`
-    SELECT name 
-    FROM sys.databases
-    WHERE name LIKE 'ACVSUJournal[_]%'
-    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
-  `);
+  const overallStart = Date.now();
+  const cacheKey = `hist:${location || '__ALL__'}`;
+
+  // 0) If we have a fresh cached result, return immediately (no SQL run)
+  const cached = _resultCache.get(cacheKey);
+  if (cached && (Date.now() - cached.ts) < RESULT_CACHE_TTL_MS) {
+    console.log(`[occupancy] returning cached historical result (location=${location}) age=${Date.now()-cached.ts}ms`);
+    return cached.data;
+  }
+
+  // 1. Get all ACVSUJournal_* database names dynamically (cached)
+  if (!_cachedDbList || (Date.now() - _cachedDbListTs) > DBLIST_CACHE_TTL_MS) {
+    const dbStart = Date.now();
+    const dbResult = await pool.request().query(`
+      SELECT name 
+      FROM sys.databases
+      WHERE name LIKE 'ACVSUJournal[_]%'
+      ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
+    `);
+    _cachedDbList = dbResult.recordset.map(r => r.name);
+    _cachedDbListTs = Date.now();
+    console.log(`[occupancy] refreshed db list in ${Date.now()-dbStart}ms (count=${_cachedDbList.length})`);
+  }
 
   // Map DBs and pick last 2 only
-  const databases = dbResult.recordset.map(r => r.name);
+  const databases = _cachedDbList;
   const selectedDbs = databases.slice(-2); // newest and previous
 
   if (selectedDbs.length === 0) {
     throw new Error("No ACVSUJournal_* databases found.");
   }
 
-  // 2. Outer filter
+  // 2. Outer filter (unchanged)
   const outerFilter = location
     ? `WHERE PartitionNameFriendly = @location`
     : `WHERE PartitionNameFriendly IN (${quoteList([
         'Pune','Quezon City','JP.Tokyo','MY.Kuala Lumpur','Taguig City','IN.HYD'
       ])})`;
 
-  // 3. Build UNION ALL query across selected DBs only
+  // 3. Build UNION ALL query across selected DBs only (UNCHANGED SQL)
   const unionQueries = selectedDbs.map(db => `
     SELECT
       DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
@@ -83,7 +111,7 @@ exports.fetchHistoricalData = async ({ location = null }) => {
     WHERE t1.MessageType = 'CardAdmitted'
   `).join('\nUNION ALL\n');
 
-  // 4. Final query
+  // 4. Final query (unchanged)
   const query = `
     WITH Hist AS (
       ${unionQueries}
@@ -94,17 +122,30 @@ exports.fetchHistoricalData = async ({ location = null }) => {
     ORDER BY LocaleMessageTime ASC;
   `;
 
+  // instrumentation: log query length in case it's huge
+  console.log(`[occupancy] executing historical query (location=${location}) SQL-len=${query.length}`);
+
+  const reqStart = Date.now();
   const req = pool.request();
   if (location) {
     req.input('location', sql.NVarChar, location);
   }
+
   const result = await req.query(query);
+  const dur = Date.now() - reqStart;
+  console.log(`[occupancy] SQL executed in ${dur}ms, rows=${result.recordset.length}; overall ${(Date.now()-overallStart)}ms`);
+
+  // save result in cache
+  try {
+    _resultCache.set(cacheKey, { ts: Date.now(), data: result.recordset });
+  } catch (e) {
+    // if caching fails for any reason, still return result
+    console.warn('[occupancy] result caching failed', e);
+  }
+
   return result.recordset;
 };
 
-// keep this for occupancy
+// keep this for occupancy (no change)
 exports.fetchHistoricalOccupancy = async (location) =>
   exports.fetchHistoricalData({ location: location || null });
-
-
-
