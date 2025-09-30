@@ -18,3 +18,68 @@ Server running at http://localhost:5000
     at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
     at runNextTicks (node:internal/process/task_queues:65:5)
     at process.processTimers (node:internal/timers:520:9)
+
+
+
+/////////////////////////////////
+
+Server running at http://localhost:5000
+✅ MSSQL pool connected
+✅ Denver MSSQL pool connected
+❌ Denver MSSQL pool error: TimeoutError: operation timed out for an unknown reason
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processTimers (node:internal/timers:520:9)
+⚠️ Denver keep-alive query failed, resetting poolPromise: TimeoutError: operation timed out for an unknown reason
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processTimers (node:internal/timers:520:9)
+❌ Error computing in/out inconsistency: TypeError: Cannot read properties of undefined (reading 'request')
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:899:24
+    at withRetry (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:872:20)
+    at fetchHistoricalEventsChunked (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:898:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getDenverInOutInconsistency (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:1063:20)
+⚠️ Denver poolPromise resolved to null — DB likely unavailable
+Error fetching rejection data: TypeError: Cannot read properties of undefined (reading 'request')
+    at getRejections (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverRejection.js:73:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+❌ Error computing in/out inconsistency: TypeError: Cannot read properties of undefined (reading 'request')
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:899:24
+    at withRetry (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:872:20)
+    at fetchHistoricalEventsChunked (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:898:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getDenverInOutInconsistency (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:1063:20)
+Error fetching rejection data: TypeError: Cannot read properties of undefined (reading 'request')
+    at getRejections (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverRejection.js:73:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+❌ Denver pool connection failed: ConnectionError: Failed to connect to SRVWUDEN0891V:1433 in 30000ms
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\mssql\lib\tedious\connection-pool.js:85:17
+    at Connection.onConnect (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:849:9)
+    at Object.onceWrapper (node:events:633:26)
+    at Connection.emit (node:events:518:28)
+    at Connection.emit (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:970:18)
+    at Connection.connectTimeout (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:1222:10)
+    at Timeout._onTimeout (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:1167:12)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7) {
+  code: 'ETIMEOUT',
+  originalError: ConnectionError: Failed to connect to SRVWUDEN0891V:1433 in 30000ms
+      at Connection.connectTimeout (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:1222:26)
+      at Timeout._onTimeout (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:1167:12)
+      at listOnTimeout (node:internal/timers:588:17)
+      at process.processTimers (node:internal/timers:523:7) {
+    code: 'ETIMEOUT'
+  }
+}
+⏳ Retrying Denver pool connect (3 left)…
+❌ Error computing in/out inconsistency: TypeError: Cannot read properties of undefined (reading 'request')
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:899:24
+    at withRetry (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:872:20)
+    at fetchHistoricalEventsChunked (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:898:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getDenverInOutInconsistency (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverInOutInconsistencyController.js:1063:20)
+⚠️ Denver poolPromise resolved to null — DB likely unavailable
+Error fetching rejection data: TypeError: Cannot read properties of undefined (reading 'request')
+    at getRejections (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\denverRejection.js:73:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
