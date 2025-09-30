@@ -7,6 +7,7 @@ backend or frontend, that i understant the erro is where is came and what is the
 where data is stukking ok 
 i hope you undestand better, 
 that is got , then we move on backend 
++++ first i stat backend and frontend only 10 or 15 minite not get any error, but aftet that, in dashbaord not disply any things is empty++ not disply any data ++ 
 C:\Users\W0024618\Desktop\swipeData\client\src\services\app.js
 import React, { useEffect, useState } from 'react';
 import { fetchOccupancyData } from './services/api';
