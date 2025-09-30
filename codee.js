@@ -6,7 +6,7 @@ why data is not visibal in dashboard , where is the isssue,
 backend or frontend, that i understant the erro is where is came and what is the error, whay data is not disply, 
 where data is stukking ok 
 i hope you undestand better, 
-
+that is got , then we move on backend 
 C:\Users\W0024618\Desktop\swipeData\client\src\services\app.js
 import React, { useEffect, useState } from 'react';
 import { fetchOccupancyData } from './services/api';
