@@ -21,3 +21,45 @@ const setPayload = useCallback((p) => {
   };
   setLiveData((prev) => ({ ...prev, ...safe }));
 }, []);
+
+// SSE with throttling
+  useEffect(() => {
+    if (timeTravelMode) {
+      if (esRef.current) esRef.current.close();
+      esRef.current = null;
+      return;
+    }
+
+    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
+    const es = new EventSource(esUrl);
+    esRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        sseBufferRef.current = p;
+
+        if (!sseFlushScheduledRef.current) {
+          sseFlushScheduledRef.current = true;
+          setTimeout(() => {
+            setLiveData(sseBufferRef.current);
+            sseFlushScheduledRef.current = false;
+          }, 500); // throttle updates to every 0.5s
+        }
+      } catch (err) {
+        console.error('[SSE] parse error', err);
+      }
+    };
+
+    es.onerror = (err) => {
+      console.error('[SSE] error', err);
+      es.close();
+      esRef.current = null;
+    };
+
+    return () => {
+      es.close();
+      esRef.current = null;
+    };
+  }, [timeTravelMode, API_ORIGIN]);
+
