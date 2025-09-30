@@ -1,20 +1,4 @@
 
-Uncaught runtime errors:
-×
-ERROR
-Cannot access 'setPayload' before initialization
-ReferenceError: Cannot access 'setPayload' before initialization
-    at App (http://localhost:3000/static/js/bundle.js:67978:35)
-    at react-stack-bottom-frame (http://localhost:3000/static/js/bundle.js:27882:18)
-    at renderWithHooks (http://localhost:3000/static/js/bundle.js:18092:20)
-    at updateFunctionComponent (http://localhost:3000/static/js/bundle.js:19785:17)
-    at beginWork (http://localhost:3000/static/js/bundle.js:20371:16)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15864:68)
-    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22444:93)
-    at workLoopSync (http://localhost:3000/static/js/bundle.js:22337:38)
-    at renderRootSync (http://localhost:3000/static/js/bundle.js:22321:7)
-    at performWorkOnRoot (http://localhost:3000/static/js/bundle.js:22085:42)
-
 // src/App.js
 import React, {
   useEffect,
@@ -175,145 +159,104 @@ function App() {
   const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
   const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
+  // 🔌 Connection status for SSE (will show on-screen banner)
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting | open | stale | error
+  const lastSeenRef = useRef(Date.now());
 
+  // Safer payload setter (validates before replacing UI)
+  const setPayload = useCallback((p) => {
+    if (!p || typeof p !== 'object') {
+      console.warn('[setPayload] ignoring invalid payload', p);
+      return;
+    }
+    const safe = {
+      summary: Array.isArray(p.summary) ? p.summary : [],
+      details: p.details && typeof p.details === 'object' ? p.details : {},
+      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+      totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+      visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+      ertStatus: p.ertStatus || {}
+    };
+    setLiveData((prev) => ({ ...prev, ...safe }));
+  }, []);
 
-  // 🔌 Connection status for SSE
-const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting | open | stale | error
-const lastSeenRef = useRef(Date.now());
-
-  // SSE with throttling
-  // useEffect(() => {
-  //   if (timeTravelMode) {
-  //     if (esRef.current) esRef.current.close();
-  //     esRef.current = null;
-  //     return;
-  //   }
-
-  //   const esUrl = `${API_ORIGIN}/api/live-occupancy`;
-  //   const es = new EventSource(esUrl);
-  //   esRef.current = es;
-
-  //   es.onmessage = (e) => {
-  //     try {
-  //       const p = JSON.parse(e.data);
-  //       sseBufferRef.current = p;
-
-  //       if (!sseFlushScheduledRef.current) {
-  //         sseFlushScheduledRef.current = true;
-  //         setTimeout(() => {
-  //           setLiveData(sseBufferRef.current);
-  //           sseFlushScheduledRef.current = false;
-  //         }, 500); // throttle updates to every 0.5s
-  //       }
-  //     } catch (err) {
-  //       console.error('[SSE] parse error', err);
-  //     }
-  //   };
-
-  //   es.onerror = (err) => {
-  //     console.error('[SSE] error', err);
-  //     es.close();
-  //     esRef.current = null;
-  //   };
-
-  //   return () => {
-  //     es.close();
-  //     esRef.current = null;
-  //   };
-  // }, [timeTravelMode, API_ORIGIN]);
-
-
-
+  // SSE with throttling + connection status reporting
   useEffect(() => {
-  if (timeTravelMode) {
-    if (esRef.current) {
-      esRef.current.close();
-      esRef.current = null;
+    if (timeTravelMode) {
+      if (esRef.current) {
+        try { esRef.current.close(); } catch (e) {}
+        esRef.current = null;
+      }
+      return;
     }
-    return;
-  }
 
-  const esUrl = `${API_ORIGIN}/api/live-occupancy`;
-  console.info('[SSE] connecting to', esUrl);
-  const es = new EventSource(esUrl);
-  esRef.current = es;
+    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
+    console.info('[SSE] connecting to', esUrl);
+    const es = new EventSource(esUrl);
+    esRef.current = es;
 
-  es.onopen = () => {
-    console.info('[SSE] open');
-    setConnectionStatus('open');
-  };
-
-  es.onmessage = (e) => {
-    try {
-      const p = JSON.parse(e.data);
-      lastSeenRef.current = Date.now();
-      setPayload(p);
-      if (connectionStatus !== 'open') setConnectionStatus('open');
-    } catch (err) {
-      console.error('[SSE] parse error', err, 'raw:', e.data);
-      setConnectionStatus('error'); // but keep connection open
-    }
-  };
-
-  es.onerror = (err) => {
-    console.error('[SSE] error (EventSource will try reconnect automatically)', err);
-    // ⚠️ Important: DO NOT close here, let EventSource retry
-    setConnectionStatus('error');
-  };
-
-  // monitor for staleness
-  const stalenessChecker = setInterval(() => {
-    const age = Date.now() - lastSeenRef.current;
-    if (age > 20_000) { // 20s with no data
-      setConnectionStatus('stale');
-    } else if (connectionStatus === 'stale') {
+    es.onopen = () => {
+      console.info('[SSE] open');
       setConnectionStatus('open');
-    }
-  }, 4000);
+    };
 
-  return () => {
-    clearInterval(stalenessChecker);
-    try { es.close(); } catch (e) {}
-    esRef.current = null;
-  };
-}, [timeTravelMode, API_ORIGIN, setPayload]);
+    es.onmessage = (e) => {
+      try {
+        const p = JSON.parse(e.data);
+        lastSeenRef.current = Date.now();
+        sseBufferRef.current = p;
 
+        if (!sseFlushScheduledRef.current) {
+          sseFlushScheduledRef.current = true;
+          setTimeout(() => {
+            try {
+              setPayload(sseBufferRef.current);
+            } catch (err) {
+              console.error('[SSE flush] payload apply error', err);
+            } finally {
+              sseFlushScheduledRef.current = false;
+            }
+          }, 500); // throttle updates to every 0.5s
+        }
 
+        // mark connected
+        setConnectionStatus('open');
+      } catch (err) {
+        console.error('[SSE] parse error', err, 'raw:', e.data);
+        // keep connection open; but mark error so banner shows
+        setConnectionStatus('error');
+      }
+    };
 
-  // Unified payload setter
-  // const setPayload = useCallback((p) => {
-  //   setLiveData({
-  //     summary: Array.isArray(p.summary) ? p.summary : [],
-  //     details: p.details || {},
-  //     floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-  //     zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-  //     personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-  //     totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-  //     personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-  //     visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-  //     ertStatus: p.ertStatus || {}
-  //   });
-  // }, []);
+    es.onerror = (err) => {
+      // EventSource will automatically retry — do not close here.
+      console.error('[SSE] error (EventSource will try reconnect automatically)', err);
+      setConnectionStatus('error');
+    };
 
+    // monitor for staleness
+    const stalenessChecker = setInterval(() => {
+      try {
+        const age = Date.now() - lastSeenRef.current;
+        if (age > 20_000) { // 20s with no data
+          setConnectionStatus('stale');
+        } else {
+          setConnectionStatus('open');
+        }
+      } catch (e) {
+        console.error('[SSE stalenessChecker] error', e);
+      }
+    }, 4000);
 
-const setPayload = useCallback((p) => {
-  if (!p || typeof p !== 'object') {
-    console.warn('[setPayload] ignoring invalid payload', p);
-    return;
-  }
-  const safe = {
-    summary: Array.isArray(p.summary) ? p.summary : [],
-    details: p.details && typeof p.details === 'object' ? p.details : {},
-    floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
-    zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
-    personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
-    totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
-    personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-    visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-    ertStatus: p.ertStatus || {}
-  };
-  setLiveData((prev) => ({ ...prev, ...safe }));
-}, []);
+    return () => {
+      clearInterval(stalenessChecker);
+      try { es.close(); } catch (e) { /* ignore */ }
+      esRef.current = null;
+    };
+  }, [timeTravelMode, API_ORIGIN, setPayload]);
 
   // Fetch a historical snapshot
   const fetchSnapshot = useCallback(async (dateStr, timeStr) => {
@@ -364,28 +307,20 @@ const setPayload = useCallback((p) => {
   return (
     <>
 
-      {/* <Navbar bg="dark" variant="dark" expand="lg" className="px-4">
-        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
-        <Nav className="ms-auto align-items-center">
-          <div className="me-3" style={{ display: 'flex', alignItems: 'center' }}>
-            <TimeTravelControl
-              currentTimestamp={timeTravelTimestamp}
-              onApply={fetchSnapshot}
-              onLive={clearTimeTravel}
-              loading={timeTravelLoading}
-            />
-          </div>
-
-          <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
-          <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
-          <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
-          <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
-          <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun /></Nav.Link>
-        </Nav>
-      </Navbar> */}
-
-      {/* responsive */}
-
+      {/* Connection banner — shows when not open */}
+      {connectionStatus !== 'open' && (
+        <div style={{
+          background: connectionStatus === 'error' ? '#8B0000' : '#b07b00',
+          color: 'white',
+          padding: '8px 12px',
+          textAlign: 'center',
+          fontWeight: '600'
+        }}>
+          {connectionStatus === 'error' && 'Connection error — check console and backend (SSE/CORS/504)'}
+          {connectionStatus === 'stale' && 'No updates received in the last 20s — connection may be idle/closed'}
+          {connectionStatus === 'connecting' && 'Connecting to live updates...'}
+        </div>
+      )}
 
       <Navbar bg="dark" variant="dark" expand="lg" className="px-3">
         <Navbar.Brand as={Link} to="/" className="wu-brand">
