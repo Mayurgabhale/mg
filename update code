@@ -1,4 +1,10 @@
 
+node --max-old-space-size=4096 index.js
+
+
+
+
+
 <--- Last few GCs --->
 
 [21488:0000024143E09000]   576990 ms: Scavenge (interleaved) 3984.9 (4127.5) -> 3969.2 (4127.5) MB, pooled: 16 MB, 5.45 / 0.00 ms  (average mu = 0.130, current mu = 0.117) allocation failure;
