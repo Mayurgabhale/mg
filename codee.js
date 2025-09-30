@@ -1,3 +1,34 @@
+Server running at http://localhost:5000
+✅ MSSQL pool connected
+PS C:\Users\W0024618\desktop\swipeData\employee-ai-insights> npm start
+
+> employee-ai-insights@1.0.0 start
+> node server.js
+
+Server running at http://localhost:5000
+✅ MSSQL pool connected (Pune)
+======== know above is ok,
++++ but afte 20 minute see below ......
+
+
+  ❌ MSSQL global error (Pune) : TimeoutError: operation timed out for an unknown reason  <<<<<<< ????
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+❌ MSSQL pool error (Pune): TimeoutError: operation timed out for an unknown reason <<<<<<???
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+❌ Unhandled Rejection at (Pune) : TimeoutError: operation timed out for an unknown reason <<<,????
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tarn\dist\PendingOperation.js:17:27
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:549:9)
+    at process.processTimers (node:internal/timers:523:7)
+✅ MSSQL pool connected (Pune)
+==============
+  
 // config/db.js — updated
 const sql    = require('mssql');
 const dotenv = require('dotenv');
@@ -34,20 +65,20 @@ async function getPool(attempts = 5) {
   poolPromise = (async () => {
     try {
       const pool = await sql.connect(config);
-      console.log('✅ MSSQL pool connected');
+      console.log('✅ MSSQL pool connected (Pune)');
 
       pool.on('error', err => {
-        console.error('❌ MSSQL pool error:', err);
+        console.error('❌ MSSQL pool error (Pune):', err);
         // free the cached promise so next call will recreate the pool
         poolPromise = null;
       });
 
       return pool;
     } catch (err) {
-      console.error('❌ MSSQL pool connection failed:', err);
+      console.error('❌ MSSQL pool connection failed (Pune) :', err);
       poolPromise = null;
       if (attempts > 0) {
-        console.log(`⏳ Retrying MSSQL connect (${attempts} left)…`);
+        console.log(`⏳ Retrying MSSQL connect (Pune) (${attempts} left)…`);
         await new Promise(res => setTimeout(res, 3000));
         return getPool(attempts - 1);
       }
@@ -57,7 +88,7 @@ async function getPool(attempts = 5) {
 
   // Global handler: reset pool on fatal pool-level errors such as Tarn TimeoutError
   sql.on('error', err => {
-    console.error('❌ MSSQL global error:', err);
+    console.error('❌ MSSQL global error (Pune) :', err);
     // If it's a timeout / pool acquisition issue, reset poolPromise so we reconnect
     if (err && err.name === 'TimeoutError') {
       poolPromise = null;
@@ -65,12 +96,12 @@ async function getPool(attempts = 5) {
   });
 
   process.on('unhandledRejection', (reason) => {
-    console.error('❌ Unhandled Rejection at:', reason);
+    console.error('❌ Unhandled Rejection at (Pune) :', reason);
     // do not crash — but you could choose to exit(1) if desired and rely on a process manager
   });
 
   process.on('uncaughtException', (err) => {
-    console.error('❌ Uncaught Exception (will exit):', err);
+    console.error('❌ Uncaught Exception (will exit) (Pune):', err);
     // prefer letting a process manager restart the process if it's a truly fatal error
     // process.exit(1);
   });
