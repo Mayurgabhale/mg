@@ -1,478 +1,52 @@
-hellow, 
-in this issue is the when this dashboard project is open more time 1 hours or 2,3 hourse
-that time we got this error::  Error loading live data
-listion 
-this error show only when dashboad is open more time 2,3,4,5 hourse that  time i got this errro
-Read belw all files carefullym and how to slove this error and why this came, ok 
-i hove you undrstand better...! 
-+++
-(index):64 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
-(anonymous) @ (index):64
-react-dom-client.development.js:24867 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
-:3008/api/occupancy/live-summary:1  Failed to load resource: net::ERR_NETWORK_IO_SUSPENDED
-:3008/api/occupancy/live-summary:1  Failed to load resource: net::ERR_NETWORK_IO_SUSPENDED
-WebSocketClient.js:13 WebSocket connection to 'ws://10.199.22.57:3000/ws' failed: 
-WebSocketClient @ WebSocketClient.js:13
-:3008/api/occupancy/live-summary:1  Failed to load resource: net::ERR_INTERNET_DISCONNECTED
-WebSocketClient.js:13 WebSocket connection to 'ws://10.199.22.57:3000/ws' failed: 
-WebSocketClient @ WebSocketClient.js:13
-
-++++++++++++++++++++++++++++++
-  
-  // 7) Error state
-  if (error) {
-    return (
-      <Box width="100vw" py={4}>
-        <Typography color="error" align="center">
-          Error loading live data
-        </Typography>
-      </Box>
-    );
-  }
-+++++++++++++++++++++++++++++++++++
-  //C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\Dashboard.jsx
-import React, { useMemo } from 'react';
-import {Container, Box, Typography, Skeleton,Paper} from '@mui/material';
-
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-
-import SummaryCard from '../components/SummaryCard';
-import CompositeChartCard from '../components/CompositeChartCard';
-import PieChartCard from '../components/PieChartCard';
-
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-import { partitionList } from '../services/occupancy.service';
-import buildingCapacities from '../data/buildingCapacities';
-import floorCapacities from '../data/floorCapacities';
-import LoadingSpinner from '../components/LoadingSpinner';
-
-
-import indiaFlag from '../assets/flags/india.png';
-import japanFlag from '../assets/flags/japan.png';
-import malaysiaFlag from '../assets/flags/malaysia.png';
-import philippinesFlag from '../assets/flags/philippines.png';
-
-
-const palette15 = [
-  '#FFC107', '#E57373', '#4CAF50', '#FFEB3B', '#FFD666',
-  '#8BC34A', '#3F51B5', '#9C27B0', '#00BCD4', '#8BC34A',
-  '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'];
-
-const flagMap = {
-  'Pune': indiaFlag,
-  'Quezon City': philippinesFlag,
-  'JP.Tokyo': japanFlag,
-  'MY.Kuala Lumpur': malaysiaFlag,
-  'Taguig City': philippinesFlag,
-  'IN.HYD': indiaFlag
-};
-
-
-const displayNameMap = {
-  'IN.HYD': 'Hyderabad',
-  'JP.Tokyo': 'Tokyo',
-  'MY.Kuala Lumpur': 'Kuala Lumpur',
-  'PH.Quezon': 'Quezon City',
-  'PH.Taguig': 'Taguig City',
-  'Pune': 'Pune',
-};
-
-
-export default function Dashboard() {
-  // 1) Live data hook
-  const { data, loading, error } = useLiveOccupancy(1000);
-
-  // 2) Partitions
-  const regions = data?.realtime || {};
-  const partitions = useMemo(() => {
-    return partitionList
-      .map(name => {
-        const key = Object.keys(regions).find(k => k.includes(name));
-        const p = key && regions[key] ? regions[key] : {};
-        return {
-          name,
-          total: p.total || 0,
-          Employee: p.Employee || 0,
-          Contractor: p.Contractor || 0,
-          floors: p.floors || {},
-          flag: flagMap[name] || null
-        };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [regions]);
-
-  // 3) Totals
-  const todayTot = data?.today?.total || 0;
-  const todayEmp = data?.today?.Employee || 0;
-  const todayCont = data?.today?.Contractor || 0;
-  const realtimeTot = partitions.reduce((sum, p) => sum + p.total, 0);
-  const realtimeEmp = partitions.reduce((sum, p) => sum + p.Employee, 0);
-  const realtimeCont = partitions.reduce((sum, p) => sum + p.Contractor, 0);
-
-  // 4) Regions of interest
-  const pune = partitions.find(p => p.name === 'Pune');
-  const quezonCity = partitions.find(p => p.name === 'Quezon City');
-  const combinedRegions = partitions.filter(p =>
-    ['JP.Tokyo', 'MY.Kuala Lumpur', 'Taguig City','IN.HYD'].includes(p.name)
-  );
-
-  // 5) Pie chart data
-  const quezonData = useMemo(() => [
-    { name: 'Employees', value: quezonCity?.Employee || 0 },
-    { name: 'Contractors', value: quezonCity?.Contractor || 0 }
-  ], [quezonCity?.Employee, quezonCity?.Contractor]);
-
-  const asiaPacData = useMemo(() =>
-    combinedRegions.map(r => ({
-      // name: r.name.replace(/^.*\./, ''),
-      name: displayNameMap[r.name] || r.name.replace(/^.*\./, ''),
-      value: r.total,
-      emp: r.Employee,
-      cont: r.Contractor
-    })),
-    [combinedRegions]
-  );
-
-
-  // 6) Prepare floors + chart configs _before_ any returns
-  // 6a) Get only real floors (drop any that came back Unmapped/"Out of office")
-  const floors = Object.entries(pune?.floors || {})
-    .filter(([floorName, _count]) => floorName !== 'Unmapped');
-
-  const puneChartData = useMemo(() => {
-    // Map only the filtered floors; no Unknown bucket needed
-    return floors.map(([f, headcount]) => {
-      // first try Pune-specific capacity, else global
-      const puneKey = `${f} (Pune)`;
-      const capacity =
-        floorCapacities[puneKey] != null
-          ? floorCapacities[puneKey]
-          : buildingCapacities[f] || 0;
-
-      return {
-        name: f,
-        headcount,
-        capacity
-      };
-    });
-  }, [floors]);
-
-
-
-  const chartConfigs = useMemo(() => {
-    return [
-      {
-        key: 'pune',
-        title: 'Pune',
-        body: pune?.total === 0
-          ? (
-            <Typography color="white" align="center" py={6}>
-              No Pune data
-            </Typography>
-          )
-          : (
-            <CompositeChartCard
-
-              data={puneChartData}
-
-              lineColor={palette15[0]}
-              height={250}
-              sx={{ border: 'none' }}
-            />
-          )
-      },
-
-      {
-        key: 'quezon',
-        title: 'Quezon City',
-        body: quezonCity?.total === 0
-          ? (
-            <Typography color="white" align="center" py={6}>
-              No Quezon City data
-            </Typography>
-          )
-          : (
-
-            <CompositeChartCard
-              title=""
-              data={[
-                {
-                  name: "Quezon City (6thFloor)",
-                  headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
-                  capacity: buildingCapacities?.["Quezon City (6thFloor)"] ?? 0,
-                },
-                {
-                  name: "Quezon City (7thFloor)",
-                  headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
-                  capacity: buildingCapacities?.["Quezon City (7thFloor)"] ?? 0,
-                },
-              ]}
-
-              lineColor={palette15[1]}
-              height={250}
-              sx={{ border: 'none' }}
-            />
-          )
-      },
-      {
-        key: 'combined',
-        title: 'Asia-Pacific',
-        body: combinedRegions.length === 0
-          ? (
-            <Typography color="white" align="center" py={6}>
-              No regional data
-            </Typography>
-          )
-          : (
-            <PieChartCard
-              data={asiaPacData}
-              colors={['#FFBF00', '#FFFAA0', '#B4C424']}
-              height={320}
-              showZeroSlice
-              sx={{ border: 'none' }}
-            />
-          )
-      }
-    ];
-  }, [
-    floors,
-    pune?.total,
-    quezonCity?.floors?.["6th Floor"],
-    quezonCity?.floors?.["7th Floor"],
-    combinedRegions.length,
-    asiaPacData
-  ]);
-
-  // 7) Error state
-  if (error) {
-    return (
-      <Box width="100vw" py={4}>
-        <Typography color="error" align="center">
-          Error loading live data
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          bgcolor: 'rgba(0, 0, 0, 0.85)',
-          zIndex: 9999,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <LoadingSpinner />
-      </Box>
-    );
-  }
-
-
-  // 8) Render
-  return (
-    <>
-      <Header title="APAC Live Occupancy" />
-      <Container
-        maxWidth={false}
-        disableGutters
-        sx={{
-          py: 0,
-          px: 2,
-          background: 'linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)',
-          color: '#f5f5f5',
-        }}
-      >
-        {/* Top Summary Cards */}
-        <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
-          {[
-            { title: "Today's Total Headcount", value: todayTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
-            { title: "Today's Employees Count", value: todayEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#8BC34A' },
-            { title: "Today's Contractors Count", value: todayCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#E57373' },
-            { title: "Realtime Headcount", value: realtimeTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFD180' },
-            { title: "Realtime Employees Count", value: realtimeEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#AED581' },
-            { title: "Realtime Contractors Count", value: realtimeCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#EF5350' },
-          ].map(c => (
-            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
-              <SummaryCard
-                title={c.title}
-                total={c.value}
-                stats={[]}
-                icon={c.icon}
-                sx={{ height: 140, border: `2px solid ${c.border}` }}
-              />
-            </Box>
-          ))}
-        </Box>
-        {/* Region Cards */}
-        <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
-          {loading
-            ? <Skeleton variant="rectangular" width="90%" height={200} />
-            : partitions.map((p, i) => (
-              <Box key={p.name} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
-                <SummaryCard
-                  // title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>{p.name.replace(/^.*\./, '')}</Typography>}
-                  title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>
-                     {displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
-                    </Typography>}
-                  total={p.total}
-                  stats={[{ label: 'Employees', value: p.Employee }, { label: 'Contractors', value: p.Contractor }]}
-                  sx={{ width: '100%', border: `2px solid ${palette15[i % palette15.length]}` }}
-                  icon={<Box component="img" src={p.flag} sx={{ width: 48, height: 32 }} />}
-                />
-              </Box>
-            ))
-          }
-        </Box>
-
-        {/* Main Charts */}
-        <Box display="flex" gap={2} flexWrap="wrap" mb={4}>
-          {chartConfigs.map(({ key, title, body }) => (
-            <Box key={key} sx={{ flex: '1 1 32%', minWidth: 280, height: 405, animation: 'fadeInUp 0.5s' }}>
-              <Paper sx={{ p: 2, height: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid #FFC107', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 2 }}>{title}</Typography>
-                <Box sx={{ flex: 1, overflow: 'hidden' }}>{body}</Box>
-              </Paper>
-            </Box>
-          ))}
-        </Box>
-      </Container>
-      <Footer />
-    </>
-  );
-}
-+++++++++++++
-                        
-//C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\hooks\useLiveOccupancy.js
-
-import { useState, useEffect, useRef } from 'react';
-import { fetchLiveSummary } from '../api/occupancy.service';
-
-export function useLiveOccupancy(interval = 1000) {
-  const [data, setData]     = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState(null);
-  const timer = useRef(null);
-
-  useEffect(() => {
-    let active = true;
-
-    async function load() {
-      try {
-        // fetchLiveSummary now returns cached data immediately if present
-        const json = await fetchLiveSummary();
-        if (!active) return;
-        setData(json);
-        setLoading(false);
-      } catch (e) {
-        if (!active) return;
-        setError(e);
-        setLoading(false);
-      }
-    }
-
-    load();
-    timer.current = setInterval(load, interval);
-
-    return () => {
-      active = false;
-      clearInterval(timer.current);
-    };
-  }, [interval]);
-
-  return { data, loading, error };
-  
-}
-
-
-++++++++++++++++++++++
-            // src/api/occupancy.service.js
-
+// src/api/occupancy.service.js
 const BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3007';
 
-// In‐memory cache
+// In-memory cache (liveSummary now has a timestamp)
 const cache = {
-  liveSummary: null,
-  history: new Map(),  // key: either 'global' or the partition name the backend expects
+  liveSummary: null, // { ts: number, data: any }
+  history: new Map()
 };
 
+const LIVE_TTL = 2000; // ms: return cached copy if last fetch < 2s
 
+// helper: fetch with timeout
+async function fetchWithTimeout(url, opts = {}, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
 
-/**
- * Fetch live summary (always fresh).
- */
-export async function fetchLiveSummary() {
-  const res = await fetch(`${BASE}/api/occupancy/live-summary`);
+export async function fetchLiveSummary({ force = false, timeout = 8000 } = {}) {
+  if (!force && cache.liveSummary && Date.now() - cache.liveSummary.ts < LIVE_TTL) {
+    return cache.liveSummary.data;
+  }
+
+  const res = await fetchWithTimeout(`${BASE}/api/occupancy/live-summary`, {}, timeout);
   if (!res.ok) {
     throw new Error(`Live summary fetch failed: ${res.status}`);
   }
-  return res.json();
-}
-
-
-/**
- * Fetch history (global or per‐partition), with in‐memory caching.
- * @param {string} [location] — e.g. 'IN.Pune' from your front‐end router param
- */
-
-export async function fetchHistory(location) {
-  const codeMap = {
-    'IN.Pune': 'Pune',
-    'MY.Kuala Lumpur': 'MY.Kuala Lumpur',
-    'PH.Quezon': 'Quezon City',
-    'PH.Taguig': 'Taguig City',
-    'JP.Tokyo': 'JP.Tokyo',
-    'IN.HYD':'IN.HYD'
-
-  };
-  
-  const key = location ? codeMap[location] || location : 'global';
-  
-  if (cache.history.has(key)) {
-    return cache.history.get(key);
-  }
-
-  const url = key === 'global' 
-    ? `${BASE}/api/occupancy/history`
-    : `${BASE}/api/occupancy/history/${encodeURIComponent(key)}`;
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`History fetch failed: ${res.status}`);
-  
-  let json = await res.json();
-  
-  // Normalize single-city response to match global structure
-  if (key !== 'global') {
-    json.summaryByDate = json.summaryByDate.map(entry => ({
-      ...entry,
-      partitions: {
-        [key]: {
-          Employee: entry.region?.Employee,
-          Contractor: entry.region?.Contractor,
-          total: entry.region?.total
-        }
-      }
-    }));
-  }
-  
-  cache.history.set(key, json);
+  const json = await res.json();
+  cache.liveSummary = { ts: Date.now(), data: json };
   return json;
 }
-/** Clear in‐memory caches (for dev/testing) */
+
+/* existing fetchHistory / clearCache unchanged except add liveSummary clear */
+export async function fetchHistory(location) {
+  // ... your existing code ...
+}
+
 export function clearCache() {
   cache.liveSummary = null;
   cache.history.clear();
 }
 
-// APAC partition list for any selector UI
 export const partitionList = [
   'IN.Pune',
   'MY.Kuala Lumpur',
@@ -483,3 +57,103 @@ export const partitionList = [
 ];
 
 
+
+
+
+
+
+
+
+......
+.
+
+
+// src/hooks/useLiveOccupancy.js
+import { useState, useEffect, useRef } from 'react';
+import { fetchLiveSummary } from '../api/occupancy.service';
+
+export function useLiveOccupancy(interval = 5000, options = {}) {
+  // default interval increased to 5s for production; you can keep 1000 for dev
+  const pollInterval = interval;
+  const maxErrorCount = options.maxErrorCount ?? 3; // only show error after 3 consecutive failures
+  const maxBackoff = options.maxBackoff ?? 60_000; // 60s
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const mountedRef = useRef(true);
+  const failuresRef = useRef(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    const shouldPollNow = () => !document.hidden && navigator.onLine;
+
+    async function pollOnce() {
+      if (!mountedRef.current) return;
+      if (!shouldPollNow()) {
+        // check again later (small delay) but don't hammer when hidden/offline
+        timerRef.current = setTimeout(pollOnce, 2000);
+        return;
+      }
+
+      try {
+        // try fetching; fetchLiveSummary has a TTL to reduce backend calls
+        const json = await fetchLiveSummary();
+        if (!mountedRef.current) return;
+        setData(json);
+        setLoading(false);
+        setError(null);
+        failuresRef.current = 0;
+        // next normal poll
+        timerRef.current = setTimeout(pollOnce, pollInterval);
+      } catch (err) {
+        // transient failure handling
+        failuresRef.current += 1;
+        console.warn('Live summary fetch failed (attempt):', failuresRef.current, err?.message);
+
+        if (failuresRef.current >= maxErrorCount) {
+          setError(err);
+          setLoading(false);
+        }
+        // exponential backoff: increase delay after failures
+        const backoff = Math.min(maxBackoff, pollInterval * Math.pow(2, failuresRef.current));
+        timerRef.current = setTimeout(pollOnce, backoff);
+      }
+    }
+
+    // react to visibility / online changes: try to resume polling immediately
+    const onVisibilityChange = () => {
+      if (!document.hidden) {
+        // resume ASAP
+        clearTimeout(timerRef.current);
+        pollOnce();
+      }
+    };
+    const onOnline = () => {
+      clearTimeout(timerRef.current);
+      pollOnce();
+    };
+    const onOffline = () => {
+      setError(new Error('Offline'));
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
+    // kick off
+    pollOnce();
+
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timerRef.current);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, [pollInterval, maxErrorCount, maxBackoff]);
+
+  return { data, loading, error };
+}
