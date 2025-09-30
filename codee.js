@@ -1,3 +1,4 @@
+
 chekc belwo error and issue, and try to slove this permenantly ok 
 ⚠️ Denver poolPromise resolved to null — DB likely unavailable
 [DENVER] SSE client disconnected, cleared timers
@@ -32,7 +33,30 @@ chekc belwo error and issue, and try to slove this permenantly ok
     at listOnTimeout (node:internal/timers:549:9) {
   code: 'ECONNCLOSED'
 }
-
+✅ Denver MSSQL pool connected
+⚠️ Denver poolPromise resolved to null — DB likely unavailable
+[DENVER] SSE client disconnected, cleared timers
+❌ fetchNewEvents query error — resetting Denver pool and returning empty: RequestError: Query timed out after 20000ms
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\mssql\lib\tedious\request.js:449:19
+    at Array.forEach (<anonymous>)
+    at Request.userCallback (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\mssql\lib\tedious\request.js:446:46)
+    at Request.callback (C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\request.js:239:14)
+    at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:2694:24
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ECANCEL',
+  originalError: RequestError: Canceled.
+      at C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\node_modules\tedious\lib\connection.js:2694:33
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    code: 'ECANCEL'
+  },
+  number: 'ECANCEL',
+  lineNumber: undefined,
+  state: undefined,
+  class: undefined,
+  serverName: undefined,
+  procName: undefined,
+  precedingErrors: []
+        ____________________________
 async function fetchNewEvents(since) {
   let pool;
   try {
