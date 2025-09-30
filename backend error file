@@ -132,3 +132,54 @@ Error fetching rejection data: TypeError: Cannot read properties of undefined (r
     at runNextTicks (node:internal/process/task_queues:65:5)
     at listOnTimeout (node:internal/timers:549:9)
     at process.processTimers (node:internal/timers:523:7)
+
+
+
+
+
+
+
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+}
+⏳ Retrying Denver pool connect (2 left)…
+✅ MSSQL pool connected (Pune)
+[DENVER] SSE client disconnected, cleared timers
+
+<--- Last few GCs --->
+
+[40056:0000014EE4455000]   665641 ms: Mark-Compact 3996.3 (4137.5) -> 3983.7 (4140.8) MB, pooled: 0 MB, 1408.98 / 0.00 ms  (average mu = 0.111, current mu = 0.027) allocation failure; scavenge might not succeed
+[40056:0000014EE4455000]   668916 ms: Mark-Compact 3999.4 (4141.0) -> 3986.8 (4144.3) MB, pooled: 0 MB, 3244.39 / 0.00 ms  (average mu = 0.041, current mu = 0.009) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 00007FF7DCB8542D node::SetCppgcReference+17693
+ 2: 00007FF7DCAE8248 SSL_get_quiet_shutdown+102712
+ 3: 00007FF7DD66ED41 v8::Isolate::ReportExternalAllocationLimitReached+65
+ 4: 00007FF7DD65B9C6 v8::Function::Experimental_IsNopFunction+2870
+ 5: 00007FF7DD4A8B10 v8::internal::StrongRootAllocatorBase::StrongRootAllocatorBase+31456
+ 6: 00007FF7DD4A5B7A v8::internal::StrongRootAllocatorBase::StrongRootAllocatorBase+19274
+ 7: 00007FF7DD4BB3D1 v8::Isolate::GetHeapProfiler+7793
+ 8: 00007FF7DD4BBC78 v8::Isolate::GetHeapProfiler+10008
+ 9: 00007FF7DD4C6EE1 v8::Isolate::GetHeapProfiler+55681
+10: 00007FF7DD4D6977 v8::Isolate::GetHeapProfiler+119831
+11: 00007FF7DD03D94E v8::base::bits::RoundUpToPowerOfTwo32+177838
+12: 00007FF7DD2FF464 v8::MemorySpan<std::basic_string_view<char,std::char_traits<char> > const >::end+705748
+13: 00007FF7DD6207C7 v8::SharedValueConveyor::SharedValueConveyor+334663
+14: 00007FF7DD61F990 v8::SharedValueConveyor::SharedValueConveyor+331024
+15: 00007FF77D6ED3FA
+PS C:\Users\W0024618\desktop\swipeData\employee-ai-insights>
