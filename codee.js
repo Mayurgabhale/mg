@@ -1,40 +1,27 @@
-
-const { DateTime }   = require('luxon');
-// const { poolConnect, pool, sql } = require('../config/db');
+const { DateTime } = require('luxon');
 const { sql, getPool } = require('../config/db');
 
-const doorZoneMap    = require('../data/doorZoneMap');
-const zoneFloorMap   = require('../data/zoneFloorMap');
+const doorZoneMap  = require('../data/doorZoneMap');
+const zoneFloorMap = require('../data/zoneFloorMap');
+const ertMembers   = require('../data/puneErtMembers.json');
 
-const ertMembers = require('../data/puneErtMembers.json');
-
-// track which door→zone keys we've already warned on
+// Track which door→zone keys we've already warned on
 const warnedKeys = new Set();
 
-//update
+// --- Helpers ---
+
 function getTodayString() {
-  return DateTime.now()
-    .setZone('Asia/Kolkata')
-    .toFormat('yyyy-LL-dd');
+  return DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 }
 
 function normalizeZoneKey(rawDoor, rawDir) {
-  // 1) Ensure it’s a string and trim whitespace
   let door = String(rawDoor || '').trim();
-
-  // 2) Strip any "_HH:MM:SS" or "_XX:XX:XX" suffix (hex codes or times at end)
   door = door.replace(/_[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
-
-  // 3) Collapse multiple spaces into one, then uppercase
   door = door.replace(/\s+/g, ' ').toUpperCase();
-
-  // 4) Pick the direction token exactly as doorZoneMap expects
   const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
-
   return `${door}___${dir}`;
 }
 
-/** Normalize "Last, First" or "First Last" → lowercase "first last" */
 function normalizePersonName(raw) {
   let n = String(raw || '').trim();
   if (n.includes(',')) {
@@ -44,12 +31,9 @@ function normalizePersonName(raw) {
   return n.toLowerCase();
 }
 
-
-// --- new mapDoorToZone ---
 function mapDoorToZone(rawDoor, rawDir) {
   const key = normalizeZoneKey(rawDoor, rawDir);
   const zone = doorZoneMap[key];
-
   if (!zone) {
     if (!warnedKeys.has(key)) {
       console.warn('⛔ Unmapped door–direction key:', key);
@@ -57,24 +41,20 @@ function mapDoorToZone(rawDoor, rawDir) {
     }
     return 'Unknown Zone';
   }
-
-  // IMPORTANT: return the zone exactly as defined in doorZoneMap
   return zone;
 }
 
+// --- Core functions ---
 
 async function fetchNewEvents(since) {
-  // await the shared pool promise instead of poolConnect
   const pool = await getPool();
   const req  = pool.request();
   req.input('since', sql.DateTime2, since);
 
-// console.log('🔎 [Pune] fetchNewEvents called with since =', since.toISOString());
   const { recordset } = await req.query(`
     WITH CombinedQuery AS (
       SELECT
-       DATEADD(MINUTE,-1 *t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-       
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
         t1.ObjectName1,
         CASE
           WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
@@ -91,7 +71,7 @@ async function fetchNewEvents(since) {
         t5d.value AS Direction,
         t1.ObjectName2 AS Door
       FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
       LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
       LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
         ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
@@ -105,14 +85,14 @@ async function fetchNewEvents(since) {
         WHERE Name IN ('Card','CHUID')
       ) sc ON t1.XmlGUID = sc.GUID
       WHERE
-        t1.MessageType     = 'CardAdmitted'
+        t1.MessageType = 'CardAdmitted'
         AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) >@since
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) > @since
     )
     SELECT
       LocaleMessageTime,
       CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
+      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
       EmployeeID,
       PersonGUID,
       ObjectName1,
@@ -125,81 +105,56 @@ async function fetchNewEvents(since) {
     ORDER BY LocaleMessageTime ASC;
   `);
 
-  // console.log(`📥 [Pune] fetched ${recordset.length} rows:`,
-    // recordset.map(r => r.LocaleMessageTime.toISOString()));
-
   return recordset;
 }
 
 async function buildOccupancy(allEvents) {
   const current      = {};
   const uniquePeople = new Map();
-// --- simplified per-event loop inside buildOccupancy ---
-for (const evt of allEvents) {
-  const {
-    EmployeeID, PersonGUID,
-    ObjectName1, PersonnelType,
-    CardNumber, Dateonly,
-    Swipe_Time, Direction, Door
-  } = evt;
 
-  const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
-  const zoneRaw  = mapDoorToZone(Door, Direction);
+  for (const evt of allEvents) {
+    const {
+      EmployeeID, PersonGUID,
+      ObjectName1, PersonnelType,
+      CardNumber, Dateonly,
+      Swipe_Time, Direction, Door
+    } = evt;
 
-  // 1) If we can’t map door+direction to a valid zone, skip this event entirely.
-  if (zoneRaw === 'Unknown Zone') {
-    continue;
-  }
+    const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
+    const zoneRaw  = mapDoorToZone(Door, Direction);
 
-  const zoneLower = zoneRaw.toLowerCase();
+    if (zoneRaw === 'Unknown Zone') continue;
 
-  // OutDirection: eviction only for the real "Out of office"
-  if (Direction === 'OutDirection') {
-    if (zoneLower === 'out of office') {
-      uniquePeople.delete(dedupKey);
-      delete current[dedupKey];
-    } else {
-      // Keep them in headcount, update last-seen
-      uniquePeople.set(dedupKey, PersonnelType);
-      current[dedupKey] = {
-        Dateonly, Swipe_Time,
-        EmployeeID, ObjectName1, CardNumber,
-        PersonnelType,
-        zone: zoneRaw,
-        door: Door,
-        Direction
-      };
+    const zoneLower = zoneRaw.toLowerCase();
+
+    if (Direction === 'OutDirection') {
+      if (zoneLower === 'out of office') {
+        uniquePeople.delete(dedupKey);
+        delete current[dedupKey];
+      } else {
+        uniquePeople.set(dedupKey, PersonnelType);
+        current[dedupKey] = { Dateonly, Swipe_Time, EmployeeID, ObjectName1, CardNumber, PersonnelType, zone: zoneRaw, door: Door, Direction };
+      }
+      continue;
     }
-    continue;
+
+    if (Direction === 'InDirection') {
+      uniquePeople.set(dedupKey, PersonnelType);
+      current[dedupKey] = { Dateonly, Swipe_Time, EmployeeID, ObjectName1, CardNumber, PersonnelType, zone: zoneRaw, door: Door, Direction };
+      continue;
+    }
+
+    uniquePeople.delete(dedupKey);
+    delete current[dedupKey];
   }
 
-  // InDirection → normal check-in
-  if (Direction === 'InDirection') {
-    uniquePeople.set(dedupKey, PersonnelType);
-    current[dedupKey] = {
-      Dateonly, Swipe_Time,
-      EmployeeID, ObjectName1, CardNumber,
-      PersonnelType,
-      zone: zoneRaw,
-      door: Door,
-      Direction
-    };
-    continue;
-  }
-  // Catch-all eviction
-  uniquePeople.delete(dedupKey);
-  delete current[dedupKey];
-}
-
-// live headcounts (only from uniquePeople, which has already evicted all true out-of-office)
-  let employeeCount   = 0;
+  let employeeCount = 0;
   let contractorCount = 0;
   for (const pt of uniquePeople.values()) {
     if (['Employee','Terminated Personnel'].includes(pt)) employeeCount++;
     else contractorCount++;
   }
 
-  // Build zone→people map, but filter out any out-of-office at this final step too
   const zoneMap = {};
   for (const emp of Object.values(current)) {
     const zKey = emp.zone.toLowerCase();
@@ -208,204 +163,125 @@ for (const evt of allEvents) {
     zoneMap[emp.zone].push(emp);
   }
 
-  // zoneDetails
   const zoneDetails = Object.fromEntries(
     Object.entries(zoneMap).map(([zone, emps]) => {
       const byType = emps.reduce((acc, e) => {
-        acc[e.PersonnelType] = (acc[e.PersonnelType]||0) + 1;
+        acc[e.PersonnelType] = (acc[e.PersonnelType] || 0) + 1;
         return acc;
       }, {});
-      return [ zone, { total: emps.length, byPersonnelType: byType, employees: emps } ];
+      return [zone, { total: emps.length, byPersonnelType: byType, employees: emps }];
     })
   );
 
-  // floorBreakdown
   const floorMap = {};
   for (const [zone, data] of Object.entries(zoneDetails)) {
     const floor = zoneFloorMap[zone] || 'Unknown Floor';
     floorMap[floor] = floorMap[floor] || { total: 0, byPersonnelType: {} };
     floorMap[floor].total += data.total;
     for (const [pt, c] of Object.entries(data.byPersonnelType)) {
-      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt]||0) + c;
+      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt] || 0) + c;
     }
   }
-
 
   const ertStatus = Object.fromEntries(
     Object.entries(ertMembers).map(([role, members]) => {
       const list = members.map(m => {
-        // pick the correct name field (JSON uses "Name")
         const rawName = m.name || m.Name;
         const expected = normalizePersonName(rawName);
-
-        // find a matching swipe in current[]
-        const matchEvt = Object.values(current).find(e => {
-          return normalizePersonName(e.ObjectName1) === expected;
-        });
-        return {
-          ...m,
-          present: !!matchEvt,
-          zone:    matchEvt ? matchEvt.zone : null
-        };
-     });
-      return [ role, list ];
+        const matchEvt = Object.values(current).find(e => normalizePersonName(e.ObjectName1) === expected);
+        return { ...m, present: !!matchEvt, zone: matchEvt ? matchEvt.zone : null };
+      });
+      return [role, list];
     })
   );
 
   return {
-    asOf:             new Date().toISOString(),
-    summary:          Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
-    zoneBreakdown:    Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
-    floorBreakdown:   Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
-    details:          zoneMap,
+    asOf: new Date().toISOString(),
+    summary: Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
+    zoneBreakdown: Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
+    floorBreakdown: Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
+    details: zoneMap,
     personnelSummary: { employees: employeeCount, contractors: contractorCount },
-     ertStatus,
-  
-  personnelBreakdown: (() => {
-    const map = new Map();
-    // uniquePeople: Map<dedupKey, PersonnelType>
-    for (const pt of uniquePeople.values()) {
-      map.set(pt, (map.get(pt) || 0) + 1);
-    }
-    return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
-  })(),
+    ertStatus,
+    personnelBreakdown: (() => {
+      const map = new Map();
+      for (const pt of uniquePeople.values()) map.set(pt, (map.get(pt)||0)+1);
+      return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
+    })()
   };
 }
 
-
-/**
- * Build “visited today” from the same in‐memory stream
- *
- * @param {Array} allEvents  - events where evt.Dateonly is already local yyyy-MM-dd
- * @param {DateTime|Date|string} [asOf] - optional Luxon DateTime, JS Date or yyyy-MM-dd string.
- *                                       If provided, "today" will be computed from this instead
- *                                       of DateTime.now().setZone('Asia/Kolkata').
- */
 function buildVisitedToday(allEvents, asOf) {
-  // Determine "today" in Asia/Kolkata:
   let today;
   if (asOf) {
-    // Accept Luxon DateTime, JS Date, or plain yyyy-MM-dd string
-    if (typeof asOf === 'string') {
-      today = asOf; // assume already 'yyyy-LL-dd'
-    } else if (asOf instanceof Date) {
-      today = DateTime.fromJSDate(asOf, { zone: 'Asia/Kolkata' }).toFormat('yyyy-LL-dd');
-    } else if (asOf && typeof asOf.toFormat === 'function') {
-      // assume Luxon DateTime
-      today = asOf.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-    } else {
-      // fallback to now
-      today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-    }
-  } else {
-    // default behaviour: "today" is now in Kolkata
-    today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-  }
+    if (typeof asOf === 'string') today = asOf;
+    else if (asOf instanceof Date) today = DateTime.fromJSDate(asOf, { zone: 'Asia/Kolkata' }).toFormat('yyyy-LL-dd');
+    else if (asOf && typeof asOf.toFormat === 'function') today = asOf.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    else today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  } else today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-  // Use evt.Dateonly (already “yyyy-MM-dd” in local zone) to pick out today's InDirection swipes
-  const todayIns = allEvents.filter(evt => {
-    return (
-      evt.Direction === 'InDirection' &&
-      evt.Dateonly === today
-    );
-  });
-
-  // Dedupe by PersonGUID → keep the latest swipe
+  const todayIns = allEvents.filter(evt => evt.Direction === 'InDirection' && evt.Dateonly === today);
   const dedup = new Map();
   for (const e of todayIns) {
-    const key = e.PersonGUID; // same as original logic
+    const key = e.PersonGUID;
     const prev = dedup.get(key);
-    // Compare LocaleMessageTime lexicographically is fine for ISO strings; keep original behavior
-    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) {
-      dedup.set(key, e);
-    }
+    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) dedup.set(key, e);
   }
-
   const finalList = Array.from(dedup.values());
-
-  // Separate employees vs contractors (preserve original classification list)
-  const employees = finalList.filter(e =>
-    !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management']
-      .includes(e.PersonnelType)
-  ).length;
+  const employees = finalList.filter(e => !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management'].includes(e.PersonnelType)).length;
   const contractors = finalList.length - employees;
-
   return { employees, contractors, total: finalList.length };
 }
 
+// --- SSE endpoint ---
 
-
-/** Server‐Sent‐Events endpoint */
 exports.getLiveOccupancy = async (req, res) => {
   try {
-    // wait for the shared pool to be ready
     await getPool();
 
     res.writeHead(200, {
-      'Content-Type':  'text/event-stream',
+      'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection':    'keep-alive'
+      'Connection': 'keep-alive'
     });
     res.write('\n');
 
-    // pull last 24h on startup
-    // let lastSeen = new Date(Date.now() - 24*60*60*1000);
     let lastSeen = new Date();
     const events = [];
 
     const push = async () => {
-
-    // Option B: Recompute date from the JS timestamp in Asia/Kolkata:
-    const todayKolkata = DateTime.now().setZone('Asia/Kolkata').toISODate();
-    for (let i = events.length - 1; i >= 0; i--) {
-      const ts = DateTime.fromJSDate(events[i].LocaleMessageTime, { zone: 'utc' })
-                     .setZone('Asia/Kolkata')
-                     .toISODate();
-      if (ts !== todayKolkata) {
-        events.splice(i, 1);
+      const todayKolkata = DateTime.now().setZone('Asia/Kolkata').toISODate();
+      for (let i = events.length - 1; i >= 0; i--) {
+        const ts = DateTime.fromJSDate(events[i].LocaleMessageTime, { zone: 'utc' })
+                       .setZone('Asia/Kolkata').toISODate();
+        if (ts !== todayKolkata) events.splice(i, 1);
       }
-    }
 
       const fresh = await fetchNewEvents(lastSeen);
-      //  console.log('📥 New events fetched:', fresh.length);
       if (fresh.length) {
-        // lastSeen = fresh[fresh.length - 1].LocaleMessageTime;
-         lastSeen = new Date();
+        lastSeen = new Date();
         events.push(...fresh);
       }
-      // build occupancy + today counts
-      const occupancy  = await buildOccupancy(events);
+
+      const occupancy = await buildOccupancy(events);
       const todayStats = buildVisitedToday(events);
 
       occupancy.totalVisitedToday = todayStats.total;
-      occupancy.visitedToday      = {
-        employees:   todayStats.employees,
-        contractors: todayStats.contractors,
-        total:       todayStats.total
-      };
+      occupancy.visitedToday = { ...todayStats };
 
-  
-
-      // add an `id:` so EventSource treats even identical payloads as “new”
-      
       const sid = Date.now();
       res.write(`id: ${sid}\n`);
       res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
 
-    
-      if (typeof res.flush === 'function') {
-        res.flush();
-      }
+      if (typeof res.flush === 'function') res.flush();
+    };
 
-     };
     await push();
     const timer = setInterval(push, 2000);
     req.on('close', () => clearInterval(timer));
 
   } catch (err) {
     console.error('Live occupancy SSE error:', err);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+    if (!res.headersSent) res.status(500).json({ error: 'Internal Server Error' });
   }
 };
