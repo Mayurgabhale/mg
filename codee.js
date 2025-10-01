@@ -1,3 +1,149 @@
+
+
+// src/App.js
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense
+} from 'react';
+import {
+  Container,
+  Navbar,
+  Nav,
+  Button,
+  InputGroup,
+  FormControl,
+  Spinner
+} from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
+
+import './App.css';
+
+// Lazy load pages
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
+const ErtPage = lazy(() => import('./pages/ErtPage'));
+const ZoneDetailsTable = lazy(() => import('./components/ZoneDetailsTable'));
+
+
+  // Error 
+  function ErrorBanner({ status }) {
+    if (status === 'open') return null;
+
+    let message = '';
+    if (status === 'connecting') {
+      message = 'Connecting to live data...';
+    } else if (status === 'error') {
+      message = '⚠️ Live data connection lost. Retrying...';
+    }
+
+    return (
+      <div style={{
+        background: status === 'error' ? '#b00020' : '#444',
+        color: '#fff',
+        padding: '8px 16px',
+        borderLeft: status === 'error' ? '4px solid #ff9800' : '4px solid #2196f3',
+        marginBottom: '8px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <span>{message}</span>
+        {status === 'error' && (
+          <button
+            className="btn btn-sm btn-outline-light"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  }
+
+// -----------------------------
+// TimeTravelControl
+// -----------------------------
+function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
+  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
+
+  useEffect(() => {
+    setLocal(currentTimestamp ? isoToInput(currentTimestamp) : '');
+  }, [currentTimestamp]);
+
+  const handleApply = useCallback(() => {
+    if (!local) return;
+    const selected = new Date(local);
+    if (selected > new Date()) {
+      return window.alert("Please select a valid time (cannot be future)");
+    }
+    const [datePart, timePart] = local.split('T');
+    onApply(datePart, timePart);
+  }, [local, onApply]);
+
+  const handleLive = useCallback(() => {
+    setLocal('');
+    onLive();
+  }, [onLive]);
+
+
+
+
+
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
+      <InputGroup>
+        <FormControl
+          type="datetime-local"
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          placeholder="Select date & time"
+        />
+      </InputGroup>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
+          {loading ? <><Spinner animation="border" size="sm" /> Applying</> : 'Apply'}
+        </Button>
+        <Button variant="warning" onClick={handleLive} disabled={loading}>Live</Button>
+      </div>
+    </div>
+  );
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function isoToInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// -----------------------------
+// ZoneDetailsPage
+// -----------------------------
+const ZoneDetailsPage = React.memo(function ZoneDetailsPage({ detailsData }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-2" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+      </div>
+      <Suspense fallback={<div>Loading details…</div>}>
+        <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+      </Suspense>
+    </>
+  );
+});
+
 // -----------------------------
 // Main App
 // -----------------------------
@@ -27,7 +173,6 @@ function App() {
   const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting | open | error
-  const [dashboardLoading, setDashboardLoading] = useState(true); // 👈 NEW
 
   const setPayload = useCallback(p => {
     if (!p || typeof p !== 'object') return;
@@ -43,7 +188,6 @@ function App() {
       ertStatus: p.ertStatus || {}
     };
     setLiveData(prev => ({ ...prev, ...safe }));
-    setDashboardLoading(false); // 👈 mark as loaded when first payload arrives
   }, []);
 
   // ------------------ SSE Live Updates ------------------
@@ -71,7 +215,7 @@ function App() {
           setTimeout(() => {
             setPayload(sseBufferRef.current);
             sseFlushScheduledRef.current = false;
-          }, 500);
+          }, 500); // max UI update every 0.5s
         }
       } catch (err) {
         console.error('[SSE] parse error', err);
@@ -87,60 +231,105 @@ function App() {
     return () => es.close();
   }, [timeTravelMode, API_ORIGIN, setPayload]);
 
+  // ------------------ Time Travel ------------------
+  const fetchSnapshot = useCallback(async (dateStr, timeStr) => {
+    setTimeTravelLoading(true);
+    const safeTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+    const url = `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(safeTime)}`;
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+      const p = await resp.json();
+      setPayload(p);
+      setTimeTravelMode(true);
+      setTimeTravelTimestamp(p?.asOfLocal || `${dateStr} ${safeTime}`);
+    } catch (err) { console.error(err); }
+    finally { setTimeTravelLoading(false); }
+  }, [API_ORIGIN, setPayload]);
+
+  // 📝📝📝📝📝📝📝📝
+
+  const clearTimeTravel = useCallback(async () => {
+    setTimeTravelLoading(true);
+    try {
+      setTimeTravelMode(false);
+      setTimeTravelTimestamp(null);
+      const resp = await fetch(`${API_ORIGIN}/api/current-occupancy`);
+      if (resp.ok) setPayload(await resp.json());
+    } finally { setTimeTravelLoading(false); }
+  }, [API_ORIGIN, setPayload]);
+
+
+  // 📝📝📝📝📝📝📝📝
+
+
   // ------------------ Render ------------------
   return (
     <>
       <Navbar bg="dark" variant="dark" expand="lg" className="px-3">
         <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
-        {/* ... navbar content ... */}
+        <Navbar.Toggle aria-controls="main-navbar" />
+        <Navbar.Collapse id="main-navbar">
+          <Nav className="ms-auto align-items-center gap-2">
+            <div className="time-travel-wrapper me-2">
+              <TimeTravelControl
+                currentTimestamp={timeTravelTimestamp}
+                onApply={fetchSnapshot}
+                onLive={clearTimeTravel}
+                loading={timeTravelLoading}
+              />
+            </div>
+            <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
+            <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
+            <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
+            <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
+            <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun /></Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
       </Navbar>
 
       <Container fluid className="mt-2">
         {timeTravelMode && (
-          <div style={{ background: '#434d44', color: '#FFF', padding: '8px 16px',
-                        display: 'flex', justifyContent: 'space-between',
-                        alignItems: 'center', borderLeft: '4px solid rgb(0, 255, 21)',
-                        marginBottom: 8 }}>
+          <div style={{ background: '#434d44', color: '#FFF', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid rgb(0, 255, 21)', marginBottom: 8 }}>
             <div>Viewing snapshot: <strong>{new Date(timeTravelTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</strong></div>
             <div>
-              <button className="btn btn-sm btn-outline-warning"
-                      onClick={() => setTimeTravelMode(false)}
-                      disabled={timeTravelLoading}>
-                Return to Live
-              </button>
+              <button className="btn btn-sm btn-outline-warning" onClick={clearTimeTravel} disabled={timeTravelLoading}>Return to Live</button>
             </div>
           </div>
         )}
+        {/* 👇 NEW ERROR UI */}
         <ErrorBanner status={connectionStatus} />
 
-        {dashboardLoading ? (
-          <div className="d-flex justify-content-center align-items-center"
-               style={{ minHeight: '60vh' }}>
-            <Spinner animation="border" role="status" variant="warning" />
-            <span className="ms-2" style={{ color: '#FFC72C' }}>Loading live dashboard…</span>
-          </div>
-        ) : (
-          <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
-            <Routes>
-              <Route path="/" element={
-                <DashboardHome
-                  summaryData={liveData.summary}
-                  detailsData={liveData.details}
-                  floorData={liveData.floorBreakdown}
-                  zoneBreakdown={liveData.zoneBreakdown}
-                  personnelBreakdown={liveData.personnelBreakdown}
-                  totalVisitedToday={liveData.totalVisitedToday}
-                  personnelSummary={liveData.personnelSummary}
-                  visitedToday={liveData.visitedToday}
-                  ertStatus={liveData.ertStatus}
-                />
-              } />
-              <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-              <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
-            </Routes>
-          </Suspense>
-        )}
+        <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
+          <Routes>
+            <Route path="/" element={
+              <DashboardHome
+                summaryData={liveData.summary}
+                detailsData={liveData.details}
+                floorData={liveData.floorBreakdown}
+                zoneBreakdown={liveData.zoneBreakdown}
+                personnelBreakdown={liveData.personnelBreakdown}
+                totalVisitedToday={liveData.totalVisitedToday}
+                personnelSummary={liveData.personnelSummary}
+                visitedToday={liveData.visitedToday}
+                ertStatus={liveData.ertStatus}
+              />
+            } />
+            <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+            <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
+          </Routes>
+        </Suspense>
       </Container>
     </>
+  );
+}
+
+export default function WrappedApp() {
+  return (
+    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+      <div className="dark-theme">
+        <App />
+      </div>
+    </BrowserRouter>
   );
 }
