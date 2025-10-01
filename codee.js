@@ -1,7 +1,7 @@
-const { recordset } = await reqDb.query(`
+const { recordset } = await req.query(`
   WITH CombinedQuery AS (
     SELECT
-      t1.MessageUTC,   -- always UTC
+      DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
       t1.ObjectName1,
       CASE
         WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
@@ -20,7 +20,7 @@ const { recordset } = await reqDb.query(`
       t2.Text4 AS CompanyName,          -- ✅ added
       t2.Text5 AS PrimaryLocation       -- ✅ added
     FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-    LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+    LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
     LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
     LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
       ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
@@ -34,12 +34,24 @@ const { recordset } = await reqDb.query(`
       WHERE Name IN ('Card','CHUID')
     ) sc ON t1.XmlGUID = sc.GUID
     WHERE
-      t1.MessageType     = 'CardAdmitted'
+      t1.MessageType = 'CardAdmitted'
       AND t1.PartitionName2 = 'APAC.Default'
-      AND t1.MessageUTC <= @until
-      AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
+      AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) > @since
   )
-  SELECT *
+  SELECT
+    LocaleMessageTime,
+    CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+    CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
+    EmployeeID,
+    PersonGUID,
+    ObjectName1,
+    PersonnelType,
+    CardNumber,
+    AdmitCode,
+    Direction,
+    Door,
+    CompanyName,         -- ✅ included in final output
+    PrimaryLocation      -- ✅ included in final output
   FROM CombinedQuery
-  ORDER BY MessageUTC ASC;
+  ORDER BY LocaleMessageTime ASC;
 `);
