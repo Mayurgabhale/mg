@@ -1,3 +1,14 @@
+
+<Container fluid className="mt-4">
+  {/* 👇 NEW ERROR UI */}
+  <ErrorBanner status={connectionStatus} />
+
+  {snapshotLabel}
+  {state.snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{state.snapshotError}</span>}
+
+
+
+....
 const [connectionStatus, setConnectionStatus] = useState('connecting');
 
 
