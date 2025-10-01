@@ -1,284 +1,42 @@
-function ErrorBanner({ status }) {
-  if (status === 'open') return null;
-
-  let message = '';
-  if (status === 'connecting') {
-    message = 'Connecting to live data...';
-  } else if (status === 'error') {
-    message = '⚠️ Live data connection lost. Retrying...';
-  }
-
-  return (
-    <div style={{
-      background: status === 'error' ? '#b00020' : '#444',
-      color: '#fff',
-      padding: '8px 16px',
-      borderLeft: status === 'error' ? '4px solid #ff9800' : '4px solid #2196f3',
-      marginBottom: '8px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }}>
-      <span>{message}</span>
-      {status === 'error' && (
-        <button
-          className="btn btn-sm btn-outline-light"
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </button>
-      )}
-    </div>
-  );
-}
+const [connectionStatus, setConnectionStatus] = useState('connecting');
 
 
 
-
-<Container fluid className="mt-2">
-  {timeTravelMode && (
-    <div style={{ background: '#434d44', color: '#FFF', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid rgb(0, 255, 21)', marginBottom: 8 }}>
-      <div>
-        Viewing snapshot: <strong>{new Date(timeTravelTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</strong>
-      </div>
-      <div>
-        <button className="btn btn-sm btn-outline-warning" onClick={clearTimeTravel} disabled={timeTravelLoading}>Return to Live</button>
-      </div>
-    </div>
-  )}
-
-  {/* 👇 NEW ERROR UI */}
-  <ErrorBanner status={connectionStatus} />
-
-  <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
-    <Routes>
-      <Route path="/" element={
-        <DashboardHome
-          summaryData={liveData.summary}
-          detailsData={liveData.details}
-          floorData={liveData.floorBreakdown}
-          zoneBreakdown={liveData.zoneBreakdown}
-          personnelBreakdown={liveData.personnelBreakdown}
-          totalVisitedToday={liveData.totalVisitedToday}
-          personnelSummary={liveData.personnelSummary}
-          visitedToday={liveData.visitedToday}
-          ertStatus={liveData.ertStatus}
-        />
-      }/>
-      <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-      <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
-    </Routes>
-  </Suspense>
-</Container>
+......
 
 
-same for this 
+useEffect(() => {
+  const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
 
-// client-denver/src/App.js
-// src/App.js
-import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
-import { Container, Navbar, Nav, Form, Button, InputGroup } from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-import OverlayTrigger from "react-bootstrap/OverlayTrigger";
-import Tooltip from "react-bootstrap/Tooltip";
-import './App.css';
+  es.onopen = () => {
+    setConnectionStatus('open');
+  };
 
-// Lazy load pages
-const DashboardHome = lazy(() => import('./pages/DashboardHome'));
-const FloorDetailsPage = lazy(() => import('./pages/FloorDetailsPage'));
-const DenverInOutInconsistencyPage = lazy(() => import('./pages/DenverInOutInconsistency'));
-
-export default function App() {
-  const [state, setState] = useState({
-    floorData: [],
-    personnelBreakdown: [],
-    totalVisitedToday: 0,
-    personnelSummary: { employees: 0, contractors: 0 },
-    visitedToday: { employees: 0, contractors: 0, total: 0 },
-    floorInOutSummary: [],
-    liveVisitedOccupants: [],
-    visitedOccupants: [],
-    inOutData: null,
-    loadingInOut: true,
-    inOutError: null,
-    snapshotMode: false,
-    snapshotTime: '',
-    snapshotDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' }),
-    snapshotLoading: false,
-    snapshotError: null,
-    snapshotData: null
-  });
-
-  // SSE for live occupancy
-  useEffect(() => {
-    const es = new EventSource('http://localhost:5000/api/live-occupancy-denver');
-
-    es.onmessage = e => {
-      try {
-        const p = JSON.parse(e.data);
-        setState(prev => ({
-          ...prev,
-          floorData: p.floorBreakdown || [],
-          personnelBreakdown: p.personnelBreakdown || [],
-          totalVisitedToday: p.totalVisitedToday || 0,
-          personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
-          visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
-          floorInOutSummary: p.floorInOutSummary || [],
-          liveVisitedOccupants: p.visitedOccupants || [],
-          visitedOccupants: prev.snapshotMode ? prev.visitedOccupants : (p.visitedOccupants || [])
-        }));
-      } catch (err) {
-        console.error('SSE parse error:', err);
-      }
-    };
-
-    es.onerror = err => {
-      console.error('SSE error:', err);
-      es.close();
-    };
-
-    return () => es.close();
-  }, []);
-
-  // Fetch in/out inconsistency once
-  useEffect(() => {
-    fetch('http://localhost:5000/api/inout-inconsistency-denver')
-      .then(res => res.ok ? res.json() : Promise.reject(`HTTP ${res.status} - ${res.statusText}`))
-      .then(data => setState(prev => ({ ...prev, inOutData: data.floorInconsistency || [], loadingInOut: false })))
-      .catch(err => setState(prev => ({ ...prev, inOutError: err.toString(), loadingInOut: false })));
-  }, []);
-
-  // Snapshot handlers
-  const handleSnapshotTimeChange = e => setState(prev => ({ ...prev, snapshotTime: e.target.value, snapshotError: null }));
-  const handleSnapshotDateChange = e => setState(prev => ({ ...prev, snapshotDate: e.target.value, snapshotError: null }));
-
-  function getDenverNowIsoString() {
-    const fmt = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Denver',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-    });
-    const parts = fmt.formatToParts(new Date());
-    const m = {};
-    parts.forEach(p => { if (p.type !== 'literal') m[p.type] = p.value; });
-    return `${m.year}-${m.month}-${m.day}T${m.hour}:${m.minute}:${m.second}`;
-  }
-
-  const applySnapshot = async () => {
-    const { snapshotTime, snapshotDate } = state;
-    if (!snapshotTime || !snapshotDate) {
-      setState(prev => ({ ...prev, snapshotError: 'Select date and time first.' }));
-      return;
-    }
-
-    const timeForApi = snapshotTime.length === 5 ? `${snapshotTime}:00` : snapshotTime;
-    const snapshotIso = `${snapshotDate}T${timeForApi}`;
-    const nowDenverIso = getDenverNowIsoString();
-
-    if (snapshotIso > nowDenverIso) {
-      const msg = 'Snapshot cannot be in the future.';
-      setState(prev => ({ ...prev, snapshotError: msg }));
-      return;
-    }
-
-    setState(prev => ({ ...prev, snapshotLoading: true, snapshotError: null }));
+  es.onmessage = e => {
     try {
-      const resp = await fetch(`http://localhost:5000/api/occupancy-at-time-denver?date=${encodeURIComponent(snapshotDate)}&time=${encodeURIComponent(timeForApi)}`);
-      if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
-      const json = await resp.json();
+      const p = JSON.parse(e.data);
       setState(prev => ({
         ...prev,
-        snapshotData: json,
-        visitedOccupants: json.visitedOccupants || [],
-        snapshotMode: true
+        floorData: p.floorBreakdown || [],
+        personnelBreakdown: p.personnelBreakdown || [],
+        totalVisitedToday: p.totalVisitedToday || 0,
+        personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+        visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+        floorInOutSummary: p.floorInOutSummary || [],
+        liveVisitedOccupants: p.visitedOccupants || [],
+        visitedOccupants: prev.snapshotMode ? prev.visitedOccupants : (p.visitedOccupants || [])
       }));
     } catch (err) {
-      setState(prev => ({ ...prev, snapshotError: err.message || 'Failed to fetch snapshot', snapshotData: null, snapshotMode: false }));
-    } finally {
-      setState(prev => ({ ...prev, snapshotLoading: false }));
+      console.error('SSE parse error:', err);
+      setConnectionStatus('error');
     }
   };
 
-  const clearSnapshot = () => {
-    setState(prev => ({
-      ...prev,
-      snapshotMode: false,
-      snapshotData: null,
-      snapshotTime: '',
-      snapshotError: null,
-      snapshotLoading: false,
-      visitedOccupants: prev.liveVisitedOccupants
-    }));
+  es.onerror = err => {
+    console.error('SSE error:', err);
+    setConnectionStatus('error');
+    es.close();
   };
 
-  // Memoized active data
-  const activeFloorData = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.floorBreakdown || [] : state.floorData, [state.snapshotMode, state.snapshotData, state.floorData]);
-  const activePersonnelBreakdown = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.personnelBreakdown || [] : state.personnelBreakdown, [state.snapshotMode, state.snapshotData, state.personnelBreakdown]);
-  const activeVisitedOccupants = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.visitedOccupants || [] : state.visitedOccupants, [state.snapshotMode, state.snapshotData, state.visitedOccupants]);
-  const activeTotalVisitedToday = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.totalVisitedToday || 0 : state.totalVisitedToday, [state.snapshotMode, state.snapshotData, state.totalVisitedToday]);
-  const activePersonnelSummary = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.personnelSummary || { employees: 0, contractors: 0 } : state.personnelSummary, [state.snapshotMode, state.snapshotData, state.personnelSummary]);
-  const activeVisitedToday = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.visitedToday || { employees: 0, contractors: 0, total: 0 } : state.visitedToday, [state.snapshotMode, state.snapshotData, state.visitedToday]);
-  const activeFloorInOutSummary = useMemo(() => state.snapshotMode && state.snapshotData ? state.snapshotData.floorInOutSummary || [] : state.floorInOutSummary, [state.snapshotMode, state.snapshotData, state.floorInOutSummary]);
-
-  let snapshotLabel = null;
-  if (state.snapshotMode && state.snapshotData) {
-    const asOfLocal = state.snapshotData.asOfLocal || state.snapshotData.asOf || state.snapshotData.asOfUTC;
-    const formatted = asOfLocal ? new Date(asOfLocal).toLocaleString('en-US', { timeZone: 'America/Denver' }) : `${state.snapshotDate} ${state.snapshotTime}`;
-    snapshotLabel = <div style={{ background: '#363d37', color: '#FFF', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid rgb(11,248,3)', marginBottom: 8 }}> Snapshot: {formatted} (Denver) </div>;
-  }
-
-  return (
-    <BrowserRouter>
-      <div className="dark-theme">
-        <Navbar bg="dark" variant="dark" expand="lg" className="px-4 navbar-infographic">
-          <Navbar.Brand as={Link} to="/" className="wu-brand">Live Occupancy — Western Union Denver</Navbar.Brand>
-          <Nav className="ms-auto align-items-center">
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-dashboard">Dashboard</Tooltip>}>
-              <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
-            </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-history">History</Tooltip>}>
-              <Nav.Link href="http://10.199.22.57:3002/partition/US.CO.OBS/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
-            </OverlayTrigger>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-details">Details</Tooltip>}>
-              <Nav.Link as={Link} to="/floor-details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
-            </OverlayTrigger>
-            <Form className="d-flex align-items-center ms-3" onSubmit={e => e.preventDefault()}>
-              <InputGroup>
-                <Form.Control type="date" value={state.snapshotDate} onChange={handleSnapshotDateChange} style={{ maxWidth: 150 }} />
-                <Form.Control type="time" step="1" value={state.snapshotTime} onChange={handleSnapshotTimeChange} style={{ maxWidth: 120 }} />
-                <Button variant="outline-light" onClick={applySnapshot} disabled={state.snapshotLoading}>{state.snapshotLoading ? 'Loading…' : 'Apply'}</Button>
-                <Button variant="outline-secondary" onClick={clearSnapshot} className="ms-1">Clear</Button>
-              </InputGroup>
-            </Form>
-            <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun color="#FFC72C" /></Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Container fluid className="mt-4">
-          {snapshotLabel}
-          {state.snapshotError && <span style={{ color: 'salmon', marginLeft: 10 }}>{state.snapshotError}</span>}
-
-          <Suspense fallback={<div>Loading dashboard...</div>}>
-            <Routes>
-              <Route path="/" element={
-                <DashboardHome
-                  personnelSummary={activePersonnelSummary}
-                  totalVisitedToday={activeTotalVisitedToday}
-                  visitedToday={activeVisitedToday}
-                  visitedOccupants={activeVisitedOccupants}
-                  floorData={activeFloorData}
-                  personnelBreakdown={activePersonnelBreakdown}
-                  floorInOutSummary={activeFloorInOutSummary}
-                  rejectionSnapshot={state.snapshotMode && state.snapshotData ? state.snapshotData.rejections || state.snapshotData.rejectionAllDetailsToday || [] : null}
-                />
-              } />
-              <Route path="/floor-details" element={<FloorDetailsPage floorData={activeFloorData} floorInOutSummary={activeFloorInOutSummary} visitedOccupants={activeVisitedOccupants} />} />
-              <Route path="/inout-inconsistency-denver" element={<DenverInOutInconsistencyPage data={state.inOutData} loading={state.loadingInOut} error={state.inOutError} />} />
-            </Routes>
-          </Suspense> {/* <-- Fixed: Suspense properly closed */}
-        </Container>
-      </div>
-    </BrowserRouter>
-  );
-}
+  return () => es.close();
+}, []);
