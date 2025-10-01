@@ -1,5 +1,6 @@
 C:\Users\W0024618\Desktop\swipeData\client\src\components
 
+
 Know i want to crerte new component compnay wise summary, 
 and in this dashbord page, look like atractive dashboard
 in this multiple setion we will and 
