@@ -1,271 +1,300 @@
-id: 1759308577038
-data: {"asOfLocal":"2025-10-01T02:49:37.038-06:00","asOfUTC":"2025-10-01T08:49:37.038Z","currentCount":4,"floorBreakdown":[{"floor":"Floor 11","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-10-
-  id: 1759308586685
-data: {"asOfLocal":"2025-10-01T02:49:46.685-06:00","asOfUTC":"2025-10-01T08:49:
-  : heartbeat
+once is referes or reload the page, that time, i want to diplsy count/occupany, 
+very quickly, wihtou any taking time, that time diplsy count 
+(if i want like that what we want to do for this, ) 
+// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
+const { DateTime } = require('luxon');
+const { sql, getPool } = require('../config/db');
 
-id: 1759308589994
-data: {"asOfLocal":"2025-10-01T02:49:49.994-06:00","asOfUTC":"2025-10-01T08:49:49.994Z","currentCount":4,"floorBreakdown":[{"floor":"Floor 11","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025
-  -10-01T00:15:16.000Z","Dateonly":"2025-10-01","Swipe_Time":"00:15:16","ObjectName1":"Lemus, Genesis","EmployeeID":"W0027745","PersonGUID":"E78FB912-A154-4790-B213-
-: heartbeat
+const doorZoneMap  = require('../data/doorZoneMap');
+const zoneFloorMap = require('../data/zoneFloorMap');
+const ertMembers   = require('../data/puneErtMembers.json');
 
-id: 1759308604938
-data: {"asOfLocal":"2025-10-01T02:50:04.938-06:00","asOfUTC":"2025-10-01T08:50:04.938Z","currentCount":4,"floorBreakdown":[{"floor":"Floor 11","total":1,"
-                                                                                                                                                                                                                              
-  I want to fectch data continuaslsy wihotu any hearrtbeact every 1 seconds ok 
-  
-                                                                                                                                                                                                                            
-                                                                                                                            
-                                                                                                                            
-
-// controllers/denverLiveOccupancyController.js
-
-const { DateTime }       = require('luxon');
-const { denver }         = require('../config/siteConfig');
-const doorFloorMap       = require('../data/denverDoorFloorMap');
-const { monitoredDoors } = require('../data/strictDoorList');
-const sql                = require('mssql');
-const normalizeKey       = require('../data/normalizeKey');
-
+// Track which door→zone keys we've already warned on
 const warnedKeys = new Set();
 
+// --- Helpers ---
 
-// Increase timeout and add retry logic
-async function safeQueryWithTimeout(req, sqlText, timeoutMs = 60000) { // Increased to 60s
-  let timer = null;
-  let timedOut = false;
+function getTodayString() {
+  return DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+}
 
-  const cancelIfTimeout = () => {
-    timedOut = true;
-    try {
-      if (typeof req.cancel === 'function') req.cancel();
-    } catch (e) {
-      // ignore
-    }
-  };
+function normalizeZoneKey(rawDoor, rawDir) {
+  let door = String(rawDoor || '').trim();
+  door = door.replace(/_[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
+  door = door.replace(/\s+/g, ' ').toUpperCase();
+  const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
+  return `${door}___${dir}`;
+}
 
-  const qPromise = (async () => {
-    try {
-      const result = await req.query(sqlText);
-      return result;
-    } finally {
-      if (timer) clearTimeout(timer);
-    }
-  })();
-
-  timer = setTimeout(cancelIfTimeout, timeoutMs);
-
-  try {
-    const res = await qPromise;
-    if (timedOut) throw new Error('Query canceled after timeout');
-    return res;
-  } catch (err) {
-    if (timedOut) err.message = `Query timed out after ${timeoutMs}ms`;
-    throw err;
+function normalizePersonName(raw) {
+  let n = String(raw || '').trim();
+  if (n.includes(',')) {
+    const [last, rest] = n.split(',', 2);
+    n = `${rest.trim()} ${last.trim()}`;
   }
+  return n.toLowerCase();
 }
 
-// build a Set of normalized door___direction keys
-const normalizedMonitoredKeys = new Set(
-  Object.entries(monitoredDoors).map(([door, dir]) => normalizeKey(door, dir))
-);
-
-/** Determine floor label, fallback to “HQ. N.” parsing **/
-function mapDoorToFloor(rawDoor, rawDir) {
-  const key = normalizeKey(rawDoor, rawDir);
-  if (doorFloorMap[key]) return doorFloorMap[key];
-  const m = rawDoor.match(/HQ\.\s*(\d{1,2})\b/);
-  if (m) return `Floor ${m[1]}`;
-  if (!warnedKeys.has(key)) {
-    console.warn(`⛔ Unmapped door-floor key: "${key}"`);
-    warnedKeys.add(key);
+function mapDoorToZone(rawDoor, rawDir) {
+  const key = normalizeZoneKey(rawDoor, rawDir);
+  const zone = doorZoneMap[key];
+  if (!zone) {
+    if (!warnedKeys.has(key)) {
+      console.warn('⛔ Unmapped door–direction key:', key);
+      warnedKeys.add(key);
+    }
+    return 'Unknown Zone';
   }
-  return 'Unknown Floor';
+  return zone;
 }
 
-/** Strip any trailing “_HH:MM:SS” from a door name **/
-function stripTimeSuffix(doorRaw) {
-  return doorRaw.replace(/_[0-9]{2}:[0-9]{2}:[0-9]{2}$/, '');
-}
+// --- Core functions ---
 
-/**
- * Compare a DB row's Dateonly (yyyy-MM-dd) to either "today in Denver" OR a supplied reference DateTime (also Denver).
- * - dateOnly: string like '2025-09-11'
- * - referenceDt: optional luxon DateTime (zone 'America/Denver') to treat as "today"
- */
-function isSameDenverDate(dateOnly, referenceDt = null) {
-  if (!dateOnly) return false;
-  const swipeDate = DateTime.fromISO(dateOnly, { zone: 'America/Denver' }).toFormat('yyyy-LL-dd');
-  const today = referenceDt
-    ? referenceDt.setZone('America/Denver').toFormat('yyyy-LL-dd')
-    : DateTime.now().setZone('America/Denver').toFormat('yyyy-LL-dd');
-  return swipeDate === today;
-}
+async function fetchNewEvents(since) {
+  const pool = await getPool();
+  const req  = pool.request();
+  req.input('since', sql.DateTime2, since);
 
-
-// Optimized query with better filtering
-
-async function fetchNewEvents(since, maxRetries = 3) {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    let pool;
-    try {
-      pool = await denver.getPool();
-    } catch (err) {
-      console.error(`❌ Attempt ${attempt}: Failed to get Denver pool:`, err);
-      if (attempt === maxRetries) return [];
-      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-      continue;
-    }
-
-    if (!pool) {
-      console.warn(`⚠️ Attempt ${attempt}: No pool available`);
-      if (attempt === maxRetries) return [];
-      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
-      continue;
-    }
-
-    const req = pool.request();
-    req.input('since', sql.DateTime2, since);
-
-    // Optimized query - simplified and more efficient
-    const queryText = `
-      SELECT 
+  const { recordset } = await req.query(`
+    WITH CombinedQuery AS (
+      SELECT
         DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        CONVERT(VARCHAR(10), DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC), 23) AS Dateonly,
-        CONVERT(VARCHAR(8), DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC), 108) AS Swipe_Time,
         t1.ObjectName1,
-        CASE 
+        CASE
           WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
           ELSE CAST(t2.Int1 AS NVARCHAR)
         END AS EmployeeID,
         t1.ObjectIdentity1 AS PersonGUID,
         t3.Name AS PersonnelType,
         COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]', 'varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
           sc.value
         ) AS CardNumber,
         t5a.value AS AdmitCode,
         t5d.value AS Direction,
         t1.ObjectName2 AS Door
-      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-      LEFT JOIN ACVSCore.Access.Personnel t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a 
+      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
         ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d 
-        ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml 
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
         ON t1.XmlGUID = t_xml.GUID
       LEFT JOIN (
         SELECT GUID, value
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
         WHERE Name IN ('Card','CHUID')
       ) sc ON t1.XmlGUID = sc.GUID
-      WHERE t1.MessageType = 'CardAdmitted'
-        AND t1.ObjectName2 LIKE '%HQ%'
-        AND t1.MessageUTC >= DATEADD(MINUTE, t1.MessageLocaleOffset, @since)
-      ORDER BY t1.MessageUTC ASC
-    `;
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 = 'APAC.Default'
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) > @since
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      PersonnelType,
+      CardNumber,
+      AdmitCode,
+      Direction,
+      Door
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `);
 
-    const t0 = Date.now();
-    try {
-      const { recordset } = await safeQueryWithTimeout(req, queryText, 60000); // 60s timeout
-      const took = Date.now() - t0;
-      // console.log(`[DENVER] fetchNewEvents: got ${recordset.length} rows in ${took}ms`);
-      return recordset || [];
-    } catch (err) {
-      console.error(`❌ Attempt ${attempt}: fetchNewEvents query error:`, err.message);
-      
-      // Reset pool on timeout
-      if (err.message.includes('timed out') || err.code === 'ECANCEL') {
-        try {
-          if (pool && typeof pool.close === 'function') {
-            await pool.close();
-          }
-        } catch (e) { /* ignore */ }
-        denverPoolPromise = null;
-      }
+  return recordset;
+}
 
-      if (attempt === maxRetries) {
-        console.error('❌ All retry attempts failed for fetchNewEvents');
-        return [];
+async function buildOccupancy(allEvents) {
+  const current      = {};
+  const uniquePeople = new Map();
+
+  for (const evt of allEvents) {
+    const {
+      EmployeeID, PersonGUID,
+      ObjectName1, PersonnelType,
+      CardNumber, Dateonly,
+      Swipe_Time, Direction, Door
+    } = evt;
+
+    const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
+    const zoneRaw  = mapDoorToZone(Door, Direction);
+
+    if (zoneRaw === 'Unknown Zone') continue;
+
+    const zoneLower = zoneRaw.toLowerCase();
+
+    if (Direction === 'OutDirection') {
+      if (zoneLower === 'out of office') {
+        uniquePeople.delete(dedupKey);
+        delete current[dedupKey];
+      } else {
+        uniquePeople.set(dedupKey, PersonnelType);
+        current[dedupKey] = { Dateonly, Swipe_Time, EmployeeID, ObjectName1, CardNumber, PersonnelType, zone: zoneRaw, door: Door, Direction };
       }
-      
-      // Wait before retry (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
+      continue;
+    }
+
+    if (Direction === 'InDirection') {
+      uniquePeople.set(dedupKey, PersonnelType);
+      current[dedupKey] = { Dateonly, Swipe_Time, EmployeeID, ObjectName1, CardNumber, PersonnelType, zone: zoneRaw, door: Door, Direction };
+      continue;
+    }
+
+    uniquePeople.delete(dedupKey);
+    delete current[dedupKey];
+  }
+
+  let employeeCount = 0;
+  let contractorCount = 0;
+  for (const pt of uniquePeople.values()) {
+    if (['Employee','Terminated Personnel'].includes(pt)) employeeCount++;
+    else contractorCount++;
+  }
+
+  const zoneMap = {};
+  for (const emp of Object.values(current)) {
+    const zKey = emp.zone.toLowerCase();
+    if (zKey === 'out of office') continue;
+    zoneMap[emp.zone] = zoneMap[emp.zone] || [];
+    zoneMap[emp.zone].push(emp);
+  }
+
+  const zoneDetails = Object.fromEntries(
+    Object.entries(zoneMap).map(([zone, emps]) => {
+      const byType = emps.reduce((acc, e) => {
+        acc[e.PersonnelType] = (acc[e.PersonnelType] || 0) + 1;
+        return acc;
+      }, {});
+      return [zone, { total: emps.length, byPersonnelType: byType, employees: emps }];
+    })
+  );
+
+  const floorMap = {};
+  for (const [zone, data] of Object.entries(zoneDetails)) {
+    const floor = zoneFloorMap[zone] || 'Unknown Floor';
+    floorMap[floor] = floorMap[floor] || { total: 0, byPersonnelType: {} };
+    floorMap[floor].total += data.total;
+    for (const [pt, c] of Object.entries(data.byPersonnelType)) {
+      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt] || 0) + c;
     }
   }
-  return [];
+
+  const ertStatus = Object.fromEntries(
+    Object.entries(ertMembers).map(([role, members]) => {
+      const list = members.map(m => {
+        const rawName = m.name || m.Name;
+        const expected = normalizePersonName(rawName);
+        const matchEvt = Object.values(current).find(e => normalizePersonName(e.ObjectName1) === expected);
+        return { ...m, present: !!matchEvt, zone: matchEvt ? matchEvt.zone : null };
+      });
+      return [role, list];
+    })
+  );
+
+  return {
+    asOf: new Date().toISOString(),
+    summary: Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
+    zoneBreakdown: Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
+    floorBreakdown: Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
+    details: zoneMap,
+    personnelSummary: { employees: employeeCount, contractors: contractorCount },
+    ertStatus,
+    personnelBreakdown: (() => {
+      const map = new Map();
+      for (const pt of uniquePeople.values()) map.set(pt, (map.get(pt)||0)+1);
+      return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
+    })()
+  };
 }
 
-async function fetchEventsWindowUntil(until) {
-  let pool;
-  try {
-    pool = await denver.poolPromise;
-  } catch (err) {
-    console.error('❌ Failed to get Denver pool in fetchEventsWindowUntil():', err);
-    return [];
-  }
-  if (!pool) return [];
+function buildVisitedToday(allEvents, asOf) {
+  let today;
+  if (asOf) {
+    if (typeof asOf === 'string') today = asOf;
+    else if (asOf instanceof Date) today = DateTime.fromJSDate(asOf, { zone: 'Asia/Kolkata' }).toFormat('yyyy-LL-dd');
+    else if (asOf && typeof asOf.toFormat === 'function') today = asOf.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+    else today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
+  } else today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
 
-  try {
-    const req = pool.request();
-    req.input('until', sql.DateTime2, until);
-
-    const { recordset } = await req.query(`
-      WITH CombinedQuery AS (
-        SELECT
-          DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-          t1.ObjectName1,
-          CASE WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-          t1.ObjectIdentity1 AS PersonGUID,
-          t3.Name AS PersonnelType,
-          COALESCE(TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'), sc.value) AS CardNumber,
-          t5a.value AS AdmitCode,
-          t5d.value AS Direction,
-          t1.ObjectName2 AS Door
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-        LEFT JOIN ACVSCore.Access.Personnel t2 ON t1.ObjectIdentity1 = t2.GUID
-        LEFT JOIN ACVSCore.Access.PersonnelType t3 ON t2.PersonnelTypeId  = t3.ObjectID
-        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5a ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d ON t1.XmlGUID = t5d.GUID AND t5d.Name = 'Direction'
-        LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml ON t1.XmlGUID = t_xml.GUID
-        LEFT JOIN (
-          SELECT GUID, value
-          FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
-          WHERE Name IN ('Card','CHUID')
-        ) sc ON t1.XmlGUID = sc.GUID
-        WHERE
-          t1.MessageType = 'CardAdmitted'
-          AND t1.ObjectName2 LIKE '%HQ%'
-          AND DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC) <= @until
-          AND DATEADD(HOUR, -24, @until) < DATEADD(MINUTE,-1 * t1.MessageLocaleOffset, t1.MessageUTC)
-      )
-      SELECT
-        LocaleMessageTime,
-        CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-        CONVERT(VARCHAR(8) , LocaleMessageTime, 108) AS Swipe_Time,
-        EmployeeID, PersonGUID, ObjectName1, PersonnelType,
-        CardNumber, AdmitCode, Direction, Door
-      FROM CombinedQuery
-      ORDER BY LocaleMessageTime ASC;
-    `);
-    return recordset || [];
-  } catch (err) {
-    console.error('❌ fetchEventsWindowUntil query error — resetting Denver poolPromise:', err);
-    try { denver.poolPromise = null; } catch (e) { /* ignore */ }
-    return [];
+  const todayIns = allEvents.filter(evt => evt.Direction === 'InDirection' && evt.Dateonly === today);
+  const dedup = new Map();
+  for (const e of todayIns) {
+    const key = e.PersonGUID;
+    const prev = dedup.get(key);
+    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) dedup.set(key, e);
   }
+  const finalList = Array.from(dedup.values());
+  const employees = finalList.filter(e => !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management'].includes(e.PersonnelType)).length;
+  const contractors = finalList.length - employees;
+  return { employees, contractors, total: finalList.length };
 }
 
 
+// --- SSE endpoint ---
+
+
+exports.getLiveOccupancy = async (req, res) => {
+  try {
+    await getPool();
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+    res.write('\n');
+
+    let lastSeen = new Date();
+    const events = [];
+
+    const push = async () => {
+      // fetch only new events since lastSeen
+      const fresh = await fetchNewEvents(lastSeen);
+      if (fresh.length) {
+        lastSeen = new Date();
+        events.push(...fresh);
+      }
+
+      // build live snapshot
+      const occupancy = await buildOccupancy(events);
+      const todayStats = buildVisitedToday(events);
+      occupancy.totalVisitedToday = todayStats.total;
+      occupancy.visitedToday = { ...todayStats };
+
+      // send snapshot every second
+      const sid = Date.now();
+      res.write(`id: ${sid}\n`);
+      res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
+
+      if (typeof res.flush === 'function') res.flush();
+    };
+
+    // push immediately, then every 1 second
+    await push();
+    const timer = setInterval(push, 1000);
+
+    req.on('close', () => clearInterval(timer));
+  } catch (err) {
+    console.error('Live occupancy SSE error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+};
 
 
 
 
-// --- ONLY endpoint: Snapshot endpoint for Denver with date + time ---
-// GET /api/occupancy-at-time-denver?date=YYYY-MM-DD&time=HH:MM[:SS]
-exports.getDenverSnapshotAtDateTime = async (req, res) => {
+// GET /api/occupancy-at-time-pune?date=YYYY-MM-DD&time=HH:MM[:SS]
+exports.getPuneSnapshotAtDateTime = async (req, res) => {
   try {
     const { date, time } = req.query;
     if (!date || !time) {
@@ -276,11 +305,15 @@ exports.getDenverSnapshotAtDateTime = async (req, res) => {
 
     // Validate date
     const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-    if (!dateMatch) return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
+    if (!dateMatch) {
+      return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
+    }
 
     // Validate time
     const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
-    if (!timeMatch) return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+    if (!timeMatch) {
+      return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+    }
 
     const year   = Number(dateMatch[1]);
     const month  = Number(dateMatch[2]);
@@ -289,470 +322,434 @@ exports.getDenverSnapshotAtDateTime = async (req, res) => {
     const minute = Number(timeMatch[2]);
     const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
 
-    // Build Denver-local datetime
+    // Build Pune-local datetime
     const atDt = DateTime.fromObject(
       { year, month, day, hour, minute, second, millisecond: 0 },
-      { zone: 'America/Denver' }
+      { zone: 'Asia/Kolkata' }
     );
 
     if (!atDt.isValid) {
       return res.status(400).json({ error: 'invalid date+time combination' });
     }
 
-    const untilJsDate = atDt.toJSDate();
+    // Convert to UTC for SQL boundary
+    const untilUtc = atDt.setZone('utc').toJSDate();
 
-    // fetch with 24h window ending at requested datetime
-    const events = await fetchEventsWindowUntil(untilJsDate);
+    // -----------------
+    // Step 1: fetch events in 24h window ending at atDt
+    const pool = await getPool();
+    const reqDb = pool.request();
+    reqDb.input('until', sql.DateTime2, untilUtc);
 
-    // filter only events on that Denver local date
+    const { recordset } = await reqDb.query(`
+      WITH CombinedQuery AS (
+        SELECT
+          t1.MessageUTC,   -- always UTC
+          t1.ObjectName1,
+          CASE
+            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+            ELSE CAST(t2.Int1 AS NVARCHAR)
+          END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+            sc.value
+          ) AS CardNumber,
+          t5a.value AS AdmitCode,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType     = 'CardAdmitted'
+          AND t1.PartitionName2 = 'APAC.Default'
+          AND t1.MessageUTC <= @until
+          AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
+      )
+      SELECT *
+      FROM CombinedQuery
+      ORDER BY MessageUTC ASC;
+    `);
+
+    // -----------------
+    // Step 2: convert UTC → Asia/Kolkata
+    const events = recordset.map(e => {
+      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' })
+                            .setZone('Asia/Kolkata');
+      return {
+        ...e,
+        LocaleMessageTime: local.toISO(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
+      };
+    });
+
+    // -----------------
+    // Step 3: filter only same Pune date
     const targetDate = atDt.toFormat('yyyy-LL-dd');
     const filtered = events.filter(e => e.Dateonly === targetDate);
 
-    // build occupancy payload (pass atDt so date checks use it)
-    const payload = buildOccupancyForToday(filtered, [], atDt);
+    // Step 4: build occupancy snapshot
+    const occupancy = await buildOccupancy(filtered);
 
-    return res.json(payload);
+    // Step 5: visited-today counts aligned to atDt
+    // const visitedStats = buildVisitedToday(filtered);
+    
+    const visitedStats = buildVisitedToday(filtered, atDt);  // this add new code as per function buildVisitedToday change 📝 📝
+
+    // ---- Output timestamps ----
+    occupancy.asOfLocal = atDt.toISO(); // Pune-local with offset
+    occupancy.asOfUTC   = `${date}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}Z`;
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = visitedStats;
+
+    return res.json(occupancy);
   } catch (err) {
-    console.error('getDenverSnapshotAtDateTime error:', err);
+    console.error('getPuneSnapshotAtDateTime error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// helper: computeVisitedToday using optional reference date
-// Counts any swipe (In or Out) on the same Denver date and up to referenceDt (if provided).
-function computeVisitedToday(allEvents, referenceDt = null) {
-  const seen = new Map(); // key -> PersonnelType
+// src/App.js
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense
+} from 'react';
+import {
+  Container,
+  Navbar,
+  Nav,
+  Button,
+  InputGroup,
+  FormControl,
+  Spinner
+} from 'react-bootstrap';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FaSun } from 'react-icons/fa';
 
-  allEvents.forEach(evt => {
-    // Must be same Denver date as referenceDt (or today when referenceDt null)
-    if (!isSameDenverDate(evt.Dateonly, referenceDt)) return;
+import './App.css';
 
-    // If referenceDt provided, ensure the event's local datetime <= referenceDt
-    if (referenceDt) {
-      // Prefer Dateonly + Swipe_Time (DB local fields)
-      if (!evt.Dateonly || !evt.Swipe_Time) return;
-      const evtDt = DateTime.fromISO(`${evt.Dateonly}T${evt.Swipe_Time}`, { zone: 'America/Denver' });
-      if (!evtDt.isValid) return;
-      if (evtDt > referenceDt.setZone('America/Denver')) return;
+// Lazy load pages
+const DashboardHome = lazy(() => import('./pages/DashboardHome'));
+const ErtPage = lazy(() => import('./pages/ErtPage'));
+const ZoneDetailsTable = lazy(() => import('./components/ZoneDetailsTable'));
+
+
+  // Error 
+  function ErrorBanner({ status }) {
+    if (status === 'open') return null;
+
+    let message = '';
+    if (status === 'connecting') {
+      message = 'Connecting to live data...';
+    } else if (status === 'error') {
+      message = '⚠️ Live data connection lost. Retrying...';
     }
 
-    const key = evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
-    if (!key) return;
-    if (!seen.has(key)) {
-      seen.set(key, evt.PersonnelType);
+    return (
+      <div style={{
+        background: status === 'error' ? '#b00020' : '#444',
+        color: '#fff',
+        padding: '8px 16px',
+        borderLeft: status === 'error' ? '4px solid #ff9800' : '4px solid #2196f3',
+        marginBottom: '8px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <span>{message}</span>
+        {status === 'error' && (
+          <button
+            className="btn btn-sm btn-outline-light"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  }
+
+// -----------------------------
+// TimeTravelControl
+// -----------------------------
+function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
+  const [local, setLocal] = useState(currentTimestamp ? isoToInput(currentTimestamp) : '');
+
+  useEffect(() => {
+    setLocal(currentTimestamp ? isoToInput(currentTimestamp) : '');
+  }, [currentTimestamp]);
+
+  const handleApply = useCallback(() => {
+    if (!local) return;
+    const selected = new Date(local);
+    if (selected > new Date()) {
+      return window.alert("Please select a valid time (cannot be future)");
     }
-  });
+    const [datePart, timePart] = local.split('T');
+    onApply(datePart, timePart);
+  }, [local, onApply]);
 
-  let employees = 0, contractors = 0;
-  seen.forEach(type => {
-    if (type === 'Employee' || type === 'Terminated Personnel') employees++;
-    else contractors++;
-  });
-
-  return { total: seen.size, employees, contractors };
-}
+  const handleLive = useCallback(() => {
+    setLocal('');
+    onLive();
+  }, [onLive]);
 
 
-// Build occupancy for "today" where "today" can be the real today OR the date represented by atDt (Denver)
-function buildOccupancyForToday(allEvents, freshEvents = [], atDt = null) {
-  // reference DateTime in Denver (null => live now)
-  const refDt = atDt ? atDt.setZone('America/Denver') : null;
 
-  // canonical person key
-  const personKey = (evt) => evt.PersonGUID || evt.EmployeeID || evt.CardNumber;
 
-  // derive a Luxon DateTime in America/Denver for the event.
-  // Prefer Dateonly + Swipe_Time (these are the DB's local values). Fallback to parsing LocaleMessageTime.
-  const eventDtFor = (evt) => {
-    if (evt && evt.Dateonly && evt.Swipe_Time) {
-      const iso = `${evt.Dateonly}T${evt.Swipe_Time}`; // e.g. "2025-09-17T00:26:55"
-      const dt = DateTime.fromISO(iso, { zone: 'America/Denver' });
-      if (dt.isValid) return dt;
-    }
-    if (evt && evt.LocaleMessageTime) {
-      // Last resort: parse LocaleMessageTime as ISO and convert to Denver.
-      // NOTE: this is fallback only — avoid relying on it for correctness.
-      const dt = DateTime.fromISO(evt.LocaleMessageTime, { zone: 'utc' }).setZone('America/Denver');
-      if (dt.isValid) return dt;
-    }
-    return null;
-  };
 
-  // ---------- PREFILTER: only keep events on same Denver date and (if refDt) that occurred <= refDt
-  const relevantEvents = allEvents.filter(evt => {
-    if (!isSameDenverDate(evt.Dateonly, refDt)) return false;
-    if (!refDt) return true;
-    const eDt = eventDtFor(evt);
-    if (!eDt) return false; // cannot compare -> discard
-    return eDt <= refDt;
-  });
-
-  // ---------- A) Evict “Out of office” using the last event per person (by eventDt)
-  const lastByPerson = new Map(); // personKey -> evt
-  const lastDtByPerson = new Map(); // personKey -> DateTime
-
-  relevantEvents.forEach(evt => {
-    const key = personKey(evt);
-    const eDt = eventDtFor(evt);
-    if (!eDt) return; // skip malformed
-    const prevDt = lastDtByPerson.get(key);
-    if (!prevDt || eDt > prevDt) {
-      lastDtByPerson.set(key, eDt);
-      lastByPerson.set(key, evt);
-    }
-  });
-
-  const evicted = new Set();
-  lastByPerson.forEach(evt => {
-    if (
-      evt.Direction === 'OutDirection'
-      && mapDoorToFloor(evt.Door, evt.Direction) === 'Out of office'
-    ) {
-      evicted.add(personKey(evt));
-    }
-  });
-
-  // active events are relevantEvents minus evicted persons
-  const activeEvents = relevantEvents.filter(evt => !evicted.has(personKey(evt)));
-
-  // ---------- 1) Live occupancy dedupe by last InDirection (use eventDt ordering)
-  const todayIn = activeEvents.filter(e => e.Direction === 'InDirection');
-
-  const latestByPerson = new Map();
-  const latestDtByPerson = new Map();
-  todayIn.forEach(e => {
-    const key = personKey(e);
-    const eDt = eventDtFor(e);
-    if (!eDt) return;
-    const prev = latestDtByPerson.get(key);
-    if (!prev || eDt > prev) {
-      latestDtByPerson.set(key, eDt);
-      latestByPerson.set(key, e);
-    }
-  });
-  const finalList = Array.from(latestByPerson.values());
-  
-
-  // ---------- 2) Floor breakdown & personnel counts (live)
-  let employees = 0, contractors = 0;
-  const floorMap = {};
-  finalList.forEach(e => {
-    const fl = mapDoorToFloor(e.Door, e.Direction);
-    floorMap[fl] = floorMap[fl] || [];
-    floorMap[fl].push(e);
-    if (e.PersonnelType === 'Employee' || e.PersonnelType === 'Terminated Personnel') employees++;
-    else if (e.PersonnelType) contractors++;
-  });
-
-  const floorBreakdown = Object.entries(floorMap).map(([floor, occ]) => {
-    let empCount = 0, contractorCount = 0, tempBadgeCount = 0, otherCount = 0;
-    occ.forEach(e => {
-      switch (e.PersonnelType) {
-        case 'Employee':
-        case 'Terminated Personnel':
-          empCount++; break;
-        case 'Contractor':
-        case 'Terminated Contractor':
-          contractorCount++; break;
-        case 'Temp Badge':
-          tempBadgeCount++; break;
-        default:
-          otherCount++;
-      }
-    });
-    return {
-      floor,
-      total: occ.length,
-      employees: empCount,
-      contractors: contractorCount,
-      tempBadge: tempBadgeCount,
-      others: otherCount,
-      occupants: occ
-    };
-  });
-
-  // ---------- 3) Personnel breakdown
-  const personnelBreakdown = Array.from(
-    finalList.reduce((m, e) => {
-      m.set(e.PersonnelType, (m.get(e.PersonnelType) || 0) + 1);
-      return m;
-    }, new Map()),
-    ([personnelType, count]) => ({ personnelType, count })
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
+      <InputGroup>
+        <FormControl
+          type="datetime-local"
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          placeholder="Select date & time"
+        />
+      </InputGroup>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <Button variant="outline-warning" onClick={handleApply} disabled={loading || !local}>
+          {loading ? <><Spinner animation="border" size="sm" /> Applying</> : 'Apply'}
+        </Button>
+        <Button variant="warning" onClick={handleLive} disabled={loading}>Live</Button>
+      </div>
+    </div>
   );
+}
 
-  // ---------- 4) Swipe stats (fresh only) — count only up to refDt
-  const countUpToRef = (evt) => {
-    if (!isSameDenverDate(evt.Dateonly, refDt)) return false;
-    if (!refDt) return true;
-    const eDt = eventDtFor(evt);
-    if (!eDt) return false;
-    return eDt <= refDt;
-  };
-  const totalInSwipes = (freshEvents || []).filter(e => e.Direction === 'InDirection' && countUpToRef(e)).length;
-  const totalOutSwipes = (freshEvents || []).filter(e => e.Direction === 'OutDirection' && countUpToRef(e)).length;
+function pad(n) { return String(n).padStart(2, '0'); }
+function isoToInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
-  // ---------- 5) Floor In/Out summary (strict doors only)
-  const validEvents = relevantEvents.filter(evt => {
-    const doorNoTime = stripTimeSuffix(evt.Door.trim());
-    const key = normalizeKey(doorNoTime, (evt.Direction || '').trim());
-    return normalizedMonitoredKeys.has(key);
+// -----------------------------
+// ZoneDetailsPage
+// -----------------------------
+const ZoneDetailsPage = React.memo(function ZoneDetailsPage({ detailsData }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  return (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-2" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+        <Link to="/" className="btn btn-secondary">← Back to Dashboard</Link>
+        <input
+          type="text"
+          placeholder="Search employee..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{ flexGrow: 1, maxWidth: 300, padding: '0.4rem 0.8rem', fontSize: '1rem', borderRadius: 4, border: '1px solid #ccc' }}
+        />
+      </div>
+      <Suspense fallback={<div>Loading details…</div>}>
+        <ZoneDetailsTable data={detailsData} searchTerm={searchTerm} />
+      </Suspense>
+    </>
+  );
+});
+
+// -----------------------------
+// Main App
+// -----------------------------
+function App() {
+  const esRef = useRef(null);
+  const sseBufferRef = useRef(null);
+  const sseFlushScheduledRef = useRef(false);
+  const lastSeenRef = useRef(Date.now());
+
+  const location = useLocation();
+  const headerText = location.pathname === '/ert'
+    ? 'Emergency Response Team — Western Union Pune'
+    : 'Live Occupancy — Western Union Pune';
+
+  const API_BASE = process.env.REACT_APP_API_BASE_URL
+    || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : window.location.origin);
+  const API_ORIGIN = API_BASE.replace(/\/$/, '');
+
+  const [liveData, setLiveData] = useState({
+    summary: [], details: {}, floorBreakdown: [], zoneBreakdown: [], personnelBreakdown: [],
+    totalVisitedToday: 0, personnelSummary: { employees: 0, contractors: 0 },
+    visitedToday: { employees: 0, contractors: 0, total: 0 }, ertStatus: {}
   });
 
-  // Dedupe per person+floor+direction using eventDt ordering
-  const deduped = new Map(); // mapKey -> evt
-  validEvents.forEach(evt => {
-    const rawNoTime = stripTimeSuffix(evt.Door);
-    const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
-    const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
+  const [timeTravelMode, setTimeTravelMode] = useState(false);
+  const [timeTravelTimestamp, setTimeTravelTimestamp] = useState(null);
+  const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
-    const mapKey = `${personKey(evt)}___${floor}___${evt.Direction}`;
-    const prev = deduped.get(mapKey);
-    const nowDt = eventDtFor(evt);
-    if (!nowDt) return;
-    if (!prev) {
-      deduped.set(mapKey, evt);
-    } else {
-      const prevDt = eventDtFor(prev);
-      if (!prevDt || nowDt > prevDt) deduped.set(mapKey, evt);
-    }
-  });
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting | open | error
 
-  // Aggregate in/out per floor
-  const floorMapIO = {};
-  for (const evt of deduped.values()) {
-    const rawNoTime = stripTimeSuffix(evt.Door);
-    const m = rawNoTime.match(/HQ\.\s*(\d{1,2})\b/);
-    const floor = m ? `Floor ${m[1]}` : 'Unknown Floor';
-
-    if (!floorMapIO[floor]) floorMapIO[floor] = { inSwipes: 0, outSwipes: 0, inSet: new Set(), outSet: new Set() };
-    const id = personKey(evt);
-    if (evt.Direction === 'InDirection') {
-      floorMapIO[floor].inSwipes++;
-      floorMapIO[floor].inSet.add(id);
-    } else {
-      floorMapIO[floor].outSwipes++;
-      floorMapIO[floor].outSet.add(id);
-    }
-  }
-
-  const floorInOutSummary = Object.entries(floorMapIO).map(([floor, stats]) => {
-    const inOnly = [...stats.inSet].filter(id => !stats.outSet.has(id));
-    return {
-      floor,
-      inSwipes: stats.inSwipes,
-      outSwipes: stats.outSwipes,
-      inOnlyCount: inOnly.length,
-      inOnlyPersons: inOnly
+  const setPayload = useCallback(p => {
+    if (!p || typeof p !== 'object') return;
+    const safe = {
+      summary: Array.isArray(p.summary) ? p.summary : [],
+      details: p.details && typeof p.details === 'object' ? p.details : {},
+      floorBreakdown: Array.isArray(p.floorBreakdown) ? p.floorBreakdown : [],
+      zoneBreakdown: Array.isArray(p.zoneBreakdown) ? p.zoneBreakdown : [],
+      personnelBreakdown: Array.isArray(p.personnelBreakdown) ? p.personnelBreakdown : [],
+      totalVisitedToday: typeof p.totalVisitedToday === 'number' ? p.totalVisitedToday : 0,
+      personnelSummary: p.personnelSummary || { employees: 0, contractors: 0 },
+      visitedToday: p.visitedToday || { employees: 0, contractors: 0, total: 0 },
+      ertStatus: p.ertStatus || {}
     };
-  });
+    setLiveData(prev => ({ ...prev, ...safe }));
+  }, []);
 
-  // ---------- 6) Visited today breakdown (reuse computeVisitedToday; it already supports referenceDt)
-  // const visited = computeVisitedToday(allEvents, refDt);
-  const visited = computeVisitedToday(relevantEvents, refDt);
-
-const visitedOccupants = relevantEvents
-  .filter(e => eventDtFor(e) && eventDtFor(e) <= refDt)
-  .reduce((map, e) => {
-    const key = personKey(e);
-    if (!map.has(key)) map.set(key, e); // keep first event for identity
-    return map;
-  }, new Map());
-
-  // Build final payload
-  const asOfLocal = refDt ? refDt.toISO() : DateTime.now().setZone('America/Denver').toISO();
-  const asOfUTC = refDt ? refDt.toUTC().toISO() : new Date().toISOString();
-
-  return {
-    asOfLocal,
-    asOfUTC,
-    currentCount: finalList.length,
-    floorBreakdown,
-    personnelSummary: { employees, contractors },
-    personnelBreakdown,
-    totalVisitedToday: visited.total,
-    visitedToday: {
-      employees: visited.employees,
-      contractors: visited.contractors,
-      total: visited.total
-    },
-     visitedOccupants: Array.from(visitedOccupants.values()),  // 👈 new full list
-    swipeStats: { totalInSwipes, totalOutSwipes },
-    floorInOutSummary
-  };
-}
-
-
-const EventEmitter = require('events');
-const updates = new EventEmitter();
-let latestSnapshot = null;
-let denverBackgroundStarted = false;
-
-function startDenverBackgroundWorker() {
-  if (denverBackgroundStarted) return;
-  denverBackgroundStarted = true;
-
-  (async () => {
-    console.log('[DENVER-BG] starting background poller');
-    let lastSeen = new Date(Date.now() - 60 * 1000); // small lookback to avoid gaps
-    const eventsBuffer = [];
-    let consecutiveErrors = 0;
-
-    while (true) {
-      try {
-        const fresh = await fetchNewEvents(lastSeen);
-        if (fresh && fresh.length) {
-          const lastEvt = fresh[fresh.length - 1];
-          lastSeen = lastEvt && lastEvt.LocaleMessageTime ? new Date(lastEvt.LocaleMessageTime) : new Date();
-          eventsBuffer.push(...fresh);
-          // prune buffer to today's Denver date
-          const todayDenver = DateTime.now().setZone('America/Denver').toISODate();
-          for (let i = eventsBuffer.length - 1; i >= 0; i--) {
-            if (!eventsBuffer[i].Dateonly || eventsBuffer[i].Dateonly !== todayDenver) eventsBuffer.splice(i, 1);
-          }
-        }
-
-        // Build snapshot using your existing builder
-        const payload = buildOccupancyForToday(eventsBuffer, fresh || [], null);
-        latestSnapshot = payload;
-        updates.emit('update', payload);
-
-        consecutiveErrors = 0;
-      } catch (err) {
-        consecutiveErrors++;
-        console.error('[DENVER-BG] polling error:', err);
-        // Reset the pool so the next cycle will re-create it
-        try { denver.poolPromise = null; } catch (e) { /* ignore */ }
-        if (consecutiveErrors > 3) {
-          await new Promise(r => setTimeout(r, 5000));
-        }
-      }
-
-      await new Promise(r => setTimeout(r, 1000)); // 1s cadence (tune if needed)
-    }
-  })().catch(err => {
-    console.error('[DENVER-BG] background worker crashed:', err);
-    denverBackgroundStarted = false;
-  });
-}
-
-// Live SSE endpoint with heartbeat + non-overlap + logging
-exports.getDenverLiveOccupancy = async (req, res) => {
-  try {
-    // ensure poolPromise at least initialised (does not throw)
-    const poolMaybe = await denver.poolPromise;
-    if (!poolMaybe) {
-      console.warn('⚠️ Denver poolPromise resolved to null — DB likely unavailable');
-    }
-  } catch (err) {
-    console.error('❌ Failed to initialize Denver pool in SSE endpoint:', err);
-    // still continue but logs will show missing DB
-  }
-
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  });
-  res.write('\n');
-
-  // heartbeat comment every 15s so clients do not time out
-  const heartbeat = setInterval(() => {
-    try {
-      // SSE comment keeps connection alive but is ignored by EventSource data parser
-      res.write(': heartbeat\n\n');
-      if (typeof res.flush === 'function') res.flush();
-    } catch (err) {
-      console.warn('⚠️ Failed to send heartbeat (connection likely closed):', err);
-    }
-  }, 15_000);
-
-  let lastSeen = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const events = [];
-  let pushRunning = false;
-  let consecutiveDbErrors = 0;
-
-  const push = async () => {
-    if (pushRunning) {
-      // console.debug('[DENVER] push already running — skipping this tick');
+  // ------------------ SSE Live Updates ------------------
+  useEffect(() => {
+    if (timeTravelMode) {
+      esRef.current?.close();
+      esRef.current = null;
       return;
     }
-    pushRunning = true;
-    try {
-      const fresh = await fetchNewEvents(lastSeen);
 
-      if (fresh.length) {
-        // update lastSeen to the latest event's LocaleMessageTime (string or Date)
-        const lastEvt = fresh[fresh.length - 1];
-        if (lastEvt && lastEvt.LocaleMessageTime) {
-          lastSeen = new Date(lastEvt.LocaleMessageTime);
-        } else {
-          lastSeen = new Date();
+    const esUrl = `${API_ORIGIN}/api/live-occupancy`;
+    const es = new EventSource(esUrl);
+    esRef.current = es;
+
+    es.onopen = () => setConnectionStatus('open');
+
+    es.onmessage = e => {
+      try {
+        const p = JSON.parse(e.data);
+        lastSeenRef.current = Date.now();
+        sseBufferRef.current = p;
+
+        if (!sseFlushScheduledRef.current) {
+          sseFlushScheduledRef.current = true;
+          setTimeout(() => {
+            setPayload(sseBufferRef.current);
+            sseFlushScheduledRef.current = false;
+          }, 500); // max UI update every 0.5s
         }
-        events.push(...fresh);
-        // console.log(`[DENVER] pushed ${fresh.length} new events — events buffer now ${events.length}`);
-      }
-
-      // prune events not on today's Denver date (keep memory small)
-      const todayDenver = DateTime.now().setZone('America/Denver').toISODate();
-      for (let i = events.length - 1; i >= 0; i--) {
-        const ts = events[i].Dateonly || (events[i].LocaleMessageTime ? DateTime.fromISO(events[i].LocaleMessageTime, { zone: 'utc' }).setZone('America/Denver').toISODate() : null);
-        if (!ts || ts !== todayDenver) events.splice(i, 1);
-      }
-
-      // build payload
-      let payload;
-      try {
-        payload = buildOccupancyForToday(events, fresh, null); // live mode (null => uses now)
       } catch (err) {
-        console.error('[DENVER] Error building payload:', err);
-        payload = {
-          asOfLocal: DateTime.now().setZone('America/Denver').toISO(),
-          asOfUTC: new Date().toISOString(),
-          currentCount: 0,
-          floorBreakdown: [],
-          personnelSummary: { employees: 0, contractors: 0 },
-          personnelBreakdown: [],
-          totalVisitedToday: 0,
-          visitedToday: { employees: 0, contractors: 0, total: 0 },
-          swipeStats: { totalInSwipes: 0, totalOutSwipes: 0 },
-          floorInOutSummary: []
-        };
+        console.error('[SSE] parse error', err);
+        setConnectionStatus('error');
       }
+    };
 
-      // write SSE event
-      const sid = Date.now();
-      try {
-        res.write(`id: ${sid}\n`);
-        res.write(`data: ${JSON.stringify(payload)}\n\n`);
-        if (typeof res.flush === 'function') res.flush();
-        // console.debug(`[DENVER] wrote payload id=${sid}`);
-      } catch (err) {
-        console.warn('[DENVER] Failed to write SSE payload (connection likely closed):', err);
-      }
+    es.onerror = err => {
+      console.error('[SSE] error', err);
+      setConnectionStatus('error');
+    };
 
-      consecutiveDbErrors = 0;
-    } catch (err) {
-      consecutiveDbErrors++;
-      console.error('[DENVER] push top-level error:', err);
-      // back off a bit if DB failing repeatedly
-      if (consecutiveDbErrors > 3) {
-        console.warn(`[DENVER] ${consecutiveDbErrors} consecutive DB errors — sleeping 5s before next try`);
-        await new Promise(r => setTimeout(r, 5000));
-      }
-    } finally {
-      pushRunning = false;
-    }
-  };
+    return () => es.close();
+  }, [timeTravelMode, API_ORIGIN, setPayload]);
 
-  await push();
-  const timer = setInterval(push, 1000); // 1s interval (user requested)
+  // ------------------ Time Travel ------------------
+  const fetchSnapshot = useCallback(async (dateStr, timeStr) => {
+    setTimeTravelLoading(true);
+    const safeTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+    const url = `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(safeTime)}`;
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`Server returned ${resp.status}`);
+      const p = await resp.json();
+      setPayload(p);
+      setTimeTravelMode(true);
+      setTimeTravelTimestamp(p?.asOfLocal || `${dateStr} ${safeTime}`);
+    } catch (err) { console.error(err); }
+    finally { setTimeTravelLoading(false); }
+  }, [API_ORIGIN, setPayload]);
 
-  req.on('close', () => {
-    clearInterval(timer);
-    clearInterval(heartbeat);
-    console.log('[DENVER] SSE client disconnected, cleared timers');
-  });
-};
+  const clearTimeTravel = useCallback(async () => {
+    setTimeTravelLoading(true);
+    try {
+      setTimeTravelMode(false);
+      setTimeTravelTimestamp(null);
+      const resp = await fetch(`${API_ORIGIN}/api/current-occupancy`);
+      if (resp.ok) setPayload(await resp.json());
+    } finally { setTimeTravelLoading(false); }
+  }, [API_ORIGIN, setPayload]);
 
+  // ------------------ Render ------------------
+  return (
+    <>
+      <Navbar bg="dark" variant="dark" expand="lg" className="px-3">
+        <Navbar.Brand as={Link} to="/" className="wu-brand">{headerText}</Navbar.Brand>
+        <Navbar.Toggle aria-controls="main-navbar" />
+        <Navbar.Collapse id="main-navbar">
+          <Nav className="ms-auto align-items-center gap-2">
+            <div className="time-travel-wrapper me-2">
+              <TimeTravelControl
+                currentTimestamp={timeTravelTimestamp}
+                onApply={fetchSnapshot}
+                onLive={clearTimeTravel}
+                loading={timeTravelLoading}
+              />
+            </div>
+            <Nav.Link as={Link} to="/" className="nav-item-infographic"><i className="bi bi-house"></i></Nav.Link>
+            <Nav.Link href="http://10.199.22.57:3000/partition/Pune/history" className="nav-item-infographic"><i className="bi bi-clock-history"></i></Nav.Link>
+            <Nav.Link as={Link} to="/details" className="nav-item-infographic"><i className="fa-solid fa-calendar-day"></i></Nav.Link>
+            <Nav.Link as={Link} to="/ert" className="nav-item-infographic">ERT Overview</Nav.Link>
+            <Nav.Link className="theme-toggle-icon" title="Dark mode only"><FaSun /></Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
 
+      <Container fluid className="mt-2">
+        {timeTravelMode && (
+          <div style={{ background: '#434d44', color: '#FFF', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid rgb(0, 255, 21)', marginBottom: 8 }}>
+            <div>Viewing snapshot: <strong>{new Date(timeTravelTimestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</strong></div>
+            <div>
+              <button className="btn btn-sm btn-outline-warning" onClick={clearTimeTravel} disabled={timeTravelLoading}>Return to Live</button>
+            </div>
+          </div>
+        )}
+        {/* 👇 NEW ERROR UI */}
+        <ErrorBanner status={connectionStatus} />
+
+        <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
+          <Routes>
+            <Route path="/" element={
+              <DashboardHome
+                summaryData={liveData.summary}
+                detailsData={liveData.details}
+                floorData={liveData.floorBreakdown}
+                zoneBreakdown={liveData.zoneBreakdown}
+                personnelBreakdown={liveData.personnelBreakdown}
+                totalVisitedToday={liveData.totalVisitedToday}
+                personnelSummary={liveData.personnelSummary}
+                visitedToday={liveData.visitedToday}
+                ertStatus={liveData.ertStatus}
+              />
+            } />
+            <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+            <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
+          </Routes>
+        </Suspense>
+      </Container>
+    </>
+  );
+}
+
+export default function WrappedApp() {
+  return (
+    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+      <div className="dark-theme">
+        <App />
+      </div>
+    </BrowserRouter>
+  );
+}
 
