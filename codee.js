@@ -1,4 +1,7 @@
-
+add loading spinner and
+once is referes or reload the page, that time, i want to diplsy count/occupany,
+very quickly, wihtou any taking time, that time diplsy count
+(if i want like that what we want to do for this, )
 
 // src/App.js
 import React, {
