@@ -40,3 +40,44 @@ useEffect(() => {
 
   return () => es.close();
 }, []);
+
+
+
+
+
+
+
+.....
+function ErrorBanner({ status }) {
+  if (status === 'open') return null;
+
+  let message = '';
+  if (status === 'connecting') {
+    message = '🔄 Connecting to live data...';
+  } else if (status === 'error') {
+    message = '⚠️ Live data connection lost. Retrying...';
+  }
+
+  return (
+    <div style={{
+      background: status === 'error' ? '#b00020' : '#444',
+      color: '#fff',
+      padding: '8px 16px',
+      borderLeft: status === 'error' ? '4px solid #ff9800' : '4px solid #2196f3',
+      marginBottom: '8px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }}>
+      <span>{message}</span>
+      {status === 'error' && (
+        <button
+          className="btn btn-sm btn-outline-light"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
