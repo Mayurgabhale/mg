@@ -1,8 +1,3 @@
-add loading spinner and
-once is referes or reload the page, that time, i want to diplsy count/occupany,
-very quickly, wihtou any taking time, that time diplsy count
-(if i want like that what we want to do for this, )
-
 // src/App.js
 import React, {
   useEffect,
@@ -31,41 +26,42 @@ const DashboardHome = lazy(() => import('./pages/DashboardHome'));
 const ErtPage = lazy(() => import('./pages/ErtPage'));
 const ZoneDetailsTable = lazy(() => import('./components/ZoneDetailsTable'));
 
+// -----------------------------
+// Error Banner
+// -----------------------------
+function ErrorBanner({ status }) {
+  if (status === 'open') return null;
 
-  // Error 
-  function ErrorBanner({ status }) {
-    if (status === 'open') return null;
-
-    let message = '';
-    if (status === 'connecting') {
-      message = 'Connecting to live data...';
-    } else if (status === 'error') {
-      message = '⚠️ Live data connection lost. Retrying...';
-    }
-
-    return (
-      <div style={{
-        background: status === 'error' ? '#b00020' : '#444',
-        color: '#fff',
-        padding: '8px 16px',
-        borderLeft: status === 'error' ? '4px solid #ff9800' : '4px solid #2196f3',
-        marginBottom: '8px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <span>{message}</span>
-        {status === 'error' && (
-          <button
-            className="btn btn-sm btn-outline-light"
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </button>
-        )}
-      </div>
-    );
+  let message = '';
+  if (status === 'connecting') {
+    message = 'Connecting to live data...';
+  } else if (status === 'error') {
+    message = '⚠️ Live data connection lost. Retrying...';
   }
+
+  return (
+    <div style={{
+      background: status === 'error' ? '#b00020' : '#444',
+      color: '#fff',
+      padding: '8px 16px',
+      borderLeft: status === 'error' ? '4px solid #ff9800' : '4px solid #2196f3',
+      marginBottom: '8px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }}>
+      <span>{message}</span>
+      {status === 'error' && (
+        <button
+          className="btn btn-sm btn-outline-light"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
 
 // -----------------------------
 // TimeTravelControl
@@ -91,10 +87,6 @@ function TimeTravelControl({ currentTimestamp, onApply, onLive, loading }) {
     setLocal('');
     onLive();
   }, [onLive]);
-
-
-
-
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 340 }}>
@@ -176,7 +168,9 @@ function App() {
   const [timeTravelLoading, setTimeTravelLoading] = useState(false);
 
   const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting | open | error
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
+  // ------------------ setPayload ------------------
   const setPayload = useCallback(p => {
     if (!p || typeof p !== 'object') return;
     const safe = {
@@ -191,7 +185,31 @@ function App() {
       ertStatus: p.ertStatus || {}
     };
     setLiveData(prev => ({ ...prev, ...safe }));
+    setDashboardLoading(false); // ✅ stop spinner when data arrives
   }, []);
+
+  // ------------------ Bootstrap Fetch ------------------
+  useEffect(() => {
+    const fetchBootstrap = async () => {
+      try {
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+        const timeStr = now.toTimeString().slice(0, 8); // HH:MM:SS
+
+        const resp = await fetch(
+          `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}`
+        );
+        if (resp.ok) {
+          const p = await resp.json();
+          setPayload(p);
+        }
+      } catch (err) {
+        console.error("Bootstrap fetch failed", err);
+      }
+    };
+
+    fetchBootstrap();
+  }, [API_ORIGIN, setPayload]);
 
   // ------------------ SSE Live Updates ------------------
   useEffect(() => {
@@ -218,7 +236,7 @@ function App() {
           setTimeout(() => {
             setPayload(sseBufferRef.current);
             sseFlushScheduledRef.current = false;
-          }, 500); // max UI update every 0.5s
+          }, 500);
         }
       } catch (err) {
         console.error('[SSE] parse error', err);
@@ -246,25 +264,35 @@ function App() {
       setPayload(p);
       setTimeTravelMode(true);
       setTimeTravelTimestamp(p?.asOfLocal || `${dateStr} ${safeTime}`);
-    } catch (err) { console.error(err); }
-    finally { setTimeTravelLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeTravelLoading(false);
+    }
   }, [API_ORIGIN, setPayload]);
-
-  // 📝📝📝📝📝📝📝📝
 
   const clearTimeTravel = useCallback(async () => {
     setTimeTravelLoading(true);
     try {
       setTimeTravelMode(false);
       setTimeTravelTimestamp(null);
-      const resp = await fetch(`${API_ORIGIN}/api/current-occupancy`);
-      if (resp.ok) setPayload(await resp.json());
-    } finally { setTimeTravelLoading(false); }
+
+      // ✅ fetch snapshot with current time
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
+      const timeStr = now.toTimeString().slice(0, 8);
+
+      const resp = await fetch(
+        `${API_ORIGIN}/api/occupancy-at-time-pune?date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}`
+      );
+      if (resp.ok) {
+        const p = await resp.json();
+        setPayload(p);
+      }
+    } finally {
+      setTimeTravelLoading(false);
+    }
   }, [API_ORIGIN, setPayload]);
-
-
-  // 📝📝📝📝📝📝📝📝
-
 
   // ------------------ Render ------------------
   return (
@@ -300,28 +328,36 @@ function App() {
             </div>
           </div>
         )}
-        {/* 👇 NEW ERROR UI */}
+
+        {/* Error UI */}
         <ErrorBanner status={connectionStatus} />
 
-        <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
-          <Routes>
-            <Route path="/" element={
-              <DashboardHome
-                summaryData={liveData.summary}
-                detailsData={liveData.details}
-                floorData={liveData.floorBreakdown}
-                zoneBreakdown={liveData.zoneBreakdown}
-                personnelBreakdown={liveData.personnelBreakdown}
-                totalVisitedToday={liveData.totalVisitedToday}
-                personnelSummary={liveData.personnelSummary}
-                visitedToday={liveData.visitedToday}
-                ertStatus={liveData.ertStatus}
-              />
-            } />
-            <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
-            <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
-          </Routes>
-        </Suspense>
+        {dashboardLoading ? (
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+            <Spinner animation="border" role="status" variant="warning" />
+            <span className="ms-2" style={{ color: '#FFC72C' }}>Loading live occupancy…</span>
+          </div>
+        ) : (
+          <Suspense fallback={<div style={{ color: '#FFC72C' }}>Loading page…</div>}>
+            <Routes>
+              <Route path="/" element={
+                <DashboardHome
+                  summaryData={liveData.summary}
+                  detailsData={liveData.details}
+                  floorData={liveData.floorBreakdown}
+                  zoneBreakdown={liveData.zoneBreakdown}
+                  personnelBreakdown={liveData.personnelBreakdown}
+                  totalVisitedToday={liveData.totalVisitedToday}
+                  personnelSummary={liveData.personnelSummary}
+                  visitedToday={liveData.visitedToday}
+                  ertStatus={liveData.ertStatus}
+                />
+              } />
+              <Route path="/details" element={<ZoneDetailsPage detailsData={liveData.details} />} />
+              <Route path="/ert" element={<ErtPage ertStatus={liveData.ertStatus} />} />
+            </Routes>
+          </Suspense>
+        )}
       </Container>
     </>
   );
