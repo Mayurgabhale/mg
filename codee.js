@@ -1,3 +1,9 @@
+Podium Floor
+2nd Floor
+Tower B
+---------------------------
+this above name is correct  use this ok.
+  not below 
 // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
@@ -19,7 +25,7 @@ const CompanySummary = ({
   const getBuildingFromZone = (zone) => {
     if (!zone) return 'other';
     const zoneLower = String(zone).toLowerCase();
-    if (zoneLower.includes('podium')) return 'podium';
+    if (zoneLower.includes('podium floor')) return 'podium';
     if (zoneLower.includes('tower b') || zoneLower.includes('tower_b')) return 'towerB';
     return 'other';
   };
@@ -466,5 +472,3 @@ const CompanySummary = ({
     </Container>
   );
 };
-
-export default CompanySummary;
