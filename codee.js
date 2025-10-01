@@ -1,5 +1,6 @@
 
-
+i want to show error in screen,
+  i means live data load error, data base descnnected, or anythink ok 
 // src/App.js
 import React, {
   useEffect,
