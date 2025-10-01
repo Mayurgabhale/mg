@@ -1,47 +1,22 @@
-http://10.199.22.57:3013/api/live-occupancy-denver
+id: 1759308577038
+data: {"asOfLocal":"2025-10-01T02:49:37.038-06:00","asOfUTC":"2025-10-01T08:49:37.038Z","currentCount":4,"floorBreakdown":[{"floor":"Floor 11","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025-10-
+  id: 1759308586685
+data: {"asOfLocal":"2025-10-01T02:49:46.685-06:00","asOfUTC":"2025-10-01T08:49:
+  : heartbeat
 
+id: 1759308589994
+data: {"asOfLocal":"2025-10-01T02:49:49.994-06:00","asOfUTC":"2025-10-01T08:49:49.994Z","currentCount":4,"floorBreakdown":[{"floor":"Floor 11","total":1,"employees":0,"contractors":1,"tempBadge":0,"others":0,"occupants":[{"LocaleMessageTime":"2025
+  -10-01T00:15:16.000Z","Dateonly":"2025-10-01","Swipe_Time":"00:15:16","ObjectName1":"Lemus, Genesis","EmployeeID":"W0027745","PersonGUID":"E78FB912-A154-4790-B213-
 : heartbeat
 
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-: heartbeat
-
-when upload this code on http://10.199.22.57:3013/api/live-occupancy-denver
-this server, data not show, we got only this  : heartbeat
-: heartbea
-: heartbeat
->> 
-check why this happening, and how to slve this issue, 
-
-
-+++++++++++++++++++++++++++++++
+id: 1759308604938
+data: {"asOfLocal":"2025-10-01T02:50:04.938-06:00","asOfUTC":"2025-10-01T08:50:04.938Z","currentCount":4,"floorBreakdown":[{"floor":"Floor 11","total":1,"
+                                                                                                                                                                                                                              
+  I want to fectch data continuaslsy wihotu any hearrtbeact every 1 seconds ok 
   
+                                                                                                                                                                                                                            
+                                                                                                                            
+                                                                                                                            
 
 // controllers/denverLiveOccupancyController.js
 
