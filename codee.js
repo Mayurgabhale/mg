@@ -1,6 +1,9 @@
 once is referes or reload the page, that time, i want to diplsy count/occupany, 
 very quickly, wihtou any taking time, that time diplsy count 
 (if i want like that what we want to do for this, ) 
+
+   
+
 // C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
 const { DateTime } = require('luxon');
 const { sql, getPool } = require('../config/db');
@@ -424,29 +427,6 @@ exports.getPuneSnapshotAtDateTime = async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-// src/App.js
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  lazy,
-  Suspense
-} from 'react';
-import {
-  Container,
-  Navbar,
-  Nav,
-  Button,
-  InputGroup,
-  FormControl,
-  Spinner
-} from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { FaSun } from 'react-icons/fa';
-
-import './App.css';
 
 // Lazy load pages
 const DashboardHome = lazy(() => import('./pages/DashboardHome'));
