@@ -1,129 +1,131 @@
+// GET /api/occupancy-at-time-pune?date=YYYY-MM-DD&time=HH:MM[:SS]
+exports.getPuneSnapshotAtDateTime = async (req, res) => {
+  try {
+    const { date, time } = req.query;
+    if (!date || !time) {
+      return res.status(400).json({
+        error: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]'
+      });
+    }
 
-    WITH CombinedEmployeeData AS (
-      SELECT
-        t1.ObjectName1,
-        t1.ObjectName2             AS Door,               -- include Door
-        CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-        t3.Name                    AS PersonnelType,
-        t1.ObjectIdentity1         AS PersonGUID,
-        -- extract CardNumber from XML or shred table
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        )                          AS CardNumber,
-        CASE
-          WHEN t1.ObjectName2 LIKE 'APAC_PI%' THEN 'Taguig City'
-          WHEN t1.ObjectName2 LIKE 'APAC_PH%' THEN 'Quezon City'
-          WHEN t1.ObjectName2 LIKE '%PUN%'   THEN 'Pune'
-          WHEN t1.ObjectName2 LIKE 'APAC_JPN%' THEN 'JP.Tokyo'
-          WHEN t1.ObjectName2 LIKE 'APAC_MY%'  THEN 'MY.Kuala Lumpur'
-          WHEN t1.ObjectName2 LIKE 'IN.HYD%'  THEN 'IN.HYD'
-          ELSE t1.PartitionName2
-        END                        AS PartitionName2,
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t5d.value                  AS Direction,
-        t2.Text4                   AS CompanyName,        -- ✅ added
-        t2.Text5                   AS PrimaryLocation     -- ✅ added
-      FROM ACVSUJournal_00010029.dbo.ACVSUJournalLog t1
-      JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
-      JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
+    // Validate date
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!dateMatch) {
+      return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
+    }
 
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred t5d
-      ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+    // Validate time
+    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
+    if (!timeMatch) {
+      return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
+    }
 
-      LEFT JOIN ACVSUJournal_00010029.dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM ACVSUJournal_00010029.dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) AS sc
-        ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.PartitionName2 IN (${parts})
-        AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
-            = CONVERT(DATE, GETDATE())
-    ), Ranked AS (
-      SELECT *,
-        ROW_NUMBER() OVER (PARTITION BY PersonGUID ORDER BY LocaleMessageTime DESC) AS rn
-      FROM CombinedEmployeeData
-      
-    )
-    SELECT
-      ObjectName1,
-      Door,                            -- door
-      PersonnelType,
-      EmployeeID,
-      CardNumber,                      -- now returned
-      PartitionName2,
-      LocaleMessageTime,
-      Direction,
-      PersonGUID,
-      CompanyName,                      -- ✅ added
-      PrimaryLocation                   -- ✅ added
-    FROM Ranked
-    WHERE rn = 1;
-  `;
+    const year   = Number(dateMatch[1]);
+    const month  = Number(dateMatch[2]);
+    const day    = Number(dateMatch[3]);
+    const hour   = Number(timeMatch[1]);
+    const minute = Number(timeMatch[2]);
+    const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
 
-++++++++++++++++ In below queiry i want ot add 
- CompanyName,                      -- ✅ added
-      PrimaryLocation                   -- ✅ added
-      so whow to add 
-  
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) > @since
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
+    // Build Pune-local datetime
+    const atDt = DateTime.fromObject(
+      { year, month, day, hour, minute, second, millisecond: 0 },
+      { zone: 'Asia/Kolkata' }
+    );
 
+    if (!atDt.isValid) {
+      return res.status(400).json({ error: 'invalid date+time combination' });
+    }
 
+    // Convert to UTC for SQL boundary
+    const untilUtc = atDt.setZone('utc').toJSDate();
+
+    // -----------------
+    // Step 1: fetch events in 24h window ending at atDt
+    const pool = await getPool();
+    const reqDb = pool.request();
+    reqDb.input('until', sql.DateTime2, untilUtc);
+
+    const { recordset } = await reqDb.query(`
+      WITH CombinedQuery AS (
+        SELECT
+          t1.MessageUTC,   -- always UTC
+          t1.ObjectName1,
+          CASE
+            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+            ELSE CAST(t2.Int1 AS NVARCHAR)
+          END AS EmployeeID,
+          t1.ObjectIdentity1 AS PersonGUID,
+          t3.Name AS PersonnelType,
+          COALESCE(
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+            sc.value
+          ) AS CardNumber,
+          t5a.value AS AdmitCode,
+          t5d.value AS Direction,
+          t1.ObjectName2 AS Door
+        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
+        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
+        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
+          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
+          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
+          ON t1.XmlGUID = t_xml.GUID
+        LEFT JOIN (
+          SELECT GUID, value
+          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
+          WHERE Name IN ('Card','CHUID')
+        ) sc ON t1.XmlGUID = sc.GUID
+        WHERE
+          t1.MessageType     = 'CardAdmitted'
+          AND t1.PartitionName2 = 'APAC.Default'
+          AND t1.MessageUTC <= @until
+          AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
+      )
+      SELECT *
+      FROM CombinedQuery
+      ORDER BY MessageUTC ASC;
+    `);
+
+    // -----------------
+    // Step 2: convert UTC → Asia/Kolkata
+    const events = recordset.map(e => {
+      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' })
+                            .setZone('Asia/Kolkata');
+      return {
+        ...e,
+        LocaleMessageTime: local.toISO(),
+        Dateonly: local.toFormat('yyyy-LL-dd'),
+        Swipe_Time: local.toFormat('HH:mm:ss'),
+      };
+    });
+
+    // -----------------
+    // Step 3: filter only same Pune date
+    const targetDate = atDt.toFormat('yyyy-LL-dd');
+    const filtered = events.filter(e => e.Dateonly === targetDate);
+
+    // Step 4: build occupancy snapshot
+    const occupancy = await buildOccupancy(filtered);
+
+    // Step 5: visited-today counts aligned to atDt
+    // const visitedStats = buildVisitedToday(filtered);
+    
+    const visitedStats = buildVisitedToday(filtered, atDt);  // this add new code as per function buildVisitedToday change 📝 📝
+
+    // ---- Output timestamps ----
+    occupancy.asOfLocal = atDt.toISO(); // Pune-local with offset
+    occupancy.asOfUTC   = `${date}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}Z`;
+
+    occupancy.totalVisitedToday = visitedStats.total;
+    occupancy.visitedToday = visitedStats;
+
+    return res.json(occupancy);
+  } catch (err) {
+    console.error('getPuneSnapshotAtDateTime error:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
