@@ -1,487 +1,13 @@
-http://localhost:5000/api/live-occupancy
-id: 1759317331691
-data: {"asOf":"2025-10-01T11:15:31.689Z","summary":[{"zone":"Red Zone","count":144},{"zone":"Reception Area","count":29},{"zone":"Orange Zone","count":67},{"zone":"Tower B","count":144},{"zone":"Gr
-  een Zone","count":69},{"zone":"West Outdoor Area","count":33},{"zone":"East Outdoor Area","count":87},{"zone":"Yellow Zone","count":106},{"zone":"2nd Floor, Pune","count":62},{"zone":"Assembly Area
-  ","count":2},{"zone":"Tower B GYM","count":7}],"zoneBreakdown":[{"zone":"Red Zone","Employee":131,"Visitor":7,"Property Management":4,"Contractor":2,"total":144},{"zone":"Reception Area","Visitor":6,"Contractor":3,"Empl
-  oyee":17,"Property Management":3,"total":29},{"zone":"Orange Zone","Employee":60,"Property Management":3,"Contractor":2,"Visitor":2,"total":67},{"zone":"Tower B","Employee":132,"Property Management":7,"Temp Badge":1,"Contractor":3,"Visitor":1,"
-  total":144},{"zone":"Green Zone","Employee":62,"Visitor":5,"Contractor":1,"Temp Badge":1,"total":69},{"zone":"West Outdoor Area","Employee":33,"total":33},{"zone":"East Outdoor Area","Employee":84,"Property Management":1,"Visitor":2,"total":87},{"zone":"Y
-  ellow Zone","Property Management":3,"Employee":96,"Temp Badge":3,"Contractor":3,"Visitor":1,"total":106},{"zone":"2nd Floor, Pune","Employee":57,"Contractor":3,"Property Management":2,"total":62},{"zone":"Assembly Area","Employee":2,"total":2},{"zone":"Tower B 
-  GYM","Employee":7,"total":7}],"floorBreakdown":[{"floor":"Podium Floor","Employee":485,"Visitor":23,"Property Management":14,"Contractor":11,"Temp Badge":4,"total":537},{"floor":"Tower B","Employee":139,"Property Management":7,"Temp Badge":1,"Contractor":3,"Visit
-  or":1,"total":151},{"floor":"2nd Floor","Employee":57,"Contractor":3,"Property Management":2,"total":62}],"details":{"Red Zone":[{"Dateonly":"2025-10-01","Swipe_Time":"15:28:51","EmployeeID":"311888","ObjectName1":"Dandekar, Vijay Narayanrao","CardNumber":"409712"
-     ,"PersonnelType":"Employee","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDi rection","CompanyName":"WU Technology Engineering Services Private Limited","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"
-  2025-10-01","Swipe_Time":"16:35:26","EmployeeID":"329203","ObjectName1":"Yadav, Tanmay","CardNumber":"620083","PersonnelType":"Employee","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName
-  ":"WU Srvcs India Private Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-01","Swipe_Time":"16:39:51","EmployeeID":"323024","ObjectName1":"Samgir, Yogesh Tukaram","CardNumber":"609573","PersonnelType":"Employee","zone":"Red Zone","door":"AP
-  AC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"WU Srvcs India Private Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-01","Swipe_Time":"15:46:28","EmployeeID":"328344","ObjectName1":"Bajaj, C
-  heerag","CardNumber":"615841","PersonnelType":"Employee","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)","Direction":"InDirection","CompanyName":"WU Srvcs India Private Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-01","Swipe_T
-  ime":"15:01:01","EmployeeID":"319164","ObjectName1":"Bhide, Amol","CardNumber":"600123","PersonnelType":"Employee","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"WU Srvcs India Pri
-  vate Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-01","Swipe_Time":"16:24:05","EmployeeID":"320937","ObjectName1":"Pawar, Ankush Shivajirao","CardNumber":"608418","PersonnelType":"Employee","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_
-  RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"WU Srvcs India Private Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-01","Swipe_Time":"16:24:08","EmployeeID":"329087","ObjectName1":"Awadhwal, Lalit","CardNumbe
-  r":"620141","PersonnelType":"Employee","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":
-  "WU Srvcs India Private Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"202
-
-
-
-
-// C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers\liveOccupancyController.js
-const { DateTime } = require('luxon');
-const { sql, getPool } = require('../config/db');
-
-const doorZoneMap  = require('../data/doorZoneMap');
-const zoneFloorMap = require('../data/zoneFloorMap');
-const ertMembers   = require('../data/puneErtMembers.json');
-
-// Track which door→zone keys we've already warned on
-const warnedKeys = new Set();
-
-// --- Helpers ---
-
-function getTodayString() {
-  return DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-}
-
-function normalizeZoneKey(rawDoor, rawDir) {
-  let door = String(rawDoor || '').trim();
-  door = door.replace(/_[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$/, '');
-  door = door.replace(/\s+/g, ' ').toUpperCase();
-  const dir = rawDir === 'InDirection' ? 'InDirection' : 'OutDirection';
-  return `${door}___${dir}`;
-}
-
-function normalizePersonName(raw) {
-  let n = String(raw || '').trim();
-  if (n.includes(',')) {
-    const [last, rest] = n.split(',', 2);
-    n = `${rest.trim()} ${last.trim()}`;
-  }
-  return n.toLowerCase();
-}
-
-function mapDoorToZone(rawDoor, rawDir) {
-  const key = normalizeZoneKey(rawDoor, rawDir);
-  const zone = doorZoneMap[key];
-  if (!zone) {
-    if (!warnedKeys.has(key)) {
-      console.warn('⛔ Unmapped door–direction key:', key);
-      warnedKeys.add(key);
-    }
-    return 'Unknown Zone';
-  }
-  return zone;
-}
-
-// --- Core functions ---
-
-async function fetchNewEvents(since) {
-  const pool = await getPool();
-  const req  = pool.request();
-  req.input('since', sql.DateTime2, since);
-
-  const { recordset } = await req.query(`
-    WITH CombinedQuery AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END AS EmployeeID,
-        t1.ObjectIdentity1 AS PersonGUID,
-        t3.Name AS PersonnelType,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        ) AS CardNumber,
-        t5a.value AS AdmitCode,
-        t5d.value AS Direction,
-        t1.ObjectName2 AS Door,
-        t2.Text4 AS CompanyName,          -- ✅ added
-      t2.Text5 AS PrimaryLocation       -- ✅ added
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel] t2 ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) sc ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.PartitionName2 = 'APAC.Default'
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) > @since
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      PersonnelType,
-      CardNumber,
-      AdmitCode,
-      Direction,
-      Door,
-      CompanyName,         -- ✅ 
-      PrimaryLocation      -- ✅ 
-    FROM CombinedQuery
-    ORDER BY LocaleMessageTime ASC;
-  `);
-
-  return recordset;
-}
-
-async function buildOccupancy(allEvents) {
-  const current      = {};
-  const uniquePeople = new Map();
-
-  for (const evt of allEvents) {
-    const {
-      EmployeeID, PersonGUID,
-      ObjectName1, PersonnelType,
-      CardNumber, Dateonly,
-      Swipe_Time, Direction, Door
-    } = evt;
-
-    const dedupKey = PersonGUID || EmployeeID || CardNumber || ObjectName1;
-    const zoneRaw  = mapDoorToZone(Door, Direction);
-
-    if (zoneRaw === 'Unknown Zone') continue;
-
-    const zoneLower = zoneRaw.toLowerCase();
-
-    if (Direction === 'OutDirection') {
-      if (zoneLower === 'out of office') {
-        uniquePeople.delete(dedupKey);
-        delete current[dedupKey];
-      } else {
-        uniquePeople.set(dedupKey, PersonnelType);
-        current[dedupKey] = { Dateonly, Swipe_Time, EmployeeID, ObjectName1, CardNumber, PersonnelType, zone: zoneRaw, door: Door, CompanyName: evt.CompanyName || null,  PrimaryLocation: evt.PrimaryLocation || null  };
-      }
-      continue;
-    }
-
-    if (Direction === 'InDirection') {
-      uniquePeople.set(dedupKey, PersonnelType);
-      current[dedupKey] = { Dateonly, Swipe_Time, EmployeeID, ObjectName1, CardNumber, PersonnelType, zone: zoneRaw, door: Door, Direction,CompanyName: evt.CompanyName || null, PrimaryLocation: evt.PrimaryLocation || null  };
-      continue;
-    }
-
-    uniquePeople.delete(dedupKey);
-    delete current[dedupKey];
-  }
-
-  let employeeCount = 0;
-  let contractorCount = 0;
-  for (const pt of uniquePeople.values()) {
-    if (['Employee','Terminated Personnel'].includes(pt)) employeeCount++;
-    else contractorCount++;
-  }
-
-  const zoneMap = {};
-  for (const emp of Object.values(current)) {
-    const zKey = emp.zone.toLowerCase();
-    if (zKey === 'out of office') continue;
-    zoneMap[emp.zone] = zoneMap[emp.zone] || [];
-    zoneMap[emp.zone].push(emp);
-  }
-
-  const zoneDetails = Object.fromEntries(
-    Object.entries(zoneMap).map(([zone, emps]) => {
-      const byType = emps.reduce((acc, e) => {
-        acc[e.PersonnelType] = (acc[e.PersonnelType] || 0) + 1;
-        return acc;
-      }, {});
-      return [zone, { total: emps.length, byPersonnelType: byType, employees: emps }];
-    })
-  );
-
-  const floorMap = {};
-  for (const [zone, data] of Object.entries(zoneDetails)) {
-    const floor = zoneFloorMap[zone] || 'Unknown Floor';
-    floorMap[floor] = floorMap[floor] || { total: 0, byPersonnelType: {} };
-    floorMap[floor].total += data.total;
-    for (const [pt, c] of Object.entries(data.byPersonnelType)) {
-      floorMap[floor].byPersonnelType[pt] = (floorMap[floor].byPersonnelType[pt] || 0) + c;
-    }
-  }
-
-  const ertStatus = Object.fromEntries(
-    Object.entries(ertMembers).map(([role, members]) => {
-      const list = members.map(m => {
-        const rawName = m.name || m.Name;
-        const expected = normalizePersonName(rawName);
-        const matchEvt = Object.values(current).find(e => normalizePersonName(e.ObjectName1) === expected);
-        return { ...m, present: !!matchEvt, zone: matchEvt ? matchEvt.zone : null };
-      });
-      return [role, list];
-    })
-  );
-
-  return {
-    asOf: new Date().toISOString(),
-    summary: Object.entries(zoneDetails).map(([z,d])=>({ zone: z, count: d.total })),
-    zoneBreakdown: Object.entries(zoneDetails).map(([z,d])=>({ zone: z, ...d.byPersonnelType, total: d.total })),
-    floorBreakdown: Object.entries(floorMap).map(([f,d])=>({ floor: f, ...d.byPersonnelType, total: d.total })),
-    details: zoneMap,
-    personnelSummary: { employees: employeeCount, contractors: contractorCount },
-    ertStatus,
-    personnelBreakdown: (() => {
-      const map = new Map();
-      for (const pt of uniquePeople.values()) map.set(pt, (map.get(pt)||0)+1);
-      return Array.from(map, ([personnelType, count]) => ({ personnelType, count }));
-    })()
-  };
-}
-
-function buildVisitedToday(allEvents, asOf) {
-  let today;
-  if (asOf) {
-    if (typeof asOf === 'string') today = asOf;
-    else if (asOf instanceof Date) today = DateTime.fromJSDate(asOf, { zone: 'Asia/Kolkata' }).toFormat('yyyy-LL-dd');
-    else if (asOf && typeof asOf.toFormat === 'function') today = asOf.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-    else today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-  } else today = DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');
-
-  const todayIns = allEvents.filter(evt => evt.Direction === 'InDirection' && evt.Dateonly === today);
-  const dedup = new Map();
-  for (const e of todayIns) {
-    const key = e.PersonGUID;
-    const prev = dedup.get(key);
-    if (!prev || e.LocaleMessageTime > prev.LocaleMessageTime) dedup.set(key, e);
-  }
-  const finalList = Array.from(dedup.values());
-  const employees = finalList.filter(e => !['Contractor','Terminated Contractor','Temp Badge','Visitor','Property Management'].includes(e.PersonnelType)).length;
-  const contractors = finalList.length - employees;
-  return { employees, contractors, total: finalList.length };
-}
-
-
-// --- SSE endpoint ---
-
-
-exports.getLiveOccupancy = async (req, res) => {
-  try {
-    await getPool();
-
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    });
-    res.write('\n');
-
-    let lastSeen = new Date();
-    const events = [];
-
-    const push = async () => {
-      // fetch only new events since lastSeen
-      const fresh = await fetchNewEvents(lastSeen);
-      if (fresh.length) {
-        lastSeen = new Date();
-        events.push(...fresh);
-      }
-
-      // build live snapshot
-      const occupancy = await buildOccupancy(events);
-      const todayStats = buildVisitedToday(events);
-      occupancy.totalVisitedToday = todayStats.total;
-      occupancy.visitedToday = { ...todayStats };
-
-      // send snapshot every second
-      const sid = Date.now();
-      res.write(`id: ${sid}\n`);
-      res.write(`data: ${JSON.stringify(occupancy)}\n\n`);
-
-      if (typeof res.flush === 'function') res.flush();
-    };
-
-    // push immediately, then every 1 second
-    await push();
-    const timer = setInterval(push, 1000);
-
-    req.on('close', () => clearInterval(timer));
-  } catch (err) {
-    console.error('Live occupancy SSE error:', err);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  }
-};
-
-
-
-
-// GET /api/occupancy-at-time-pune?date=YYYY-MM-DD&time=HH:MM[:SS]
-exports.getPuneSnapshotAtDateTime = async (req, res) => {
-  try {
-    const { date, time } = req.query;
-    if (!date || !time) {
-      return res.status(400).json({
-        error: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS]'
-      });
-    }
-
-    // Validate date
-    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-    if (!dateMatch) {
-      return res.status(400).json({ error: 'invalid "date" format; expected YYYY-MM-DD' });
-    }
-
-    // Validate time
-    const timeMatch = /^([0-1]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
-    if (!timeMatch) {
-      return res.status(400).json({ error: 'invalid "time" format; expected HH:MM or HH:MM:SS' });
-    }
-
-    const year   = Number(dateMatch[1]);
-    const month  = Number(dateMatch[2]);
-    const day    = Number(dateMatch[3]);
-    const hour   = Number(timeMatch[1]);
-    const minute = Number(timeMatch[2]);
-    const second = timeMatch[3] ? Number(timeMatch[3]) : 0;
-
-    // Build Pune-local datetime
-    const atDt = DateTime.fromObject(
-      { year, month, day, hour, minute, second, millisecond: 0 },
-      { zone: 'Asia/Kolkata' }
-    );
-
-    if (!atDt.isValid) {
-      return res.status(400).json({ error: 'invalid date+time combination' });
-    }
-
-    // Convert to UTC for SQL boundary
-    const untilUtc = atDt.setZone('utc').toJSDate();
-
-    // -----------------
-    // Step 1: fetch events in 24h window ending at atDt
-    const pool = await getPool();
-    const reqDb = pool.request();
-    reqDb.input('until', sql.DateTime2, untilUtc);
-
-    const { recordset } = await reqDb.query(`
-      WITH CombinedQuery AS (
-        SELECT
-          t1.MessageUTC,   -- always UTC
-          t1.ObjectName1,
-          CASE
-            WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-            ELSE CAST(t2.Int1 AS NVARCHAR)
-          END AS EmployeeID,
-          t1.ObjectIdentity1 AS PersonGUID,
-          t3.Name AS PersonnelType,
-          COALESCE(
-            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-            TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-            sc.value
-          ) AS CardNumber,
-          t5a.value AS AdmitCode,
-          t5d.value AS Direction,
-          t1.ObjectName2 AS Door,
-           t2.Text4 AS CompanyName,          -- ✅ added
-           t2.Text5 AS PrimaryLocation       -- ✅ added
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] t1
-        LEFT JOIN [ACVSCore].[Access].[Personnel]     t2 ON t1.ObjectIdentity1 = t2.GUID
-        LEFT JOIN [ACVSCore].[Access].[PersonnelType] t3 ON t2.PersonnelTypeId = t3.ObjectID
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5a
-          ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] t5d
-          ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-        LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] t_xml
-          ON t1.XmlGUID = t_xml.GUID
-        LEFT JOIN (
-          SELECT GUID, value
-          FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-          WHERE Name IN ('Card','CHUID')
-        ) sc ON t1.XmlGUID = sc.GUID
-        WHERE
-          t1.MessageType     = 'CardAdmitted'
-          AND t1.PartitionName2 = 'APAC.Default'
-          AND t1.MessageUTC <= @until
-          AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
-      )
-      SELECT *
-      FROM CombinedQuery
-      ORDER BY MessageUTC ASC;
-    `);
-
-    // -----------------
-    // Step 2: convert UTC → Asia/Kolkata
-    const events = recordset.map(e => {
-      const local = DateTime.fromJSDate(e.MessageUTC, { zone: 'utc' })
-                            .setZone('Asia/Kolkata');
-      return {
-        ...e,
-        LocaleMessageTime: local.toISO(),
-        Dateonly: local.toFormat('yyyy-LL-dd'),
-        Swipe_Time: local.toFormat('HH:mm:ss'),
-      };
-    });
-
-    // -----------------
-    // Step 3: filter only same Pune date
-    const targetDate = atDt.toFormat('yyyy-LL-dd');
-    const filtered = events.filter(e => e.Dateonly === targetDate);
-
-    // Step 4: build occupancy snapshot
-    const occupancy = await buildOccupancy(filtered);
-
-    // Step 5: visited-today counts aligned to atDt
-    // const visitedStats = buildVisitedToday(filtered);
-    
-    const visitedStats = buildVisitedToday(filtered, atDt);  // this add new code as per function buildVisitedToday change 📝 📝
-
-    // ---- Output timestamps ----
-    occupancy.asOfLocal = atDt.toISO(); // Pune-local with offset
-    occupancy.asOfUTC   = `${date}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}Z`;
-
-    occupancy.totalVisitedToday = visitedStats.total;
-    occupancy.visitedToday = visitedStats;
-
-    return res.json(occupancy);
-  } catch (err) {
-    console.error('getPuneSnapshotAtDateTime error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
-
-Read above code carefullyn and slove this error, 
-  +++++++++++++
-  Uncaught runtime errors:
-×
-ERROR
-Cannot read properties of undefined (reading 'podium')
-TypeError: Cannot read properties of undefined (reading 'podium')
-    at CompanySummary (http://localhost:3000/src_components_CompanySummary_jsx.9738ed9ee4e50362b8a0.hot-update.js:391:91)
-    at react-stack-bottom-frame (http://localhost:3000/static/js/bundle.js:27882:18)
-    at renderWithHooks (http://localhost:3000/static/js/bundle.js:18092:20)
-    at updateFunctionComponent (http://localhost:3000/static/js/bundle.js:19785:17)
-    at beginWork (http://localhost:3000/static/js/bundle.js:20353:637)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15864:68)
-    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22444:93)
-    at workLoopSync (http://localhost:3000/static/js/bundle.js:22337:38)
-    at renderRootSync (http://localhost:3000/static/js/bundle.js:22321:7)
-    at performWorkOnRoot (http://localhost:3000/static/js/bundle.js:22085:42)
-                          +++++++++++++++++++++++++++
-
-
-
-      import React, { useState, useMemo } from 'react';
-import { 
+// CompanySummary.jsx
+import React, { useState, useMemo } from 'react';
+import {
   Container, Row, Col, Card, Table, Badge, ProgressBar, Form
 } from 'react-bootstrap';
-import { 
+import {
   FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaArrowTrendUp, FaClock
 } from 'react-icons/fa6';
 
-const CompanySummary = ({ 
+const CompanySummary = ({
   detailsData = {},
   personnelBreakdown = [],
   zoneBreakdown = []
@@ -492,7 +18,7 @@ const CompanySummary = ({
   // --- Helper function to determine building from zone ---
   const getBuildingFromZone = (zone) => {
     if (!zone) return 'other';
-    const zoneLower = zone.toLowerCase();
+    const zoneLower = String(zone).toLowerCase();
     if (zoneLower.includes('podium')) return 'podium';
     if (zoneLower.includes('tower b') || zoneLower.includes('tower_b')) return 'towerB';
     return 'other';
@@ -503,12 +29,12 @@ const CompanySummary = ({
     const companies = {};
     let totalCount = 0;
 
-    Object.values(detailsData).forEach(zoneEmployees => {
+    Object.values(detailsData || {}).forEach(zoneEmployees => {
       if (Array.isArray(zoneEmployees)) {
         zoneEmployees.forEach(employee => {
-          const companyName = employee.CompanyName || 'Unknown Company';
-          const building = getBuildingFromZone(employee.zone);
-          
+          const companyName = employee?.CompanyName || 'Unknown Company';
+          const building = getBuildingFromZone(employee?.zone) || 'other';
+
           if (!companies[companyName]) {
             companies[companyName] = {
               name: companyName,
@@ -520,9 +46,12 @@ const CompanySummary = ({
           }
 
           companies[companyName].total++;
-          companies[companyName].byBuilding[building]++;
+          // ensure key exists and increment safely
+          const bb = companies[companyName].byBuilding;
+          bb[building] = (bb[building] || 0) + 1;
+
           companies[companyName].employees.push(employee);
-          if (employee.PrimaryLocation) {
+          if (employee?.PrimaryLocation) {
             companies[companyName].locations.add(employee.PrimaryLocation);
           }
           totalCount++;
@@ -533,48 +62,56 @@ const CompanySummary = ({
     const companyArray = Object.values(companies)
       .map(company => ({
         ...company,
-        locations: Array.from(company.locations),
-        percentage: ((company.total / totalCount) * 100).toFixed(1)
+        locations: Array.from(company.locations || []),
+        percentage: totalCount > 0 ? ((company.total / totalCount) * 100).toFixed(1) : '0.0'
       }))
-      .sort((a, b) => b.total - a.total);
+      .sort((a, b) => (b.total || 0) - (a.total || 0));
+
+    const buildingTotals = companyArray.reduce((acc, company) => {
+      acc.podium += (company.byBuilding?.podium || 0);
+      acc.towerB += (company.byBuilding?.towerB || 0);
+      acc.other += (company.byBuilding?.other || 0);
+      return acc;
+    }, { podium: 0, towerB: 0, other: 0 });
 
     return {
       companies: companyArray,
       totalCount,
-      buildingTotals: companyArray.reduce((acc, company) => {
-        acc.podium += company.byBuilding.podium;
-        acc.towerB += company.byBuilding.towerB;
-        acc.other += company.byBuilding.other;
-        return acc;
-      }, { podium: 0, towerB: 0, other: 0 })
+      buildingTotals
     };
   }, [detailsData]);
 
   // --- Filtered companies based on building ---
   const filteredCompanies = useMemo(() => {
-    if (selectedBuilding === 'all') {
-      return companyData.companies;
-    }
-    return companyData.companies.filter(company => 
-      company.byBuilding[selectedBuilding] > 0
-    );
-  }, [companyData.companies, selectedBuilding]);
+    const comps = companyData?.companies || [];
+    if (selectedBuilding === 'all') return comps;
+    return comps.filter(company => (company.byBuilding?.[selectedBuilding] || 0) > 0);
+  }, [companyData?.companies, selectedBuilding]);
 
-  // --- Podium winners ---
+  // --- Podium winners (fixed ordering and guarded accesses) ---
   const getPodiumWinners = () => {
-    const podiumCompanies = companyData.companies
-      .filter(company => company.byBuilding.podium > 0)
-      .sort((a, b) => b.byBuilding.podium - a.byBuilding.podium)
+    const podiumCompanies = (companyData?.companies || [])
+      .filter(c => (c.byBuilding?.podium || 0) > 0)
+      .sort((a, b) => (b.byBuilding?.podium || 0) - (a.byBuilding?.podium || 0))
       .slice(0, 3);
-    
-    return [
-      { ...podiumCompanies[1], position: '1st', icon: FaTrophy, color: 'gold' },
-      { ...podiumCompanies[0], position: '2nd', icon: FaMedal, color: 'silver' },
-      { ...podiumCompanies[2], position: '3rd', icon: FaMedal, color: '#cd7f32' }
-    ].filter(Boolean);
+
+    // Build safe winner objects: index 0 => 1st, 1 => 2nd, 2 => 3rd
+    const winners = podiumCompanies.map((c, idx) => ({
+      name: c?.name || 'Unknown',
+      byBuilding: c?.byBuilding || { podium: 0, towerB: 0, other: 0 },
+      total: c?.total || 0,
+      position: idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd',
+      icon: idx === 0 ? FaTrophy : FaMedal,
+      color: idx === 0 ? 'gold' : idx === 1 ? 'silver' : '#cd7f32'
+    }));
+
+    return winners;
   };
 
   const podiumWinners = getPodiumWinners();
+
+  // small util for safe percentage math
+  const safePercent = (num, denom) => (denom > 0 ? (num / denom) * 100 : 0);
 
   return (
     <Container fluid className="company-summary-dashboard">
@@ -593,7 +130,7 @@ const CompanySummary = ({
             </div>
             <Badge bg="warning" text="dark" className="fs-6">
               <FaUsers className="me-1" />
-              Total: {companyData.totalCount} People
+              Total: {companyData?.totalCount || 0} People
             </Badge>
           </div>
         </Col>
@@ -607,7 +144,7 @@ const CompanySummary = ({
               <FaBuilding className="me-2" />
               Filter by Building
             </Form.Label>
-            <Form.Select 
+            <Form.Select
               value={selectedBuilding}
               onChange={(e) => setSelectedBuilding(e.target.value)}
               className="bg-dark text-light border-secondary"
@@ -625,7 +162,7 @@ const CompanySummary = ({
               <FaClock className="me-2" />
               Time Range
             </Form.Label>
-            <Form.Select 
+            <Form.Select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
               className="bg-dark text-light border-secondary"
@@ -639,7 +176,7 @@ const CompanySummary = ({
       </Row>
 
       {/* Podium Section */}
-      {selectedBuilding === 'all' || selectedBuilding === 'podium' ? (
+      {(selectedBuilding === 'all' || selectedBuilding === 'podium') && (
         <Row className="mb-4">
           <Col>
             <Card className="bg-dark text-light border-warning">
@@ -663,10 +200,10 @@ const CompanySummary = ({
                             </div>
                             <div className="podium-company-info">
                               <h6 className="mb-1">
-                                {podiumWinners.find(w => w.position === '2nd').name}
+                                {podiumWinners.find(w => w.position === '2nd')?.name}
                               </h6>
-                              <Badge bg="silver" className="fs-6">
-                                {podiumWinners.find(w => w.position === '2nd').byBuilding.podium}
+                              <Badge bg="secondary" className="fs-6">
+                                {podiumWinners.find(w => w.position === '2nd')?.byBuilding?.podium || 0}
                               </Badge>
                             </div>
                           </div>
@@ -683,10 +220,10 @@ const CompanySummary = ({
                             </div>
                             <div className="podium-company-info">
                               <h5 className="mb-1 text-warning">
-                                {podiumWinners.find(w => w.position === '1st').name}
+                                {podiumWinners.find(w => w.position === '1st')?.name}
                               </h5>
                               <Badge bg="warning" text="dark" className="fs-5">
-                                {podiumWinners.find(w => w.position === '1st').byBuilding.podium}
+                                {podiumWinners.find(w => w.position === '1st')?.byBuilding?.podium || 0}
                               </Badge>
                             </div>
                           </div>
@@ -703,10 +240,10 @@ const CompanySummary = ({
                             </div>
                             <div className="podium-company-info">
                               <h6 className="mb-1">
-                                {podiumWinners.find(w => w.position === '3rd').name}
+                                {podiumWinners.find(w => w.position === '3rd')?.name}
                               </h6>
-                              <Badge bg="bronze" className="fs-6">
-                                {podiumWinners.find(w => w.position === '3rd').byBuilding.podium}
+                              <Badge bg="secondary" className="fs-6">
+                                {podiumWinners.find(w => w.position === '3rd')?.byBuilding?.podium || 0}
                               </Badge>
                             </div>
                           </div>
@@ -723,7 +260,7 @@ const CompanySummary = ({
             </Card>
           </Col>
         </Row>
-      ) : null}
+      )}
 
       {/* Statistics Cards */}
       <Row className="mb-4">
@@ -731,7 +268,7 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-primary h-100">
             <Card.Body className="text-center">
               <FaBuilding className="text-primary fs-1 mb-2" />
-              <h4 className="text-primary">{companyData.companies.length}</h4>
+              <h4 className="text-primary">{(companyData?.companies || []).length}</h4>
               <p className="mb-0">Total Companies</p>
             </Card.Body>
           </Card>
@@ -740,7 +277,7 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-success h-100">
             <Card.Body className="text-center">
               <FaUsers className="text-success fs-1 mb-2" />
-              <h4 className="text-success">{companyData.buildingTotals.podium}</h4>
+              <h4 className="text-success">{companyData?.buildingTotals?.podium || 0}</h4>
               <p className="mb-0">Podium Occupancy</p>
             </Card.Body>
           </Card>
@@ -749,7 +286,7 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-info h-100">
             <Card.Body className="text-center">
               <FaChartBar className="text-info fs-1 mb-2" />
-              <h4 className="text-info">{companyData.buildingTotals.towerB}</h4>
+              <h4 className="text-info">{companyData?.buildingTotals?.towerB || 0}</h4>
               <p className="mb-0">Tower B Occupancy</p>
             </Card.Body>
           </Card>
@@ -758,7 +295,7 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-warning h-100">
             <Card.Body className="text-center">
               <FaArrowTrendUp className="text-warning fs-1 mb-2" />
-              <h4 className="text-warning">{companyData.totalCount}</h4>
+              <h4 className="text-warning">{companyData?.totalCount || 0}</h4>
               <p className="mb-0">Total Current Presence</p>
             </Card.Body>
           </Card>
@@ -791,70 +328,77 @@ const CompanySummary = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCompanies.map((company, index) => (
-                      <tr key={company.name} className="border-secondary">
-                        <td className="border-secondary">
-                          <Badge bg={index < 3 ? 'warning' : 'secondary'}>
-                            #{index + 1}
-                          </Badge>
-                        </td>
-                        <td className="border-secondary fw-bold">
-                          {company.name}
-                        </td>
-                        <td className="border-secondary text-center">
-                          <Badge bg="light" text="dark" className="fs-6">
-                            {company.total}
-                          </Badge>
-                        </td>
-                        <td className="border-secondary text-center">
-                          {company.byBuilding.podium > 0 ? (
-                            <Badge bg="success">{company.byBuilding.podium}</Badge>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                        <td className="border-secondary text-center">
-                          {company.byBuilding.towerB > 0 ? (
-                            <Badge bg="info">{company.byBuilding.towerB}</Badge>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                        <td className="border-secondary text-center">
-                          {company.byBuilding.other > 0 ? (
-                            <Badge bg="secondary">{company.byBuilding.other}</Badge>
-                          ) : (
-                            <span className="text-muted">-</span>
-                          )}
-                        </td>
-                        <td className="border-secondary">
-                          <div className="distribution-bar">
-                            <ProgressBar className="bg-gray-700">
-                              <ProgressBar 
-                                now={(company.byBuilding.podium / company.total) * 100}
-                                variant="success"
-                                label={`${Math.round((company.byBuilding.podium / company.total) * 100)}%`}
-                              />
-                              <ProgressBar 
-                                now={(company.byBuilding.towerB / company.total) * 100}
-                                variant="info"
-                                label={`${Math.round((company.byBuilding.towerB / company.total) * 100)}%`}
-                              />
-                            </ProgressBar>
-                          </div>
-                        </td>
-                        <td className="border-secondary">
-                          <small>
-                            {company.locations.slice(0, 2).join(', ')}
-                            {company.locations.length > 2 && '...'}
-                          </small>
-                        </td>
-                      </tr>
-                    ))}
+                    {(filteredCompanies || []).map((company, index) => {
+                      const podiumCount = company?.byBuilding?.podium || 0;
+                      const towerBCount = company?.byBuilding?.towerB || 0;
+                      const otherCount = company?.byBuilding?.other || 0;
+                      const total = company?.total || 1; // avoid divide by zero
+
+                      return (
+                        <tr key={company?.name || index} className="border-secondary">
+                          <td className="border-secondary">
+                            <Badge bg={index < 3 ? 'warning' : 'secondary'}>
+                              #{index + 1}
+                            </Badge>
+                          </td>
+                          <td className="border-secondary fw-bold">
+                            {company?.name || 'Unknown'}
+                          </td>
+                          <td className="border-secondary text-center">
+                            <Badge bg="light" text="dark" className="fs-6">
+                              {company?.total || 0}
+                            </Badge>
+                          </td>
+                          <td className="border-secondary text-center">
+                            {podiumCount > 0 ? (
+                              <Badge bg="success">{podiumCount}</Badge>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td className="border-secondary text-center">
+                            {towerBCount > 0 ? (
+                              <Badge bg="info">{towerBCount}</Badge>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td className="border-secondary text-center">
+                            {otherCount > 0 ? (
+                              <Badge bg="secondary">{otherCount}</Badge>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td className="border-secondary">
+                            <div className="distribution-bar">
+                              <ProgressBar className="bg-gray-700">
+                                <ProgressBar
+                                  now={safePercent(podiumCount, total)}
+                                  variant="success"
+                                  label={`${Math.round(safePercent(podiumCount, total))}%`}
+                                />
+                                <ProgressBar
+                                  now={safePercent(towerBCount, total)}
+                                  variant="info"
+                                  label={`${Math.round(safePercent(towerBCount, total))}%`}
+                                />
+                              </ProgressBar>
+                            </div>
+                          </td>
+                          <td className="border-secondary">
+                            <small>
+                              {(company?.locations || []).slice(0, 2).join(', ')}
+                              {(company?.locations || []).length > 2 && '...'}
+                            </small>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </Table>
               </div>
-              {filteredCompanies.length === 0 && (
+              {(filteredCompanies || []).length === 0 && (
                 <div className="text-center text-muted py-4">
                   No companies found for the selected filter
                 </div>
@@ -872,17 +416,17 @@ const CompanySummary = ({
               <h5 className="mb-0">Podium Distribution</h5>
             </Card.Header>
             <Card.Body>
-              {companyData.companies
-                .filter(company => company.byBuilding.podium > 0)
+              {(companyData?.companies || [])
+                .filter(company => (company?.byBuilding?.podium || 0) > 0)
                 .slice(0, 5)
-                .map((company, index) => (
-                  <div key={company.name} className="mb-3">
+                .map((company) => (
+                  <div key={company?.name || Math.random()} className="mb-3">
                     <div className="d-flex justify-content-between align-items-center mb-1">
-                      <span className="small">{company.name}</span>
-                      <Badge bg="success">{company.byBuilding.podium}</Badge>
+                      <span className="small">{company?.name}</span>
+                      <Badge bg="success">{company?.byBuilding?.podium || 0}</Badge>
                     </div>
-                    <ProgressBar 
-                      now={(company.byBuilding.podium / companyData.buildingTotals.podium) * 100}
+                    <ProgressBar
+                      now={safePercent(company?.byBuilding?.podium || 0, companyData?.buildingTotals?.podium || 1)}
                       variant="success"
                       className="bg-gray-700"
                     />
@@ -898,17 +442,17 @@ const CompanySummary = ({
               <h5 className="mb-0">Tower B Distribution</h5>
             </Card.Header>
             <Card.Body>
-              {companyData.companies
-                .filter(company => company.byBuilding.towerB > 0)
+              {(companyData?.companies || [])
+                .filter(company => (company?.byBuilding?.towerB || 0) > 0)
                 .slice(0, 5)
-                .map((company, index) => (
-                  <div key={company.name} className="mb-3">
+                .map((company) => (
+                  <div key={company?.name || Math.random()} className="mb-3">
                     <div className="d-flex justify-content-between align-items-center mb-1">
-                      <span className="small">{company.name}</span>
-                      <Badge bg="info">{company.byBuilding.towerB}</Badge>
+                      <span className="small">{company?.name}</span>
+                      <Badge bg="info">{company?.byBuilding?.towerB || 0}</Badge>
                     </div>
-                    <ProgressBar 
-                      now={(company.byBuilding.towerB / companyData.buildingTotals.towerB) * 100}
+                    <ProgressBar
+                      now={safePercent(company?.byBuilding?.towerB || 0, companyData?.buildingTotals?.towerB || 1)}
                       variant="info"
                       className="bg-gray-700"
                     />
@@ -923,5 +467,4 @@ const CompanySummary = ({
   );
 };
 
-// Add some custom CSS
-const styles = `
+export default CompanySummary;
