@@ -1,4 +1,3 @@
-this file half code not copy please writ correct 
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\CompanyAnalytics.jsx
 import React, { useState, useMemo } from 'react';
 import {
