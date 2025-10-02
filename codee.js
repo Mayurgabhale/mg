@@ -7,11 +7,15 @@ import {
   FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaArrowTrendUp, FaClock
 } from 'react-icons/fa6';
 
-const CompanySummary = ({ detailsData = {} }) => {
+const CompanySummary = ({
+  detailsData = {},
+  personnelBreakdown = [],
+  zoneBreakdown = []
+}) => {
   const [selectedBuilding, setSelectedBuilding] = useState('all');
   const [timeRange, setTimeRange] = useState('today');
 
-  // --- Helper function to determine building from zone ---
+  // --- Normalize building from zone ---
   const getBuildingFromZone = (zone) => {
     if (!zone) return null;
     const z = String(zone).toLowerCase();
@@ -21,7 +25,7 @@ const CompanySummary = ({ detailsData = {} }) => {
     return null; // ignore anything else
   };
 
-  // --- Process company data from details ---
+  // --- Process company data ---
   const companyData = useMemo(() => {
     const companies = {};
     let totalCount = 0;
@@ -31,7 +35,8 @@ const CompanySummary = ({ detailsData = {} }) => {
         zoneEmployees.forEach(employee => {
           const companyName = employee?.CompanyName || 'Unknown Company';
           const building = getBuildingFromZone(employee?.zone);
-          if (!building) return; // skip zones not matching our 3 floors
+
+          if (!building) return; // ignore unrecognized zones
 
           if (!companies[companyName]) {
             companies[companyName] = {
@@ -44,9 +49,13 @@ const CompanySummary = ({ detailsData = {} }) => {
           }
 
           companies[companyName].total++;
-          companies[companyName].byBuilding[building]++;
+          companies[companyName].byBuilding[building] =
+            (companies[companyName].byBuilding[building] || 0) + 1;
+
           companies[companyName].employees.push(employee);
-          if (employee?.PrimaryLocation) companies[companyName].locations.add(employee.PrimaryLocation);
+          if (employee?.PrimaryLocation) {
+            companies[companyName].locations.add(employee.PrimaryLocation);
+          }
           totalCount++;
         });
       }
@@ -61,9 +70,9 @@ const CompanySummary = ({ detailsData = {} }) => {
       .sort((a, b) => (b.total || 0) - (a.total || 0));
 
     const buildingTotals = companyArray.reduce((acc, company) => {
-      acc['Podium Floor'] += company.byBuilding['Podium Floor'];
-      acc['2nd Floor'] += company.byBuilding['2nd Floor'];
-      acc['Tower B'] += company.byBuilding['Tower B'];
+      acc['Podium Floor'] += (company.byBuilding?.['Podium Floor'] || 0);
+      acc['2nd Floor'] += (company.byBuilding?.['2nd Floor'] || 0);
+      acc['Tower B'] += (company.byBuilding?.['Tower B'] || 0);
       return acc;
     }, { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 });
 
@@ -74,24 +83,24 @@ const CompanySummary = ({ detailsData = {} }) => {
     };
   }, [detailsData]);
 
-  // --- Filtered companies based on building ---
+  // --- Filtered companies ---
   const filteredCompanies = useMemo(() => {
     const comps = companyData?.companies || [];
     if (selectedBuilding === 'all') return comps;
     return comps.filter(company => (company.byBuilding?.[selectedBuilding] || 0) > 0);
   }, [companyData?.companies, selectedBuilding]);
 
-  // --- Podium winners (Podium Floor only) ---
+  // --- Podium winners (only for Podium Floor) ---
   const getPodiumWinners = () => {
     const podiumCompanies = (companyData?.companies || [])
       .filter(c => (c.byBuilding?.['Podium Floor'] || 0) > 0)
       .sort((a, b) => (b.byBuilding?.['Podium Floor'] || 0) - (a.byBuilding?.['Podium Floor'] || 0))
+      .reverse()
       .slice(0, 3);
 
     return podiumCompanies.map((c, idx) => ({
       name: c?.name || 'Unknown',
-      byBuilding: c?.byBuilding,
-      total: c?.total || 0,
+      count: c?.byBuilding?.['Podium Floor'] || 0,
       position: idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd',
       icon: idx === 0 ? FaTrophy : FaMedal,
       color: idx === 0 ? 'gold' : idx === 1 ? 'silver' : '#cd7f32'
@@ -100,11 +109,12 @@ const CompanySummary = ({ detailsData = {} }) => {
 
   const podiumWinners = getPodiumWinners();
 
+  // small util
   const safePercent = (num, denom) => (denom > 0 ? (num / denom) * 100 : 0);
 
   return (
     <Container fluid className="company-summary-dashboard">
-      {/* Header Section */}
+      {/* Header */}
       <Row className="mb-4">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
@@ -164,7 +174,7 @@ const CompanySummary = ({ detailsData = {} }) => {
         </Col>
       </Row>
 
-      {/* Podium Section */}
+      {/* Podium Leaderboard */}
       {(selectedBuilding === 'all' || selectedBuilding === 'Podium Floor') && (
         <Row className="mb-4">
           <Col>
@@ -172,35 +182,25 @@ const CompanySummary = ({ detailsData = {} }) => {
               <Card.Header className="bg-warning text-dark">
                 <h4 className="mb-0">
                   <FaTrophy className="me-2" />
-                  Podium Leaderboard
+                  Podium Floor Leaderboard
                 </h4>
               </Card.Header>
               <Card.Body>
                 {podiumWinners.length > 0 ? (
-                  <div className="podium-container text-center">
-                    <Row className="align-items-end justify-content-center">
-                      {['2nd', '1st', '3rd'].map(pos => {
-                        const winner = podiumWinners.find(w => w.position === pos);
-                        if (!winner) return null;
-                        const colSize = pos === '1st' ? 4 : 3;
-                        const bg = pos === '1st' ? 'warning' : 'secondary';
-                        return (
-                          <Col md={colSize} className="mb-3" key={pos}>
-                            <div className={`podium-place ${pos.toLowerCase()}-place`}>
-                              <div className={`podium-rank bg-${bg} text-dark`}>
-                                {winner.icon({ className: `text-${bg === 'warning' ? 'gold' : pos === '2nd' ? 'silver' : 'bronze'}` })}
-                                <div>{pos}</div>
-                              </div>
-                              <div className="podium-company-info">
-                                <h6 className="mb-1">{winner.name}</h6>
-                                <Badge bg={bg}>{winner.byBuilding['Podium Floor'] || 0}</Badge>
-                              </div>
-                            </div>
-                          </Col>
-                        );
-                      })}
-                    </Row>
-                  </div>
+                  <Row className="align-items-end justify-content-center text-center">
+                    {podiumWinners.map(w => (
+                      <Col md={3} key={w.position} className="mb-3">
+                        <div>
+                          <div className="mb-2">
+                            <w.icon style={{ color: w.color, fontSize: '2rem' }} />
+                            <div>{w.position}</div>
+                          </div>
+                          <h6 className="mb-1">{w.name}</h6>
+                          <Badge bg="secondary">{w.count}</Badge>
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
                 ) : (
                   <div className="text-center text-muted py-4">
                     No podium data available
@@ -212,31 +212,38 @@ const CompanySummary = ({ detailsData = {} }) => {
         </Row>
       )}
 
-      {/* Statistics Cards */}
+      {/* Stats */}
       <Row className="mb-4">
-        {['Podium Floor', '2nd Floor', 'Tower B'].map((floor, idx) => (
-          <Col md={3} key={floor}>
-            <Card className="bg-dark text-light border-primary h-100">
-              <Card.Body className="text-center">
-                <FaBuilding className={`text-${['primary','info','success'][idx]} fs-1 mb-2`} />
-                <h4 className={`text-${['primary','info','success'][idx]}`}>{companyData?.buildingTotals?.[floor] || 0}</h4>
-                <p className="mb-0">{floor} Occupancy</p>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-        <Col md={3}>
+        <Col md={4}>
+          <Card className="bg-dark text-light border-success h-100">
+            <Card.Body className="text-center">
+              <FaUsers className="text-success fs-1 mb-2" />
+              <h4 className="text-success">{companyData?.buildingTotals?.['Podium Floor'] || 0}</h4>
+              <p className="mb-0">Podium Floor Occupancy</p>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="bg-dark text-light border-info h-100">
+            <Card.Body className="text-center">
+              <FaUsers className="text-info fs-1 mb-2" />
+              <h4 className="text-info">{companyData?.buildingTotals?.['2nd Floor'] || 0}</h4>
+              <p className="mb-0">2nd Floor Occupancy</p>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
           <Card className="bg-dark text-light border-warning h-100">
             <Card.Body className="text-center">
-              <FaArrowTrendUp className="text-warning fs-1 mb-2" />
-              <h4 className="text-warning">{companyData?.totalCount || 0}</h4>
-              <p className="mb-0">Total Current Presence</p>
+              <FaUsers className="text-warning fs-1 mb-2" />
+              <h4 className="text-warning">{companyData?.buildingTotals?.['Tower B'] || 0}</h4>
+              <p className="mb-0">Tower B Occupancy</p>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {/* Main Company Table */}
+      {/* Company Table */}
       <Row>
         <Col>
           <Card className="bg-dark text-light border-secondary">
@@ -249,52 +256,54 @@ const CompanySummary = ({ detailsData = {} }) => {
             <Card.Body className="p-0">
               <div className="table-responsive">
                 <Table hover variant="dark" className="mb-0">
-                  <thead className="bg-gray-800">
+                  <thead>
                     <tr>
-                      <th className="border-secondary">Rank</th>
-                      <th className="border-secondary">Company Name</th>
-                      <th className="border-secondary text-center">Total</th>
-                      {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
-                        <th className="border-secondary text-center" key={floor}>{floor}</th>
-                      ))}
-                      <th className="border-secondary text-center">Distribution</th>
-                      <th className="border-secondary">Primary Locations</th>
+                      <th>Rank</th>
+                      <th>Company</th>
+                      <th>Total</th>
+                      <th>Podium Floor</th>
+                      <th>2nd Floor</th>
+                      <th>Tower B</th>
+                      <th>Distribution</th>
+                      <th>Primary Locations</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(filteredCompanies || []).map((company, index) => {
+                      const podiumCount = company?.byBuilding?.['Podium Floor'] || 0;
+                      const secondFloorCount = company?.byBuilding?.['2nd Floor'] || 0;
+                      const towerBCount = company?.byBuilding?.['Tower B'] || 0;
                       const total = company?.total || 1;
+
                       return (
-                        <tr key={company?.name || index} className="border-secondary">
-                          <td className="border-secondary">
-                            <Badge bg={index < 3 ? 'warning' : 'secondary'}>#{index + 1}</Badge>
+                        <tr key={company?.name || index}>
+                          <td>
+                            <Badge bg={index < 3 ? 'warning' : 'secondary'}>
+                              #{index + 1}
+                            </Badge>
                           </td>
-                          <td className="border-secondary fw-bold">{company?.name}</td>
-                          <td className="border-secondary text-center">
-                            <Badge bg="light" text="dark" className="fs-6">{company?.total || 0}</Badge>
-                          </td>
-                          {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
-                            <td className="border-secondary text-center" key={floor}>
-                              {company?.byBuilding?.[floor] > 0 ? (
-                                <Badge bg={floor === '2nd Floor' ? 'info' : floor === 'Tower B' ? 'success' : 'primary'}>
-                                  {company.byBuilding[floor]}
-                                </Badge>
-                              ) : <span className="text-muted">-</span>}
-                            </td>
-                          ))}
-                          <td className="border-secondary">
+                          <td>{company?.name}</td>
+                          <td><Badge bg="light" text="dark">{company?.total || 0}</Badge></td>
+                          <td>{podiumCount > 0 ? <Badge bg="success">{podiumCount}</Badge> : '-'}</td>
+                          <td>{secondFloorCount > 0 ? <Badge bg="info">{secondFloorCount}</Badge> : '-'}</td>
+                          <td>{towerBCount > 0 ? <Badge bg="warning">{towerBCount}</Badge> : '-'}</td>
+                          <td>
                             <ProgressBar className="bg-gray-700">
-                              {['Podium Floor','2nd Floor','Tower B'].map(floor => (
+                              {['Podium Floor', '2nd Floor', 'Tower B'].map(floor => (
                                 <ProgressBar
                                   key={floor}
                                   now={safePercent(company?.byBuilding?.[floor], total)}
-                                  variant={floor === '2nd Floor' ? 'info' : floor === 'Tower B' ? 'success' : 'primary'}
+                                  variant={floor === '2nd Floor' ? 'info' : floor === 'Tower B' ? 'warning' : 'success'}
+                                  label={company?.byBuilding?.[floor] > 0 ? `${company.byBuilding[floor]}` : ''}
                                 />
                               ))}
                             </ProgressBar>
                           </td>
-                          <td className="border-secondary">
-                            <small>{(company?.locations || []).slice(0,2).join(', ')}{(company?.locations || []).length > 2 ? '...' : ''}</small>
+                          <td>
+                            <small>
+                              {(company?.locations || []).slice(0, 2).join(', ')}
+                              {(company?.locations || []).length > 2 && '...'}
+                            </small>
                           </td>
                         </tr>
                       );
