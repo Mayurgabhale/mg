@@ -1,3 +1,9 @@
+Rank	Company	Total	Podium Floor	2nd Floor	Tower B
+Podium Floor	2nd Floor	Tower B
+when i click on header Podium Floor	2nd Floor	Tower B, that time disply all 
+i measn all  Podium Floor, all tower b, all 2nd floor ok 
+-------------
+  
 // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
@@ -474,5 +480,3 @@ const CompanySummary = ({
     </>
   );
 };
-
-export default CompanySummary;
