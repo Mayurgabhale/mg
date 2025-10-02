@@ -1,87 +1,104 @@
 <Row>
   {/* Sidebar */}
   <Col
-    xs={sidebarOpen ? 2 : 1}
+    xs={sidebarOpen ? 3 : 1}
     className="position-sticky shadow-sm"
     style={{
       top: 0,
       minHeight: "100vh",
       transition: "width 0.3s",
-      background: "linear-gradient(to bottom, #3a8dff, #6cc1ff)",
-      color: "#fff",
-      padding: "1.5rem 0.5rem",
+      background: "#f8f9fa",
+      padding: "1rem",
     }}
   >
-    {/* Header */}
+    {/* Dashboard Header */}
     <div className="d-flex justify-content-between align-items-center mb-4 px-2">
       {sidebarOpen && (
-        <h5 className="mb-0 d-flex align-items-center">
+        <h5 className="mb-0 text-primary d-flex align-items-center">
           <FaHouse className="me-2" /> Dashboard
         </h5>
       )}
       <FaBars
-        className="cursor-pointer"
+        className="cursor-pointer text-secondary"
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        style={{ fontSize: "1.2rem" }}
+        style={{ fontSize: "1.3rem" }}
       />
     </div>
 
-    {/* Clock */}
+    {/* Clock Card */}
     {sidebarOpen && (
-      <div
-        className="text-center mb-4"
+      <Card
+        className="mb-4 shadow-sm"
         style={{
-          fontSize: "1.1rem",
-          fontWeight: "600",
-          background: "rgba(255,255,255,0.15)",
-          borderRadius: "0.5rem",
-          padding: "0.5rem",
+          borderRadius: "0.8rem",
+          background: "linear-gradient(90deg, #3a8dff, #6cc1ff)",
+          color: "#fff",
+          textAlign: "center",
         }}
       >
-        {currentTime.toLocaleTimeString()}
-      </div>
+        <Card.Body style={{ padding: "0.8rem" }}>
+          <div style={{ fontSize: "1rem", fontWeight: "600" }}>Current Time</div>
+          <div style={{ fontSize: "1.2rem", fontWeight: "700" }}>
+            {currentTime.toLocaleTimeString()}
+          </div>
+        </Card.Body>
+      </Card>
     )}
 
-    {/* Navigation */}
-    <Nav className="flex-column">
-      <Nav.Link
-        active={activeTab === "companyAnalytics"}
-        onClick={() => setActiveTab("companyAnalytics")}
-        className={`d-flex align-items-center mb-2 px-3 py-2 rounded ${
-          activeTab === "companyAnalytics" ? "bg-white text-primary fw-bold" : "text-white"
-        }`}
-        style={{ transition: "all 0.2s" }}
-        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)")}
-        onMouseOut={(e) =>
-          (e.currentTarget.style.backgroundColor =
-            activeTab === "companyAnalytics" ? "white" : "transparent")
-        }
-      >
-        <FaBuilding className="me-2" />
-        {sidebarOpen && "Company Analytics"}
-      </Nav.Link>
+    {/* Navigation Sections */}
+    <div className="mb-3">
+      {sidebarOpen && <div className="text-secondary px-2 mb-2 fw-bold small">Analytics</div>}
+      <Nav className="flex-column">
+        <Nav.Link
+          active={activeTab === "companyAnalytics"}
+          onClick={() => setActiveTab("companyAnalytics")}
+          className={`d-flex align-items-center mb-2 px-3 py-2 rounded shadow-sm ${
+            activeTab === "companyAnalytics"
+              ? "bg-primary text-white fw-bold"
+              : "text-dark bg-white"
+          }`}
+          style={{ transition: "all 0.2s" }}
+          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <FaBuilding className="me-2" />
+          {sidebarOpen && "Company Analytics"}
+        </Nav.Link>
 
-      <Nav.Link
-        active={activeTab === "futureTab"}
-        onClick={() => setActiveTab("futureTab")}
-        className={`d-flex align-items-center mb-2 px-3 py-2 rounded ${
-          activeTab === "futureTab" ? "bg-white text-primary fw-bold" : "text-white"
-        }`}
-        style={{ transition: "all 0.2s" }}
-        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)")}
-        onMouseOut={(e) =>
-          (e.currentTarget.style.backgroundColor =
-            activeTab === "futureTab" ? "white" : "transparent")
-        }
-      >
-        <FaChartPie className="me-2" />
-        {sidebarOpen && "Future Analytics"}
-      </Nav.Link>
-    </Nav>
+        <Nav.Link
+          active={activeTab === "futureTab"}
+          onClick={() => setActiveTab("futureTab")}
+          className={`d-flex align-items-center mb-2 px-3 py-2 rounded shadow-sm ${
+            activeTab === "futureTab"
+              ? "bg-primary text-white fw-bold"
+              : "text-dark bg-white"
+          }`}
+          style={{ transition: "all 0.2s" }}
+          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          <FaChartPie className="me-2" />
+          {sidebarOpen && "Future Analytics"}
+        </Nav.Link>
+      </Nav>
+    </div>
+
+    {/* Optional Extra Section */}
+    {sidebarOpen && (
+      <div className="mt-auto">
+        <div className="text-secondary px-2 mb-2 fw-bold small">Extras</div>
+        <Nav className="flex-column">
+          <Nav.Link className="d-flex align-items-center mb-2 px-3 py-2 rounded shadow-sm text-dark bg-white">
+            <FaUsers className="me-2" />
+            {sidebarOpen && "User Management"}
+          </Nav.Link>
+        </Nav>
+      </div>
+    )}
   </Col>
 
   {/* Main Content */}
-  <Col xs={sidebarOpen ? 10 : 11} className="p-4">
+  <Col xs={sidebarOpen ? 9 : 11} className="p-4">
     <h2 className="text-dark mb-4">
       {activeTab === "companyAnalytics" ? "Company Analytics Dashboard" : "Future Analytics"}
     </h2>
