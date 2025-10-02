@@ -1,187 +1,4 @@
-I'll create a professional dashboard layout with sidebar navigation and light theme. Let me build this step by step:
-
-1. First, create the main Dashboard Layout with Sidebar:
-
-```jsx
-// C:\Users\W0024618\Desktop\swipeData\client\src\components\DashboardLayout.jsx
-import React, { useState } from 'react';
-import { 
-  Container, 
-  Row, 
-  Col, 
-  Nav,
-  Card,
-  Badge
-} from 'react-bootstrap';
-import {
-  FaBuilding,
-  FaChartLine,
-  FaUsers,
-  FaChartBar,
-  FaHistory,
-  FaCog,
-  FaBars,
-  FaTimes
-} from 'react-icons/fa';
-
-const DashboardLayout = ({ children, activeTab, onTabChange }) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const menuItems = [
-    { id: 'company-analytics', label: 'Company Analytics', icon: FaBuilding, badge: null },
-    { id: 'occupancy-trends', label: 'Occupancy Trends', icon: FaChartLine, badge: 'Soon' },
-    { id: 'employee-insights', label: 'Employee Insights', icon: FaUsers, badge: 'New' },
-    { id: 'reports', label: 'Reports & Analytics', icon: FaChartBar, badge: null },
-    { id: 'history', label: 'Historical Data', icon: FaHistory, badge: null },
-    { id: 'settings', label: 'Dashboard Settings', icon: FaCog, badge: null }
-  ];
-
-  return (
-    <Container fluid className="dashboard-layout px-0">
-      <Row className="g-0">
-        {/* Sidebar */}
-        <Col xs={sidebarCollapsed ? 1 : 3} lg={sidebarCollapsed ? 1 : 2} className="sidebar-col">
-          <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-            {/* Sidebar Header */}
-            <div className="sidebar-header">
-              {!sidebarCollapsed && (
-                <div className="brand-section">
-                  <div className="d-flex align-items-center">
-                    <FaBuilding className="brand-icon" />
-                    <div className="brand-text">
-                      <h5 className="mb-0">WU Analytics</h5>
-                      <small className="text-muted">Dashboard Suite</small>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <button 
-                className="sidebar-toggle"
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              >
-                {sidebarCollapsed ? <FaBars /> : <FaTimes />}
-              </button>
-            </div>
-
-            {/* Navigation */}
-            <Nav className="sidebar-nav flex-column">
-              {menuItems.map((item) => {
-                const IconComponent = item.icon;
-                const isActive = activeTab === item.id;
-                
-                return (
-                  <Nav.Link
-                    key={item.id}
-                    className={`nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => onTabChange(item.id)}
-                  >
-                    <div className="nav-item-content">
-                      <IconComponent className="nav-icon" />
-                      {!sidebarCollapsed && (
-                        <>
-                          <span className="nav-label">{item.label}</span>
-                          {item.badge && (
-                            <Badge bg="primary" className="nav-badge">
-                              {item.badge}
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    {sidebarCollapsed && (
-                      <div className="nav-tooltip">{item.label}</div>
-                    )}
-                  </Nav.Link>
-                );
-              })}
-            </Nav>
-
-            {/* Sidebar Footer */}
-            {!sidebarCollapsed && (
-              <div className="sidebar-footer">
-                <div className="user-info">
-                  <div className="avatar">AD</div>
-                  <div className="user-details">
-                    <div className="user-name">Admin User</div>
-                    <div className="user-role">Administrator</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </Col>
-
-        {/* Main Content */}
-        <Col xs={sidebarCollapsed ? 11 : 9} lg={sidebarCollapsed ? 11 : 10} className="main-content-col">
-          <div className="main-content">
-            {children}
-          </div>
-        </Col>
-      </Row>
-    </Container>
-  );
-};
-
-export default DashboardLayout;
-```
-
-2. Create the main Dashboard Page that uses the layout:
-
-```jsx
-// C:\Users\W0024618\Desktop\swipeData\client\src\pages\DashboardPage.jsx
-import React, { useState } from 'react';
-import DashboardLayout from '../components/DashboardLayout';
-import CompanyAnalytics from '../components/CompanyAnalytics';
-import ComingSoon from '../components/ComingSoon';
-
-const DashboardPage = ({ 
-  detailsData = {},
-  personnelBreakdown = [],
-  zoneBreakdown = [],
-  floorBreakdown = []
-}) => {
-  const [activeTab, setActiveTab] = useState('company-analytics');
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'company-analytics':
-        return (
-          <CompanyAnalytics
-            detailsData={detailsData}
-            personnelBreakdown={personnelBreakdown}
-            zoneBreakdown={zoneBreakdown}
-            floorBreakdown={floorBreakdown}
-          />
-        );
-      case 'occupancy-trends':
-      case 'employee-insights':
-      case 'reports':
-      case 'history':
-      case 'settings':
-        return <ComingSoon tabName={activeTab} />;
-      default:
-        return <CompanyAnalytics
-          detailsData={detailsData}
-          personnelBreakdown={personnelBreakdown}
-          zoneBreakdown={zoneBreakdown}
-          floorBreakdown={floorBreakdown}
-        />;
-    }
-  };
-
-  return (
-    <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderActiveTab()}
-    </DashboardLayout>
-  );
-};
-
-export default DashboardPage;
-```
-
-3. Create the updated CompanyAnalytics component (light theme):
-
-```jsx
+this file half code not copy please writ correct 
 // C:\Users\W0024618\Desktop\swipeData\client\src\components\CompanyAnalytics.jsx
 import React, { useState, useMemo } from 'react';
 import {
@@ -575,4 +392,142 @@ const CompanyAnalytics = ({
                       const total = company?.total || 0;
 
                       return (
-               
+                        <tr key={company?.name || index}>
+                          <td>
+                            <Badge bg={index < 3 ? 'primary' : 'light'} text={index < 3 ? 'white' : 'dark'}>
+                              #{index + 1}
+                            </Badge>
+                          </td>
+                          <td>
+                            <span 
+                              className="company-name clickable"
+                              onClick={() => handleCompanyClick(company)}
+                            >
+                              {company?.name}
+                            </span>
+                          </td>
+                          <td className="text-center">
+                            <Badge bg="dark" className="fs-6">
+                              {total}
+                            </Badge>
+                          </td>
+                          <td className="text-center">
+                            {podiumCount > 0 ? (
+                              <Badge
+                                bg="primary"
+                                className="clickable fs-6"
+                                onClick={() => handleCompanyBuildingClick(company, 'Podium Floor')}
+                              >
+                                {podiumCount}
+                              </Badge>
+                            ) : '-'}
+                          </td>
+                          <td className="text-center">
+                            {secondFloorCount > 0 ? (
+                              <Badge
+                                bg="info"
+                                className="clickable fs-6"
+                                onClick={() => handleCompanyBuildingClick(company, '2nd Floor')}
+                              >
+                                {secondFloorCount}
+                              </Badge>
+                            ) : '-'}
+                          </td>
+                          <td className="text-center">
+                            {towerBCount > 0 ? (
+                              <Badge
+                                bg="warning"
+                                className="clickable fs-6"
+                                onClick={() => handleCompanyBuildingClick(company, 'Tower B')}
+                              >
+                                {towerBCount}
+                              </Badge>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            <ProgressBar className="distribution-bar">
+                              <ProgressBar 
+                                now={(podiumCount / total) * 100}
+                                variant="primary"
+                                label={podiumCount > 0 ? `${Math.round((podiumCount / total) * 100)}%` : ''}
+                              />
+                              <ProgressBar 
+                                now={(secondFloorCount / total) * 100}
+                                variant="info"
+                                label={secondFloorCount > 0 ? `${Math.round((secondFloorCount / total) * 100)}%` : ''}
+                              />
+                              <ProgressBar 
+                                now={(towerBCount / total) * 100}
+                                variant="warning"
+                                label={towerBCount > 0 ? `${Math.round((towerBCount / total) * 100)}%` : ''}
+                              />
+                            </ProgressBar>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              </div>
+              {filteredCompanies.length === 0 && (
+                <div className="text-center text-muted py-5">
+                  <FaBuilding className="fs-1 mb-3" />
+                  <h5>No companies found</h5>
+                  <p>Try adjusting your filters or search terms</p>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="xl" scrollable>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title>{modalTitle}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {modalRows.length > 0 ? (
+            <Table striped hover>
+              <thead className="table-light">
+                <tr>
+                  {modalRows[0]?.company && <th>Company</th>}
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Employee ID</th>
+                  <th>Card Number</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Zone</th>
+                </tr>
+              </thead>
+              <tbody>
+                {modalRows.map((row, index) => (
+                  <tr key={index}>
+                    {row.company && <td>{row.company}</td>}
+                    <td>{row.idx}</td>
+                    <td className="fw-semibold">{row.name}</td>
+                    <td>{row.employeeId || '-'}</td>
+                    <td>{row.cardNumber || '-'}</td>
+                    <td>
+                      <Badge bg="light" text="dark" className="text-xs">
+                        {row.personnelType || '-'}
+                      </Badge>
+                    </td>
+                    <td>{row.primaryLocation || '-'}</td>
+                    <td>
+                      <small className="text-muted">{row.zone || '-'}</small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <div className="text-center py-4 text-muted">
+              No data available
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowModal(false)}>
+        
