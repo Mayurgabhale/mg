@@ -1,20 +1,23 @@
-Read the code carefuuly, and  create more professal and cleans dashboard UI, wiht more atractive ok
-looking like more atractive, side bar clock and opne buttion with more atractve UI
-// CompanySummary.jsx
-import React, { useState, useMemo } from "react";
-import { Container, Row, Col, Card, Table, Badge, Modal, Button, Nav } from "react-bootstrap";
-import { FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaChartPie } from "react-icons/fa6";
-import { FaHouse } from 'react-icons/fa6';
-const CompanySummary = ({
-  detailsData = {},
-}) => {
+// CompanySummaryModern.jsx
+import React, { useState, useMemo, useEffect } from "react";
+import { Container, Row, Col, Card, Table, Badge, Modal, Button, Nav, Collapse } from "react-bootstrap";
+import { FaBuilding, FaUsers, FaChartBar, FaChartPie, FaHouse, FaBars } from 'react-icons/fa6';
+
+const CompanySummaryModern = ({ detailsData = {} }) => {
   const [selectedBuilding, setSelectedBuilding] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalRows, setModalRows] = useState([]);
-  const [activeTab, setActiveTab] = useState("companyAnalytics"); // manage multi-tab
+  const [activeTab, setActiveTab] = useState("companyAnalytics");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // --- Helper: map zone to building ---
+  // Clock
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const getBuildingFromZone = (zone) => {
     if (!zone) return null;
     const z = String(zone).toLowerCase();
@@ -24,49 +27,34 @@ const CompanySummary = ({
     return null;
   };
 
-    const normalizeCompany = (raw) => {
-  if (!raw) return 'Unknown';
-  const orig = String(raw).trim();
-  const s = orig
-    .toLowerCase()
-    .replace(/[.,()\/\-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const normalizeCompany = (raw) => {
+    if (!raw) return 'Unknown';
+    const orig = String(raw).trim();
+    const s = orig.toLowerCase().replace(/[.,()\/\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (/\bpoona\b/.test(s) || /\bpoona security\b/.test(s)) return 'Poona Security India Pvt Ltd';
+    if (/\bwestern union\b/.test(s) || /\bwu\b/.test(s)) return 'Western Union';
+    if (/\bvedant\b/.test(s)) return 'Vedant Enterprises Pvt. Ltd';
+    if (/\bosource\b/.test(s)) return 'Osource India Pvt Ltd';
+    if (/\bcbre\b/.test(s)) return 'CBRE';
+    return orig || 'Unknown';
+  };
 
-  if (/\bpoona\b/.test(s) || /\bpoona security\b/.test(s)) return 'Poona Security India Pvt Ltd';
-  if (/\bwestern union\b/.test(s) || /\bwu\b/.test(s) || /\bwu srvcs\b/.test(s) || /\bwu technology\b/.test(s)) return 'Western Union';
-  if (/\bvedant\b/.test(s)) return 'Vedant Enterprises Pvt. Ltd';
-  if (/\bosource\b/.test(s)) return 'Osource India Pvt Ltd';
-  if (/\bcbre\b/.test(s)) return 'CBRE';
-  if (s === 'unknown' || s === '') return 'Unknown';
-  return orig;
-};
+  const getCanonicalCompany = (r) => {
+    const rawCompany = (r.CompanyName || '').toString().trim();
+    const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
+    const s = rawCompany.toLowerCase();
+    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) return 'CLR Facility Services Pvt.Ltd.';
+    if (!rawCompany) {
+      if (pt.includes('contractor')) return 'CBRE';
+      if (pt.includes('property') || pt.includes('management')) return 'CLR Facility Services Pvt.Ltd.';
+      if (pt === 'employee') return 'Western Union';
+      if (pt.includes('visitor')) return 'Visitor';
+      if (pt.includes('temp')) return 'Temp Badge';
+      return 'Unknown';
+    }
+    return normalizeCompany(rawCompany);
+  };
 
-const getCanonicalCompany = (r) => {
-  const rawCompany = (r.CompanyName || '').toString().trim();
-  const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
-
-  const s = rawCompany.toLowerCase();
-
-  // CBRE + CLR or Facility -> CLR canonical
-  if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
-    return 'CLR Facility Services Pvt.Ltd.';
-  }
-
-  // blank company -> use PersonnelType fallback
-  if (!rawCompany) {
-    if (pt.includes('contractor')) return 'CBRE';
-    if (pt.includes('property') || pt.includes('management')) return 'CLR Facility Services Pvt.Ltd.';
-    if (pt === 'employee') return 'Western Union';
-    if (pt.includes('visitor')) return 'Visitor';
-    if (pt.includes('temp')) return 'Temp Badge';
-    return 'Unknown';
-  }
-
-  return normalizeCompany(rawCompany);
-};
-
-  // --- Process company data ---
   const companyData = useMemo(() => {
     const companies = {};
     let totalCount = 0;
@@ -75,9 +63,7 @@ const getCanonicalCompany = (r) => {
     Object.values(detailsData || {}).forEach((zoneEmployees) => {
       if (Array.isArray(zoneEmployees)) {
         zoneEmployees.forEach((employee) => {
-        //   const companyName = employee?.CompanyName || "Unknown Company";
-        const companyName = getCanonicalCompany(employee);
-
+          const companyName = getCanonicalCompany(employee);
           const building = getBuildingFromZone(employee?.zone);
           if (!building) return;
 
@@ -123,8 +109,6 @@ const getCanonicalCompany = (r) => {
     setModalRows(rows || []);
     setShowModal(true);
   };
-
-
 
   const handleCompanyClick = (company) => {
     const rows = (company?.employees || []).map((r, i) => ({
@@ -183,23 +167,24 @@ const getCanonicalCompany = (r) => {
     openModalWithRows(`${company?.name || "Company"} — ${buildingName}`, rows);
   };
 
-  // --- Tab content components ---
   const renderTabContent = () => {
     if (activeTab === "companyAnalytics") {
       return (
         <>
           <Row className="mb-4">
-            {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
-              <Col md={4} key={floor}>
+            {["Podium Floor", "2nd Floor", "Tower B"].map((floor, idx) => (
+              <Col md={4} key={floor} className="mb-3">
                 <Card
-                  className="h-100 shadow-sm cursor-pointer"
-                  role="button"
+                  className="h-100 shadow-sm border-0 cursor-pointer"
+                  style={{ background: `linear-gradient(135deg, #3a8dff, #6cc1ff)`, color: "#fff", transition: "transform 0.2s" }}
                   onClick={() => handleBuildingClick(floor)}
+                  onMouseOver={e => e.currentTarget.style.transform = "scale(1.05)"}
+                  onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
                 >
-                  <Card.Body className="text-center"  style={{ background:"#ebf0f2" }}>
-                    <FaUsers className="fs-1 mb-2 text-primary" />
-                    <h4 className="text-dark">{companyData?.buildingTotals?.[floor] || 0}</h4>
-                    <p className="mb-0 text-dark">{floor} Occupancy (click to view)</p>
+                  <Card.Body className="text-center py-5">
+                    <FaUsers className="fs-1 mb-2" />
+                    <h3>{companyData?.buildingTotals?.[floor] || 0}</h3>
+                    <p className="mb-0">{floor} Occupancy</p>
                   </Card.Body>
                 </Card>
               </Col>
@@ -208,12 +193,9 @@ const getCanonicalCompany = (r) => {
 
           <Row>
             <Col>
-              <Card className="shadow-sm">
-                <Card.Header className="bg-light">
-                  <h4 className="mb-0 text-dark">
-                    <FaChartBar className="me-2 text-primary" />
-                    Company-wise Distribution
-                  </h4>
+              <Card className="shadow-sm border-0">
+                <Card.Header className="bg-primary text-white">
+                  <h5 className="mb-0"><FaChartBar className="me-2" /> Company Distribution</h5>
                 </Card.Header>
                 <Card.Body className="p-0">
                   <div className="table-responsive">
@@ -235,15 +217,12 @@ const getCanonicalCompany = (r) => {
                               <Badge bg={index < 3 ? "warning" : "secondary"}>#{index + 1}</Badge>
                             </td>
                             <td
-                              role="button"
                               onClick={() => handleCompanyClick(company)}
-                              style={{ cursor: "pointer", textDecoration: "underline", textDecorationColor: "rgba(0,123,255,0.5)" }}
+                              style={{ cursor: "pointer", textDecoration: "underline" }}
                             >
                               {company?.name}
                             </td>
-                            <td>
-                              <Badge bg="light" text="dark">{company?.total || 0}</Badge>
-                            </td>
+                            <td><Badge bg="light" text="dark">{company?.total || 0}</Badge></td>
                             {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
                               <td key={floor}>
                                 {company?.byBuilding?.[floor] > 0 ? (
@@ -261,15 +240,6 @@ const getCanonicalCompany = (r) => {
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot>
-                        <tr className="fw-bold table-light">
-                          <td colSpan={2} className="text-end">Totals:</td>
-                          <td><Badge bg="light" text="dark">{companyData?.totalCount || 0}</Badge></td>
-                          {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
-                            <td key={floor}><Badge bg="light" text="dark">{companyData?.buildingTotals?.[floor] || 0}</Badge></td>
-                          ))}
-                        </tr>
-                      </tfoot>
                     </Table>
                   </div>
                 </Card.Body>
@@ -280,39 +250,45 @@ const getCanonicalCompany = (r) => {
       );
     } else if (activeTab === "futureTab") {
       return (
-        <Card className="shadow-sm p-3">
-          <h4><FaChartPie className="me-2 text-primary" />Future Tab Placeholder</h4>
-          <p className="text-secondary">This area can be used for another dashboard or analytics.</p>
+        <Card className="shadow-sm p-4 border-0">
+          <h5><FaChartPie className="me-2 text-primary" /> Future Analytics</h5>
+          <p className="text-secondary">This area is reserved for future analytics and dashboard metrics.</p>
         </Card>
       );
     }
   };
 
   return (
-    <Container fluid className="company-summary-dashboard  text-dark" style={{ minHeight: "100vh",background:"#d0e9f7" }}>
+    <Container fluid style={{ minHeight: "100vh", background: "#f0f4f8" }}>
       <Row>
         {/* Sidebar */}
-        <Col md={2} className="bg-light p-3 shadow-sm" style={{ minHeight: "100vh" }}>
-          <h5 className="text-primary mb-4"><FaHouse className="me-2" />Dashboard</h5>
+        <Col xs={sidebarOpen ? 2 : 1} className="bg-white shadow-sm p-3 position-sticky" style={{ top: 0, minHeight: "100vh", transition: "width 0.3s" }}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            {sidebarOpen && <h5 className="text-primary mb-0"><FaHouse className="me-2" />Dashboard</h5>}
+            <FaBars className="cursor-pointer" onClick={() => setSidebarOpen(!sidebarOpen)} />
+          </div>
+          {sidebarOpen && <div className="mb-4 text-center text-dark fw-bold">{currentTime.toLocaleTimeString()}</div>}
           <Nav className="flex-column">
             <Nav.Link
               active={activeTab === "companyAnalytics"}
               onClick={() => setActiveTab("companyAnalytics")}
+              className="mb-2 rounded px-2 py-1"
             >
-              <FaBuilding className="me-2" /> Company Analytics
+              <FaBuilding className="me-2" /> {sidebarOpen && "Company Analytics"}
             </Nav.Link>
             <Nav.Link
               active={activeTab === "futureTab"}
               onClick={() => setActiveTab("futureTab")}
+              className="mb-2 rounded px-2 py-1"
             >
-              <FaChartPie className="me-2" /> Future Tab
+              <FaChartPie className="me-2" /> {sidebarOpen && "Future Analytics"}
             </Nav.Link>
           </Nav>
         </Col>
 
         {/* Main Content */}
-        <Col md={10} className="p-4">
-          <h2 className="text-dark mb-4">{activeTab === "companyAnalytics" ? "Company Analytics Dashboard" : "Future Tab"}</h2>
+        <Col xs={sidebarOpen ? 10 : 11} className="p-4">
+          <h2 className="text-dark mb-4">{activeTab === "companyAnalytics" ? "Company Analytics Dashboard" : "Future Analytics"}</h2>
           {renderTabContent()}
         </Col>
       </Row>
@@ -366,4 +342,4 @@ const getCanonicalCompany = (r) => {
   );
 };
 
-export default CompanySummary;
+export default CompanySummaryModern;
