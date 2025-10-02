@@ -1,23 +1,53 @@
-// CompanySummaryModern.jsx
-import React, { useState, useMemo, useEffect } from "react";
-import { Container, Row, Col, Card, Table, Badge, Modal, Button, Nav, Collapse } from "react-bootstrap";
-import { FaBuilding, FaUsers, FaChartBar, FaChartPie, FaHouse, FaBars } from 'react-icons/fa6';
+Here's a more professional and attractive dashboard UI with improved sidebar, clock, and overall design:
 
-const CompanySummaryModern = ({ detailsData = {} }) => {
+```jsx
+// CompanySummary.jsx
+import React, { useState, useMemo, useEffect } from "react";
+import { Container, Row, Col, Card, Table, Badge, Modal, Button, Nav } from "react-bootstrap";
+import { FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaChartPie, FaBars, FaTimes, FaClock, FaSearch, FaFilter } from "react-icons/fa6";
+import { FaHouse } from 'react-icons/fa6';
+
+const CompanySummary = ({
+  detailsData = {},
+}) => {
   const [selectedBuilding, setSelectedBuilding] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalRows, setModalRows] = useState([]);
   const [activeTab, setActiveTab] = useState("companyAnalytics");
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Clock
+  // Real-time clock
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // Format time with AM/PM
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true 
+    });
+  };
+
+  // Format date
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // --- Helper: map zone to building ---
   const getBuildingFromZone = (zone) => {
     if (!zone) return null;
     const z = String(zone).toLowerCase();
@@ -30,20 +60,33 @@ const CompanySummaryModern = ({ detailsData = {} }) => {
   const normalizeCompany = (raw) => {
     if (!raw) return 'Unknown';
     const orig = String(raw).trim();
-    const s = orig.toLowerCase().replace(/[.,()\/\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const s = orig
+      .toLowerCase()
+      .replace(/[.,()\/\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
     if (/\bpoona\b/.test(s) || /\bpoona security\b/.test(s)) return 'Poona Security India Pvt Ltd';
-    if (/\bwestern union\b/.test(s) || /\bwu\b/.test(s)) return 'Western Union';
+    if (/\bwestern union\b/.test(s) || /\bwu\b/.test(s) || /\bwu srvcs\b/.test(s) || /\bwu technology\b/.test(s)) return 'Western Union';
     if (/\bvedant\b/.test(s)) return 'Vedant Enterprises Pvt. Ltd';
     if (/\bosource\b/.test(s)) return 'Osource India Pvt Ltd';
     if (/\bcbre\b/.test(s)) return 'CBRE';
-    return orig || 'Unknown';
+    if (s === 'unknown' || s === '') return 'Unknown';
+    return orig;
   };
 
   const getCanonicalCompany = (r) => {
     const rawCompany = (r.CompanyName || '').toString().trim();
     const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
+
     const s = rawCompany.toLowerCase();
-    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) return 'CLR Facility Services Pvt.Ltd.';
+
+    // CBRE + CLR or Facility -> CLR canonical
+    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
+      return 'CLR Facility Services Pvt.Ltd.';
+    }
+
+    // blank company -> use PersonnelType fallback
     if (!rawCompany) {
       if (pt.includes('contractor')) return 'CBRE';
       if (pt.includes('property') || pt.includes('management')) return 'CLR Facility Services Pvt.Ltd.';
@@ -52,9 +95,11 @@ const CompanySummaryModern = ({ detailsData = {} }) => {
       if (pt.includes('temp')) return 'Temp Badge';
       return 'Unknown';
     }
+
     return normalizeCompany(rawCompany);
   };
 
+  // --- Process company data ---
   const companyData = useMemo(() => {
     const companies = {};
     let totalCount = 0;
@@ -99,10 +144,22 @@ const CompanySummaryModern = ({ detailsData = {} }) => {
     return { companies: companyArray, totalCount, buildingTotals };
   }, [detailsData]);
 
+  // Filter companies based on search term
   const filteredCompanies = useMemo(() => {
-    if (selectedBuilding === "all") return companyData?.companies || [];
-    return companyData?.companies.filter((c) => (c.byBuilding?.[selectedBuilding] || 0) > 0);
-  }, [companyData?.companies, selectedBuilding]);
+    let companies = companyData?.companies || [];
+    
+    if (selectedBuilding !== "all") {
+      companies = companies.filter((c) => (c.byBuilding?.[selectedBuilding] || 0) > 0);
+    }
+    
+    if (searchTerm) {
+      companies = companies.filter((c) => 
+        c.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return companies;
+  }, [companyData?.companies, selectedBuilding, searchTerm]);
 
   const openModalWithRows = (title, rows = []) => {
     setModalTitle(title || "");
@@ -167,80 +224,185 @@ const CompanySummaryModern = ({ detailsData = {} }) => {
     openModalWithRows(`${company?.name || "Company"} — ${buildingName}`, rows);
   };
 
+  // Building card colors
+  const buildingColors = {
+    "Podium Floor": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "2nd Floor": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    "Tower B": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+  };
+
+  // Rank badge colors
+  const getRankBadge = (index) => {
+    if (index === 0) return { bg: "warning", text: "dark", icon: <FaTrophy className="me-1" /> };
+    if (index === 1) return { bg: "secondary", text: "light", icon: <FaMedal className="me-1" /> };
+    if (index === 2) return { bg: "danger", text: "light", icon: <FaMedal className="me-1" /> };
+    return { bg: "light", text: "dark", icon: null };
+  };
+
+  // --- Tab content components ---
   const renderTabContent = () => {
     if (activeTab === "companyAnalytics") {
       return (
         <>
+          {/* KPI Cards */}
           <Row className="mb-4">
-            {["Podium Floor", "2nd Floor", "Tower B"].map((floor, idx) => (
+            {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
               <Col md={4} key={floor} className="mb-3">
                 <Card
-                  className="h-100 shadow-sm border-0 cursor-pointer"
-                  style={{ background: `linear-gradient(135deg, #3a8dff, #6cc1ff)`, color: "#fff", transition: "transform 0.2s" }}
+                  className="h-100 shadow-lg cursor-pointer border-0 text-white"
+                  role="button"
                   onClick={() => handleBuildingClick(floor)}
-                  onMouseOver={e => e.currentTarget.style.transform = "scale(1.05)"}
-                  onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
+                  style={{ 
+                    background: buildingColors[floor],
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 12px 25px rgba(0,0,0,0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                  }}
                 >
-                  <Card.Body className="text-center py-5">
-                    <FaUsers className="fs-1 mb-2" />
-                    <h3>{companyData?.buildingTotals?.[floor] || 0}</h3>
-                    <p className="mb-0">{floor} Occupancy</p>
+                  <Card.Body className="text-center d-flex flex-column justify-content-center">
+                    <FaUsers className="fs-1 mb-3 opacity-75" />
+                    <h2 className="display-6 fw-bold mb-2">{companyData?.buildingTotals?.[floor] || 0}</h2>
+                    <p className="mb-0 fs-6 opacity-90">{floor} Occupancy</p>
+                    <small className="opacity-75">Click to view details</small>
                   </Card.Body>
                 </Card>
               </Col>
             ))}
           </Row>
 
+          {/* Filters and Search */}
+          <Row className="mb-3">
+            <Col md={8}>
+              <div className="d-flex gap-2 flex-wrap">
+                <Button
+                  variant={selectedBuilding === "all" ? "primary" : "outline-primary"}
+                  onClick={() => setSelectedBuilding("all")}
+                  size="sm"
+                >
+                  All Buildings
+                </Button>
+                {["Podium Floor", "2nd Floor", "Tower B"].map((building) => (
+                  <Button
+                    key={building}
+                    variant={selectedBuilding === building ? "primary" : "outline-primary"}
+                    onClick={() => setSelectedBuilding(building)}
+                    size="sm"
+                  >
+                    {building}
+                  </Button>
+                ))}
+              </div>
+            </Col>
+            <Col md={4}>
+              <div className="position-relative">
+                <FaSearch className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" />
+                <input
+                  type="text"
+                  className="form-control ps-5"
+                  placeholder="Search companies..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </Col>
+          </Row>
+
+          {/* Company Table */}
           <Row>
             <Col>
               <Card className="shadow-sm border-0">
-                <Card.Header className="bg-primary text-white">
-                  <h5 className="mb-0"><FaChartBar className="me-2" /> Company Distribution</h5>
+                <Card.Header className="bg-white border-0 py-3">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h4 className="mb-0 text-dark fw-semibold">
+                      <FaChartBar className="me-2 text-primary" />
+                      Company-wise Distribution
+                    </h4>
+                    <Badge bg="light" text="dark" className="fs-6">
+                      Total: {companyData?.totalCount || 0}
+                    </Badge>
+                  </div>
                 </Card.Header>
                 <Card.Body className="p-0">
                   <div className="table-responsive">
                     <Table hover className="mb-0">
                       <thead className="table-light">
                         <tr>
-                          <th>Rank</th>
+                          <th className="ps-4">Rank</th>
                           <th>Company</th>
-                          <th>Total</th>
-                          <th>Podium Floor</th>
-                          <th>2nd Floor</th>
-                          <th>Tower B</th>
+                          <th className="text-center">Total</th>
+                          <th className="text-center">Podium Floor</th>
+                          <th className="text-center">2nd Floor</th>
+                          <th className="text-center">Tower B</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(filteredCompanies || []).map((company, index) => (
-                          <tr key={company?.name || index}>
-                            <td>
-                              <Badge bg={index < 3 ? "warning" : "secondary"}>#{index + 1}</Badge>
-                            </td>
-                            <td
-                              onClick={() => handleCompanyClick(company)}
-                              style={{ cursor: "pointer", textDecoration: "underline" }}
-                            >
-                              {company?.name}
-                            </td>
-                            <td><Badge bg="light" text="dark">{company?.total || 0}</Badge></td>
-                            {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
-                              <td key={floor}>
-                                {company?.byBuilding?.[floor] > 0 ? (
-                                  <Badge
-                                    bg="primary"
-                                    role="button"
-                                    style={{ cursor: "pointer" }}
-                                    onClick={() => handleCompanyBuildingClick(company, floor)}
-                                  >
-                                    {company?.byBuilding?.[floor]}
-                                  </Badge>
-                                ) : "-"}
+                        {(filteredCompanies || []).map((company, index) => {
+                          const rankBadge = getRankBadge(index);
+                          return (
+                            <tr key={company?.name || index} className="align-middle">
+                              <td className="ps-4">
+                                <Badge bg={rankBadge.bg} text={rankBadge.text} className="fs-6 px-2 py-1">
+                                  {rankBadge.icon}#{index + 1}
+                                </Badge>
                               </td>
-                            ))}
-                          </tr>
-                        ))}
+                              <td
+                                role="button"
+                                onClick={() => handleCompanyClick(company)}
+                                className="fw-semibold"
+                                style={{ 
+                                  cursor: "pointer", 
+                                  color: "#0d6efd",
+                                  transition: 'color 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.target.style.color = "#0a58ca"}
+                                onMouseLeave={(e) => e.target.style.color = "#0d6efd"}
+                              >
+                                {company?.name}
+                              </td>
+                              <td className="text-center">
+                                <Badge bg="dark" className="fs-6 px-2 py-1">
+                                  {company?.total || 0}
+                                </Badge>
+                              </td>
+                              {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
+                                <td key={floor} className="text-center">
+                                  {company?.byBuilding?.[floor] > 0 ? (
+                                    <Badge
+                                      bg="primary"
+                                      role="button"
+                                      className="fs-6 px-2 py-1"
+                                      style={{ 
+                                        cursor: "pointer",
+                                        transition: 'transform 0.2s ease'
+                                      }}
+                                      onClick={() => handleCompanyBuildingClick(company, floor)}
+                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                    >
+                                      {company?.byBuilding?.[floor]}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted">—</span>
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </Table>
+                    {filteredCompanies.length === 0 && (
+                      <div className="text-center py-5 text-muted">
+                        <FaSearch className="fs-1 mb-3 opacity-50" />
+                        <p className="fs-5">No companies found matching your criteria</p>
+                      </div>
+                    )}
                   </div>
                 </Card.Body>
               </Card>
@@ -250,96 +412,68 @@ const CompanySummaryModern = ({ detailsData = {} }) => {
       );
     } else if (activeTab === "futureTab") {
       return (
-        <Card className="shadow-sm p-4 border-0">
-          <h5><FaChartPie className="me-2 text-primary" /> Future Analytics</h5>
-          <p className="text-secondary">This area is reserved for future analytics and dashboard metrics.</p>
+        <Card className="shadow-sm border-0 p-4 text-center">
+          <FaChartPie className="fs-1 text-primary mb-3 opacity-50" />
+          <h4 className="text-dark mb-2">Future Analytics</h4>
+          <p className="text-secondary">This area is reserved for future dashboard features and analytics.</p>
         </Card>
       );
     }
   };
 
   return (
-    <Container fluid style={{ minHeight: "100vh", background: "#f0f4f8" }}>
-      <Row>
+    <Container fluid className="company-summary-dashboard text-dark p-0" style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)" }}>
+      <Row className="g-0">
         {/* Sidebar */}
-        <Col xs={sidebarOpen ? 2 : 1} className="bg-white shadow-sm p-3 position-sticky" style={{ top: 0, minHeight: "100vh", transition: "width 0.3s" }}>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            {sidebarOpen && <h5 className="text-primary mb-0"><FaHouse className="me-2" />Dashboard</h5>}
-            <FaBars className="cursor-pointer" onClick={() => setSidebarOpen(!sidebarOpen)} />
-          </div>
-          {sidebarOpen && <div className="mb-4 text-center text-dark fw-bold">{currentTime.toLocaleTimeString()}</div>}
-          <Nav className="flex-column">
-            <Nav.Link
-              active={activeTab === "companyAnalytics"}
-              onClick={() => setActiveTab("companyAnalytics")}
-              className="mb-2 rounded px-2 py-1"
-            >
-              <FaBuilding className="me-2" /> {sidebarOpen && "Company Analytics"}
-            </Nav.Link>
-            <Nav.Link
-              active={activeTab === "futureTab"}
-              onClick={() => setActiveTab("futureTab")}
-              className="mb-2 rounded px-2 py-1"
-            >
-              <FaChartPie className="me-2" /> {sidebarOpen && "Future Analytics"}
-            </Nav.Link>
-          </Nav>
-        </Col>
-
-        {/* Main Content */}
-        <Col xs={sidebarOpen ? 10 : 11} className="p-4">
-          <h2 className="text-dark mb-4">{activeTab === "companyAnalytics" ? "Company Analytics Dashboard" : "Future Analytics"}</h2>
-          {renderTabContent()}
-        </Col>
-      </Row>
-
-      {/* Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered scrollable>
-        <Modal.Header closeButton>
-          <Modal.Title>{modalTitle}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {modalRows.length > 0 ? (
-            <div className="table-responsive">
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    {modalRows[0].company && <th>Company</th>}
-                    <th>Sr</th>
-                    <th>Name</th>
-                    <th>Employee ID</th>
-                    <th>Card</th>
-                    <th>Personnel Type</th>
-                    <th>Primary Location</th>
-                    <th>Zone</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {modalRows.map((r, i) => (
-                    <tr key={`${r.employeeId || r.idx}-${i}`}>
-                      {r.company && <td>{r.company}</td>}
-                      <td>{r.idx}</td>
-                      <td>{r.name}</td>
-                      <td>{r.employeeId || "-"}</td>
-                      <td>{r.cardNumber || "-"}</td>
-                      <td>{r.personnelType || "-"}</td>
-                      <td>{r.primaryLocation || "-"}</td>
-                      <td>{r.zone || "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
+        <Col md={sidebarOpen ? 2 : 1} className="bg-dark text-white shadow-lg" style={{ minHeight: "100vh", transition: 'all 0.3s ease' }}>
+          <div className="p-3 d-flex flex-column h-100">
+            {/* Sidebar Header */}
+            <div className="text-center mb-4 border-bottom pb-3">
+              {sidebarOpen && (
+                <>
+                  <div className="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '60px', height: '60px' }}>
+                    <FaBuilding className="fs-4 text-white" />
+                  </div>
+                  <h5 className="text-white mb-1">Security Dashboard</h5>
+                  <small className="text-white-50">Occupancy Analytics</small>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="text-center text-muted py-4">No records to display.</div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
-  );
-};
 
-export default CompanySummaryModern;
+            {/* Clock */}
+            <div className="text-center mb-4 p-3 bg-dark rounded border">
+              <FaClock className="fs-5 text-primary mb-2" />
+              {sidebarOpen && (
+                <>
+                  <div className="fs-6 fw-bold text-white">{formatTime(currentTime)}</div>
+                  <div className="small text-white-50">{formatDate(currentTime)}</div>
+                </>
+              )}
+            </div>
+
+            {/* Navigation */}
+            <Nav className="flex-column gap-2">
+              <Nav.Link
+                active={activeTab === "companyAnalytics"}
+                onClick={() => setActiveTab("companyAnalytics")}
+                className={`rounded-pill px-3 py-2 text-start ${activeTab === "companyAnalytics" ? 'bg-primary text-white' : 'text-white-50 hover-bg'}`}
+                style={{ 
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => !e.target.className.includes('bg-primary') && (e.target.style.backgroundColor = 'rgba(255,255,255,0.1)')}
+                onMouseLeave={(e) => !e.target.className.includes('bg-primary') && (e.target.style.backgroundColor = 'transparent')}
+              >
+                <FaChartBar className="me-2 fs-6" />
+                {sidebarOpen && "Company Analytics"}
+              </Nav.Link>
+              <Nav.Link
+                active={activeTab === "futureTab"}
+                onClick={() => setActiveTab("futureTab")}
+                className={`rounded-pill px-3 py-2 text-start ${activeTab === "futureTab" ? 'bg-primary text-white' : 'text-white-50 hover-bg'}`}
+                style={{ 
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => !e.target.className.includes('bg-primary') && (e.target.style.backgroundColor = 'rgba(255,255,255,0.1)')}
+                onMouseLeave={(e) => !e.target.className.include
