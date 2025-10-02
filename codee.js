@@ -1,55 +1,39 @@
-
-id: 1759371983569
-data: {"asOf":"2025-10-02T02:26:23.569Z","summary":[{"zone":"Red Zone","count":5},{"zone":"Tower B","count":2},{"zone":"Yellow Zone","count":5},{"zone":"Green Zone","count":1},{"zone":"Reception Area","count":2}],"zoneBreakdown":[{"zone":"Red Zone","Property Management":2,"Contractor":3,"total":5},{"zone":"Tower B","Property Management":2,"total":2},{"zone":"Yellow Zone","Contractor":5,"total":5},{"zone":"Green Zone","Temp Badge":1,"total":1},{"zone":"Reception Area","Property Management":2,"total":2}],"floorBreakdown":[{"floor":"Podium Floor","Property Management":4,"Contractor":8,"Temp Badge":1,"total":13},{"floor":"Tower B","Property Management":2,"total":2}],"details":{"Red Zone":[{"Dateonly":"2025-10-02","Swipe_Time":"07:48:26","EmployeeID":"0","ObjectName1":"Maurya, Jitendra","CardNumber":"414293","PersonnelType":"Property Management","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd","PrimaryLocation":"Business Bay - Pune"},{"Dateonly":"2025-10-02","Swipe_Time":"07:20:26","EmployeeID":"90762427"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ,"ObjectName1":"Gaikwad, Neil","CardNumber":"615827","PersonnelType":"Contractor","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:34:59","EmployeeID":"0","ObjectName1":"Maurya, Anil","CardNumber":"410377","PersonnelType":"Property Management","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt.Ltd","PrimaryLocation":"Business Bay - Pune"},{"Dateonly":"2025-10-02","Swipe_Time":"07:51:10","EmployeeID":"W0024617","ObjectName1":"Divekar, Dipali","CardNumber":"414969","PersonnelType":"Contractor","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt.Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:34:56","EmployeeID":"75624480","ObjectName1":"Shelar, Sheetal","CardNumber":"410385","PersonnelType":"Contractor","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd.","PrimaryLocation":"Pune - Business Bay"}],"Tower B":[{"Dateonly":"2025-10-02","Swipe_Time":"07:46:51","EmployeeID":"0","ObjectName1":"Kadam, Krishnakant","CardNumber":"410358","PersonnelType":"Property Management","zone":"Tower B","door":"APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR","CompanyName":"Poona Security India Pvt.Ltd","PrimaryLocation":"Business Bay - Pune"},{"Dateonly":"2025-10-02","Swipe_Time":"07:49:41","EmployeeID":"0","ObjectName1":"Chavan, Jairam","CardNumber":"413837","PersonnelType":"Property Management","zone":"Tower B","door":"APAC_IN_PUN_TOWER B_ST6_GYM SIDE DOOR","CompanyName":"Poona Security India Pvt. Ltd","PrimaryLocation":"Business Bay - Pune"}],"Yellow Zone":[{"Dateonly":"2025-10-02","Swipe_Time":"07:20:21","EmployeeID":"W0024618","ObjectName1":"Diwate, Swapnil","CardNumber":"619957","PersonnelType":"Contractor","zone":"Yellow Zone","door":"APAC_IN_PUN_PODIUM_YELLOW_FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd.","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:20:22","EmployeeID":"W0025562","ObjectName1":"Dhobale, Abhishek","CardNumber":"619955","PersonnelType":"Contractor","zone":"Yellow Zone","door":"APAC_IN_PUN_PODIUM_YELLOW_FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd.","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:25:37","EmployeeID":"W0019059","ObjectName1":"Satpute, Sejal","CardNumber":"620011","PersonnelType":"Contractor","zone":"Yellow Zone","door":"APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door","Direction":"InDirection","CompanyName":"Poona Security India Pvt.Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:03:19","EmployeeID":"75620900","ObjectName1":"Kakade, Aniket Pratap","CardNumber":"419351","PersonnelType":"Contractor","zone":"Yellow Zone","door":"APAC_IN_PUN_PODIUM_GSOC DOOR Restricted door","Direction":"InDirection","CompanyName":"Poona Security India Pvt.Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:47:48","EmployeeID":"W0019519","ObjectName1":"Kadu, Akshay","CardNumber":"615769","PersonnelType":"Contractor","zone":"Yellow Zone","door":"APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)","Direction":"InDirection","CompanyName":"Vedant Enterprises Pvt. Ltd.","PrimaryLocation":"Pune - Business Bay"}],"Green Zone":[{"Dateonly":"2025-10-02","Swipe_Time":"07:51:05","EmployeeID":"0","ObjectName1":"India, TEMP_PUN_006","CardNumber":"411106","PersonnelType":"Temp Badge","zone":"Green Zone","door":"APAC_IN_PUN_PODIUM_ST3 DOOR 2 (GREEN)","Direction":"InDirection","CompanyName":null,"PrimaryLocation":"Business Bay - Pune"}],"Reception Area":[{"Dateonly":"2025-10-02","Swipe_Time":"07:50:15","EmployeeID":"0","ObjectName1":"Padwal, Kailash","CardNumber":"414089","PersonnelType":"Property Management","zone":"Reception Area","door":"APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW","CompanyName":"Poona Security India Pvt. Ltd","PrimaryLocation":"Business Bay - Pune"},{"Dateonly":"2025-10-02","Swipe_Time":"07:54:25","EmployeeID":"0","ObjectName1":"Kale, Rahul","CardNumber":"413812","PersonnelType":"Property Management","zone":"Reception Area","door":"APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR","Direction":"InDirection","CompanyName":"CBRE (CLR)","PrimaryLocation":"Business Bay - Pune"}]},"personnelSummary":{"employees":0,"contractors":15},"ertStatus":{"Site Head":[{"name":"Rajeev Mago","email":"rajeev.mago@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null}],"BCM Team / Site Operations":[{"name":"Rohit Singla","email":"rohit.singla@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null}],"HR":[{"name":"Suma Roy","email":"suma.roy@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null}],"Incident Controller":[{"name":"Sameer Kanade","email":"Sameer.Kanade@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Lloyds Dass","email":"Lloyds.Dass@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Singh, Uday Prakash","email":"Uday.Singh@westernunion.com","phone":"xxx-xxx-xxxx","present":false,"zone":null}],"ERT Team Leader":[{"name":"Vishal Chaudhari","email":"Vishal.Chaudhary@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Vinit Kumar","email":"Vinit.Kumar@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Sagar Jamdade","email":"sagar.jamdade@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Bhoyane, Satish Pandurang","email":"satishpandurang.bhoyane@westernunion.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Sonu Pandey","email":"Sonu.Pandey@westernunion.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"name":"Rangare, Bhupendra Babu","email":"bhupendra.rangare@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null}],"ERT Team Members":[{"Name":"Nair, Saurabh","Base Location":"Podium Floor -Yellow Zone","Email":"Saurabh.Nair@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Ladva, Hirav","Floor":"Podium Floor- Yellow Zone","Email":"Hirav.Ladva@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Ahuja, Charandeep Singh","Floor":"Podium Floor-Green Zone - 2","Email":"CharandeepSingh.Ahuja@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Samrendra, Samar","Floor":"Podium Floor-Green Zone - 2","Email":"Samar.Samrendra@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Mahajan, Sachin","Floor":"Podium Floor-Green Zone - 2","Email":"sachin.mahajan@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Sharma, Rajesh","Floor":"Podium Floor-Green Zone - 2","Email":"Rajesh.Sharma@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Palve, Vikas","Floor":"2nd Floor","Email":"Vikas.Palve@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Nalband, Khushboo","Floor":"2nd Floor","Email":"Khushboo.Nalband@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Nerella, Srikanth","Floor":"2nd Floor","Email":"Srikanth.Nerella@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Patle, Mayank","Floor":"2nd Floor","Email":"Mayank.Patle@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Kolhe, Vaibhav","Floor":"2nd Floor","Email":"Vaibhav.Kolhe@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Dalal, Vighnesh","Floor":"Podium Floor-Red Zone","Email":"Vighnesh.Dalal@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Shah, Bhavik","Floor":"Podium Floor-Red Zone","Email":"Bhavik.Shah@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Mulye, Devdatta","Floor":"Podium Floor-Red Zone","Email":"devdatta.mulye@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Mishra, Anurag","Floor":"Podium Floor-Yellow Zone","Email":"Anurag.Mishra@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Bamoriya, Priyank","Floor":"Podium Floor-Yellow Zone","Email":"Priyank.Bamoriya@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Patil, Sangramsinh","Floor":"Podium Floor-Orange Zone","Email":"Sangramsinh.Patil@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Pillai, Anurag","Floor":"Podium Floor-Orange Zone","Email":"Anurag.Pillai@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Yash, Kumar","Floor":"Podium Floor-Red Zone","Email":"kumar.yash@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Punde, Deepak","Floor":"Podium Floor-Red Zone","Email":"Deepak.Punde@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Barua, Renuka","Floor":"Tower B","Email":"Renuka.Barua@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Choudhary, Shanker","Floor":"Tower B","Email":"Shanker.Choudhary@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Ahuja, Ravi","Floor":"Tower B","Email":"Ravi.Ahuja@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Dhavale, Yashraj","Floor":"Tower B","Email":"Yashraj.Dhavale@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Bedre, Atharva","Floor":"Tower B","Email":"Atharva.Bedre@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Thirumala, Rajesh","Floor":"Tower B","Email":"Rajesh.Thirumala@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Shaikh, Juned Ahmed","Floor":"Tower B","Email":"Juned.Ahmed@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null},{"Name":"Pachimatla, Shiva Prasad","Floor":"Tower B","Email":"Shiva.Pachimatla@wu.com","phone":"xxx-xxx-xxxx","present":false,"zone":null}]},"personnelBreakdown":[{"personnelType":"Property Management","count":6},{"personnelType":"Contractor","count":8},{"personnelType":"Temp Badge","count":1}],"totalVisitedToday":21,"visitedToday":{"employees":0,"contractors":21,
-  "total":21}}
-not disply ony tower b are disply chekc why
-0
-Podium Floor Occupancy
-
-0
-2nd Floor Occupancy
-
-0
-Tower B Occupancy
-
-Company-wise Distribution
-Rank	Company	Total	Podium Floor	2nd Floor	Tower B	Distribution	Primary Locations
-#1	Poona Security India Pvt.Ltd	1	-	-	1	
-1
-Business Bay - Pune
-#2	Poona Security India Pvt. Ltd	1	-	-	1	
-1
-Business Bay - Pune
-#3	CBRE (CLR)	1	-	-	1	
-1
-Business Bay - Pune
 // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
-  Container, Row, Col, Card, Table, Badge, ProgressBar, Form
+  Container, Row, Col, Card, Table, Badge, ProgressBar
 } from 'react-bootstrap';
 import {
-  FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaClock
+  FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers
 } from 'react-icons/fa6';
 
 const CompanySummary = ({
   detailsData = {},
   personnelBreakdown = [],
   zoneBreakdown = [],
-  floorBreakdown = []   // <-- NEW
+  floorBreakdown = []
 }) => {
   const [selectedBuilding, setSelectedBuilding] = useState('all');
-  const [timeRange, setTimeRange] = useState('today');
 
   // --- Normalize building from zone ---
   const getBuildingFromZone = (zone) => {
     if (!zone) return null;
     const z = String(zone).toLowerCase();
-    if (z.includes('podium')) return 'Podium Floor';
+
+    // ✅ Map all podium sub-zones
+    if (
+      z.includes('red zone') ||
+      z.includes('yellow zone') ||
+      z.includes('green zone') ||
+      z.includes('reception')
+    ) {
+      return 'Podium Floor';
+    }
+
     if (z.includes('2nd')) return '2nd Floor';
     if (z.includes('tower b')) return 'Tower B';
-    return null; // ignore anything else
+
+    return null;
   };
 
   // --- Process company data ---
@@ -96,7 +80,7 @@ const CompanySummary = ({
       }))
       .sort((a, b) => (b.total || 0) - (a.total || 0));
 
-    // ✅ Use floorBreakdown to build totals instead of recalculating
+    // ✅ Use floorBreakdown directly for totals
     const buildingTotals = floorBreakdown.reduce((acc, floor) => {
       acc[floor.floor] = floor.total || 0;
       return acc;
@@ -167,7 +151,9 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-success h-100">
             <Card.Body className="text-center">
               <FaUsers className="text-success fs-1 mb-2" />
-              <h4 className="text-success">{companyData?.buildingTotals?.['Podium Floor'] || 0}</h4>
+              <h4 className="text-success">
+                {companyData?.buildingTotals?.['Podium Floor'] || 0}
+              </h4>
               <p className="mb-0">Podium Floor Occupancy</p>
             </Card.Body>
           </Card>
@@ -176,7 +162,9 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-info h-100">
             <Card.Body className="text-center">
               <FaUsers className="text-info fs-1 mb-2" />
-              <h4 className="text-info">{companyData?.buildingTotals?.['2nd Floor'] || 0}</h4>
+              <h4 className="text-info">
+                {companyData?.buildingTotals?.['2nd Floor'] || 0}
+              </h4>
               <p className="mb-0">2nd Floor Occupancy</p>
             </Card.Body>
           </Card>
@@ -185,7 +173,9 @@ const CompanySummary = ({
           <Card className="bg-dark text-light border-warning h-100">
             <Card.Body className="text-center">
               <FaUsers className="text-warning fs-1 mb-2" />
-              <h4 className="text-warning">{companyData?.buildingTotals?.['Tower B'] || 0}</h4>
+              <h4 className="text-warning">
+                {companyData?.buildingTotals?.['Tower B'] || 0}
+              </h4>
               <p className="mb-0">Tower B Occupancy</p>
             </Card.Body>
           </Card>
@@ -242,7 +232,13 @@ const CompanySummary = ({
                                 <ProgressBar
                                   key={floor}
                                   now={safePercent(company?.byBuilding?.[floor], total)}
-                                  variant={floor === '2nd Floor' ? 'info' : floor === 'Tower B' ? 'warning' : 'success'}
+                                  variant={
+                                    floor === '2nd Floor'
+                                      ? 'info'
+                                      : floor === 'Tower B'
+                                        ? 'warning'
+                                        : 'success'
+                                  }
                                   label={company?.byBuilding?.[floor] > 0 ? `${company.byBuilding[floor]}` : ''}
                                 />
                               ))}
