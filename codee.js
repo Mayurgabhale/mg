@@ -1,8 +1,46 @@
+Company-wise Distribution
+Rank	Company	Total	Podium Floor	2nd Floor	Tower B
+#1	WU Srvcs India Private Ltd	531	310	98	123
+#2	WU Technology Engineering Services Private Limited	97	75	2	20
+#3	Unknown Company	22	21	1	-
+#4	CBRE - CLR Facility Services Pvt.Ltd.	14	8	-	6
+#5	Poona Security India Pvt. Ltd	5	2	-	3
+#6	Poona Security India Pvt.Ltd	3	3	-	-
+#7	CBRE	3	2	-	1
+#8	Osource India Pvt Ltd (HCT)	3	-	3	-
+#9	Western Union, LLC	2	2	-	-
+#10	CBRE (HCT)	2	1	-	1
+#11	Vedant Enterprises Pvt. Ltd	1	1	-	-
+#12	Tea Point	1	1	-	-
+#13	Vedant Enterprises Pvt. Ltd.	1	-	-	1
+#14	CBRE - CLR Facility Servises Pvt Ltd.	1	-	-	1
+#15	Poona Security India Pvt. Ltd.	1	1	-	-
+#16	Osource India Pvt Ltd.	1	1	-	-
+
+know in this one compnay name are different different formt ok 
+see WU Srvcs India Private Ltd and this same WU Technology Engineering Services Private Limited
+and Poona Security India Pvt. ,Poona Security India Pvt.Ltd, Poona Security India Pvt. Ltd. these are all one 
+and if unknow then chek ther per
+compnay name is   "CompanyName": null, null then check there "PersonnelType": "Temp Badge",
+  then add compnay name like CompanyName: Temp Badge OK LIKE 
+FOR COMNAY NAME IS NULL THE THEN CHEKC THER PERSONNEL TYPE OK 
+  CLR Facility Services Pvt.Ltd.	27
+	Osource India Pvt Ltd	4
+  Poona Security India Pvt Ltd	30
+	Tea Point	1
+	Temp Badge	5
+	Vedant Enterprises Pvt. Ltd	5
+	Visitor	42
+	Western Union	914
+*******************'
+    
+
+
 // CompanySummary.jsx
 import React, { useState, useMemo } from "react";
 import { Container, Row, Col, Card, Table, Badge, Modal, Button, Nav } from "react-bootstrap";
-import { FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaHome, FaChartPie } from "react-icons/fa6";
-
+import { FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers, FaChartPie } from "react-icons/fa6";
+import { FaHouse } from 'react-icons/fa6';
 const CompanySummary = ({
   detailsData = {},
 }) => {
@@ -245,7 +283,7 @@ const CompanySummary = ({
       <Row>
         {/* Sidebar */}
         <Col md={2} className="bg-light p-3 shadow-sm" style={{ minHeight: "100vh" }}>
-          <h5 className="text-primary mb-4"><FaHome className="me-2" />Dashboard</h5>
+          <h5 className="text-primary mb-4"><FaHouse className="me-2" />Dashboard</h5>
           <Nav className="flex-column">
             <Nav.Link
               active={activeTab === "companyAnalytics"}
@@ -319,3 +357,101 @@ const CompanySummary = ({
 };
 
 export default CompanySummary;
+
+
+reAD ALOC BELOW CODE THEN YOU UNDERSTND OK CAREFULLYUM 
+
+// --- company name normalizer ---
+  // keep it deterministic and conservative (only maps the families you listed)
+  const normalizeCompany = (raw) => {
+    if (!raw) return 'Unknown';
+    // trim and collapse whitespace
+    const orig = String(raw).trim();
+    const s = orig
+      .toLowerCase()
+      // remove punctuation commonly causing variants
+      .replace(/[.,()\/\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Poona / Poona Security family
+    if (/\bpoona\b/.test(s) || /\bpoona security\b/.test(s) || /\bpoona security india\b/.test(s)) {
+      return 'Poona Security India Pvt Ltd';
+    }
+
+    // Western Union family (map many variants to single canonical)
+    if (
+      /\bwestern union\b/.test(s) ||
+      /\bwesternunion\b/.test(s) ||
+      /\bwu\b/.test(s) ||           // WU standalone
+      /\bwufs\b/.test(s) ||         // WUFS variants
+      /\bwu technology\b/.test(s) ||
+      /\bwu srvcs\b/.test(s) ||
+      /\bwestern union svs\b/.test(s) ||
+      /\bwestern union processing\b/.test(s) ||
+      /\bwestern union japan\b/.test(s) ||
+      /\bwestern union, llc\b/.test(s)
+    ) {
+      return 'Western Union';
+    }
+
+    // Vedant family
+    if (/\bvedant\b/.test(s)) {
+      return 'Vedant Enterprises Pvt. Ltd';
+    }
+
+    // Osource family
+    if (/\bosource\b/.test(s)) {
+      return 'Osource India Pvt Ltd';
+    }
+
+    // CBRE family
+    if (/\bcbre\b/.test(s)) {
+      return 'CBRE';
+    }
+
+    // explicit Unknown canonical
+    if (s === 'unknown' || s === '') return 'Unknown';
+
+    // otherwise return the original trimmed string (preserve casing)
+    return orig;
+  };
+
+  // helper: compute canonical company for a single detail row (same logic used by companyRows)
+  const getCanonicalCompany = (r) => {
+    const rawCompany = (r.CompanyName || '').toString().trim();
+    const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
+    const s = rawCompany.toLowerCase();
+
+    // If CompanyName contains CBRE and also mention of CLR or Facility -> CLR canonical
+    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
+      return 'CLR Facility Services Pvt.Ltd.';
+    }
+
+    // If CompanyName is explicitly CBRE (or normalizes to CBRE)
+    // and PersonnelType indicates Property Management -> map to CLR Facility Services
+    if (s && (s === 'cbre' || normalizeCompany(rawCompany) === 'CBRE')) {
+      if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
+        // NEW: map CBRE + Property Management -> CLR Facility Services (single canonical)
+        return 'CLR Facility Services Pvt.Ltd.';
+      }
+      // otherwise keep as CBRE
+      return 'CBRE';
+    }
+
+    // If CompanyName is blank -> use PersonnelType fallback rules
+    if (!rawCompany) {
+      if (pt.includes('contractor')) return 'CBRE';
+      if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
+        // blank company but property-management -> CLR Facility Services (same canonical)
+        return 'CLR Facility Services Pvt.Ltd.';
+      }
+      if (pt === 'employee') return 'Western Union';
+      if (pt.includes('visitor')) return 'Visitor';
+      if (pt.includes('temp')) return 'Temp Badge';
+      return 'Unknown';
+    }
+
+    // otherwise use normalizeCompany for other families
+    return normalizeCompany(rawCompany);
+  };
