@@ -1,4 +1,15 @@
-// CompanySummary.jsx
+0
+Podium Floor Occupancy
+
+0
+2nd Floor Occupancy
+
+0
+Tower B Occupancy
+
+in this count are not disply, 
+  ++++++++++++++++
+  // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
   Container, Row, Col, Card, Table, Badge, ProgressBar
@@ -204,7 +215,6 @@ const CompanySummary = ({
                       <th>2nd Floor</th>
                       <th>Tower B</th>
                       <th>Distribution</th>
-                      <th>Primary Locations</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -244,12 +254,7 @@ const CompanySummary = ({
                               ))}
                             </ProgressBar>
                           </td>
-                          <td>
-                            <small>
-                              {(company?.locations || []).slice(0, 2).join(', ')}
-                              {(company?.locations || []).length > 2 && '...'}
-                            </small>
-                          </td>
+                         
                         </tr>
                       );
                     })}
@@ -269,4 +274,4 @@ const CompanySummary = ({
   );
 };
 
-export default CompanySummary;
+
