@@ -2,6 +2,7 @@ ok, good,
 this is our one future, ok, 
 know we want to add more future, in this dasbhoardm, 
 multiple, 
+
 ++ so i want to create dashboard like UI,
   wihtu side bar, and in this side bard Company Analytics Dashboard this one tap, 
   in futrue we want to add more tab, in side bar afte clikc on Company Analytics Dashboard then opne below page, 
