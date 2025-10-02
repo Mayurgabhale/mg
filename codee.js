@@ -1,3 +1,38 @@
+++++"floorBreakdown"++++
+"floorBreakdown":[{"floor":"Podium Floor","Property Management":4,"Contractor":8,"Temp Badge":1,"total":13},{"floor":"Tower B","Property Management":2,"total":2}],"details":{"Red Zone":[{"Dateonly":"2025-10-02","Swipe_Time":"07:48:26","EmployeeID":"0","ObjectName1":"Maurya, Jitendra","CardNumber":"414293","PersonnelType":"Property Management","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd","PrimaryLocation":"Business Bay - Pune"},{"Dateonly":"2025-10-02","Swipe_Time":"07:20:26","EmployeeID":"90762427","ObjectName1":"Gaikwad, Neil","CardNumber":"615827","PersonnelType":"Contractor","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW","Direction":"InDirection","CompanyName":"Poona Security India Pvt. Ltd","PrimaryLocation":"Pune - Business Bay"},{"Dateonly":"2025-10-02","Swipe_Time":"07:34:59","EmployeeID":"0","ObjectName1":"Maurya, Anil","CardNumber":"410377","PersonnelType":"Property Management","zone":"Red Zone","door":"APAC_IN_PUN_PODIUM_RED_RECEPTION
+  "floorBreakdown": [
+    {
+      "floor": "Podium Floor",
+      "Employee": 498,
+      "Property Management": 15,
+      "Contractor": 11,
+      "Visitor": 19,
+      "Temp Badge": 4,
+      "total": 547
+    },
+    {
+      "floor": "Tower B",
+      "Property Management": 11,
+      "Employee": 128,
+      "Contractor": 2,
+      "total": 141
+    },
+    {
+      "floor": "2nd Floor",
+      "Employee": 95,
+      "Visitor": 1,
+      "Contractor": 3,
+      "Property Management": 1,
+      "total": 100
+    }
+  ],
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+
+  see bove not zone floorbreakdown ok use                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+       use this floorBreakdown                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+
 // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
