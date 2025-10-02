@@ -1,9 +1,12 @@
-Rank	Company	Total	Podium Floor	2nd Floor	Tower B
-Podium Floor	2nd Floor	Tower B
-when i click on header Podium Floor	2nd Floor	Tower B, that time disply all 
-i measn all  Podium Floor, all tower b, all 2nd floor ok 
--------------
-  
+ok, good,
+this is our one future, ok, 
+know we want to add more future, in this dasbhoardm, 
+multiple, 
+++ so i want to create dashboard like UI,
+  wihtu side bar, and in this side bard Company Analytics Dashboard this one tap, 
+  in futrue we want to add more tab, in side bar afte clikc on Company Analytics Dashboard then opne below page, 
+  and i want this light theme with mor atract UI, 
+  create moere more profeesla dashboard UI in light theme ok wiht side bar 
 // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
@@ -480,3 +483,70 @@ const CompanySummary = ({
     </>
   );
 };
+
+
+// Add some custom CSS
+const styles = `
+.company-summary-dashboard .podium-container {
+  min-height: 200px;
+}
+
+.company-summary-dashboard .podium-place {
+  transition: transform 0.3s ease;
+}
+
+.company-summary-dashboard .podium-place:hover {
+  transform: translateY(-5px);
+}
+
+.company-summary-dashboard .first-place {
+  transform: scale(1.1);
+}
+
+.company-summary-dashboard .podium-rank {
+  padding: 10px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+  font-weight: bold;
+}
+
+.company-summary-dashboard .podium-company-info {
+  padding: 15px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 0 0 8px 8px;
+}
+
+.text-gold { color: #ffd700 !important; }
+.text-silver { color: #c0c0c0 !important; }
+.text-bronze { color: #cd7f32 !important; }
+
+.bg-bronze {
+  background-color: #cd7f32 !important;
+  color: white !important;
+}
+
+.distribution-bar .progress {
+  height: 20px;
+  border-radius: 4px;
+}
+
+.distribution-bar .progress-bar {
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.bg-gray-700 {
+  background-color: #495057 !important;
+}
+
+.bg-gray-800 {
+  background-color: #343a40 !important;
+}
+`;
+
+// Add styles to document
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
+
+export default CompanySummary;
