@@ -1,1237 +1,478 @@
 // CompanySummary.jsx
 import React, { useState, useMemo } from 'react';
 import {
-    Container, Row, Col, Card, Table, Badge, ProgressBar
+  Container, Row, Col, Card, Table, Badge, Modal, Button
 } from 'react-bootstrap';
 import {
-    FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers
+  FaTrophy, FaMedal, FaChartBar, FaBuilding, FaUsers
 } from 'react-icons/fa6';
 
 const CompanySummary = ({
-    detailsData = {},
-    personnelBreakdown = [],
-    zoneBreakdown = [],
-    floorBreakdown = []
+  detailsData = {},
+  personnelBreakdown = [],
+  zoneBreakdown = [],
+  floorBreakdown = []
 }) => {
-    const [selectedBuilding, setSelectedBuilding] = useState('all');
+  const [selectedBuilding, setSelectedBuilding] = useState('all');
 
-    // --- Normalize building from zone ---
-    const getBuildingFromZone = (zone) => {
-        if (!zone) return null;
-        const z = String(zone).toLowerCase();
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalRows, setModalRows] = useState([]);
 
-        // ✅ Map all podium sub-zones
-        if (
-            z.includes('red zone') ||
-            z.includes('yellow zone') ||
-            z.includes('green zone') ||
-            z.includes('reception')
-        ) {
-            return 'Podium Floor';
-        }
+  // --- Normalize building from zone ---
+  const getBuildingFromZone = (zone) => {
+    if (!zone) return null;
+    const z = String(zone).toLowerCase();
 
-        if (z.includes('2nd')) return '2nd Floor';
-        if (z.includes('tower b')) return 'Tower B';
-
-        return null;
-    };
-
-    // --- Process company data ---
-    const companyData = useMemo(() => {
-        const companies = {};
-        let totalCount = 0;
-        const buildingTotals = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
-
-        Object.values(detailsData || {}).forEach(zoneEmployees => {
-            if (Array.isArray(zoneEmployees)) {
-                zoneEmployees.forEach(employee => {
-                    const companyName = employee?.CompanyName || 'Unknown Company';
-                    const building = getBuildingFromZone(employee?.zone);
-
-                    if (!building) return; // ignore unrecognized zones
-
-                    if (!companies[companyName]) {
-                        companies[companyName] = {
-                            name: companyName,
-                            total: 0,
-                            byBuilding: { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 },
-                            employees: [],
-                            locations: new Set()
-                        };
-                    }
-
-                    // Update company totals
-                    companies[companyName].total++;
-                    companies[companyName].byBuilding[building]++;
-                    companies[companyName].employees.push(employee);
-                    if (employee?.PrimaryLocation) {
-                        companies[companyName].locations.add(employee.PrimaryLocation);
-                    }
-
-                    // Update overall totals
-                    totalCount++;
-                    buildingTotals[building]++;
-                });
-            }
-        });
-
-        const companyArray = Object.values(companies)
-            .map(company => ({
-                ...company,
-                locations: Array.from(company.locations || []),
-                percentage: totalCount > 0 ? ((company.total / totalCount) * 100).toFixed(1) : '0.0'
-            }))
-            .sort((a, b) => (b.total || 0) - (a.total || 0));
-
-        return {
-            companies: companyArray,
-            totalCount,
-            buildingTotals
-        };
-    }, [detailsData]);
-    // --- Filtered companies ---
-    const filteredCompanies = useMemo(() => {
-        const comps = companyData?.companies || [];
-        if (selectedBuilding === 'all') return comps;
-        return comps.filter(company => (company.byBuilding?.[selectedBuilding] || 0) > 0);
-    }, [companyData?.companies, selectedBuilding]);
-
-    // --- Podium winners ---
-    const getPodiumWinners = () => {
-        const podiumCompanies = (companyData?.companies || [])
-            .filter(c => (c.byBuilding?.['Podium Floor'] || 0) > 0)
-            .sort((a, b) => (b.byBuilding?.['Podium Floor'] || 0) - (a.byBuilding?.['Podium Floor'] || 0))
-            .reverse()
-            .slice(0, 3);
-
-        return podiumCompanies.map((c, idx) => ({
-            name: c?.name || 'Unknown',
-            count: c?.byBuilding?.['Podium Floor'] || 0,
-            position: idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd',
-            icon: idx === 0 ? FaTrophy : FaMedal,
-            color: idx === 0 ? 'gold' : idx === 1 ? 'silver' : '#cd7f32'
-        }));
-    };
-
-    const podiumWinners = getPodiumWinners();
-
-    // util
-    const safePercent = (num, denom) => (denom > 0 ? (num / denom) * 100 : 0);
-
-    return (
-        <Container fluid className="company-summary-dashboard">
-            {/* Header */}
-            <Row className="mb-4">
-                <Col>
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 className="text-warning mb-1">
-                                <FaBuilding className="me-2" />
-                                Company Analytics Dashboard
-                            </h2>
-                            <p className="text-light mb-0">
-                                Real-time company presence and distribution analysis
-                            </p>
-                        </div>
-                        <Badge bg="warning" text="dark" className="fs-6">
-                            <FaUsers className="me-1" />
-                            Total: {companyData?.totalCount || 0} People
-                        </Badge>
-                    </div>
-                </Col>
-            </Row>
-
-            {/* Stats */}
-            <Row className="mb-4">
-                <Col md={4}>
-                    <Card className="bg-dark text-light border-success h-100">
-                        <Card.Body className="text-center">
-                            <FaUsers className="text-success fs-1 mb-2" />
-                            <h4 className="text-success">
-                                {companyData?.buildingTotals?.['Podium Floor'] || 0}
-                            </h4>
-                            <p className="mb-0">Podium Floor Occupancy</p>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={4}>
-                    <Card className="bg-dark text-light border-info h-100">
-                        <Card.Body className="text-center">
-                            <FaUsers className="text-info fs-1 mb-2" />
-                            <h4 className="text-info">
-                                {companyData?.buildingTotals?.['2nd Floor'] || 0}
-                            </h4>
-                            <p className="mb-0">2nd Floor Occupancy</p>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={4}>
-                    <Card className="bg-dark text-light border-warning h-100">
-                        <Card.Body className="text-center">
-                            <FaUsers className="text-warning fs-1 mb-2" />
-                            <h4 className="text-warning">
-                                {companyData?.buildingTotals?.['Tower B'] || 0}
-                            </h4>
-                            <p className="mb-0">Tower B Occupancy</p>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-
-            {/* Company Table */}
-            <Row>
-                <Col>
-                    <Card className="bg-dark text-light border-secondary">
-                        <Card.Header className="bg-secondary text-dark">
-                            <h4 className="mb-0">
-                                <FaChartBar className="me-2" />
-                                Company-wise Distribution
-                            </h4>
-                        </Card.Header>
-                        <Card.Body className="p-0">
-                            <div className="table-responsive">
-
-
-
-                                <Table hover variant="dark" className="mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Rank</th>
-                                            <th>Company</th>
-                                            <th>Total</th>
-                                            <th>Podium Floor</th>
-                                            <th>2nd Floor</th>
-                                            <th>Tower B</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(filteredCompanies || []).map((company, index) => {
-                                            const podiumCount = company?.byBuilding?.['Podium Floor'] || 0;
-                                            const secondFloorCount = company?.byBuilding?.['2nd Floor'] || 0;
-                                            const towerBCount = company?.byBuilding?.['Tower B'] || 0;
-
-                                            return (
-                                                <tr key={company?.name || index}>
-                                                    <td>
-                                                        <Badge bg={index < 3 ? 'warning' : 'secondary'}>
-                                                            #{index + 1}
-                                                        </Badge>
-                                                    </td>
-                                                    <td>{company?.name}</td>
-                                                    <td>
-                                                        <Badge bg="light" text="dark">{company?.total || 0}</Badge>
-                                                    </td>
-                                                    <td>{podiumCount > 0 ? <Badge bg="success">{podiumCount}</Badge> : '-'}</td>
-                                                    <td>{secondFloorCount > 0 ? <Badge bg="info">{secondFloorCount}</Badge> : '-'}</td>
-                                                    <td>{towerBCount > 0 ? <Badge bg="warning">{towerBCount}</Badge> : '-'}</td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-
-                                    {/* ✅ Totals Row */}
-                                    <tfoot>
-                                        <tr className="fw-bold bg-secondary text-dark">
-                                            <td colSpan={2} className="text-end">Totals:</td>
-                                            <td>
-                                                <Badge bg="light" text="dark">
-                                                    {companyData?.totalCount || 0}
-                                                </Badge>
-                                            </td>
-                                            <td>
-                                                <Badge bg="light" text="dark">
-                                                    {companyData?.buildingTotals?.['Podium Floor'] || 0}
-                                                </Badge>
-                                            </td>
-                                            <td>
-                                                <Badge bg="light" text="dark">
-                                                    {companyData?.buildingTotals?.['2nd Floor'] || 0}
-                                                </Badge>
-                                            </td>
-                                            <td>
-                                                <Badge bg="light" text="dark">
-                                                    {companyData?.buildingTotals?.['Tower B'] || 0}
-                                                </Badge>
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </Table>
-
-                            </div>
-                            {(filteredCompanies || []).length === 0 && (
-                                <div className="text-center text-muted py-4">
-                                    No companies found for the selected filter
-                                </div>
-                            )}
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
-    );
-};
-
-
-++++++ Read Below code carefully, i want to re like this, 
-afte clikc on   <th>Company</th> disply details compnay wise, 
-this all i did, in below code, you just check / read the below code carefully, and 
-and create like this our CompanySummary.jsx this page,
-carefullym ok , afte click on  <th>Company</th>  <td>{company?.name}</td> then popup details table, 
-    table name Poona Security India Pvt.Ltd and in this disply all ok 
-++ and clikc on Podium Floor then popup table, and Podium Floor all like
-ok carefully,
-    read below code, carefully and create companysummary ok 
-
-// src/pages/History.jsx — APAC Edition
-
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { fetchHistory } from '../api/occupancy.service';
-// APAC display mapping
-const apacPartitionDisplay = {
-  'IN.Pune': { country: 'India', city: 'Pune' },
-  'MY.Kuala Lumpur': { country: 'Malaysia', city: 'Kuala Lumpur' },
-  'PH.Quezon': { country: 'Philippines', city: 'Quezon City' },
-  'PH.Taguig': { country: 'Philippines', city: 'Taguig' },
-  'JP.Tokyo': { country: 'Japan', city: 'Tokyo' },
-  'IN.HYD': { country: 'India', city: 'Hyderabad' },
-
-};
-
-// FE ↔ BE keys
-const apacForwardKey = {
-  'IN.Pune': 'Pune', 
-};
-const apacReverseKey = Object.fromEntries(
-  Object.entries(apacForwardKey).map(([fe, be]) => [be, fe])
-);
-// helper to display “Quezon City” → “Quezon City”
-const formatPartition = key => {
-  const fe = apacReverseKey[key];
-  return fe
-    ? apacPartitionDisplay[fe].city
-    : key;
-};
-
-// helper: unify the key format used by companyRows and detailRows
-const makeCompanyKey = (country, city, company) => `${country}||${city}||${company}`;
-
-
-export default function History() {
-  const { partition } = useParams();
-  const decodedPartition = partition ? decodeURIComponent(partition) : null;
-  const backendFilterKey = decodedPartition
-    ? apacForwardKey[decodedPartition] || decodedPartition
-    : null;
-
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [pickedDate, setPickedDate] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
-  // new: company click/filter state
-  const [selectedCompany, setSelectedCompany] = useState(null);
-
-  // NEW: personnel header filter state
-  const [selectedPersonnel, setSelectedPersonnel] = useState(null); // 'Employee' | 'Contractor' | null
-  const [selectedSummaryPartition, setSelectedSummaryPartition] = useState(null); // e.g. 'Costa Rica||Costa Rica'
-
-  useEffect(() => {
-    setLoading(true);
-    fetchHistory(decodedPartition)
-      .then(json => {
-        setData(json);
-      })
-      .finally(() => setLoading(false));
-  }, [decodedPartition]);
-
-
-  // clear company selection when date changes
-  useEffect(() => {
-    setSelectedCompany(null);
-  }, [pickedDate]);
-
-
-  const summaryEntry = useMemo(() => {
-    if (!data || !pickedDate) return null;
-    const ds = format(pickedDate, 'yyyy-MM-dd');
-    return data.summaryByDate.find(r =>
-      r.date === ds || r.date.startsWith(ds)
-    ) || null;
-  }, [data, pickedDate]);
-
-  const partitionRows = useMemo(() => {
-    if (!summaryEntry) return [];
-    if (backendFilterKey && summaryEntry.region) {
-      const fe = Object.keys(apacPartitionDisplay).find(
-        code => apacForwardKey[code] === backendFilterKey || code === backendFilterKey
-      );
-      const disp = fe ? apacPartitionDisplay[fe] : {};
-      return [{
-        country: disp.country || 'Unknown',
-        city: disp.city || backendFilterKey.replace(' City', ''),
-        employee: summaryEntry.region.Employee || 0,
-        contractor: summaryEntry.region.Contractor || 0,
-        total: summaryEntry.region.total || 0
-      }];
-    }
-    return Object.entries(summaryEntry.partitions).map(([key, v]) => {
-      const fe = Object.entries(apacForwardKey).find(([, be]) =>
-        be === key || `${be} City` === key
-      )?.[0];
-      const disp = fe
-        ? apacPartitionDisplay[fe]
-        : Object.values(apacPartitionDisplay)
-          .find(d => d.city === key.replace(' City', ''));
-      return {
-        country: disp?.country || 'Unknown',
-        city: disp?.city || key.replace(' City', ''),
-        employee: v.Employee || v.EmployeeCount || 0,
-        contractor: v.Contractor || v.ContractorCount || 0,
-        total: v.total || 0
-      };
-    });
-  }, [summaryEntry, backendFilterKey]);
-
-  const formatApiTime12 = iso => {
-    if (!iso) return "";
-    // get HH:MM:SS part from ISO like "2025-08-28T10:22:33.000Z"
-    const tp = (iso && iso.slice(11, 19)) || "";
-    if (!tp) return "";
-    const [hStr, mStr, sStr] = tp.split(':');   // ✅ now include seconds
-    const hh = parseInt(hStr, 10);
-    if (Number.isNaN(hh)) return tp;
-    let h12 = hh % 12;
-    if (h12 === 0) h12 = 12;
-    const ampm = hh >= 12 ? "PM" : "AM";
-    return `${String(h12).padStart(2, "0")}:${mStr}:${sStr} ${ampm}`;
-  };
-
-  // --- company name normalizer ---
-  // keep it deterministic and conservative (only maps the families you listed)
-  const normalizeCompany = (raw) => {
-    if (!raw) return 'Unknown';
-    // trim and collapse whitespace
-    const orig = String(raw).trim();
-    const s = orig
-      .toLowerCase()
-      // remove punctuation commonly causing variants
-      .replace(/[.,()\/\-]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // Poona / Poona Security family
-    if (/\bpoona\b/.test(s) || /\bpoona security\b/.test(s) || /\bpoona security india\b/.test(s)) {
-      return 'Poona Security India Pvt Ltd';
-    }
-
-    // Western Union family (map many variants to single canonical)
     if (
-      /\bwestern union\b/.test(s) ||
-      /\bwesternunion\b/.test(s) ||
-      /\bwu\b/.test(s) ||           // WU standalone
-      /\bwufs\b/.test(s) ||         // WUFS variants
-      /\bwu technology\b/.test(s) ||
-      /\bwu srvcs\b/.test(s) ||
-      /\bwestern union svs\b/.test(s) ||
-      /\bwestern union processing\b/.test(s) ||
-      /\bwestern union japan\b/.test(s) ||
-      /\bwestern union, llc\b/.test(s)
+      z.includes('red zone') ||
+      z.includes('yellow zone') ||
+      z.includes('green zone') ||
+      z.includes('reception')
     ) {
-      return 'Western Union';
+      return 'Podium Floor';
     }
-    // Vedant family
-    if (/\bvedant\b/.test(s)) {
-      return 'Vedant Enterprises Pvt. Ltd';
-    }
-    // Osource family
-    if (/\bosource\b/.test(s)) {
-      return 'Osource India Pvt Ltd';
-    }
-    // CBRE family
-    if (/\bcbre\b/.test(s)) {
-      return 'CBRE';
-    }
-    // explicit Unknown canonical
-    if (s === 'unknown' || s === '') return 'Unknown';
 
-    // otherwise return the original trimmed string (preserve casing)
-    return orig;
+    if (z.includes('2nd')) return '2nd Floor';
+    if (z.includes('tower b')) return 'Tower B';
+
+    return null;
   };
 
-  // helper: compute canonical company for a single detail row (same logic used by companyRows)
-  const getCanonicalCompany = (r) => {
-    const rawCompany = (r.CompanyName || '').toString().trim();
-    const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
-    const s = rawCompany.toLowerCase();
+  // --- Process company data ---
+  const companyData = useMemo(() => {
+    const companies = {};
+    let totalCount = 0;
+    const buildingTotals = { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 };
 
-    // If CompanyName contains CBRE and also mention of CLR or Facility -> CLR canonical
-    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
-      return 'CLR Facility Services Pvt.Ltd.';
-    }
+    Object.values(detailsData || {}).forEach(zoneEmployees => {
+      if (Array.isArray(zoneEmployees)) {
+        zoneEmployees.forEach(employee => {
+          const companyName = employee?.CompanyName || 'Unknown Company';
+          const building = getBuildingFromZone(employee?.zone);
 
-    // If CompanyName is explicitly CBRE (or normalizes to CBRE)
-    // and PersonnelType indicates Property Management -> map to CLR Facility Services
-    if (s && (s === 'cbre' || normalizeCompany(rawCompany) === 'CBRE')) {
-      if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
-        // NEW: map CBRE + Property Management -> CLR Facility Services (single canonical)
-        return 'CLR Facility Services Pvt.Ltd.';
-      }
-      // otherwise keep as CBRE
-      return 'CBRE';
-    }
+          if (!building) return; // ignore unrecognized zones
 
-    // If CompanyName is blank -> use PersonnelType fallback rules
-    if (!rawCompany) {
-      if (pt.includes('contractor')) return 'CBRE';
-      if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
-        // blank company but property-management -> CLR Facility Services (same canonical)
-        return 'CLR Facility Services Pvt.Ltd.';
-      }
-      if (pt === 'employee') return 'Western Union';
-      if (pt.includes('visitor')) return 'Visitor';
-      if (pt.includes('temp')) return 'Temp Badge';
-      return 'Unknown';
-    }
-    // otherwise use normalizeCompany for other families
-    return normalizeCompany(rawCompany);
-  };
-
-  const detailRows = useMemo(() => {
-  if (!data || !pickedDate || !showDetails) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-
-  return data.details
-    .filter(r => {
-      // match date
-      if (!r.LocaleMessageTime || r.LocaleMessageTime.slice(0, 10) !== ds) return false;
-      // partition (city) filter (backend / friendly)
-      if (backendFilterKey) {
-        const ok = r.PartitionNameFriendly === backendFilterKey ||
-          apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
-        if (!ok) return false;
-      }
-      // --- personnel header filter (Employees / Contractors) ---
-      if (selectedPersonnel) {
-        const pt = String(r.PersonnelType || '').toLowerCase();
-        if (selectedPersonnel === 'Employee') {
-          // conservative match for employees
-          if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
-        } else if (selectedPersonnel === 'Contractor') {
-          // conservative match for contractors
-          if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
-        }
-      }
-      // If a summary-partition (country||city) was selected (optional support),
-      // ensure detail row belongs to that partition.
-      if (selectedSummaryPartition) {
-        const [selCountry, selCity] = (selectedSummaryPartition || '').split('||');
-        const city = formatPartition(r.PartitionNameFriendly || '');
-        const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-        const country = disp?.country || 'Unknown';
-        if (country !== selCountry || city !== selCity) return false;
-      }
-      // If a company is selected, only include rows for that company (unchanged behavior)
-      if (!selectedCompany) return true;
-
-      // compute country & city the same way companyRows does
-      const city = formatPartition(r.PartitionNameFriendly || '');
-      const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-      const country = disp?.country || 'Unknown';
-      // canonical company name for this row
-      const canonical = getCanonicalCompany(r);
-      // build key and compare
-      const rowKey = makeCompanyKey(country, city, canonical);
-      return rowKey === selectedCompany;
-    })
-    .sort((a, b) => a.LocaleMessageTime.localeCompare(b.LocaleMessageTime));
-}, [data, pickedDate, showDetails, backendFilterKey, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
-  
-  const companyRows = useMemo(() => {
-  if (!data || !pickedDate) return [];
-  const ds = format(pickedDate, 'yyyy-MM-dd');
-  // filter details for the date + optional partition filter
-  const filtered = data.details.filter(r => {
-    if (!r.LocaleMessageTime || r.LocaleMessageTime.slice(0, 10) !== ds) return false;
-    if (backendFilterKey) {
-      const ok = r.PartitionNameFriendly === backendFilterKey ||
-        apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
-      if (!ok) return false;
-    }
-    // apply personnel header filter here so companyCounts reflect the selected personnel type
-    if (selectedPersonnel) {
-      const pt = String(r.PersonnelType || '').toLowerCase();
-      if (selectedPersonnel === 'Employee') {
-        if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
-      } else if (selectedPersonnel === 'Contractor') {
-        if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
-      }
-    }
-    return true;
-  });
-
-  // aggregate into map: key = country||city||normalizedCompany
-  const map = new Map();
-
-  filtered.forEach(r => {
-    const city = formatPartition(r.PartitionNameFriendly || '');
-    const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
-    const country = disp?.country || 'Unknown';
-    // use the shared canonical helper so companyRows and detail filtering match exactly
-    const company = getCanonicalCompany(r);
-    const key = `${country}||${city}||${company}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.total += 1; // counting rows as "total" (same behaviour as before)
-    } else {
-      map.set(key, { country, city, company, total: 1 });
-    }
-  });
-
-  // return sorted list (optional: by country, city, company)
-  return Array.from(map.values()).sort((a, b) => {
-    if (a.country !== b.country) return a.country.localeCompare(b.country);
-    if (a.city !== b.city) return a.city.localeCompare(b.city);
-    return a.company.localeCompare(b.company);
-  });
-}, [data, pickedDate, backendFilterKey, selectedPersonnel]);
-  const handleExport = async () => {
-    if (!pickedDate || !detailRows.length) return;
-
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Details");
-    // --- Top date row (merged across all columns) ---
-    sheet.mergeCells(1, 1, 1, 11); // merge across 11 columns
-    const titleCell = sheet.getCell("A1");
-    titleCell.value = format(pickedDate, "EEEE, d MMMM, yyyy");
-    titleCell.alignment = { horizontal: "center", vertical: "middle" };
-    titleCell.font = { bold: true, size: 14 };
-    // --- Header row ---
-    const headers = [
-      "Sr",
-      "Date",
-      "Time",
-      "Employee ID",
-      "Card Number",
-      "Name",
-      "Personnel Type",
-      "Company",
-      "Primary Location",
-      "Door",
-      "duration",
-      "Partition"
-    ];
-    const headerRow = sheet.addRow(headers);
-    headerRow.eachCell(cell => {
-      cell.font = { bold: true, color: { argb: "0a0a0a" } };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFFC107" }
-      };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" }
-      };
-    });
-
-    // --- Data rows ---
-    detailRows.forEach((r, i) => {
-      const row = sheet.addRow([
-        i + 1,
-        r.LocaleMessageTime ? r.LocaleMessageTime.slice(0, 10) : "",
-        formatApiTime12(r.LocaleMessageTime),
-        r.EmployeeID,
-        r.CardNumber,
-        r.ObjectName1,
-        r.PersonnelType,
-        r.CompanyName,
-        r.PrimaryLocation,
-        r.Door,
-        r.duration,
-        formatPartition(r.PartitionNameFriendly)
-      ]);
-      row.eachCell(cell => {
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" }
-        };
-      });
-    });
-    // First set some defaults (will override specific ones after)
-    sheet.columns = [
-      { key: 'sr' },           // A
-      { key: 'date' },         // B
-      { key: 'time' },         // C
-      { key: 'empid' },        // D
-      { key: 'card' },         // E
-      { key: 'name' },         // F
-      { key: 'ptype' },        // G
-      { key: 'company' },      // H
-      { key: 'ploc' },         // I
-      { key: 'door' },         // J
-      {key:'duration'},
-      { key: 'partition' }     // K
-    ];
-
-    // Explicit compact widths for narrow/ID columns (these are character widths)
-    const explicitWidths = {
-      1: 7,   // Sr
-      2: 12,  // Date (yyyy-mm-dd is 10 chars; give a little room)
-      3: 13,  // Time (hh:mm:ss AM)
-      4: 12,  // Employee ID (IDs are short)
-      5: 12,
-      6: 25,
-      8: 25,  // Card Number (short)
-      10: 50
-      // other columns will be auto-sized below
-    };
-
-    // auto-size remaining columns but with minimal padding
-    // compute max length per column from cells (including header)
-    const maxLens = new Array(sheet.columns.length).fill(0);
-    sheet.eachRow((row, rowNumber) => {
-      row.eachCell((cell, colNumber) => {
-        const text = cell.value === null || cell.value === undefined ? '' : String(cell.value);
-        // don't count long strings with weird spacing — trim for measurement
-        const len = text.trim().length;
-        if (len > maxLens[colNumber - 1]) maxLens[colNumber - 1] = len;
-      });
-    });
-
-    // apply widths: use explicit widths where given, otherwise use measured length + small padding
-    sheet.columns.forEach((col, idx) => {
-      const colIndex = idx + 1;
-      if (explicitWidths[colIndex]) {
-        col.width = explicitWidths[colIndex];
-      } else {
-        // small padding: +1 (instead of +2 previously) and min 8, max 40
-        const measured = maxLens[idx] || 8;
-        const width = Math.min(Math.max(measured + 1, 8), 40);
-        col.width = width;
-      }
-    });
-
-    // Optional: freeze the header row to keep it visible when scrolling in Excel
-    sheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-    // --- Save file ---
-    const buf = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buf]), `apac_history_${format(pickedDate, "yyyyMMdd")}.xlsx`);
-  };
-
-  // UPDATED: prettier Excel export for summary (date centered, full borders, header styling, spacing, column widths)
-
-  const handleExportSummary = async () => {
-    if (!pickedDate) return;
-
-    // workbook / sheet
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Summary');
-
-    // columns (widths)
-    ws.columns = [
-      { header: 'Country', key: 'country', width: 20 },
-      { header: 'City', key: 'city', width: 25 },
-      { header: 'Employees', key: 'employees', width: 12 },
-      { header: 'Contractors', key: 'contractors', width: 12 },
-      { header: 'Total', key: 'total', width: 12 },
-    ];
-
-    // Row 1: merged date centered
-    ws.mergeCells('A1:E1');
-    const dateCell = ws.getCell('A1');
-    dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
-    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    dateCell.font = { name: 'Calibri', size: 14, bold: true };
-
-    // Row 2: blank spacing
-    ws.addRow([]);
-
-    // Row 3: header row (we'll style it)
-    const headerRow = ws.addRow(['Country', 'City', 'Employees', 'Contractors', 'Total']);
-    headerRow.height = 20;
-
-    // style helpers
-    const thinBorder = { style: 'thin', color: { argb: 'FF000000' } };
-    const allThinBorder = { top: thinBorder, left: thinBorder, bottom: thinBorder, right: thinBorder };
-
-    // header style: yellow fill, bold, centered
-    headerRow.eachCell(cell => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } }; // yellow
-      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = allThinBorder;
-    });
-
-    // Row 4: blank spacing (visual)
-    ws.addRow([]);
-
-    // Data rows start at excelRowIndex = current row number + 1
-    partitionRows.forEach(r => {
-      const row = ws.addRow([r.country, r.city, r.employee, r.contractor, r.total]);
-      // style cells & numeric formatting
-      row.eachCell((cell, colNumber) => {
-        cell.border = allThinBorder;
-        if (colNumber >= 3) {
-          // numeric columns: right align, number format
-          cell.alignment = { horizontal: 'right', vertical: 'middle' };
-          if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
-            cell.numFmt = '#,##0';
+          if (!companies[companyName]) {
+            companies[companyName] = {
+              name: companyName,
+              total: 0,
+              byBuilding: { 'Podium Floor': 0, '2nd Floor': 0, 'Tower B': 0 },
+              employees: [],
+              locations: new Set()
+            };
           }
-        } else {
-          cell.alignment = { horizontal: 'left', vertical: 'middle' };
-        }
-        cell.font = { name: 'Calibri', size: 11, color: { argb: 'FF000000' } };
-      });
-    });
 
-    // Final total row
-    const totalEmployees = partitionRows.reduce((s, r) => s + r.employee, 0);
-    const totalContractors = partitionRows.reduce((s, r) => s + r.contractor, 0);
-    const totalTotal = partitionRows.reduce((s, r) => s + r.total, 0);
-    const totalRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotal]);
+          // Update company totals
+          companies[companyName].total++;
+          companies[companyName].byBuilding[building]++;
+          companies[companyName].employees.push(employee);
+          if (employee?.PrimaryLocation) {
+            companies[companyName].locations.add(employee.PrimaryLocation);
+          }
 
-    // style total row: bold and light-gray fill
-    totalRow.eachCell((cell, colNumber) => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; // light gray
-      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
-      cell.border = allThinBorder;
-      if (colNumber >= 3) {
-        cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        cell.numFmt = '#,##0';
-      } else {
-        cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
+          // Update overall totals
+          totalCount++;
+          buildingTotals[building]++;
+        });
       }
     });
 
-    // Freeze panes so header is visible (freeze above data rows: after row 4)
-    ws.views = [{ state: 'frozen', ySplit: 4 }];
+    const companyArray = Object.values(companies)
+      .map(company => ({
+        ...company,
+        locations: Array.from(company.locations || []),
+        percentage: totalCount > 0 ? ((company.total / totalCount) * 100).toFixed(1) : '0.0'
+      }))
+      .sort((a, b) => (b.total || 0) - (a.total || 0));
 
-    // Optional: set sheet outline or table-like styling can be added here
+    return {
+      companies: companyArray,
+      totalCount,
+      buildingTotals
+    };
+  }, [detailsData]);
 
-    // export
-    const buf = await wb.xlsx.writeBuffer();
-    const safeDate = format(pickedDate, 'yyyyMMdd');
-    const filename = `apac_summary_${safeDate}.xlsx`;
-    saveAs(new Blob([buf]), filename);
+  // --- Filtered companies (by selected building) ---
+  const filteredCompanies = useMemo(() => {
+    const comps = companyData?.companies || [];
+    if (selectedBuilding === 'all') return comps;
+    return comps.filter(company => (company.byBuilding?.[selectedBuilding] || 0) > 0);
+  }, [companyData?.companies, selectedBuilding]);
+
+  // --- Podium winners (top 3 by podium count) ---
+  const getPodiumWinners = () => {
+    const podiumCompanies = (companyData?.companies || [])
+      .filter(c => (c.byBuilding?.['Podium Floor'] || 0) > 0)
+      .sort((a, b) => (b.byBuilding?.['Podium Floor'] || 0) - (a.byBuilding?.['Podium Floor'] || 0))
+      .slice(0, 3);
+
+    return podiumCompanies.map((c, idx) => ({
+      name: c?.name || 'Unknown',
+      count: c?.byBuilding?.['Podium Floor'] || 0,
+      position: idx === 0 ? '1st' : idx === 1 ? '2nd' : '3rd',
+      icon: idx === 0 ? FaTrophy : FaMedal,
+      color: idx === 0 ? 'gold' : idx === 1 ? 'silver' : '#cd7f32'
+    }));
   };
 
+  const podiumWinners = getPodiumWinners();
 
-  const handleExportCompanies = async () => {
-    if (!pickedDate || !companyRows.length) return;
+  // util
+  const safePercent = (num, denom) => (denom > 0 ? (num / denom) * 100 : 0);
 
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Company Summary');
+  // --- Modal helpers ---
+  const openModalWithRows = (title, rows = []) => {
+    setModalTitle(title || '');
+    setModalRows(rows || []);
+    setShowModal(true);
+  };
 
-    // set up columns
-    ws.columns = [
-      { header: 'Country', key: 'country', width: 20 },
-      { header: 'City', key: 'city', width: 25 },
-      { header: 'Company', key: 'company', width: 40 },
-      { header: 'Total', key: 'total', width: 12 },
-    ];
+  // Clicking a company row (company cell)
+  const handleCompanyClick = (company) => {
+    const rows = (company?.employees || []).map((r, i) => ({
+      idx: i + 1,
+      name: r?.ObjectName1 || r?.Name || '—',
+      employeeId: r?.EmployeeID || '',
+      cardNumber: r?.CardNumber || '',
+      personnelType: r?.PersonnelType || '',
+      primaryLocation: r?.PrimaryLocation || '',
+      zone: r?.zone || ''
+    }));
+    openModalWithRows(company?.name || 'Company Details', rows);
+  };
 
-    // merge top row for date
-    ws.mergeCells('A1:D1');
-    const dateCell = ws.getCell('A1');
-    dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
-    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    dateCell.font = { name: 'Calibri', size: 14, bold: true };
-
-    // blank spacer
-    ws.addRow([]);
-
-    // header row
-    const headerRow = ws.addRow(['Country', 'City', 'Company', 'Total']);
-    headerRow.eachCell(cell => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
-      cell.font = { bold: true, color: { argb: 'FF000000' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-    });
-
-    // data rows
-    companyRows.forEach(r => {
-      const row = ws.addRow([r.country, r.city, r.company, r.total]);
-      row.eachCell((cell, colNumber) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-        if (colNumber === 4) {
-          cell.alignment = { horizontal: 'right', vertical: 'middle' };
-          cell.numFmt = '#,##0';
-        } else {
-          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+  // Clicking a building stat card (global building employees)
+  const handleBuildingClick = (buildingName) => {
+    // gather all employees across companies that belong to buildingName
+    const allEmployees = [];
+    (companyData?.companies || []).forEach(c => {
+      (c.employees || []).forEach(r => {
+        const b = getBuildingFromZone(r?.zone);
+        if (b === buildingName) {
+          allEmployees.push({
+            name: r?.ObjectName1 || r?.Name || '—',
+            employeeId: r?.EmployeeID || '',
+            cardNumber: r?.CardNumber || '',
+            personnelType: r?.PersonnelType || '',
+            primaryLocation: r?.PrimaryLocation || '',
+            company: r?.CompanyName || 'Unknown Company',
+            zone: r?.zone || ''
+          });
         }
       });
     });
 
-    // totals row
-    const total = companyRows.reduce((s, r) => s + r.total, 0);
-    const totalRow = ws.addRow(['Total', '', '', total]);
-    totalRow.eachCell((cell, colNumber) => {
-      cell.font = { bold: true };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-      if (colNumber === 4) {
-        cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        cell.numFmt = '#,##0';
-      } else {
-        cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
-      }
+    // sort stable by company then name
+    allEmployees.sort((a, b) => {
+      if ((a.company || '') !== (b.company || '')) return (a.company || '').localeCompare(b.company || '');
+      return (a.name || '').localeCompare(b.name || '');
     });
 
-    // save
-    const buf = await wb.xlsx.writeBuffer();
-    saveAs(new Blob([buf]), `apac_companies_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+    const rows = allEmployees.map((r, i) => ({
+      idx: i + 1,
+      name: r.name,
+      employeeId: r.employeeId,
+      cardNumber: r.cardNumber,
+      personnelType: r.personnelType,
+      primaryLocation: r.primaryLocation,
+      company: r.company,
+      zone: r.zone
+    }));
+
+    openModalWithRows(`${buildingName} — Occupants`, rows);
   };
 
+  // Clicking a company's building-count badge to show only that company's employees on that building
+  const handleCompanyBuildingClick = (company, buildingName) => {
+    const rows = (company?.employees || [])
+      .filter(r => getBuildingFromZone(r?.zone) === buildingName)
+      .map((r, i) => ({
+        idx: i + 1,
+        name: r?.ObjectName1 || r?.Name || '—',
+        employeeId: r?.EmployeeID || '',
+        cardNumber: r?.CardNumber || '',
+        personnelType: r?.PersonnelType || '',
+        primaryLocation: r?.PrimaryLocation || '',
+        zone: r?.zone || ''
+      }));
 
-  if (loading) return <LoadingSpinner />;
-  if (!data) return null;
-
-  const datePickerSx = {
-    backgroundColor: '#000',
-    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#FFC107' },
-    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFC107' },
-    '& .MuiInputBase-input': { color: '#FFC107' },
-    '& .MuiInputLabel-root': { color: '#FFC107' },
-    '& .MuiInputAdornment-root svg': { color: '#FFC107' },
+    openModalWithRows(`${company?.name || 'Company'} — ${buildingName}`, rows);
   };
 
   return (
     <>
-      <Header />
-      <Container maxWidth={false} disableGutters sx={{ pt: 2, pb: 4 }}>
-        {/* ‣ Date & summary */}
-        {pickedDate && summaryEntry ? (
+      <Container fluid className="company-summary-dashboard">
+        {/* Header */}
+        <Row className="mb-4">
+          <Col>
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h2 className="text-warning mb-1">
+                  <FaBuilding className="me-2" />
+                  Company Analytics Dashboard
+                </h2>
+                <p className="text-light mb-0">
+                  Real-time company presence and distribution analysis
+                </p>
+              </div>
+              <Badge bg="warning" text="dark" className="fs-6">
+                <FaUsers className="me-1" />
+                Total: {companyData?.totalCount || 0} People
+              </Badge>
+            </div>
+          </Col>
+        </Row>
 
-          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 2 }}>
-            <Box sx={{ width: 200 }}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Select date"
-                  value={pickedDate}
-                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
-                  renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
-                />
-              </LocalizationProvider>
-            </Box>
-            {/* Container for both tables side-by-side */}
-            <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
-              {/* Left: existing summary table */}
+        {/* Stats */}
+        <Row className="mb-4">
+          <Col md={4}>
+            <Card
+              className="bg-dark text-light border-success h-100"
+              role="button"
+              onClick={() => handleBuildingClick('Podium Floor')}
+              aria-label="Open Podium Floor details"
+            >
+              <Card.Body className="text-center">
+                <FaUsers className="text-success fs-1 mb-2" />
+                <h4 className="text-success">
+                  {companyData?.buildingTotals?.['Podium Floor'] || 0}
+                </h4>
+                <p className="mb-0">Podium Floor Occupancy (click to view)</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card
+              className="bg-dark text-light border-info h-100"
+              role="button"
+              onClick={() => handleBuildingClick('2nd Floor')}
+              aria-label="Open 2nd Floor details"
+            >
+              <Card.Body className="text-center">
+                <FaUsers className="text-info fs-1 mb-2" />
+                <h4 className="text-info">
+                  {companyData?.buildingTotals?.['2nd Floor'] || 0}
+                </h4>
+                <p className="mb-0">2nd Floor Occupancy (click to view)</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={4}>
+            <Card
+              className="bg-dark text-light border-warning h-100"
+              role="button"
+              onClick={() => handleBuildingClick('Tower B')}
+              aria-label="Open Tower B details"
+            >
+              <Card.Body className="text-center">
+                <FaUsers className="text-warning fs-1 mb-2" />
+                <h4 className="text-warning">
+                  {companyData?.buildingTotals?.['Tower B'] || 0}
+                </h4>
+                <p className="mb-0">Tower B Occupancy (click to view)</p>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
 
-              <Box sx={{ flex: 1, minWidth: 320 }}>
+        {/* Company Table */}
+        <Row>
+          <Col>
+            <Card className="bg-dark text-light border-secondary">
+              <Card.Header className="bg-secondary text-dark">
+                <h4 className="mb-0">
+                  <FaChartBar className="me-2" />
+                  Company-wise Distribution
+                </h4>
+              </Card.Header>
+              <Card.Body className="p-0">
+                <div className="table-responsive">
+                  <Table hover variant="dark" className="mb-0">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Company</th>
+                        <th>Total</th>
+                        <th>Podium Floor</th>
+                        <th>2nd Floor</th>
+                        <th>Tower B</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(filteredCompanies || []).map((company, index) => {
+                        const podiumCount = company?.byBuilding?.['Podium Floor'] || 0;
+                        const secondFloorCount = company?.byBuilding?.['2nd Floor'] || 0;
+                        const towerBCount = company?.byBuilding?.['Tower B'] || 0;
 
-                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
-                  <TableContainer sx={{ maxHeight: 500, overflowY: 'auto' }}>
+                        return (
+                          <tr key={company?.name || index}>
+                            <td>
+                              <Badge bg={index < 3 ? 'warning' : 'secondary'}>
+                                #{index + 1}
+                              </Badge>
+                            </td>
 
-                    <Table sx={{ border: '2px solid #000' }} size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell colSpan={5} align="center"
-                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
-                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
-                          </TableCell>
-                        </TableRow>
-                  
-                        <TableRow sx={{ bgcolor: '#FFC107' }}>
-                          {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => {
-                            // clickable personnel headers
-                            if (h === 'Employees' || h === 'Contractors') {
-                              const personnelType = h === 'Employees' ? 'Employee' : 'Contractor';
-                              const isActive = selectedPersonnel === personnelType && !selectedSummaryPartition;
-
-                              return (
-                                <TableCell
-                                  key={h}
-                                  align="right"
-                                  onClick={() => {
-                                    // toggle global personnel filter (header click)
-                                    if (isActive) {
-                                      setSelectedPersonnel(null);
-                                    } else {
-                                      setSelectedPersonnel(personnelType);
-                                      setSelectedSummaryPartition(null); // clear any partition-specific selection
-                                      setSelectedCompany(null);          // clear company selection to avoid conflicts
-                                      setShowDetails(true);
-                                    }
-                                  }}
-                                  sx={{
-                                    color: isActive ? '#fff' : '#000',
-                                    fontWeight: 'bold',
-                                    fontSize: 14,
-                                    border: '2px solid #000',
-                                    cursor: 'pointer',
-                                    textAlign: 'right',
-                                    bgcolor: isActive ? '#474747' : '#FFC107',
-                                    '&:hover': { backgroundColor: isActive ? '#5a5a5a' : '#f2f2f2' }
-                                  }}
-                                >
-                                  {h}
-                                </TableCell>
-                              );
-                            }
-
-                            // non-clickable headers
-                            return (
-                              <TableCell
-                                key={h}
-                                align={['Country', 'City'].includes(h) ? 'left' : 'right'}
-                                sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
-                              >
-                                {h}
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-
-                      </TableHead>
-                      <TableBody>
-                        {partitionRows.map((r, i) => (
-                          <TableRow key={i}>
-                            <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-                            <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
-                            <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
-                            <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-                              {r.total}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        <TableRow sx={{ bgcolor: '#666' }}>
-                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                            Total
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                            {partitionRows.reduce((s, r) => s + r.employee, 0)}
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                            {partitionRows.reduce((s, r) => s + r.contractor, 0)}
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
-                            {partitionRows.reduce((s, r) => s + r.total, 0)}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-
-                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
-                  <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
-                    onClick={() => setShowDetails(v => !v)}>
-                    {showDetails ? 'Hide Details' : 'See Details'}
-                  </Button>
-                  {showDetails && (
-                    <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
-                      onClick={handleExport}>
-                      Export to Excel
-                    </Button>
-                  )}
-                  <Button
-                    variant="contained"
-                    sx={{ ml: 2, bgcolor: '#FFC107', color: '#000' }}
-                    onClick={handleExportSummary}
-                  >
-                    Export Summary to Excel
-                  </Button>
-                </Box>
-              </Box>
-
-              {/* Right: NEW company-level table (same style) */}
-              <Box sx={{ flex: 1, minWidth: 320 }}>
-                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
-                  <TableContainer sx={{ maxHeight: 280, overflowY: 'auto' }}>
-                    <Table sx={{ border: '2px solid #000' }} size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell colSpan={4} align="center"
-                            sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}>
-                            {format(pickedDate, 'EEEE, d MMMM, yyyy')}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow sx={{ bgcolor: '#FFC107' }}>
-                          {['Country', 'City', 'Company', 'Total'].map(h => (
-                            <TableCell key={h} align={h === 'Country' || h === 'City' ? 'left' : 'center'}
-                              sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
-                              {h}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {companyRows.length > 0 ? companyRows.map((r, i) => {
-                          const rowKey = makeCompanyKey(r.country, r.city, r.company);
-                          return (
-                            <TableRow
-                              key={`${r.company}-${i}`}
-                              onClick={() => {
-                                if (selectedCompany === rowKey) {
-                                  setSelectedCompany(null);   // second click — clear filter
-                                  setShowDetails(true);
-                                } else {
-                                  setSelectedCompany(rowKey); // first click — filter
-                                  setShowDetails(true);
-                                }
-                              }}
-                              sx={{
-                                cursor: 'pointer',
-                                '&:hover': { backgroundColor: '#474747' },
-                                ...(selectedCompany === rowKey ? { backgroundColor: '#474747' } : {})
-                              }}
-                              tabIndex={0}
+                            {/* Company clickable cell */}
+                            <td
                               role="button"
+                              tabIndex={0}
+                              onClick={() => handleCompanyClick(company)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
-                                  if (selectedCompany === rowKey) {
-                                    setSelectedCompany(null);
-                                    setShowDetails(true);
-                                  } else {
-                                    setSelectedCompany(rowKey);
-                                    setShowDetails(true);
-                                  }
+                                  handleCompanyClick(company);
                                 }
                               }}
+                              style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(255,193,7,0.6)' }}
                             >
-                              <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-                              <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-                              <TableCell sx={{ border: '2px solid #000' }}>{r.company}</TableCell>
-                              <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-                                {r.total}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        }) : (
-                          <TableRow>
-                            <TableCell colSpan={4} sx={{ border: '2px solid #000', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                              No records for this date.
-                            </TableCell>
-                          </TableRow>
-                        )}
+                              {company?.name}
+                            </td>
 
-                        {/* Totals row */}
-                        <TableRow sx={{ bgcolor: '#666' }}>
-                          <TableCell colSpan={2} align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                            Total
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                            {/* empty cell for layout: keep consistent with left table */}
-                          </TableCell>
-                          <TableCell align="right" sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
-                            {companyRows.reduce((s, r) => s + r.total, 0)}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
-                  <Button
-                    variant="contained"
-                    sx={{ bgcolor: '#FFC107', color: '#000' }}
-                    onClick={handleExportCompanies}
-                  >
-                    Export Companies to Excel
-                  </Button>
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        ) : (
-          <Box sx={{ px: 2, mb: 3 }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Select date"
-                value={pickedDate}
-                onChange={d => { setPickedDate(d); setShowDetails(false); }}
-                renderInput={params => <TextField fullWidth {...params} sx={datePickerSx} />}
-              />
-            </LocalizationProvider>
-            {!pickedDate && (
-              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
-                Please pick a date to view region summary.
-              </Typography>
-            )}
-          </Box>
-        )}
-        {/* ‣ Details */}
-        {showDetails && (
-          <Box display="flex" justifyContent="center" mb={0} sx={{ width: '100%' }}>
-            <Paper elevation={1} sx={{ p: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
-              {detailRows.length > 0 ? (
+                            <td>
+                              <Badge bg="light" text="dark">{company?.total || 0}</Badge>
+                            </td>
 
-                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }} size='small'>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#000' }}>
-                      {[
-                        'Sr', 'Date', 'Time',
-                        'Employee ID', 'Card Number', 'Name', 'Personnel Type', 'CompanyName', 'PrimaryLocation',
-                        'Door', 'Duration','Partition'
-                      ].map(h => (
-                        <TableCell key={h} align="center"
-                          sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
-                          {h}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {detailRows.map((r, i) => (
-                      <TableRow key={`${r.PersonGUID}-${i}`}>
-                        <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>{i + 1}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.LocaleMessageTime.slice(0, 10)}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000', whiteSpace: 'nowrap' }}>
-                          {formatApiTime12(r.LocaleMessageTime)}
-                        </TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.CompanyName}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.PrimaryLocation}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
-                          <TableCell sx={{ border: '2px solid #000' }}>{r.duration}</TableCell>
+                            {/* Podium badge — clickable to show company-specific podium employees */}
+                            <td>
+                              {podiumCount > 0 ? (
+                                <Badge
+                                  bg="success"
+                                  role="button"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => handleCompanyBuildingClick(company, 'Podium Floor')}
+                                  title={`View ${company?.name} on Podium Floor`}
+                                >
+                                  {podiumCount}
+                                </Badge>
+                              ) : '-'}
+                            </td>
 
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {formatPartition(r.PartitionNameFriendly)}
-                        </TableCell>
-                      </TableRow>
+                            {/* 2nd Floor badge */}
+                            <td>
+                              {secondFloorCount > 0 ? (
+                                <Badge
+                                  bg="info"
+                                  role="button"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => handleCompanyBuildingClick(company, '2nd Floor')}
+                                  title={`View ${company?.name} on 2nd Floor`}
+                                >
+                                  {secondFloorCount}
+                                </Badge>
+                              ) : '-'}
+                            </td>
+
+                            {/* Tower B badge */}
+                            <td>
+                              {towerBCount > 0 ? (
+                                <Badge
+                                  bg="warning"
+                                  role="button"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => handleCompanyBuildingClick(company, 'Tower B')}
+                                  title={`View ${company?.name} on Tower B`}
+                                >
+                                  {towerBCount}
+                                </Badge>
+                              ) : '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+
+                    {/* Totals Row */}
+                    <tfoot>
+                      <tr className="fw-bold bg-secondary text-dark">
+                        <td colSpan={2} className="text-end">Totals:</td>
+                        <td>
+                          <Badge bg="light" text="dark">
+                            {companyData?.totalCount || 0}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge bg="light" text="dark">
+                            {companyData?.buildingTotals?.['Podium Floor'] || 0}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge bg="light" text="dark">
+                            {companyData?.buildingTotals?.['2nd Floor'] || 0}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge bg="light" text="dark">
+                            {companyData?.buildingTotals?.['Tower B'] || 0}
+                          </Badge>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </Table>
+                </div>
+
+                {(filteredCompanies || []).length === 0 && (
+                  <div className="text-center text-muted py-4">
+                    No companies found for the selected filter
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Modal for details (company / building) */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered scrollable>
+          <Modal.Header closeButton>
+            <Modal.Title>{modalTitle}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {modalRows && modalRows.length > 0 ? (
+              <div className="table-responsive">
+                <Table striped bordered hover size="sm">
+                  <thead>
+                    <tr>
+                      {/* adapt columns to available data */}
+                      {modalRows[0].company && <th>Company</th>}
+                      <th>Sr</th>
+                      <th>Name</th>
+                      <th>Employee ID</th>
+                      <th>Card</th>
+                      <th>Personnel Type</th>
+                      <th>Primary Location</th>
+                      <th>Zone</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modalRows.map((r, i) => (
+                      <tr key={`${r.employeeId || r.idx}-${i}`}>
+                        {r.company && <td>{r.company}</td>}
+                        <td style={{ whiteSpace: 'nowrap' }}>{r.idx}</td>
+                        <td>{r.name}</td>
+                        <td>{r.employeeId || '-'}</td>
+                        <td>{r.cardNumber || '-'}</td>
+                        <td>{r.personnelType || '-'}</td>
+                        <td>{r.primaryLocation || '-'}</td>
+                        <td>{r.zone || (r.zone === '' ? '-' : r.zone)}</td>
+                      </tr>
                     ))}
-                  </TableBody>
+                  </tbody>
                 </Table>
-              ) : (
-                <Typography variant="body2" sx={{ color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic' }}>
-                  No swipe records found for this date.
-                </Typography>
-              )}
-            </Paper>
-          </Box>
-        )}
+              </div>
+            ) : (
+              <div className="text-center text-muted py-4">
+                No records to display.
+              </div>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
       </Container>
-      <Footer />
     </>
   );
-}
+};
+
+export default CompanySummary;
