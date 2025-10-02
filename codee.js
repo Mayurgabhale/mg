@@ -1,4 +1,16 @@
+ Company Distribution
+Rank	Company	Podium Floor	2nd Floor	Tower B	Total
+1	Western Union	468	84	115	667
+2	Visitor	18	1	-	19
+3	CLR Facility Services Pvt.Ltd.	12	-	6	18
+4	Poona Security India Pvt Ltd	8	1	3	12
+5	Temp Badge	4	-	-	4
+6	CBRE	2	1	1	4
+7	Osource India Pvt Ltd	2	2	-	4
+8	Vedant Enterprises Pvt. Ltd	1	-	1	2
+9	Tea Point	1	-	-	1
 
+in table add total : Podium Floor total, 2nd Floor totla , 	Tower B totalm and all totals ok 
 
 
 import React, { useState, useMemo, useEffect } from "react";
