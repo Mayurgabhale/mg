@@ -1,62 +1,105 @@
-<div className="table-responsive">
-  <div className="d-flex justify-content-between align-items-center mb-2">
-    <h5 className="mb-0">Company Distribution</h5>
-    <Button variant="success" onClick={exportToExcel}>
-      Export to Excel
-    </Button>
-  </div>
+ <Table hover className="mb-0" id="companyTable">
+                                            <thead style={{ background: "#aacef2" }}>
+                                                <tr>
+                                                    <th style={{ background: "#2965cc", color: "#FFF" }}>Rank</th>
+                                                    <th style={{ background: "#2965cc", color: "#FFF" }}>Company</th>
+                                                    <th style={{ background: "#2965cc", color: "#FFF" }}>Podium Floor</th>
+                                                    <th style={{ background: "#2965cc", color: "#FFF" }}>2nd Floor</th>
+                                                    <th style={{ background: "#2965cc", color: "#FFF" }}>Tower B</th>
+                                                    <th style={{ background: "#2965cc", color: "#FFF" }}>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(filteredCompanies || []).map((company, index) => (
+                                                    <tr key={company?.name || index}>
+                                                        <td>
+                                                            <Badge bg="light" text="dark">{index + 1}</Badge>
+                                                        </td>
+                                                        <td
+                                                            onClick={() => handleCompanyClick(company)}
+                                                            style={{ cursor: "pointer", textDecoration: "underline" }}
+                                                        >
+                                                            {company?.name}
+                                                        </td>
+                                                        {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
+                                                            <td key={floor}>
+                                                                {company?.byBuilding?.[floor] > 0 ? (
+                                                                    <Badge
+                                                                        bg="primary"
+                                                                        role="button"
+                                                                        style={{ cursor: "pointer" }}
+                                                                        onClick={() => handleCompanyBuildingClick(company, floor)}
+                                                                    >
+                                                                        {company?.byBuilding?.[floor]}
+                                                                    </Badge>
+                                                                ) : "-"}
+                                                            </td>
+                                                        ))}
+                                                        <td>
+                                                            <Badge bg="light" text="dark">{company?.total || 0}</Badge>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr className="fw-bold" style={{ background: "#aacef2" }}>
+                                                    <td colSpan={2} className="text-end">Totals:</td>
+                                                    <td>{companyData?.buildingTotals?.["Podium Floor"] || 0}</td>
+                                                    <td>{companyData?.buildingTotals?.["2nd Floor"] || 0}</td>
+                                                    <td>{companyData?.buildingTotals?.["Tower B"] || 0}</td>
+                                                    <td>{companyData?.totalCount || 0}</td>
+                                                </tr>
+                                            </tfoot>
+                                            
+                                        </Table>
 
-  <Table hover className="mb-0" id="companyTable">
-    <thead style={{ background: "#aacef2" }}>
-      <tr>
-        <th style={{ background: "#2965cc", color: "#FFF" }}>Rank</th>
-        <th style={{ background: "#2965cc", color: "#FFF" }}>Company</th>
-        <th style={{ background: "#2965cc", color: "#FFF" }}>Podium Floor</th>
-        <th style={{ background: "#2965cc", color: "#FFF" }}>2nd Floor</th>
-        <th style={{ background: "#2965cc", color: "#FFF" }}>Tower B</th>
-        <th style={{ background: "#2965cc", color: "#FFF" }}>Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {(filteredCompanies || []).map((company, index) => (
-        <tr key={company?.name || index}>
-          <td>
-            <Badge bg="light" text="dark">{index + 1}</Badge>
-          </td>
-          <td
-            onClick={() => handleCompanyClick(company)}
-            style={{ cursor: "pointer", textDecoration: "underline" }}
-          >
-            {company?.name}
-          </td>
-          {["Podium Floor", "2nd Floor", "Tower B"].map((floor) => (
-            <td key={floor}>
-              {company?.byBuilding?.[floor] > 0 ? (
-                <Badge
-                  bg="primary"
-                  role="button"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => handleCompanyBuildingClick(company, floor)}
-                >
-                  {company?.byBuilding?.[floor]}
-                </Badge>
-              ) : "-"}
-            </td>
-          ))}
-          <td>
-            <Badge bg="light" text="dark">{company?.total || 0}</Badge>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-    <tfoot>
-      <tr className="fw-bold" style={{ background: "#aacef2" }}>
-        <td colSpan={2} className="text-end">Totals:</td>
-        <td>{companyData?.buildingTotals?.["Podium Floor"] || 0}</td>
-        <td>{companyData?.buildingTotals?.["2nd Floor"] || 0}</td>
-        <td>{companyData?.buildingTotals?.["Tower B"] || 0}</td>
-        <td>{companyData?.totalCount || 0}</td>
-      </tr>
-    </tfoot>
-  </Table>
-</div>
+See my table desing, i want same desing wiht color for excle sheet ok 
+this excle 
+   const exportToExcel = () => {
+        const wb = XLSX.utils.book_new();
+
+        // Extract table data
+        const table = document.getElementById("companyTable");
+        const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+
+        // Apply styles
+        const range = XLSX.utils.decode_range(ws["!ref"]);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[cellAddress]) continue;
+
+                // Header style
+                if (R === 0) {
+                    ws[cellAddress].s = {
+                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                        fill: { fgColor: { rgb: "2965CC" } },
+                        alignment: { horizontal: "center", vertical: "center" },
+                        border: {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } },
+                        },
+                    };
+                }
+
+                // Totals row style
+                if (R === range.e.r) {
+                    ws[cellAddress].s = {
+                        font: { bold: true, color: { rgb: "000000" } },
+                        fill: { fgColor: { rgb: "aacef2" } },
+                        alignment: { horizontal: "center", vertical: "center" },
+                    };
+                }
+            }
+        }
+
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Company Distribution");
+
+        // Save as Excel
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
+        const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+        saveAs(data, "Company_Distribution.xlsx");
+    };
