@@ -1,42 +1,90 @@
-this is my backend
-Mode                 LastWriteTime         Length Name
-----                 -------------         ------ ----
-d-----         5/20/2025   7:39 PM                config
-d-----         9/16/2025   4:02 PM                controllers
-d-----         9/16/2025   2:54 PM                data
-d-----         5/23/2025  11:55 AM                node_modules
-d-----         5/20/2025   8:23 PM                routes
-d-----         5/20/2025   9:12 PM                scripts
-d-----         5/15/2025  10:38 PM                sql
--a----         8/21/2025  12:22 PM            125 .env
--a----         5/19/2025   5:51 PM            634 doorZoneMap.js
--a----         5/23/2025  11:55 AM          70331 package-lock.json
--a----         5/23/2025  11:55 AM            516 package.json
--a----         9/10/2025  10:49 AM           3660 server.js
+const XLSX = require("xlsx-js-style");
+const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
 
+let latestCompanyData = null; // store data received from frontend
 
-PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights>
+// Save data from frontend
+exports.saveCompanyData = (req, res) => {
+    latestCompanyData = req.body;
+    console.log("Company data saved for daily report");
+    res.json({ success: true });
+};
 
+// Generate Excel file
+const generateExcel = () => {
+    if (!latestCompanyData) return null;
 
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(latestCompanyData.filteredCompanies);
 
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cellAddress]) continue;
 
+            // Header
+            if (R === 0) {
+                ws[cellAddress].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "2965CC" } },
+                    alignment: { horizontal: "center" },
+                };
+            }
 
- Directory: C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\controllers
+            // Totals row (last row)
+            if (R === range.e.r) {
+                ws[cellAddress].s = {
+                    font: { bold: true, color: { rgb: "000000" } },
+                    fill: { fgColor: { rgb: "AACEF2" } },
+                    alignment: { horizontal: "center" },
+                };
+            }
 
+            // Alternate row shading
+            if (R > 0 && R < range.e.r && R % 2 === 0) {
+                ws[cellAddress].s = {
+                    fill: { fgColor: { rgb: "F2F2F2" } },
+                };
+            }
 
-Mode                 LastWriteTime         Length Name
-----                 -------------         ------ ----
--a----         9/30/2025   2:58 PM          37865 denverInOutInconsistencyController.js
--a----         10/1/2025   2:24 PM         104303 denverLiveOccupancyController.js
--a----         9/30/2025   3:32 PM          10571 denverRejection.js
--a----         9/30/2025   3:31 PM           3878 employeeController.js
--a----         10/1/2025   4:47 PM          57140 liveOccupancyController.js
+            // Company column → left align
+            if (C === 1 && R > 0) {
+                ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" };
+            }
+        }
+    }
 
- Directory: C:\Users\W0024618\Desktop\swipeData\employee-ai-insights\routes
+    XLSX.utils.book_append_sheet(wb, ws, "Company Distribution");
 
+    const filePath = path.join(__dirname, "../reports/Company_Distribution.xlsx");
+    XLSX.writeFile(wb, filePath);
+    return filePath;
+};
 
-Mode                 LastWriteTime         Length Name
-----                 -------------         ------ ----
--a----         5/21/2025  12:25 PM            220 employeeRoutes.js
--a----         10/1/2025   3:12 PM           1680 liveOccupancyRoutes.js
--a----         9/30/2025   3:02 PM           2443 occupancyDenverRoutes.js
+// Send email with Excel attachment
+exports.sendDailyEmail = async () => {
+    if (!latestCompanyData) return console.log("No data to send.");
+
+    const filePath = generateExcel();
+    if (!filePath) return;
+
+    const transporter = nodemailer.createTransport({
+        host: "smtp.yourcompany.com",
+        port: 587,
+        secure: false,
+        auth: { user: "your_email@company.com", pass: "your_password" },
+    });
+
+    await transporter.sendMail({
+        from: "your_email@company.com",
+        to: "recipient@company.com", // or multiple emails
+        subject: "Daily Company Distribution Report",
+        text: "Please find attached the daily company distribution report.",
+        attachments: [{ filename: "Company_Distribution.xlsx", path: filePath }],
+    });
+
+    console.log("Daily report email sent!");
+};
