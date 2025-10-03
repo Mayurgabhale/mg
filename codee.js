@@ -1,32 +1,31 @@
-write correct code to send mail 
-const nodemailer = require('nodemailer')
+const nodemailer = require('nodemailer');
 
-
-const transpoeter = nodemailer.createTransport(
-    {
-        secure:true,
-        host:'smtp.gmail.com',
-        port:465,
-        auth:{
-            user:'mayurgabhale709@gmail.com',
-            pass:'syhqmnzfmjmqsojh'
-        }
+// ✅ Setup transporter
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // use SSL
+    auth: {
+        user: "mayurgabhale709@gmail.com",   // your Gmail
+        pass: "syhqmnzfmjmqsojh"             // your App Password (not Gmail password)
     }
-);
+});
 
+// ✅ Send mail function
+async function sendMail(to, sub, msg) {
+    try {
+        let info = await transporter.sendMail({
+            from: '"Mayur Gabhale" <mayurgabhale709@gmail.com>', // sender
+            to: to,                                             // receiver(s)
+            subject: sub,                                       // subject
+            html: msg                                           // message body (HTML or plain text)
+        });
 
-function sendMail(to,sub,msg){
-    transpoeter.sendMail({
-        to:to,
-        subject:sub,
-        html:msg
-    });
-
-    console.log("email sent succrfully, ")
-
+        console.log("✅ Email sent successfully:", info.messageId);
+    } catch (error) {
+        console.error("❌ Error sending email:", error);
+    }
 }
 
-sendMail("codingmayur@gmail.com", "this is a subject", "this is the message to send for mail ")
-
-
-PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> node .\mailsend.js
+// Test sending mail
+sendMail("codingmayur@gmail.com", "This is a subject", "This is the message to send for mail");
