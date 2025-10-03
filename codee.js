@@ -1,13 +1,8 @@
-// routes/dailyReportRoutes.js
-const express = require("express");
-const router = express.Router();
-const dailyReportController = require("../controllers/dailyReportController");
-
-// Endpoint for frontend to send data
-router.post("/saveCompanyData", dailyReportController.saveCompanyData);
-
-// Debug endpoints (for manual testing)
-router.get("/debug", dailyReportController.getSavedData);
-router.post("/clear", dailyReportController.clearSavedData);
-
-module.exports = router;
+SMTP_HOST=mail.mayoai.tech
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=info@mayoai.tech
+SMTP_PASS=REPLACE_WITH_NEW_PASSWORD  # rotate this - do not commit
+SMTP_FROM=info@mayoai.tech
+DAILY_REPORT_TO=info@mayoai.tech
+PORT=5001
