@@ -1,3 +1,14 @@
+PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> node .\mailsend.js
+❌ Error sending email: Error: connect ETIMEDOUT 172.253.118.108:465
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16) {
+  errno: -4039,
+  code: 'ESOCKET',
+  syscall: 'connect',
+  address: '172.253.118.108',
+  port: 465,
+  command: 'CONN'
+}
+PS C:\Users\W0024618\Desktop\swipeData\employee-ai-insights> 
 const nodemailer = require('nodemailer');
 
 // ✅ Setup transporter
