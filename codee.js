@@ -30,7 +30,7 @@ const exportToExcel = () => {
         ws[cellAddress].s = {
           ...ws[cellAddress].s,
           font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
-          fill: { fgColor: { rgb: "2965CC" } },
+          fill: { type: "pattern", pattern: "solid", fgColor: { rgb: "2965CC" } }
         };
       }
 
@@ -39,21 +39,19 @@ const exportToExcel = () => {
         ws[cellAddress].s = {
           ...ws[cellAddress].s,
           font: { bold: true, color: { rgb: "000000" }, sz: 12 },
-          fill: { fgColor: { rgb: "aacef2" } },
+          fill: { type: "pattern", pattern: "solid", fgColor: { rgb: "AACEF2" } }
         };
       }
 
-      // Alternate row shading for data rows
-      if (R > 0 && R < range.e.r) {
-        if (R % 2 === 0) {
-          ws[cellAddress].s = {
-            ...ws[cellAddress].s,
-            fill: { fgColor: { rgb: "f2f2f2" } }
-          };
-        }
+      // Alternate row shading
+      if (R > 0 && R < range.e.r && R % 2 === 0) {
+        ws[cellAddress].s = {
+          ...ws[cellAddress].s,
+          fill: { type: "pattern", pattern: "solid", fgColor: { rgb: "F2F2F2" } }
+        };
       }
 
-      // Company name column (second col) → left align
+      // Company name column → left align
       if (C === 1 && R > 0) {
         ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" };
       }
@@ -73,15 +71,9 @@ const exportToExcel = () => {
   }
   ws["!cols"] = colWidths;
 
-  // Add worksheet to workbook
+  // Add sheet and save
   XLSX.utils.book_append_sheet(wb, ws, "Company Distribution");
-
-  // Save file
-  const excelBuffer = XLSX.write(wb, {
-    bookType: "xlsx",
-    type: "array",
-    cellStyles: true,
-  });
+  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
   saveAs(data, "Company_Distribution.xlsx");
 };
