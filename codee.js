@@ -1,6 +1,7 @@
-hi, can you you create this page more lookin professal UI  and atractive UI wiht better Ui desing and layout,
-mor professal , 
-  // C:\Users\W0024618\Desktop\swipeData\client\src\components\CompanySummary.jsx
+know we wan to work on this Future Analytics
+but in this wha we add, to help compnay more and more ok 
+suggest me what futeu we add in this dashboard not moe help full 
+// C:\Users\W0024618\Desktop\swipeData\client\src\components\CompanySummary.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { Container, Row, Col, Card, Table, Badge, Modal, Button, Nav } from "react-bootstrap";
 import { FaBuilding, FaUsers, FaChartPie, FaHouse, FaBars } from 'react-icons/fa6';
