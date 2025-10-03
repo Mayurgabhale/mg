@@ -1,3 +1,6 @@
+Hangup (SIGHUP)
+  File "Solution.py", line 27
+SyntaxError: Non-ASCII character '\xe2' in file Solution.py on line 27, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
