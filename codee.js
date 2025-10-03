@@ -1,4 +1,4 @@
-hi, can you you create this page more lookin professal and atractivem wiht better desing and layout,
+hi, can you you create this page more lookin professal UI  and atractive UI wiht better Ui desing and layout,
 mor professal , 
   // C:\Users\W0024618\Desktop\swipeData\client\src\components\CompanySummary.jsx
 import React, { useState, useMemo, useEffect } from "react";
