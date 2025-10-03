@@ -1,24 +1,29 @@
-i want to change graph bg color
-    
 <Row className="mb-4">
-                        <Col>
-                            <Card className="shadow-sm border-0 p-3">
-                                <h5 className="mb-3">Company Occupancy Line Graph</h5>
-                                <ResponsiveContainer width="100%" height={400}>
-                                    <LineChart data={chartData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" angle={-30} textAnchor="end" height={100} />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Line type="monotone" dataKey="podium" stroke="#8884d8" name="Podium Floor" />
-                                        <Line type="monotone" dataKey="second" stroke="#82ca9d" name="2nd Floor" />
-                                        <Line type="monotone" dataKey="towerB" stroke="#ffc658" name="Tower B" />
-                                        <Line type="monotone" dataKey="total" stroke="#ff7300" name="Total" />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </Card>
-                        </Col>
-
-                        
-                    </Row>
+  <Col>
+    <Card className="shadow-sm border-0 p-3" style={{ background: "#ffffff" }}>
+      <h5 className="mb-3">Company Occupancy Line Graph</h5>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart 
+          data={chartData} 
+          style={{ backgroundColor: "#f9fafc", borderRadius: "8px", padding: "8px" }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+          <XAxis 
+            dataKey="name" 
+            angle={-30} 
+            textAnchor="end" 
+            height={100} 
+            stroke="#333" 
+          />
+          <YAxis stroke="#333" />
+          <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #ddd" }} />
+          <Legend />
+          <Line type="monotone" dataKey="podium" stroke="#4a90e2" name="Podium Floor" />
+          <Line type="monotone" dataKey="second" stroke="#50c878" name="2nd Floor" />
+          <Line type="monotone" dataKey="towerB" stroke="#f5a623" name="Tower B" />
+          <Line type="monotone" dataKey="total" stroke="#d0021b" name="Total" />
+        </LineChart>
+      </ResponsiveContainer>
+    </Card>
+  </Col>
+</Row>
