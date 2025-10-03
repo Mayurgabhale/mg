@@ -13,13 +13,14 @@ const exportToExcel = () => {
       const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
       if (!ws[cellAddress]) continue;
 
-      // Default border style
+      // Default style (all cells)
       ws[cellAddress].s = {
+        font: { name: "Calibri", sz: 11 },
         border: {
-          top: { style: "thin", color: { rgb: "000000" } },
-          bottom: { style: "thin", color: { rgb: "000000" } },
-          left: { style: "thin", color: { rgb: "000000" } },
-          right: { style: "thin", color: { rgb: "000000" } },
+          top: { style: "thin", color: { rgb: "DDDDDD" } },
+          bottom: { style: "thin", color: { rgb: "DDDDDD" } },
+          left: { style: "thin", color: { rgb: "DDDDDD" } },
+          right: { style: "thin", color: { rgb: "DDDDDD" } },
         },
         alignment: { horizontal: "center", vertical: "center" }
       };
@@ -28,7 +29,7 @@ const exportToExcel = () => {
       if (R === 0) {
         ws[cellAddress].s = {
           ...ws[cellAddress].s,
-          font: { bold: true, color: { rgb: "FFFFFF" } },
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
           fill: { fgColor: { rgb: "2965CC" } },
         };
       }
@@ -37,12 +38,40 @@ const exportToExcel = () => {
       if (R === range.e.r) {
         ws[cellAddress].s = {
           ...ws[cellAddress].s,
-          font: { bold: true, color: { rgb: "000000" } },
+          font: { bold: true, color: { rgb: "000000" }, sz: 12 },
           fill: { fgColor: { rgb: "aacef2" } },
         };
       }
+
+      // Alternate row shading for data rows
+      if (R > 0 && R < range.e.r) {
+        if (R % 2 === 0) {
+          ws[cellAddress].s = {
+            ...ws[cellAddress].s,
+            fill: { fgColor: { rgb: "f2f2f2" } }
+          };
+        }
+      }
+
+      // Company name column (second col) → left align
+      if (C === 1 && R > 0) {
+        ws[cellAddress].s.alignment = { horizontal: "left", vertical: "center" };
+      }
     }
   }
+
+  // Auto column widths
+  const colWidths = [];
+  for (let C = range.s.c; C <= range.e.c; ++C) {
+    let maxLen = 10;
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+      const value = ws[cellAddress]?.v ? ws[cellAddress].v.toString() : "";
+      if (value.length > maxLen) maxLen = value.length;
+    }
+    colWidths.push({ wch: maxLen + 2 });
+  }
+  ws["!cols"] = colWidths;
 
   // Add worksheet to workbook
   XLSX.utils.book_append_sheet(wb, ws, "Company Distribution");
@@ -51,7 +80,7 @@ const exportToExcel = () => {
   const excelBuffer = XLSX.write(wb, {
     bookType: "xlsx",
     type: "array",
-    cellStyles: true, // keep styles
+    cellStyles: true,
   });
   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
   saveAs(data, "Company_Distribution.xlsx");
