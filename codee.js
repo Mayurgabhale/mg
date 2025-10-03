@@ -1,15 +1,24 @@
-Uncaught runtime errors:
-×
-ERROR
-Cannot read properties of undefined (reading 'Header')
-TypeError: Cannot read properties of undefined (reading 'Header')
-    at CompanySummary (http://localhost:3000/src_components_CompanySummary_jsx.f7a085bfa9c6397c135f.hot-update.js:1741:150)
-    at react-stack-bottom-frame (http://localhost:3000/static/js/bundle.js:27882:18)
-    at renderWithHooks (http://localhost:3000/static/js/bundle.js:18092:20)
-    at updateFunctionComponent (http://localhost:3000/static/js/bundle.js:19785:17)
-    at beginWork (http://localhost:3000/static/js/bundle.js:20371:16)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15864:68)
-    at performUnitOfWork (http://localhost:3000/static/js/bundle.js:22444:93)
-    at workLoopSync (http://localhost:3000/static/js/bundle.js:22337:38)
-    at renderRootSync (http://localhost:3000/static/js/bundle.js:22321:7)
-    at performWorkOnRoot (http://localhost:3000/static/js/bundle.js:22085:42)
+i want to change graph bg color
+    
+<Row className="mb-4">
+                        <Col>
+                            <Card className="shadow-sm border-0 p-3">
+                                <h5 className="mb-3">Company Occupancy Line Graph</h5>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <LineChart data={chartData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" angle={-30} textAnchor="end" height={100} />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="podium" stroke="#8884d8" name="Podium Floor" />
+                                        <Line type="monotone" dataKey="second" stroke="#82ca9d" name="2nd Floor" />
+                                        <Line type="monotone" dataKey="towerB" stroke="#ffc658" name="Tower B" />
+                                        <Line type="monotone" dataKey="total" stroke="#ff7300" name="Total" />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </Card>
+                        </Col>
+
+                        
+                    </Row>
