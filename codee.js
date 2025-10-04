@@ -1,32 +1,47 @@
-// src/App.js
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  lazy,
-  Suspense
-} from 'react';
-import {
-  Container,
-  Navbar,
-  Nav,
-  Button,
-  InputGroup,
-  FormControl,
-  Spinner
-} from 'react-bootstrap';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { FaSun, FaBuilding } from 'react-icons/fa';
-import { FaBuildingCircleCheck } from "react-icons/fa6";
-import { MdAddAlert } from "react-icons/md";
-import OverlayTrigger from "react-bootstrap/OverlayTrigger";
-import Tooltip from "react-bootstrap/Tooltip";
+	Western Union	 <<<< WU
+	Visitor	<< Visitor
+	CLR Facility Services Pvt.Ltd.	<< CLR
+	Poona Security India Pvt Ltd	<< PSI 
+	CBRE	4	1	2	7 << CBRE
+	Osource India Pvt Ltd	  << Osource 
+	Temp Badge	<< temp badge 
+	Vedant Enterprises Pvt. Ltd	 << vedant 
+	Tea Point	  << tea point 
+  l
 
-import './App.css';
+in line graph, this compnay name is more long. 
+but in want in short like above, 
+and stright line,
+how to do that 
+    
+<Row className="mb-4">
 
-// Lazy load pages
-const DashboardHome = lazy(() => import('./pages/DashboardHome'));
-const ErtPage = lazy(() => import('./pages/ErtPage'));
-const ZoneDetailsTable = lazy(() => import('./components/ZoneDetailsTable'));
-const CompanySummary = lazy(() => import('./components/CompanySummary'));
+                        <Col>
+                            <Card className="shadow-sm border-0 p-3" style={{ background: "#ffffff" }}>
+                                {/* <h5 className="mb-3">Company Occupancy Line Graph</h5> */}
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <LineChart
+                                        data={chartData}
+                                        style={{ backgroundColor: "#f9fafc", borderRadius: "8px", padding: "8px" }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                                        <XAxis
+                                            dataKey="name"
+                                            angle={-30}
+                                            textAnchor="end"
+                                            height={100}
+                                            stroke="#333"
+                                        />
+                                        <YAxis stroke="#333" />
+                                        <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #ddd" }} />
+                                        <Legend />
+                                        <Line type="monotone" dataKey="podium" stroke="#4a90e2" name="Podium Floor" />
+                                        <Line type="monotone" dataKey="second" stroke="#50c878" name="2nd Floor" />
+                                        <Line type="monotone" dataKey="towerB" stroke="#f5a623" name="Tower B" />
+                                        <Line type="monotone" dataKey="total" stroke="#d0021b" name="Total" />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </Card>
+                        </Col>
+                    </Row>
+
