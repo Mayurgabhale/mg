@@ -11,7 +11,6 @@ REad below all files carefully and how to slove this above error,
 and how to slove it 
 -------------------
 
-
  // frontend/vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -173,9 +172,6 @@ function _extractServerDateTimeParts(iso) {
     second: tParts[2] || 0
   };
 }
-
-
-
 function formatDateFromServerISO(iso) {
   if (!iso) return '';
   const dt = new Date(iso);
@@ -185,8 +181,6 @@ function formatDateFromServerISO(iso) {
   const yrShort = String(y).slice(-2);
   return `${pad2(d)}-${MONTH_ABBR[m]}-${yrShort}`;         // e.g. "12-Aug-25"
 }
-
-
 
 function formatTimeFromServerISO(iso) {
   if (!iso) return '';
@@ -199,9 +193,6 @@ function formatTimeFromServerISO(iso) {
   const hh12 = ((hh + 11) % 12) + 1;
   return `${hh12}:${pad2(mm)}:${pad2(ss)} ${ampm}`; // e.g. "3:23:46 PM"
 }
-
-
-
 function buildISOFromDateOnlyAndSwipe(dateOnlyIso, swipeIso) {
   if (!dateOnlyIso) return '';
   const datePart = dateOnlyIso.toString().slice(0,10);
@@ -221,12 +212,6 @@ function buildISOFromDateOnlyAndSwipe(dateOnlyIso, swipeIso) {
   const ss = parts[2] || '00';
   return `${datePart}T${hh}:${mm}:${ss}.000`;
 }
-
-
-
-
-
-
 // returns a server-wall-clock ISO for a row: prefer LocaleMessageTime, else DateOnly+Swipe_Time
 const getServerISO = (r) => {
   if (!r) return '';
@@ -293,10 +278,7 @@ export default function ReportsPage() {
 
   const [rawSearch, setRawSearch] = useState('');
   const [rawAdmitFilter, setRawAdmitFilter] = useState('all');
-  const [newEmployee, setNewEmployee] = useState(''); // text field for adding name or ID
-
-  //new usestste
-
+  const [newEmployee, setNewEmployee] = useState(''); // text field for adding name or I
   // locations fetched from backend for current region (strings like "APAC.Default")
   const [availableLocations, setAvailableLocations] = useState([]);
   // selected locations for Raw (multiple)
@@ -305,10 +287,6 @@ export default function ReportsPage() {
   const [rawEmpOptions, setRawEmpOptions] = useState([]); // suggestions from backend
   const [selectedRawEmps, setSelectedRawEmps] = useState([]); // array of strings (name or ID)
   const empQueryRef = useRef(null); // debounce timer
-
-
-
-
 // Helper: fetch locations for a single region key (backend endpoint: GET /api/locations?region=apac)
 const fetchLocationsForRegion = async (r) => {
   try {
@@ -316,11 +294,6 @@ const fetchLocationsForRegion = async (r) => {
     // pass region param exactly as frontend holds it (lowercase like 'apac','emea')
     const resp = await axios.get('/api/locations', { params: { region: r } });
     const listRaw = (resp.data && (resp.data.data || resp.data)) || [];
-
-    // Accept multiple shapes:
-    //  - array of strings: ["APAC.Default", "IN.HYD"]
-    //  - array of objects: [{ PartitionName2: "APAC.Default" }, { partition: "IN.HYD" }]
-    // Normalize to strings.
     const list = Array.isArray(listRaw)
       ? listRaw.map(item => {
           if (typeof item === 'string') return item;
@@ -424,50 +397,6 @@ useEffect(() => {
       };
     });
 
-    ws.columns = [
-      { key: 'sr', width: 8 },
-      { key: 'name', width: 25 },
-      { key: 'id', width: 15 },
-      { key: 'ptype', width: 18 },
-      { key: 'part', width: 15 },
-      { key: 'txt5', width: 20 },
-      { key: 'year', width: 8 },
-      { key: 'week', width: 6 },
-      { key: 'date', width: 12 },
-      { key: 'first', width: 16 },
-      { key: 'last', width: 16 },
-      { key: 'dur', width: 10 },
-      { key: 'cat', width: 12 },
-      { key: 'dpw', width: 12 },
-      { key: 'vdw', width: 14 },
-      { key: 'cdw', width: 12 },
-      { key: 'def', width: 10 }
-    ];
-
-    data.forEach((r, idx) => {
-      const first = new Date(r.FirstSwipeTime);
-      const last = new Date(r.LastSwipeTime);
-      const date = new Date(r.ShiftedDate);
-      const row = ws.addRow([
-        idx + 1,
-        r.ObjectName1,
-        r.EmployeeID,
-        r.PersonnelType,
-        r.PartitionName2,
-        r.text5,
-        r.YearNumber,
-        r.WeekNumber,
-        date,
-        first,
-        last,
-        r.DurationHHMM,
-        r.TimeDiffCategory,
-        r.DaysPresentInWeek,
-        r.ViolationDaysInWeek,
-        r.CleanDaysInWeek,
-        r.Defaulter
-      ]);
-
       row.getCell(9).numFmt = 'dd-mmm-yy';
       row.getCell(10).numFmt = 'h:mm:ss AM/PM';
       row.getCell(11).numFmt = 'h:mm:ss AM/PM';
@@ -522,25 +451,7 @@ useEffect(() => {
       };
     });
 
-    ws.columns = [
-      { key: 'sr', width: 8 },
-      { key: 'date', width: 12 },
-      { key: 'time', width: 12 },
-      { key: 'name', width: 25 },
-      { key: 'id', width: 15 },
-      { key: 'card', width: 15 },
-      { key: 'type', width: 15 },
-      { key: 'door', width: 40 },
-      { key: 'loc', width: 15 },
-      { key: 'swipe', width: 10 }
-    ];
-
-    data.forEach((r, idx) => {
-      const iso = getServerISO(r);
-      const dateStr = iso ? formatDateFromServerISO(iso) : '';
-      const timeStr = iso ? formatTimeFromServerISO(iso) : '';
-
-      const row = ws.addRow([
+   
         idx + 1,
         dateStr,
         timeStr,
@@ -743,16 +654,6 @@ function buildRawFileName(opts = {}) {
     return ['gsoc_reports'];
   };
 
-  // disabled conditions - UI-level validations (permission gating done separately)
-  // const disabled = loading
-  //   || !region
-  //   || (tab === 0 && (!from || !to || selectedEmps.length === 0))
-  //   || (tab === 1 && (!from || !to))
-  //   || (tab === 2 && (!from || !to))
-  //   || (tab === 3 && !from)
-  //   || (tab === 4 && (!from || !to));
-
-
   const disabled = loading
     || !region
     || (tab === 0 && (!from || !to || selectedEmps.length === 0))
@@ -950,16 +851,6 @@ function buildRawFileName(opts = {}) {
         await generateRawExcel(deduped, { region, location: selectedLocations && selectedLocations.join(',') || location, rawSearch, from, to, rawAdmitFilter });
         return;
       }
-
-
-
-
-
-
-
-
-
-
       // ----- 2: Rejection -----
       if (tab === 2) {
         const params = { ...baseParams, startDate: formatLocalDate(from), endDate: formatLocalDate(to, true) };
@@ -1348,26 +1239,7 @@ if (tab === 6) {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Button
-              startIcon={<DownloadIcon />}
-              onClick={handleGenerate}
-              disabled={tab === 5 ? navDisabled || !exportAllowed : disabled || !exportAllowed}
-              sx={{
-                bgcolor: exportAllowed ? '#FFCC00' : 'rgba(255,204,0,0.24)',
-                color: '#000',
-                fontWeight: 800,
-                px: 3,
-                py: 1,
-                borderRadius: 3,
-                boxShadow: '0 6px 22px rgba(255,204,0,0.18)',
-                transformOrigin: 'center',
-                '&:hover': { bgcolor: exportAllowed ? '#ffd84d' : 'rgba(255,204,0,0.24)', transform: exportAllowed ? 'translateY(-2px)' : 'none' }
-              }}
-            >
-              {loading ? 'Loading…'
-                : (tab === 5 ? (location ? `Navigate ${location.split('.').pop()}` : `Navigate ${region.toUpperCase()}`) : 'Export to Excel')}
-            </Button>
+         
           </Box>
         </Box>
 
@@ -1608,45 +1480,7 @@ renderOption={(props, option) => <li {...props}>{typeof option === 'string' ? op
 
 
               {/* Dates */}
-              {tab !== 5 && (
-                <Box>
-                  <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 1, fontWeight: 700 }}>
-                    Date Range
-                  </Typography>
-                  <Box sx={{ display: 'grid', gap: 1.25 }}>
-                    <TextField
-                      label={tab === 0 ? 'From Date' : 'Start Date'}
-                      value={from ? from.toLocaleDateString() : ''}
-                      readOnly
-                      onClick={() => setShowFromCal(true)}
-                      sx={{
-                        '& .MuiInputBase-input': { color: '#fff' },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.08)' }
-                      }}
-                    />
-                    <TextField
-                      label={tab === 0 ? 'To Date' : 'End Date'}
-                      value={to ? to.toLocaleDateString() : ''}
-                      readOnly
-                      onClick={() => setShowToCal(true)}
-                      sx={{
-                        '& .MuiInputBase-input': { color: '#fff' },
-                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,204,0,0.08)' }
-                      }}
-                    />
-                  </Box>
-
-                  {showFromCal && (
-                    <Box sx={{ mt: 1 }}>
-                      <StaticDatePicker
-                        displayStaticWrapperAs="desktop"
-                        value={from}
-                        onChange={(newValue) => setFrom(newValue)}
-                        onAccept={() => setShowFromCal(false)}
-                        onClose={() => setShowFromCal(false)}
-                        renderInput={(params) => <TextField {...params} />}
-                        views={['year', 'month', 'day']}
-                      />
+             
                     </Box>
                   )}
                   {showToCal && (
@@ -1743,44 +1577,7 @@ renderOption={(props, option) => <li {...props}>{typeof option === 'string' ? op
           </Grid>
 
           {/* Main panel */}
-          <Grid item xs={12} md={9}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 2,
-                  border: '1px solid rgba(255,204,0,0.04)'
-                }}
-              >
-                <Tabs
-                  value={tab}
-                  onChange={handleTabChange}
-                  sx={{
-                    '& .MuiTab-root': {
-                      textTransform: 'none',
-                      minWidth: 120,
-                      fontWeight: 700,
-                      color: 'rgba(255,255,255,0.8)'
-                    },
-                    '& .Mui-selected': { color: '#FFCC00' }
-                  }}
-                >
-                  <Tab icon={<CalendarTodayIcon />} label="Daily Access" />
-                  <Tab icon={<PeopleIcon />} label="Raw" />
-                  <Tab icon={<PlaceIcon />} label="Rejection" />
-                  <Tab icon={<PeopleIcon />} label="EUROC Admit-Reject" />
-                  <Tab icon={<CalendarTodayIcon />} label="Time Duration" />
-                  <Tab icon={<PeopleIcon />} label="HeadCount" />
-                  <Tab icon={<PeopleIcon />} label="Denver Monthly" />
-
-                </Tabs>
-
+        
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                   <Button
                     variant="text"
