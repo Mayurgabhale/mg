@@ -1,5 +1,5 @@
-dont change anythign jsut add top and left two empty row and clounmn boht sheet,
-  carefullym dont change anything just add two two empty row and column ok caefullyun 
+
+write correct ok 
 
 const handleExport = async () => {
   if (!pickedDate) return;
@@ -15,7 +15,9 @@ const handleExport = async () => {
 
     // ---------- SHEET 1: WU Employee ----------
     const wsDetails = wb.addWorksheet('WU Employee');
-
+    
+    wsDetails.spliceRows(1,0,[],[])
+    wsDetails.spliceColumns(1,0,[],[])
     // Headers
     const detailsHeaders = [
       'Sr.No', 'Date', 'Time',
@@ -120,6 +122,8 @@ const handleExport = async () => {
 
     // ---------- SHEET 2: WU Summary ----------
     const ws = wb.addWorksheet('WU Summary');
+    ws.spliceRows(1,0,[],[])
+    ws.spliceColumns(1,0,[],[])
 
     const r1 = ws.addRow(['Country', 'City', format(pickedDate, 'EEEE, d MMMM, yyyy'), null, null]);
     ws.mergeCells('C1:E1');
@@ -219,4 +223,3 @@ const handleExport = async () => {
     console.error('handleExport error:', err);
   }
 };
-  
