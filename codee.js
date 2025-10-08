@@ -1,3 +1,5 @@
+and excle name shout to like this 
+Western Union APAC Headcount Report - 1 October 2025 
 const handleExport = async () => {
   if (!pickedDate) return;
 
@@ -81,11 +83,11 @@ const handleExport = async () => {
       });
       let width = maxLen + 2;
 
-      if (idx === 2) width = 2; // extra padding col
+      if (idx === 2) width = 6; // extra padding col
       else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
-      else if (idx === 4) width = Math.min(Math.max(width, 10), 15);    // Date
+      else if (idx === 4) width = Math.min(Math.max(width, 12), 15);    // Date
       else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
-      else if (idx === 6) width = Math.min(Math.max(width, 15), 30);    // Employee Name
+      else if (idx === 6) width = Math.min(Math.max(width, 20), 30);    // Employee Name
       else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
       else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
       else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
@@ -233,7 +235,7 @@ const handleExport = async () => {
     };
 
     // ---------- Save file ----------
-    const filename = `apac_export_${format(pickedDate, 'yyyyMMdd')}.xlsx`;
+    const filename = `Western Union APAC Headcount Report - ${format(pickedDate, 'yyyyMMdd')}.xlsx`;
     const buf = await wb.xlsx.writeBuffer();
     saveAs(new Blob([buf]), filename);
 
