@@ -1,3 +1,17 @@
+when i download the excle sheet,
+  in this boht sheet are not correct formatin not disply correct, some part are hidden in boht 
+this sheet 
+---- SHEET 1: WU Employee ----------
+    const wsDetails = wb.addWorksheet('WU Employee');
+Employee Name and Door Name colunmn data not disply correct, data is hide ok 
+and second 
+
+    // ---------- SHEET 2: WU Summary ----------
+    const ws = wb.addWorksheet('WU Summary');
+in this alos Country not disply correct so fix this ok 
+
+
+
 const handleExport = async () => {
   if (!pickedDate) return;
 
@@ -83,10 +97,10 @@ const handleExport = async () => {
       else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
       else if (idx === 4) width = Math.min(Math.max(width, 12), 15);    // Date
       else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
-      else if (idx === 6) width = Math.min(Math.max(width, 20), 30);    // Employee Name
+      else if (idx === 6) width = Math.min(Math.max(width, 25), 30);    // Employee Name
       else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
       else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
-      else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
+      else if (idx === 9) width = Math.min(Math.max(width, 30), 40);    // Door
       else if (idx === 10) width = Math.min(Math.max(width, 18), 40);   // Location
 
       col.width = width;
@@ -132,13 +146,13 @@ const handleExport = async () => {
     ws.mergeCells('E3:G3');
     const dateCell = ws.getCell('E3');
     dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    dateCell.font = { bold: true, size: 16 };
+    dateCell.font = { bold: true, size: 14 };
     dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
 
     const r2 = ws.addRow([null, null, '', '', 'Employee', 'Contractors', 'Total']);
     r2.eachCell((cell, colNumber) => {
       if (colNumber >= 5) {
-        cell.font = { bold: true, size: 15 };
+        cell.font = { bold: true, size: 14 };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
         cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
@@ -153,7 +167,7 @@ const handleExport = async () => {
           cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
           if (colNumber === 7) {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
-            cell.font = { bold: true, size: 15 };
+            cell.font = { bold: true, size: 14 };
           }
         }
       });
