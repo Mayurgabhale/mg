@@ -1,4 +1,23 @@
-const handleExportCombined = async () => {
+Country	City	Monday, 6 October, 2025		
+		Employee	Contractors	Total
+Costa Rica	Costa Rica	447	57	504
+Argentina	Cordoba	210	48	258
+Brazil	Sao Paulo	47	12	59
+Mexico	Mexico City	31	5	36
+Panama	Panama City	24	3	27
+Peru	Lima	48	8	56
+Total		807	133	940
+
+this sheet i want in center,
+  and perfect layout, border and colors to fille differnt, country and city, wiht 
+
+ | Country	City	 |_______________ Monday, 6 October, 2025		
+ |	               |Employee	Contractors	Total
+ 
+==============
+
+
+    const handleExport = async () => {
   if (!pickedDate) return;
   try {
     const excelModule = await import('exceljs');
@@ -194,6 +213,6 @@ const handleExportCombined = async () => {
     saveAs(new Blob([buf]), filename);
 
   } catch (err) {
-    console.error('handleExportCombined error:', err);
+    console.error('handleExport error:', err);
   }
 };
