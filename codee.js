@@ -1,7 +1,3 @@
-and excle name shout to like this 
-Western Union APAC Headcount Report - 1 October 2025  
-data format like this ok 
-and auto column wiht data
 const handleExport = async () => {
   if (!pickedDate) return;
 
@@ -28,7 +24,7 @@ const handleExport = async () => {
       'Door Name', 'Location'
     ];
 
-    // Title row (now row 3, starting col C)
+    // Title row (row 3, col C start)
     wsDetails.mergeCells(`C3:${String.fromCharCode(66 + detailsHeaders.length)}3`);
     const detailsTitle = wsDetails.getCell('C3');
     detailsTitle.value = `WU Employee — ${format(pickedDate, 'EEEE, d MMMM, yyyy')}`;
@@ -36,7 +32,7 @@ const handleExport = async () => {
     detailsTitle.font = { name: 'Calibri', size: 14, bold: true };
 
     // Header row
-    const hdrRow = wsDetails.addRow([null, null, ...detailsHeaders]); // shift right
+    const hdrRow = wsDetails.addRow([null, null, ...detailsHeaders]);
     hdrRow.eachCell((cell, colNumber) => {
       if (colNumber > 2) {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC107' } };
@@ -75,7 +71,7 @@ const handleExport = async () => {
       }
     });
 
-    // Auto-width
+    // Auto-width based on content
     wsDetails.columns.forEach((col, idx) => {
       if (idx <= 1) { col.width = 2; return; } // padding columns
       let maxLen = 0;
@@ -83,19 +79,7 @@ const handleExport = async () => {
         const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
         if (v.length > maxLen) maxLen = v.length;
       });
-      let width = maxLen + 2;
-
-      if (idx === 2) width = 6; // extra padding col
-      else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
-      else if (idx === 4) width = Math.min(Math.max(width, 12), 15);    // Date
-      else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
-      else if (idx === 6) width = Math.min(Math.max(width, 20), 30);    // Employee Name
-      else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
-      else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
-      else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
-      else if (idx === 10) width = Math.min(Math.max(width, 18), 40);   // Location
-
-      col.width = width;
+      col.width = maxLen + 2;
     });
 
     wsDetails.views = [{ state: 'frozen', ySplit: 4, xSplit: 2 }];
@@ -142,20 +126,6 @@ const handleExport = async () => {
     dateCell.font = { bold: true, size: 16 };
     dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
 
-    r1.eachCell((cell, colNumber) => {
-      if (colNumber >= 3) {
-        if (colNumber <= 4) {
-          cell.font = { bold: true, size: 15 };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-        } else if (colNumber === 5) {
-          cell.font = { bold: true, size: 15 };
-          cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-        }
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      }
-    });
-
     // Row 4 (headers)
     const r2 = ws.addRow([null, null, '', '', 'Employee', 'Contractors', 'Total']);
     r2.eachCell((cell, colNumber) => {
@@ -196,14 +166,15 @@ const handleExport = async () => {
       }
     });
 
+    // Auto column width
     ws.columns.forEach((col, idx) => {
-      if (idx <= 2) { col.width = 2; return; } // padding cols
-      let maxLen = 6;
+      if (idx <= 2) { col.width = 2; return; } // padding
+      let maxLen = 0;
       col.eachCell({ includeEmpty: true }, c => {
-        const v = c.value ? String(c.value) : '';
-        maxLen = Math.max(maxLen, v.length + 2);
+        const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
+        if (v.length > maxLen) maxLen = v.length;
       });
-      col.width = Math.min(Math.max(maxLen, 10), 40);
+      col.width = maxLen + 2;
     });
 
     ws.views = [{ state: 'frozen', ySplit: 4, xSplit: 2 }];
@@ -237,7 +208,7 @@ const handleExport = async () => {
     };
 
     // ---------- Save file ----------
-    const filename = `Western Union APAC Headcount Report - ${format(pickedDate, 'yyyyMMdd')}.xlsx`;
+    const filename = `Western Union APAC Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`;
     const buf = await wb.xlsx.writeBuffer();
     saveAs(new Blob([buf]), filename);
 
