@@ -1,6 +1,3 @@
-
-write correct ok 
-
 const handleExport = async () => {
   if (!pickedDate) return;
 
@@ -15,31 +12,34 @@ const handleExport = async () => {
 
     // ---------- SHEET 1: WU Employee ----------
     const wsDetails = wb.addWorksheet('WU Employee');
-    
-    wsDetails.spliceRows(1,0,[],[])
-    wsDetails.spliceColumns(1,0,[],[])
+
+    // Add padding rows/columns
+    wsDetails.spliceRows(1, 0, [], []);
+    wsDetails.spliceColumns(1, 0, [], []);
+
     // Headers
     const detailsHeaders = [
       'Sr.No', 'Date', 'Time',
       'Employee Name', 'Employee ID', 'Personal Type',
       'Door Name', 'Location'
     ];
-    
 
-    // Title row
-    wsDetails.mergeCells(`A1:${String.fromCharCode(64 + detailsHeaders.length)}1`);
-    const detailsTitle = wsDetails.getCell('A1');
+    // Title row (now row 3, starting col C)
+    wsDetails.mergeCells(`C3:${String.fromCharCode(66 + detailsHeaders.length)}3`);
+    const detailsTitle = wsDetails.getCell('C3');
     detailsTitle.value = `WU Employee — ${format(pickedDate, 'EEEE, d MMMM, yyyy')}`;
     detailsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
     detailsTitle.font = { name: 'Calibri', size: 14, bold: true };
 
     // Header row
-    const hdrRow = wsDetails.addRow(detailsHeaders);
-    hdrRow.eachCell(cell => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC107' } };
-      cell.font = { bold: true, color: { argb: 'FF000000' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    const hdrRow = wsDetails.addRow([null, null, ...detailsHeaders]); // shift right
+    hdrRow.eachCell((cell, colNumber) => {
+      if (colNumber > 2) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC107' } };
+        cell.font = { bold: true, color: { argb: 'FF000000' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      }
     });
 
     // Data rows
@@ -52,25 +52,28 @@ const handleExport = async () => {
       const door = r.Door || r.ObjectName2 || '';
       const location = r.PartitionName2 || r.PrimaryLocation || '';
 
-      const row = wsDetails.addRow([
-        i + 1, dateVal, timeVal, name, empId, ptype, door, location
-      ]);
+      const row = wsDetails.addRow([null, null, i + 1, dateVal, timeVal, name, empId, ptype, door, location]);
 
       row.eachCell((cell, colNumber) => {
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-        cell.font = { name: 'Calibri', size: 11 };
-        cell.alignment = colNumber === 1 ? { horizontal: 'center', vertical: 'middle' } : { horizontal: 'left', vertical: 'middle' };
+        if (colNumber > 2) {
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          cell.font = { name: 'Calibri', size: 11 };
+          cell.alignment = colNumber === 3 ? { horizontal: 'center', vertical: 'middle' } : { horizontal: 'left', vertical: 'middle' };
+        }
       });
 
       if (i % 2 === 1) {
-        row.eachCell(cell => {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
+        row.eachCell((cell, colNumber) => {
+          if (colNumber > 2) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
+          }
         });
       }
     });
 
-    // Custom Auto-width columns
+    // Auto-width
     wsDetails.columns.forEach((col, idx) => {
+      if (idx <= 1) { col.width = 2; return; } // padding columns
       let maxLen = 0;
       col.eachCell({ includeEmpty: true }, c => {
         const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
@@ -78,25 +81,26 @@ const handleExport = async () => {
       });
       let width = maxLen + 2;
 
-      if (idx === 0) width = Math.min(Math.max(width, 6), 10);     // Sr.No
-      else if (idx === 1) width = Math.min(Math.max(width, 10), 15); // Date
-      else if (idx === 2) width = Math.min(Math.max(width, 8), 12);  // Time
-      else if (idx === 3) width = Math.min(Math.max(width, 15), 30); // Employee Name
-      else if (idx === 4) width = Math.min(Math.max(width, 10), 18); // Employee ID
-      else if (idx === 5) width = Math.min(Math.max(width, 12), 20); // Personal Type
-      else if (idx === 6) width = Math.min(Math.max(width, 18), 40); // Door
-      else if (idx === 7) width = Math.min(Math.max(width, 18), 40); // Location
+      if (idx === 2) width = 2; // extra padding col
+      else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
+      else if (idx === 4) width = Math.min(Math.max(width, 10), 15);    // Date
+      else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
+      else if (idx === 6) width = Math.min(Math.max(width, 15), 30);    // Employee Name
+      else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
+      else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
+      else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
+      else if (idx === 10) width = Math.min(Math.max(width, 18), 40);   // Location
 
       col.width = width;
     });
 
-    wsDetails.views = [{ state: 'frozen', ySplit: 2 }];
+    wsDetails.views = [{ state: 'frozen', ySplit: 4, xSplit: 2 }];
 
-    // Outer border
-    const firstDetailRow = 2;
+    // Outer border (skip padding rows/cols)
+    const firstDetailRow = 4;
     const lastDetailRow = wsDetails.lastRow.number;
-    const firstDetailCol = 1;
-    const lastDetailCol = detailsHeaders.length;
+    const firstDetailCol = 3;
+    const lastDetailCol = 10;
 
     for (let r = firstDetailRow; r <= lastDetailRow; r++) {
       for (let c = firstDetailCol; c <= lastDetailCol; c++) {
@@ -122,61 +126,74 @@ const handleExport = async () => {
 
     // ---------- SHEET 2: WU Summary ----------
     const ws = wb.addWorksheet('WU Summary');
-    ws.spliceRows(1,0,[],[])
-    ws.spliceColumns(1,0,[],[])
 
-    const r1 = ws.addRow(['Country', 'City', format(pickedDate, 'EEEE, d MMMM, yyyy'), null, null]);
-    ws.mergeCells('C1:E1');
-    const dateCell = ws.getCell('C1');
+    ws.spliceRows(1, 0, [], []);
+    ws.spliceColumns(1, 0, [], []);
+
+    // Row 3 (with merged date header at E3:G3)
+    const r1 = ws.addRow([null, null, 'Country', 'City', format(pickedDate, 'EEEE, d MMMM, yyyy'), null, null]);
+    ws.mergeCells('E3:G3');
+    const dateCell = ws.getCell('E3');
     dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     dateCell.font = { bold: true, size: 16 };
     dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
 
     r1.eachCell((cell, colNumber) => {
-      if (colNumber <= 2) {
-        cell.font = { bold: true, size: 15 };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-      } else if (colNumber === 3) {
+      if (colNumber >= 3) {
+        if (colNumber <= 4) {
+          cell.font = { bold: true, size: 15 };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+        } else if (colNumber === 5) {
+          cell.font = { bold: true, size: 15 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+        }
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      }
+    });
+
+    // Row 4 (headers)
+    const r2 = ws.addRow([null, null, '', '', 'Employee', 'Contractors', 'Total']);
+    r2.eachCell((cell, colNumber) => {
+      if (colNumber >= 5) {
         cell.font = { bold: true, size: 15 };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       }
-      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-    });
-
-    const r2 = ws.addRow(['', '', 'Employee', 'Contractors', 'Total']);
-    r2.eachCell(cell => {
-      cell.font = { bold: true, size: 15 };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
     });
 
     (partitionRows || []).forEach(r => {
-      const row = ws.addRow([r.country || '', r.city || '', r.employee || 0, r.contractor || 0, r.total || 0]);
+      const row = ws.addRow([null, null, r.country || '', r.city || '', r.employee || 0, r.contractor || 0, r.total || 0]);
       row.eachCell((cell, colNumber) => {
-        cell.alignment = { vertical: 'middle', horizontal: colNumber >= 3 ? 'center' : 'left' };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-        if (colNumber === 5) {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
-          cell.font = { bold: true, size: 15 };
+        if (colNumber >= 3) {
+          cell.alignment = { vertical: 'middle', horizontal: colNumber >= 5 ? 'center' : 'left' };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          if (colNumber === 7) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
+            cell.font = { bold: true, size: 15 };
+          }
         }
       });
     });
 
+    // Totals row
     const totalEmployees = (partitionRows || []).reduce((s, r) => s + (r.employee || 0), 0);
     const totalContractors = (partitionRows || []).reduce((s, r) => s + (r.contractor || 0), 0);
     const totalTotals = (partitionRows || []).reduce((s, r) => s + (r.total || 0), 0);
 
-    const totalsRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotals]);
-    totalsRow.eachCell(cell => {
-      cell.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF808080' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+    const totalsRow = ws.addRow([null, null, 'Total', '', totalEmployees, totalContractors, totalTotals]);
+    totalsRow.eachCell((cell, colNumber) => {
+      if (colNumber >= 3) {
+        cell.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF808080' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      }
     });
 
-    ws.columns.forEach(col => {
+    ws.columns.forEach((col, idx) => {
+      if (idx <= 2) { col.width = 2; return; } // padding cols
       let maxLen = 6;
       col.eachCell({ includeEmpty: true }, c => {
         const v = c.value ? String(c.value) : '';
@@ -185,12 +202,13 @@ const handleExport = async () => {
       col.width = Math.min(Math.max(maxLen, 10), 40);
     });
 
-    ws.views = [{ state: 'frozen', ySplit: 2 }];
+    ws.views = [{ state: 'frozen', ySplit: 4, xSplit: 2 }];
 
-    const firstRow = 1;
+    // Outer border
+    const firstRow = 3;
     const lastRow = ws.lastRow.number;
-    const firstCol = 1;
-    const lastCol = 5;
+    const firstCol = 3;
+    const lastCol = 7;
 
     for (let r = firstRow; r <= lastRow; r++) {
       for (let c = firstCol; c <= lastCol; c++) {
