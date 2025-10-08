@@ -1,17 +1,3 @@
-add also this
-for better formating 
- if (idx === 2) width = 6; // extra padding col
-//       else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
-//       else if (idx === 4) width = Math.min(Math.max(width, 12), 15);    // Date
-//       else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
-//       else if (idx === 6) width = Math.min(Math.max(width, 20), 30);    // Employee Name
-//       else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
-//       else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
-//       else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
-//       else if (idx === 10) width = Math.min(Math.max(width, 18), 40);   // Location
-
-------
-
 const handleExport = async () => {
   if (!pickedDate) return;
 
@@ -27,21 +13,19 @@ const handleExport = async () => {
     // ---------- SHEET 1: WU Employee ----------
     const wsDetails = wb.addWorksheet('WU Employee');
 
-    // Add padding rows/columns
     wsDetails.spliceRows(1, 0, [], []);
     wsDetails.spliceColumns(1, 0, [], []);
 
-    // Headers
     const detailsHeaders = [
       'Sr.No', 'Date', 'Time',
       'Employee Name', 'Employee ID', 'Personal Type',
       'Door Name', 'Location'
     ];
 
-    // Title row (row 3, col C start)
+    // Title row
     wsDetails.mergeCells(`C3:${String.fromCharCode(66 + detailsHeaders.length)}3`);
     const detailsTitle = wsDetails.getCell('C3');
-    detailsTitle.value = `WU Employee — ${format(pickedDate, 'EEEE, d MMMM, yyyy')}`;
+    detailsTitle.value = `Western Union APAC Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}`;
     detailsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
     detailsTitle.font = { name: 'Calibri', size: 14, bold: true };
 
@@ -85,7 +69,7 @@ const handleExport = async () => {
       }
     });
 
-    // Auto-width based on content
+    // Auto-width with formatting limits
     wsDetails.columns.forEach((col, idx) => {
       if (idx <= 1) { col.width = 2; return; } // padding columns
       let maxLen = 0;
@@ -93,12 +77,24 @@ const handleExport = async () => {
         const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
         if (v.length > maxLen) maxLen = v.length;
       });
-      col.width = maxLen + 2;
+
+      let width = maxLen + 2;
+      if (idx === 2) width = 6;        // extra padding col
+      else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
+      else if (idx === 4) width = Math.min(Math.max(width, 12), 15);    // Date
+      else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
+      else if (idx === 6) width = Math.min(Math.max(width, 20), 30);    // Employee Name
+      else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
+      else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
+      else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
+      else if (idx === 10) width = Math.min(Math.max(width, 18), 40);   // Location
+
+      col.width = width;
     });
 
     wsDetails.views = [{ state: 'frozen', ySplit: 4, xSplit: 2 }];
 
-    // Outer border (skip padding rows/cols)
+    // Outer border
     const firstDetailRow = 4;
     const lastDetailRow = wsDetails.lastRow.number;
     const firstDetailCol = 3;
@@ -132,7 +128,6 @@ const handleExport = async () => {
     ws.spliceRows(1, 0, [], []);
     ws.spliceColumns(1, 0, [], []);
 
-    // Row 3 (with merged date header at E3:G3)
     const r1 = ws.addRow([null, null, 'Country', 'City', format(pickedDate, 'EEEE, d MMMM, yyyy'), null, null]);
     ws.mergeCells('E3:G3');
     const dateCell = ws.getCell('E3');
@@ -140,7 +135,6 @@ const handleExport = async () => {
     dateCell.font = { bold: true, size: 16 };
     dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
 
-    // Row 4 (headers)
     const r2 = ws.addRow([null, null, '', '', 'Employee', 'Contractors', 'Total']);
     r2.eachCell((cell, colNumber) => {
       if (colNumber >= 5) {
@@ -165,7 +159,6 @@ const handleExport = async () => {
       });
     });
 
-    // Totals row
     const totalEmployees = (partitionRows || []).reduce((s, r) => s + (r.employee || 0), 0);
     const totalContractors = (partitionRows || []).reduce((s, r) => s + (r.contractor || 0), 0);
     const totalTotals = (partitionRows || []).reduce((s, r) => s + (r.total || 0), 0);
@@ -180,36 +173,22 @@ const handleExport = async () => {
       }
     });
 
-    // Auto column width
+    // Auto-width with limits for summary sheet
     ws.columns.forEach((col, idx) => {
-      if (idx <= 2) { col.width = 2; return; } // padding
+      if (idx <= 2) { col.width = 2; return; }
       let maxLen = 0;
       col.eachCell({ includeEmpty: true }, c => {
         const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
         if (v.length > maxLen) maxLen = v.length;
       });
-      col.width = maxLen + 2;
+      let width = maxLen + 2;
+      if (idx === 3) width = Math.min(Math.max(width, 12), 20); // Country
+      else if (idx === 4) width = Math.min(Math.max(width, 12), 20); // City
+      else if (idx === 5 || idx === 6 || idx === 7) width = Math.min(Math.max(width, 8), 12); // Numbers
+      col.width = width;
     });
 
     ws.views = [{ state: 'frozen', ySplit: 4, xSplit: 2 }];
-
-    // Outer border
-    const firstRow = 3;
-    const lastRow = ws.lastRow.number;
-    const firstCol = 3;
-    const lastCol = 7;
-
-    for (let r = firstRow; r <= lastRow; r++) {
-      for (let c = firstCol; c <= lastCol; c++) {
-        const cell = ws.getCell(r, c);
-        const border = { ...cell.border };
-        if (r === firstRow) border.top = { style: 'medium' };
-        if (r === lastRow) border.bottom = { style: 'medium' };
-        if (c === firstCol) border.left = { style: 'medium' };
-        if (c === lastCol) border.right = { style: 'medium' };
-        cell.border = border;
-      }
-    }
 
     ws.pageSetup = {
       orientation: 'landscape',
