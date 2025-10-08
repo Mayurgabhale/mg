@@ -1,3 +1,6 @@
+'Country', 'City' i want bold 
+const r1 = ws.addRow(['Country', 'City', format(pickedDate, 'EEEE, d MMMM, yyyy'), null, null]);
+
 const handleExport = async () => {
   if (!pickedDate) return;
 
