@@ -1,3 +1,17 @@
+add also this
+for better formating 
+ if (idx === 2) width = 6; // extra padding col
+//       else if (idx === 3) width = Math.min(Math.max(width, 6), 10);     // Sr.No
+//       else if (idx === 4) width = Math.min(Math.max(width, 12), 15);    // Date
+//       else if (idx === 5) width = Math.min(Math.max(width, 8), 12);     // Time
+//       else if (idx === 6) width = Math.min(Math.max(width, 20), 30);    // Employee Name
+//       else if (idx === 7) width = Math.min(Math.max(width, 10), 18);    // Employee ID
+//       else if (idx === 8) width = Math.min(Math.max(width, 12), 20);    // Personal Type
+//       else if (idx === 9) width = Math.min(Math.max(width, 18), 40);    // Door
+//       else if (idx === 10) width = Math.min(Math.max(width, 18), 40);   // Location
+
+------
+
 const handleExport = async () => {
   if (!pickedDate) return;
 
