@@ -1,82 +1,3 @@
-pop up not disply correct 
-  please chekc all code belwo ok carefully, 
-/* Fancy popup container */
-.fancy-popup {
-  background: #1c1c24;
-  color: #fff;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  animation: popupFadeIn 0.25s ease-out;
-  transform-origin: top right;
-  position: relative;
-  min-width: 280px;
-}
-
-/* Popup animation */
-@keyframes popupFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* Popup header */
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 15px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 221, 0, 0.3);
-  padding-bottom: 6px;
-}
-
-/* Clock-style close button */
-.fancy-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid #ffdd00;
-  background: transparent;
-  color: #ffdd00;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.25s ease;
-}
-
-.fancy-close:hover {
-  background: #ffdd00;
-  color: #1c1c24;
-  transform: rotate(90deg);
-}
-
-/* Popup body */
-.popup-body {
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.popup-list {
-  margin: 5px 0 0 15px;
-  padding: 0;
-  list-style: disc;
-}
-
-.popup-list li {
-  margin-bottom: 3px;
-}
-
-
-
-
 // frontend/src/components/EmployeeCard.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FaUser, FaIdBadge, FaUserTie, FaIdCard, FaCheckCircle, FaClone, FaMapMarkerAlt } from 'react-icons/fa';
@@ -85,14 +6,12 @@ import { HiOutlineBuildingOffice2 } from "react-icons/hi2";
 import './EmployeeCard.css';
 
 export default function EmployeeCard({ emp }) {
-  // ---- Hooks: MUST be called unconditionally ----
   const [showMore, setShowMore] = useState(false);
   const [showCardsPopup, setShowCardsPopup] = useState(false);
   const [showClearancePopup, setShowClearancePopup] = useState(false);
   const cardsRef = useRef(null);
   const clearanceRef = useRef(null);
 
-  // close popups on outside click (unconditional hook)
   useEffect(() => {
     function handleDocClick(e) {
       if (showCardsPopup && cardsRef.current && !cardsRef.current.contains(e.target)) {
@@ -106,13 +25,11 @@ export default function EmployeeCard({ emp }) {
     return () => document.removeEventListener('mousedown', handleDocClick);
   }, [showCardsPopup, showClearancePopup]);
 
-  // helper to convert comma string -> array
   const toList = (csv) => {
     if (!csv) return [];
     return csv.split(',').map(s => s.trim()).filter(Boolean);
   };
 
-  // Early return AFTER hooks (so hooks are always called in same order)
   if (!emp) return null;
 
   const rawStatus = emp.Employee_Status || 'Deactive';
@@ -160,25 +77,23 @@ export default function EmployeeCard({ emp }) {
 
         <table className="details-table" aria-label="employee details">
           <tbody>
-            {/* Always visible */}
             <tr>
               <td className="label "><FaUser color='#FFDD00' /> Name</td>
               <td className="value v-color">{emp.EmpName || '—'}</td>
             </tr>
+
             <tr>
               <td className="label"><FaIdBadge color='#FFDD00' /> Employee ID</td>
               <td className="value v-color">{emp.EmployeeID || '—'}</td>
             </tr>
+
             <tr>
               <td className="label"><FaUserTie color='#FFDD00' /> Manager</td>
               <td className="value v-color">{emp.Manager_Name || '—'}</td>
             </tr>
 
-            {/* Active Cards: displays Total_Cards (requested) */}
-            <tr
-              className="clickable-row"
-              ref={cardsRef}
-            >
+            {/* Active Cards row */}
+            <tr className="clickable-row" ref={cardsRef}>
               <td className="label"><FaIdCard /> Active Cards</td>
               <td
                 className="value v-color clickable-cell"
@@ -191,17 +106,17 @@ export default function EmployeeCard({ emp }) {
                 {emp.Total_Cards ?? 0}
               </td>
 
-            
-
+              {/* Popup cell must be a TD (keeps table markup valid) */}
               {showCardsPopup && (
-                <td className="popup-td" colSpan="2">
-                  <div className="popup-card fancy-popup">
+                <td className="popup-td" colSpan="2" style={{ padding: 0 }}>
+                  <div className="popup-card fancy-popup" role="dialog" aria-label="Card details">
                     <div className="popup-header">
                       <strong>Card Details</strong>
                       <button
                         className="popup-close fancy-close"
                         onClick={() => setShowCardsPopup(false)}
                         title="Close"
+                        aria-label="Close card details"
                       >
                         🕓
                       </button>
@@ -233,11 +148,8 @@ export default function EmployeeCard({ emp }) {
               )}
             </tr>
 
-            {/* Clearance row: shows ClearanceCount and clickable to open details */}
-            <tr
-              className="clickable-row"
-              ref={clearanceRef}
-            >
+            {/* Clearance row */}
+            <tr className="clickable-row" ref={clearanceRef}>
               <td className="label"><FaCheckCircle color='#FFDD00' /> Clearance</td>
               <td
                 className="value v-color clickable-cell"
@@ -251,32 +163,32 @@ export default function EmployeeCard({ emp }) {
               </td>
 
               {showClearancePopup && (
+                <td className="popup-td" colSpan="2" style={{ padding: 0 }}>
+                  <div className="popup-card fancy-popup" role="dialog" aria-label="Clearance details">
+                    <div className="popup-header">
+                      <strong>Clearance Details</strong>
+                      <button
+                        className="popup-close fancy-close"
+                        onClick={() => setShowClearancePopup(false)}
+                        title="Close"
+                        aria-label="Close clearance details"
+                      >
+                        🕓
+                      </button>
+                    </div>
 
-             
-                <div className="popup-card fancy-popup">
-                  <div className="popup-header">
-                    <strong>Clearance Details</strong>
-                    <button
-                      className="popup-close fancy-close"
-                      onClick={() => setShowClearancePopup(false)}
-                      title="Close"
-                    >
-                      🕓
-                    </button>
-                  </div>
-
-                  <div className="popup-body">
-                    <div><strong>Clearance Count:</strong> {emp.ClearanceCount ?? 0}</div>
-                    <div style={{ marginTop: 8 }}>
-                      <strong>Clearances</strong>
-                      <ul className="popup-list">
-                        {(!emp.Clearances || emp.Clearances.trim() === '') && <li>—</li>}
-                        {emp.Clearances && emp.Clearances.split(',').map((c, i) => <li key={`clr-${i}`}>{c.trim()}</li>)}
-                      </ul>
+                    <div className="popup-body">
+                      <div><strong>Clearance Count:</strong> {emp.ClearanceCount ?? 0}</div>
+                      <div style={{ marginTop: 8 }}>
+                        <strong>Clearances</strong>
+                        <ul className="popup-list">
+                          {(!emp.Clearances || emp.Clearances.trim() === '') && <li>—</li>}
+                          {emp.Clearances && emp.Clearances.split(',').map((c, i) => <li key={`clr-${i}`}>{c.trim()}</li>)}
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                </div>
-
+                </td>
               )}
             </tr>
 
@@ -284,6 +196,7 @@ export default function EmployeeCard({ emp }) {
               <td className="label"><HiOutlineBuildingOffice2 color='#FFDD00' /> Company Name</td>
               <td className="value v-color">{emp.CompanyName || '—'}</td>
             </tr>
+
             <tr>
               <td className="label"><FaMapMarkerAlt color='#FFDD00' /> Primary Location</td>
               <td className="value v-color">{emp.PrimaryLocation || '—'}</td>
@@ -295,7 +208,6 @@ export default function EmployeeCard({ emp }) {
               </td>
             </tr>
 
-            {/* Hidden until showMore is true */}
             {showMore && (
               <>
                 <tr>
@@ -307,7 +219,6 @@ export default function EmployeeCard({ emp }) {
           </tbody>
         </table>
 
-        {/* Toggle Button */}
         <button
           className="show-more-btn"
           onClick={() => setShowMore((prev) => !prev)}
@@ -319,3 +230,62 @@ export default function EmployeeCard({ emp }) {
   );
 }
 
+
+
+
+
+
+
+
+
+
+/* ensure clickable cells look clickable */
+.clickable-cell {
+  cursor: pointer;
+}
+
+/* popup cell (the td that contains the absolute popup) */
+.popup-td {
+  position: relative;         /* so child .fancy-popup can be absolute */
+  vertical-align: top;
+  padding: 0;                 /* we control spacing inside popup */
+  /* keep table row spacing intact */
+}
+
+/* Position the popup absolutely inside the popup-td */
+.fancy-popup {
+  position: absolute;
+  top: calc(100% + 8px);      /* place below the row */
+  right: 0;                   /* align to the right edge of the cell */
+  min-width: 280px;
+  max-width: 420px;
+  box-sizing: border-box;
+  z-index: 9999;
+  /* existing styles you already added (color, bg, radius, animation) remain */
+}
+
+/* small-screen fallback: make popup full width (with margins) */
+@media (max-width: 520px) {
+  .fancy-popup {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    top: auto;
+    bottom: 16px;
+    max-width: none;
+    width: calc(100% - 32px);
+    transform: none;
+  }
+}
+
+/* ensure that table cells allow overflow visible (some browsers clip) */
+.details-table, .details-table tr, .details-table td {
+  overflow: visible;
+}
+
+/* optional: make popup appear with slightly bigger spacing */
+.fancy-popup .popup-body {
+  padding-top: 6px;
+}
+
+/* keep your fancy-close hover behavior already defined earlier */
