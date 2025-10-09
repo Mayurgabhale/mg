@@ -1,93 +1,47 @@
-{showCardsPopup && (
-  <div className="popup-overlay" onClick={() => setShowCardsPopup(false)}>
-    <div
-      className="popup-card fancy-popup"
-      onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
-    >
-      <div className="popup-header">
-        <strong>Card Details</strong>
-        <button
-          className="popup-close fancy-close"
-          onClick={() => setShowCardsPopup(false)}
-          title="Close"
-        >
-          🕓
-        </button>
-      </div>
+ {/* Clearance row: shows ClearanceCount and clickable to open details */}
+            <tr
+              className="clickable-row"
+              ref={clearanceRef}
+            >
+              <td className="label"><FaCheckCircle color='#FFDD00' /> Clearance</td>
+              <td
+                className="value v-color clickable-cell"
+                onClick={(e) => { e.stopPropagation(); setShowClearancePopup(prev => !prev); }}
+                title="Click to view clearance details"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setShowClearancePopup(prev => !prev); } }}
+              >
+                {emp.ClearanceCount ?? 0}
+              </td>
 
-      <div className="popup-body">
-        <div><strong>Total Cards:</strong> {emp.Total_Cards ?? 0}</div>
-        <div><strong>Active Cards:</strong> {emp.Active_Cards ?? 0}</div>
-        <div><strong>Deactive Cards:</strong> {emp.Deactive_Cards ?? 0}</div>
+              {showClearancePopup && (
+                <td className="popup-td" colSpan="2">
+                  <div className="popup-card fancy-popup">
+                    <div className="popup-header">
+                      <strong>Clearance Details</strong>
+                      <button
+                        className="popup-close fancy-close"
+                        onClick={() => setShowClearancePopup(false)}
+                        title="Close"
+                      >
+                        🕓
+                      </button>
+                    </div>
 
-        <div style={{ marginTop: 10 }}>
-          <strong>Active Card Numbers</strong>
-          <ul className="popup-list">
-            {toList(emp.Active_Card_Numbers).length === 0 && (<li>—</li>)}
-            {toList(emp.Active_Card_Numbers).map((c, i) => <li key={`ac-${i}`}>{c}</li>)}
-          </ul>
-        </div>
-
-        <div style={{ marginTop: 10 }}>
-          <strong>Deactive Card Numbers</strong>
-          <ul className="popup-list">
-            {toList(emp.Deactive_Card_Numbers).length === 0 && (<li>—</li>)}
-            {toList(emp.Deactive_Card_Numbers).map((c, i) => <li key={`dc-${i}`}>{c}</li>)}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-
-
-
-
-
-
-
-
-
-/* Centered overlay for popups */
-.popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 9998;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(3px);
-}
-
-/* Centered fancy popup */
-.fancy-popup {
-  position: relative;
-  background: #1c1c24;
-  color: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  min-width: 320px;
-  max-width: 480px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  animation: popupFadeInCenter 0.3s ease-out;
-  z-index: 9999;
-}
-
-/* smooth fade + scale animation */
-@keyframes popupFadeInCenter {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+                    <div className="popup-body">
+                      <div><strong>Clearance Count:</strong> {emp.ClearanceCount ?? 0}</div>
+                      <div style={{ marginTop: 8 }}>
+                        <strong>Clearances</strong>
+                        <ul className="popup-list">
+                          {(!emp.Clearances || emp.Clearances.trim() === '') && <li>—</li>}
+                          {emp.Clearances && emp.Clearances.split(',').map((c, i) => (
+                            <li key={`clr-${i}`}>{c.trim()}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              )}
+            </tr>
