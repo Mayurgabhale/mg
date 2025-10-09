@@ -1,53 +1,93 @@
-// controllers/occupancy.controller.js (replace getHistoricalOccupancy)
-exports.getHistoricalOccupancy = async (req, res) => {
-  const location = req.params.location || null;
-  try {
-    // raw is already one-row-per-person-per-day (because service uses SQL dedupe)
-    const raw = await service.fetchHistoricalOccupancy(location);
+[eslint] 
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
 
-    // group by date -> arrays (lightweight grouping)
-    const byDate = raw.reduce((acc, r) => {
-      const date = new Date(r.LocaleMessageTime).toISOString().slice(0,10);
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(r);
-      return acc;
-    }, {});
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
 
-    const summaryByDate = [];
-    const details = []; // raw details (already deduped)
+WARNING in [eslint]
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
 
-    Object.keys(byDate).sort().forEach(date => {
-      const recs = byDate[date];
-      details.push(...recs);
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
 
-      const region = { total: 0, Employee: 0, Contractor: 0 };
-      const partitions = {};
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages'
 
-      recs.forEach(r => {
-        region.total++;
-        if (isEmployeeType(r.PersonnelType)) region.Employee++;
-        else region.Contractor++;
+[eslint] 
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
 
-        if (!location) {
-          const key = r.PartitionNameFriendly || 'APAC.Default';
-          if (!partitions[key]) partitions[key] = { total: 0, Employee: 0, Contractor: 0 };
-          partitions[key].total++;
-          if (isEmployeeType(r.PersonnelType)) partitions[key].Employee++;
-          else partitions[key].Contractor++;
-        }
-      });
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
 
-      summaryByDate.push({
-        date,
-        day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' }),
-        region: location ? { name: location, ...region } : { name: 'APAC', ...region },
-        partitions: location ? {} : partitions
-      });
-    });
+WARNING in ./src/pages/History.jsx 172:32-49
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages'
 
-    res.json({ success: true, summaryByDate, details });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Historical failed' });
-  }
-};
+WARNING in [eslint]
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+webpack compiled with 2 warnings
+Compiling...
+Compiled with warnings.
+
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages'
+
+[eslint] 
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in ./src/pages/History.jsx 172:32-49
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages'
+
+WARNING in [eslint]
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+webpack compiled with 2 warnings
+Compiling...
+Compiled with warnings.
+
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages'
+
+[eslint] 
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in ./src/pages/History.jsx 172:32-49
+Module not found: Error: Can't resolve 'exceljs' in 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend\src\pages'
+
+WARNING in [eslint]
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+webpack compiled with 2 warnings
+Compiling...
+Compiled with warnings.
+
+Failed to parse source map from 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map' file: Error: ENOENT: no such file or directory, open 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map'
+
+[eslint] 
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in ../node_modules/exceljs/dist/exceljs.min.js
+Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
+Failed to parse source map from 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map' file: Error: ENOENT: no such file or directory, open 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map'
+
+WARNING in [eslint]
+src\pages\History.jsx
+  Line 13:13:  'XLSX' is defined but never used  no-unused-vars
+
+webpack compiled with 2 warnings
