@@ -1,18 +1,18 @@
-<div className="popup-card fancy-popup">
-  <div className="popup-header">
-    <strong>{showCardsPopup ? 'Card Details' : 'Clearance Details'}</strong>
-    <button
-      className="popup-close fancy-close"
-      onClick={() => showCardsPopup ? setShowCardsPopup(false) : setShowClearancePopup(false)}
-      title="Close"
-    >
-      🕓
-    </button>
-  </div>
+{showCardsPopup && (
+  <td className="popup-td" colSpan="2">
+    <div className="popup-card fancy-popup">
+      <div className="popup-header">
+        <strong>Card Details</strong>
+        <button
+          className="popup-close fancy-close"
+          onClick={() => setShowCardsPopup(false)}
+          title="Close"
+        >
+          🕓
+        </button>
+      </div>
 
-  <div className="popup-body">
-    {showCardsPopup ? (
-      <>
+      <div className="popup-body">
         <div><strong>Total Cards:</strong> {emp.Total_Cards ?? 0}</div>
         <div><strong>Active Cards:</strong> {emp.Active_Cards ?? 0}</div>
         <div><strong>Deactive Cards:</strong> {emp.Deactive_Cards ?? 0}</div>
@@ -32,18 +32,7 @@
             {toList(emp.Deactive_Card_Numbers).map((c, i) => <li key={`dc-${i}`}>{c}</li>)}
           </ul>
         </div>
-      </>
-    ) : (
-      <>
-        <div><strong>Clearance Count:</strong> {emp.ClearanceCount ?? 0}</div>
-        <div style={{ marginTop: 8 }}>
-          <strong>Clearances</strong>
-          <ul className="popup-list">
-            {(!emp.Clearances || emp.Clearances.trim() === '') && <li>—</li>}
-            {emp.Clearances && emp.Clearances.split(',').map((c, i) => <li key={`clr-${i}`}>{c.trim()}</li>)}
-          </ul>
-        </div>
-      </>
-    )}
-  </div>
-</div>
+      </div>
+    </div>
+  </td>
+)}
