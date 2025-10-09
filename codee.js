@@ -1,315 +1,3 @@
-PS C:\Users\W0024618\Desktop\namer-occupancy-frontend\namer-occupancy-frontend> npm run start
-
-> namer-occupancy-frontend@0.1.0 start
-> react-scripts start
-
-(node:25128) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-(node:25128) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-Starting the development server...
-Compiled with warnings.
-
-Failed to parse source map from 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map' file: Error: ENOENT: no such file or directory, open 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map'
-
-Search for the keywords to learn more about each warning.
-To ignore, add // eslint-disable-next-line to the line before.
-
-WARNING in ../node_modules/exceljs/dist/exceljs.min.js
-Module Warning (from ./node_modules/source-map-loader/dist/cjs.js):
-Failed to parse source map from 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map' file: Error: ENOENT: no such file or directory, open 'C:\Users\W0024618\Desktop\namer-occupancy-frontend\node_modules\exceljs\dist\exceljs.min.js.map'
-
-webpack compiled with 1 warning
-// src/pages/History.jsx
-
-import React, { useEffect, useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import {
-  Container, Box, Button, Typography, Table,
-  TableHead, TableBody, TableRow, TableCell,
-  Paper, TextField
-} from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { format } from 'date-fns';
-// import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import LoadingSpinner from '../components/LoadingSpinner';
-import { fetchHistory } from '../api/occupancy.service';
-
-// Partition → display mapping
-const partitionToDisplay = {
-  'US.CO.OBS': { city: 'Denver', country: 'United States' },
-  'US.FL.Miami': { city: 'Miami', country: 'United States' },
-  'US.NYC': { city: 'New York', country: 'United States' },
-  'USA/Canada Default': { city: 'Austin TX', country: 'United States' }
-};
-
-export default function History() {
-  const { partition: partitionParam } = useParams();
-  const decodedKey = partitionParam ? decodeURIComponent(partitionParam) : null;
-
-  // Wrap in useMemo to keep stable across renders
-  const filteredPartitionKeys = useMemo(
-    () => decodedKey ? [decodedKey] : Object.keys(partitionToDisplay),
-    [decodedKey]
-  );
-
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [pickedDate, setPickedDate] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
-
-
-
-  const getIsoDate = (r) =>
-    (r?.SwipeDate && typeof r.SwipeDate === 'string' && r.SwipeDate.slice(0, 10)) ||
-    (r?.LocaleMessageTime && typeof r.LocaleMessageTime === 'string' && r.LocaleMessageTime.slice(0, 10)) ||
-    '';
-
-
-
-  // If you want 12-hour with AM/PM (optional)
-  const formatApiTime12 = (isoOrTime) => {
-    if (!isoOrTime || typeof isoOrTime !== 'string') return '';
-    const m = isoOrTime.match(/T?(\d{2}):(\d{2}):(\d{2})/);
-    if (!m) return '';
-    let hh = parseInt(m[1], 10);
-    const mm = m[2];
-    const ss = m[3];
-    if (Number.isNaN(hh)) return `${m[1]}:${mm}:${ss}`;
-    const ampm = hh >= 12 ? 'PM' : 'AM';
-    let h12 = hh % 12;
-    if (h12 === 0) h12 = 12;
-    return `${String(h12).padStart(2, '0')}:${mm}:${ss} ${ampm}`;
-  };
-
-
-
-
-
-
-  // 1) Find the summary entry for the chosen date
-  const summaryEntry = useMemo(() => {
-    if (!data || !pickedDate) return null;
-    const ds = format(pickedDate, 'yyyy-MM-dd');
-    return data.summaryByDate.find(r => r.date === ds) || null;
-  }, [data, pickedDate]);
-
-  // 2) Build that summary table’s rows
-  const partitionRows = useMemo(() => {
-    if (!summaryEntry) return [];
-    const codeToCountry = { US: 'United States', CA: 'Canada' };
-    return Object.entries(summaryEntry.partitions)
-      .filter(([key]) => filteredPartitionKeys.includes(key))
-      .map(([key, vals]) => {
-        const disp = partitionToDisplay[key];
-        const country = disp
-          ? disp.country
-          : codeToCountry[key.split('.')[0]] || key;
-        const city = disp ? disp.city : key;
-        return {
-          country,
-          city,
-          employee: vals.Employee ?? 0,
-          contractor: vals.Contractor ?? 0,
-          total: vals.total ?? 0
-        };
-      });
-  }, [summaryEntry, filteredPartitionKeys]);
-
-  // 3) Build the detail list exactly as your back-end does:
-  //    a) filter by LocaleMessageTime, same date & partition
-  //    b) sort ascending
-  //    c) keep only each PersonGUID’s last swipe
-  //    d) only InDirection (still inside)
-  const detailRows = useMemo(() => {
-    if (!data || !pickedDate) return [];
-    const ds = format(pickedDate, 'yyyy-MM-dd');
-
-
-
-    // a) all swipes that day for our partitions
-    // const all = data.details.filter(r =>
-    //   filteredPartitionKeys.includes(r.PartitionName2) &&
-    //   // format(new Date(r.LocaleMessageTime), 'yyyy-MM-dd') === ds
-    //    r.LocaleMessageTime.startsWith(ds)
-    // );
-
-
-    const all = data.details.filter(r =>
-      filteredPartitionKeys.includes(r.PartitionName2) &&
-      getIsoDate(r) === ds
-    );
-
-
-    // b) oldest → newest
-    // all.sort((a, b) =>
-    //   new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime)
-    // );
-
-
-    // Lexical compare on the ISO timestamp (avoids timezone conversion side effects)
-    all.sort((a, b) =>
-      ((a.LocaleMessageTime || '')).localeCompare((b.LocaleMessageTime || ''))
-    );
-
-    // c) last swipe per person
-    const lastByPerson = {};
-    all.forEach(r => { lastByPerson[r.PersonGUID] = r; });
-
-    // d) only those whose final swipe was an entry
-    // return Object.values(lastByPerson).filter(r => r.Direction === 'InDirection');
-    return Object.values(lastByPerson);
-  }, [data, pickedDate, filteredPartitionKeys]);
-
-  // Fetch once on mount
-  useEffect(() => {
-    setLoading(true);
-    fetchHistory()
-      .then(json => setData(json))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <LoadingSpinner />;
-  if (!data) return null;
-
-  // Excel export (includes CardNumber)
-  // const handleExport = () => {
-  //   const ws = XLSX.utils.json_to_sheet(
-  //     detailRows.map((r, i) => ({
-  //       Sr: i + 1,
-  //       Date: getIsoDate(r),
-  //       Time: formatApiTime12(r.LocaleMessageTime || r.Swipe_Time || ''),
-  //       EmployeeID: r.EmployeeID,
-  //       Name: r.ObjectName1,
-  //       PersonnelType: r.PersonnelType,
-  //       CardNumber: r.CardNumber,
-  //       Door: r.Door,
-  //       Partition: partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2
-  //     }))
-  //   );
-  //   const wb = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(wb, ws, 'Details');
-  //   const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  //   saveAs(new Blob([buf]), `history_${format(pickedDate, 'yyyyMMdd')}.xlsx`);
-  // };
-
-    const handleExport = async () => {
-    if (!pickedDate) return;
-
-    try {
-      const excelModule = await import('exceljs');
-      const Excel = excelModule.default || excelModule;
-      let wb;
-
-      if (Excel && Excel.Workbook) wb = new Excel.Workbook();
-      else if (typeof Excel === 'function') wb = new Excel();
-      else throw new Error('ExcelJS Workbook constructor not found');
-
-      // ---------- SHEET 1: WU Employee ----------
-      const wsDetails = wb.addWorksheet('WU Employee');
-
-      // Headers
-      const detailsHeaders = [
-        'Sr.No', 'Date', 'Time',
-        'Employee Name', 'Employee ID', 'Personal Type',
-        'Door Name', 'Location'
-      ];
-
-      // Title row
-      wsDetails.mergeCells(`A1:${String.fromCharCode(64 + detailsHeaders.length)}1`);
-      const detailsTitle = wsDetails.getCell('A1');
-      detailsTitle.value = `Details — ${format(pickedDate, 'EEEE, d MMMM, yyyy')}`;
-      detailsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-      detailsTitle.font = { name: 'Calibri', size: 14, bold: true };
-
-      // Header row
-      const hdrRow = wsDetails.addRow(detailsHeaders);
-      hdrRow.eachCell(cell => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC107' } };
-        cell.font = { bold: true, color: { argb: 'FF000000' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      });
-
-      // Data rows
-      (detailRows || []).forEach((r, i) => {
-        const dateVal = (r.LocaleMessageTime?.slice(0, 10)) || (r.SwipeDate?.slice(0, 10)) || '';
-        const timeVal = formatApiTime12(r.LocaleMessageTime) || '';
-        const name = r.ObjectName1 || '';
-        const empId = r.EmployeeID || '';
-        const ptype = r.PersonnelType || '';
-        const door = r.Door || r.ObjectName2 || '';
-        const location = r.PartitionName2 || r.PrimaryLocation || '';
-
-        const row = wsDetails.addRow([i + 1, dateVal, timeVal, name, empId, ptype, door, location]);
-
-        row.eachCell((cell, colNumber) => {
-          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-          cell.font = { name: 'Calibri', size: 11 };
-          cell.alignment = colNumber === 1 ? { horizontal: 'center', vertical: 'middle' } : { horizontal: 'left', vertical: 'middle' };
-        });
-
-        if (i % 2 === 1) {
-          row.eachCell(cell => {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
-          });
-        }
-      });
-
-      // Auto-width columns
-      wsDetails.columns.forEach((col, idx) => {
-        let maxLen = 0;
-        col.eachCell({ includeEmpty: true }, c => {
-          const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
-          if (v.length > maxLen) maxLen = v.length;
-        });
-        let width = maxLen + 2;
-
-        if (idx === 0) width = Math.min(Math.max(width, 6), 10);
-        else if (idx === 1) width = Math.min(Math.max(width, 10), 15);
-        else if (idx === 2) width = Math.min(Math.max(width, 8), 12);
-        else if (idx === 3) width = Math.min(Math.max(width, 15), 30);
-        else if (idx === 4) width = Math.min(Math.max(width, 10), 18);
-        else if (idx === 5) width = Math.min(Math.max(width, 12), 20);
-        else if (idx === 6) width = Math.min(Math.max(width, 18), 40);
-        else if (idx === 7) width = Math.min(Math.max(width, 18), 40);
-
-        col.width = width;
-      });
-
-      wsDetails.views = [{ state: 'frozen', ySplit: 2 }];
-
-      // Outer border for WU Employee
-      const firstDetailRow = 2;
-      const lastDetailRow = wsDetails.lastRow.number;
-      const firstDetailCol = 1;
-      const lastDetailCol = detailsHeaders.length;
-
-      for (let r = firstDetailRow; r <= lastDetailRow; r++) {
-        for (let c = firstDetailCol; c <= lastDetailCol; c++) {
-          const cell = wsDetails.getCell(r, c);
-          const border = { ...cell.border };
-          if (r === firstDetailRow) border.top = { style: 'medium' };
-          if (r === lastDetailRow) border.bottom = { style: 'medium' };
-          if (c === firstDetailCol) border.left = { style: 'medium' };
-          if (c === lastDetailCol) border.right = { style: 'medium' };
-          cell.border = border;
-        }
-      }
-
-      wsDetails.pageSetup = {
-        horizontalCentered: true,
-        verticalCentered: false,
-        orientation: 'landscape',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        margins: { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
-      };
 
       // ---------- SHEET 2: WU Summary ----------
       const ws = wb.addWorksheet('WU Summary');
@@ -319,16 +7,16 @@ export default function History() {
       ws.mergeCells('C1:E1');
       const dateCell = ws.getCell('C1');
       dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      dateCell.font = { bold: true, size: 16 };
+      dateCell.font = { bold: true, size: 12 };
       dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
 
      
       r1.eachCell((cell, colNumber) => {
         if (colNumber <= 2) { // Bold Country and City
-          cell.font = { bold: true , size: 15};
+          cell.font = { bold: true , size: 12};
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
         } else if (colNumber === 3) { // Date cell is merged C1:E1
-          cell.font = { bold: true, size: 15 };
+          cell.font = { bold: true, size: 12 };
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
         }
@@ -338,7 +26,7 @@ export default function History() {
       // Header Row 2
       const r2 = ws.addRow(['', '', 'Employee', 'Contractors', 'Total']);
       r2.eachCell(cell => {
-        cell.font = { bold: true , size: 15};
+        cell.font = { bold: true , size: 12};
         cell.alignment = { horizontal: 'center', vertical: 'middle' };  
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
         cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
@@ -352,7 +40,7 @@ export default function History() {
           cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
           if (colNumber === 5) {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
-            cell.font = { bold: true, size: 15 };
+            cell.font = { bold: true, size: 12 };
           }
         });
       });
@@ -364,233 +52,39 @@ export default function History() {
 
       const totalsRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotals]);
       totalsRow.eachCell((cell) => {
-        cell.font = { bold: true, size: 15, color: { argb: 'FFFFFFFF' } };
+        cell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF808080' } };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
       });
 
       // Auto-fit columns
-      ws.columns.forEach(col => {
-        let maxLen = 6;
+      // ws.columns.forEach(col => {
+      //   let maxLen = 6;
+      //   col.eachCell({ includeEmpty: true }, c => {
+      //     const v = c.value ? String(c.value) : '';
+      //     maxLen = Math.max(maxLen, v.length + 1);
+      //   });
+      //   col.width = Math.min(Math.max(maxLen, 7), 30);
+      // });
+
+
+       wsDetails.columns.forEach((col, idx) => {
+        let maxLen = 0;
         col.eachCell({ includeEmpty: true }, c => {
-          const v = c.value ? String(c.value) : '';
-          maxLen = Math.max(maxLen, v.length + 2);
+          const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
+          if (v.length > maxLen) maxLen = v.length;
         });
-        col.width = Math.min(Math.max(maxLen, 10), 40);
+        let width = maxLen + 2;
+
+        if (idx === 0) width = Math.min(Math.max(width, 15), 10);
+        else if (idx === 1) width = Math.min(Math.max(width, 15), 30);
+        else if (idx === 2) width = Math.min(Math.max(width, 8), 30);
+        else if (idx === 3) width = Math.min(Math.max(width, 15), 30);
+        else if (idx === 4) width = Math.min(Math.max(width, 10), 30);
+        
+        col.width = width;
       });
 
       // Freeze headers
       ws.views = [{ state: 'frozen', ySplit: 2 }];
-
-      // Outer border for Summary
-      const firstRow = 1;
-      const lastRow = ws.lastRow.number;
-      const firstCol = 1;
-      const lastCol = 5;
-
-      for (let r = firstRow; r <= lastRow; r++) {
-        for (let c = firstCol; c <= lastCol; c++) {
-          const cell = ws.getCell(r, c);
-          const border = { ...cell.border };
-          if (r === firstRow) border.top = { style: 'medium' };
-          if (r === lastRow) border.bottom = { style: 'medium' };
-          if (c === firstCol) border.left = { style: 'medium' };
-          if (c === lastCol) border.right = { style: 'medium' };
-          cell.border = border;
-        }
-      }
-
-      ws.pageSetup = {
-        orientation: 'landscape',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        horizontalCentered: true,
-        verticalCentered: false,
-        margins: { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
-      };
-
-      // ---------- Save file ----------
-      const filename = `Western Union APAC Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`;
-      const buf = await wb.xlsx.writeBuffer();
-      saveAs(new Blob([buf]), filename);
-
-    } catch (err) {
-      console.error('handleExport error:', err);
-    }
-  };
-
-
-  return (
-    <>
-      <Header />
-      <Container maxWidth={false} disableGutters sx={{ pt: 2, pb: 4 }}>
-        {/* DatePicker + Summary */}
-        {pickedDate && summaryEntry ? (
-          <Box display="flex" alignItems="flex-start" sx={{ px: 2, mb: 2, gap: 1 }}>
-            <Box sx={{ width: 200 }}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Select date"
-                  value={pickedDate}
-                  onChange={d => { setPickedDate(d); setShowDetails(false); }}
-                  renderInput={params => <TextField fullWidth {...params} />}
-                />
-              </LocalizationProvider>
-            </Box>
-
-            <Box sx={{ flex: 1, maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Paper elevation={3} sx={{ px: 4, py: 3, border: '3px solid #000', borderRadius: 2 }}>
-                <Table sx={{ border: '2px solid #000' }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell colSpan={5} align="center"
-                        sx={{ fontWeight: 'bold', fontSize: 16, bgcolor: '#000', color: '#FFC107', border: '2px solid #000' }}
-                      >
-                        {format(pickedDate, 'EEEE, d MMMM, yyyy')}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow sx={{ bgcolor: '#FFC107' }}>
-                      {['Country', 'City', 'Employees', 'Contractors', 'Total'].map(h => (
-                        <TableCell key={h}
-                          align={['Country', 'City'].includes(h) ? 'left' : 'right'}
-                          sx={{ color: '#000', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}
-                        >
-                          {h}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {partitionRows.map((r, i) => (
-                      <TableRow key={i}>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.country}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.city}</TableCell>
-                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.employee}</TableCell>
-                        <TableCell align="right" sx={{ border: '2px solid #000' }}>{r.contractor}</TableCell>
-                        <TableCell align="right" sx={{ bgcolor: '#FFC107', fontWeight: 'bold', border: '2px solid #000' }}>
-                          {r.total}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow sx={{ bgcolor: '#666' }}>
-                      <TableCell colSpan={2} align="right"
-                        sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                        Total
-                      </TableCell>
-                      <TableCell align="right"
-                        sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                        {partitionRows.reduce((s, r) => s + r.employee, 0)}
-                      </TableCell>
-                      <TableCell align="right"
-                        sx={{ color: '#fff', fontWeight: 'bold', border: '2px solid #000' }}>
-                        {partitionRows.reduce((s, r) => s + r.contractor, 0)}
-                      </TableCell>
-                      <TableCell align="right"
-                        sx={{ color: '#fff', fontWeight: 'bold', bgcolor: '#333', border: '2px solid #000' }}>
-                        {partitionRows.reduce((s, r) => s + r.total, 0)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-
-                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
-                  <Button variant="contained" sx={{ bgcolor: '#FFC107', color: '#000' }}
-                    onClick={() => setShowDetails(v => !v)}>
-                    {showDetails ? 'Hide Details' : 'See Details'}
-                  </Button>
-                  {showDetails && (
-                    <Button variant="outlined" sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
-                      onClick={handleExport}>
-                      Export to Excel
-                    </Button>
-                  )}
-                </Box>
-              </Paper>
-            </Box>
-          </Box>
-        ) : (
-          <Box sx={{ px: 2, mb: 3 }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Select date"
-                value={pickedDate}
-                onChange={d => { setPickedDate(d); setShowDetails(false); }}
-                renderInput={params => <TextField fullWidth {...params} />}
-              />
-            </LocalizationProvider>
-            {!pickedDate && (
-              <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
-                Please pick a date to view region summary.
-              </Typography>
-            )}
-          </Box>
-        )}
-
-        {/* Details table */}
-        {showDetails && (
-          <Box display="flex" justifyContent="center" mb={2} sx={{ width: '100%' }}>
-            <Paper elevation={1} sx={{ px: 4, py: 1, width: '100%', border: '3px solid #000', borderRadius: 2 }}>
-              {detailRows.length > 0 ? (
-                <Table sx={{ border: '2px solid #000', borderCollapse: 'collapse' }}>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#000' }}>
-                      {['Sr', 'Date', 'Time', 'Emp ID', 'Name', 'Type', 'Card', 'Door', 'Partition']
-                        .map(h => (
-                          <TableCell key={h} align="center"
-                            sx={{ color: '#FFC107', fontWeight: 'bold', fontSize: 14, border: '2px solid #000' }}>
-                            {h}
-                          </TableCell>
-                        ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {detailRows.map((r, i) => (
-                      <TableRow key={r.PersonGUID}>
-                        <TableCell sx={{ border: '2px solid #000' }}>{i + 1}</TableCell>
-
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {getIsoDate(r)}
-                        </TableCell>
-
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {formatApiTime12(r.LocaleMessageTime || r.Swipe_Time || '')}
-                        </TableCell>
-
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.EmployeeID}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.ObjectName1}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.PersonnelType}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.CardNumber}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>{r.Door}</TableCell>
-                        <TableCell sx={{ border: '2px solid #000' }}>
-                          {partitionToDisplay[r.PartitionName2]?.city || r.PartitionName2}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <Typography variant="body2" sx={{
-                  color: '#666', textAlign: 'center', mt: 2, fontStyle: 'italic'
-                }}>
-                  No swipe records found for this date.
-                </Typography>
-              )}
-            </Paper>
-          </Box>
-        )}
-      </Container>
-      <Footer />
-    </>
-  );
-}
-
-
-
-
-
-
-
-
-
