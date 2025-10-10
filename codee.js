@@ -1,21 +1,16 @@
-hi, i want to create my all dashboard wiht each device responsive, 
-  including laptop, tablet  and pc ok depend on screen size,
-  each screen size can be responsvie dashboard 
-
-know this is header :: 
-// src/components/Header.jsx — APAC Edition
+// src/components/Header.jsx — Responsive APAC Edition
 import React, { useEffect, useState } from 'react';
 import {
   AppBar, Toolbar, Box, Typography,
-  Select, MenuItem, IconButton
+  Select, MenuItem, IconButton, useMediaQuery
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import HomeIcon from '@mui/icons-material/Home';
 import HistoryIcon from '@mui/icons-material/History';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 
-// import wuLogo from '../assets/wu-logo.png';
 import wuLogo from '../assets/images/wu-logo.png';
 import IndiaFlag from '../assets/flags/india.png';
 import MalaysiaFlag from '../assets/flags/malaysia.png';
@@ -24,8 +19,6 @@ import JapanFlag from '../assets/flags/japan.png';
 import HYDFlag from '../assets/flags/india.png';
 import { partitionList } from '../services/occupancy.service';
 import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-
-
 
 const displayNameMap = {
   'IN.Pune': 'Pune',
@@ -36,8 +29,6 @@ const displayNameMap = {
   'IN.HYD': 'Hyderabad',
 };
 
-
-// Flag lookup by partition code
 const flagMap = {
   'Pune': IndiaFlag,
   'MY.Kuala Lumpur': MalaysiaFlag,
@@ -46,13 +37,16 @@ const flagMap = {
   'JP.Tokyo': JapanFlag,
   'IN.HYD': HYDFlag,
 };
+
 export default function Header() {
-
-
   const navigate = useNavigate();
   const location = useLocation();
   const { data } = useLiveOccupancy(1000);
   const [lastUpdate, setLastUpdate] = useState('');
+
+  const theme = useTheme();
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));   // <960px
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));   // <600px
 
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
@@ -77,7 +71,6 @@ export default function Header() {
   const handlePartitionChange = (newPartition) => {
     if (!newPartition) return navigate('/');
 
-    // Special handling for Pune partition - only redirect when going to base partition route
     if (newPartition === 'Pune' && suffixSegments.length === 0) {
       window.location.href = 'http://10.199.22.57:3011/';
       return;
@@ -92,50 +85,64 @@ export default function Header() {
 
   return (
     <AppBar position="static" color="primary" sx={{ mb: 2 }}>
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
-        {/* Left: Logo + Navigation */}
-        <Box display="flex" alignItems="center">
-          <Box component="img" src={wuLogo} alt="WU" sx={{ height: 36, mr: 2 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            APAC Occupancy
-            {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
-          </Typography>
+      <Toolbar
+        sx={{
+          justifyContent: 'space-between',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          gap: isMobile ? 1 : 0,
+        }}
+      >
+        {/* Left Section */}
+        <Box display="flex" alignItems="center" sx={{ flexWrap: 'wrap' }}>
+          <Box component="img" src={wuLogo} alt="WU" sx={{ height: isMobile ? 28 : 36, mr: 1 }} />
+          {!isMobile && (
+            <Typography variant="h6" sx={{ flexGrow: 1, mr: 2 }}>
+              APAC Occupancy
+              {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
+            </Typography>
+          )}
 
-          <IconButton color="inherit" onClick={() => navigate('/')}>
-            <HomeIcon />
-          </IconButton>
+          <Box>
+            <IconButton color="inherit" onClick={() => navigate('/')}>
+              <HomeIcon fontSize={isMobile ? 'small' : 'medium'} />
+            </IconButton>
 
-          {/* History */}
-          <IconButton color="inherit" onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
-            <HistoryIcon />
-          </IconButton>
+            <IconButton color="inherit" onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
+              <HistoryIcon fontSize={isMobile ? 'small' : 'medium'} />
+            </IconButton>
 
-          {/* Details */}
-          <IconButton
-            color="inherit"
-            onClick={() =>
-              navigate(currentPartition
-                ? makePartitionPath('details')
-                : '/partition/Pune/details'
-              )
-            }
-          >
-            <ListAltIcon />
-          </IconButton>
+            <IconButton
+              color="inherit"
+              onClick={() =>
+                navigate(currentPartition
+                  ? makePartitionPath('details')
+                  : '/partition/Pune/details'
+                )
+              }
+            >
+              <ListAltIcon fontSize={isMobile ? 'small' : 'medium'} />
+            </IconButton>
+          </Box>
         </Box>
 
-        {/* Right: Dropdown Selector + Flag */}
-        <Box display="flex" alignItems="center">
+        {/* Right Section */}
+        <Box display="flex" alignItems="center" sx={{ mt: isMobile ? 1 : 0 }}>
           <Select
-            size="small"
+            size={isTablet ? 'small' : 'medium'}
             value={currentPartition}
             displayEmpty
             onChange={(e) => handlePartitionChange(e.target.value)}
-            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
+            sx={{
+              bgcolor: 'background.paper',
+              minWidth: isMobile ? 130 : 180,
+              fontSize: isMobile ? '0.8rem' : '1rem',
+            }}
             renderValue={(selected) =>
               selected ? (
                 <Box display="flex" alignItems="center">
-                  <Box component="img" src={flagMap[selected]} alt={selected} sx={{ width: 24, height: 16, mr: 1 }} />
+                  <Box component="img" src={flagMap[selected]} alt={selected}
+                    sx={{ width: 20, height: 14, mr: 1 }} />
                   {displayNameMap[selected] || selected}
                 </Box>
               ) : "— Select Site —"
@@ -153,7 +160,3 @@ export default function Header() {
     </AppBar>
   );
 }
-
-
-
-
