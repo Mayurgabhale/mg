@@ -1,60 +1,159 @@
-{/* Clearance row: shows ClearanceCount and clickable to open details */}
-<tr className="clickable-row" ref={clearanceRef}>
-  <td className="label">
-    <FaCheckCircle color="#FFDD00" /> Clearance
-  </td>
-  <td
-    className="value v-color clickable-cell"
-    onClick={(e) => {
-      e.stopPropagation();
-      setShowClearancePopup((prev) => !prev);
-    }}
-    title="Click to view clearance details"
-    role="button"
-    tabIndex={0}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        setShowClearancePopup((prev) => !prev);
-      }
-    }}
-  >
-    {emp.ClearanceCount ?? 0}
-  </td>
-</tr>
+hi, i want to create my all dashboard wiht each device responsive, 
+  including laptop, tablet  and pc ok depend on screen size,
+  each screen size can be responsvie dashboard 
 
-{/* ✅ Centered Clearance Popup */}
-{showClearancePopup && (
-  <div className="popup-overlay" onClick={() => setShowClearancePopup(false)}>
-    <div
-      className="popup-card fancy-popup"
-      onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
-    >
-      <div className="popup-header">
-        <strong>Clearance Details</strong>
-        <button
-          className="popup-close fancy-close"
-          onClick={() => setShowClearancePopup(false)}
-          title="Close"
-        >
-          🕓
-        </button>
-      </div>
+know this is header :: 
+// src/components/Header.jsx — APAC Edition
+import React, { useEffect, useState } from 'react';
+import {
+  AppBar, Toolbar, Box, Typography,
+  Select, MenuItem, IconButton
+} from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-      <div className="popup-body">
-        <div>
-          <strong>Clearance Count:</strong> {emp.ClearanceCount ?? 0}
-        </div>
-        <div style={{ marginTop: 8 }}>
-          <strong>Clearances</strong>
-          <ul className="popup-list">
-            {(!emp.Clearances || emp.Clearances.trim() === '') && <li>—</li>}
-            {emp.Clearances &&
-              emp.Clearances.split(',').map((c, i) => (
-                <li key={`clr-${i}`}>{c.trim()}</li>
-              ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+
+// import wuLogo from '../assets/wu-logo.png';
+import wuLogo from '../assets/images/wu-logo.png';
+import IndiaFlag from '../assets/flags/india.png';
+import MalaysiaFlag from '../assets/flags/malaysia.png';
+import PhilippinesFlag from '../assets/flags/philippines.png';
+import JapanFlag from '../assets/flags/japan.png';
+import HYDFlag from '../assets/flags/india.png';
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+
+
+const displayNameMap = {
+  'IN.Pune': 'Pune',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig',
+  'JP.Tokyo': 'Tokyo',
+  'IN.HYD': 'Hyderabad',
+};
+
+
+// Flag lookup by partition code
+const flagMap = {
+  'Pune': IndiaFlag,
+  'MY.Kuala Lumpur': MalaysiaFlag,
+  'Quezon City': PhilippinesFlag,
+  'Taguig City': PhilippinesFlag,
+  'JP.Tokyo': JapanFlag,
+  'IN.HYD': HYDFlag,
+};
+export default function Header() {
+
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  const parts = location.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
+
+  const selectedFlag = flagMap[currentPartition];
+
+  const makePartitionPath = (suffix) => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
+
+  const handlePartitionChange = (newPartition) => {
+    if (!newPartition) return navigate('/');
+
+    // Special handling for Pune partition - only redirect when going to base partition route
+    if (newPartition === 'Pune' && suffixSegments.length === 0) {
+      window.location.href = 'http://10.199.22.57:3011/';
+      return;
+    }
+
+    const base = `/partition/${encodeURIComponent(newPartition)}`;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
+    navigate(full);
+  };
+
+  return (
+    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        {/* Left: Logo + Navigation */}
+        <Box display="flex" alignItems="center">
+          <Box component="img" src={wuLogo} alt="WU" sx={{ height: 36, mr: 2 }} />
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            APAC Occupancy
+            {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
+          </Typography>
+
+          <IconButton color="inherit" onClick={() => navigate('/')}>
+            <HomeIcon />
+          </IconButton>
+
+          {/* History */}
+          <IconButton color="inherit" onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
+            <HistoryIcon />
+          </IconButton>
+
+          {/* Details */}
+          <IconButton
+            color="inherit"
+            onClick={() =>
+              navigate(currentPartition
+                ? makePartitionPath('details')
+                : '/partition/Pune/details'
+              )
+            }
+          >
+            <ListAltIcon />
+          </IconButton>
+        </Box>
+
+        {/* Right: Dropdown Selector + Flag */}
+        <Box display="flex" alignItems="center">
+          <Select
+            size="small"
+            value={currentPartition}
+            displayEmpty
+            onChange={(e) => handlePartitionChange(e.target.value)}
+            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
+            renderValue={(selected) =>
+              selected ? (
+                <Box display="flex" alignItems="center">
+                  <Box component="img" src={flagMap[selected]} alt={selected} sx={{ width: 24, height: 16, mr: 1 }} />
+                  {displayNameMap[selected] || selected}
+                </Box>
+              ) : "— Select Site —"
+            }
+          >
+            <MenuItem value="">— Select Site —</MenuItem>
+            {partitionList.map((p) => (
+              <MenuItem key={p} value={p}>
+                {displayNameMap[p] || p}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+
+
+
