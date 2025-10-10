@@ -1,13 +1,15 @@
-// C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\Dashboard.jsx
-import React, { useMemo, Suspense } from 'react';
-import { Container, Box, Typography, Paper, Grid } from '@mui/material';
+i want ths page responsive for each device, dependign os screen size
+like laptop, tablate, and pc ok 
+//C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\Dashboard.jsx
+import React, { useMemo } from 'react';
+import {Container, Box, Typography, Skeleton,Paper} from '@mui/material';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 import SummaryCard from '../components/SummaryCard';
-const CompositeChartCard = React.lazy(() => import('../components/CompositeChartCard'));
-const PieChartCard = React.lazy(() => import('../components/PieChartCard'));
+import CompositeChartCard from '../components/CompositeChartCard';
+import PieChartCard from '../components/PieChartCard';
 
 import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 import { partitionList } from '../services/occupancy.service';
@@ -15,16 +17,17 @@ import buildingCapacities from '../data/buildingCapacities';
 import floorCapacities from '../data/floorCapacities';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+
 import indiaFlag from '../assets/flags/india.png';
 import japanFlag from '../assets/flags/japan.png';
 import malaysiaFlag from '../assets/flags/malaysia.png';
 import philippinesFlag from '../assets/flags/philippines.png';
 
+
 const palette15 = [
   '#FFC107', '#E57373', '#4CAF50', '#FFEB3B', '#FFD666',
   '#8BC34A', '#3F51B5', '#9C27B0', '#00BCD4', '#8BC34A',
-  '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'
-];
+  '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'];
 
 const flagMap = {
   'Pune': indiaFlag,
@@ -35,6 +38,7 @@ const flagMap = {
   'IN.HYD': indiaFlag
 };
 
+
 const displayNameMap = {
   'IN.HYD': 'Hyderabad',
   'JP.Tokyo': 'Tokyo',
@@ -44,8 +48,9 @@ const displayNameMap = {
   'Pune': 'Pune',
 };
 
+
 export default function Dashboard() {
-  // 1) Live data hook - consider increasing interval to 5000ms if 1000ms causes too many requests and impacts performance
+  // 1) Live data hook
   const { data, loading, error } = useLiveOccupancy(1000);
 
   // 2) Partitions
@@ -79,7 +84,7 @@ export default function Dashboard() {
   const pune = partitions.find(p => p.name === 'Pune');
   const quezonCity = partitions.find(p => p.name === 'Quezon City');
   const combinedRegions = partitions.filter(p =>
-    ['JP.Tokyo', 'MY.Kuala Lumpur', 'Taguig City', 'IN.HYD'].includes(p.name)
+    ['JP.Tokyo', 'MY.Kuala Lumpur', 'Taguig City','IN.HYD'].includes(p.name)
   );
 
   // 5) Pie chart data
@@ -90,7 +95,8 @@ export default function Dashboard() {
 
   const asiaPacData = useMemo(() =>
     combinedRegions.map(r => ({
-      name: displayNameMap[r.name] || r.name.replace(/^../, ''),
+      // name: r.name.replace(/^.*\./, ''),
+      name: displayNameMap[r.name] || r.name.replace(/^.*\./, ''),
       value: r.total,
       emp: r.Employee,
       cont: r.Contractor
@@ -98,7 +104,8 @@ export default function Dashboard() {
     [combinedRegions]
   );
 
-  // 6) Prepare floors + chart configs before any returns
+
+  // 6) Prepare floors + chart configs _before_ any returns
   // 6a) Get only real floors (drop any that came back Unmapped/"Out of office")
   const floors = Object.entries(pune?.floors || {})
     .filter(([floorName, _count]) => floorName !== 'Unmapped');
@@ -121,6 +128,8 @@ export default function Dashboard() {
     });
   }, [floors]);
 
+
+
   const chartConfigs = useMemo(() => {
     return [
       {
@@ -133,16 +142,17 @@ export default function Dashboard() {
             </Typography>
           )
           : (
-            <Suspense fallback={<LoadingSpinner size="small" />}>
-              <CompositeChartCard
-                data={puneChartData}
-                lineColor={palette15[0]}
-                height={250}
-                sx={{ border: 'none' }}
-              />
-            </Suspense>
+            <CompositeChartCard
+
+              data={puneChartData}
+
+              lineColor={palette15[0]}
+              height={250}
+              sx={{ border: 'none' }}
+            />
           )
       },
+
       {
         key: 'quezon',
         title: 'Quezon City',
@@ -153,26 +163,26 @@ export default function Dashboard() {
             </Typography>
           )
           : (
-            <Suspense fallback={<LoadingSpinner size="small" />}>
-              <CompositeChartCard
-                title=""
-                data={[
-                  {
-                    name: "Quezon City (6th Floor)",
-                    headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
-                    capacity: buildingCapacities?.["Quezon City (6th Floor)"] ?? 0,
-                  },
-                  {
-                    name: "Quezon City (7th Floor)",
-                    headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
-                    capacity: buildingCapacities?.["Quezon City (7th Floor)"] ?? 0,
-                  },
-                ]}
-                lineColor={palette15[1]}
-                height={250}
-                sx={{ border: 'none' }}
-              />
-            </Suspense>
+
+            <CompositeChartCard
+              title=""
+              data={[
+                {
+                  name: "Quezon City (6thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (6thFloor)"] ?? 0,
+                },
+                {
+                  name: "Quezon City (7thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (7thFloor)"] ?? 0,
+                },
+              ]}
+
+              lineColor={palette15[1]}
+              height={250}
+              sx={{ border: 'none' }}
+            />
           )
       },
       {
@@ -185,27 +195,23 @@ export default function Dashboard() {
             </Typography>
           )
           : (
-            <Suspense fallback={<LoadingSpinner size="small" />}>
-              <PieChartCard
-                data={asiaPacData}
-                colors={['#FFBF00', '#FFFAA0', '#B4C424']}
-                height={320}
-                showZeroSlice
-                sx={{ border: 'none' }}
-              />
-            </Suspense>
+            <PieChartCard
+              data={asiaPacData}
+              colors={['#FFBF00', '#FFFAA0', '#B4C424']}
+              height={320}
+              showZeroSlice
+              sx={{ border: 'none' }}
+            />
           )
       }
     ];
   }, [
     floors,
     pune?.total,
-    quezonCity?.total,
-    data?.realtime?.["Quezon City"]?.floors?.["6th Floor"],
-    data?.realtime?.["Quezon City"]?.floors?.["7th Floor"],
+    quezonCity?.floors?.["6th Floor"],
+    quezonCity?.floors?.["7th Floor"],
     combinedRegions.length,
-    asiaPacData,
-    puneChartData
+    asiaPacData
   ]);
 
   // 7) Error state
@@ -240,6 +246,7 @@ export default function Dashboard() {
     );
   }
 
+
   // 8) Render
   return (
     <>
@@ -249,13 +256,13 @@ export default function Dashboard() {
         disableGutters
         sx={{
           py: 0,
-          px: { xs: 1, sm: 2 }, // Reduce padding on mobile for better fit
+          px: 2,
           background: 'linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)',
           color: '#f5f5f5',
         }}
       >
         {/* Top Summary Cards */}
-        <Grid container spacing={1} sx={{ mb: 1 }}>
+        <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
           {[
             { title: "Today's Total Headcount", value: todayTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
             { title: "Today's Employees Count", value: todayEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#8BC34A' },
@@ -264,7 +271,7 @@ export default function Dashboard() {
             { title: "Realtime Employees Count", value: realtimeEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#AED581' },
             { title: "Realtime Contractors Count", value: realtimeCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#EF5350' },
           ].map(c => (
-            <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={c.title}>
+            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
               <SummaryCard
                 title={c.title}
                 total={c.value}
@@ -272,55 +279,46 @@ export default function Dashboard() {
                 icon={c.icon}
                 sx={{ height: 140, border: `2px solid ${c.border}` }}
               />
-            </Grid>
+            </Box>
           ))}
-        </Grid>
-
+        </Box>
         {/* Region Cards */}
-        <Grid container spacing={1} sx={{ mb: 3 }}>
-          {partitions.map((p, i) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={p.name}>
-              <SummaryCard
-                title={
-                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>
-                    {displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
-                  </Typography>
-                }
-                total={p.total}
-                stats={[{ label: 'Employees', value: p.Employee }, { label: 'Contractors', value: p.Contractor }]}
-                sx={{ width: '100%', border: `2px solid ${palette15[i % palette15.length]}` }}
-                icon={<Box component="img" src={p.flag} sx={{ width: 48, height: 32, loading: 'lazy' }} />} // Added lazy loading for images
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
+          {loading
+            ? <Skeleton variant="rectangular" width="90%" height={200} />
+            : partitions.map((p, i) => (
+              <Box key={p.name} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+                <SummaryCard
+                  // title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>{p.name.replace(/^.*\./, '')}</Typography>}
+                  title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>
+                     {displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
+                    </Typography>}
+                  total={p.total}
+                  stats={[{ label: 'Employees', value: p.Employee }, { label: 'Contractors', value: p.Contractor }]}
+                  sx={{ width: '100%', border: `2px solid ${palette15[i % palette15.length]}` }}
+                  icon={<Box component="img" src={p.flag} sx={{ width: 48, height: 32 }} />}
+                />
+              </Box>
+            ))
+          }
+        </Box>
 
         {/* Main Charts */}
-        <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Box display="flex" gap={2} flexWrap="wrap" mb={4}>
           {chartConfigs.map(({ key, title, body }) => (
-            <Grid item xs={12} md={4} key={key}>
-              <Paper
-                sx={{
-                  p: 2,
-                  height: '100%',
-                  minHeight: { xs: 320, md: 405 }, // Adjust min height for mobile
-                  background: 'rgba(0,0,0,0.4)',
-                  border: '1px solid #FFC107',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  animation: 'fadeInUp 0.5s'
-                }}
-              >
-                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 2 }}>
-                  {title}
-                </Typography>
+            <Box key={key} sx={{ flex: '1 1 32%', minWidth: 280, height: 405, animation: 'fadeInUp 0.5s' }}>
+              <Paper sx={{ p: 2, height: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid #FFC107', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 2 }}>{title}</Typography>
                 <Box sx={{ flex: 1, overflow: 'hidden' }}>{body}</Box>
               </Paper>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </Container>
       <Footer />
     </>
   );
 }
+
+
+
