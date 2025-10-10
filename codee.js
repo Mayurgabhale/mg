@@ -1,7 +1,6 @@
-Hi, 
-i want to create my all dashboard with each device responsive & Fast performance,
-i means page loaind ony 3 to 5 seconds ok not more that 5 second 
-  including laptop, tablet  and pc ok depend on screen size,
-  each screen size can be responsvie dashboard 
+Hi,
+I want to create a fully responsive dashboard that works smoothly on all devices — including laptops, tablets, and PCs. The dashboard should adapt to each screen size automatically.
 
-know this is header :: 
+Also, I want to ensure fast performance — the page should load within 3 to 5 seconds, and not more than that.
+
+Here is the header:
