@@ -1,188 +1,126 @@
-const handleExport = () => {
+const handleExport = async () => {
   if (!pickedDate) return;
 
   try {
-    // Styles for Excel-friendly HTML
-    const pageStyle = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      margin-top: 40px;
-      margin-left: 50px;
-      margin-right: 50px;
-      text-align: center;
-      font-family: Calibri, Arial, sans-serif;
-    `;
-    const tableStyle = `
-      border-collapse: collapse;
-      border: 3px solid #000;
-      text-align: center;
-      margin: 20px 50px;
-    `;
-    const thStyle = `
-      border: 2px solid #000;
-      padding: 6px;
-      font-weight: bold;
-      text-align: center;
-      background-color: #FFC107;
-      color: #000;
-    `;
-    const tdStyle = `
-      border: 1px solid #000;
-      padding: 5px;
-      text-align: center;
-      vertical-align: middle;
-    `;
-    const tdBold = `
-      border: 1px solid #000;
-      padding: 5px;
-      text-align: center;
-      font-weight: bold;
-      background-color: #f0f0f0;
-    `;
+    const { default: ExcelJS } = await import('exceljs');
+    const wb = new ExcelJS.Workbook();
 
-    let html = `
-      <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="${pageStyle}">
-    `;
-
-    // ================= SHEET 1: WU Employee =================
-    html += `
-      <h2 style="text-align:center;">Western Union - Employee Report (${format(
-        pickedDate,
-        "d MMMM yyyy"
-      )})</h2>
-      <table style="${tableStyle}">
-    `;
+    // ------------------ SHEET 1: WU Employee ------------------
+    const wsEmp = wb.addWorksheet('WU Employee');
 
     const empHeaders = [
-      "Sr.No",
-      "Date",
-      "Time",
-      "Employee Name",
-      "Employee ID",
-      "Personal Type",
-      "Door Name",
-      "City",
-      "Location",
+      "Sr.No", "Date", "Time", "Employee Name", "Employee ID",
+      "Personal Type", "Door Name", "City", "Location"
     ];
 
-    // Header
-    html += "<thead><tr>";
-    empHeaders.forEach((h) => (html += `<th style="${thStyle}">${h}</th>`));
-    html += "</tr></thead><tbody>";
+    // Title row
+    wsEmp.mergeCells(`A1:I1`);
+    const titleCell = wsEmp.getCell('A1');
+    titleCell.value = `Western Union - Employee Report (${format(pickedDate, "d MMMM yyyy")})`;
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.font = { bold: true, size: 14 };
 
-    // Rows
-    (detailRows || []).forEach((r, i) => {
-      const dateVal =
-        r.LocaleMessageTime?.slice(0, 10) || r.SwipeDate?.slice(0, 10) || "";
-      const timeVal = formatApiTime12(r.LocaleMessageTime) || "";
-      const name = r.ObjectName1 || "";
-      const empId = r.EmployeeID || "";
-      const ptype = r.PersonnelType || "";
-      const door = r.Door || r.ObjectName2 || "";
-      const city = r.City || r.PartitionName1 || "";
-      const location = r.PartitionName2 || r.PrimaryLocation || "";
-
-      html += "<tr>";
-      html += `<td style="${tdStyle}">${i + 1}</td>`;
-      html += `<td style="${tdStyle}">${dateVal}</td>`;
-      html += `<td style="${tdStyle}">${timeVal}</td>`;
-      html += `<td style="${tdStyle}">${name}</td>`;
-      html += `<td style="${tdStyle}">${empId}</td>`;
-      html += `<td style="${tdStyle}">${ptype}</td>`;
-      html += `<td style="${tdStyle}">${door}</td>`;
-      html += `<td style="${tdStyle}">${city}</td>`;
-      html += `<td style="${tdStyle}">${location}</td>`;
-      html += "</tr>";
+    // Header row
+    const hdrRow = wsEmp.addRow(empHeaders);
+    hdrRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
     });
 
-    html += "</tbody></table>";
+    // Data rows
+    (detailRows || []).forEach((r, i) => {
+      const row = wsEmp.addRow([
+        i + 1,
+        r.LocaleMessageTime?.slice(0, 10) || r.SwipeDate?.slice(0, 10) || '',
+        formatApiTime12(r.LocaleMessageTime) || '',
+        r.ObjectName1 || '',
+        r.EmployeeID || '',
+        r.PersonnelType || '',
+        r.Door || r.ObjectName2 || '',
+        r.City || r.PartitionName1 || '',
+        r.PartitionName2 || r.PrimaryLocation || ''
+      ]);
 
-    // ================= SHEET 2: WU Summary =================
-    html += `
-      <h2 style="text-align:center; margin-top:50px;">Western Union - Summary Report (${format(
-        pickedDate,
-        "d MMMM yyyy"
-      )})</h2>
-      <table style="${tableStyle}">
-    `;
+      row.eachCell(cell => {
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+      });
+    });
+
+    wsEmp.columns.forEach(col => col.width = 18);
+
+    wsEmp.views = [{ state: 'frozen', ySplit: 2 }];
+
+    // ------------------ SHEET 2: WU Summary ------------------
+    const wsSum = wb.addWorksheet('WU Summary');
 
     const sumHeaders = ["Country", "City", "Employee", "Contractors", "Total"];
-    html += "<thead><tr>";
-    sumHeaders.forEach((h) => (html += `<th style="${thStyle}">${h}</th>`));
-    html += "</tr></thead><tbody>";
 
-    (partitionRows || []).forEach((r) => {
-      html += "<tr>";
-      html += `<td style="${tdStyle}">${r.country || ""}</td>`;
-      html += `<td style="${tdStyle}">${r.city || ""}</td>`;
-      html += `<td style="${tdStyle}">${r.employee || 0}</td>`;
-      html += `<td style="${tdStyle}">${r.contractor || 0}</td>`;
-      html += `<td style="${tdBold}">${r.total || 0}</td>`;
-      html += "</tr>";
+    // Title row
+    wsSum.mergeCells(`A1:E1`);
+    const titleCell2 = wsSum.getCell('A1');
+    titleCell2.value = `Western Union - Summary Report (${format(pickedDate, "d MMMM yyyy")})`;
+    titleCell2.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell2.font = { bold: true, size: 14 };
+
+    // Header row
+    const hdrRow2 = wsSum.addRow(sumHeaders);
+    hdrRow2.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
     });
 
-    // Totals
-    const totalEmp = (partitionRows || []).reduce(
-      (s, r) => s + (r.employee || 0),
-      0
-    );
-    const totalCont = (partitionRows || []).reduce(
-      (s, r) => s + (r.contractor || 0),
-      0
-    );
-    const totalAll = (partitionRows || []).reduce(
-      (s, r) => s + (r.total || 0),
-      0
-    );
+    // Data rows
+    (partitionRows || []).forEach(r => {
+      const row = wsSum.addRow([
+        r.country || '',
+        r.city || '',
+        r.employee || 0,
+        r.contractor || 0,
+        r.total || 0
+      ]);
 
-    html += `
-      <tr style="background-color:#666; color:#fff;">
-        <td colspan="2" style="${tdBold} text-align:right;">Total</td>
-        <td style="${tdBold}">${totalEmp}</td>
-        <td style="${tdBold}">${totalCont}</td>
-        <td style="${tdBold}">${totalAll}</td>
-      </tr>
-    `;
+      row.eachCell((cell, colNumber) => {
+        cell.alignment = { horizontal: colNumber >= 3 ? 'center' : 'left', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        };
+        if (colNumber === 5) cell.font = { bold: true };
+      });
+    });
 
-    html += "</tbody></table></body></html>";
+    wsSum.columns.forEach(col => col.width = 18);
 
-    // ================= DOWNLOAD =================
+    // ------------------ SAVE FILE ------------------
     const cityName = backendFilterKey
       ? Object.keys(apacPartitionDisplay).find(
-          (code) =>
-            apacForwardKey[code] === backendFilterKey || code === backendFilterKey
+          code => apacForwardKey[code] === backendFilterKey || code === backendFilterKey
         )
-      : "";
-    const city = cityName
-      ? apacPartitionDisplay[cityName]?.city || backendFilterKey
-      : "";
+      : '';
+    const city = cityName ? apacPartitionDisplay[cityName]?.city || backendFilterKey : '';
 
     const filename = city
-      ? `Western Union APAC (${city}) Headcount Report - ${format(
-          pickedDate,
-          "d MMMM yyyy"
-        )}.xls`
-      : `Western Union APAC Headcount Report - ${format(
-          pickedDate,
-          "d MMMM yyyy"
-        )}.xls`;
+      ? `Western Union APAC (${city}) Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`
+      : `Western Union APAC Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`;
 
-    const blob = new Blob([html], {
-      type: "application/vnd.ms-excel;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const buf = await wb.xlsx.writeBuffer();
+    saveAs(new Blob([buf]), filename);
+
   } catch (err) {
-    console.error("handleExport (HTML) error:", err);
+    console.error('handleExport ExcelJS error:', err);
   }
 };
