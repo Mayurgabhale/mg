@@ -1,435 +1,132 @@
-when i filte to city, and download that time not change  that time not change  excle sheet name check why, and i want this ok 
-const handleExport = async () => {
-    if (!pickedDate) return;
+this is our chart i want to add border and creae more atractive chart ok wht more professal lookig ok 
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  LabelList,
+  Cell
+} from 'recharts';
 
-    try {
-      const excelModule = await import('exceljs');
-      const Excel = excelModule.default || excelModule;
-      let wb;
+import buildingCapacities from '../data/buildingCapacities';
+import floorCapacities from '../data/floorCapacities';
 
-      if (Excel && Excel.Workbook) wb = new Excel.Workbook();
-      else if (typeof Excel === 'function') wb = new Excel();
-      else throw new Error('ExcelJS Workbook constructor not found');
+const DARK_TO_LIGHT = [
+  '#FFD666', '#FFE599', '#FFF2CC', '#FFE599', '#E0E1DD',
+  '#FFD666', '#FFEE8C', '#F8DE7E', '#FBEC5D', '#F0E68C',
+  '#FFEE8C', '#21325E', '#415A77', '#6A7F9A', '#B0C4DE',
+  '#1A1F36', '#2B3353', '#4C6482', '#7B90B2', '#CAD3E9'
+];
 
-      // ---------- SHEET 1: WU Employee ----------
-      const wsDetails = wb.addWorksheet('WU Employee');
+function CompositeChartCard({
+  title,
+  data,
+  lineColor = '#fff',
+  height = 350,
+  animationDuration,
+  animationEasing,
+  sx
+}) {
+  const enriched = useMemo(() => {
+    return data.map((d, i) => ({
+      ...d,
+      percentage: d.capacity ? Math.round(d.headcount / d.capacity * 100) : 0,
+      _color: DARK_TO_LIGHT[i % DARK_TO_LIGHT.length]
+    }));
+  }, [data]);
 
-      // Headers
-      const detailsHeaders = [
-        'Sr.No', 'Date', 'Time',
-        'Employee Name', 'Employee ID', 'Personal Type',
-        'Door Name', 'Location'
-      ];
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <Card sx={{ border: `1px solid #fff`, bgcolor: 'rgba(0,0,0,0.4)', ...sx }}>
+        <CardContent>
+          <Typography variant="subtitle1" align="center" color="text.secondary">
+            {title}
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
+            No realtime employee data
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
 
-      // Title row
-      wsDetails.mergeCells(`A1:${String.fromCharCode(64 + detailsHeaders.length)}1`);
-      const detailsTitle = wsDetails.getCell('A1');
-      detailsTitle.value = `${format(pickedDate, 'EEEE, d MMMM, yyyy')}`;
-      detailsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-      detailsTitle.font = { name: 'Calibri', size: 12, bold: true };
+  const totalHeadcount = enriched.reduce((sum, d) => sum + (d.headcount || 0), 0);
+  const totalCapacity = enriched.reduce((sum, d) => sum + (d.capacity || 0), 0);
+  const avgUsage = totalCapacity ? Math.round((totalHeadcount / totalCapacity) * 100) : 0;
 
-      // Header row
-      const hdrRow = wsDetails.addRow(detailsHeaders);
-      hdrRow.eachCell(cell => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC107' } };
-        cell.font = { bold: true, color: { argb: 'FF000000' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      });
+  return (
+    <Card sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'rgba(0,0,0,0.4)', transition: 'transform 0.3s, box-shadow 0.3s', '&:hover': { transform: 'scale(1.02)', boxShadow: '0 4px 12px rgba(0,0,0,0.7)' }, ...sx }}>
+      <CardContent sx={{ p: 1 }}>
+        <Typography variant="subtitle1" align="center" gutterBottom sx={{ color: '#FFC107' }}>
+          {title}
+        </Typography>
+        <Box sx={{ width: '100%', height }}>
+          <ResponsiveContainer>
+            <ComposedChart data={enriched} margin={{ top: 15, right: 20, left: 0, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)"
+                tickFormatter={label => {
+                  const str = String(label || '');
+                  const n = parseInt((str.match(/\d+/) || [])[0], 10);
+                  if (!isNaN(n)) {
+                    if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+                    switch (n % 10) {
+                      case 1: return `${n}st`;
+                      case 2: return `${n}nd`;
+                      case 3: return `${n}rd`;
+                      default: return `${n}th`;
+                    }
+                  }
+                  return str;
+                }}
+              />
+              <YAxis yAxisId="left" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)" />
+              <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)" domain={[0, 100]} tickFormatter={v => `${v}%`} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#FFD666', borderColor: lineColor, padding: 8 }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div style={{ backgroundColor: '#FFD666', border: `1px solid ${lineColor}`, borderRadius: 4, padding: 8 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
+                      <div>Headcount: {d.headcount}</div>
+                      <div>Usage %: {d.percentage}%</div>
+                      <div>Seat Capacity: {d.capacity}</div>
+                    </div>
+                  );
+                }}
+              />
+              <Bar yAxisId="left" dataKey="headcount" name="Headcount" barSize={700} isAnimationActive={false}>
+                {enriched.map((e, i) => <Cell key={i} fill={e._color} />)}
+                <LabelList dataKey="headcount" position="top" formatter={v => `${v}`} style={{ fill: '#fff', fontSize: 15, fontWeight: 700 }} />
 
-      // Data rows
-      (detailRows || []).forEach((r, i) => {
-        const dateVal = (r.LocaleMessageTime?.slice(0, 10)) || (r.SwipeDate?.slice(0, 10)) || '';
-        const timeVal = formatApiTime12(r.LocaleMessageTime) || '';
-        const name = r.ObjectName1 || '';
-        const empId = r.EmployeeID || '';
-        const ptype = r.PersonnelType || '';
-        const door = r.Door || r.ObjectName2 || '';
-        const location = r.PartitionName2 || r.PrimaryLocation || '';
+                <LabelList dataKey="percentage" position="inside" formatter={v => `${v}%`} style={{ fill: '#EE4B2B', fontSize: 14, fontWeight: 700 }} />
+              </Bar>
+              <Line yAxisId="right" type="monotone" dataKey="percentage" name="Usage %" stroke="#FF0000" strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line yAxisId="left" type="monotone" 
+              
+               name="Total Seats" stroke="#81C784" strokeDasharray="5 5" dot={false} isAnimationActive={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, alignItems: 'center', mb: 1, fontWeight: 'bold', fontSize: 16 }}>
+          <Box sx={{ color: '#FFD700' }}>Total Headcount: {totalHeadcount}</Box>
+          <Box sx={{ color: '#4CAF50' }}>Total Seats: {totalCapacity}</Box>
+          <Box sx={{ color: '#FF4C4C' }}>Usage: {avgUsage}%</Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
 
-        const row = wsDetails.addRow([i + 1, dateVal, timeVal, name, empId, ptype, door, location]);
-
-        row.eachCell((cell, colNumber) => {
-          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-          cell.font = { name: 'Calibri', size: 12 };
-          cell.alignment = colNumber === 1 ? { horizontal: 'center', vertical: 'middle' } : { horizontal: 'left', vertical: 'middle' };
-        });
-
-        if (i % 2 === 1) {
-          row.eachCell(cell => {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
-          });
-        }
-      });
-
-      // Auto-width columns
-      wsDetails.columns.forEach((col, idx) => {
-        let maxLen = 0;
-        col.eachCell({ includeEmpty: true }, c => {
-          const v = c.value === null || c.value === undefined ? '' : String(c.value).trim();
-          if (v.length > maxLen) maxLen = v.length;
-        });
-        let width = maxLen + 2;
-
-        if (idx === 0) width = Math.min(Math.max(width, 6), 10);
-        else if (idx === 1) width = Math.min(Math.max(width, 10), 15);
-        else if (idx === 2) width = Math.min(Math.max(width, 8), 12);
-        else if (idx === 3) width = Math.min(Math.max(width, 15), 30);
-        else if (idx === 4) width = Math.min(Math.max(width, 10), 18);
-        else if (idx === 5) width = Math.min(Math.max(width, 12), 20);
-        else if (idx === 6) width = Math.min(Math.max(width, 18), 40);
-        else if (idx === 7) width = Math.min(Math.max(width, 18), 40);
-
-        col.width = width;
-      });
-
-      wsDetails.views = [{ state: 'frozen', ySplit: 2 }];
-
-      // Outer border for WU Employee
-      const firstDetailRow = 2;
-      const lastDetailRow = wsDetails.lastRow.number;
-      const firstDetailCol = 1;
-      const lastDetailCol = detailsHeaders.length;
-
-      for (let r = firstDetailRow; r <= lastDetailRow; r++) {
-        for (let c = firstDetailCol; c <= lastDetailCol; c++) {
-          const cell = wsDetails.getCell(r, c);
-          const border = { ...cell.border };
-          if (r === firstDetailRow) border.top = { style: 'medium' };
-          if (r === lastDetailRow) border.bottom = { style: 'medium' };
-          if (c === firstDetailCol) border.left = { style: 'medium' };
-          if (c === lastDetailCol) border.right = { style: 'medium' };
-          cell.border = border;
-        }
-      }
-
-      wsDetails.pageSetup = {
-        horizontalCentered: true,
-        verticalCentered: false,
-        orientation: 'landscape',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        margins: { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
-      };
-
-      // ---------- SHEET 2: WU Summary ----------
-      const ws = wb.addWorksheet('WU Summary');
-
-      // Header Row 1
-      const r1 = ws.addRow(['Country', 'City', format(pickedDate, 'EEEE, d MMMM, yyyy'), null, null]);
-      ws.mergeCells('C1:E1');
-      const dateCell = ws.getCell('C1');
-      dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      dateCell.font = { bold: true, size: 12 };
-      dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-
-
-      r1.eachCell((cell, colNumber) => {
-        if (colNumber <= 2) { // Bold Country and City
-          cell.font = { bold: true, size: 12 };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-        } else if (colNumber === 3) { // Date cell is merged C1:E1
-          cell.font = { bold: true, size: 12 };
-          cell.alignment = { horizontal: 'center', vertical: 'middle' };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-        }
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      });
-
-      // Header Row 2
-      const r2 = ws.addRow(['', '', 'Employee', 'Contractors', 'Total']);
-      r2.eachCell(cell => {
-        cell.font = { bold: true, size: 12 };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      });
-
-      // Data Rows
-      (partitionRows || []).forEach(r => {
-        const row = ws.addRow([r.country || '', r.city || '', r.employee || 0, r.contractor || 0, r.total || 0]);
-        row.eachCell((cell, colNumber) => {
-          cell.alignment = { vertical: 'middle', horizontal: colNumber >= 3 ? 'center' : 'left' };
-          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-          if (colNumber === 5) {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } };
-            cell.font = { bold: true, size: 12 };
-          }
-        });
-      });
-
-      // Totals Row
-      const totalEmployees = (partitionRows || []).reduce((s, r) => s + (r.employee || 0), 0);
-      const totalContractors = (partitionRows || []).reduce((s, r) => s + (r.contractor || 0), 0);
-      const totalTotals = (partitionRows || []).reduce((s, r) => s + (r.total || 0), 0);
-
-      const totalsRow = ws.addRow(['Total', '', totalEmployees, totalContractors, totalTotals]);
-      totalsRow.eachCell((cell) => {
-        cell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF808080' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
-      });
-
-      // Auto-fit columns
-      ws.columns.forEach(col => {
-        let maxLen = 6;
-        col.eachCell({ includeEmpty: true }, c => {
-          const v = c.value ? String(c.value) : '';
-          maxLen = Math.max(maxLen, v.length + 2);
-        });
-        col.width = Math.min(Math.max(maxLen, 10), 40);
-      });
-
-      // Freeze headers
-      ws.views = [{ state: 'frozen', ySplit: 2 }];
-
-      // Outer border for Summary
-      const firstRow = 1;
-      const lastRow = ws.lastRow.number;
-      const firstCol = 1;
-      const lastCol = 5;
-
-      for (let r = firstRow; r <= lastRow; r++) {
-        for (let c = firstCol; c <= lastCol; c++) {
-          const cell = ws.getCell(r, c);
-          const border = { ...cell.border };
-          if (r === firstRow) border.top = { style: 'medium' };
-          if (r === lastRow) border.bottom = { style: 'medium' };
-          if (c === firstCol) border.left = { style: 'medium' };
-          if (c === lastCol) border.right = { style: 'medium' };
-          cell.border = border;
-        }
-      }
-
-      ws.pageSetup = {
-        orientation: 'landscape',
-        fitToPage: true,
-        fitToWidth: 1,
-        fitToHeight: 0,
-        horizontalCentered: true,
-        verticalCentered: false,
-        margins: { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
-      };
-
-      // ---------- Save file ----------
-
-      // Determine city name for filename
-      let cityName = '';
-      if (backendFilterKey) {
-        const fe = Object.keys(apacPartitionDisplay).find(
-          code => apacForwardKey[code] === backendFilterKey || code === backendFilterKey
-        );
-        cityName = fe ? apacPartitionDisplay[fe].city : backendFilterKey;
-      }
-
-      // Build dynamic filename
-      const filename = cityName
-        ? `Western Union APAC (${cityName}) Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`
-        : `Western Union APAC Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`;
-
-      // Save file
-      const buf = await wb.xlsx.writeBuffer();
-      saveAs(new Blob([buf]), filename);
-
-    } catch (err) {
-      console.error('handleExport error:', err);
-    }
-  };
+export default React.memo(CompositeChartCard, (prev, next) =>
+  isEqual(prev.data, next.data) &&
+  prev.lineColor === next.lineColor &&
+  prev.height === next.height
+);
 
 
-  {/* Right: NEW company-level table (same style) */}
-              <Box sx={{ flex: 1, minWidth: 320 }}>
-                <Paper elevation={3} sx={{ p: 3, border: '3px solid #000', borderRadius: 2 }}>
-                  <TableContainer sx={{ maxHeight: 280, overflowY: 'auto' }}>
-                    <Table sx={{ border: '2px solid #000' }} size="small">
-
-
-
-                      <TableHead>
-                        <TableRow>
-                          <TableCell
-                            colSpan={4}
-                            align="center"
-                            sx={{
-                              fontWeight: "bold",
-                              fontSize: 16,
-                              bgcolor: "#000",
-                              color: "#FFC107",
-                              border: "2px solid #000",
-                            }}
-                          >
-                            {format(pickedDate, "EEEE, d MMMM, yyyy")}
-                          </TableCell>
-                        </TableRow>
-
-                        <TableRow sx={{ bgcolor: "#FFC107" }}>
-                          <TableCell
-                            align="left"
-                            sx={{
-                              color: "#000",
-                              fontWeight: "bold",
-                              fontSize: 14,
-                              border: "2px solid #000",
-                            }}
-                          >
-                            Country
-                          </TableCell>
-
-                          <TableCell
-                            align="left"
-                            sx={{
-                              color: "#000",
-                              fontWeight: "bold",
-                              fontSize: 14,
-                              border: "2px solid #000",
-                            }}
-                          >
-                            City
-                          </TableCell>
-
-                          <TableCell
-                            align="left"
-                            sx={{
-                              color: "#000",
-                              fontWeight: "bold",
-                              fontSize: 14,
-                              border: "2px solid #000",
-                            }}
-                          >
-                            Company
-                          </TableCell>
-
-                          <TableCell
-                            align="center"
-                            sx={{
-                              color: "#000",
-                              fontWeight: "bold",
-                              fontSize: 14,
-                              border: "2px solid #000",
-                            }}
-                          >
-                            Total
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-
-                      <TableBody>
-                        {companyRows.length > 0 ? (
-                          companyRows.map((r, i) => {
-                            const rowKey = makeCompanyKey(r.country, r.city, r.company);
-                            return (
-                              <TableRow
-                                key={`${r.company}-${i}`}
-                                onClick={() => {
-                                  if (selectedCompany === rowKey) {
-                                    setSelectedCompany(null);
-                                    setShowDetails(true);
-                                  } else {
-                                    setSelectedCompany(rowKey);
-                                    setShowDetails(true);
-                                  }
-                                }}
-                                sx={{
-                                  cursor: "pointer",
-                                  "&:hover": { backgroundColor: "#474747" },
-                                  ...(selectedCompany === rowKey
-                                    ? { backgroundColor: "#474747" }
-                                    : {}),
-                                }}
-                                tabIndex={0}
-                                role="button"
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    if (selectedCompany === rowKey) {
-                                      setSelectedCompany(null);
-                                      setShowDetails(true);
-                                    } else {
-                                      setSelectedCompany(rowKey);
-                                      setShowDetails(true);
-                                    }
-                                  }
-                                }}
-                              >
-                                <TableCell sx={{ border: "2px solid #000" }}>{r.country}</TableCell>
-                                <TableCell sx={{ border: "2px solid #000" }}>{r.city}</TableCell>
-                                <TableCell sx={{ border: "2px solid #000" }}>{r.company}</TableCell>
-                                <TableCell
-                                  align="right"
-                                  sx={{
-                                    bgcolor: "#FFC107",
-                                    fontWeight: "bold",
-                                    border: "2px solid #000",
-                                  }}
-                                >
-                                  {r.total}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={4}
-                              sx={{
-                                border: "2px solid #000",
-                                textAlign: "center",
-                                color: "#666",
-                                fontStyle: "italic",
-                              }}
-                            >
-                              No records for this date.
-                            </TableCell>
-                          </TableRow>
-                        )}
-
-                        {/* ✅ Total Row */}
-                        {companyRows.length > 0 && (
-                          <TableRow sx={{ bgcolor: "#666" }}>
-                            <TableCell
-                              colSpan={3}
-                              align="right"
-                              sx={{
-                                color: "#fff",
-                                fontWeight: "bold",
-                                border: "2px solid #000",
-                                fontSize: 15,
-                              }}
-                            >
-                              Total
-                            </TableCell>
-                            <TableCell
-                              align="right"
-                              sx={{
-                                color: "#fff",
-                                fontWeight: "bold",
-                                bgcolor: "#333",
-                                border: "2px solid #000",
-                                fontSize: 15,
-                              }}
-                            >
-                              {companyRows.reduce((s, r) => s + r.total, 0)}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-
-                    </Table>
-                  </TableContainer>
-                </Paper>
-
-                <Box display="flex" justifyContent="center" sx={{ mt: 1 }}>
-                  <Button
-                    variant="contained"
-                    sx={{ bgcolor: '#FFC107', color: '#000' }}
-                    onClick={handleExportCompanies}
-                  >
-                    Export Companies to Excel
-                  </Button>
-
-
-                </Box>
-
-              </Box>
