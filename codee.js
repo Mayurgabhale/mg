@@ -1,96 +1,174 @@
-exports.fetchHistoricalData = async ({ location = null }) => {
-  const pool = await poolPromise;
+i want city not country ok 
+<TableHead>
+                        <TableRow>
+                          <TableCell
+                            colSpan={selectedSummaryPartition ? 3 : 4}
+                            align="center"
+                            sx={{
+                              fontWeight: "bold",
+                              fontSize: 16,
+                              bgcolor: "#000",
+                              color: "#FFC107",
+                              border: "2px solid #000",
+                            }}
+                          >
+                            {format(pickedDate, "EEEE, d MMMM, yyyy")}
+                          </TableCell>
+                        </TableRow>
 
-  // 1. Get all ACVSUJournal_* database names dynamically
-  const dbResult = await pool.request().query(`
-    SELECT name 
-    FROM sys.databases
-    WHERE name LIKE 'ACVSUJournal[_]%'
-    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
-  `);
+                        <TableRow sx={{ bgcolor: "#FFC107" }}>
+                          {/* Header columns adjust dynamically */}
+                          <TableCell
+                            align="left"
+                            sx={{
+                              color: "#000",
+                              fontWeight: "bold",
+                              fontSize: 14,
+                              border: "2px solid #000",
+                            }}
+                          >
+                            Country
+                          </TableCell>
 
-  // Map DBs and pick last 2 only
-  const databases = dbResult.recordset.map(r => r.name);
-  const selectedDbs = databases.slice(-2); // newest and previous
+                          {!selectedSummaryPartition && (
+                            <TableCell
+                              align="left"
+                              sx={{
+                                color: "#000",
+                                fontWeight: "bold",
+                                fontSize: 14,
+                                border: "2px solid #000",
+                              }}
+                            >
+                              City
+                            </TableCell>
+                          )}
 
-  if (selectedDbs.length === 0) {
-    throw new Error("No ACVSUJournal_* databases found.");
-  }
+                          <TableCell
+                            align="left"
+                            sx={{
+                              color: "#000",
+                              fontWeight: "bold",
+                              fontSize: 14,
+                              border: "2px solid #000",
+                            }}
+                          >
+                            Company
+                          </TableCell>
 
-  // 2. Outer filter
-  const outerFilter = location
-    ? `WHERE PartitionNameFriendly = @location`
-    : `WHERE PartitionNameFriendly IN (${quoteList([
-        'Pune','Quezon City','JP.Tokyo','MY.Kuala Lumpur','Taguig City','IN.HYD'
-      ])})`;
+                          <TableCell
+                            align="center"
+                            sx={{
+                              color: "#000",
+                              fontWeight: "bold",
+                              fontSize: 14,
+                              border: "2px solid #000",
+                            }}
+                          >
+                            Total
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
 
-  // 3. Build UNION ALL query across selected DBs only
-  const unionQueries = selectedDbs.map(db => `
-    SELECT
-      DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-      t1.ObjectName1,
-      t1.ObjectName2               AS Door,
-      CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-      t3.Name                      AS PersonnelType,
-      t1.ObjectIdentity1           AS PersonGUID,
-     t2.Text4                   AS CompanyName,   -- ✅ company
-     t2.Text5                   AS PrimaryLocation, -- ✅ location
-      COALESCE(
-        CASE
-          WHEN t1.ObjectName2 LIKE 'APAC_PI%'   THEN 'Taguig City'
-          WHEN t1.ObjectName2 LIKE 'APAC_PH%'   THEN 'Quezon City'
-          WHEN t1.ObjectName2 LIKE '%PUN%'      THEN 'Pune'
-          WHEN t1.ObjectName2 LIKE 'APAC_JPN%'  THEN 'JP.Tokyo'
-          WHEN t1.ObjectName2 LIKE 'APAC_MY%'   THEN 'MY.Kuala Lumpur'
-          WHEN t1.ObjectName2 LIKE 'APAC_HYD%'   THEN 'IN.HYD'
-          ELSE t1.PartitionName2
-        END,
-        'APAC.Default'
-      ) AS PartitionNameFriendly,
+                      <TableBody>
+                        {companyRows.length > 0 ? (
+                          companyRows.map((r, i) => {
+                            const rowKey = makeCompanyKey(r.country, r.city, r.company);
+                            return (
+                              <TableRow
+                                key={`${r.company}-${i}`}
+                                onClick={() => {
+                                  if (selectedCompany === rowKey) {
+                                    setSelectedCompany(null);
+                                    setShowDetails(true);
+                                  } else {
+                                    setSelectedCompany(rowKey);
+                                    setShowDetails(true);
+                                  }
+                                }}
+                                sx={{
+                                  cursor: "pointer",
+                                  "&:hover": { backgroundColor: "#474747" },
+                                  ...(selectedCompany === rowKey
+                                    ? { backgroundColor: "#474747" }
+                                    : {}),
+                                }}
+                                tabIndex={0}
+                                role="button"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    if (selectedCompany === rowKey) {
+                                      setSelectedCompany(null);
+                                      setShowDetails(true);
+                                    } else {
+                                      setSelectedCompany(rowKey);
+                                      setShowDetails(true);
+                                    }
+                                  }
+                                }}
+                              >
+                                <TableCell sx={{ border: "2px solid #000" }}>{r.country}</TableCell>
+                                {!selectedSummaryPartition && (
+                                  <TableCell sx={{ border: "2px solid #000" }}>{r.city}</TableCell>
+                                )}
+                                <TableCell sx={{ border: "2px solid #000" }}>{r.company}</TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    bgcolor: "#FFC107",
+                                    fontWeight: "bold",
+                                    border: "2px solid #000",
+                                  }}
+                                >
+                                  {r.total}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={selectedSummaryPartition ? 3 : 4}
+                              sx={{
+                                border: "2px solid #000",
+                                textAlign: "center",
+                                color: "#666",
+                                fontStyle: "italic",
+                              }}
+                            >
+                              No records for this date.
+                            </TableCell>
+                          </TableRow>
+                        )}
 
-
-
-      COALESCE(
-        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-        sc.value
-      ) AS CardNumber,
-      t5d.value AS Direction
-    FROM ${db}.dbo.ACVSUJournalLog t1
-    JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
-    JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
-
-    LEFT JOIN ${db}.dbo.ACVSUJournalLogxmlShred t5d
-      ON t1.XmlGUID = t5d.GUID 
-      AND t5d.Value IN ('InDirection','OutDirection')
-
-    LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
-      ON t1.XmlGUID = t_xml.GUID
-
-    LEFT JOIN (
-      SELECT GUID, value
-      FROM ${db}.dbo.ACVSUJournalLogxmlShred
-      WHERE Name IN ('Card','CHUID')
-    ) AS sc
-      ON t1.XmlGUID = sc.GUID
-    WHERE t1.MessageType = 'CardAdmitted'
-  `).join('\nUNION ALL\n');
-
-  // 4. Final query
-  const query = `
-    WITH Hist AS (
-      ${unionQueries}
-    )
-    SELECT *
-    FROM Hist
-    ${outerFilter}
-    ORDER BY LocaleMessageTime ASC;
-  `;
-
-  const req = pool.request();
-  if (location) {
-    req.input('location', sql.NVarChar, location);
-  }
-  const result = await req.query(query);
-  return result.recordset;
-};
+                        {/* ✅ Clean Total Row */}
+                        {companyRows.length > 0 && (
+                          <TableRow sx={{ bgcolor: "#666" }}>
+                            <TableCell
+                              colSpan={selectedSummaryPartition ? 2 : 3}
+                              align="right"
+                              sx={{
+                                color: "#fff",
+                                fontWeight: "bold",
+                                border: "2px solid #000",
+                                fontSize: 15,
+                              }}
+                            >
+                              Total
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{
+                                color: "#fff",
+                                fontWeight: "bold",
+                                bgcolor: "#333",
+                                border: "2px solid #000",
+                                fontSize: 15,
+                              }}
+                            >
+                              {companyRows.reduce((s, r) => s + r.total, 0)}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
