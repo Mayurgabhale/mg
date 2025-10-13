@@ -1,3 +1,5 @@
+ok good,
+  data i want in center and, alos all table i want in center includ maring top and left side, ok like in center 
 const handleExport = () => {
   if (!pickedDate) return;
 
