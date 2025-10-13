@@ -71,20 +71,7 @@ export default function Header() {
     return suffix ? `${base}/${suffix}` : base;
   };
 
-  // const handlePartitionChange = (newPartition) => {
-  //   if (!newPartition) return navigate('/');
-
-  //   if (newPartition === 'Pune' && suffixSegments.length === 0) {
-  //     window.location.href = 'http://10.199.22.57:3011/';
-  //     return;
-  //   }
-
-  //   const base = `/partition/${encodeURIComponent(newPartition)}`;
-  //   const full = suffixSegments.length
-  //     ? `${base}/${suffixSegments.join('/')}`
-  //     : base;
-  //   navigate(full);
-  // };
+  
 
   
   const [selectedPartition, setSelectedPartition] = useState(currentPartition);
@@ -155,11 +142,7 @@ export default function Header() {
 
         {/* Right Section */}
         <Box display="flex" alignItems="center" sx={{ mt: isMobile ? 1 : 0 }}>
-          {/* <Select
-            size={isTablet ? 'small' : 'medium'}
-            value={currentPartition}
-            displayEmpty
-            onChange={(e) => handlePartitionChange(e.target.value)} */}
+        
           <Select
             size={isTablet ? 'small' : 'medium'}
             value={selectedPartition}   // <-- bind to local state
