@@ -1,3 +1,26 @@
+y
+
+
+
+
+
+
+
+const filterAndMap = (json, currentPartition) =>
+  json.details
+    .filter(r =>
+      r.PartitionName2 === currentPartition &&
+      (r.Direction === "InDirection" || r.Direction === "OutDirection")
+    )
+    .map(r => {
+      const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction);
+      return { ...r, floor };
+    })
+    .filter(r => r.floor !== "Unmapped");
+
+
+....
+
 useEffect(() => {
   let active = true;
 
