@@ -4,13 +4,14 @@ const handleExport = () => {
   try {
     const tableStyle = `
       border-collapse: collapse;
-      border: 3px solid #000;
+      border: 2px solid #000;
+      width: 100%;
       text-align: center;
-      margin: 0;
+      margin-bottom: 20px;
     `;
     const thStyle = `
-      border: 2px solid #000;
-      padding: 6px;
+      border: 1px solid #000;
+      padding: 6px 8px;
       font-weight: bold;
       text-align: center;
       background-color: #FFC107;
@@ -18,13 +19,13 @@ const handleExport = () => {
     `;
     const tdStyle = `
       border: 1px solid #000;
-      padding: 5px;
+      padding: 5px 8px;
       text-align: center;
       vertical-align: middle;
     `;
     const tdBold = `
       border: 1px solid #000;
-      padding: 5px;
+      padding: 5px 8px;
       text-align: center;
       font-weight: bold;
       background-color: #f0f0f0;
@@ -34,11 +35,11 @@ const handleExport = () => {
       <html>
         <head><meta charset="UTF-8"></head>
         <body style="font-family: Calibri, Arial, sans-serif;">
-          <table style="${tableStyle}">
+          <table style="width:100%; border:none; border-collapse:collapse;">
             <tr>
-              <!-- Employee Table Cell -->
-              <td style="vertical-align: top; padding-right: 30px;">
-                <h2>Western Union - Employee Report (${format(pickedDate,"d MMMM yyyy")})</h2>
+              <!-- ================= Employee Table (Left) ================= -->
+              <td style="vertical-align: top; width: 60%; padding-right: 20px;">
+                <h2>Western Union - Employee Report (${format(pickedDate, "d MMMM yyyy")})</h2>
                 <table style="${tableStyle}">
                   <thead><tr>
     `;
@@ -47,7 +48,7 @@ const handleExport = () => {
     empHeaders.forEach(h => html += `<th style="${thStyle}">${h}</th>`);
     html += "</tr></thead><tbody>";
 
-    (detailRows || []).forEach((r,i)=>{
+    (detailRows || []).forEach((r, i) => {
       const dateVal = r.LocaleMessageTime?.slice(0,10) || r.SwipeDate?.slice(0,10) || "";
       const timeVal = formatApiTime12(r.LocaleMessageTime) || "";
       const name = r.ObjectName1 || "";
@@ -57,24 +58,24 @@ const handleExport = () => {
       const city = r.City || r.PartitionName1 || "";
       const location = r.PartitionName2 || r.PrimaryLocation || "";
 
-      html += "<tr>";
-      html += `<td style="${tdStyle}">${i+1}</td>`;
-      html += `<td style="${tdStyle}">${dateVal}</td>`;
-      html += `<td style="${tdStyle}">${timeVal}</td>`;
-      html += `<td style="${tdStyle}">${name}</td>`;
-      html += `<td style="${tdStyle}">${empId}</td>`;
-      html += `<td style="${tdStyle}">${ptype}</td>`;
-      html += `<td style="${tdStyle}">${door}</td>`;
-      html += `<td style="${tdStyle}">${city}</td>`;
-      html += `<td style="${tdStyle}">${location}</td>`;
-      html += "</tr>";
+      html += `<tr>
+        <td style="${tdStyle}">${i + 1}</td>
+        <td style="${tdStyle}">${dateVal}</td>
+        <td style="${tdStyle}">${timeVal}</td>
+        <td style="${tdStyle}">${name}</td>
+        <td style="${tdStyle}">${empId}</td>
+        <td style="${tdStyle}">${ptype}</td>
+        <td style="${tdStyle}">${door}</td>
+        <td style="${tdStyle}">${city}</td>
+        <td style="${tdStyle}">${location}</td>
+      </tr>`;
     });
     html += "</tbody></table></td>";
 
-    // ---------------- Summary Table Cell (Right, top-aligned) ----------------
+    // ================= Summary Table (Right) =================
     html += `
-      <td style="vertical-align: top; padding-left: 30px;">
-        <h2>Western Union - Summary Report (${format(pickedDate,"d MMMM yyyy")})</h2>
+      <td style="vertical-align: top; width: 40%; padding-left: 20px;">
+        <h2>Western Union - Summary Report (${format(pickedDate, "d MMMM yyyy")})</h2>
         <table style="${tableStyle}">
           <thead><tr>
     `;
@@ -82,19 +83,19 @@ const handleExport = () => {
     sumHeaders.forEach(h => html += `<th style="${thStyle}">${h}</th>`);
     html += "</tr></thead><tbody>";
 
-    (partitionRows || []).forEach(r=>{
-      html += "<tr>";
-      html += `<td style="${tdStyle}">${r.country || ""}</td>`;
-      html += `<td style="${tdStyle}">${r.city || ""}</td>`;
-      html += `<td style="${tdStyle}">${r.employee || 0}</td>`;
-      html += `<td style="${tdStyle}">${r.contractor || 0}</td>`;
-      html += `<td style="${tdBold}">${r.total || 0}</td>`;
-      html += "</tr>";
+    (partitionRows || []).forEach(r => {
+      html += `<tr>
+        <td style="${tdStyle}">${r.country || ""}</td>
+        <td style="${tdStyle}">${r.city || ""}</td>
+        <td style="${tdStyle}">${r.employee || 0}</td>
+        <td style="${tdStyle}">${r.contractor || 0}</td>
+        <td style="${tdBold}">${r.total || 0}</td>
+      </tr>`;
     });
 
-    const totalEmp = (partitionRows || []).reduce((s,r)=>s+(r.employee||0),0);
-    const totalCont = (partitionRows || []).reduce((s,r)=>s+(r.contractor||0),0);
-    const totalAll = (partitionRows || []).reduce((s,r)=>s+(r.total||0),0);
+    const totalEmp = (partitionRows || []).reduce((s, r) => s + (r.employee || 0), 0);
+    const totalCont = (partitionRows || []).reduce((s, r) => s + (r.contractor || 0), 0);
+    const totalAll = (partitionRows || []).reduce((s, r) => s + (r.total || 0), 0);
 
     html += `<tr style="background-color:#666; color:#fff;">
       <td colspan="2" style="${tdBold} text-align:right;">Total</td>
@@ -107,14 +108,14 @@ const handleExport = () => {
 
     // ================= DOWNLOAD =================
     const cityName = backendFilterKey
-      ? Object.keys(apacPartitionDisplay).find(code=>apacForwardKey[code]===backendFilterKey||code===backendFilterKey)
+      ? Object.keys(apacPartitionDisplay).find(code => apacForwardKey[code] === backendFilterKey || code === backendFilterKey)
       : "";
-    const city = cityName ? apacPartitionDisplay[cityName]?.city||backendFilterKey : "";
+    const city = cityName ? apacPartitionDisplay[cityName]?.city || backendFilterKey : "";
     const filename = city
       ? `Western Union APAC (${city}) Headcount Report - ${format(pickedDate,"d MMMM yyyy")}.xls`
       : `Western Union APAC Headcount Report - ${format(pickedDate,"d MMMM yyyy")}.xls`;
 
-    const blob = new Blob([html], {type:"application/vnd.ms-excel;charset=utf-8;"});
+    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -124,7 +125,7 @@ const handleExport = () => {
     a.remove();
     URL.revokeObjectURL(url);
 
-  } catch(err){
+  } catch(err) {
     console.error("handleExport (HTML) error:", err);
   }
 };
