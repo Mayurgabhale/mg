@@ -37,15 +37,13 @@ const handleExport = () => {
           <table style="${tableStyle}">
             <tr>
               <!-- Employee Table Cell -->
-              <td style="vertical-align: top; padding-right: 20px;">
+              <td style="vertical-align: top; padding-right: 30px;">
                 <h2>Western Union - Employee Report (${format(pickedDate,"d MMMM yyyy")})</h2>
                 <table style="${tableStyle}">
                   <thead><tr>
     `;
 
-    const empHeaders = [
-      "Sr.No","Date","Time","Employee Name","Employee ID","Personal Type","Door Name","City","Location"
-    ];
+    const empHeaders = ["Sr.No","Date","Time","Employee Name","Employee ID","Personal Type","Door Name","City","Location"];
     empHeaders.forEach(h => html += `<th style="${thStyle}">${h}</th>`);
     html += "</tr></thead><tbody>";
 
@@ -73,9 +71,9 @@ const handleExport = () => {
     });
     html += "</tbody></table></td>";
 
-    // ---------------- Summary Table Cell ----------------
+    // ---------------- Summary Table Cell (Right, top-aligned) ----------------
     html += `
-      <td style="vertical-align: top; padding-left: 20px;">
+      <td style="vertical-align: top; padding-left: 30px;">
         <h2>Western Union - Summary Report (${format(pickedDate,"d MMMM yyyy")})</h2>
         <table style="${tableStyle}">
           <thead><tr>
@@ -107,6 +105,7 @@ const handleExport = () => {
 
     html += "</tbody></table></td></tr></table></body></html>";
 
+    // ================= DOWNLOAD =================
     const cityName = backendFilterKey
       ? Object.keys(apacPartitionDisplay).find(code=>apacForwardKey[code]===backendFilterKey||code===backendFilterKey)
       : "";
