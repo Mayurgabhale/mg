@@ -1,4 +1,5 @@
 know i want this page for each device responsive, depend on screen size ok 
+each screen size look better ok 
 // src/pages/PartitionDetailDetails.jsx
 
 import React, { useEffect, useState, useMemo } from "react";
