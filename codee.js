@@ -1,3 +1,19 @@
+
+whin i hover on this icon 
+that time dip;sy
+HomeIcon << Home page
+HistoryIcon <<  history 
+ListAltIcon << live details page ok like that 
+  const navItems = [
+    { icon: <HomeIcon />, label: 'Home', action: () => navigate('/') },
+    { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
+    { icon: <ListAltIcon />, label: 'Details', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
+  ];
+
+
+
+     
+
 // src/components/Header.jsx — Fully Responsive APAC Edition (with Drawer Menu)
 import React, { useEffect, useState } from 'react';
 import {
@@ -146,7 +162,7 @@ export default function Header() {
           {/* --- Right: Desktop Menu or Mobile Drawer Toggle --- */}
           {isMobile ? (
             <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
-              <MenuIcon />
+              <MenuIcon /> 
             </IconButton>
           ) : (
             <Box display="flex" alignItems="center" gap={2}>
@@ -155,7 +171,7 @@ export default function Header() {
                 {navItems.map((item, idx) => (
                   <IconButton key={idx} color="inherit" onClick={item.action}>
                     {item.icon}
-                  </IconButton>
+                  </IconButton> 
                 ))}
               </Box>
 
@@ -166,7 +182,7 @@ export default function Header() {
                 displayEmpty
                 onChange={(e) => handlePartitionChange(e.target.value)}
                 sx={{
-                  bgcolor: 'background.paper',
+                   bgcolor: '#fff',
                   color: '#000',
                   borderRadius: 1,
                   minWidth: 160,
@@ -195,10 +211,7 @@ export default function Header() {
                 ))}
               </Select>
 
-              {/* Last Update */}
-              <Typography variant="body2" sx={{ color: '#FFC107' }}>
-                {lastUpdate || '--:--:--'}
-              </Typography>
+             
             </Box>
           )}
         </Toolbar>
@@ -279,10 +292,7 @@ export default function Header() {
             </Select>
           </Box>
 
-          {/* Last Updated */}
-          <Typography variant="body2" sx={{ mt: 2, color: '#FFC107' }}>
-            Updated: {lastUpdate || '--:--:--'}
-          </Typography>
+         
         </Box>
       </Drawer>
     </>
