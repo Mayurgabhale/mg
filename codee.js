@@ -155,8 +155,9 @@ const exportReportCsv = () => {
     a.remove();
     URL.revokeObjectURL(url);
   };
+ 
 
-
+user html like above for maring top and left sideto and border, and excle sheet i wnat in center ok like above code, use aobve code referecne to  desing the excle sheet ok carefullyn 
 for this handleExport use htm to desing more atractive like above ok 
 
 const handleExport = async () => {
