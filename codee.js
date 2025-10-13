@@ -1,4 +1,5 @@
 this is our chart i want to add border and creae more atractive chart ok wht more professal lookig ok 
+and responsive for each debice and screen size ok 
   ComposedChart,
   Bar,
   Line,
