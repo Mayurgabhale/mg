@@ -1,24 +1,7 @@
-
-whin i hover on this icon 
-that time dip;sy
-HomeIcon << Home page
-HistoryIcon <<  history 
-ListAltIcon << live details page ok like that 
-  const navItems = [
-    { icon: <HomeIcon />, label: 'Home', action: () => navigate('/') },
-    { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
-    { icon: <ListAltIcon />, label: 'Details', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
-  ];
-
-
-
-     
-
-// src/components/Header.jsx — Fully Responsive APAC Edition (with Drawer Menu)
 import React, { useEffect, useState } from 'react';
 import {
   AppBar, Toolbar, Box, Typography,
-  Select, MenuItem, IconButton, Drawer, List, ListItemButton, ListItemIcon, ListItemText, useMediaQuery
+  Select, MenuItem, IconButton, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -66,8 +49,8 @@ export default function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));   // <600px
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg')); // 600–1280px
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
 
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
@@ -110,14 +93,13 @@ export default function Header() {
   };
 
   const navItems = [
-    { icon: <HomeIcon />, label: 'Home', action: () => navigate('/') },
+    { icon: <HomeIcon />, label: 'Home Page', action: () => navigate('/') },
     { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
-    { icon: <ListAltIcon />, label: 'Details', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
+    { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
   ];
 
   return (
     <>
-      {/* ===== APP BAR ===== */}
       <AppBar
         position="static"
         sx={{
@@ -134,24 +116,13 @@ export default function Header() {
             alignItems: 'center',
           }}
         >
-          {/* --- Left: Logo + Title --- */}
+          {/* Left: Logo + Title */}
           <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
-            <Box
-              component="img"
-              src={wuLogo}
-              alt="WU"
-              sx={{
-                height: isMobile ? 28 : 36,
-              }}
-            />
+            <Box component="img" src={wuLogo} alt="WU" sx={{ height: isMobile ? 28 : 36 }} />
             {!isMobile && (
               <Typography
                 variant={isTablet ? 'h6' : 'h5'}
-                sx={{
-                  color: '#FFC107',
-                  fontWeight: 600,
-                  ml: 1,
-                }}
+                sx={{ color: '#FFC107', fontWeight: 600, ml: 1 }}
               >
                 APAC Occupancy
                 {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
@@ -159,19 +130,21 @@ export default function Header() {
             )}
           </Box>
 
-          {/* --- Right: Desktop Menu or Mobile Drawer Toggle --- */}
+          {/* Right Section */}
           {isMobile ? (
             <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
-              <MenuIcon /> 
+              <MenuIcon />
             </IconButton>
           ) : (
             <Box display="flex" alignItems="center" gap={2}>
-              {/* Icons */}
+              {/* Icons with tooltips */}
               <Box display="flex" alignItems="center" gap={1.5}>
                 {navItems.map((item, idx) => (
-                  <IconButton key={idx} color="inherit" onClick={item.action}>
-                    {item.icon}
-                  </IconButton> 
+                  <Tooltip key={idx} title={item.label} arrow placement="bottom">
+                    <IconButton color="inherit" onClick={item.action}>
+                      {item.icon}
+                    </IconButton>
+                  </Tooltip>
                 ))}
               </Box>
 
@@ -182,7 +155,7 @@ export default function Header() {
                 displayEmpty
                 onChange={(e) => handlePartitionChange(e.target.value)}
                 sx={{
-                   bgcolor: '#fff',
+                  bgcolor: '#fff',
                   color: '#000',
                   borderRadius: 1,
                   minWidth: 160,
@@ -210,39 +183,30 @@ export default function Header() {
                   </MenuItem>
                 ))}
               </Select>
-
-             
             </Box>
           )}
         </Toolbar>
       </AppBar>
 
-      {/* ===== MOBILE DRAWER ===== */}
+      {/* MOBILE DRAWER (unchanged) */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        PaperProps={{
-          sx: { width: 260, background: '#111', color: '#fff' },
-        }}
+        PaperProps={{ sx: { width: 260, background: '#111', color: '#fff' } }}
       >
         <Box sx={{ p: 2 }}>
-          {/* Close Button */}
           <Box display="flex" justifyContent="flex-end">
             <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#FFC107' }}>
               <CloseIcon />
             </IconButton>
           </Box>
-
-          {/* Logo & Title */}
           <Box display="flex" alignItems="center" mb={2}>
             <Box component="img" src={wuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
             <Typography variant="h6" sx={{ color: '#FFC107' }}>
               APAC Occupancy
             </Typography>
           </Box>
-
-          {/* Navigation */}
           <List>
             {navItems.map((item, i) => (
               <ListItemButton key={i} onClick={() => { item.action(); setDrawerOpen(false); }}>
@@ -251,8 +215,6 @@ export default function Header() {
               </ListItemButton>
             ))}
           </List>
-
-          {/* Site Selector */}
           <Box mt={2}>
             <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>
               Select Site
@@ -291,8 +253,6 @@ export default function Header() {
               ))}
             </Select>
           </Box>
-
-         
         </Box>
       </Drawer>
     </>
