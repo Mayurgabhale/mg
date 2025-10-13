@@ -1,28 +1,22 @@
-// ================= SHEET 2: WU Summary ================= 
-ok this second i want right side not in bottom 
-
-
 const handleExport = () => {
   if (!pickedDate) return;
 
   try {
-    // Styles for Excel-friendly HTML
     const pageStyle = `
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
+      flex-direction: row; /* side by side */
+      align-items: flex-start;
+      justify-content: center;
       margin-top: 40px;
       margin-left: 50px;
       margin-right: 50px;
-      text-align: center;
       font-family: Calibri, Arial, sans-serif;
     `;
     const tableStyle = `
       border-collapse: collapse;
       border: 3px solid #000;
       text-align: center;
-      margin: 20px 50px;
+      margin: 0 20px;
     `;
     const thStyle = `
       border: 2px solid #000;
@@ -50,15 +44,14 @@ const handleExport = () => {
       <html>
         <head><meta charset="UTF-8"></head>
         <body style="${pageStyle}">
-    `;
-
-    // ================= SHEET 1: WU Employee =================
-    html += `
-      <h2 style="text-align:center;">Western Union - Employee Report (${format(
-        pickedDate,
-        "d MMMM yyyy"
-      )})</h2>
-      <table style="${tableStyle}">
+          <div style="display:flex; flex-direction:row; align-items:flex-start; justify-content:center;">
+            <!-- Employee Table -->
+            <div>
+              <h2 style="text-align:center;">Western Union - Employee Report (${format(
+                pickedDate,
+                "d MMMM yyyy"
+              )})</h2>
+              <table style="${tableStyle}">
     `;
 
     const empHeaders = [
@@ -73,12 +66,10 @@ const handleExport = () => {
       "Location",
     ];
 
-    // Header
     html += "<thead><tr>";
     empHeaders.forEach((h) => (html += `<th style="${thStyle}">${h}</th>`));
     html += "</tr></thead><tbody>";
 
-    // Rows
     (detailRows || []).forEach((r, i) => {
       const dateVal =
         r.LocaleMessageTime?.slice(0, 10) || r.SwipeDate?.slice(0, 10) || "";
@@ -103,15 +94,16 @@ const handleExport = () => {
       html += "</tr>";
     });
 
-    html += "</tbody></table>";
+    html += "</tbody></table></div>"; // end Employee table div
 
-    // ================= SHEET 2: WU Summary =================
+    // ------------------ Summary Table (Right Side) ------------------
     html += `
-      <h2 style="text-align:center; margin-top:50px;">Western Union - Summary Report (${format(
-        pickedDate,
-        "d MMMM yyyy"
-      )})</h2>
-      <table style="${tableStyle}">
+      <div style="margin-left:40px;">
+        <h2 style="text-align:center;">Western Union - Summary Report (${format(
+          pickedDate,
+          "d MMMM yyyy"
+        )})</h2>
+        <table style="${tableStyle}">
     `;
 
     const sumHeaders = ["Country", "City", "Employee", "Contractors", "Total"];
@@ -129,7 +121,6 @@ const handleExport = () => {
       html += "</tr>";
     });
 
-    // Totals
     const totalEmp = (partitionRows || []).reduce(
       (s, r) => s + (r.employee || 0),
       0
@@ -152,7 +143,7 @@ const handleExport = () => {
       </tr>
     `;
 
-    html += "</tbody></table></body></html>";
+    html += "</tbody></table></div></div></body></html>";
 
     // ================= DOWNLOAD =================
     const cityName = backendFilterKey
