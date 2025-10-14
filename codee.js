@@ -4,7 +4,13 @@ HISTORY PAGE TAKE  THAT 2:39:71 MUVH TTIM TO LODING THE PAGE,
   what we do, and plese to this carefully, 
   page only take 3 to 5 seconds to loding the page onl not more 
 
-
+src\pages\History.jsx
+  Line 2724:22:  Unnecessary escape character: \/                                                                                                                                                   no-useless-escape
+  Line 2724:24:  Unnecessary escape character: \-                                                                                                                                                   no-useless-escape
+  Line 2846:6:   React Hook useEffect has missing dependencies: 'CACHE_TTL_MS', 'backendFilterKey', 'loadHistoryCache', and 'saveHistoryCache'. Either include them or remove the dependency array  react-hooks/exhaustive-deps        
+  Line 2982:6:   React Hook useMemo has a missing dependency: 'getCanonicalCompany'. Either include it or remove the dependency array                                                               react-hooks/exhaustive-deps        
+  Line 3031:6:   React Hook useMemo has a missing dependency: 'getCanonicalCompany'. Either include it or remove the dependency array                                                               react-hooks/exhaustive-deps        
+  Line 3465:9:   'companyColSpan' is assigned a value but never used  
 
 ========
 import React, { useEffect, useState, useMemo } from 'react';
