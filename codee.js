@@ -1,12 +1,6 @@
-
-i want this responsive for each and every device i measn responsvei for each screen size,
-  dot chagne anything just write responsvie code, ok 
-carefully, dont chagne anythinkgs ok 
-
-omly i want responisve code ok. 
-//C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\Dashboard.jsx
+// src/pages/Dashboard.jsx
 import React, { useMemo } from 'react';
-import {Container, Box, Typography, Skeleton,Paper} from '@mui/material';
+import {Container, Box, Typography, Skeleton,Paper, useTheme, useMediaQuery} from '@mui/material';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -61,8 +55,14 @@ export default function Dashboard() {
   const regions = data?.realtime || {};
 
 
-  
-  
+  // responsive helpers
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));      // <600
+  const isSm = useMediaQuery(theme.breakpoints.between('sm','md')); // 600-959
+  const isMd = useMediaQuery(theme.breakpoints.between('md','lg')); // 960-1279
+  const isLgUp = useMediaQuery(theme.breakpoints.up('lg'));       // >=1280
+
+
   const partitions = useMemo(() => {
   return partitionList
     .map(name => {
@@ -95,8 +95,8 @@ export default function Dashboard() {
     })
     .sort((a, b) => b.total - a.total);
 }, [regions]);
-  
-  
+
+
   const todayTot = data?.today?.total || 0;
   const todayEmp = data?.today?.Employee || 0;
   const todayCont = data?.today?.Contractor || 0;
@@ -280,13 +280,35 @@ export default function Dashboard() {
         disableGutters
         sx={{
           py: 0,
-          px: 2,
+          px: { xs: 1, sm: 2, md: 3, lg: 4 },
           background: 'linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)',
           color: '#f5f5f5',
         }}
       >
         {/* Top Summary Cards */}
-        <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+        <Box
+          display="flex"
+          flexWrap="wrap"
+          gap={1}
+          mb={1}
+          sx={{
+            // On xs: 1 column; sm: 2 columns-ish; md+: show 6 across if space
+            '& > div': {
+              flex: {
+                xs: '1 1 100%',
+                sm: '1 1 calc(50% - 8px)',
+                md: '1 1 calc(33.333% - 12px)',
+                lg: '1 1 calc(16.66% - 12px)'
+              },
+              minWidth: {
+                xs: '100%',
+                sm: '220px',
+                md: '220px',
+                lg: '180px'
+              }
+            }
+          }}
+        >
           {[
             { title: "Today's Total Headcount", value: todayTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
             { title: "Today's Employees Count", value: todayEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#8BC34A' },
@@ -295,32 +317,65 @@ export default function Dashboard() {
             { title: "Realtime Employees Count", value: realtimeEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#AED581' },
             { title: "Realtime Contractors Count", value: realtimeCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#EF5350' },
           ].map(c => (
-            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+            <Box key={c.title} sx={{}}>
               <SummaryCard
                 title={c.title}
                 total={c.value}
                 stats={[]}
                 icon={c.icon}
-                sx={{ height: 140, border: `2px solid ${c.border}` }}
+                sx={{
+                  height: { xs: 120, sm: 120, md: 140 },
+                  border: `2px solid ${c.border}`,
+                  px: { xs: 1, sm: 1.5 },
+                  py: { xs: 1, sm: 1.5 }
+                }}
+                titleSx={{ fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}
+                numberSx={{ fontSize: { xs: '1.15rem', sm: '1.4rem', md: '1.6rem' } }}
               />
             </Box>
           ))}
         </Box>
+
         {/* Region Cards */}
-        <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
+        <Box
+          display="flex"
+          flexWrap="wrap"
+          gap={1}
+          mb={3}
+          sx={{
+            '& > div': {
+              flex: {
+                xs: '1 1 100%',
+                sm: '1 1 calc(50% - 8px)',
+                md: '1 1 calc(33.333% - 12px)',
+                lg: '1 1 calc(16.66% - 12px)'
+              },
+              minWidth: {
+                xs: '100%',
+                sm: '240px',
+                md: '240px',
+                lg: '180px'
+              }
+            }
+          }}
+        >
           {loading
             ? <Skeleton variant="rectangular" width="90%" height={200} />
             : partitions.map((p, i) => (
-              <Box key={p.name} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+              <Box key={p.name} sx={{}}>
                 <SummaryCard
-                  // title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>{p.name.replace(/^.*\./, '')}</Typography>}
-                  title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>
+                  title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' } }}>
                      {displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
                     </Typography>}
                   total={p.total}
                   stats={[{ label: 'Employees', value: p.Employee }, { label: 'Contractors', value: p.Contractor }]}
-                  sx={{ width: '100%', border: `2px solid ${palette15[i % palette15.length]}` }}
-                  icon={<Box component="img" src={p.flag} sx={{ width: 48, height: 32 }} />}
+                  sx={{
+                    width: '100%',
+                    border: `2px solid ${palette15[i % palette15.length]}`,
+                    height: { xs: 110, sm: 130, md: 140 },
+                    px: { xs: 1, sm: 1.5 }
+                  }}
+                  icon={<Box component="img" src={p.flag} sx={{ width: { xs: 40, sm: 48 }, height: { xs: 26, sm: 32 } }} />}
                 />
               </Box>
             ))
@@ -328,12 +383,30 @@ export default function Dashboard() {
         </Box>
 
         {/* Main Charts */}
-        <Box display="flex" gap={2} flexWrap="wrap" mb={4}>
+        <Box
+          display="flex"
+          gap={2}
+          flexWrap="wrap"
+          mb={4}
+          sx={{
+            // prefer 3 across on large, 2 across on md, 1 across on small
+            '& > div': {
+              flex: {
+                xs: '1 1 100%',
+                sm: '1 1 calc(50% - 8px)',
+                md: '1 1 calc(50% - 12px)',
+                lg: '1 1 calc(33.333% - 12px)'
+              },
+              minWidth: { xs: '100%', sm: '320px', md: '360px', lg: '320px' },
+              height: { xs: 'auto', sm: 420, md: 405 }
+            }
+          }}
+        >
           {chartConfigs.map(({ key, title, body }) => (
-            <Box key={key} sx={{ flex: '1 1 32%', minWidth: 280, height: 405, animation: 'fadeInUp 0.5s' }}>
-              <Paper sx={{ p: 2, height: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid #FFC107', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 2 }}>{title}</Typography>
-                <Box sx={{ flex: 1, overflow: 'hidden' }}>{body}</Box>
+            <Box key={key} sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Paper sx={{ p: { xs: 1, sm: 2 }, height: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid #FFC107', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 1, fontSize: { xs: '1rem', sm: '1.05rem', md: '1.15rem' } }}>{title}</Typography>
+                <Box sx={{ flex: 1, overflow: 'hidden', minHeight: { xs: 220, sm: 260, md: 260 } }}>{body}</Box>
               </Paper>
             </Box>
           ))}
