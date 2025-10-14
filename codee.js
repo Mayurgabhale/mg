@@ -1,251 +1,279 @@
-this is my correct working code, dont change any thinjg
-just i want this in responsive for each and everu device ok , depend on screen size 
-carefullym 
-// src/pages/PartitionDetailDetails.jsx
-
-import React, { useEffect, useState, useMemo } from "react";
+in select box flag i want to add border 
+import React, { useEffect, useState } from 'react';
 import {
-  Container, Box, Typography, Button, TextField,
-  Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
-} from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+  AppBar, Toolbar, Box, Typography,
+  Select, MenuItem, IconButton, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import LoadingSpinner from "../components/LoadingSpinner";
-import DataTable from "../components/DataTable";
+import MenuIcon from '@mui/icons-material/Menu';
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import CloseIcon from '@mui/icons-material/Close';
 
-import { fetchLiveSummary } from "../api/occupancy.service";
-import { lookupFloor } from "../utils/floorLookup";
+import wuLogo from '../assets/images/wu-logo.png';
+import IndiaFlag from '../assets/flags/india.png';
+import MalaysiaFlag from '../assets/flags/malaysia.png';
+import PhilippinesFlag from '../assets/flags/philippines.png';
+import JapanFlag from '../assets/flags/japan.png';
+import HYDFlag from '../assets/flags/india.png';
 
-export default function PartitionDetailDetails() {
-  const { partition } = useParams();
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+const displayNameMap = {
+  'IN.Pune': 'Pune',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig',
+  'JP.Tokyo': 'Tokyo',
+  'IN.HYD': 'Hyderabad',
+};
+
+const flagMap = {
+  'Pune': IndiaFlag,
+  'MY.Kuala Lumpur': MalaysiaFlag,
+  'Quezon City': PhilippinesFlag,
+  'Taguig City': PhilippinesFlag,
+  'JP.Tokyo': JapanFlag,
+  'IN.HYD': HYDFlag,
+};
+
+export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+  const [selectedPartition, setSelectedPartition] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const [details, setDetails]       = useState([]);
-  const [liveCounts, setLiveCounts] = useState({});
-  const [loading, setLoading]       = useState(true);
-  const [lastUpdate, setLastUpdate] = useState("");
-  const [search, setSearchTerm]     = useState("");
-  const [expandedFloor, setExpandedFloor] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
 
-  // 1) Filter the raw details → keep only In/Out for this partition,
-  //    map to include floor, then drop any that resolve to "Unmapped"
-  const filterAndMap = json =>
-    json.details
-      .filter(r =>
-        r.PartitionName2 === partition &&
-        (r.Direction === "InDirection" || r.Direction === "OutDirection")
-      )
-      .map(r => {
-        const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction);
-        return { ...r, floor };
-      })
-      .filter(r => r.floor !== "Unmapped");  // remove any Out-of-office / unmapped
-
-  // initial load
   useEffect(() => {
-    let active = true;
-    fetchLiveSummary().then(json => {
-      if (!active) return;
-      setLiveCounts(json.realtime[partition]?.floors || {});
-      setDetails(filterAndMap(json));
-      setLastUpdate(new Date().toLocaleTimeString());
-      setLoading(false);
-    });
-    return () => { active = false };
-  }, [partition]);
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
 
-  // poll every second
+  // Routing setup
+  const parts = location.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
+
   useEffect(() => {
-    const iv = setInterval(async () => {
-      const json = await fetchLiveSummary();
-      setLiveCounts(json.realtime[partition]?.floors || {});
-      setDetails(filterAndMap(json));
-      setLastUpdate(new Date().toLocaleTimeString());
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [partition]);
+    setSelectedPartition(currentPartition);
+  }, [currentPartition]);
 
-  // group by floor name
-  const floorMap = useMemo(() => {
-    const m = {};
-    Object.keys(liveCounts).forEach(f => { m[f] = [] });
-    details.forEach(r => {
-      if (!m[r.floor]) m[r.floor] = [];
-      m[r.floor].push(r);
-    });
-    return m;
-  }, [details, liveCounts]);
+  const makePartitionPath = (suffix) => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
 
-  // apply search filter to each floor's list
-  const displayed = useMemo(() => {
-    const term = search.toLowerCase();
-    return Object.entries(floorMap)
-      .map(([floor, emps]) => {
-        const filtered = emps.filter(e =>
-          floor.toLowerCase().includes(term) ||
-          e.ObjectName1?.toLowerCase().includes(term) ||
-          `${e.EmployeeID}`.toLowerCase().includes(term) ||
-          `${e.CardNumber}`.toLowerCase().includes(term)
-        );
-        return [floor, filtered];
-      })
-      .filter(([, emps]) => emps.length > 0);
-  }, [floorMap, search]);
+  const handlePartitionChange = (newPartition) => {
+    if (!newPartition) return navigate('/');
+    setSelectedPartition(newPartition);
+    if (newPartition === 'Pune' && suffixSegments.length === 0) {
+      window.location.href = 'http://10.199.22.57:3011/';
+      return;
+    }
 
-  const columns = [
-    { field: "EmployeeID",      headerName: "Emp ID" },
-    { field: "ObjectName1",     headerName: "Name" },
-    { field: "LocaleMessageTime", headerName: "Swipe Time" },
-    { field: "PersonnelType",   headerName: "Type" },
-    { field: "CardNumber",      headerName: "Card" },
-    { field: "Door",            headerName: "Door" },
+    const base = `/partition/${encodeURIComponent(newPartition)}`;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
+
+    navigate(full);
+    setDrawerOpen(false);
+  };
+
+  const navItems = [
+    { icon: <HomeIcon />, label: 'Home Page', action: () => navigate('/') },
+    { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
+    { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
   ];
-
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box>
-        <Footer />
-      </>
-    );
-  }
 
   return (
     <>
-      <Header />
-      <Box sx={{ pt: 1, pb: 1, background: "rgba(0,0,0,0.6)" }}>
-        <Container disableGutters maxWidth={false}>
-
-          {/* Back button + title */}
-          <Box display="flex" alignItems="center" mb={2} sx={{ px: 2 }}>
-            <Button size="small" onClick={() => navigate(-1)} sx={{ color: "#FFC107" }}>
-              ← Back to Overview
-            </Button>
-          </Box>
-
-          {/* Search + timestamp */}
-          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: 2 }}>
-            <Typography variant="h6" sx={{ color: "#FFC107" }}>
-              Floor Details
-            </Typography>
-            <Typography variant="body2" sx={{ color: "#FFC107" }}>
-              Last updated: {lastUpdate}
-            </Typography>
-            <TextField
-              size="small"
-              placeholder="Search floor / emp…"
-              value={search}
-              onChange={e => setSearchTerm(e.target.value)}
-              sx={{
-                "& .MuiInputBase-input": { color: "#FFC107" },
-                "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" }
-              }}
-            />
-          </Box>
-
-          {/* Floor cards */}
-          <Box display="flex" flexWrap="wrap" width="100%" sx={{ px: 2 }}>
-            {displayed.map(([floor, emps]) => (
-              <Box key={floor} sx={{ width: "50%", p: 2 }}>
-                <Paper sx={{
-                  border: "2px solid #FFC107",
-                  p: 2,
-                  background: "rgba(0,0,0,0.4)"
-                }}>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    gutterBottom
-                    sx={{ color: "#FFC107" }}
-                  >
-                    {floor} (Total {emps.length})
-                  </Typography>
-
-                  <TableContainer
-                    component={Paper}
-                    variant="outlined"
-                    sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}
-                  >
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: "#000" }}>
-                          {["Emp ID","Name","Swipe Time","Type","Card","Door"].map(h => (
-                            <TableCell
-                              key={h}
-                              sx={{
-                                color: "#FFC107",
-                                border: "1px solid #FFC107",
-                                fontWeight: "bold"
-                              }}
-                            >
-                              {h}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {emps.slice(0, 10).map((r, i) => (
-                          <TableRow key={i}>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.EmployeeID}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.ObjectName1}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {new Date(r.LocaleMessageTime).toLocaleTimeString()}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.PersonnelType}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.CardNumber}
-                            </TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                              {r.Door}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-
-                  <Button
-                    size="small"
-                    onClick={() => setExpandedFloor(f => f === floor ? null : floor)}
-                    sx={{ color: "#FFC107" }}
-                  >
-                    {expandedFloor === floor ? "Hide" : "See more…"}
-                  </Button>
-                </Paper>
-              </Box>
-            ))}
-          </Box>
-
-          {/* Expanded table */}
-          {expandedFloor && (
-            <Box sx={{ px: 2, mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
-                {expandedFloor} — All Entries
+      <AppBar
+        position="static"
+        sx={{
+          background: 'linear-gradient(90deg, #111, #222)',
+          px: isMobile ? 1 : 2,
+          py: isMobile ? 0.5 : 0,
+        }}
+      >
+        <Toolbar
+          disableGutters
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          {/* Left: Logo + Title */}
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <Box component="img" src={wuLogo} alt="WU" border='1' sx={{ height: isMobile ? 28 : 36, border: '1px solid black' }} />
+            {!isMobile && (
+              <Typography
+                variant={isTablet ? 'h6' : 'h5'}
+                sx={{ color: '#FFC107', fontWeight: 600, ml: 1 }}
+              >
+                APAC Occupancy
+                {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
               </Typography>
-              <DataTable
-                columns={columns}
-                rows={floorMap[expandedFloor].map(r => ({
-                  ...r,
-                  LocaleMessageTime: new Date(r.LocaleMessageTime).toLocaleTimeString()
-                }))}
-              />
+            )}
+          </Box>
+
+          {/* Right Section */}
+          {isMobile ? (
+            <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+          ) : (
+            <Box display="flex" alignItems="center" gap={2}>
+              {/* Icons with tooltips */}
+              {/* <Box display="flex" alignItems="center" gap={1.5}>
+                {navItems.map((item, idx) => (
+                  <Tooltip key={idx} title={item.label} arrow placement="bottom">
+                    <IconButton color="inherit" onClick={item.action}>
+                      {item.icon}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Box> */}
+              <Box display="flex" alignItems="center" gap={1.5}>
+                {navItems.map((item, idx) => (
+                  <Tooltip
+                    key={idx}
+                    title={
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                        {item.label}
+                      </Typography>
+                    }
+                    arrow
+                    placement="bottom"
+                  >
+                    <IconButton color="inherit" onClick={item.action}>
+                      {React.cloneElement(item.icon, { fontSize: 'medium' })}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Box>
+
+              {/* Selector */}
+              <Select
+                size={isTablet ? 'small' : 'medium'}
+                value={selectedPartition}
+                displayEmpty
+                onChange={(e) => handlePartitionChange(e.target.value)}
+                sx={{
+                  bgcolor: '#fff',
+                  color: '#000',
+                  borderRadius: 1,
+                  minWidth: 160,
+                  fontSize: '0.9rem',
+                  height: 40,
+                }}
+                renderValue={(selected) =>
+                  selected ? (
+                    <Box display="flex" alignItems="center">
+                      <Box
+                        component="img"
+                        src={flagMap[selected]}
+                        alt={selected}
+                        sx={{ width: 20, height: 14, mr: 1 }}
+                      />
+                      {displayNameMap[selected] || selected}
+                    </Box>
+                  ) : '— Select Site —'
+                }
+              >
+                <MenuItem value="">— Select Site —</MenuItem>
+                {partitionList.map((p) => (
+                  <MenuItem key={p} value={p}>
+                    {displayNameMap[p] || p}
+                  </MenuItem>
+                ))}
+              </Select>
             </Box>
           )}
+        </Toolbar>
+      </AppBar>
 
-        </Container>
-      </Box>
-      <Footer />
+      {/* MOBILE DRAWER (unchanged) */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{ sx: { width: 260, background: '#111', color: '#fff' } }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Box display="flex" justifyContent="flex-end">
+            <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#FFC107' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box display="flex" alignItems="center" mb={2}>
+            <Box component="img" src={wuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
+            <Typography variant="h6" sx={{ color: '#FFC107' }}>
+              APAC Occupancy
+            </Typography>
+          </Box>
+          <List>
+            {navItems.map((item, i) => (
+              <ListItemButton key={i} onClick={() => { item.action(); setDrawerOpen(false); }}>
+                <ListItemIcon sx={{ color: '#FFC107' }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+          </List>
+          <Box mt={2}>
+            <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>
+              Select Site
+            </Typography>
+            <Select
+              fullWidth
+              size="small"
+              value={selectedPartition}
+              displayEmpty
+              onChange={(e) => handlePartitionChange(e.target.value)}
+              sx={{
+                bgcolor: '#fff',
+                color: '#000',
+                borderRadius: 1,
+                fontSize: '0.85rem',
+              }}
+              renderValue={(selected) =>
+                selected ? (
+                  <Box display="flex" alignItems="center">
+                    <Box
+                      component="img"
+                      src={flagMap[selected]}
+                      alt={selected}
+                      sx={{ width: 20, height: 14, mr: 1 }}
+                    />
+                    {displayNameMap[selected] || selected}
+                  </Box>
+                ) : '— Select Site —'
+              }
+            >
+              <MenuItem value="">— Select Site —</MenuItem>
+              {partitionList.map((p) => (
+                <MenuItem key={p} value={p}>
+                  {displayNameMap[p] || p}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </Box>
+      </Drawer>
     </>
   );
 }
-
-
