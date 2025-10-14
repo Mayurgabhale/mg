@@ -1,22 +1,343 @@
-
-in detial sectin we got correct count but in dashboard compoist chart and this Pune
-
 Pune
 
-678
+888
 Employees
 
-590
+801
 
 Contractors
 
-88
+87
 
-not correct count 
-this is detisl count 
-Podium Floor (Total 510)
-Tower B (Total 159)
-2nd Floor (Total 9)
+  and pune  chart tower b show 220 ok
+in detia secitn tower b count is correct but in dashboard show wrong count 
+Tower B (Total 234) this is correct:: 
+// src/pages/PartitionDetailDetails.jsx
+wind out what is the isseu ok carefullym 
+
+//C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\Dashboard.jsx
+import React, { useMemo } from 'react';
+import {Container, Box, Typography, Skeleton,Paper} from '@mui/material';
+
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+
+import SummaryCard from '../components/SummaryCard';
+import CompositeChartCard from '../components/CompositeChartCard';
+import PieChartCard from '../components/PieChartCard';
+
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+import { partitionList } from '../services/occupancy.service';
+import buildingCapacities from '../data/buildingCapacities';
+import floorCapacities from '../data/floorCapacities';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+
+import indiaFlag from '../assets/flags/india.png';
+import japanFlag from '../assets/flags/japan.png';
+import malaysiaFlag from '../assets/flags/malaysia.png';
+import philippinesFlag from '../assets/flags/philippines.png';
+
+
+const palette15 = [
+  '#FFC107', '#E57373', '#4CAF50', '#FFEB3B', '#FFD666',
+  '#8BC34A', '#3F51B5', '#9C27B0', '#00BCD4', '#8BC34A',
+  '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'];
+
+const flagMap = {
+  'Pune': indiaFlag,
+  'Quezon City': philippinesFlag,
+  'JP.Tokyo': japanFlag,
+  'MY.Kuala Lumpur': malaysiaFlag,
+  'Taguig City': philippinesFlag,
+  'IN.HYD': indiaFlag
+};
+
+
+const displayNameMap = {
+  'IN.HYD': 'Hyderabad',
+  'JP.Tokyo': 'Tokyo',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig City',
+  'Pune': 'Pune',
+};
+
+
+export default function Dashboard() {
+  // 1) Live data hook
+  const { data, loading, error } = useLiveOccupancy(1000);
+
+  // 2) Partitions
+  const regions = data?.realtime || {};
+  const partitions = useMemo(() => {
+    return partitionList
+      .map(name => {
+        const key = Object.keys(regions).find(k => k.includes(name));
+        const p = key && regions[key] ? regions[key] : {};
+        return {
+          name,
+          total: p.total || 0,
+          Employee: p.Employee || 0,
+          Contractor: p.Contractor || 0,
+          floors: p.floors || {},
+          flag: flagMap[name] || null
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+  }, [regions]);
+
+  // 3) Totals
+  const todayTot = data?.today?.total || 0;
+  const todayEmp = data?.today?.Employee || 0;
+  const todayCont = data?.today?.Contractor || 0;
+  const realtimeTot = partitions.reduce((sum, p) => sum + p.total, 0);
+  const realtimeEmp = partitions.reduce((sum, p) => sum + p.Employee, 0);
+  const realtimeCont = partitions.reduce((sum, p) => sum + p.Contractor, 0);
+
+  // 4) Regions of interest
+  const pune = partitions.find(p => p.name === 'Pune');
+  const quezonCity = partitions.find(p => p.name === 'Quezon City');
+  const combinedRegions = partitions.filter(p =>
+    ['JP.Tokyo', 'MY.Kuala Lumpur', 'Taguig City','IN.HYD'].includes(p.name)
+  );
+
+  // 5) Pie chart data
+  const quezonData = useMemo(() => [
+    { name: 'Employees', value: quezonCity?.Employee || 0 },
+    { name: 'Contractors', value: quezonCity?.Contractor || 0 }
+  ], [quezonCity?.Employee, quezonCity?.Contractor]);
+
+  const asiaPacData = useMemo(() =>
+    combinedRegions.map(r => ({
+      // name: r.name.replace(/^.*\./, ''),
+      name: displayNameMap[r.name] || r.name.replace(/^.*\./, ''),
+      value: r.total,
+      emp: r.Employee,
+      cont: r.Contractor
+    })),
+    [combinedRegions]
+  );
+
+
+  // 6) Prepare floors + chart configs _before_ any returns
+  // 6a) Get only real floors (drop any that came back Unmapped/"Out of office")
+  const floors = Object.entries(pune?.floors || {})
+    .filter(([floorName, _count]) => floorName !== 'Unmapped');
+
+  const puneChartData = useMemo(() => {
+    // Map only the filtered floors; no Unknown bucket needed
+    return floors.map(([f, headcount]) => {
+      // first try Pune-specific capacity, else global
+      const puneKey = `${f} (Pune)`;
+      const capacity =
+        floorCapacities[puneKey] != null
+          ? floorCapacities[puneKey]
+          : buildingCapacities[f] || 0;
+
+      return {
+        name: f,
+        headcount,
+        capacity
+      };
+    });
+  }, [floors]);
+
+
+
+  const chartConfigs = useMemo(() => {
+    return [
+      {
+        key: 'pune',
+        title: 'Pune',
+        body: pune?.total === 0
+          ? (
+            <Typography color="white" align="center" py={6}>
+              No Pune data
+            </Typography>
+          )
+          : (
+            <CompositeChartCard
+
+              data={puneChartData}
+
+              lineColor={palette15[0]}
+              height={250}
+              sx={{ border: 'none' }}
+            />
+          )
+      },
+
+      {
+        key: 'quezon',
+        title: 'Quezon City',
+        body: quezonCity?.total === 0
+          ? (
+            <Typography color="white" align="center" py={6}>
+              No Quezon City data
+            </Typography>
+          )
+          : (
+
+            <CompositeChartCard
+              title=""
+              data={[
+                {
+                  name: "Quezon City (6thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (6thFloor)"] ?? 0,
+                },
+                {
+                  name: "Quezon City (7thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (7thFloor)"] ?? 0,
+                },
+              ]}
+
+              lineColor={palette15[1]}
+              height={250}
+              sx={{ border: 'none' }}
+            />
+          )
+      },
+      {
+        key: 'combined',
+        title: 'Asia-Pacific',
+        body: combinedRegions.length === 0
+          ? (
+            <Typography color="white" align="center" py={6}>
+              No regional data
+            </Typography>
+          )
+          : (
+            <PieChartCard
+              data={asiaPacData}
+              colors={['#FFBF00', '#FFFAA0', '#B4C424']}
+              height={320}
+              showZeroSlice
+              sx={{ border: 'none' }}
+            />
+          )
+      }
+    ];
+  }, [
+    floors,
+    pune?.total,
+    quezonCity?.floors?.["6th Floor"],
+    quezonCity?.floors?.["7th Floor"],
+    combinedRegions.length,
+    asiaPacData
+  ]);
+
+  // 7) Error state
+  if (error) {
+    return (
+      <Box width="100vw" py={4}>
+        <Typography color="error" align="center">
+          Error loading live data
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          bgcolor: 'rgba(0, 0, 0, 0.85)',
+          zIndex: 9999,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <LoadingSpinner />
+      </Box>
+    );
+  }
+
+
+  // 8) Render
+  return (
+    <>
+      <Header title="APAC Live Occupancy" />
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{
+          py: 0,
+          px: 2,
+          background: 'linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)',
+          color: '#f5f5f5',
+        }}
+      >
+        {/* Top Summary Cards */}
+        <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+          {[
+            { title: "Today's Total Headcount", value: todayTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
+            { title: "Today's Employees Count", value: todayEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#8BC34A' },
+            { title: "Today's Contractors Count", value: todayCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#E57373' },
+            { title: "Realtime Headcount", value: realtimeTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFD180' },
+            { title: "Realtime Employees Count", value: realtimeEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#AED581' },
+            { title: "Realtime Contractors Count", value: realtimeCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#EF5350' },
+          ].map(c => (
+            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+              <SummaryCard
+                title={c.title}
+                total={c.value}
+                stats={[]}
+                icon={c.icon}
+                sx={{ height: 140, border: `2px solid ${c.border}` }}
+              />
+            </Box>
+          ))}
+        </Box>
+        {/* Region Cards */}
+        <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
+          {loading
+            ? <Skeleton variant="rectangular" width="90%" height={200} />
+            : partitions.map((p, i) => (
+              <Box key={p.name} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+                <SummaryCard
+                  // title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>{p.name.replace(/^.*\./, '')}</Typography>}
+                  title={<Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#FFC107', fontSize: '1.3rem' }}>
+                     {displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
+                    </Typography>}
+                  total={p.total}
+                  stats={[{ label: 'Employees', value: p.Employee }, { label: 'Contractors', value: p.Contractor }]}
+                  sx={{ width: '100%', border: `2px solid ${palette15[i % palette15.length]}` }}
+                  icon={<Box component="img" src={p.flag} sx={{ width: 48, height: 32 }} />}
+                />
+              </Box>
+            ))
+          }
+        </Box>
+
+        {/* Main Charts */}
+        <Box display="flex" gap={2} flexWrap="wrap" mb={4}>
+          {chartConfigs.map(({ key, title, body }) => (
+            <Box key={key} sx={{ flex: '1 1 32%', minWidth: 280, height: 405, animation: 'fadeInUp 0.5s' }}>
+              <Paper sx={{ p: 2, height: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid #FFC107', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 2 }}>{title}</Typography>
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>{body}</Box>
+              </Paper>
+            </Box>
+          ))}
+        </Box>
+      </Container>
+      <Footer />
+    </>
+  );
+}
+
+
+in detia secitn tower b count is correct but in dashboard show wrong count 
+Tower B (Total 234) this is correct:: 
 // src/pages/PartitionDetailDetails.jsx
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -404,555 +725,3 @@ export default function PartitionDetailDetails() {
     </>
   );
 }
-
-C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\components\CompositeChartCard.jsx
-import React, { useMemo } from 'react';
-import isEqual from 'lodash.isequal';
-
-import { Card, CardContent, Typography, Box } from '@mui/material';
-import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  LabelList,
-  Cell
-} from 'recharts';
-
-import buildingCapacities from '../data/buildingCapacities';
-import floorCapacities from '../data/floorCapacities';
-
-const DARK_TO_LIGHT = [
-  '#FFD666', '#FFE599', '#FFF2CC', '#FFE599', '#E0E1DD',
-  '#FFD666', '#FFEE8C', '#F8DE7E', '#FBEC5D', '#F0E68C',
-  '#FFEE8C', '#21325E', '#415A77', '#6A7F9A', '#B0C4DE',
-  '#1A1F36', '#2B3353', '#4C6482', '#7B90B2', '#CAD3E9'
-];
-
-function CompositeChartCard({
-  title,
-  data,
-  lineColor = '#fff',
-  height = 350,
-  animationDuration,
-  animationEasing,
-  sx
-}) {
-  const enriched = useMemo(() => {
-    return data.map((d, i) => ({
-      ...d,
-      percentage: d.capacity ? Math.round(d.headcount / d.capacity * 100) : 0,
-      _color: DARK_TO_LIGHT[i % DARK_TO_LIGHT.length]
-    }));
-  }, [data]);
-
-  if (!Array.isArray(data) || data.length === 0) {
-    return (
-      <Card sx={{ border: `1px solid #fff`, bgcolor: 'rgba(0,0,0,0.4)', ...sx }}>
-        <CardContent>
-          <Typography variant="subtitle1" align="center" color="text.secondary">
-            {title}
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
-            No realtime employee data
-          </Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const totalHeadcount = enriched.reduce((sum, d) => sum + (d.headcount || 0), 0);
-  const totalCapacity = enriched.reduce((sum, d) => sum + (d.capacity || 0), 0);
-  const avgUsage = totalCapacity ? Math.round((totalHeadcount / totalCapacity) * 100) : 0;
-
-  return (
-    <Card sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'rgba(0,0,0,0.4)', transition: 'transform 0.3s, box-shadow 0.3s', '&:hover': { transform: 'scale(1.02)', boxShadow: '0 4px 12px rgba(0,0,0,0.7)' }, ...sx }}>
-      <CardContent sx={{ p: 1 }}>
-        <Typography variant="subtitle1" align="center" gutterBottom sx={{ color: '#FFC107' }}>
-          {title}
-        </Typography>
-        <Box sx={{ width: '100%', height }}>
-          <ResponsiveContainer>
-
-            <ComposedChart data={enriched} margin={{ top: 15, right: 20, left: 0, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)"
-                tickFormatter={label => {
-                  const str = String(label || '');
-                  const n = parseInt((str.match(/\d+/) || [])[0], 10);
-                  if (!isNaN(n)) {
-                    if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
-                    switch (n % 10) {
-                      case 1: return `${n}st`;
-                      case 2: return `${n}nd`;
-                      case 3: return `${n}rd`;
-                      default: return `${n}th`;
-                    }
-                  }
-                  return str;
-                }}
-              />
-              <YAxis yAxisId="left" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)" />
-              <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)" domain={[0, 100]} tickFormatter={v => `${v}%`} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#FFD666', borderColor: lineColor, padding: 8 }}
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const d = payload[0].payload;
-                  return (
-                    <div style={{ backgroundColor: '#FFD666', border: `1px solid ${lineColor}`, borderRadius: 4, padding: 8 }}>
-                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
-                      <div>Headcount: {d.headcount}</div>
-                      <div>Usage %: {d.percentage}%</div>
-                      <div>Seat Capacity: {d.capacity}</div>
-                    </div>
-                  );
-                }}
-              />
-              <Bar yAxisId="left" dataKey="headcount" name="Headcount" barSize={700} isAnimationActive={false} stroke="#fff"  strokeWidth={2}>
-                {enriched.map((e, i) => <Cell key={i} fill={e._color}   />)}
-                <LabelList dataKey="headcount" position="top" formatter={v => `${v}`} style={{ fill: '#fff', fontSize: 15, fontWeight: 700 }} />
-
-                <LabelList dataKey="percentage" position="inside" formatter={v => `${v}%`} style={{ fill: '#EE4B2B', fontSize: 14, fontWeight: 700 }} />
-              </Bar>
-              <Line yAxisId="right" type="monotone" dataKey="percentage" name="Usage %" stroke="#FF0000" strokeWidth={2} dot={false} isAnimationActive={false} />
-              <Line yAxisId="left" type="monotone"
-
-                name="Total Seats" stroke="#81C784" strokeDasharray="5 5" dot={false} isAnimationActive={false} />
-            </ComposedChart>
-            
-          </ResponsiveContainer>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, alignItems: 'center', mb: 1, fontWeight: 'bold', fontSize: 16 }}>
-          <Box sx={{ color: '#FFD700' }}>Total Headcount: {totalHeadcount}</Box>
-          <Box sx={{ color: '#4CAF50' }}>Total Seats: {totalCapacity}</Box>
-          <Box sx={{ color: '#FF4C4C' }}>Usage: {avgUsage}%</Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-}
-
-export default React.memo(CompositeChartCard, (prev, next) =>
-  isEqual(prev.data, next.data) &&
-  prev.lineColor === next.lineColor &&
-  prev.height === next.height
-);
-
-// src/utils/doorMap.js
-
-// 1) raw door → zone
-const doorMap = {
-
- 
-  // Podium / Red
-  "APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-RESTRICTED DOOR___InDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)___InDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)___OutDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR___InDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)___InDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)___OutDirection": "Red Zone - Outer Area",
-  "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW___InDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_RED_RECEPTION TO WS ENTRY 1-DOOR NEW___OutDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW___InDirection": "Red Zone",
-  "APAC_IN_PUN_PODIUM_RED_RECREATION AREA FIRE EXIT 1-DOOR NEW___OutDirection": "Yellow Zone - Outer Area",
-
-  // Podium / Yellow
-  "APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)___OutDirection": "Yellow Zone - Outer Area",
-  "APAC_IN_PUN_PODIUM_YELLOW_MDF RESTRICTED DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_IT STORE ROOM-DOOR RESTRICTED DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_REPRO STORE-DOOR RESTRICTED DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_CONTROL PANEL ROOM-DOOR RESTRICTED DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_PREACTION ROOM-DOOR RESTRICTED DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_TESTING LAB-DOOR RESTRICTED DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_RECEPTION ENTRY-DOOR___OutDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_YELLOW_MAIN LIFT LOBBY-DOOR NEW___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_MAIN LIFT LOBBY-DOOR NEW___OutDirection": "Out of office",
-  "APAC_IN_PUN_PODIUM_ST 1 DOOR 2 (YELLOW)___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_ST 1 DOOR 2 (YELLOW)___OutDirection": "Yellow Zone - Outer Area",
-  "APAC_IN_PUN_PODIUM_YELLOW_FIRE EXIT 1-DOOR NEW___InDirection": "Yellow Zone",
-  "APAC_IN_PUN_PODIUM_YELLOW_FIRE EXIT 1-DOOR NEW___OutDirection": "Yellow Zone - Outer Area",
-
-  // Podium / Green
-  "APAC_IN_PUN_PODIUM_GREEN-_IDF ROOM 1-RESTRICTED DOOR___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_GREEN_UPS ENTRY 1-DOOR RESTRICTED DOOR___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_GREEN_UPS ENTRY 2-DOOR RESTRICTED DOOR___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_GREEN_LOCKER HR STORE 3-DOOR RESTRICTED DOOR___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_ST4 DOOR 2 (GREEN)___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_GREEN-MAIN LIFT LOBBY-DOOR___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_GREEN-MAIN LIFT LOBBY-DOOR___OutDirection": "Green Zone - Outer Area",
-  "APAC_IN_PUN_PODIUM_ST3 DOOR 2 (GREEN)___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_ST3 DOOR 2 (GREEN)___OutDirection": "Green Zone - Outer Area",
-  "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR___InDirection": "Green Zone",
-  "APAC_IN_PUN_PODIUM_GREEN_RECEPTION ENTRY-DOOR___OutDirection": "Reception Area",
-
-  // Podium / Orange
-  "APAC_IN_PUN_PODIUM_ST4 DOOR 1 (ORANGE)___InDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR___InDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ORANGE_RECEPTION ENTRY-DOOR___OutDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_ST3_DOOR 1 (ORANGE)___InDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ST3_DOOR 1 (ORANGE)___OutDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ORANGE_MAIN LIFT LOBBY-DOOR___InDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ORANGE_MAIN LIFT LOBBY-DOOR___OutDirection": "Orange Zone - Outer Area",
-  "APAC_IN_PUN_PODIUM_ORANGE-IDF ROOM 3-RESTRICTED DOOR___InDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ORANGE_KITCHENETTE FIRE EXIT-DOOR NEW___InDirection": "Orange Zone",
-  "APAC_IN_PUN_PODIUM_ORANGE_KITCHENETTE FIRE EXIT-DOOR NEW___OutDirection": "Orange Zone - Outer Area",
-
-  // Podium / GSOC door
-  "APAC_IN_PUN_PODIUM_GSOC DOOR RESTRICTED DOOR___InDirection": "Yellow Zone",
-
-  // Podium / Main Right & Left Entry
-  "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR NEW___InDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR NEW___OutDirection": "Assembly Area",
-  "APAC_IN_PUN_PODIUM_MAIN PODIUM LEFT ENTRY-DOOR NEW___InDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_MAIN PODIUM LEFT ENTRY-DOOR NEW___OutDirection": "Assembly Area",
-
-  // Podium / Turnstiles
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR___InDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR___InDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR___InDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR___InDirection": "Reception Area",
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2 -OUT DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4 -OUT DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-OUT DOOR___OutDirection": "Out of office",
-
-  "APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR___InDirection": "Reception Area",
-
-
-
-
-  // 2nd-Floor / IDF + UPS/ELEC + Reception→Workstation + LiftLobby→Reception
-  "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 RESTRICTED DOOR___InDirection": "2nd Floor, Pune",
-  "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM RESTRICTED DOOR___InDirection": "2nd Floor, Pune",
-  "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR___InDirection": "2nd Floor, Pune",
-  "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR___InDirection": "2nd Floor, Pune",
-  "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR___OutDirection": "2nd Floor, Pune",
-
-  // Tower B
-  "APAC_IN_PUN_TOWER B_MAIN RECEPTION DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_MAIN RECEPTION DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN_TOWER B_LIFT LOBBY DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_LIFT LOBBY DOOR___OutDirection": "Out of office",
-  "APAC_IN_PUN_TOWER B_ST6_GYM SIDE DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST6_GYM SIDE DOOR___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST6_WKS SIDE DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST6_WKS SIDE DOOR___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST5_KAPIL DEV DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST5_KAPIL DEV DOOR___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST5_WKS SIDE DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_ST5_WKS SIDE DOOR___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_RECEPTION RIGHT DOOR___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_IBMS ROOM___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_UPS ROOM___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_MDF ROOM___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_PAC ROOM___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_IT STORE ROOM___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_GYM ROOM___InDirection": "Tower B GYM",
-  "APAC_IN_PUN_TOWER B_GYM ROOM___OutDirection": "Tower B GYM",
-  "APAC_IN_PUN_TOWER B_SITE OPS STORE___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_MOBILE LAB___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_MOBILE LAB___OutDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_CEC DOOR___InDirection": "Tower B",
-  "APAC_IN_PUN_TOWER B_CEC DOOR___OutDirection": "Tower B",
-
-  // ----- APAC-wide (from your Excel file) -----
-  // Kuala Lumpur
-  "APAC_MY_KL_MAIN ENTRANCE DOOR___InDirection": "Kuala Lumpur",
-  "APAC_MY_KL_MAIN ENTRANCE DOOR___OutDirection": "Out of office",
-  "APAC_MY_KL_INTERIOR RECEPTION DOOR___InDirection": "Kuala Lumpur",
-  "APAC_MY_KL_INTERIOR RECEPTION DOOR___OutDirection": "Kuala Lumpur",
-  "APAC_MY_KL_SIDE ENTRANCE DOOR NEW___InDirection": "Kuala Lumpur",
-  "APAC_MY_KL_SIDE ENTRANCE DOOR NEW___OutDirection": "Kuala Lumpur",
-  "APAC_MY_KL_PANTRY ENTRANCE DOOR NEW___InDirection": "Kuala Lumpur",
-  "APAC_MY_KL_PANTRY ENTRANCE DOOR NEW___OutDirection": "Kuala Lumpur",
-  "APAC_MY_KL_SERVER ROOM DOOR___InDirection": "Kuala Lumpur",
-  "APAC_MY_KL_SERVER ROOM DOOR___OutDirection": "Kuala Lumpur",
-
-  // Tokyo
-  "APAC_JPN_Tokyo_7th FLRSide Entrance___InDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLRSide Entrance___OutDirection": "Out of office",
-  "APAC_JPN_Tokyo_7th FLR_IT Room___InDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLR_IT Room___OutDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLR_Main Entrance___InDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLR_Main Entrance___OutDirection": "Out of office",
-  "APAC_JPN_Tokyo_7th FLR_Office Entrance___InDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLR_Office Entrance___OutDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLR_Side Entrance to Back Office___InDirection": "Tokyo",
-  "APAC_JPN_Tokyo_7th FLR_Side Entrance to Back Office___OutDirection": "Out of office",
-
-  // Manila (6th & 7th Floor)
-  "APAC_PH_Manila_6th Floor Enrty Door 1___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor Enrty Door 1___OutDirection": "Out of office",
-  "APAC_PH_Manila_6th Floor Open Office 2___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor Open Office 2___OutDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Entry Door 2___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Entry Door 2___OutDirection": "Out of office",
-  "APAC_PH_Manila_6th Floor_Entry Door 3___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Entry Door 3___OutDirection": "Out of office",
-  "APAC_PH_Manila_6th Floor_Exit Corridor___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Exit Corridor___OutDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_IDF Restricted Door___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_IDF Restricted Door___OutDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Mothers Room___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Mothers Room___OutDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Print Area___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_Print Area___OutDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_UPS/Switch Restricted Door___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor_UPS/Switch Restricted Door___OutDirection": "6th Floor",
-
-  "APAC_PH_Manila_7th Floor_Directors Office-708___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Directors Office-708___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Exit Corridore-704___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Exit Corridore-704___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_IT Work Room  725___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_IT Work Room  725___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_MDF-726 Restricted Door___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_MDF-726 Restricted Door___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Open Office Door 1-721___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Open Office Door 1-721___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Open Office Door 2-721___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Open Office Door 2-721___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Pantry-720a___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Pantry-720a___OutDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Recption Door 1-701___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Recption Door 1-701___OutDirection": "Out of office",
-  "APAC_PH_Manila_7th Floor_Recption Door 2-701___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Recption Door 2-701___OutDirection": "Out of office",
-  "APAC_PH_Manila_7th Floor_Security Room-723___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor_Security Room-723___OutDirection": "7th Floor",
-
-  // PI Manila DR (Taguig)
-  "APAC_PI_Manila_DR_MainEntrance___InDirection": "Taguig",
-  "APAC_PI_Manila_DR_MainEntrance___OutDirection": "Out of office",
-  "APAC_PI_Manila_DR_OfficeLobby___InDirection": "Taguig",
-  "APAC_PI_Manila_DR_OfficeLobby___OutDirection": "Out of office",
-  "APAC_PI_Manila_DR_Server Restricted Door___InDirection": "Taguig",
-  "APAC_PI_Manila_DR_Server Restricted Door___OutDirection": "Taguig",
-  "APAC_PI_Manila_DR_StorageRm___InDirection": "Taguig",
-  "APAC_PI_Manila_DR_StorageRm___OutDirection": "Taguig",
-  "APAC_PI_Manila_Emerg Exit Dr- Lobby___InDirection": "Taguig",
-  "APAC_PI_Manila_Emerg Exit Dr- Lobby___OutDirection": "Taguig",
-  "APAC_PI_Manila_Emgerg DR_Storage RM___InDirection": "Taguig",
-  "APAC_PI_Manila_Emgerg DR_Storage RM___OutDirection": "Taguig",
-
-
-
-
-  // --- Manila 7th Floor Reception Doors ---
-  "APAC_PH_Manila_7th Floor Recption Door 1-701___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor Recption Door 1-701___OutDirection": "Out of office",
-
-  "APAC_PH_Manila_7th Floor Recption Door 2-701___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor Recption Door 2-701___OutDirection": "Out of office",
-
-  // --- Manila 7th Floor Open Office Door 2-721 ---
-  "APAC_PH_Manila_7th Floor Open Office Door 2-721___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor Open Office Door 2-721___OutDirection": "7th Floor",
-
-  // --- Manila 7th Floor IT Work Room  725 & Security Room 723 ---
-  "APAC_PH_Manila_7th Floor IT Work Room  725___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor IT Work Room  725___OutDirection": "7th Floor",
-
-  "APAC_PH_Manila_7th Floor Security Room-723___InDirection": "7th Floor",
-  "APAC_PH_Manila_7th Floor Security Room-723___OutDirection": "7th Floor",
-
-  // --- Manila 6th Floor variants ---
-  "APAC_PH_Manila_6th Floor Enrty Door 1___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor Enrty Door 1___OutDirection": "Out of office",
-
-  "APAC_PH_Manila_6th Floor Print Area___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor Print Area___OutDirection": "6th Floor",
-
-  "APAC_PH_Manila_6th Floor Entry Door 2___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor Entry Door 2___OutDirection": "Out of office",
-
-  "APAC_PH_Manila_6th Floor Entry Door 3___InDirection": "6th Floor",
-  "APAC_PH_Manila_6th Floor Entry Door 3___OutDirection": "6th Floor",
-
-  // --- Pune Tower B Lift Lobby Door (OutDirection) ---
-  "APAC_IN_PUN_TOWER B_LIFT LOBBY DOOR___OutDirection": "Out of office",
-
-  // --- Pune Turnstile 1 Exit Door (normalize the hyphen) ---
-  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1 OUT DOOR___OutDirection": "Out of office",
-
-  // --- Taguig Main Entrance Door (InDirection) ---
-  "APAC_PI_Manila_DR_MainEntrance___InDirection": "Taguig",
-  "APAC_PI_Manila_DR_MainEntrance___OutDirection": "Out of office",
-
-  // --- Tokyo 7th Floor Office Entrance (OutDirection) ---
-  "APAC_JPN_Tokyo_7th FLR Office Entrance___OutDirection": "Out of office",
-
-
-  
-// --- Hydrabad
-
-  "APAC_IN_HYD_2NDFLR_BMS ROOM___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_BMS ROOM___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_BATTERY ROOM 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_BATTERY ROOM 1___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_UPS ROOM 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_UPS ROOM 1___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_UPS ROOM 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_UPS ROOM 2___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_BATTERY ROOM 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_BATTERY ROOM 2___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_SERVER ROOM___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVER ROOM___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_MUX ROOM 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_MUX ROOM 1___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_MUX ROOM 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_MUX ROOM 2___OutDirection": "HYD_2NDFLR",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 4 PASSAGE 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 4 PASSAGE 1___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 4 ENTRY___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 4 ENTRY___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_MAIN LIFT LOBBY ENTRY 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_MAIN LIFT LOBBY ENTRY 1___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 ENTRY 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 ENTRY 1___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 ENTRY 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 ENTRY 2___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 4 PASSAGE 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 4 PASSAGE 2___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 PASSAGE 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 PASSAGE 2___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_F&A WING SIDE ENTRY 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_F&A WING SIDE ENTRY 2___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 PASSAGE 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_SERVICE LIFT 5 PASSAGE 1___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_IT STAGING ROOM___InDirection": "HYD_2NDFLR",
-
-
-  "APAC_IN_HYD_2NDFLR_IT STORE ROOM___InDirection": "HYD_2NDFLR",
-
-
-  "APAC_IN_HYD_2NDFLR_AHU ROOM 2___InDirection": "HYD_2NDFLR",
-
-
-  "APAC_IN_HYD_2NDFLR_AHU ROOM 1___InDirection": "HYD_2NDFLR",
-
-
-  "APAC_IN_HYD_2NDFLR_F&A WING SIDE ENTRY 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_F&A WING SIDE ENTRY 1___OutDirection": "Out of Office",
-
-  "APAC_IN_HYD_2NDFLR_MAIN LIFT LOBBY ENTRY 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_MAIN LIFT LOBBY ENTRY 2___OutDirection": "Out of Office"
-
-
-
-};
-
-
-// 2) zone → floor
-const zoneFloorMap = {
-  "Red Zone": "Podium Floor",
-  "Red Zone - Outer Area": "Podium Floor",
-  "Yellow Zone": "Podium Floor",
-  "Yellow Zone - Outer Area": "Podium Floor",
-  "Reception Area": "Podium Floor",
-  "Green Zone": "Podium Floor",
-  "Green Zone - Outer Area": "Podium Floor",
-  "Orange Zone": "Podium Floor",
-  "Orange Zone - Outer Area": "Podium Floor",
-  "Assembly Area": "Podium Floor",
-
-  "2nd Floor, Pune": "2nd Floor",
-  "2nd Floor, Pune - Outer Area": "2nd Floor",
-
-  "Tower B": "Tower B",
-  "Tower B - Outer Area": "Tower B",
-  "Tower B GYM": "Tower B",
-  "Tower B GYM - Outer Area": "Tower B",
-
-  "Kuala Lumpur": "Kuala Lumpur",
-
-  "6th Floor": "6th Floor",
-  "7th Floor": "7th Floor",
-
-  "Tokyo": "Tokyo",
-  "Taguig": "Taguig",
-
-  "Out of office": null,
-  "HYD_2NDFLR":"Hyderabad"
-};
-
-// 3) URL segment → partitions[] key
-
-
-const partitionMap = {
-  Pune: "APAC_IN_PUN",
-  "Quezon City": "APAC_PH_Manila",    // must match your “/partition/Quezon City/details”
-  Taguig: "APAC_PI_Manila",
-  "Kuala Lumpur": "APAC_MY_KL",
-  "JP.Tokyo": "APAC_JPN_Tokyo",  // if your URL is /partition/JP.Tokyo/details
-  Tokyo: "APAC_JPN_Tokyo",  // you can even support both
-  Hyderabad:"APAC_IN_HYD"
-};
-
-
-
-// 1) same normalizer as on the backend
-function normalizeDoorName(name) {
-  return name
-    .replace(/[_/]/g, ' ')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\bRECPTION\b/gi, 'RECEPTION')
-    .replace(/\bENRTY\b|\bENTRTY\b/gi, 'ENTRY')
-    .replace(/\b[0-9A-F]{6}\b$/, '')
-    .replace(/[\s-]+/g, ' ')
-    .toUpperCase()
-    .trim();
-}
-
-// 2) build a normalized-key → zone lookup
-const normalizedDoorZoneMap = Object.entries(doorMap).reduce(
-  (acc, [rawKey, zone]) => {
-    const [rawDoor, dir] = rawKey.split('___');
-    const normKey = `${normalizeDoorName(rawDoor)}___${dir}`;
-    acc[normKey] = zone;
-    return acc;
-  },
-  {}
-);
-
-
-export {
-  doorMap,
-  zoneFloorMap,
-  partitionMap,
-  normalizeDoorName,
-  normalizedDoorZoneMap
-};
-
-
-
