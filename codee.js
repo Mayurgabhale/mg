@@ -1,13 +1,3 @@
-src\pages\PartitionDetailDetails.jsx
-  Line 576:9:  'isXs' is assigned a value but never used    no-unused-vars
-  Line 577:9:  'isSm' is assigned a value but never used    no-unused-vars
-  Line 578:9:  'isMdUp' is assigned a value but never used  no-unused-vars
-
-I DONT WANT THIS Select a floor (click "See more…") to view full entries here.
-
-
-
-
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -23,8 +13,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  useMediaQuery,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -49,12 +38,9 @@ export default function PartitionDetailDetails() {
   const [expandedFloor, setExpandedFloor] = useState(null);
 
   const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down("sm"));   // mobile
-  const isSm = useMediaQuery(theme.breakpoints.between("sm", "md")); // small tablet
-  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));   // medium and up (desktop)
 
-  // format helper
-  const formatApiDateTime = iso => {
+  // Format helper
+  const formatApiDateTime = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
     if (isNaN(d)) return iso;
@@ -69,7 +55,7 @@ export default function PartitionDetailDetails() {
     return `${hourStr}:${minutes}:${seconds} ${ampm}`;
   };
 
-  // export excel for a floor (keeps your ExcelJS styling)
+  // Export floor to Excel
   const handleExportFloor = async (floor, emps) => {
     if (!emps || emps.length === 0) return;
 
@@ -84,10 +70,10 @@ export default function PartitionDetailDetails() {
       "Company",
       "Direction",
       "Card",
-      "Door"
+      "Door",
     ];
     const headerRow = sheet.addRow(headers);
-    headerRow.eachCell(cell => {
+    headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "8b8c8f" } };
       cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -95,11 +81,11 @@ export default function PartitionDetailDetails() {
         top: { style: "thin" },
         left: { style: "thin" },
         bottom: { style: "thin" },
-        right: { style: "thin" }
+        right: { style: "thin" },
       };
     });
 
-    emps.forEach(r => {
+    emps.forEach((r) => {
       const row = sheet.addRow([
         r.EmployeeID ?? "",
         r.ObjectName1 ?? "",
@@ -108,21 +94,21 @@ export default function PartitionDetailDetails() {
         r.CompanyName ?? "",
         r.Direction ?? "",
         r.CardNumber ?? "",
-        r.Door ?? ""
+        r.Door ?? "",
       ]);
-      row.eachCell(cell => {
+      row.eachCell((cell) => {
         cell.border = {
           top: { style: "thin" },
           left: { style: "thin" },
           bottom: { style: "thin" },
-          right: { style: "thin" }
+          right: { style: "thin" },
         };
       });
     });
 
-    sheet.columns.forEach(col => {
+    sheet.columns.forEach((col) => {
       let maxLen = 7;
-      col.eachCell({ includeEmpty: true }, c => {
+      col.eachCell({ includeEmpty: true }, (c) => {
         maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2);
       });
       col.width = Math.min(Math.max(maxLen, 17), 40);
@@ -135,20 +121,21 @@ export default function PartitionDetailDetails() {
     saveAs(new Blob([buf]), filename);
   };
 
-  // filter + map with partition parameter (keeps your lookupFloor)
+  // Filter + map
   const filterAndMap = (json, currentPartition) =>
     json.details
-      .filter(r =>
-        r.PartitionName2 === currentPartition &&
-        (r.Direction === "InDirection" || r.Direction === "OutDirection")
+      .filter(
+        (r) =>
+          r.PartitionName2 === currentPartition &&
+          (r.Direction === "InDirection" || r.Direction === "OutDirection")
       )
-      .map(r => {
+      .map((r) => {
         const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction);
         return { ...r, floor };
       })
-      .filter(r => r.floor !== "Unmapped");
+      .filter((r) => r.floor !== "Unmapped");
 
-  // single fetch + poll effect (no duplicate effects)
+  // Fetch + polling
   useEffect(() => {
     let active = true;
 
@@ -176,27 +163,30 @@ export default function PartitionDetailDetails() {
     };
   }, [partition]);
 
-  // group by floor name
+  // Group by floor
   const floorMap = useMemo(() => {
     const m = {};
-    Object.keys(liveCounts).forEach(f => { m[f] = [] });
-    details.forEach(r => {
+    Object.keys(liveCounts).forEach((f) => {
+      m[f] = [];
+    });
+    details.forEach((r) => {
       if (!m[r.floor]) m[r.floor] = [];
       m[r.floor].push(r);
     });
     return m;
   }, [details, liveCounts]);
 
-  // search + displayed list (sorted by length desc)
+  // Search & sort
   const displayed = useMemo(() => {
     const term = (search || "").toLowerCase();
     const arr = Object.entries(floorMap)
       .map(([floor, emps]) => {
-        const filtered = emps.filter(e =>
-          floor.toLowerCase().includes(term) ||
-          e.ObjectName1?.toLowerCase().includes(term) ||
-          `${e.EmployeeID}`.toLowerCase().includes(term) ||
-          `${e.CardNumber}`.toLowerCase().includes(term)
+        const filtered = emps.filter(
+          (e) =>
+            floor.toLowerCase().includes(term) ||
+            e.ObjectName1?.toLowerCase().includes(term) ||
+            `${e.EmployeeID}`.toLowerCase().includes(term) ||
+            `${e.CardNumber}`.toLowerCase().includes(term)
         );
         return [floor, filtered];
       })
@@ -221,27 +211,41 @@ export default function PartitionDetailDetails() {
     return (
       <>
         <Header />
-        <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box>
+        <Box sx={{ px: 2, py: 8 }}>
+          <LoadingSpinner />
+        </Box>
         <Footer />
       </>
     );
   }
 
-  // Layout:
-  // - On md+ screens: two columns: left = floor cards (summary), right = expanded DataTable (or placeholder)
-  // - On smaller screens: single column stacked (cards then expanded table)
+  // Layout
   return (
     <>
       <Header />
       <Box sx={{ pt: 1, pb: 2, background: "rgba(0,0,0,0.6)" }}>
         <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
-          {/* Top row: back button + title + search */}
-          <Box display="flex" flexWrap="wrap" alignItems="center" justifyContent="space-between" mb={2} gap={1}>
+          {/* Top Row */}
+          <Box
+            display="flex"
+            flexWrap="wrap"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={2}
+            gap={1}
+          >
             <Box display="flex" alignItems="center" gap={1}>
-              <Button size="small" onClick={() => navigate(-1)} sx={{ color: "#FFC107", fontSize: { xs: "0.8rem", sm: "0.9rem" } }}>
+              <Button
+                size="small"
+                onClick={() => navigate(-1)}
+                sx={{ color: "#FFC107", fontSize: { xs: "0.8rem", sm: "0.9rem" } }}
+              >
                 ← Back to Overview
               </Button>
-              <Typography variant="h6" sx={{ color: "#FFC107", fontSize: { xs: "1rem", sm: "1.15rem" } }}>
+              <Typography
+                variant="h6"
+                sx={{ color: "#FFC107", fontSize: { xs: "1rem", sm: "1.15rem" } }}
+              >
                 Floor Details
               </Typography>
             </Box>
@@ -251,11 +255,11 @@ export default function PartitionDetailDetails() {
                 size="small"
                 placeholder="Search floor / emp…"
                 value={search}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 sx={{
                   width: { xs: "100%", sm: 260 },
                   "& .MuiInputBase-input": { color: "#FFC107" },
-                  "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" }
+                  "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" },
                 }}
               />
               <Typography sx={{ color: "#FFC107", fontSize: { xs: "0.75rem", sm: "0.85rem" } }}>
@@ -264,7 +268,7 @@ export default function PartitionDetailDetails() {
             </Box>
           </Box>
 
-          {/* Main grid: left summary, right expanded */}
+          {/* Main Grid */}
           <Box
             sx={{
               display: "grid",
@@ -272,7 +276,7 @@ export default function PartitionDetailDetails() {
               gap: 2,
             }}
           >
-            {/* LEFT: floor cards (scrollable if many) */}
+            {/* LEFT: floor cards */}
             <Box>
               <Box
                 sx={{
@@ -280,55 +284,175 @@ export default function PartitionDetailDetails() {
                   gridTemplateColumns: {
                     xs: "1fr",
                     sm: "1fr 1fr",
-                    md: "1fr"
+                    md: "1fr",
                   },
                   gap: 2,
                 }}
               >
                 {displayed.map(([floor, emps]) => (
-                  <Paper key={floor} sx={{ border: "2px solid #FFC107", p: 1.5, background: "rgba(0,0,0,0.4)" }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1} flexWrap="wrap">
-                      <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#FFC107", fontSize: { xs: "0.9rem", sm: "1rem" } }}>
+                  <Paper
+                    key={floor}
+                    sx={{
+                      border: "2px solid #FFC107",
+                      p: 1.5,
+                      background: "rgba(0,0,0,0.4)",
+                    }}
+                  >
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      mb={1}
+                      flexWrap="wrap"
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={600}
+                        sx={{ color: "#FFC107", fontSize: { xs: "0.9rem", sm: "1rem" } }}
+                      >
                         {floor} (Total {emps.length})
                       </Typography>
 
-                      <Button size="small" variant="contained"
+                      <Button
+                        size="small"
+                        variant="contained"
                         onClick={() => handleExportFloor(floor, emps)}
-                        sx={{ bgcolor: '#FFC107', color: '#000', textTransform: 'none', fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>
+                        sx={{
+                          bgcolor: "#FFC107",
+                          color: "#000",
+                          textTransform: "none",
+                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                        }}
+                      >
                         Export
                       </Button>
                     </Box>
 
-                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, background: "rgba(0,0,0,0.4)", overflowX: "auto" }}>
+                    <TableContainer
+                      component={Paper}
+                      variant="outlined"
+                      sx={{
+                        mb: 1,
+                        background: "rgba(0,0,0,0.4)",
+                        overflowX: "auto",
+                      }}
+                    >
                       <Table size="small">
                         <TableHead>
                           <TableRow sx={{ bgcolor: "#000" }}>
-                            {["Emp ID", "Name", "Swipe Time", "Type", "Company", "Direction", "Card", "Door"].map(h => (
-                              <TableCell key={h} sx={{ color: "#FFC107", border: "1px solid #FFC107", fontWeight: "bold", fontSize: { xs: "0.65rem", sm: "0.8rem" }, whiteSpace: "nowrap" }}>
+                            {[
+                              "Emp ID",
+                              "Name",
+                              "Swipe Time",
+                              "Type",
+                              "Company",
+                              "Direction",
+                              "Card",
+                              "Door",
+                            ].map((h) => (
+                              <TableCell
+                                key={h}
+                                sx={{
+                                  color: "#FFC107",
+                                  border: "1px solid #FFC107",
+                                  fontWeight: "bold",
+                                  fontSize: { xs: "0.65rem", sm: "0.8rem" },
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
                                 {h}
                               </TableCell>
                             ))}
                           </TableRow>
                         </TableHead>
-
                         <TableBody>
                           {emps.slice(0, 10).map((r, i) => (
                             <TableRow key={i}>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.EmployeeID}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.ObjectName1}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{formatApiDateTime(r.LocaleMessageTime)}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.PersonnelType}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.CompanyName}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.Direction}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.CardNumber}</TableCell>
-                              <TableCell sx={{ color: "#fff", border: "1px solid #FFC107", fontSize: { xs: "0.7rem", sm: "0.85rem" } }}>{r.Door}</TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.EmployeeID}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.ObjectName1}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {formatApiDateTime(r.LocaleMessageTime)}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.PersonnelType}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.CompanyName}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.Direction}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.CardNumber}
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  color: "#fff",
+                                  border: "1px solid #FFC107",
+                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {r.Door}
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </TableContainer>
 
-                    <Button size="small" onClick={() => setExpandedFloor(f => f === floor ? null : floor)} sx={{ color: "#FFC107", fontSize: { xs: "0.75rem", sm: "0.85rem" } }}>
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        setExpandedFloor((f) => (f === floor ? null : floor))
+                      }
+                      sx={{ color: "#FFC107", fontSize: { xs: "0.75rem", sm: "0.85rem" } }}
+                    >
                       {expandedFloor === floor ? "Hide" : "See more…"}
                     </Button>
                   </Paper>
@@ -336,11 +460,18 @@ export default function PartitionDetailDetails() {
               </Box>
             </Box>
 
-            {/* RIGHT: expanded table (shows on md+ as second column, on xs it is stacked below) */}
+            {/* RIGHT: expanded table */}
             <Box>
-              {expandedFloor ? (
+              {expandedFloor && (
                 <Box>
-                  <Typography variant="h6" sx={{ color: "#FFC107", mb: 1, fontSize: { xs: "1rem", sm: "1.1rem" } }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#FFC107",
+                      mb: 1,
+                      fontSize: { xs: "1rem", sm: "1.1rem" },
+                    }}
+                  >
                     {expandedFloor} — All Entries
                   </Typography>
 
@@ -350,17 +481,11 @@ export default function PartitionDetailDetails() {
                       rows={(floorMap[expandedFloor] || []).map((r, i) => ({
                         ...r,
                         LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
-                        SrNo: i + 1
+                        SrNo: i + 1,
                       }))}
                     />
                   </Paper>
                 </Box>
-              ) : (
-                <Paper sx={{ p: 2, background: "rgba(0,0,0,0.25)", border: "1px dashed rgba(255,193,7,0.3)" }}>
-                  <Typography sx={{ color: "#FFC107", fontSize: { xs: "0.95rem", sm: "1rem" } }}>
-                    Select a floor (click "See more…") to view full entries here.
-                  </Typography>
-                </Paper>
               )}
             </Box>
           </Box>
