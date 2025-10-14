@@ -1,5 +1,4 @@
-dont change anything just i want this tabe in responsive ok
-in tab and mobile one one table ok and laptop and destop as it is two table side by site ok carefully
+```jsx
 // src/pages/PartitionDetailDetails.jsx
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -268,7 +267,7 @@ export default function PartitionDetailDetails() {
           {/* Floor cards */}
           <Box display="flex" flexWrap="wrap" width="100%" sx={{ px: 2 }}>
             {displayed.map(([floor, emps]) => (
-              <Box key={floor} sx={{ width: "50%", p: 2 }}>
+              <Box key={floor} sx={{ width: { xs: '100%', md: '50%' }, p: 2 }}>
                 <Paper sx={{
                   border: "2px solid #FFC107",
                   p: 2,
@@ -387,3 +386,4 @@ export default function PartitionDetailDetails() {
     </>
   );
 }
+```
