@@ -1,5 +1,3 @@
-I  want this page responive for each and every device, i menas auto adjust on screen size.
-  fully responsive ok.  in desktop desktop and laptop disply 2 table side by side wiht table alos responsive ok 
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -16,6 +14,7 @@ import {
   TableCell,
   TableBody,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -31,6 +30,7 @@ import { saveAs } from "file-saver";
 export default function PartitionDetailDetails() {
   const { partition } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const [details, setDetails] = useState([]);
   const [liveCounts, setLiveCounts] = useState({});
@@ -39,14 +39,15 @@ export default function PartitionDetailDetails() {
   const [search, setSearchTerm] = useState("");
   const [expandedFloor, setExpandedFloor] = useState(null);
 
-  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
   // Format helper
   const formatApiDateTime = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
     if (isNaN(d)) return iso;
-
     const hours24 = d.getUTCHours();
     const minutes = String(d.getUTCMinutes()).padStart(2, "0");
     const seconds = String(d.getUTCSeconds()).padStart(2, "0");
@@ -57,13 +58,12 @@ export default function PartitionDetailDetails() {
     return `${hourStr}:${minutes}:${seconds} ${ampm}`;
   };
 
-  // Export floor to Excel
+  // Excel export
   const handleExportFloor = async (floor, emps) => {
-    if (!emps || emps.length === 0) return;
+    if (!emps?.length) return;
 
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("FloorExport");
-
     const headers = [
       "Emp ID",
       "Name",
@@ -74,6 +74,7 @@ export default function PartitionDetailDetails() {
       "Card",
       "Door",
     ];
+
     const headerRow = sheet.addRow(headers);
     headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -226,7 +227,7 @@ export default function PartitionDetailDetails() {
     <>
       <Header />
       <Box sx={{ pt: 1, pb: 2, background: "rgba(0,0,0,0.6)" }}>
-        <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
           {/* Top Row */}
           <Box
             display="flex"
@@ -242,7 +243,7 @@ export default function PartitionDetailDetails() {
                 onClick={() => navigate(-1)}
                 sx={{ color: "#FFC107", fontSize: { xs: "0.8rem", sm: "0.9rem" } }}
               >
-                ← Back to Overview
+                ← Back
               </Button>
               <Typography
                 variant="h6"
@@ -252,14 +253,14 @@ export default function PartitionDetailDetails() {
               </Typography>
             </Box>
 
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
               <TextField
                 size="small"
                 placeholder="Search floor / emp…"
                 value={search}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 sx={{
-                  width: { xs: "100%", sm: 260 },
+                  width: { xs: "100%", sm: 250 },
                   "& .MuiInputBase-input": { color: "#FFC107" },
                   "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" },
                 }}
@@ -270,7 +271,7 @@ export default function PartitionDetailDetails() {
             </Box>
           </Box>
 
-          {/* Main Grid */}
+          {/* Responsive Grid */}
           <Box
             sx={{
               display: "grid",
@@ -278,216 +279,145 @@ export default function PartitionDetailDetails() {
               gap: 2,
             }}
           >
-            {/* LEFT: floor cards */}
-            <Box>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "1fr 1fr",
-                    md: "1fr",
-                  },
-                  gap: 2,
-                }}
-              >
-                {displayed.map(([floor, emps]) => (
-                  <Paper
-                    key={floor}
-                    sx={{
-                      border: "2px solid #FFC107",
-                      p: 1.5,
-                      background: "rgba(0,0,0,0.4)",
-                    }}
+            {/* LEFT */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr", md: "1fr" },
+                gap: 2,
+              }}
+            >
+              {displayed.map(([floor, emps]) => (
+                <Paper
+                  key={floor}
+                  sx={{
+                    border: "2px solid #FFC107",
+                    p: 1.5,
+                    background: "rgba(0,0,0,0.4)",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    flexWrap="wrap"
+                    mb={1}
                   >
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      mb={1}
-                      flexWrap="wrap"
-                    >
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={600}
-                        sx={{ color: "#FFC107", fontSize: { xs: "0.9rem", sm: "1rem" } }}
-                      >
-                        {floor} (Total {emps.length})
-                      </Typography>
-
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => handleExportFloor(floor, emps)}
-                        sx={{
-                          bgcolor: "#FFC107",
-                          color: "#000",
-                          textTransform: "none",
-                          fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                        }}
-                      >
-                        Export
-                      </Button>
-                    </Box>
-
-                    <TableContainer
-                      component={Paper}
-                      variant="outlined"
+                    <Typography sx={{ color: "#FFC107", fontWeight: 600, fontSize: "1rem" }}>
+                      {floor} ({emps.length})
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleExportFloor(floor, emps)}
                       sx={{
-                        mb: 1,
-                        background: "rgba(0,0,0,0.4)",
-                        overflowX: "auto",
+                        bgcolor: "#FFC107",
+                        color: "#000",
+                        textTransform: "none",
+                        fontSize: "0.8rem",
                       }}
                     >
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ bgcolor: "#000" }}>
-                            {[
-                              "Emp ID",
-                              "Name",
-                              "Swipe Time",
-                              "Type",
-                              "Company",
-                              "Direction",
-                              "Card",
-                              "Door",
-                            ].map((h) => (
-                              <TableCell
-                                key={h}
-                                sx={{
-                                  color: "#FFC107",
-                                  border: "1px solid #FFC107",
-                                  fontWeight: "bold",
-                                  fontSize: { xs: "0.65rem", sm: "0.8rem" },
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {h}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {emps.slice(0, 10).map((r, i) => (
-                            <TableRow key={i}>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.EmployeeID}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.ObjectName1}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {formatApiDateTime(r.LocaleMessageTime)}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.PersonnelType}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.CompanyName}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.Direction}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.CardNumber}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  color: "#fff",
-                                  border: "1px solid #FFC107",
-                                  fontSize: { xs: "0.7rem", sm: "0.85rem" },
-                                }}
-                              >
-                                {r.Door}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-
-                    <Button
-                      size="small"
-                      onClick={() =>
-                        setExpandedFloor((f) => (f === floor ? null : floor))
-                      }
-                      sx={{ color: "#FFC107", fontSize: { xs: "0.75rem", sm: "0.85rem" } }}
-                    >
-                      {expandedFloor === floor ? "Hide" : "See more…"}
+                      Export
                     </Button>
-                  </Paper>
-                ))}
-              </Box>
-            </Box>
+                  </Box>
 
-            {/* RIGHT: expanded table */}
-            <Box>
-              {expandedFloor && (
-                <Box>
-                  <Typography
-                    variant="h6"
+                  <TableContainer
                     sx={{
-                      color: "#FFC107",
-                      mb: 1,
-                      fontSize: { xs: "1rem", sm: "1.1rem" },
+                      background: "rgba(0,0,0,0.5)",
+                      borderRadius: 2,
+                      overflowX: "auto",
+                      maxHeight: 400,
                     }}
                   >
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          {[
+                            "Emp ID",
+                            "Name",
+                            "Swipe Time",
+                            "Type",
+                            "Company",
+                            "Direction",
+                            "Card",
+                            "Door",
+                          ].map((h) => (
+                            <TableCell
+                              key={h}
+                              sx={{
+                                color: "#FFC107",
+                                borderBottom: "1px solid #FFC107",
+                                fontWeight: "bold",
+                                fontSize: "0.8rem",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {h}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {emps.slice(0, 10).map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell sx={{ color: "#fff" }}>{r.EmployeeID}</TableCell>
+                            <TableCell sx={{ color: "#fff" }}>{r.ObjectName1}</TableCell>
+                            <TableCell sx={{ color: "#fff" }}>
+                              {formatApiDateTime(r.LocaleMessageTime)}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff" }}>{r.PersonnelType}</TableCell>
+                            <TableCell sx={{ color: "#fff" }}>{r.CompanyName}</TableCell>
+                            <TableCell sx={{ color: "#fff" }}>{r.Direction}</TableCell>
+                            <TableCell sx={{ color: "#fff" }}>{r.CardNumber}</TableCell>
+                            <TableCell sx={{ color: "#fff" }}>{r.Door}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+
+                  <Button
+                    size="small"
+                    onClick={() => setExpandedFloor((f) => (f === floor ? null : floor))}
+                    sx={{
+                      color: "#FFC107",
+                      mt: 1,
+                      fontSize: "0.85rem",
+                      textTransform: "none",
+                    }}
+                  >
+                    {expandedFloor === floor ? "Hide" : "See more…"}
+                  </Button>
+                </Paper>
+              ))}
+            </Box>
+
+            {/* RIGHT: Expanded Table */}
+            <Box>
+              {expandedFloor && (
+                <Paper
+                  sx={{
+                    p: 1.5,
+                    background: "rgba(0,0,0,0.35)",
+                    border: "1px solid #FFC107",
+                    borderRadius: 2,
+                    overflowX: "auto",
+                  }}
+                >
+                  <Typography sx={{ color: "#FFC107", mb: 1, fontWeight: 600 }}>
                     {expandedFloor} — All Entries
                   </Typography>
-
-                  <Paper sx={{ p: 1, background: "rgba(0,0,0,0.35)" }}>
-                    <DataTable
-                      columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
-                      rows={(floorMap[expandedFloor] || []).map((r, i) => ({
-                        ...r,
-                        LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
-                        SrNo: i + 1,
-                      }))}
-                    />
-                  </Paper>
-                </Box>
+                  <DataTable
+                    columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
+                    rows={(floorMap[expandedFloor] || []).map((r, i) => ({
+                      ...r,
+                      LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
+                      SrNo: i + 1,
+                    }))}
+                  />
+                </Paper>
               )}
             </Box>
           </Box>
