@@ -1,3 +1,5 @@
+I  want this page responive for each and every device, i menas auto adjust on screen size.
+  fully responsive ok.  in desktop desktop and laptop disply 2 table side by side wiht table alos responsive ok 
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
