@@ -1,3 +1,13 @@
+src\pages\PartitionDetailDetails.jsx
+  Line 576:9:  'isXs' is assigned a value but never used    no-unused-vars
+  Line 577:9:  'isSm' is assigned a value but never used    no-unused-vars
+  Line 578:9:  'isMdUp' is assigned a value but never used  no-unused-vars
+
+I DONT WANT THIS Select a floor (click "See more…") to view full entries here.
+
+
+
+
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
