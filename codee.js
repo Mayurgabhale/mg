@@ -76,11 +76,11 @@ return (
                 key={floor}
                 sx={{
                   width: {
-                    xs: '100%',
-                    sm: '50%',
-                    md: '33.33%',
-                    lg: '25%',
-                    xl: '20%',
+                    xs: '100%',   // 1 per row on mobile
+                    sm: '100%',   // 1 per row on tablet
+                    md: '50%',    // ✅ 2 per row on laptop
+                    lg: '50%',    // ✅ 2 per row on desktop
+                    xl: '50%',    // ✅ 2 per row even on large screens
                   },
                   p: { xs: 0.5, sm: 1 },
                   boxSizing: 'border-box',
