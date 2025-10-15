@@ -1,3 +1,7 @@
+ok, good,
+  but it take some time i want quicklym,
+    get respons ok 
+very fast ok 
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
