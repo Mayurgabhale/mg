@@ -1,5 +1,3 @@
-// Before
-.replace(/[.,()\/\-]/g, ' ')
-
-// After
-.replace(/[.,()/\-]/g, ' ') // you can also leave the hyphen at the end
+const companyRows = useMemo(() => {
+  // memo code
+}, [indexByDate.detailMap, pickedDate, backendFilterKey, selectedPersonnel, selectedSummaryPartition, getCanonicalCompany]);
