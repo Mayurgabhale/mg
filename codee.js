@@ -1,4 +1,309 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+
+when i slect is select box any region,
+in url chnage header alos change but
+detial page, data not upate emditlaum but in page table are not show it take more time
+i want emditlau show ok 
+this 
+http://localhost:3000/partition/Quezon%20City/details
+and this change quckilcy 
+APAC Occupancy • Quezon City
+but this not show quickly 
+7th Floor (Total 128)
+Emp ID	Name	Swipe Time	Type	Company	Direction	Card	Door
+323311	Mendoza, Jiyan Frances Ocampo	03:19:57 PM	Employee	Western Union Svs Philippines	InDirection	608256	APAC_PH_Manila_7th Floor_Open Office Door 2-721
+7th Floor (Total 128)
+Emp ID	Name	Swipe Time	Type	Company	Direction	Card	Door
+323311	Mendoza, Jiyan Frances Ocampo	03:19:57 PM	Employee	Western Union Svs Philippines	InDirection	608256	APAC_PH_Manila_7th Floor_Open Office Door 2-721
+ok 
+i want show quikcly data that i slect in select hox ok 
+
+// C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\components\Header.jsx
+import React, { useEffect, useState } from 'react';
+import {
+  AppBar, Toolbar, Box, Typography,
+  Select, MenuItem, IconButton, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+import MenuIcon from '@mui/icons-material/Menu';
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import CloseIcon from '@mui/icons-material/Close';
+
+import wuLogo from '../assets/images/wu-logo.png';
+import IndiaFlag from '../assets/flags/india.png';
+import MalaysiaFlag from '../assets/flags/malaysia.png';
+import PhilippinesFlag from '../assets/flags/philippines.png';
+import JapanFlag from '../assets/flags/japan.png';
+import HYDFlag from '../assets/flags/india.png';
+
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+const displayNameMap = {
+  'IN.Pune': 'Pune',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig',
+  'JP.Tokyo': 'Tokyo',
+  'IN.HYD': 'Hyderabad',
+};
+
+const flagMap = {
+  'Pune': IndiaFlag,
+  'MY.Kuala Lumpur': MalaysiaFlag,
+  'Quezon City': PhilippinesFlag,
+  'Taguig City': PhilippinesFlag,
+  'JP.Tokyo': JapanFlag,
+  'IN.HYD': HYDFlag,
+};
+
+export default function Header() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+  const [selectedPartition, setSelectedPartition] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
+
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  // Routing setup
+  const parts = location.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
+
+  useEffect(() => {
+    setSelectedPartition(currentPartition);
+  }, [currentPartition]);
+
+  const makePartitionPath = (suffix) => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
+
+  const handlePartitionChange = (newPartition) => {
+    if (!newPartition) return navigate('/');
+    setSelectedPartition(newPartition);
+    if (newPartition === 'Pune' && suffixSegments.length === 0) {
+      window.location.href = 'http://10.199.22.57:3011/';
+      return;
+    }
+
+    const base = `/partition/${encodeURIComponent(newPartition)}`;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
+
+    navigate(full);
+    setDrawerOpen(false);
+  };
+
+  const navItems = [
+    { icon: <HomeIcon />, label: 'Home Page', action: () => navigate('/') },
+    { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
+    { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
+  ];
+
+  return (
+    <>
+      <AppBar
+        position="static"
+        sx={{
+          background: 'linear-gradient(90deg, #111, #222)',
+          px: isMobile ? 1 : 2,
+          py: isMobile ? 0.5 : 0,
+        }}
+      >
+        <Toolbar
+          disableGutters
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          {/* Left: Logo + Title */}
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <Box component="img" src={wuLogo} alt="WU" border='1' sx={{ height: isMobile ? 28 : 36, border: '1px solid black' }} />
+            {!isMobile && (
+              <Typography
+                variant={isTablet ? 'h6' : 'h5'}
+                sx={{ color: '#FFC107', fontWeight: 600, ml: 1 }}
+              >
+                APAC Occupancy
+                {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Right Section */}
+          {isMobile ? (
+            <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+          ) : (
+            <Box display="flex" alignItems="center" gap={2}>
+              {/* Icons with tooltips */}
+              
+              <Box display="flex" alignItems="center" gap={1.5}>
+                {navItems.map((item, idx) => (
+                  <Tooltip
+                    key={idx}
+                    title={
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                        {item.label}
+                      </Typography>
+                    }
+                    arrow
+                    placement="bottom"
+                  >
+                    <IconButton color="inherit" onClick={item.action}>
+                      {React.cloneElement(item.icon, { fontSize: 'medium' })}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Box>
+
+              {/* Selector */}
+              <Select
+                size={isTablet ? 'small' : 'medium'}
+                value={selectedPartition}
+                displayEmpty
+                onChange={(e) => handlePartitionChange(e.target.value)}
+                sx={{
+                  bgcolor: '#fff',
+                  color: '#000',
+                  borderRadius: 1,
+                  minWidth: 160,
+                  fontSize: '0.9rem',
+                  height: 40,
+                }}
+
+                renderValue={(selected) =>
+                  selected ? (
+                    <Box display="flex" alignItems="center">
+                      <Box
+                        component="img"
+                        src={flagMap[selected]}
+                        alt={selected}
+                        sx={{
+                          width: 22,
+                          height: 15,
+                          mr: 1,
+                          border: '1px solid #6a6868ff', // ✅ adds visible border
+                          
+                          objectFit: 'cover',
+                        }}
+                      />
+                      {displayNameMap[selected] || selected}
+                    </Box>
+                  ) : '— Select Site —'
+                }
+
+              >
+                <MenuItem value="">— Select Site —</MenuItem>
+                {partitionList.map((p) => (
+                  <MenuItem key={p} value={p}>
+                    {displayNameMap[p] || p}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* MOBILE DRAWER (unchanged) */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{ sx: { width: 260, background: '#111', color: '#fff' } }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Box display="flex" justifyContent="flex-end">
+            <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#FFC107' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box display="flex" alignItems="center" mb={2}>
+            <Box component="img" src={wuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
+            <Typography variant="h6" sx={{ color: '#FFC107' }}>
+              APAC Occupancy
+            </Typography>
+          </Box>
+          <List>
+            {navItems.map((item, i) => (
+              <ListItemButton key={i} onClick={() => { item.action(); setDrawerOpen(false); }}>
+                <ListItemIcon sx={{ color: '#FFC107' }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+          </List>
+          <Box mt={2}>
+            <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>
+              Select Site
+            </Typography>
+            <Select
+              fullWidth
+              size="small"
+              value={selectedPartition}
+              displayEmpty
+              onChange={(e) => handlePartitionChange(e.target.value)}
+              sx={{
+                bgcolor: '#fff',
+                color: '#000',
+                borderRadius: 1,
+                fontSize: '0.85rem',
+              }}
+              renderValue={(selected) =>
+                selected ? (
+                  <Box display="flex" alignItems="center">
+                    <Box
+                      component="img"
+                      src={flagMap[selected]}
+                      alt={selected}
+                      sx={{ width: 20, height: 14, mr: 1 }}
+                    />
+                    {displayNameMap[selected] || selected}
+                  </Box>
+                ) : '— Select Site —'
+              }
+            >
+              <MenuItem value="">— Select Site —</MenuItem>
+              {partitionList.map((p) => (
+                <MenuItem key={p} value={p}>
+                  {displayNameMap[p] || p}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </Box>
+      </Drawer>
+    </>
+  );
+}
+
+
+
+
+// src/pages/PartitionDetailDetails.jsx
+
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Container, Box, Typography, Button, TextField,
   Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
@@ -13,6 +318,7 @@ import { fetchLiveSummary } from "../api/occupancy.service";
 import { lookupFloor } from "../utils/floorLookup";
 import { saveAs } from 'file-saver';
 
+
 export default function PartitionDetailDetails() {
   const { partition } = useParams();
   const navigate = useNavigate();
@@ -20,81 +326,147 @@ export default function PartitionDetailDetails() {
   const [details, setDetails] = useState([]);
   const [liveCounts, setLiveCounts] = useState({});
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState("");
   const [search, setSearchTerm] = useState("");
   const [expandedFloor, setExpandedFloor] = useState(null);
 
-  const intervalRef = useRef(null); // Keep track of polling interval
 
-  // Format date
+  // Helper: format API ISO (UTC) to "hh:mm:ss AM/PM"
   const formatApiDateTime = iso => {
     if (!iso) return "";
     const d = new Date(iso);
     if (isNaN(d)) return iso;
+
     const hours24 = d.getUTCHours();
     const minutes = String(d.getUTCMinutes()).padStart(2, "0");
     const seconds = String(d.getUTCSeconds()).padStart(2, "0");
+
     const ampm = hours24 >= 12 ? "PM" : "AM";
     let hour12 = hours24 % 12;
     if (hour12 === 0) hour12 = 12;
-    return `${String(hour12).padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
+    const hourStr = String(hour12).padStart(2, "0");
+
+    return `${hourStr}:${minutes}:${seconds} ${ampm}`;
   };
 
-  // Filter & map
-  const filterAndMap = useCallback((json) => {
-    return json.details
+  const handleExportFloor = async (floor, emps) => {
+  if (!emps || emps.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("FloorExport");
+
+  // --- Header row ---
+  const headers = [
+    "Emp ID",
+    "Name",
+    "Swipe Time",
+    "Type",
+    "Company",
+    "Direction",
+    "Card",
+    "Door"
+  ];
+  const headerRow = sheet.addRow(headers);
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "8b8c8f" } // Yellow
+    };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" }
+    };
+  });
+
+  // --- Data rows ---
+  emps.forEach(r => {
+    const row = sheet.addRow([
+      r.EmployeeID ?? "",
+      r.ObjectName1 ?? "",
+      formatApiDateTime(r.LocaleMessageTime),
+      r.PersonnelType ?? "",
+      r.CompanyName ?? "",
+      r.Direction ?? "",
+      r.CardNumber ?? "",
+      r.Door ?? ""
+    ]);
+
+    row.eachCell(cell => {
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" }
+      };
+    });
+  });
+
+  // --- Auto column width ---
+  sheet.columns.forEach(col => {
+    let maxLen = 7;
+    col.eachCell({ includeEmpty: true }, c => {
+      maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2);
+    });
+    col.width = Math.min(Math.max(maxLen, 17), 40);
+  });
+
+  // --- Filename (safe floor name + timestamp) ---
+  const safeFloor = floor.replace(/[^a-z0-9\-_]/gi, "_").slice(0, 80);
+  const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const filename = `${safeFloor}_${ts}.xlsx`;
+
+  // --- Save file ---
+  const buf = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buf]), filename);
+};
+
+  // 1) Filter the raw details → keep only In/Out for this partition,
+  //    map to include floor, then drop any that resolve to "Unmapped"
+  const filterAndMap = json =>
+    json.details
       .filter(r =>
         r.PartitionName2 === partition &&
         (r.Direction === "InDirection" || r.Direction === "OutDirection")
       )
-      .map(r => ({ ...r, floor: lookupFloor(r.PartitionName2, r.Door, r.Direction) }))
-      .filter(r => r.floor !== "Unmapped");
+      .map(r => {
+        const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction);
+        return { ...r, floor };
+      })
+      .filter(r => r.floor !== "Unmapped");  // remove any Out-of-office / unmapped
+
+  // initial load
+  useEffect(() => {
+    let active = true;
+    fetchLiveSummary().then(json => {
+      if (!active) return;
+      setLiveCounts(json.realtime[partition]?.floors || {});
+      setDetails(filterAndMap(json));
+      setLastUpdate(new Date().toLocaleTimeString());
+      setLoading(false);
+    });
+    return () => { active = false };
   }, [partition]);
 
-  // Fetch for current partition
-  const fetchPartitionData = useCallback(async () => {
-    try {
+  // poll every second
+  useEffect(() => {
+    const iv = setInterval(async () => {
       const json = await fetchLiveSummary();
       setLiveCounts(json.realtime[partition]?.floors || {});
       setDetails(filterAndMap(json));
-      setLoading(false);
-    } catch (err) {
-      console.error("Failed to fetch live summary", err);
-      setDetails([]);
-      setLiveCounts({});
-      setLoading(false);
-    }
-  }, [partition, filterAndMap]);
-
-  // Handle partition change
-  useEffect(() => {
-    // Stop previous interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    // Reset state immediately
-    setLoading(true);
-    setDetails([]);
-    setLiveCounts({});
-
-    // Fetch immediately for the new partition
-    fetchPartitionData();
-
-    // Start new interval for polling
-    intervalRef.current = setInterval(() => {
-      fetchPartitionData();
+      setLastUpdate(new Date().toLocaleTimeString());
     }, 1000);
+    return () => clearInterval(iv);
+  }, [partition]);
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [partition, fetchPartitionData]);
-
-  // Group by floor
+  // group by floor name
   const floorMap = useMemo(() => {
     const m = {};
-    Object.keys(liveCounts).forEach(f => { m[f] = []; });
+    Object.keys(liveCounts).forEach(f => { m[f] = [] });
     details.forEach(r => {
       if (!m[r.floor]) m[r.floor] = [];
       m[r.floor].push(r);
@@ -102,10 +474,12 @@ export default function PartitionDetailDetails() {
     return m;
   }, [details, liveCounts]);
 
-  // Search
+  
+  // apply search filter to each floor's list
   const displayed = useMemo(() => {
     const term = search.toLowerCase();
-    return Object.entries(floorMap)
+
+    const arr = Object.entries(floorMap)
       .map(([floor, emps]) => {
         const filtered = emps.filter(e =>
           floor.toLowerCase().includes(term) ||
@@ -115,8 +489,12 @@ export default function PartitionDetailDetails() {
         );
         return [floor, filtered];
       })
-      .filter(([, emps]) => emps.length > 0)
-      .sort((a, b) => b[1].length - a[1].length);
+      .filter(([, emps]) => emps.length > 0);
+
+    // ✅ sort by length descending (largest totals first)
+    arr.sort((a, b) => b[1].length - a[1].length);
+
+    return arr;
   }, [floorMap, search]);
 
   const columns = [
@@ -124,8 +502,8 @@ export default function PartitionDetailDetails() {
     { field: "ObjectName1", headerName: "Name" },
     { field: "LocaleMessageTime", headerName: "Swipe Time" },
     { field: "PersonnelType", headerName: "Type" },
-    { field: "CompanyName", headerName: "Company" },
-    { field: "Direction", headerName: "Direction" },
+    { field: "CompanyName", headerName: "Company" }, // <-- ADD THIS LINE
+    { field: "Direction", headerName: "Direction" }, // <-- ADD THIS LINE
     { field: "CardNumber", headerName: "Card" },
     { field: "Door", headerName: "Door" },
   ];
@@ -139,47 +517,78 @@ export default function PartitionDetailDetails() {
       </>
     );
   }
-
   return (
     <>
       <Header />
       <Box sx={{ pt: 1, pb: 1, background: "rgba(0,0,0,0.6)" }}>
         <Container disableGutters maxWidth={false}>
-          {/* Back button */}
+          {/* Back button + title */}
           <Box display="flex" alignItems="center" mb={2} sx={{ px: 2 }}>
             <Button size="small" onClick={() => navigate(-1)} sx={{ color: "#FFC107" }}>
               ← Back to Overview
             </Button>
           </Box>
-
-          {/* Search */}
+          {/* Search + timestamp */}
           <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: 2 }}>
-            <Typography variant="h6" sx={{ color: "#FFC107" }}>Floor Details</Typography>
+            <Typography variant="h6" sx={{ color: "#FFC107" }}>
+              Floor Details
+            </Typography>
             <TextField
               size="small"
               placeholder="Search floor / emp…"
               value={search}
               onChange={e => setSearchTerm(e.target.value)}
-              sx={{ "& .MuiInputBase-input": { color: "#FFC107" }, "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" } }}
+              sx={{
+                "& .MuiInputBase-input": { color: "#FFC107" },
+                "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" }
+              }}
             />
           </Box>
-
+           {/* 3) replace the floor card JSX (the displayed.map rendering) with this updated version */}
           {/* Floor cards */}
           <Box display="flex" flexWrap="wrap" width="100%" sx={{ px: 2 }}>
             {displayed.map(([floor, emps]) => (
               <Box key={floor} sx={{ width: { xs: '100%', md: '50%' }, p: 2 }}>
-                <Paper sx={{ border: "2px solid #FFC107", p: 2, background: "rgba(0,0,0,0.4)" }}>
+                <Paper sx={{
+                  border: "2px solid #FFC107",
+                  p: 2,
+                  background: "rgba(0,0,0,0.4)"
+                }}>
+                  {/* Header row: left = floor title, right = export button */}
                   <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                    <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#FFC107" }}>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={600}
+                      sx={{ color: "#FFC107" }}
+                    >
                       {floor} (Total {emps.length})
                     </Typography>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => handleExportFloor(floor, emps)}
+                      sx={{ bgcolor: '#FFC107', color: '#000', textTransform: 'none' }}
+                    >
+                      Export
+                    </Button>
                   </Box>
-                  <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}>
+                  <TableContainer
+                    component={Paper}
+                    variant="outlined"
+                    sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}
+                  >
                     <Table size="small">
                       <TableHead>
                         <TableRow sx={{ bgcolor: "#000" }}>
-                          {["Emp ID", "Name", "Swipe Time", "Type", "Company", "Direction", "Card", "Door"].map(h => (
-                            <TableCell key={h} sx={{ color: "#FFC107", border: "1px solid #FFC107", fontWeight: "bold" }}>
+                          {["Emp ID", "Name", "Swipe Time", "Type", "Company","Direction", "Card", "Door"].map(h => (
+                            <TableCell
+                              key={h}
+                              sx={{
+                                color: "#FFC107",
+                                border: "1px solid #FFC107",
+                                fontWeight: "bold"
+                              }}
+                            >
                               {h}
                             </TableCell>
                           ))}
@@ -188,26 +597,64 @@ export default function PartitionDetailDetails() {
                       <TableBody>
                         {emps.slice(0, 10).map((r, i) => (
                           <TableRow key={i}>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.EmployeeID}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.ObjectName1}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{formatApiDateTime(r.LocaleMessageTime)}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.PersonnelType}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.CompanyName}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.Direction}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.CardNumber}</TableCell>
-                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.Door}</TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.EmployeeID}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.ObjectName1}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {formatApiDateTime(r.LocaleMessageTime)}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.PersonnelType}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.CompanyName}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.Direction}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.CardNumber}
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                              {r.Door}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
-                  <Button size="small" onClick={() => setExpandedFloor(f => f === floor ? null : floor)} sx={{ color: "#FFC107" }}>
+                  <Button
+                    size="small"
+                    onClick={() => setExpandedFloor(f => f === floor ? null : floor)}
+                    sx={{ color: "#FFC107" }}
+                  >
                     {expandedFloor === floor ? "Hide" : "See more…"}
                   </Button>
                 </Paper>
               </Box>
             ))}
           </Box>
+
+          {/* Expanded table */}
+          {expandedFloor && (
+            <Box sx={{ px: 2, mt: 2 }}>
+              <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
+                {expandedFloor} — All Entries
+              </Typography>
+              <DataTable
+                // add a Sr No column only for the expanded table (keeps original `columns` unchanged)
+                columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
+                rows={(floorMap[expandedFloor] || []).map((r, i) => ({
+                  ...r,
+                  LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
+                  SrNo: i + 1 // 1,2,3...
+                }))}
+              />
+            </Box>
+          )}
         </Container>
       </Box>
       <Footer />
