@@ -45,7 +45,7 @@ const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 </Grid>
 
 
-see this is the code 
+see this is the code  this i want in responsive ok 
 {/* Container for both tables side-by-side */}
             <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
               {/* Left: existing summary table */}
