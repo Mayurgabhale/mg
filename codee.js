@@ -46,7 +46,8 @@ const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
 
 
 see this is the code  this i want in responsive ok 
-{/* Container for both tables side-by-side */}
+
+            {/* Container for both tables side-by-side */}
             <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
               {/* Left: existing summary table */}
               <Box sx={{ flex: 1, minWidth: 320 }}>
@@ -203,38 +204,7 @@ see this is the code  this i want in responsive ok
                   )}
                 </Box>
 
-                <Button
-                  variant="outlined"
-                  sx={{ ml: 2, borderColor: '#FFC107', color: '#FFC107' }}
-                  onClick={async () => {
-                    const backendKey = backendFilterKey || 'all';
-                    clearHistoryCache(backendKey);
-                    setLoading(true);
-                    try {
-                      const fresh = await fetchHistory(decodedPartition);
-                      saveHistoryCache(backendKey, fresh);
-                      // build index
-                      const detailMap = new Map();
-                      (fresh.details || []).forEach(r => {
-                        const d = (r.LocaleMessageTime && r.LocaleMessageTime.slice(0, 10))
-                          || (r.SwipeDate && r.SwipeDate.slice(0, 10))
-                          || 'unknown';
-                        if (!detailMap.has(d)) detailMap.set(d, []);
-                        detailMap.get(d).push(r);
-                      });
-                      const summaryMap = new Map();
-                      (fresh.summaryByDate || []).forEach(s => summaryMap.set((s.date || '').slice(0, 10), s));
-                      setData(fresh);
-                      setIndexByDate({ detailMap, summaryMap });
-                    } catch (err) {
-                      console.error('Manual refresh failed', err);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  Refresh History
-                </Button>
+                
 
               </Box>
 
