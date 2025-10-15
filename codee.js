@@ -1,3 +1,4 @@
+when user clikc on see more that time i want to genrete pup up tabl ok 
 return (
   <>
     <Header />
