@@ -1,3 +1,6 @@
+yes,  it  is work but, glich, 
+  i means if slect tokyo it dipsply, only one second after privius data diplsy i means pune data diplsy 
+fix this only not glichinh ok 
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
