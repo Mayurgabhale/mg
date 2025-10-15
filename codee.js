@@ -1,6 +1,4 @@
-// src/pages/PartitionDetailDetails.jsx
-
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   Container, Box, Typography, Button, TextField,
   Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody
@@ -22,16 +20,16 @@ export default function PartitionDetailDetails() {
   const [details, setDetails] = useState([]);
   const [liveCounts, setLiveCounts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState("");
   const [search, setSearchTerm] = useState("");
   const [expandedFloor, setExpandedFloor] = useState(null);
 
-  // --- Helper: format ISO UTC to "hh:mm:ss AM/PM"
+  const intervalRef = useRef(null); // Keep track of polling interval
+
+  // Format date
   const formatApiDateTime = iso => {
     if (!iso) return "";
     const d = new Date(iso);
     if (isNaN(d)) return iso;
-
     const hours24 = d.getUTCHours();
     const minutes = String(d.getUTCMinutes()).padStart(2, "0");
     const seconds = String(d.getUTCSeconds()).padStart(2, "0");
@@ -41,52 +39,7 @@ export default function PartitionDetailDetails() {
     return `${String(hour12).padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
   };
 
-  // --- Export floor to Excel
-  const handleExportFloor = async (floor, emps) => {
-    if (!emps || emps.length === 0) return;
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("FloorExport");
-
-    const headers = ["Emp ID", "Name", "Swipe Time", "Type", "Company", "Direction", "Card", "Door"];
-    const headerRow = sheet.addRow(headers);
-    headerRow.eachCell(cell => {
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "8b8c8f" } };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-    });
-
-    emps.forEach(r => {
-      const row = sheet.addRow([
-        r.EmployeeID ?? "",
-        r.ObjectName1 ?? "",
-        formatApiDateTime(r.LocaleMessageTime),
-        r.PersonnelType ?? "",
-        r.CompanyName ?? "",
-        r.Direction ?? "",
-        r.CardNumber ?? "",
-        r.Door ?? ""
-      ]);
-      row.eachCell(cell => {
-        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
-      });
-    });
-
-    sheet.columns.forEach(col => {
-      let maxLen = 7;
-      col.eachCell({ includeEmpty: true }, c => { maxLen = Math.max(maxLen, (c.value ? c.value.toString().length : 0) + 2); });
-      col.width = Math.min(Math.max(maxLen, 17), 40);
-    });
-
-    const safeFloor = floor.replace(/[^a-z0-9\-_]/gi, "_").slice(0, 80);
-    const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-    const filename = `${safeFloor}_${ts}.xlsx`;
-
-    const buf = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buf]), filename);
-  };
-
-  // --- Filter & map raw details
+  // Filter & map
   const filterAndMap = useCallback((json) => {
     return json.details
       .filter(r =>
@@ -97,32 +50,48 @@ export default function PartitionDetailDetails() {
       .filter(r => r.floor !== "Unmapped");
   }, [partition]);
 
-  // --- Unified fetch function
-  const updatePartitionData = useCallback(async () => {
+  // Fetch for current partition
+  const fetchPartitionData = useCallback(async () => {
     try {
       const json = await fetchLiveSummary();
       setLiveCounts(json.realtime[partition]?.floors || {});
       setDetails(filterAndMap(json));
-      setLastUpdate(new Date().toLocaleTimeString());
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch live summary", err);
+      setDetails([]);
+      setLiveCounts({});
+      setLoading(false);
     }
   }, [partition, filterAndMap]);
 
-  // --- Fetch immediately on partition change
+  // Handle partition change
   useEffect(() => {
+    // Stop previous interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Reset state immediately
     setLoading(true);
-    updatePartitionData();
-  }, [partition, updatePartitionData]);
+    setDetails([]);
+    setLiveCounts({});
 
-  // --- Poll every 1s
-  useEffect(() => {
-    const iv = setInterval(updatePartitionData, 1000);
-    return () => clearInterval(iv);
-  }, [updatePartitionData]);
+    // Fetch immediately for the new partition
+    fetchPartitionData();
 
-  // --- Group by floor
+    // Start new interval for polling
+    intervalRef.current = setInterval(() => {
+      fetchPartitionData();
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [partition, fetchPartitionData]);
+
+  // Group by floor
   const floorMap = useMemo(() => {
     const m = {};
     Object.keys(liveCounts).forEach(f => { m[f] = []; });
@@ -133,7 +102,7 @@ export default function PartitionDetailDetails() {
     return m;
   }, [details, liveCounts]);
 
-  // --- Apply search filter
+  // Search
   const displayed = useMemo(() => {
     const term = search.toLowerCase();
     return Object.entries(floorMap)
@@ -147,7 +116,7 @@ export default function PartitionDetailDetails() {
         return [floor, filtered];
       })
       .filter(([, emps]) => emps.length > 0)
-      .sort((a, b) => b[1].length - a[1].length); // largest first
+      .sort((a, b) => b[1].length - a[1].length);
   }, [floorMap, search]);
 
   const columns = [
@@ -176,7 +145,6 @@ export default function PartitionDetailDetails() {
       <Header />
       <Box sx={{ pt: 1, pb: 1, background: "rgba(0,0,0,0.6)" }}>
         <Container disableGutters maxWidth={false}>
-
           {/* Back button */}
           <Box display="flex" alignItems="center" mb={2} sx={{ px: 2 }}>
             <Button size="small" onClick={() => navigate(-1)} sx={{ color: "#FFC107" }}>
@@ -184,7 +152,7 @@ export default function PartitionDetailDetails() {
             </Button>
           </Box>
 
-          {/* Search + timestamp */}
+          {/* Search */}
           <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: 2 }}>
             <Typography variant="h6" sx={{ color: "#FFC107" }}>Floor Details</Typography>
             <TextField
@@ -192,10 +160,7 @@ export default function PartitionDetailDetails() {
               placeholder="Search floor / emp…"
               value={search}
               onChange={e => setSearchTerm(e.target.value)}
-              sx={{
-                "& .MuiInputBase-input": { color: "#FFC107" },
-                "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" }
-              }}
+              sx={{ "& .MuiInputBase-input": { color: "#FFC107" }, "& .MuiOutlinedInput-root fieldset": { borderColor: "#FFC107" } }}
             />
           </Box>
 
@@ -208,16 +173,7 @@ export default function PartitionDetailDetails() {
                     <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#FFC107" }}>
                       {floor} (Total {emps.length})
                     </Typography>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => handleExportFloor(floor, emps)}
-                      sx={{ bgcolor: '#FFC107', color: '#000', textTransform: 'none' }}
-                    >
-                      Export
-                    </Button>
                   </Box>
-
                   <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}>
                     <Table size="small">
                       <TableHead>
@@ -245,7 +201,6 @@ export default function PartitionDetailDetails() {
                       </TableBody>
                     </Table>
                   </TableContainer>
-
                   <Button size="small" onClick={() => setExpandedFloor(f => f === floor ? null : floor)} sx={{ color: "#FFC107" }}>
                     {expandedFloor === floor ? "Hide" : "See more…"}
                   </Button>
@@ -253,23 +208,6 @@ export default function PartitionDetailDetails() {
               </Box>
             ))}
           </Box>
-
-          {/* Expanded table */}
-          {expandedFloor && (
-            <Box sx={{ px: 2, mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "#FFC107" }} gutterBottom>
-                {expandedFloor} — All Entries
-              </Typography>
-              <DataTable
-                columns={[{ field: "SrNo", headerName: "Sr No" }, ...columns]}
-                rows={(floorMap[expandedFloor] || []).map((r, i) => ({
-                  ...r,
-                  LocaleMessageTime: formatApiDateTime(r.LocaleMessageTime),
-                  SrNo: i + 1
-                }))}
-              />
-            </Box>
-          )}
         </Container>
       </Box>
       <Footer />
