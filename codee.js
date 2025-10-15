@@ -1,3 +1,4 @@
+
 i want this fully responsive for anywher device, 
   each device ok, opne this page any in any device to looking responive and clean ok 
   dont chagne anythinkg just create responive ok but careully, ok 
