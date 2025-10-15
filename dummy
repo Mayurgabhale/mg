@@ -2,6 +2,14 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 
 
 
+useEffect(() => {
+  let active = true;
+  const backendKey = backendFilterKey || 'all';
+  ...
+  return () => { active = false; };
+}, [decodedPartition, CACHE_TTL_MS, backendFilterKey, loadHistoryCache, saveHistoryCache]);
+
+
 
 
 const saveHistoryCache = useCallback((backendKey, json) => {
