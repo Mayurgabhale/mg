@@ -1,221 +1,160 @@
-return (
-  <>
-    <Header />
-    <Container
-      maxWidth={false}
-      disableGutters
-      sx={{
-        px: { xs: 1, sm: 2 },
-        py: 0,
-        background: '#151515',
-      }}
-    >
-      {/* ---------- SUMMARY CARDS ROW ---------- */}
-      <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
-        {[
-          {
-            title: "Today's Total Headcount",
-            value: todayTot,
-            icon: <i className="fa-solid fa-users" style={{ color: '#E57373', fontSize: 25 }} />,
-            border: '#FFB300',
-          },
-          {
-            title: "Today's Employees Count",
-            value: todayEmp,
-            icon: <i className="bi bi-people" style={{ color: '#81C784', fontSize: 25 }} />,
-            border: '#8BC34A',
-          },
-          {
-            title: "Today's Contractors Count",
-            value: todayCon,
-            icon: <i className="fa-solid fa-circle-user" style={{ color: '#81C784', fontSize: 25 }} />,
-            border: '#E57373',
-          },
-          {
-            title: "Realtime Headcount",
-            value: realtimeTot,
-            icon: <i className="fa-solid fa-users" style={{ color: '#BA68C8', fontSize: 25 }} />,
-            border: '#FFD180',
-          },
-          {
-            title: "Realtime Employees Count",
-            value: realtimeEmp,
-            icon: <i className="bi bi-people" style={{ color: '#81C784', fontSize: 25 }} />,
-            border: '#AED581',
-          },
-          {
-            title: "Realtime Contractors Count",
-            value: realtimeCon,
-            icon: <i className="fa-solid fa-circle-user" style={{ color: '#BA68C8', fontSize: 25 }} />,
-            border: '#EF5350',
-          },
-        ].map((c) => (
-          <Box
-            key={c.title}
-            sx={{
-              flex: {
-                xs: '1 1 100%',   // 1 per row (mobile)
-                sm: '1 1 48%',    // 2 per row (tablet)
-                md: '1 1 31%',    // 3 per row (small desktop)
-                lg: '1 1 23%',    // 4 per row (large desktop)
-                xl: '1 1 calc(16.66% - 8px)', // 6 per row (wide screen)
-              },
-            }}
-          >
-            <SummaryCard
-              title={c.title}
-              total={c.value}
-              stats={[]}
-              icon={c.icon}
-              sx={{ height: { xs: 120, sm: 130, md: 140 }, border: `2px solid ${c.border}` }}
-            />
-          </Box>
-        ))}
-      </Box>
+create this responsive for each device and screen size ok carefully
+ return (
+    <>
+      <Header />
+      <Container maxWidth={false} disableGutters sx={{ px: 2, py: 2 }}>
+        <Box mb={1}><Button size="small" onClick={() => navigate(-1)}>← Back to Overview</Button></Box>
+        <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5} mb={2}>
+          {/* Title */}
+          <Typography variant="h6">Floor Details</Typography>
 
-      {/* ---------- COUNTRY SUMMARY CARDS ---------- */}
-      <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
-        {summaryItems
-          .filter((item) => !['Dublin', 'Rome', 'Moscow'].includes(item.label))
-          .map((item, index) => {
-            const [tc, ec, cc] = item.colors;
-            const pieCities = ['Dublin', 'Rome', 'Moscow'];
+          {/* Search field */}
+          <TextField
+            size="small"
+            placeholder="Search floor / emp…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            sx={{ ml: 1 }}
+          />
+        </Box>
 
-            const pieData = summaryItems
-              ?.filter((item) => pieCities.includes(item.label))
-              .map((item) => ({
-                name: item.label,
-                value: item.total,
-              }));
+        <Box display="flex" flexWrap="wrap">
+          {[...displayed]
+            .sort((a, b) => b[1].length - a[1].length) // Priority: most rows first
+            .map(([floor, emps]) => {
+              const isExpanded = expanded === floor;
+              const visibleEmps = isExpanded ? emps : emps.slice(0, 10);
 
-            return (
-              <Box
-                key={item.label}
-                sx={{
-                  flex: {
-                    xs: '1 1 100%',
-                    sm: '1 1 48%',
-                    md: '1 1 31%',
-                    lg: '1 1 23%',
-                    xl: '1 1 calc(10.66% - 1px)',
-                  },
-                }}
-              >
-                <SummaryCard
-                  title={item.label}
-                  total={item.total}
-                  stats={[
-                    { label: 'Employees', value: item.emp },
-                    { label: 'Contractors', value: item.cont },
-                  ]}
-                  icon={
-                    item.flag && (
-                      <Box
-                        component="img"
-                        src={item.flag}
-                        alt={item.label}
-                        sx={{
-                          width: 45,
-                          height: 25,
-                          border: '1px solid #fff',
-                          borderRadius: 0.5,
-                        }}
-                      />
-                    )
-                  }
-                  titleColor={tc}
-                  statColors={[ec, cc]}
+              return (
+                <Box
+                  key={floor}
                   sx={{
-                    height: { xs: 180, sm: 190, md: 200 },
-                    border: `2px solid ${palette15[index % palette15.length]}`,
-                    '& .MuiTypography-subtitle1': { fontSize: { xs: '1rem', sm: '1.2rem', md: '1.3rem' } },
-                    '& .MuiTypography-h4': { fontSize: { xs: '1.5rem', sm: '1.8rem', md: '2rem' } },
-                    '& .MuiTypography-caption': { fontSize: { xs: '1rem', sm: '1.1rem', md: '1.3rem' } },
+                    width: { xs: '100%', sm: '50%' },
+                    p: 1,
+                    boxSizing: 'border-box',
                   }}
-                />
-              </Box>
-            );
-          })}
-      </Box>
+                >
+                  {/* Title + Export aligned in one row */}
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      {floor} (Total {emps.length})
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => exportToExcel(floor, emps)}
+                    >
+                      Export
+                    </Button>
+                  </Box>
+                  {/* Smart height layout */}
+                  <Box
+                    sx={{
+                      border: '2px solid #FFC107',
+                      borderRadius: 1,
+                      p: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      minHeight: 120,
+                      maxHeight: isExpanded ? 600 : 'auto',
+                    }}
+                  >
+                    <TableContainer
+                      component={Paper}
+                      variant="outlined"
+                      sx={{
+                        overflowY: 'auto',
+                        flexGrow: 1,
+                      }}
+                    >
+                      <Table size="small" stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            {['ID', 'Name', 'Time', 'Type', 'CompanyName', 'Card', 'Door'].map((h, idx, arr) => (
+                              <TableCell
+                                key={h}
+                                sx={{
+                                  fontWeight: 'bold',
+                                  py: 0.5,
+                                  whiteSpace: 'nowrap',
+                                  borderRight: idx !== arr.length - 1 ? '1px solid #ccc' : 'none',
+                                  borderBottom: '1px solid #ccc',
+                                }}
+                              >
+                                {h}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
 
-      {/* ---------- LIVE CHARTS ROW ---------- */}
-      <Box display="flex" gap={1} mb={1} flexWrap="wrap">
-        {/* CHART 1: Composite */}
-        <Box
-          sx={{
-            flex: { xs: '1 1 100%', md: '1 1 48%', lg: '1 1 32%' },
-            border: '2px solid #FFC107',
-            borderRadius: 2,
-            p: { xs: 1, sm: 2 },
-            background: 'rgba(0,0,0,0.6)',
-          }}
-        >
-          {loading ? (
-            <Skeleton variant="rectangular" height={300} />
-          ) : (
-            <CompositeChartCard
-              title="Vilnius"
-              data={vilniusFloors}
-              barColor="#4CAF50"
-              lineColor="#FF0000"
-              height={320}
-              animationDuration={1500}
-              animationEasing="ease-in-out"
-            />
-          )}
+                        <TableBody>
+                          {visibleEmps.map((r, i) => (
+                            <TableRow key={i}>
+                              {[
+                                r.EmployeeID,
+                                r.ObjectName1,
+                                formatApiTime12(r.LocaleMessageTime),
+                                r.PersonnelType,
+                                r.CompanyName,
+                                r.CardNumber,
+                                r.Door,
+                              ].map((val, idx, arr) => (
+                                <TableCell
+                                  key={idx}
+                                  sx={{
+                                    py: 0.5,
+                                    minWidth: [50, 120, 100, 80, 100, 100][idx],
+                                    whiteSpace: 'nowrap',
+                                    borderRight: idx !== arr.length - 1 ? '1px solid #eee' : 'none',
+                                  }}
+                                >
+                                  {val}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    {emps.length > 10 && (
+                      <Box textAlign="right" mt={1}>
+                        <Button
+                          size="small"
+                          onClick={() => setExpanded(isExpanded ? null : floor)}
+                        >
+                          {isExpanded ? 'Hide' : 'See more…'}
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              );
+            })}
         </Box>
-
-        {/* CHART 2: Dublin, Rome, Moscow */}
-        <Box
-          sx={{
-            flex: { xs: '1 1 100%', md: '1 1 48%', lg: '1 1 32%' },
-            border: '2px solid #FFC107',
-            borderRadius: 2,
-            p: { xs: 1, sm: 2 },
-            background: 'rgba(0,0,0,0.6)',
-          }}
-        >
-          {loading ? (
-            <Skeleton variant="rectangular" height={300} />
-          ) : (
-            <PieChartCard
-              title=""
-              data={pieData1}
-              colors={['#FFB74D', '#4DB6AC', '#9575CD']}
-              innerRadius={60}
-              height={400}
-              showZeroSlice
-              animationDuration={1500}
-            />
-          )}
-        </Box>
-
-        {/* CHART 3: Other Cities */}
-        <Box
-          sx={{
-            flex: { xs: '1 1 100%', md: '1 1 48%', lg: '1 1 32%' },
-            border: '2px solid #FFC107',
-            borderRadius: 2,
-            p: { xs: 1, sm: 2 },
-            background: 'rgba(0,0,0,0.6)',
-          }}
-        >
-          {loading ? (
-            <Skeleton variant="rectangular" height={300} />
-          ) : (
-            <PieChartCard
-              title=""
-              data={pieData2}
-              colors={['#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F']}
-              innerRadius={60}
-              height={400}
-              showZeroSlice
-              animationDuration={1500}
-            />
-          )}
-        </Box>
-      </Box>
-    </Container>
-    <Footer />
-  </>
-);
+        {expanded && (
+            <Box mt={2}>
+              <Typography variant="h6" gutterBottom>{expanded} — All Entries</Typography>
+              <DataTable
+                columns={[
+                  { field: 'SrNo', headerName: 'Sr No' },               
+                  { field: 'EmployeeID', headerName: 'ID' },
+                  { field: 'ObjectName1', headerName: 'Name' },
+                  { field: 'LocaleMessageTime', headerName: 'Time' },
+                  { field: 'PersonnelType', headerName: 'Type' },
+                  { field: 'CompanyName', headerName: 'CompanyName' },
+                  { field: 'CardNumber', headerName: 'Card' },
+                  { field: 'Door', headerName: 'Door' }
+                ]}
+                rows={floorMap[expanded].map((r, i) => ({
+                  ...r,
+                  LocaleMessageTime:      formatApiTime12(r.LocaleMessageTime),
+                  SrNo: i + 1                                      
+                }))}
+              />
+            </Box>
+          )
+        }
+      </Container >
+      <Footer />
+    </>
+  );
