@@ -1,3 +1,13 @@
+data not show add date 
+			
+Country	City	Company	Total
+Austria	Vienna	Cyber Search Ltd	1
+Austria	Vienna	PKE Facility Management GmbH	1
+Austria	Vienna	PS3 PERSONALSERVICE GMBH	1
+Austria	Vienna	PwC	1
+Austria	Vienna	Temp Badge	3
+
+
 /* ------------------ handleExportCompanies (EMEA) ------------------ */
 const handleExportCompanies = async () => {
   if (!pickedDate || !companyRows.length) return;
