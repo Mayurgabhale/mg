@@ -1,4 +1,149 @@
 search not wokr correct 
+
+// src/pages/PartitionDetailDetails.jsx
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  Container, Box, Typography, Button, TextField,
+  TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+
+import { useParams, useNavigate } from "react-router-dom";
+
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+import DataTable from "../components/DataTable";
+
+import { fetchLiveSummary } from "../api/occupancy.service";
+import { lookupFloor } from "../utils/floorLookup";
+
+export default function PartitionDetailDetails() {
+  const { partition } = useParams();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
+  const [details, setDetails] = useState([]);
+  const [liveCounts, setLiveCounts] = useState({});
+  const [lastUpdate, setLastUpdate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedFloor, setExpandedFloor] = useState(null);
+  const [expanded, setExpanded] = useState(null);
+
+  // pull + poll
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      let json;
+      try {
+        json = await fetchLiveSummary();
+      } catch (err) {
+        console.error("fetchLiveSummary error:", err);
+        return;
+      }
+      if (!active) return;
+
+      // --- 1) normalize & trim liveCounts keys ---
+      const raw = json.realtime[partition]?.floors || {};
+      const counts = Object.entries(raw).reduce((acc, [floor, count]) => {
+        const f = floor.trim();
+        acc[f] = (acc[f] || 0) + count;
+        return acc;
+      }, {});
+      setLiveCounts(counts);
+
+      // --- 2) grab all swipes (in+out) for this partition ---
+      const all = json.details
+        .filter(r =>
+          r.PartitionName2 === partition &&
+          (r.Direction === "InDirection" || r.Direction === "OutDirection")
+        );
+
+      // --- 3) sort oldest→newest & group to last swipe per user ---
+      all.sort((a, b) =>
+        new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime)
+      );
+      const lastByPerson = {};
+      all.forEach(r => { lastByPerson[r.PersonGUID] = r });
+
+      // --- 4) keep only people whose **last** swipe is IN → currently inside ---
+      const inside = Object.values(lastByPerson)
+        .filter(r => r.Direction === "InDirection")
+        .map(r => ({
+          ...r,
+          // 5) lookup & trim floor name
+          floor: lookupFloor(r.PartitionName2, r.Door, r.Direction)
+        }));
+
+      setDetails(inside);
+      setLastUpdate(new Date().toLocaleTimeString());
+      setLoading(false);
+    };
+
+    load();
+    const iv = setInterval(load, 1000);
+    return () => { active = false; clearInterval(iv); };
+  }, [partition]);
+
+  // build a map: floorName → rows[]
+  const floorMap = useMemo(() => {
+    const m = {};
+    // ensure every floor in liveCounts appears
+    Object.keys(liveCounts).forEach(f => { m[f] = [] });
+    details.forEach(r => {
+      const f = r.floor;
+      if (!m[f]) m[f] = [];
+      m[f].push(r);
+    });
+    return m;
+  }, [details, liveCounts]);
+
+  // filter & sort floors by search + descending headcount
+  const term = searchTerm.trim().toLowerCase();
+  const displayed = useMemo(() => {
+    return Object.entries(floorMap)
+      .filter(([floor, emps]) => {
+        if (!term) return true;
+        if (floor.toLowerCase().includes(term)) return true;
+        return emps.some(r =>
+          String(r.EmployeeID).toLowerCase().includes(term) ||
+          String(r.ObjectName1).toLowerCase().includes(term) ||
+          String(r.CardNumber).toLowerCase().includes(term)
+        );
+      })
+      .sort(([a], [b]) =>
+        (liveCounts[b] || 0) - (liveCounts[a] || 0)
+      );
+  }, [floorMap, liveCounts, term]);
+
+  const columns = [
+    { field: "EmployeeID", headerName: "Emp ID" },
+    { field: "ObjectName1", headerName: "Name" },
+    { field: "LocaleMessageTime", headerName: "Swipe Time" },
+    { field: "PersonnelType", headerName: "Type" },
+    { field: "CardNumber", headerName: "Card" },
+    { field: "Door", headerName: "Door" },
+  ];
+
+  // format API time string (HH:mm:ss from ISO) into 12h with AM/PM
+  const formatApiTime12 = (iso, fallback) => {
+    const raw = iso
+      ? iso.slice(11, 19) // HH:mm:ss
+      : (fallback || '');
+    if (!raw) return '';
+
+    // parse HH, mm, ss
+    const [hh, mm, ss] = raw.split(':').map(Number);
+    const hours12 = ((hh + 11) % 12) + 1; // convert to 1–12
+    const ampm = hh >= 12 ? 'PM' : 'AM';
+    return `${hours12.toString().padStart(2, '0')}:${mm
+      .toString()
+      .padStart(2, '0')}:${ss.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+
   return (
     <>
       <Header />
@@ -26,8 +171,6 @@ search not wokr correct
               />
             </Box>
           </Box>
-
-
 
           {loading ? <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box> : (
             <>
@@ -220,3 +363,9 @@ search not wokr correct
       <Footer />
     </>
   );
+
+
+
+}
+
+
