@@ -5,12 +5,13 @@ import {
   Select, MenuItem, IconButton, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import HistoryIcon from '@mui/icons-material/History';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import InsertChartIcon from '@mui/icons-material/InsertChart'; // ✅ ERT icon
 import CloseIcon from '@mui/icons-material/Close';
 
 import WuLogo from '../assets/wu-logo.png';
@@ -94,7 +95,7 @@ export default function Header() {
     { icon: <HomeIcon />, label: 'Home Page', action: () => navigate('/') },
     { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
     { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/CR.Costa%20Rica%20Partition/details') },
-    { icon: null, label: 'ERT Overview', action: () => navigate('/ErtPage') }, // ✅ ERT link
+    { icon: <InsertChartIcon />, label: 'ERT Overview', action: () => navigate('/ErtPage') }, // ✅ ERT icon
   ];
 
   return (
@@ -130,19 +131,13 @@ export default function Header() {
           ) : (
             <Box display="flex" alignItems="center" gap={2}>
               <Box display="flex" alignItems="center" gap={1.5}>
-                {navItems.map((item, idx) =>
-                  item.icon ? (
-                    <Tooltip key={idx} title={item.label} arrow placement="bottom">
-                      <IconButton color="inherit" onClick={item.action}>
-                        {React.cloneElement(item.icon, { fontSize: 'medium' })}
-                      </IconButton>
-                    </Tooltip>
-                  ) : (
-                    <Box key={idx} component="span" sx={{ color: '#FFC107', cursor: 'pointer', fontWeight: 500, ml: 1 }} onClick={item.action}>
-                      {item.label}
-                    </Box>
-                  )
-                )}
+                {navItems.map((item, idx) => (
+                  <Tooltip key={idx} title={item.label} arrow placement="bottom">
+                    <IconButton color="inherit" onClick={item.action}>
+                      {React.cloneElement(item.icon, { fontSize: 'medium' })}
+                    </IconButton>
+                  </Tooltip>
+                ))}
               </Box>
 
               <Select
@@ -189,7 +184,7 @@ export default function Header() {
           <List>
             {navItems.map((item, i) => (
               <ListItemButton key={i} onClick={() => { item.action(); setDrawerOpen(false); }}>
-                <ListItemIcon sx={{ color: '#FFC107' }}>{item.icon || null}</ListItemIcon>
+                <ListItemIcon sx={{ color: '#FFC107' }}>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} sx={{ color: '#FFC107' }} />
               </ListItemButton>
             ))}
