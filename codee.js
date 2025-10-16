@@ -1,88 +1,4 @@
-  const handleExportCompanies = async () => {
-    if (!pickedDate || !companyRows.length) return;
-
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Company Summary');
-
-    // set up columns
-    ws.columns = [
-      { header: 'Country', key: 'country', width: 20 },
-      { header: 'City', key: 'city', width: 25 },
-      { header: 'Company', key: 'company', width: 40 },
-      { header: 'Total', key: 'total', width: 12 },
-    ];
-
-    // merge top row for date
-    ws.mergeCells('A1:D1');
-    const dateCell = ws.getCell('A1');
-    dateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
-    dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    dateCell.font = { name: 'Calibri', size: 14, bold: true };
-
-    // blank spacer
-    ws.addRow([]);
-
-    // header row
-    const headerRow = ws.addRow(['Country', 'City', 'Company', 'Total']);
-    headerRow.eachCell(cell => {
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
-      cell.font = { bold: true, color: { argb: 'FF000000' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-    });
-
-    // data rows
-    companyRows.forEach(r => {
-      const row = ws.addRow([r.country, r.city, r.company, r.total]);
-      row.eachCell((cell, colNumber) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-        if (colNumber === 4) {
-          cell.alignment = { horizontal: 'right', vertical: 'middle' };
-          cell.numFmt = '#,##0';
-        } else {
-          cell.alignment = { horizontal: 'left', vertical: 'middle' };
-        }
-      });
-    });
-
-    // totals row
-    const total = companyRows.reduce((s, r) => s + r.total, 0);
-    const totalRow = ws.addRow(['Total', '', '', total]);
-    totalRow.eachCell((cell, colNumber) => {
-      cell.font = { bold: true };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-      if (colNumber === 4) {
-        cell.alignment = { horizontal: 'right', vertical: 'middle' };
-        cell.numFmt = '#,##0';
-      } else {
-        cell.alignment = { horizontal: colNumber === 1 ? 'left' : 'center', vertical: 'middle' };
-      }
-    });
-
-    // save
-    const buf = await wb.xlsx.writeBuffer();
-    saveAs(new Blob([buf]), `emea_companies_${format(pickedDate, "yyyyMMdd")}.xlsx`);
-  };
-
-
-in below add data  like above 
-    /* ------------------ handleExportCompanies (EMEA) ------------------ */
+/* ------------------ handleExportCompanies (EMEA) ------------------ */
 const handleExportCompanies = async () => {
   if (!pickedDate || !companyRows.length) return;
 
@@ -130,7 +46,7 @@ const handleExportCompanies = async () => {
       const cell = ws.getCell(rowIndex, c);
       const val = idx === 0 ? r.country : idx === 1 ? r.city : idx === 2 ? r.company : r.total;
       cell.value = val;
-      cell.alignment = { horizontal: idx === 3 ? 'center' : 'center', vertical: 'middle' };
+      cell.alignment = { horizontal: idx === 3 ? 'right' : 'left', vertical: 'middle' };
       if (idx === 3 && typeof val === 'number') cell.numFmt = '#,##0';
       cell.font = { name: 'Calibri', size: 10 };
       cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
@@ -157,7 +73,7 @@ const handleExportCompanies = async () => {
   }
   ws.getRow(totalsRowIndex).height = 22;
 
-  // --- Apply thick outside border around the entire summary (title → totals)
+  // --- Apply thick outside border around entire summary
   for (let r = offsetRow; r <= totalsRowIndex; r++) {
     for (let c = firstCol; c <= lastCol; c++) {
       const cell = ws.getCell(r, c);
@@ -193,4 +109,3 @@ const handleExportCompanies = async () => {
   const safeDate = format(pickedDate, 'yyyyMMdd');
   saveAs(new Blob([buf]), `emea_companies_${safeDate}.xlsx`);
 };
-  
