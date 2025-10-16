@@ -4,15 +4,12 @@ import {
   Container,
   Box,
   Typography,
-  Grid,
-  CircularProgress,
-  useMediaQuery,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header";
-import SummaryCard from "../components/SummaryCard";
 import CompositeChartCard from "../components/CompositeChartCard";
 import LineChartCard from "../components/LineChartCard";
 import PieChartCard from "../components/PieChartCard";
@@ -24,7 +21,6 @@ import { partitionList } from "../services/occupancy.service";
 import seatCapacities from "../data/seatCapacities";
 import buildingCapacities from "../data/buildingCapacities";
 
-// Flags
 import CostaRicaFlag from "../assets/flags/costa-rica.png";
 import ArgentinaFlag from "../assets/flags/argentina.png";
 import MexicoFlag from "../assets/flags/mexico.png";
@@ -79,16 +75,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
-
-  const handleSnapshot = (snapshotJson) => {
-    setData(snapshotJson);
-    setMode("snapshot");
-  };
-
-  const handleLive = () => {
-    setMode("live");
-    setData(liveData);
-  };
 
   if (loading)
     return (
@@ -145,15 +131,15 @@ export default function Dashboard() {
 
   return (
     <>
-      <Header onSnapshot={handleSnapshot} onLive={handleLive} />
+      <Header onSnapshot={setData} onLive={() => setMode("live")} />
 
       <Container
         maxWidth={false}
         disableGutters
         sx={{
-          px: { xs: 1, sm: 3, md: 4 },
-          py: { xs: 2, sm: 3 },
-          background: "linear-gradient(135deg, #0c0c0c, #1e1e1e)",
+          px: { xs: 2, sm: 3, md: 5 },
+          py: { xs: 2, sm: 4 },
+          background: "linear-gradient(135deg, #0e0e0e, #1c1c1c)",
           color: "#fff",
           minHeight: "100vh",
         }}
@@ -162,7 +148,7 @@ export default function Dashboard() {
         {mode === "snapshot" && data?.timestamp && (
           <Box
             sx={{
-              background: "rgba(255,193,7,0.1)",
+              background: "rgba(255,193,7,0.12)",
               border: "1px solid #FFC107",
               color: "#FFC107",
               py: 1,
@@ -175,191 +161,110 @@ export default function Dashboard() {
           </Box>
         )}
 
-        {/* Top Summary Section */}
+        {/* --- Overview Section --- */}
         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
           Overview Summary
         </Typography>
 
-        <Grid container spacing={2} mb={3}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 16,
+            mb: 4,
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          }}
+        >
           {[
-            {
-              title: "Today's Total Headcount",
-              value: today.total,
-              color: "#FFB300",
-              icon: "fa-users",
-            },
-            {
-              title: "Today's Employees",
-              value: today.Employee,
-              color: "#4CAF50",
-              icon: "bi-people",
-            },
-            {
-              title: "Today's Contractors",
-              value: today.Contractor,
-              color: "#E57373",
-              icon: "fa-circle-user",
-            },
-            {
-              title: "Realtime Headcount",
-              value: realtime.total,
-              color: "#FFC107",
-              icon: "fa-users",
-            },
-            {
-              title: "Realtime Employees",
-              value: realtime.Employee,
-              color: "#81C784",
-              icon: "bi-people",
-            },
-            {
-              title: "Realtime Contractors",
-              value: realtime.Contractor,
-              color: "#EF5350",
-              icon: "fa-circle-user",
-            },
+            { title: "Today's Total Headcount", value: today.total, color: "#FFB300", icon: "fa-users" },
+            { title: "Today's Employees", value: today.Employee, color: "#4CAF50", icon: "bi-people" },
+            { title: "Today's Contractors", value: today.Contractor, color: "#E57373", icon: "fa-circle-user" },
+            { title: "Realtime Headcount", value: realtime.total, color: "#FFC107", icon: "fa-users" },
+            { title: "Realtime Employees", value: realtime.Employee, color: "#81C784", icon: "bi-people" },
+            { title: "Realtime Contractors", value: realtime.Contractor, color: "#EF5350", icon: "fa-circle-user" },
           ].map((card, i) => (
-            <Grid key={i} item xs={12} sm={6} md={4} lg={2}>
-              <Box
-                sx={{
-                  borderRadius: 3,
-                  border: `1px solid ${card.color}`,
-                  p: 2,
-                  backdropFilter: "blur(6px)",
-                  background: "rgba(255,255,255,0.05)",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-                  textAlign: "center",
-                  transition: "all 0.3s",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-                  },
-                }}
-              >
-                <i
-                  className={`fa-solid ${card.icon}`}
-                  style={{ fontSize: 28, color: card.color }}
-                />
-                <Typography
-                  variant="h6"
-                  sx={{ mt: 1, color: card.color, fontWeight: 600 }}
-                >
-                  {card.value ?? 0}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "#ccc" }}>
-                  {card.title}
-                </Typography>
-              </Box>
-            </Grid>
+            <SummaryCard key={i} {...card} />
           ))}
-        </Grid>
+        </Box>
 
-        {/* Region Cards */}
+        {/* --- Regional Overview --- */}
         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
           Regional Overview
         </Typography>
-        <Grid container spacing={2} mb={3}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 16,
+            mb: 4,
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          }}
+        >
           {partitions.map((p, idx) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={p.name}>
-              <Box
-                sx={{
-                  borderRadius: 3,
-                  border: `1px solid ${palette[idx % palette.length]}`,
-                  p: 2,
-                  background: "rgba(255,255,255,0.05)",
-                  backdropFilter: "blur(4px)",
-                  textAlign: "center",
-                }}
-              >
-                <Box
-                  component="img"
-                  src={p.flag}
-                  alt={p.name}
-                  sx={{ width: 48, height: 32, borderRadius: 1, mb: 1 }}
-                />
-                <Typography
-                  sx={{
-                    color: "#FFD666",
-                    fontWeight: 600,
-                    mb: 0.5,
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {displayNameMap[p.name]}
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
-                  {p.total}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#aaa" }}>
-                  {p.Employee} Emp / {p.Contractor} Cont
-                </Typography>
-              </Box>
-            </Grid>
+            <RegionCard key={p.name} p={p} idx={idx} />
           ))}
-        </Grid>
+        </Box>
 
-        {/* Chart Section */}
+        {/* --- Detailed Insights --- */}
         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
           Detailed Insights
         </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6} lg={4}>
-            <WidgetCard>
-              {crPartition.total === 0 ? (
-                <NoData text="Costa Rica" />
-              ) : (
-                <CompositeChartCard
-                  title="Costa Rica"
-                  data={Object.entries(crPartition.floors).map(([f, c]) => ({
-                    name: f,
-                    headcount: c,
-                    capacity: buildingCapacities[f] || 0,
-                  }))}
-                  barColor={palette[0]}
-                  lineColor={palette[1]}
-                  height={340}
-                />
-              )}
-            </WidgetCard>
-          </Grid>
-
-          <Grid item xs={12} md={6} lg={4}>
-            <WidgetCard>
-              {arPartition.total === 0 ? (
-                <NoData text="Argentina" />
-              ) : (
-                <LineChartCard
-                  title="Argentina"
-                  data={Object.entries(arPartition.floors).map(([f, c]) => ({
-                    name: f,
-                    headcount: c,
-                    capacity: seatCapacities[`Argentina-${f}`] || 0,
-                  }))}
-                  height={340}
-                  lineColor1={palette[2]}
-                  lineColor2={palette[3]}
-                />
-              )}
-            </WidgetCard>
-          </Grid>
-
-          <Grid item xs={12} md={12} lg={4}>
-            <WidgetCard>
-              <PieChartCard
-                title="Latin America"
-                data={smallOnes.map((p) => ({
-                  name: displayNameMap[p.name],
-                  value: p.total,
-                  emp: p.Employee,
-                  cont: p.Contractor,
+        <Box
+          sx={{
+            display: "grid",
+            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          }}
+        >
+          <WidgetCard>
+            {crPartition?.total === 0 ? (
+              <NoData text="Costa Rica" />
+            ) : (
+              <CompositeChartCard
+                title="Costa Rica"
+                data={Object.entries(crPartition?.floors || {}).map(([f, c]) => ({
+                  name: f,
+                  headcount: c,
+                  capacity: buildingCapacities[f] || 0,
                 }))}
-                colors={[palette[4], palette[5], palette[6], palette[7]]}
+                barColor={palette[0]}
+                lineColor={palette[1]}
                 height={340}
-                showZeroSlice
               />
-            </WidgetCard>
-          </Grid>
-        </Grid>
+            )}
+          </WidgetCard>
+
+          <WidgetCard>
+            {arPartition?.total === 0 ? (
+              <NoData text="Argentina" />
+            ) : (
+              <LineChartCard
+                title="Argentina"
+                data={Object.entries(arPartition?.floors || {}).map(([f, c]) => ({
+                  name: f,
+                  headcount: c,
+                  capacity: seatCapacities[`Argentina-${f}`] || 0,
+                }))}
+                height={340}
+                lineColor1={palette[2]}
+                lineColor2={palette[3]}
+              />
+            )}
+          </WidgetCard>
+
+          <WidgetCard>
+            <PieChartCard
+              title="Latin America"
+              data={smallOnes.map((p) => ({
+                name: displayNameMap[p.name],
+                value: p.total,
+                emp: p.Employee,
+                cont: p.Contractor,
+              }))}
+              colors={[palette[4], palette[5], palette[6], palette[7]]}
+              height={340}
+              showZeroSlice
+            />
+          </WidgetCard>
+        </Box>
       </Container>
 
       <Footer />
@@ -367,7 +272,63 @@ export default function Dashboard() {
   );
 }
 
-// 💡 Utility Components
+/* ---------- Small Subcomponents ---------- */
+const SummaryCard = ({ title, value, color, icon }) => (
+  <Box
+    sx={{
+      borderRadius: 3,
+      border: `1px solid ${color}`,
+      p: 2,
+      textAlign: "center",
+      backdropFilter: "blur(6px)",
+      background: "rgba(255,255,255,0.05)",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+      "&:hover": {
+        transform: "translateY(-4px)",
+        transition: "0.3s",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+      },
+    }}
+  >
+    <i className={`fa-solid ${icon}`} style={{ fontSize: 28, color }} />
+    <Typography variant="h6" sx={{ mt: 1, color, fontWeight: 600 }}>
+      {value ?? 0}
+    </Typography>
+    <Typography variant="body2" sx={{ color: "#ccc" }}>
+      {title}
+    </Typography>
+  </Box>
+);
+
+const RegionCard = ({ p, idx }) => (
+  <Box
+    sx={{
+      borderRadius: 3,
+      border: `1px solid ${palette[idx % palette.length]}`,
+      p: 2,
+      background: "rgba(255,255,255,0.05)",
+      backdropFilter: "blur(4px)",
+      textAlign: "center",
+    }}
+  >
+    <Box
+      component="img"
+      src={p.flag}
+      alt={p.name}
+      sx={{ width: 48, height: 32, borderRadius: 1, mb: 1 }}
+    />
+    <Typography sx={{ color: "#FFD666", fontWeight: 600, mb: 0.5 }}>
+      {displayNameMap[p.name]}
+    </Typography>
+    <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
+      {p.total}
+    </Typography>
+    <Typography variant="caption" sx={{ color: "#aaa" }}>
+      {p.Employee} Emp / {p.Contractor} Cont
+    </Typography>
+  </Box>
+);
+
 const WidgetCard = ({ children }) => (
   <Box
     sx={{
