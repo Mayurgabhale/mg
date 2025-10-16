@@ -11,7 +11,7 @@ const handleExportCompanies = async () => {
   const headers = ['Country', 'City', 'Company', 'Total'];
   const lastCol = firstCol + headers.length - 1;
 
-  // Title row: merged, black background, yellow text, thick border
+  // --- Title row: merged, black background, yellow text, thick border
   ws.mergeCells(`${colLetter(firstCol)}${offsetRow}:${colLetter(lastCol)}${offsetRow}`);
   for (let c = firstCol; c <= lastCol; c++) {
     const cell = ws.getCell(offsetRow, c);
@@ -23,7 +23,7 @@ const handleExportCompanies = async () => {
   }
   ws.getRow(offsetRow).height = 22;
 
-  // Header row: yellow fill, bold, medium border
+  // --- Header row: yellow fill, bold, medium border
   const headerRowIndex = offsetRow + 1;
   headers.forEach((h, idx) => {
     const c = firstCol + idx;
@@ -36,7 +36,7 @@ const handleExportCompanies = async () => {
   });
   ws.getRow(headerRowIndex).height = 22;
 
-  // Data rows
+  // --- Data rows
   const dataStartRow = headerRowIndex + 1;
   companyRows.forEach((r, i) => {
     const rowIndex = dataStartRow + i;
@@ -53,7 +53,7 @@ const handleExportCompanies = async () => {
     });
   });
 
-  // Totals row: dark gray fill, white bold text, medium border
+  // --- Totals row: dark gray fill, white bold text, medium border
   const lastDataRow = dataStartRow + companyRows.length - 1;
   const totalsRowIndex = lastDataRow + 1;
   const total = companyRows.reduce((s, r) => s + (r.total || 0), 0);
@@ -73,15 +73,28 @@ const handleExportCompanies = async () => {
   }
   ws.getRow(totalsRowIndex).height = 22;
 
-  // Spacer row and right margin
+  // --- Apply thick outside border around the entire summary (title → totals)
+  for (let r = offsetRow; r <= totalsRowIndex; r++) {
+    for (let c = firstCol; c <= lastCol; c++) {
+      const cell = ws.getCell(r, c);
+      const border = { ...cell.border };
+      if (r === offsetRow) border.top = { style: 'medium' };
+      if (r === totalsRowIndex) border.bottom = { style: 'medium' };
+      if (c === firstCol) border.left = { style: 'medium' };
+      if (c === lastCol) border.right = { style: 'medium' };
+      cell.border = border;
+    }
+  }
+
+  // --- Spacer row & blank column
   const blankRow = ws.addRow([]);
   blankRow.height = 22;
   ws.getColumn(lastCol + 1).width = 4;
 
-  // Freeze header & hide gridlines
+  // --- Freeze header & hide gridlines
   ws.views = [{ state: 'frozen', ySplit: headerRowIndex, showGridLines: false }];
 
-  // Autosize columns
+  // --- Autosize columns
   for (let c = firstCol; c <= lastCol; c++) {
     let maxLen = 0;
     for (let r = offsetRow; r <= totalsRowIndex; r++) {
@@ -91,7 +104,7 @@ const handleExportCompanies = async () => {
     ws.getColumn(c).width = Math.min(Math.max(maxLen + 2, 6), 50);
   }
 
-  // Export
+  // --- Export
   const buf = await wb.xlsx.writeBuffer();
   const safeDate = format(pickedDate, 'yyyyMMdd');
   saveAs(new Blob([buf]), `emea_companies_${safeDate}.xlsx`);
