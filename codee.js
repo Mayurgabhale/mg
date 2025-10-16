@@ -1,5 +1,4 @@
-
-// C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\components\Header.jsx
+// C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\Header.jsx
 import React, { useEffect, useState } from 'react';
 import {
   AppBar, Toolbar, Box, Typography,
@@ -14,32 +13,34 @@ import HistoryIcon from '@mui/icons-material/History';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import CloseIcon from '@mui/icons-material/Close';
 
-import wuLogo from '../assets/images/wu-logo.png';
-import IndiaFlag from '../assets/flags/india.png';
-import MalaysiaFlag from '../assets/flags/malaysia.png';
-import PhilippinesFlag from '../assets/flags/philippines.png';
-import JapanFlag from '../assets/flags/japan.png';
-import HYDFlag from '../assets/flags/india.png';
+import WuLogo from '../assets/wu-logo.png';
+import CostaRicaFlag from '../assets/flags/costa-rica.png';
+import ArgentinaFlag from '../assets/flags/argentina.png';
+import MexicoFlag from '../assets/flags/mexico.png';
+import PeruFlag from '../assets/flags/peru.png';
+import BrazilFlag from '../assets/flags/brazil.png';
+import PanamaFlag from '../assets/flags/panama.png';
+import LacaFlag from '../assets/laca-flag.png';
 
 import { partitionList } from '../services/occupancy.service';
 import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
 
 const displayNameMap = {
-  'IN.Pune': 'Pune',
-  'MY.Kuala Lumpur': 'Kuala Lumpur',
-  'PH.Quezon': 'Quezon City',
-  'PH.Taguig': 'Taguig',
-  'JP.Tokyo': 'Tokyo',
-  'IN.HYD': 'Hyderabad',
+  'CR.Costa Rica Partition': 'Costa Rica',
+  'MX.Mexico City': 'Mexico',
+  'AR.Cordoba': 'Cordoba',
+  'PA.Panama City': 'Panama',
+  'PE.Lima': 'Lima',
+  'BR.Sao Paulo': 'Sao Paulo'
 };
 
 const flagMap = {
-  'Pune': IndiaFlag,
-  'MY.Kuala Lumpur': MalaysiaFlag,
-  'Quezon City': PhilippinesFlag,
-  'Taguig City': PhilippinesFlag,
-  'JP.Tokyo': JapanFlag,
-  'IN.HYD': HYDFlag,
+  'CR.Costa Rica Partition': CostaRicaFlag,
+  'AR.Cordoba': ArgentinaFlag,
+  'MX.Mexico City': MexicoFlag,
+  'PE.Lima': PeruFlag,
+  'BR.Sao Paulo': BrazilFlag,
+  'PA.Panama City': PanamaFlag,
 };
 
 export default function Header() {
@@ -58,7 +59,6 @@ export default function Header() {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
 
-  // Routing setup
   const parts = location.pathname.split('/').filter(Boolean);
   const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
   const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
@@ -80,10 +80,6 @@ export default function Header() {
   const handlePartitionChange = (newPartition) => {
     if (!newPartition) return navigate('/');
     setSelectedPartition(newPartition);
-    if (newPartition === 'Pune' && suffixSegments.length === 0) {
-      window.location.href = 'http://10.199.22.57:3011/';
-      return;
-    }
 
     const base = `/partition/${encodeURIComponent(newPartition)}`;
     const full = suffixSegments.length
@@ -97,7 +93,7 @@ export default function Header() {
   const navItems = [
     { icon: <HomeIcon />, label: 'Home Page', action: () => navigate('/') },
     { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
-    { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
+    { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/CR.Costa%20Rica%20Partition/details') },
   ];
 
   return (
@@ -112,21 +108,14 @@ export default function Header() {
       >
         <Toolbar
           disableGutters
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
           {/* Left: Logo + Title */}
           <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
-            <Box component="img" src={wuLogo} alt="WU" border='1' sx={{ height: isMobile ? 28 : 36, border: '1px solid black' }} />
+            <Box component="img" src={WuLogo} alt="WU" sx={{ height: isMobile ? 28 : 36 }} />
             {!isMobile && (
-              <Typography
-                variant={isTablet ? 'h6' : 'h5'}
-                sx={{ color: '#FFC107', fontWeight: 600, ml: 1 }}
-              >
-                APAC Occupancy
+              <Typography variant={isTablet ? 'h6' : 'h5'} sx={{ color: '#FFC107', fontWeight: 600 }}>
+                Western Union – LACA
                 {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
               </Typography>
             )}
@@ -139,20 +128,9 @@ export default function Header() {
             </IconButton>
           ) : (
             <Box display="flex" alignItems="center" gap={2}>
-              {/* Icons with tooltips */}
-              
               <Box display="flex" alignItems="center" gap={1.5}>
                 {navItems.map((item, idx) => (
-                  <Tooltip
-                    key={idx}
-                    title={
-                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
-                        {item.label}
-                      </Typography>
-                    }
-                    arrow
-                    placement="bottom"
-                  >
+                  <Tooltip key={idx} title={item.label} arrow placement="bottom">
                     <IconButton color="inherit" onClick={item.action}>
                       {React.cloneElement(item.icon, { fontSize: 'medium' })}
                     </IconButton>
@@ -160,44 +138,22 @@ export default function Header() {
                 ))}
               </Box>
 
-              {/* Selector */}
               <Select
                 size={isTablet ? 'small' : 'medium'}
                 value={selectedPartition}
                 displayEmpty
                 onChange={(e) => handlePartitionChange(e.target.value)}
-                sx={{
-                  bgcolor: '#fff',
-                  color: '#000',
-                  borderRadius: 1,
-                  minWidth: 160,
-                  fontSize: '0.9rem',
-                  height: 40,
-                }}
-
+                sx={{ bgcolor: '#fff', color: '#000', borderRadius: 1, minWidth: 160, fontSize: '0.9rem', height: 40 }}
                 renderValue={(selected) =>
                   selected ? (
                     <Box display="flex" alignItems="center">
-                      <Box
-                        component="img"
-                        src={flagMap[selected]}
-                        alt={selected}
-                        sx={{
-                          width: 22,
-                          height: 15,
-                          mr: 1,
-                          border: '1px solid #6a6868ff', // ✅ adds visible border
-                          
-                          objectFit: 'cover',
-                        }}
-                      />
+                      <Box component="img" src={flagMap[selected] || LacaFlag} alt={selected} sx={{ width: 22, height: 15, mr: 1, border: '1px solid #6a6868ff' }} />
                       {displayNameMap[selected] || selected}
                     </Box>
-                  ) : '— Select Site —'
+                  ) : '— Select Partition —'
                 }
-
               >
-                <MenuItem value="">— Select Site —</MenuItem>
+                <MenuItem value="">— Select Partition —</MenuItem>
                 {partitionList.map((p) => (
                   <MenuItem key={p} value={p}>
                     {displayNameMap[p] || p}
@@ -209,13 +165,8 @@ export default function Header() {
         </Toolbar>
       </AppBar>
 
-      {/* MOBILE DRAWER (unchanged) */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        PaperProps={{ sx: { width: 260, background: '#111', color: '#fff' } }}
-      >
+      {/* Mobile Drawer */}
+      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)} PaperProps={{ sx: { width: 260, background: '#111', color: '#fff' } }}>
         <Box sx={{ p: 2 }}>
           <Box display="flex" justifyContent="flex-end">
             <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#FFC107' }}>
@@ -223,9 +174,9 @@ export default function Header() {
             </IconButton>
           </Box>
           <Box display="flex" alignItems="center" mb={2}>
-            <Box component="img" src={wuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
+            <Box component="img" src={WuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
             <Typography variant="h6" sx={{ color: '#FFC107' }}>
-              APAC Occupancy
+              Western Union – LACA
             </Typography>
           </Box>
           <List>
@@ -237,36 +188,24 @@ export default function Header() {
             ))}
           </List>
           <Box mt={2}>
-            <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>
-              Select Site
-            </Typography>
+            <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>Select Partition</Typography>
             <Select
               fullWidth
               size="small"
               value={selectedPartition}
               displayEmpty
               onChange={(e) => handlePartitionChange(e.target.value)}
-              sx={{
-                bgcolor: '#fff',
-                color: '#000',
-                borderRadius: 1,
-                fontSize: '0.85rem',
-              }}
+              sx={{ bgcolor: '#fff', color: '#000', borderRadius: 1, fontSize: '0.85rem' }}
               renderValue={(selected) =>
                 selected ? (
                   <Box display="flex" alignItems="center">
-                    <Box
-                      component="img"
-                      src={flagMap[selected]}
-                      alt={selected}
-                      sx={{ width: 20, height: 14, mr: 1 }}
-                    />
+                    <Box component="img" src={flagMap[selected] || LacaFlag} alt={selected} sx={{ width: 20, height: 14, mr: 1 }} />
                     {displayNameMap[selected] || selected}
                   </Box>
-                ) : '— Select Site —'
+                ) : '— Select Partition —'
               }
             >
-              <MenuItem value="">— Select Site —</MenuItem>
+              <MenuItem value="">— Select Partition —</MenuItem>
               {partitionList.map((p) => (
                 <MenuItem key={p} value={p}>
                   {displayNameMap[p] || p}
@@ -277,170 +216,5 @@ export default function Header() {
         </Box>
       </Drawer>
     </>
-  );
-}
-
-create below laca header likve above  same header like above, with responisve for each device  ok carefully
-this is laca ::
-
-
-
-
-// C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\components\Header.jsx
-
-import React, { useEffect, useState } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Box,
-  Typography,
-  Select,
-  MenuItem,
-  IconButton
-} from '@mui/material';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-
-import HomeIcon from '@mui/icons-material/Home';
-import HistoryIcon from '@mui/icons-material/History';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-
-import WuLogo from '../assets/wu-logo.png';
-import CostaRicaFlag from '../assets/flags/costa-rica.png';
-import ArgentinaFlag from '../assets/flags/argentina.png';
-import MexicoFlag from '../assets/flags/mexico.png';
-import PeruFlag from '../assets/flags/peru.png';
-import BrazilFlag from '../assets/flags/brazil.png';
-import PanamaFlag from '../assets/flags/panama.png';
-import LacaFlag from '../assets/laca-flag.png';
-
-import { partitionList } from '../services/occupancy.service';
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-
-import { Nav } from 'react-bootstrap'; // ✅ Add this
-
-const displayNameMap = {
-  'CR.Costa Rica Partition': 'Costa Rica',
-  'MX.Mexico City': 'Mexico',
-  'AR.Cordoba': 'Cordoba',
-  'PA.Panama City': 'Panama',
-  'PE.Lima': 'Lima',
-  'BR.Sao Paulo': 'Sao Paulo'
-};
-
-export default function Header() {
-  const navigate = useNavigate();
-  const loc = useLocation();
-  // live‐update timer in header
-  const { data } = useLiveOccupancy(1000);
-  const [lastUpdate, setLastUpdate] = useState('');
-  useEffect(() => {
-    if (data) setLastUpdate(new Date().toLocaleTimeString());
-  }, [data]);
-
-  const parts = loc.pathname.split('/').filter(Boolean);
-  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
-  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
-  const suffixSegments = isPartitionPath
-    ? parts.slice(2)
-    : parts[0] === 'history'
-      ? ['history']
-      : [];
-
-  const flagMap = {
-    'CR.Costa Rica Partition': CostaRicaFlag,
-    'AR.Cordoba': ArgentinaFlag,
-    'MX.Mexico City': MexicoFlag,
-    'PE.Lima': PeruFlag,
-    'BR.Sao Paulo': BrazilFlag,
-    'PA.Panama City': PanamaFlag,
-  };
-  const selectedFlag = flagMap[currentPartition] || LacaFlag;
-
-  const makePartitionPath = suffix => {
-    const base = `/partition/${encodeURIComponent(currentPartition)}`;
-    return suffix ? `${base}/${suffix}` : base;
-  };
-
-  const handlePartitionChange = newPartition => {
-    if (!newPartition) return navigate('/');
-    const base = `/partition/${encodeURIComponent(newPartition)}`;
-    const full = suffixSegments.length
-      ? `${base}/${suffixSegments.join('/')}`
-      : base;
-    navigate(full);
-  };
-
-  return (
-    <AppBar position="static" color="primary" sx={{ mb: 2 }}>
-      <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* Left: Logo, Title, Nav */}
-        <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
-          <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
-
-          <Typography variant="h6" sx={{ fontWeight: 600, mr: 3 }}>
-            Western Union – LACA
-            {currentPartition && <> • {displayNameMap[currentPartition] || currentPartition}</>}
-          </Typography>
-
-          {/* Live update timer */}
-          <Typography
-            variant="caption"
-            sx={{
-              color: '#FFC72C',
-              ml: 2,
-              gap: 20,
-              fontStyle: 'Aptos Narrow',
-              opacity: data ? 1 : 0,
-              transition: 'opacity 0.8s'
-            }}
-          >
-            {/* {lastUpdate} */}
-          </Typography>
-          {/* Home/History/Details icons */}
-          <IconButton size="large" color="inherit"
-            onClick={() => navigate(currentPartition ? `/partition/${encodeURIComponent(currentPartition)}` : '/')}>
-            <HomeIcon sx={{ color: '#4caf50' }} />
-          </IconButton>
-          <IconButton size="large" color="inherit"
-            onClick={() => navigate(currentPartition ? makePartitionPath('history') : '/history')}>
-            <HistoryIcon sx={{ color: '#F88379' }} />
-          </IconButton>
-          {/* Details icon always shown; defaults to Costa Rica if no partition yet */}
-          <IconButton size="large" color="inherit"
-            onClick={() => {
-              const target = currentPartition
-                ? makePartitionPath('details')
-                : '/partition/CR.Costa%20Rica%20Partition/details';
-              navigate(target);
-            }}>
-            <ListAltIcon sx={{ color: '#2196f3' }} />
-          </IconButton>
-
-          <Nav.Link as={Link} to="/ErtPage" className="nav-item-infographic">
-            ERT Overview
-          </Nav.Link>
-
-        </Box>
-
-        {/* Right: Selector + Flag */}
-        <Box display="flex" alignItems="center">
-          <Select
-            size="small"
-            value={currentPartition}
-            displayEmpty
-            onChange={e => handlePartitionChange(e.target.value)}
-            sx={{ bgcolor: 'background.paper', mr: 2, minWidth: 150 }}
-          >
-            <MenuItem value="">— Select Partition —</MenuItem>
-            {partitionList.map(p => (
-              <MenuItem key={p} value={p}>
-                {displayNameMap[p] || p}
-              </MenuItem>
-            ))}
-          </Select>
-          <Box component="img" src={selectedFlag} alt="Flag" sx={{ height: 50 }} />
-        </Box>
-      </Toolbar>
-    </AppBar>
   );
 }
