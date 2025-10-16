@@ -1,18 +1,107 @@
-Uncaught runtime errors:
-×
-ERROR
-Cannot read properties of undefined (reading 'json_to_sheet')
-TypeError: Cannot read properties of undefined (reading 'json_to_sheet')
-    at exportFloorToExcel (http://localhost:3000/src_pages_PartitionDetailDetails_jsx.cadeac36487b1e659d7f.hot-update.js:916:64)
-    at onClick (http://localhost:3000/src_pages_PartitionDetailDetails_jsx.cadeac36487b1e659d7f.hot-update.js:1177:38)
-    at executeDispatch (http://localhost:3000/static/js/bundle.js:22827:7)
-    at runWithFiberInDEV (http://localhost:3000/static/js/bundle.js:15569:68)
-    at processDispatchQueue (http://localhost:3000/static/js/bundle.js:22855:31)
-    at http://localhost:3000/static/js/bundle.js:23148:7
-    at batchedUpdates$1 (http://localhost:3000/static/js/bundle.js:16418:38)
-    at dispatchEventForPluginEventSystem (http://localhost:3000/static/js/bundle.js:22931:5)
-    at dispatchEvent (http://localhost:3000/static/js/bundle.js:25030:31)
-    at dispatchDiscreteEvent (http://localhost:3000/static/js/bundle.js:25012:58)
+i want excle sheet like that
+  const exportToExcel = async (floor, data) => {
+    if (!data || data.length === 0) return;
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Entries');
+
+    // Title row (merged)
+    sheet.mergeCells('A1:H1');
+    const titleCell = sheet.getCell('A1');
+    titleCell.value = `${floor} — Entries`;
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF000000' } };
+    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '8a8987' } };
+
+    // Header row (row 2)
+    const headers = ["Sr No", "ID", "Name", "Time", "Type", "CompanyName", "Card", "Door"];
+    const headerRow = sheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+
+    // Data rows (start at row 3)
+    data.forEach((r, i) => {
+      const row = sheet.addRow([
+        i + 1,
+        r.EmployeeID ?? '',
+        r.ObjectName1 ?? '',
+        formatApiTime12(r.LocaleMessageTime),
+        r.PersonnelType ?? '',
+        r.CompanyName ?? '',
+        r.CardNumber ?? '',
+        r.Door ?? ''
+      ]);
+
+      // row styling: borders + alternate fill
+      row.eachCell((cell) => {
+        cell.alignment = { vertical: 'middle', wrapText: false };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+
+      if ((i + 1) % 2 === 0) {
+        row.eachCell(cell => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
+        });
+      }
+    });
+
+    // Column widths & small alignment tweaks
+    sheet.columns = [
+      { key: 'sr', width: 8 },        // Sr No
+      { key: 'id', width: 14 },       // ID
+      { key: 'name', width: 28 },     // Name
+      { key: 'time', width: 16 },     // Time
+      { key: 'type', width: 16 },     // Type
+      { key: 'company', width: 34 },  // CompanyName
+      { key: 'card', width: 18 },     // Card
+      { key: 'door', width: 50 }      // Door
+    ];
+
+    // Freeze header area (keep title + header visible)
+    sheet.views = [{ state: 'frozen', ySplit: 2 }];
+
+    // Add a thin outer border around the entire used range for polish
+    const lastRow = sheet.rowCount;
+    const lastCol = sheet.columns.length;
+    for (let r = 1; r <= lastRow; r++) {
+      for (let c = 1; c <= lastCol; c++) {
+        const cell = sheet.getCell(r, c);
+        // ensure border exists (merge with existing)
+        cell.border = {
+          top: cell.border?.top || { style: 'thin', color: { argb: 'FF000000' } },
+          left: cell.border?.left || { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: cell.border?.bottom || { style: 'thin', color: { argb: 'FF000000' } },
+          right: cell.border?.right || { style: 'thin', color: { argb: 'FF000000' } },
+        };
+      }
+    }
+
+    // File save
+    const buf = await workbook.xlsx.writeBuffer();
+    const safeFloor = String(floor).replace(/[^a-z0-9\-_]/gi, '_').slice(0, 80);
+    const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    saveAs(new Blob([buf]), `${safeFloor}_entries_${ts}.xlsx`);
+  };
+
+
+
+---------
+
+    
 
 
 // src/pages/PartitionDetailDetails.jsx
