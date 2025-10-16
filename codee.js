@@ -1,13 +1,3 @@
-data not show add date 
-			
-Country	City	Company	Total
-Austria	Vienna	Cyber Search Ltd	1
-Austria	Vienna	PKE Facility Management GmbH	1
-Austria	Vienna	PS3 PERSONALSERVICE GMBH	1
-Austria	Vienna	PwC	1
-Austria	Vienna	Temp Badge	3
-
-
 /* ------------------ handleExportCompanies (EMEA) ------------------ */
 const handleExportCompanies = async () => {
   if (!pickedDate || !companyRows.length) return;
@@ -21,7 +11,18 @@ const handleExportCompanies = async () => {
   const headers = ['Country', 'City', 'Company', 'Total'];
   const lastCol = firstCol + headers.length - 1;
 
-  // --- Title row: merged, black background, yellow text, thick border
+  // --- Helper to convert column number to letter
+  const colLetter = (col) => {
+    let temp, letter = '';
+    while (col > 0) {
+      temp = (col - 1) % 26;
+      letter = String.fromCharCode(temp + 65) + letter;
+      col = (col - temp - 1) / 26;
+    }
+    return letter;
+  };
+
+  // --- Title row: merged, black background, yellow text
   ws.mergeCells(`${colLetter(firstCol)}${offsetRow}:${colLetter(lastCol)}${offsetRow}`);
   for (let c = firstCol; c <= lastCol; c++) {
     const cell = ws.getCell(offsetRow, c);
@@ -33,11 +34,10 @@ const handleExportCompanies = async () => {
   }
   ws.getRow(offsetRow).height = 22;
 
-  // --- Header row: yellow fill, bold, medium border
+  // --- Header row
   const headerRowIndex = offsetRow + 1;
   headers.forEach((h, idx) => {
-    const c = firstCol + idx;
-    const cell = ws.getCell(headerRowIndex, c);
+    const cell = ws.getCell(headerRowIndex, firstCol + idx);
     cell.value = h;
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
     cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
@@ -52,38 +52,33 @@ const handleExportCompanies = async () => {
     const rowIndex = dataStartRow + i;
     ws.getRow(rowIndex).height = 22;
     headers.forEach((_, idx) => {
-      const c = firstCol + idx;
-      const cell = ws.getCell(rowIndex, c);
+      const cell = ws.getCell(rowIndex, firstCol + idx);
       const val = idx === 0 ? r.country : idx === 1 ? r.city : idx === 2 ? r.company : r.total;
       cell.value = val;
-      cell.alignment = { horizontal: idx === 3 ? 'right' : 'left', vertical: 'middle' };
-      if (idx === 3 && typeof val === 'number') cell.numFmt = '#,##0';
       cell.font = { name: 'Calibri', size: 10 };
+      cell.alignment = { horizontal: idx === 3 ? 'center' : 'left', vertical: 'middle' };
+      if (idx === 3 && typeof val === 'number') cell.numFmt = '#,##0';
       cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
     });
   });
 
-  // --- Totals row: dark gray fill, white bold text, medium border
+  // --- Totals row
   const lastDataRow = dataStartRow + companyRows.length - 1;
   const totalsRowIndex = lastDataRow + 1;
-  const total = companyRows.reduce((s, r) => s + (r.total || 0), 0);
-
-  const totalsFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF666666' } };
-  const totalsFont = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-
+  const total = companyRows.reduce((sum, r) => sum + (r.total || 0), 0);
   for (let c = firstCol; c <= lastCol; c++) {
     const cell = ws.getCell(totalsRowIndex, c);
     if (c === firstCol) cell.value = 'Total';
     if (c === firstCol + 3) cell.value = total;
-    cell.fill = totalsFill;
-    cell.font = totalsFont;
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF666666' } };
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
     if (c === firstCol + 3 && typeof cell.value === 'number') cell.numFmt = '#,##0';
   }
   ws.getRow(totalsRowIndex).height = 22;
 
-  // --- Apply thick outside border around entire summary
+  // --- Thick outside border
   for (let r = offsetRow; r <= totalsRowIndex; r++) {
     for (let c = firstCol; c <= lastCol; c++) {
       const cell = ws.getCell(r, c);
@@ -119,3 +114,13 @@ const handleExportCompanies = async () => {
   const safeDate = format(pickedDate, 'yyyyMMdd');
   saveAs(new Blob([buf]), `emea_companies_${safeDate}.xlsx`);
 };
+
+// --- Example test data
+const pickedDate = new Date();
+const companyRows = [
+  { country: 'Austria', city: 'Vienna', company: 'Cyber Search Ltd', total: 1 },
+  { country: 'Austria', city: 'Vienna', company: 'PKE Facility Management GmbH', total: 1 },
+  { country: 'Austria', city: 'Vienna', company: 'PS3 PERSONALSERVICE GMBH', total: 1 },
+  { country: 'Austria', city: 'Vienna', company: 'PwC', total: 1 },
+  { country: 'Austria', city: 'Vienna', company: 'Temp Badge', total: 3 }
+];
