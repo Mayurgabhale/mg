@@ -1,5 +1,3 @@
-create this page fully responsive for each and every device/ or screen size ok,
-  responsive for each or any screen size ..
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -41,7 +39,6 @@ export default function PartitionDetailDetails() {
       }
       if (!active) return;
 
-      // --- 1) normalize & trim liveCounts keys ---
       const raw = json.realtime[partition]?.floors || {};
       const counts = Object.entries(raw).reduce((acc, [floor, count]) => {
         const f = floor.trim();
@@ -50,26 +47,20 @@ export default function PartitionDetailDetails() {
       }, {});
       setLiveCounts(counts);
 
-      // --- 2) grab all swipes (in+out) for this partition ---
       const all = json.details
         .filter(r =>
           r.PartitionName2 === partition &&
           (r.Direction === "InDirection" || r.Direction === "OutDirection")
         );
 
-      // --- 3) sort oldest→newest & group to last swipe per user ---
-      all.sort((a, b) =>
-        new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime)
-      );
+      all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
       const lastByPerson = {};
       all.forEach(r => { lastByPerson[r.PersonGUID] = r });
 
-      // --- 4) keep only people whose **last** swipe is IN → currently inside ---
       const inside = Object.values(lastByPerson)
         .filter(r => r.Direction === "InDirection")
         .map(r => ({
           ...r,
-          // 5) lookup & trim floor name
           floor: lookupFloor(r.PartitionName2, r.Door, r.Direction)
         }));
 
@@ -83,10 +74,8 @@ export default function PartitionDetailDetails() {
     return () => { active = false; clearInterval(iv); };
   }, [partition]);
 
-  // build a map: floorName → rows[]
   const floorMap = useMemo(() => {
     const m = {};
-    // ensure every floor in liveCounts appears
     Object.keys(liveCounts).forEach(f => { m[f] = [] });
     details.forEach(r => {
       const f = r.floor;
@@ -96,7 +85,6 @@ export default function PartitionDetailDetails() {
     return m;
   }, [details, liveCounts]);
 
-  // filter & sort floors by search + descending headcount
   const term = searchTerm.trim().toLowerCase();
   const displayed = useMemo(() => {
     return Object.entries(floorMap)
@@ -109,9 +97,7 @@ export default function PartitionDetailDetails() {
           String(r.CardNumber).toLowerCase().includes(term)
         );
       })
-      .sort(([a], [b]) =>
-        (liveCounts[b] || 0) - (liveCounts[a] || 0)
-      );
+      .sort(([a], [b]) => (liveCounts[b] || 0) - (liveCounts[a] || 0));
   }, [floorMap, liveCounts, term]);
 
   const columns = [
@@ -123,51 +109,39 @@ export default function PartitionDetailDetails() {
     { field: "Door", headerName: "Door" },
   ];
 
-  // format API time string (HH:mm:ss from ISO) into 12h with AM/PM
   const formatApiTime12 = (iso, fallback) => {
-    const raw = iso
-      ? iso.slice(11, 19) // HH:mm:ss
-      : (fallback || '');
+    const raw = iso ? iso.slice(11, 19) : (fallback || '');
     if (!raw) return '';
-
-    // parse HH, mm, ss
     const [hh, mm, ss] = raw.split(':').map(Number);
-    const hours12 = ((hh + 11) % 12) + 1; // convert to 1–12
+    const hours12 = ((hh + 11) % 12) + 1;
     const ampm = hh >= 12 ? 'PM' : 'AM';
-    return `${hours12.toString().padStart(2, '0')}:${mm
-      .toString()
-      .padStart(2, '0')}:${ss.toString().padStart(2, '0')} ${ampm}`;
+    return `${hours12.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')} ${ampm}`;
   };
-
-
-
-
-
 
   return (
     <>
       <Header />
       <Box sx={{ pt: 1, pb: 1, background: 'rgba(0,0,0,0.6)' }}>
         <Container disableGutters maxWidth={false}>
-          <Box display="flex" alignItems="center" mb={2} sx={{ px: 2 }}>
-            <Button size="small" onClick={() => navigate(-1)} sx={{ color: '#FFC107' }}>
+          <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" mb={2} sx={{ px: 2 }}>
+            <Button size="small" onClick={() => navigate(-1)} sx={{ color: '#FFC107', mb: { xs: 1, sm: 0 } }}>
               ← Back to Overview
             </Button>
+            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+              <Typography variant="h6" sx={{ color: '#FFC107' }}>Floor Details</Typography>
+              <Typography variant="body2" sx={{ color: '#FFC107' }}>Last updated: {lastUpdate}</Typography>
+              <TextField
+                size="small" placeholder="Search…" value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                sx={{
+                  '& .MuiInputBase-input': { color: '#FFC107' },
+                  '& .MuiOutlinedInput-root fieldset': { borderColor: '#FFC107' },
+                  minWidth: { xs: '100%', sm: 200 }
+                }}
+              />
+            </Box>
           </Box>
-          <Box display="flex" alignItems="center" gap={2} mb={2} sx={{ px: 2 }}>
-            <Typography variant="h6" sx={{ color: '#FFC107' }}>Floor Details</Typography>
-            <Typography variant="body2" sx={{ color: '#FFC107' }}>
-              Last updated: {lastUpdate}
-            </Typography>
-            <TextField
-              size="small" placeholder="Search…" value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              sx={{
-                '& .MuiInputBase-input': { color: '#FFC107' },
-                '& .MuiOutlinedInput-root fieldset': { borderColor: '#FFC107' }
-              }}
-            />
-          </Box>
+
           {loading
             ? <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box>
             : (
@@ -184,8 +158,11 @@ export default function PartitionDetailDetails() {
                       : emps.slice(0, 15);
 
                     return (
-                      <Box key={floor} sx={{ width: '50%', p: 2 }}>
-                        <Paper sx={{ border: '2px solid #FFC107', p: 2, background: 'rgba(0,0,0,0.4)' }}>
+                      <Box key={floor} sx={{
+                        width: { xs: '100%', sm: '48%', md: '32%' },
+                        p: 1
+                      }}>
+                        <Paper sx={{ border: '2px solid #FFC107', p: 1.5, background: 'rgba(0,0,0,0.4)' }}>
                           <Typography variant="subtitle1" fontWeight={600} sx={{ color: '#FFC107', mb: 1 }}>
                             {floor} (Total {liveCounts[floor] || 0})
                           </Typography>
@@ -204,16 +181,12 @@ export default function PartitionDetailDetails() {
                               </TableHead>
                               <TableBody>
                                 {preview.map((r, i) => (
-                                  <TableRow key={`${r.PersonGUID}-${i}`}
-                                    sx={showAll ? { background: 'rgba(255,235,59,0.3)' } : {}}>
+                                  <TableRow key={`${r.PersonGUID}-${i}`} sx={showAll ? { background: 'rgba(255,235,59,0.3)' } : {}}>
                                     <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>{r.EmployeeID}</TableCell>
                                     <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>{r.ObjectName1}</TableCell>
-
-
                                     <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>
                                       {formatApiTime12(r.LocaleMessageTime, r.Swipe_Time)}
                                     </TableCell>
-
                                     <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>{r.PersonnelType}</TableCell>
                                     <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>{r.CardNumber}</TableCell>
                                     <TableCell sx={{ color: '#fff', border: '1px solid #FFC107' }}>{r.Door}</TableCell>
@@ -231,6 +204,7 @@ export default function PartitionDetailDetails() {
                     );
                   })}
                 </Box>
+
                 {expandedFloor && (
                   <Box sx={{ px: 2, mt: 2 }}>
                     <Typography variant="h6" sx={{ color: '#FFC107' }} gutterBottom>
@@ -246,13 +220,10 @@ export default function PartitionDetailDetails() {
                   </Box>
                 )}
               </>
-            )
-          }
+            )}
         </Container>
       </Box>
       <Footer />
     </>
   );
 }
-
-
