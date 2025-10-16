@@ -1,108 +1,124 @@
-I want to chane this dashboard UI,
-  i want to this more professal and clean UI, 
-  
-
 // src/pages/Dashboard.jsx
-import React, { useEffect, useState } from 'react';
-import { Container, Box, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useTheme, useMediaQuery } from '@mui/material';
+import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Box,
+  Typography,
+  Grid,
+  CircularProgress,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
-import CostaRicaFlag from '../assets/flags/costa-rica.png';
-import ArgentinaFlag from '../assets/flags/argentina.png';
-import MexicoFlag from '../assets/flags/mexico.png';
-import PeruFlag from '../assets/flags/peru.png';
-import BrazilFlag from '../assets/flags/brazil.png';
-import PanamaFlag from '../assets/flags/panama.png';
+import Header from "../components/Header";
+import SummaryCard from "../components/SummaryCard";
+import CompositeChartCard from "../components/CompositeChartCard";
+import LineChartCard from "../components/LineChartCard";
+import PieChartCard from "../components/PieChartCard";
+import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
 
-import Header from '../components/Header';
-import SummaryCard from '../components/SummaryCard';
-import CompositeChartCard from '../components/CompositeChartCard';
-import LineChartCard from '../components/LineChartCard';
-import PieChartCard from '../components/PieChartCard';
-import Footer from '../components/Footer';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { useLiveOccupancy } from "../hooks/useLiveOccupancy";
+import { partitionList } from "../services/occupancy.service";
+import seatCapacities from "../data/seatCapacities";
+import buildingCapacities from "../data/buildingCapacities";
 
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-import { partitionList } from '../services/occupancy.service';
-import seatCapacities from '../data/seatCapacities';
-import buildingCapacities from '../data/buildingCapacities';
+// Flags
+import CostaRicaFlag from "../assets/flags/costa-rica.png";
+import ArgentinaFlag from "../assets/flags/argentina.png";
+import MexicoFlag from "../assets/flags/mexico.png";
+import PeruFlag from "../assets/flags/peru.png";
+import BrazilFlag from "../assets/flags/brazil.png";
+import PanamaFlag from "../assets/flags/panama.png";
 
-const displayNameMap = {
-  'CR.Costa Rica Partition': 'Costa Rica',
-  'AR.Cordoba': 'Argentina',
-  'MX.Mexico City': 'Mexico',
-  'PE.Lima': 'Peru',
-  'BR.Sao Paulo': 'Brazil',
-  'PA.Panama City': 'Panama'
+const flagMap = {
+  "CR.Costa Rica Partition": CostaRicaFlag,
+  "AR.Cordoba": ArgentinaFlag,
+  "MX.Mexico City": MexicoFlag,
+  "PE.Lima": PeruFlag,
+  "BR.Sao Paulo": BrazilFlag,
+  "PA.Panama City": PanamaFlag,
 };
 
-const palette15 = [
-  '#FFC107', '#E57373', '#4CAF50', '#FFEB3B', '#FFD666',
-  '#D84315', '#3F51B5', '#9C27B0', '#00BCD4', '#8BC34A',
-  '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'
+const displayNameMap = {
+  "CR.Costa Rica Partition": "Costa Rica",
+  "AR.Cordoba": "Argentina",
+  "MX.Mexico City": "Mexico",
+  "PE.Lima": "Peru",
+  "BR.Sao Paulo": "Brazil",
+  "PA.Panama City": "Panama",
+};
+
+const palette = [
+  "#FFC107",
+  "#E57373",
+  "#4CAF50",
+  "#FFEB3B",
+  "#03A9F4",
+  "#AB47BC",
+  "#8BC34A",
+  "#FF9800",
+  "#009688",
 ];
 
 export default function Dashboard() {
   const { data: liveData, loading, error } = useLiveOccupancy(1000);
-  const [lastUpdate, setLastUpdate] = useState('');
   const [data, setData] = useState(null);
-  const [mode, setMode] = useState('live');
+  const [mode, setMode] = useState("live");
+  const [lastUpdate, setLastUpdate] = useState("");
   const navigate = useNavigate();
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
-    if (mode === 'live' && liveData) setData(liveData);
+    if (mode === "live" && liveData) setData(liveData);
   }, [liveData, mode]);
-
-  const handleSnapshot = (snapshotJson) => {
-    setData(snapshotJson);
-    setMode('snapshot');
-  };
-
-  const handleLive = () => {
-    setMode('live');
-    setData(liveData);
-  };
 
   useEffect(() => {
     if (data) setLastUpdate(new Date().toLocaleTimeString());
   }, [data]);
 
-  if (loading) return (
-    <Box sx={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      bgcolor: 'rgba(0,0,0,0.85)', zIndex: 9999,
-      display: 'flex', justifyContent: 'center', alignItems: 'center'
-    }}>
-      <LoadingSpinner />
-    </Box>
-  );
-
-  if (error) return (
-    <Box width="100vw" py={4}>
-      <Typography color="error" align="center">
-        Error loading live data
-      </Typography>
-    </Box>
-  );
-
-  const regions = data?.realtime || {};
-  const flagMap = {
-    'CR.Costa Rica Partition': CostaRicaFlag,
-    'AR.Cordoba': ArgentinaFlag,
-    'MX.Mexico City': MexicoFlag,
-    'PE.Lima': PeruFlag,
-    'BR.Sao Paulo': BrazilFlag,
-    'PA.Panama City': PanamaFlag,
+  const handleSnapshot = (snapshotJson) => {
+    setData(snapshotJson);
+    setMode("snapshot");
   };
 
-  const partitions = partitionList.map(name => {
-    const key = Object.keys(regions).find(k => k.includes(name));
+  const handleLive = () => {
+    setMode("live");
+    setData(liveData);
+  };
+
+  if (loading)
+    return (
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          bgcolor: "rgba(0,0,0,0.9)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <LoadingSpinner />
+      </Box>
+    );
+
+  if (error)
+    return (
+      <Typography color="error" align="center" sx={{ mt: 5 }}>
+        Error loading data
+      </Typography>
+    );
+
+  const regions = data?.realtime || {};
+  const partitions = partitionList.map((name) => {
+    const key = Object.keys(regions).find((k) => k.includes(name));
     const p = key ? regions[key] : {};
     return {
       name,
@@ -112,111 +128,238 @@ export default function Dashboard() {
       floors: p.floors || {},
       flag: flagMap[name],
     };
-  }).sort((a, b) => b.total - a.total);
+  });
 
-  const todayTot = data?.today?.total ?? 0;
-  const todayEmp = data?.today?.Employee ?? 0;
-  const todayCont = data?.today?.Contractor ?? 0;
-  const realtimeTot = partitions.reduce((sum, p) => sum + p.total, 0);
-  const realtimeEmp = partitions.reduce((sum, p) => sum + p.Employee, 0);
-  const realtimeCont = partitions.reduce((sum, p) => sum + p.Contractor, 0);
-  const crPartition = partitions.find(p => p.name === 'CR.Costa Rica Partition');
-  const arPartition = partitions.find(p => p.name === 'AR.Cordoba');
-  const smallOnes = partitions.filter(p =>
-    ['MX.Mexico City', 'BR.Sao Paulo', 'PE.Lima', 'PA.Panama City'].includes(p.name)
+  const today = data?.today ?? {};
+  const realtime = {
+    total: partitions.reduce((sum, p) => sum + p.total, 0),
+    Employee: partitions.reduce((sum, p) => sum + p.Employee, 0),
+    Contractor: partitions.reduce((sum, p) => sum + p.Contractor, 0),
+  };
+
+  const crPartition = partitions.find((p) => p.name === "CR.Costa Rica Partition");
+  const arPartition = partitions.find((p) => p.name === "AR.Cordoba");
+  const smallOnes = partitions.filter((p) =>
+    ["MX.Mexico City", "BR.Sao Paulo", "PE.Lima", "PA.Panama City"].includes(p.name)
   );
 
   return (
     <>
       <Header onSnapshot={handleSnapshot} onLive={handleLive} />
 
-      {mode === 'snapshot' && data?.timestamp && (
-        <Box sx={{ background: '#333', color: '#FFD666', textAlign: 'center', py: 1, borderRadius: 1, mb: 2 }}>
-          <Typography variant="body2">
-            Viewing historical snapshot for: {new Date(data.timestamp).toLocaleString()}
-          </Typography>
-        </Box>
-      )}
-
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ py: 0, px: { xs: 1, sm: 2, md: 3 }, background: 'linear-gradient(135deg, #0f0f0f, #1c1c1c)', color: '#f5f5f5' }}
+        sx={{
+          px: { xs: 1, sm: 3, md: 4 },
+          py: { xs: 2, sm: 3 },
+          background: "linear-gradient(135deg, #0c0c0c, #1e1e1e)",
+          color: "#fff",
+          minHeight: "100vh",
+        }}
       >
+        {/* Snapshot Notice */}
+        {mode === "snapshot" && data?.timestamp && (
+          <Box
+            sx={{
+              background: "rgba(255,193,7,0.1)",
+              border: "1px solid #FFC107",
+              color: "#FFC107",
+              py: 1,
+              mb: 2,
+              textAlign: "center",
+              borderRadius: 1,
+            }}
+          >
+            Viewing snapshot from {new Date(data.timestamp).toLocaleString()}
+          </Box>
+        )}
 
-        {/* Top Summary Cards */}
-        <Box display="flex" flexWrap="wrap" gap={2} mb={2} justifyContent="center">
+        {/* Top Summary Section */}
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+          Overview Summary
+        </Typography>
+
+        <Grid container spacing={2} mb={3}>
           {[
-            { title: "Today's Total Headcount", value: todayTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
-            { title: "Today's Employees Count", value: todayEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#8BC34A' },
-            { title: "Today's Contractors Count", value: todayCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#E57373' },
-            { title: "Realtime Headcount", value: realtimeTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFD180' },
-            { title: "Realtime Employees Count", value: realtimeEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#AED581' },
-            { title: "Realtime Contractors Count", value: realtimeCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#E57373' },
-          ].map((c, idx) => (
-            <Box key={idx} sx={{
-              flex: { xs: "1 1 100%", sm: "1 1 48%", md: "1 1 30%", lg: "1 1 15%" },
-              minWidth: { xs: "100%", sm: 200 }
-            }}>
-              <SummaryCard title={c.title} total={c.value} stats={[]} icon={c.icon} sx={{ height: 140, border: `2px solid ${c.border}` }} />
-            </Box>
+            {
+              title: "Today's Total Headcount",
+              value: today.total,
+              color: "#FFB300",
+              icon: "fa-users",
+            },
+            {
+              title: "Today's Employees",
+              value: today.Employee,
+              color: "#4CAF50",
+              icon: "bi-people",
+            },
+            {
+              title: "Today's Contractors",
+              value: today.Contractor,
+              color: "#E57373",
+              icon: "fa-circle-user",
+            },
+            {
+              title: "Realtime Headcount",
+              value: realtime.total,
+              color: "#FFC107",
+              icon: "fa-users",
+            },
+            {
+              title: "Realtime Employees",
+              value: realtime.Employee,
+              color: "#81C784",
+              icon: "bi-people",
+            },
+            {
+              title: "Realtime Contractors",
+              value: realtime.Contractor,
+              color: "#EF5350",
+              icon: "fa-circle-user",
+            },
+          ].map((card, i) => (
+            <Grid key={i} item xs={12} sm={6} md={4} lg={2}>
+              <Box
+                sx={{
+                  borderRadius: 3,
+                  border: `1px solid ${card.color}`,
+                  p: 2,
+                  backdropFilter: "blur(6px)",
+                  background: "rgba(255,255,255,0.05)",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                  textAlign: "center",
+                  transition: "all 0.3s",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                  },
+                }}
+              >
+                <i
+                  className={`fa-solid ${card.icon}`}
+                  style={{ fontSize: 28, color: card.color }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{ mt: 1, color: card.color, fontWeight: 600 }}
+                >
+                  {card.value ?? 0}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#ccc" }}>
+                  {card.title}
+                </Typography>
+              </Box>
+            </Grid>
           ))}
-        </Box>
+        </Grid>
 
-        {/* Region Summary Cards */}
-        <Box display="flex" flexWrap="wrap" gap={2} mb={2} justifyContent="center">
-          {partitions.map((p, index) => (
-            <Box key={p.name} sx={{
-              flex: { xs: "1 1 100%", sm: "1 1 48%", md: "1 1 30%", lg: "1 1 15%" },
-              minWidth: { xs: "100%", sm: 220 }
-            }}>
-              <SummaryCard
-                title={displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
-                total={p.total}
-                stats={[
-                  { label: 'Employees', value: p.Employee, color: '#40E0D0' },
-                  { label: 'Contractors', value: p.Contractor, color: 'green' },
-                ]}
-                sx={{ width: '100%', border: `2px solid ${palette15[index % palette15.length]}` }}
-                icon={<Box component="img" src={p.flag} sx={{ width: 48, height: 32 }} />}
+        {/* Region Cards */}
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+          Regional Overview
+        </Typography>
+        <Grid container spacing={2} mb={3}>
+          {partitions.map((p, idx) => (
+            <Grid item xs={12} sm={6} md={4} lg={2} key={p.name}>
+              <Box
+                sx={{
+                  borderRadius: 3,
+                  border: `1px solid ${palette[idx % palette.length]}`,
+                  p: 2,
+                  background: "rgba(255,255,255,0.05)",
+                  backdropFilter: "blur(4px)",
+                  textAlign: "center",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={p.flag}
+                  alt={p.name}
+                  sx={{ width: 48, height: 32, borderRadius: 1, mb: 1 }}
+                />
+                <Typography
+                  sx={{
+                    color: "#FFD666",
+                    fontWeight: 600,
+                    mb: 0.5,
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {displayNameMap[p.name]}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
+                  {p.total}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#aaa" }}>
+                  {p.Employee} Emp / {p.Contractor} Cont
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Chart Section */}
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+          Detailed Insights
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6} lg={4}>
+            <WidgetCard>
+              {crPartition.total === 0 ? (
+                <NoData text="Costa Rica" />
+              ) : (
+                <CompositeChartCard
+                  title="Costa Rica"
+                  data={Object.entries(crPartition.floors).map(([f, c]) => ({
+                    name: f,
+                    headcount: c,
+                    capacity: buildingCapacities[f] || 0,
+                  }))}
+                  barColor={palette[0]}
+                  lineColor={palette[1]}
+                  height={340}
+                />
+              )}
+            </WidgetCard>
+          </Grid>
+
+          <Grid item xs={12} md={6} lg={4}>
+            <WidgetCard>
+              {arPartition.total === 0 ? (
+                <NoData text="Argentina" />
+              ) : (
+                <LineChartCard
+                  title="Argentina"
+                  data={Object.entries(arPartition.floors).map(([f, c]) => ({
+                    name: f,
+                    headcount: c,
+                    capacity: seatCapacities[`Argentina-${f}`] || 0,
+                  }))}
+                  height={340}
+                  lineColor1={palette[2]}
+                  lineColor2={palette[3]}
+                />
+              )}
+            </WidgetCard>
+          </Grid>
+
+          <Grid item xs={12} md={12} lg={4}>
+            <WidgetCard>
+              <PieChartCard
+                title="Latin America"
+                data={smallOnes.map((p) => ({
+                  name: displayNameMap[p.name],
+                  value: p.total,
+                  emp: p.Employee,
+                  cont: p.Contractor,
+                }))}
+                colors={[palette[4], palette[5], palette[6], palette[7]]}
+                height={340}
+                showZeroSlice
               />
-            </Box>
-          ))}
-        </Box>
-
-        {/* Detail Widgets */}
-        <Box display="flex" flexWrap="wrap" gap={2} justifyContent="center">
-          {/* Costa Rica */}
-          <Box sx={widgetBoxStyle('#FFE599', isMobile)}>
-            {crPartition.total === 0 ? <NoData text="Costa Rica" /> :
-              <CompositeChartCard
-                title="Costa Rica"
-                data={Object.entries(crPartition.floors).map(([f, c]) => ({ name: f.trim(), headcount: c, capacity: buildingCapacities[f.trim()] || 0 }))}
-                barColor={palette15[0]} lineColor={palette15[1]} height={350}
-              />}
-          </Box>
-
-          {/* Argentina */}
-          <Box sx={widgetBoxStyle('#FFE599', isMobile)}>
-            {arPartition.total === 0 ? <NoData text="Argentina" /> :
-              <LineChartCard
-                title="Argentina"
-                data={Object.entries(arPartition.floors).map(([f, c]) => ({ name: f.trim(), headcount: c, capacity: seatCapacities[`Argentina-${f.trim()}`] || 0 }))}
-                totalCapacity={450} lineColor1={palette15[2]} lineColor2={palette15[3]} height={350}
-              />}
-          </Box>
-
-          {/* Pie Chart */}
-          <Box sx={widgetBoxStyle('#FFE599', isMobile)}>
-            <PieChartCard
-              title="Latin America"
-              data={smallOnes.map(p => ({ name: displayNameMap[p.name], value: p.total, emp: p.Employee, cont: p.Contractor }))}
-              colors={[palette15[4], palette15[5], palette15[6], palette15[7]]}
-              height={350} showZeroSlice
-              totalSeats={smallOnes.reduce((sum, p) => sum + seatCapacities[displayNameMap[p.name]], 0)}
-            />
-          </Box>
-        </Box>
+            </WidgetCard>
+          </Grid>
+        </Grid>
       </Container>
 
       <Footer />
@@ -224,20 +367,27 @@ export default function Dashboard() {
   );
 }
 
-const widgetBoxStyle = (borderColor, isMobile) => ({
-  flex: { xs: "1 1 100%", sm: "1 1 48%", md: "1 1 32%" },
-  minWidth: isMobile ? "100%" : 280,
-  border: `1px solid ${borderColor}`,
-  borderRadius: 2,
-  boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
-  overflow: 'hidden',
-  transition: 'transform 0.3s',
-  '&:hover': { transform: 'scale(1.02)' }
-});
+// 💡 Utility Components
+const WidgetCard = ({ children }) => (
+  <Box
+    sx={{
+      borderRadius: 3,
+      border: "1px solid rgba(255,255,255,0.2)",
+      background: "rgba(255,255,255,0.05)",
+      backdropFilter: "blur(6px)",
+      p: 2,
+      boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+      transition: "transform 0.3s ease",
+      "&:hover": { transform: "translateY(-4px)" },
+    }}
+  >
+    {children}
+  </Box>
+);
 
 function NoData({ text }) {
   return (
-    <Typography align="center" sx={{ py: 4, color: 'white' }}>
+    <Typography align="center" sx={{ py: 6, color: "#bbb" }}>
       No realtime employee data in {text}
     </Typography>
   );
