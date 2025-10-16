@@ -1,3 +1,28 @@
+
+<Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+  {rows.length > 10 && (
+    <Button
+      size="small"
+      sx={{ color: "#FFC107" }}
+      onClick={() => setExpanded(floor)}
+    >
+      See more…
+    </Button>
+  )}
+
+  <Button
+    size="small"
+    sx={{ color: "#4CAF50" }}
+    onClick={() => exportFloorToExcel(floor)}
+  >
+    Export Excel
+  </Button>
+</Box>
+
+
+
+....
+
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
