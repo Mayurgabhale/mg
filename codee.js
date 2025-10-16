@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-export const handleExportEmea = async (detailRows, pickedDate, selectedSummaryPartition) => {
+export const handleExport = async (detailRows, pickedDate, selectedSummaryPartition) => {
   if (!detailRows?.length) return;
 
   const workbook = new ExcelJS.Workbook();
