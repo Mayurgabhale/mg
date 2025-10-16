@@ -68,13 +68,16 @@
             </TableContainer>
           </Box>
 
-          <Button
-            size="small"
-            sx={{ color: '#FFC107', mt: 1 }}
-            onClick={() => setExpandedFloor(f => f === floor ? null : floor)}
-          >
-            {expandedFloor === floor ? 'Hide' : 'See more…'}
-          </Button>
+          {/* Right-aligned See More button */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+            <Button
+              size="small"
+              sx={{ color: '#FFC107' }}
+              onClick={() => setExpandedFloor(f => f === floor ? null : floor)}
+            >
+              {expandedFloor === floor ? 'Hide' : 'See more…'}
+            </Button>
+          </Box>
         </Paper>
       </Box>
     );
