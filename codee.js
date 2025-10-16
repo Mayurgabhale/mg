@@ -1,5 +1,3 @@
-search not wokr correct 
-
 // src/pages/PartitionDetailDetails.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
@@ -28,8 +26,8 @@ export default function PartitionDetailDetails() {
   const [liveCounts, setLiveCounts] = useState({});
   const [lastUpdate, setLastUpdate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedFloor, setExpandedFloor] = useState(null);
-  const [expanded, setExpanded] = useState(null);
+  const [expandedFloor, setExpandedFloor] = useState(null); // unused except maybe future
+  const [expanded, setExpanded] = useState(null); // dialog floor name or null
 
   // pull + poll
   useEffect(() => {
@@ -46,25 +44,22 @@ export default function PartitionDetailDetails() {
       if (!active) return;
 
       // --- 1) normalize & trim liveCounts keys ---
-      const raw = json.realtime[partition]?.floors || {};
+      const raw = json.realtime?.[partition]?.floors || {};
       const counts = Object.entries(raw).reduce((acc, [floor, count]) => {
-        const f = floor.trim();
+        const f = (floor || "").trim();
         acc[f] = (acc[f] || 0) + count;
         return acc;
       }, {});
       setLiveCounts(counts);
 
       // --- 2) grab all swipes (in+out) for this partition ---
-      const all = json.details
-        .filter(r =>
-          r.PartitionName2 === partition &&
-          (r.Direction === "InDirection" || r.Direction === "OutDirection")
-        );
+      const all = (json.details || []).filter(r =>
+        r.PartitionName2 === partition &&
+        (r.Direction === "InDirection" || r.Direction === "OutDirection")
+      );
 
       // --- 3) sort oldest→newest & group to last swipe per user ---
-      all.sort((a, b) =>
-        new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime)
-      );
+      all.sort((a, b) => new Date(a.LocaleMessageTime) - new Date(b.LocaleMessageTime));
       const lastByPerson = {};
       all.forEach(r => { lastByPerson[r.PersonGUID] = r });
 
@@ -74,7 +69,7 @@ export default function PartitionDetailDetails() {
         .map(r => ({
           ...r,
           // 5) lookup & trim floor name
-          floor: lookupFloor(r.PartitionName2, r.Door, r.Direction)
+          floor: lookupFloor(r.PartitionName2, r.Door, r.Direction) || "Unknown"
         }));
 
       setDetails(inside);
@@ -93,31 +88,14 @@ export default function PartitionDetailDetails() {
     // ensure every floor in liveCounts appears
     Object.keys(liveCounts).forEach(f => { m[f] = [] });
     details.forEach(r => {
-      const f = r.floor;
+      const f = r.floor || "Unknown";
       if (!m[f]) m[f] = [];
       m[f].push(r);
     });
     return m;
   }, [details, liveCounts]);
 
-  // filter & sort floors by search + descending headcount
-  const term = searchTerm.trim().toLowerCase();
-  const displayed = useMemo(() => {
-    return Object.entries(floorMap)
-      .filter(([floor, emps]) => {
-        if (!term) return true;
-        if (floor.toLowerCase().includes(term)) return true;
-        return emps.some(r =>
-          String(r.EmployeeID).toLowerCase().includes(term) ||
-          String(r.ObjectName1).toLowerCase().includes(term) ||
-          String(r.CardNumber).toLowerCase().includes(term)
-        );
-      })
-      .sort(([a], [b]) =>
-        (liveCounts[b] || 0) - (liveCounts[a] || 0)
-      );
-  }, [floorMap, liveCounts, term]);
-
+  // columns
   const columns = [
     { field: "EmployeeID", headerName: "Emp ID" },
     { field: "ObjectName1", headerName: "Name" },
@@ -129,20 +107,43 @@ export default function PartitionDetailDetails() {
 
   // format API time string (HH:mm:ss from ISO) into 12h with AM/PM
   const formatApiTime12 = (iso, fallback) => {
-    const raw = iso
-      ? iso.slice(11, 19) // HH:mm:ss
-      : (fallback || '');
+    const raw = iso ? iso.slice(11, 19) : (fallback || '');
     if (!raw) return '';
-
-    // parse HH, mm, ss
     const [hh, mm, ss] = raw.split(':').map(Number);
-    const hours12 = ((hh + 11) % 12) + 1; // convert to 1–12
+    if (Number.isNaN(hh)) return raw;
+    const hours12 = ((hh + 11) % 12) + 1;
     const ampm = hh >= 12 ? 'PM' : 'AM';
-    return `${hours12.toString().padStart(2, '0')}:${mm
-      .toString()
-      .padStart(2, '0')}:${ss.toString().padStart(2, '0')} ${ampm}`;
+    return `${hours12.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')} ${ampm}`;
   };
 
+  // normalized search term
+  const term = (searchTerm || "").trim().toLowerCase();
+
+  // helper: return rows for a floor taking search into account
+  const getRowsForFloor = (floor) => {
+    const allRows = floorMap[floor] || [];
+    if (!term) return allRows;
+    // floor-level match returns all rows for that floor
+    if ((floor || "").toLowerCase().includes(term)) return allRows;
+    // else return only rows that match fields
+    return allRows.filter(r =>
+      String(r.EmployeeID || "").toLowerCase().includes(term) ||
+      String(r.ObjectName1 || "").toLowerCase().includes(term) ||
+      String(r.CardNumber || "").toLowerCase().includes(term)
+    );
+  };
+
+  // displayed floors: filter out floors with zero matched rows when searching, sort by headcount desc
+  const displayed = useMemo(() => {
+    const entries = Object.keys(floorMap).map(f => [f, getRowsForFloor(f)]);
+    const filtered = entries.filter(([, rows]) => rows && rows.length > 0);
+    filtered.sort(([a], [b]) => (liveCounts[b] || 0) - (liveCounts[a] || 0));
+    return filtered;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [floorMap, liveCounts, searchTerm]); // depend on searchTerm to recompute
+
+  // preview rows per card (max 10)
+  const getPreview = (rows) => rows.slice(0, 10);
 
   return (
     <>
@@ -172,200 +173,210 @@ export default function PartitionDetailDetails() {
             </Box>
           </Box>
 
-          {loading ? <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box> : (
+          {loading ? (
+            <Box sx={{ px: 2, py: 8 }}><LoadingSpinner /></Box>
+          ) : (
             <>
-              {/* Floor Cards */}
-              <Box display="flex" flexWrap="wrap" justifyContent="center" width="100%" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
-                {displayed.map(([floor, emps]) => {
-                  const preview = emps.slice(0, 10); // show only 10 rows
+              {displayed.length === 0 ? (
+                <Box sx={{ px: 2, py: 6 }}>
+                  <Typography align="center" sx={{ color: '#FFC107' }}>
+                    No results found for “{searchTerm}”
+                  </Typography>
+                </Box>
+              ) : (
+                <Box display="flex" flexWrap="wrap" justifyContent="center" width="100%" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+                  {displayed.map(([floor, rows]) => {
+                    const preview = getPreview(rows);
+                    const totalMatches = rows.length;
+                    const showSeeMore = totalMatches > 10;
 
-                  return (
-                    <Box
-                      key={floor}
-                      sx={{
-                        flex: { xs: "1 1 100%", sm: "1 1 48%", md: "1 1 48%" },
-                        p: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "stretch",
-                      }}
-                    >
-                      <Paper
+                    return (
+                      <Box
+                        key={floor}
                         sx={{
-                          border: "2px solid #FFC107",
-                          p: 2,
-                          background: "rgba(0,0,0,0.4)",
-                          height: "100%",
+                          flex: { xs: "1 1 100%", sm: "1 1 48%", md: "1 1 48%" },
+                          p: 1,
                           display: "flex",
                           flexDirection: "column",
+                          alignItems: "stretch",
                         }}
                       >
-                        <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#FFC107", mb: 1 }}>
-                          {floor} (Total {liveCounts[floor] || 0})
-                        </Typography>
+                        <Paper
+                          sx={{
+                            border: "2px solid #FFC107",
+                            p: 2,
+                            background: "rgba(0,0,0,0.4)",
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#FFC107", mb: 1 }}>
+                            {floor} (Total {liveCounts[floor] || 0})
+                          </Typography>
 
-                        {/* Table */}
-                        <Box sx={{ overflowX: "auto", flexGrow: 1 }}>
-                          <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow sx={{ bgcolor: "#000" }}>
-                                  {columns.map((c) => (
-                                    <TableCell
-                                      key={c.field}
-                                      sx={{ color: "#FFC107", fontWeight: "bold", border: "1px solid #FFC107", minWidth: 80 }}
-                                    >
-                                      {c.headerName}
-                                    </TableCell>
-                                  ))}
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {preview.map((r, i) => (
-                                  <TableRow key={`${r.PersonGUID}-${i}`}>
-                                    <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.EmployeeID}</TableCell>
-                                    <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.ObjectName1}</TableCell>
-                                    <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
-                                      {formatApiTime12(r.LocaleMessageTime, r.Swipe_Time)}
-                                    </TableCell>
-                                    <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.PersonnelType}</TableCell>
-                                    <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.CardNumber}</TableCell>
-                                    <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.Door}</TableCell>
+                          {/* Table */}
+                          <Box sx={{ overflowX: "auto", flexGrow: 1 }}>
+                            <TableContainer component={Paper} variant="outlined" sx={{ mb: 1, background: "rgba(0,0,0,0.4)" }}>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: "#000" }}>
+                                    {columns.map((c) => (
+                                      <TableCell
+                                        key={c.field}
+                                        sx={{ color: "#FFC107", fontWeight: "bold", border: "1px solid #FFC107", minWidth: 80 }}
+                                      >
+                                        {c.headerName}
+                                      </TableCell>
+                                    ))}
                                   </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </TableContainer>
-                        </Box>
+                                </TableHead>
+                                <TableBody>
+                                  {preview.map((r, i) => (
+                                    <TableRow key={`${r.PersonGUID || i}-${i}`}>
+                                      <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.EmployeeID}</TableCell>
+                                      <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.ObjectName1}</TableCell>
+                                      <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>
+                                        {formatApiTime12(r.LocaleMessageTime, r.Swipe_Time)}
+                                      </TableCell>
+                                      <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.PersonnelType}</TableCell>
+                                      <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.CardNumber}</TableCell>
+                                      <TableCell sx={{ color: "#fff", border: "1px solid #FFC107" }}>{r.Door}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </Box>
 
-                        {/* Right-aligned See More button */}
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
-                          <Button size="small" sx={{ color: "#FFC107" }} onClick={() => setExpanded(floor)}>
-                            See more…
-                          </Button>
-                        </Box>
-                      </Paper>
-                    </Box>
-                  );
-                })}
-              </Box>
-
-              {/* ✅ Popup Modal */}
-              <Dialog
-                open={Boolean(expanded)}
-                onClose={() => setExpanded(null)}
-                maxWidth="lg"
-                fullWidth
-                sx={{
-                  "& .MuiDialog-paper": {
-                    width: "100%",
-                    maxWidth: { xs: "95%", sm: "90%", md: "85%", lg: "80%" },
-                  },
-                }}
-              >
-                <DialogTitle
-                  sx={{
-                    fontWeight: "bold",
-                    textAlign: "center",
-                    fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
-                  }}
-                >
-                  {expanded} — All Entries
-                </DialogTitle>
-
-                <DialogContent sx={{ overflowX: "auto", p: { xs: 1, sm: 2 } }}>
-                  {expanded && (
-                    <TableContainer
-                      component={Paper}
-                      variant="outlined"
-                      sx={{
-                        border: "2px solid #FFC107",
-                        borderRadius: 2,
-                        overflowX: "auto",
-                        boxShadow: "0px 2px 6px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      <Table
-                        size="small"
-                        stickyHeader
-                        sx={{
-                          borderCollapse: "collapse",
-                          width: "100%",
-                          "& th, & td": {
-                            borderRight: "1px solid #ddd",
-                            borderBottom: "1px solid #ddd",
-                            textAlign: "left",
-                            px: { xs: 0.5, sm: 1 },
-                            py: { xs: 0.6, sm: 0.8 },
-                            fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.9rem" },
-                            whiteSpace: "nowrap",
-                          },
-                          "& th:last-child, & td:last-child": { borderRight: "none" },
-                          "& thead th": { backgroundColor: "#e7b40cff", fontWeight: "bold" },
-                        }}
-                      >
-                        <TableHead>
-                          <TableRow>
-                            {columns.map((c) => (
-                              <TableCell key={c.field}>{c.headerName}</TableCell>
-                            ))}
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {floorMap[expanded]?.map((r, i) => (
-                            <TableRow
-                              key={i}
-                              sx={{
-                                "&:hover": {
-                                  backgroundColor: "#3b3b39ff",
-                                },
-                              }}
-                            >
-                              <TableCell>{r.EmployeeID}</TableCell>
-                              <TableCell>{r.ObjectName1}</TableCell>
-                              <TableCell>{formatApiTime12(r.LocaleMessageTime, r.Swipe_Time)}</TableCell>
-                              <TableCell>{r.PersonnelType}</TableCell>
-                              <TableCell>{r.CardNumber}</TableCell>
-                              <TableCell>{r.Door}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </DialogContent>
-
-                <DialogActions sx={{ justifyContent: "center", py: { xs: 1, sm: 1.5 } }}>
-                  <Button
-                    variant="contained"
-                    color="warning"
-                    onClick={() => setExpanded(null)}
-                    sx={{
-                      px: { xs: 2, sm: 3 },
-                      py: { xs: 0.7, sm: 0.9 },
-                      fontSize: { xs: "0.8rem", sm: "0.9rem" },
-                      borderRadius: 2,
-                      textTransform: "none",
-                    }}
-                  >
-                    Close
-                  </Button>
-                </DialogActions>
-              </Dialog>
-
-
+                          {/* Right-aligned See More button */}
+                          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+                            {showSeeMore ? (
+                              <Button size="small" sx={{ color: "#FFC107" }} onClick={() => setExpanded(floor)}>
+                                See more…
+                              </Button>
+                            ) : (
+                              <Typography variant="caption" sx={{ color: '#9e9e9e' }}>
+                                {totalMatches} {totalMatches === 1 ? 'record' : 'records'}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Paper>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
             </>
           )}
+
+          {/* Popup Modal */}
+          <Dialog
+            open={Boolean(expanded)}
+            onClose={() => setExpanded(null)}
+            maxWidth="lg"
+            fullWidth
+            sx={{
+              "& .MuiDialog-paper": {
+                width: "100%",
+                maxWidth: { xs: "95%", sm: "90%", md: "85%", lg: "80%" },
+              },
+            }}
+          >
+            <DialogTitle
+              sx={{
+                fontWeight: "bold",
+                textAlign: "center",
+                fontSize: { xs: "1rem", sm: "1.2rem", md: "1.4rem" },
+              }}
+            >
+              {expanded} — All Entries
+            </DialogTitle>
+
+            <DialogContent sx={{ overflowX: "auto", p: { xs: 1, sm: 2 } }}>
+              {expanded && (
+                <TableContainer
+                  component={Paper}
+                  variant="outlined"
+                  sx={{
+                    border: "2px solid #FFC107",
+                    borderRadius: 2,
+                    overflowX: "auto",
+                    boxShadow: "0px 2px 6px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <Table
+                    size="small"
+                    stickyHeader
+                    sx={{
+                      borderCollapse: "collapse",
+                      width: "100%",
+                      "& th, & td": {
+                        borderRight: "1px solid #ddd",
+                        borderBottom: "1px solid #ddd",
+                        textAlign: "left",
+                        px: { xs: 0.5, sm: 1 },
+                        py: { xs: 0.6, sm: 0.8 },
+                        fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.9rem" },
+                        whiteSpace: "nowrap",
+                      },
+                      "& th:last-child, & td:last-child": { borderRight: "none" },
+                      "& thead th": { backgroundColor: "#e7b40cff", fontWeight: "bold" },
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        {columns.map((c) => (
+                          <TableCell key={c.field}>{c.headerName}</TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(getRowsForFloor(expanded) || []).map((r, i) => (
+                        <TableRow
+                          key={i}
+                          sx={{
+                            "&:hover": {
+                              backgroundColor: "#3b3b39ff",
+                            },
+                          }}
+                        >
+                          <TableCell>{r.EmployeeID}</TableCell>
+                          <TableCell>{r.ObjectName1}</TableCell>
+                          <TableCell>{formatApiTime12(r.LocaleMessageTime, r.Swipe_Time)}</TableCell>
+                          <TableCell>{r.PersonnelType}</TableCell>
+                          <TableCell>{r.CardNumber}</TableCell>
+                          <TableCell>{r.Door}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </DialogContent>
+
+            <DialogActions sx={{ justifyContent: "center", py: { xs: 1, sm: 1.5 } }}>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={() => setExpanded(null)}
+                sx={{
+                  px: { xs: 2, sm: 3 },
+                  py: { xs: 0.7, sm: 0.9 },
+                  fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                  borderRadius: 2,
+                  textTransform: "none",
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+
         </Container>
       </Box>
-
 
       <Footer />
     </>
   );
-
-
-
 }
-
-
