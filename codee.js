@@ -1,26 +1,12 @@
-// at top of component: add error state
-const [error, setError] = useState(null);
-
-useEffect(() => {
-  let mounted = true;
-  setLoading(true);
-  setError(null);
-
-  fetchHistory()
-    .then(json => {
-      if (!mounted) return;
-      setData(json);
-    })
-    .catch(err => {
-      console.error('fetchHistory failed', err);
-      if (!mounted) return;
-      // store an error object or string to show to user
-      setError(err?.message || String(err));
-    })
-    .finally(() => {
-      if (!mounted) return;
-      setLoading(false);
-    });
-
-  return () => { mounted = false; };
-}, []);
+{error && (
+  <Box sx={{ px: 2, mb: 2 }}>
+    <Paper sx={{ p: 2, border: '1px solid #f44336', bgcolor: '#fff4f4' }}>
+      <Typography color="error" variant="body1">
+        Error loading history: {error}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        Please check server logs or contact the API owner. The client caught the error so the page won't crash.
+      </Typography>
+    </Paper>
+  </Box>
+)}
