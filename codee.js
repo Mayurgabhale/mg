@@ -1,39 +1,68 @@
-<div className="dashboard-grid">
-  {filteredDashboards.map((d, index) => (
-    <div 
-      key={d.id} 
-      className={`card ${d.status} ${activeCard === d.id ? 'active' : ''}`}
-      style={{
-        animationDelay: `${index * 0.1}s`,
-        backgroundImage: `linear-gradient(rgba(15,23,42,0.8), rgba(15,23,42,0.9)), url(${d.image})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-      onClick={() => handleClick(d)}
-    >
-      <div className="card-glow"></div>
+.card {
+  background-blend-mode: overlay;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
 
-      <div className="card-header">
-        <div className="card-icon">{d.icon}</div>
-        <h3>{d.name}</h3>
-        <div className={`status-badge ${d.status}`}>
-          {d.status === 'active' ? 'Online' : 'Offline'}
-        </div>
-      </div>
+.card-icon {
+  font-size: 2rem;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-      <div className="card-body">
-        <div className="connection-info">
-          <span className="ip-address">{d.ip}</span>
-          <span className="port">:{d.port}</span>
-        </div>
-      </div>
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-      <div className="card-footer">
-        <div className="access-indicator">
-          <span>Click to Access</span>
-          <div className="arrow">→</div>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
+.card-header h3 {
+  flex: 1;
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card:hover .card-icon {
+  transform: scale(1.2);
+  transition: all 0.3s ease;
+}
+
+.card.active {
+  transform: scale(0.96);
+  border-color: var(--success);
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+}
+
+.card-footer {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 0.75rem;
+  text-align: right;
+}
+
+.access-indicator {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.access-indicator .arrow {
+  transition: transform 0.3s ease;
+}
+
+.card:hover .access-indicator .arrow {
+  transform: translateX(4px);
+}
