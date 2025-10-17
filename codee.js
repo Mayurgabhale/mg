@@ -47,6 +47,57 @@ equestError: Connection lost - A8580000:error:1C800066:Provider routines:ossl_gc
 }
 
 
+
+
+//Abhishek//1//
+
+// C:\Users\W0024618\Desktop\laca-occupancy-backend\src\config\db.js
+const sql = require('mssql');
+require('dotenv').config();
+
+const dbConfig = {
+  user:             process.env.DB_USER,
+  password:         process.env.DB_PASSWORD,
+  server:           process.env.DB_SERVER,
+  database:         process.env.DB_DATABASE,
+  port:             parseInt(process.env.DB_PORT, 10),
+  pool: {
+    max:            10,
+    min:            0,
+    idleTimeoutMillis: 30000
+  },
+  options: {
+    // Force TLS 1.2+ and explicit cipher negotiation
+    encrypt:              true,                     // require encryption
+    trustServerCertificate: true,                   // dev only; accept self-signed cert
+    enableArithAbort:     true,                     // recommended for modern SQL Server
+    // cryptoCredentialsDetails: {
+    //   minVersion:         'TLSv1.2',               // enforce minimum TLS 1.2
+    //   maxVersion:         'TLSv1.3'                // allow up to TLS 1.3 if available
+    // }
+  }
+};
+
+const poolPromise = new sql.ConnectionPool(dbConfig)
+  .connect()
+  .then(pool => {
+    console.log('✅ MSSQL connected');
+    return pool;
+  })
+  .catch(err => {
+    console.error('❌ MSSQL connection failed ➞', err);
+    // crash early so front-end 500s disappear
+    process.exit(1);
+  });
+
+module.exports = {
+  sql,
+  poolPromise
+};
+
+
+
+
 exports.getHistoricalOccupancy = async (req, res) => {
   const location = req.params.location || null;
   try {
