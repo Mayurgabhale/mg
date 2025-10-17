@@ -1,278 +1,418 @@
-http://localhost:3001/api/occupancy/history
-{
-    "success": false,
-    "message": "Historical fetch failed"
+// // src/App.js
+// import React, { useState, useEffect } from 'react';
+// import './App.css';
+
+// function Loading() {
+//   const [displayText, setDisplayText] = useState('');
+
+//   useEffect(() => {
+//     const fullText = 'GSOC STRAT COMMAND...';
+//     let i = 0;
+//     const timer = setInterval(() => {
+//       setDisplayText(fullText.slice(0, i + 1));
+//       i++;
+//       if (i > fullText.length) {
+//         clearInterval(timer);
+//       }
+//     }, 150);
+
+//     return () => clearInterval(timer);
+//   }, []);
+
+//   return (
+//     <div className="loading-container">
+//       <h1 className="loading-title">
+//         {displayText}
+//         <span className="cursor">|</span>
+//       </h1>
+//       <div className="spinner-container">
+//         <div className="spinner"></div>
+//         <div className="spinner"></div>
+//         <div className="spinner"></div>
+//       </div>
+//       <div className="particles">
+//         <div className="particle"></div>
+//         <div className="particle"></div>
+//         <div className="particle"></div>
+//         <div className="particle"></div>
+//         <div className="particle"></div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// function DashboardContent() {
+//   const dashboards = [
+//     { id: 1, ip: '10.199.22.57', port: 3004, name: 'Associate Verification Tool', img:'/identity-verification-removebg-preview.png' },
+//     { id: 2, ip: '10.199.22.57', port: 3005, name: 'Global Montoring Station', img:'/OIP.webp' }, 
+//     { id: 3, ip: '10.199.22.57', port: 3010, name: 'Violation Monitoring Station', img:'/vio.png' },
+//     { id: 4, ip: '10.199.22.57', port: 3011, name: 'Live Occupancy Monitoring - Pune', img:'/occu.jpg' },
+//     { id: 5, ip: '10.199.22.57', port: 3012, name: 'Live Occupancy Monitoring - Denver', img:'/occu.jpg' },
+//     { id: 6, ip: '10.199.22.57', port: 3006, name: 'Test Null' }
+//   ];
+
+//   const handleClick = (dashboard) => {
+//     window.open(`http://${dashboard.ip}:${dashboard.port}`, '_blank');
+//   };
+
+//   return (
+//     <div className="App">
+//       <div className="header">
+//         <div className='title-container'>
+//           <img src='/WU-logo.png' alt='Logo' className='logo'/>
+//           <h1 className="title">GSOC STRAT COMMAND</h1>
+//         </div>
+//         <div className="divider" />
+//       </div>
+
+//       <div className="buttons-container">
+//         {dashboards.map((dashboard) => (
+//           <button
+//             key={dashboard.id}
+//             className="button"
+//             onClick={() => handleClick(dashboard)}
+//           >
+//             {dashboard.name}
+//           </button>
+//         ))}
+//       </div>
+//       <footer className='footer'>
+//         <div className='divider'/>
+//       </footer>
+//       <div className='text-block'>
+//         <div className='bold-line'>Global Security Operations Center</div>
+//         <div>GSOC Dashbord Hub</div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// function App() {
+//   const [isLoading, setIsLoading] = useState(true);
+
+//   useEffect(() => {
+//     const timer = setTimeout(() => {
+//       setIsLoading(false);
+//     }, 3000);
+
+//     return () => clearTimeout(timer);
+//   }, []);
+
+//   return isLoading ? <Loading /> : <DashboardContent />;
+// }
+
+// export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+function Loading() {
+  const [displayText, setDisplayText] = useState('');
+
+  useEffect(() => {
+    const fullText = 'GSOC STRAT COMMAND...';
+    let i = 0;
+    const timer = setInterval(() => {
+      setDisplayText(fullText.slice(0, i + 1));
+      i++;
+      if (i > fullText.length) {
+        clearInterval(timer);
+      }
+    }, 150);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="loading-container">
+      <h1 className="loading-title">
+        {displayText}
+        <span className="cursor">|</span>
+      </h1>
+      <div className="spinner-container">
+        <div className="spinner"></div>
+        <div className="spinner"></div>
+        <div className="spinner"></div>
+      </div>
+      <div className="particles">
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+        <div className="particle"></div>
+      </div>
+    </div>
+  );
 }
-PS C:\Users\W0024618\desktop\laca-occupancy-backend> npm run dev
 
-> laca-occupancy-backend@1.0.0 dev
-> nodemon src/server.js
+function DashboardContent() {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-[nodemon] 3.1.10
-[nodemon] to restart at any time, enter `rs`
-[nodemon] watching path(s): *.*
-[nodemon] watching extensions: js,mjs,cjs,json
-[nodemon] starting `node src/server.js`
-🚀 Server running on port 3001
-✅ MSSQL connected
-RequestError: Connection lost - 706E0000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:c:\ws\deps\openssl\openssl\providers\implementations\ciphers\ciphercommon_gcm.c:325:
-
-    at handleError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:530:35)
-    at Connection.emit (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
-    at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:12)
-    at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
-    at Socket.emit (node:events:530:35)
-    at emitErrorNT (node:internal/streams/destroy:170:8)
-    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
-    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-  code: 'EREQUEST',
-  originalError: Error: Connection lost - 706E0000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:c:\ws\deps\openssl\openssl\providers\implementations\ciphers\ciphercommon_gcm.c:325:
-
-      at handleError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:530:35)
-      at Connection.emit (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
-      at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:12)
-      at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
-      at Socket.emit (node:events:530:35)
-      at emitErrorNT (node:internal/streams/destroy:170:8)
-      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
-      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-    info: ConnectionError: Connection lost - 706E0000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:c:\ws\deps\openssl\openssl\providers\implementations\ciphers\ciphercommon_gcm.c:325:
-
-        at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:26)
-        at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
-        at Socket.emit (node:events:530:35)
-        at emitErrorNT (node:internal/streams/destroy:170:8)
-        at emitErrorCloseNT (node:internal/streams/destroy:129:3)
-        at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-      code: 'ESOCKET',
-      [cause]: [Error]
+  const dashboards = [
+    { 
+      id: 1, 
+      ip: '10.199.22.57', 
+      port: 3004, 
+      name: 'Associate Verification Tool', 
+      // img: '/identity-verification-removebg-preview.png',
+      category: 'verification',
+      location: 'Global',
+      status: 'active'
+    },
+    { 
+      id: 2, 
+      ip: '10.199.22.57', 
+      port: 3005, 
+      name: 'Global Monitoring Station', 
+      // img: '/OIP.webp',
+      category: 'monitoring',
+      location: 'Global',
+      status: 'active'
+    }, 
+    { 
+      id: 3, 
+      ip: '10.199.22.57', 
+      port: 3010, 
+      name: 'Violation Monitoring Station', 
+      // img: '/vio.png',
+      category: 'monitoring',
+      location: 'Global',
+      status: 'active'
+    },
+    { 
+      id: 4, 
+      ip: '10.199.22.57', 
+      port: 3011, 
+      name: 'Live Occupancy Monitoring - Pune', 
+      // img: '/occu.jpg',
+      category: 'monitoring',
+      location: 'Pune',
+      status: 'active'
+    },
+    { 
+      id: 5, 
+      ip: '10.199.22.57', 
+      port: 3012, 
+      name: 'Live Occupancy Monitoring - Denver', 
+      // img: '/occu.jpg',
+      category: 'monitoring',
+      location: 'Denver',
+      status: 'active'
+    },
+    { 
+      id: 6, 
+      ip: '10.199.22.57', 
+      port: 3006, 
+      name: 'Test Null',
+      category: 'testing',
+      location: 'Global',
+      status: 'inactive'
     }
-  },
-  number: undefined,
-  lineNumber: undefined,
-  state: undefined,
-  class: undefined,
-  serverName: undefined,
-  procName: undefined
-}
+  ];
 
+  const handleClick = (dashboard) => {
+    window.open(`http://${dashboard.ip}:${dashboard.port}`, '_blank');
+  };
 
-//Abhishek//1//
-
-// C:\Users\W0024618\Desktop\laca-occupancy-backend\src\config\db.js
-const sql = require('mssql');
-require('dotenv').config();
-
-const dbConfig = {
-  user:             process.env.DB_USER,
-  password:         process.env.DB_PASSWORD,
-  server:           process.env.DB_SERVER,
-  database:         process.env.DB_DATABASE,
-  port:             parseInt(process.env.DB_PORT, 10),
-  pool: {
-    max:            10,
-    min:            0,
-    idleTimeoutMillis: 30000
-  },
-  options: {
-    // Force TLS 1.2+ and explicit cipher negotiation
-    encrypt:              true,                     // require encryption
-    trustServerCertificate: true,                   // dev only; accept self-signed cert
-    enableArithAbort:     true,                     // recommended for modern SQL Server
-    // cryptoCredentialsDetails: {
-    //   minVersion:         'TLSv1.2',               // enforce minimum TLS 1.2
-    //   maxVersion:         'TLSv1.3'                // allow up to TLS 1.3 if available
-    // }
-  }
-};
-
-const poolPromise = new sql.ConnectionPool(dbConfig)
-  .connect()
-  .then(pool => {
-    console.log('✅ MSSQL connected');
-    return pool;
-  })
-  .catch(err => {
-    console.error('❌ MSSQL connection failed ➞', err);
-    // crash early so front-end 500s disappear
-    process.exit(1);
+  // Filter dashboards based on category and search
+  const filteredDashboards = dashboards.filter(dashboard => {
+    const matchesCategory = selectedCategory === 'all' || dashboard.category === selectedCategory;
+    const matchesSearch = dashboard.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
   });
 
-module.exports = {
-  sql,
-  poolPromise
-};
+  const getCategoryCount = (category) => {
+    if (category === 'all') return dashboards.length;
+    return dashboards.filter(d => d.category === category).length;
+  };
 
+  const getActiveCount = () => {
+    return dashboards.filter(d => d.status === 'active').length;
+  };
 
+  return (
+    <div className="App">
+      {/* Top Control Bar */}
+      <header className="top-bar">
+        <div className="top-bar-left">
+          <img src='/WU-logo.png' alt='Logo' className='logo'/>
+          <h1 className="title">GSOC STRAT COMMAND</h1>
+        </div>
+        <div className="top-bar-center">
+          <input 
+            type="text" 
+            placeholder="Search dashboards..." 
+            className="search-bar"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="top-bar-right">
+          <div className="stat-item">
+            <span className="stat-label">Systems Online</span>
+            <span className="stat-value">{getActiveCount()}/{dashboards.length}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Status</span>
+            <span className="status-indicator active"></span>
+          </div>
+        </div>
+      </header>
 
+      <div className="divider-top"></div>
 
-exports.getHistoricalOccupancy = async (req, res) => {
-  const location = req.params.location || null;
-  try {
-    const raw = await service.fetchHistoricalOccupancy(location);
+      {/* Main Content Area */}
+      <div className="content-wrapper">
+        {/* Left Sidebar */}
+        <aside className={`sidebar-left ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <button 
+            className="collapse-btn"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          >
+            {sidebarCollapsed ? '→' : '←'}
+          </button>
+          
+          {!sidebarCollapsed && (
+            <nav className="sidebar-nav">
+              <div className="nav-section">
+                <h3 className="nav-title">Categories</h3>
+                <button 
+                  className={`nav-item ${selectedCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  
+                  <span className="nav-label">All Dashboards</span>
+                  <span className="nav-count">{getCategoryCount('all')}</span>
+                </button>
+                <button 
+                  className={`nav-item ${selectedCategory === 'monitoring' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('monitoring')}
+                >
+                 
+                  <span className="nav-label">Monitoring Tools</span>
+                  <span className="nav-count">{getCategoryCount('monitoring')}</span>
+                </button>
+                <button 
+                  className={`nav-item ${selectedCategory === 'verification' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('verification')}
+                >
+                  
+                  <span className="nav-label">Verification Tools</span>
+                  <span className="nav-count">{getCategoryCount('verification')}</span>
+                </button>
+                <button 
+                  className={`nav-item ${selectedCategory === 'testing' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('testing')}
+                >
+                  
+                  <span className="nav-label">Testing</span>
+                  <span className="nav-count">{getCategoryCount('testing')}</span>
+                </button>
+              </div>
+            </nav>
+          )}
+        </aside>
 
-    // first swipe per person per date
-    const byDate = raw.reduce((acc, r) => {
-      const iso = (r.LocaleMessageTime instanceof Date)
-        ? r.LocaleMessageTime.toISOString()
-        : r.LocaleMessageTime;
-      const date = iso.slice(0,10);
-      acc[date] = acc[date] || {};
-      const prev = acc[date][r.PersonGUID];
-      if (!prev || new Date(iso) < new Date(prev.LocaleMessageTime)) {
-        acc[date][r.PersonGUID] = { ...r, LocaleMessageTime: iso };
-      }
-      return acc;
-    }, {});
+        {/* Main Grid Area */}
+        <main className="main-content">
+          <div className="buttons-container">
+            {filteredDashboards.map((dashboard) => (
+              <button
+                key={dashboard.id}
+                className="button"
+                onClick={() => handleClick(dashboard)}
+                style={{
+                  backgroundImage: dashboard.img ? `url(${dashboard.img})` : 'none'
+                }}
+              >
+                <span className="button-text">{dashboard.name}</span>
+                <div className="button-status">
+                  <span className={`status-dot ${dashboard.status}`}></span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </main>
 
-    const summaryByDate = [];
-    const details = [];
+        {/* Right Info Panel */}
+        <aside className="sidebar-right">
+          <div className="info-panel">
+            <h3 className="panel-title">System Status</h3>
+            <div className="status-list">
+              {dashboards.map((dashboard) => (
+                <div key={dashboard.id} className="status-item">
+                  <span className={`status-dot ${dashboard.status}`}></span>
+                  <span className="status-name">{dashboard.name}</span>
+                  <span className="status-port">:{dashboard.port}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-    Object.keys(byDate).sort().forEach(date => {
-      const recs = Object.values(byDate[date]);
-      details.push(...recs);
+          <div className="info-panel">
+            <h3 className="panel-title">Recent Activity</h3>
+            <div className="activity-list">
+              <div className="activity-item">
+                <span className="activity-time">2m ago</span>
+                <span className="activity-text">Global Monitoring accessed</span>
+              </div>
+              <div className="activity-item">
+                <span className="activity-time">15m ago</span>
+                <span className="activity-text">Verification Tool updated</span>
+              </div>
+              <div className="activity-item">
+                <span className="activity-time">1h ago</span>
+                <span className="activity-text">System health check completed</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
 
-      // initialize region counts, including TempBadge for CR location
-      const regionCounts = { total: 0, Employee: 0, Contractor: 0 };
-      if (location === 'CR.Costa Rica Partition') regionCounts.TempBadge = 0;
+      {/* Bottom Status Bar */}
+      <footer className='footer'>
+        <div className="footer-left">
+          <span className={`status-indicator active`}></span>
+          <span className="footer-text">Connected</span>
+        </div>
+        <div className="footer-center">
+          <div className='bold-line'>Global Security Operations Center</div>
+          <div className='bold-line'>GSOC Dashboard Hub</div>
+        </div>
+        <div className="footer-right">
+          <span className="footer-text">Last Updated: Just now</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
 
-      const partitionCounts = {};
-      recs.forEach(r => {
-        regionCounts.total++;
-        if (isTempBadgeType(r.PersonnelType)) regionCounts.TempBadge++;
-        else if (isEmployeeType(r.PersonnelType)) regionCounts.Employee++;
-        else regionCounts.Contractor++;
+function App() {
+  const [isLoading, setIsLoading] = useState(true);
 
-        if (!location) {
-          const p = r.PartitionName2;
-          if (!partitionCounts[p]) {
-            partitionCounts[p] = { total: 0, Employee: 0, Contractor: 0 };
-            if (p === 'CR.Costa Rica Partition') partitionCounts[p].TempBadge = 0;
-          }
-          partitionCounts[p].total++;
-          if (isTempBadgeType(r.PersonnelType)) partitionCounts[p].TempBadge++;
-          else if (isEmployeeType(r.PersonnelType)) partitionCounts[p].Employee++;
-          else partitionCounts[p].Contractor++;
-        }
-      });
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
 
-      summaryByDate.push({
-        date,
-        day: new Date(date).toLocaleDateString('en-US', { weekday:'long' }),
-        region: location
-          ? { name: location, ...regionCounts }
-          : { name: 'LACA', ...regionCounts },
-        partitions: location ? undefined : partitionCounts
-      });
-    });
+    return () => clearTimeout(timer);
+  }, []);
 
-    return res.json({ success: true, summaryByDate, details });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Historical fetch failed' });
-  }
-};
+  return isLoading ? <Loading /> : <DashboardContent />;
+}
 
-
-
-/**
- * Core raw‐data fetch for the past N days, all or by location.
- */
-exports.fetchHistoricalData = async ({ days = 7, location = null }) => {
-  const pool = await poolPromise;
-  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
-  const locationFilter = location
-    ? `AND t1.PartitionName2 = @location`
-    : `AND t1.PartitionName2 IN (${partitionsSql})`;
-
-  const query = `
-    WITH Hist AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        t1.ObjectName2       AS Door,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END                   AS EmployeeID,
-        t2.text5             AS Text5,
-        t1.PartitionName2    AS PartitionName2,
-        t1.ObjectIdentity1   AS PersonGUID,
-        t3.Name              AS PersonnelType,
-        t2.Text4                   AS CompanyName,   -- ✅ company
-        t2.Text5                   AS PrimaryLocation, -- ✅ location
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        )                     AS CardNumber,
-        t5a.value            AS AdmitCode,
-        t5d.value            AS Direction,
-        CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) AS SwipeDate
-      FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLog] AS t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
-        ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
-        ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxml] AS t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00010029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) AS sc
-        ON t1.XmlGUID = sc.GUID
-     
-       WHERE
-        t1.MessageType = 'CardAdmitted'
-        ${locationFilter}
-        AND CONVERT(
-            DATE,
-            DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
-        )
-          >= DATEADD(
-              DAY,
-              -${days},
-              CONVERT(
-                DATE,
-                DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE())
-              )
-            )
-
-    )
-
-    SELECT *
-    FROM Hist
-    ORDER BY LocaleMessageTime ASC;
-  `;
-
-  const req = pool.request();
-  if (location) req.input('location', sql.NVarChar, location);
-  const result = await req.query(query);
-  return result.recordset;
-};// src/routes/occupancy.routes.js
-
-const express = require('express');
-const router  = express.Router();
-const controller = require('../controllers/occupancy.controller');
-
-// Live raw and summary
-router.get('/live',         controller.getLiveOccupancy);
-router.get('/live-summary', controller.getLiveSummary);
-
-// History: all partitions or a single one
-router.get('/history',             controller.getHistoricalOccupancy);
-router.get('/history/:location',   controller.getHistoricalOccupancy);
-
-// GET /api/occupancy-at-time?date=YYYY-MM-DD&time=HH:MM[:SS]&location=MX.Mexico City
-router.get('/occupancy-at-time', controller.getSnapshotAtDateTime);
-
-module.exports = router;
-
-
+export default App;
