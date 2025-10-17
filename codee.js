@@ -1,3 +1,4 @@
+http://localhost:3000/history
 Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
 History.jsx:300 fetchHistory failed: Error: History fetch failed: 500
     at fetchHistory (occupancy.service.js:35:1)
