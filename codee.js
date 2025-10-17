@@ -1,3 +1,10 @@
+http://localhost:3000/history
+Uncaught runtime errors:
+×
+ERROR
+History fetch failed: 500
+    at fetchHistory (http://localhost:3000/static/js/src_components_Header_jsx.chunk.js:45:22)
+
 
 // src/pages/History.jsx
 
@@ -818,3 +825,10 @@ const handleExportCompanies = async () => {
                 />
               </LocalizationProvider>
             </Box>
+
+            {/* Summary (left) + Company table (right) */}
+            <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+              {/* Left: Summary */}
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+                <Paper elevatio
+                     
