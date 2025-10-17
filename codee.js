@@ -1,6 +1,12 @@
 i want to add in this dasbhoard images and icons  in card or backend,
   so this dashboard UI more atractive and modersn desing ok, 
   lookin like more atracibe and professla desing ok 
+
+C:\Users\W0025562\Desktop\New_front\newfront\public\img\Associate Verification.png
+C:\Users\W0025562\Desktop\New_front\newfront\public\img\immigration.png
+C:\Users\W0025562\Desktop\New_front\newfront\public\img\monitor.png
+C:\Users\W0025562\Desktop\New_front\newfront\public\img\productivity.png
+C:\Users\W0025562\Desktop\New_front\newfront\public\img\violation.png
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
