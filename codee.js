@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+
 function Loading() {
   const [displayText, setDisplayText] = useState('');
 
