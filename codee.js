@@ -1,15 +1,11 @@
-occupancy.service.js:34 
- GET http://localhost:3001/api/occupancy/history 500 (Internal Server Error)
- History.jsx:300 fetchHistory failed: Error: History fetch failed: 500
+Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+History.jsx:300 fetchHistory failed: Error: History fetch failed: 500
     at fetchHistory (occupancy.service.js:35:1)
+(anonymous) @ History.jsx:300Understand this error
 
-﻿
-
-how to slvoe above errro 
-
+REad belwo code carefully, and how to slove the above issue,
+ i got this issue more and more time, please all code each line carefullym and how to sloe it... 
 //C:\Users\W0024618\Desktop\laca-occupancy-frontend\src\api\occupancy.service.js
-
-
 const BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
 
 // Simple in-memory cache
@@ -54,9 +50,8 @@ export function clearCache() {
   cache.liveSummary = null;
   cache.history.clear();
 }
-
-
-
+-------------------------------
+ 
 // src/pages/History.jsx
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -889,3 +884,10 @@ const handleExportCompanies = async () => {
                 />
               </LocalizationProvider>
             </Box>
+
+            {/* Summary (left) + Company table (right) */}
+            <Box sx={{ display: 'flex', gap: 2, width: '100%', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
+              {/* Left: Summary */}
+              <Box sx={{ flex: 1, minWidth: 320 }}>
+                <Paper elevation={3} sx={{ px: 1, py: 1, border: '3px solid #000', borderRadius: 2 }}>
+                  {/* keep same table markup but wrapped in TableCont
