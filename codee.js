@@ -1,72 +1,34 @@
-[nodemon] starting `node src/server.js`
-✅ MSSQL connected
-🚀 Server running on port 3001
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
-    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:69:20)
-TypeError: Cannot read properties of undefined (reading 'request')
+// src/server.js
+require('dotenv').config();
+const app = require('./app');
+const { getConnection } = require('./config/db'); // ensure DB connection setup before starting server
+
+const PORT = process.env.PORT || 3001;
+
+// Initialize database first, then start server
+(async () => {
+  try {
+    const pool = await getConnection(); // connect to MSSQL
+    if (pool.connected) {
+      console.log('✅ Database connection established successfully.');
+    }
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to start server due to DB connection issue:', err);
+    process.exit(1); // Exit so nodemon restarts or DevOps fails fast
+  }
+})();
 
 
 
 
-// C:\Users\W0024618\Desktop\laca-occupancy-backend\src\config\db.js
+
+
+.....
+// src/config/db.js
 const sql = require('mssql');
 require('dotenv').config();
 
@@ -75,38 +37,36 @@ const dbConfig = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
-  port: parseInt(process.env.DB_PORT, 10),
+  port: parseInt(process.env.DB_PORT, 10) || 1433,
   pool: {
     max: 10,
     min: 0,
     idleTimeoutMillis: 30000,
   },
   options: {
-    encrypt: true,
-    trustServerCertificate: true, // dev only
+    encrypt: true, // Use encryption
+    trustServerCertificate: true, // Allow self-signed certs for dev
     enableArithAbort: true,
   },
 };
 
-let pool; // shared connection pool instance
+let pool; // Shared connection pool
 
-// connect with automatic retry logic
+// Create or reuse connection pool
 async function getConnection() {
   try {
+    // If pool already exists and is connected, reuse it
+    if (pool && pool.connected) return pool;
+
+    // If pool exists but not connected, close and recreate
     if (pool) {
-      // check if pool is still connected
-      if (pool.connected) return pool;
-      if (pool.connecting) {
-        await pool.connecting;
-        return pool;
-      }
+      await pool.close().catch(() => {});
     }
 
     pool = new sql.ConnectionPool(dbConfig);
 
-    // set up event listeners for connection issues
     pool.on('error', (err) => {
-      console.error('❌ SQL pool error', err);
+      console.error('❌ SQL Pool Error:', err);
       if (err.code === 'ESOCKET' || err.code === 'ECONNRESET') {
         console.log('🔁 Attempting to reconnect to SQL Server...');
         reconnect();
@@ -117,32 +77,36 @@ async function getConnection() {
     console.log('✅ MSSQL connected');
     return pool;
   } catch (err) {
-    console.error('❌ MSSQL initial connection failed:', err);
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    console.error('❌ MSSQL connection failed:', err);
+    await new Promise((res) => setTimeout(res, 5000)); // Wait before retry
     console.log('🔁 Retrying MSSQL connection...');
-    return getConnection(); // recursive retry
+    return getConnection(); // Recursive retry
   }
 }
 
-// reconnect helper
+// Reconnect helper
 async function reconnect() {
   try {
-    await sql.close();
+    if (pool) await pool.close();
   } catch (e) {
     // ignore
   }
   pool = null;
-  await getConnection();
+  return getConnection();
 }
 
-// safe query helper
+// Safe query helper
 async function query(queryText, params = {}) {
   const conn = await getConnection();
+  if (!conn) throw new Error('❌ No database connection available');
+
   const request = conn.request();
   for (const [key, value] of Object.entries(params)) {
     request.input(key, value);
   }
-  return request.query(queryText);
+
+  const result = await request.query(queryText);
+  return result.recordset;
 }
 
 module.exports = {
@@ -150,3 +114,4 @@ module.exports = {
   getConnection,
   query,
 };
+
