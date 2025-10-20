@@ -1,3 +1,37 @@
+0k, but know i am gettng this error... 
+  
+PS C:\Users\W0024618\Desktop\laca-occupancy-backend> npm run dev
+
+> laca-occupancy-backend@1.0.0 dev
+> nodemon src/server.js
+
+[nodemon] 3.1.10
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node src/server.js`
+🚀 Server running on port 3001
+TypeError: Cannot read properties of undefined (reading 'request')
+    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:409:20)
+TypeError: Cannot read properties of undefined (reading 'request')
+    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:409:20)
+TypeError: Cannot read properties of undefined (reading 'request')
+    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:409:20)
+TypeError: Cannot read properties of undefined (reading 'request')
+    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:409:20)
+TypeError: Cannot read properties of undefined (reading 'request')
+    at exports.fetchLiveOccupancy (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js:110:29)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async exports.getLiveSummary (C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js:409:20)
+
 // C:\Users\W0024618\Desktop\laca-occupancy-backend\src\config\db.js
 // laca DB connection (mirrors Pune implementation)
 
@@ -82,3 +116,19 @@ async function getPool(attempts = 5) {
 }
 
 module.exports = { sql, getPool };
+
+--------
+  C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+require('dotenv').config();
+const app = require('./app');
+
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
+
+
+
+
