@@ -38,4 +38,3 @@ process.on('uncaughtException', (err) => { console.error('❌ Uncaught Exception
 return poolPromise; }
 
 module.exports = { sql, getPool };
-
