@@ -1,54 +1,7 @@
-PS C:\Users\W0024618\Desktop\laca-occupancy-backend> npm run dev
-
-> laca-occupancy-backend@1.0.0 dev
-> nodemon src/server.js
-
-[nodemon] 3.1.10
-[nodemon] to restart at any time, enter `rs`
-[nodemon] watching path(s): *.*
-[nodemon] watching extensions: js,mjs,cjs,json
-[nodemon] starting `node src/server.js`
-🚀 Server running on port 3001
-✅ MSSQL connected
-Historical fetch failed: RequestError: Connection lost - B8580000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:c:\ws\deps\openssl\openssl\providers\implementations\ciphers\ciphercommon_gcm.c:325:
-
-    at handleError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\mssql\lib\tedious\request.js:384:15)
-    at Connection.emit (node:events:530:35)
-    at Connection.emit (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
-    at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:12)
-    at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
-    at Socket.emit (node:events:530:35)
-    at emitErrorNT (node:internal/streams/destroy:170:8)
-    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
-    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-  code: 'EREQUEST',
-  originalError: Error: Connection lost - B8580000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:c:\ws\deps\openssl\openssl\providers\implementations\ciphers\ciphercommon_gcm.c:325:
-
-      at handleError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\mssql\lib\tedious\request.js:382:19)
-      at Connection.emit (node:events:530:35)
-      at Connection.emit (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
-      at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:12)
-      at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
-      at Socket.emit (node:events:530:35)
-      at emitErrorNT (node:internal/streams/destroy:170:8)
-      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
-      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-    info: ConnectionError: Connection lost - B8580000:error:1C800066:Provider routines:ossl_gcm_stream_update:cipher operation failed:c:\ws\deps\openssl\openssl\providers\implementations\ciphers\ciphercommon_gcm.c:325:
-
-        at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:26)
-        at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
-        at Socket.emit (node:events:530:35)
-        at emitErrorNT (node:internal/streams/destroy:170:8)
-        at emitErrorCloseNT (node:internal/streams/destroy:129:3)
-        at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-      code: 'ESOCKET',
-      [cause]: [Error]
-    }
-  },
-  number: undefined,
-  lineNumber: undefined,
-  state: undefined,
-  class: undefined,
-  serverName: undefined,
-  procName: undefined
-}
+PS C:\Users\W0024618\Desktop\laca-occupancy-backend> npm install mssql@lstest
+npm error code ETARGET
+npm error notarget No matching version found for mssql@lstest.
+npm error notarget In most cases you or one of your dependencies are requesting
+npm error notarget a package version that doesn't exist.
+npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-10-20T05_45_51_875Z-debug-0.log
+PS C:\Users\W0024618\Desktop\laca-occupancy-backend> 
