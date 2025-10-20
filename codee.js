@@ -1,86 +1,57 @@
-exports.getHistoricalOccupancy = async (req, res) => {
-  const location = req.params.location || null;
+can ouo help me to slove this issue. 
+and tell me why the issue is come and who to slove it. 
+  and which file this same ::
+C:\Users\W0024618\Desktop\laca-occupancy-backend\src\config\db.js
+  C:\Users\W0024618\Desktop\laca-occupancy-backend\src\controllers\occupancy.controller.js
+    C:\Users\W0024618\Desktop\laca-occupancy-backend\src\routes\occupancy.routes.js
+      C:\Users\W0024618\Desktop\laca-occupancy-backend\src\services\occupancy.service.js
+        C:\Users\W0024618\Desktop\laca-occupancy-backend\src\app.js
+          C:\Users\W0024618\Desktop\laca-occupancy-backend\src\server.js
+            C:\Users\W0024618\Desktop\laca-occupancy-backend\.env
+> nodemon src/server.js
 
-  try {
-    const raw = await service.fetchHistoricalOccupancy(location);
-
-    if (!Array.isArray(raw)) {
-      console.warn('fetchHistoricalOccupancy returned invalid data:', raw);
-      return res.status(500).json({ success: false, message: 'Invalid data from service' });
+[nodemon] 3.1.10
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node src/server.js`
+🚀 Server running on port 3001
+✅ MSSQL connected
+Historical fetch failed: RequestError: Connection lost - read ECONNRESET
+    at handleError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\mssql\lib\tedious\request.js:384:15)
+    at Connection.emit (node:events:530:35)
+    at Connection.emit (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
+    at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:12)
+    at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
+    at Socket.emit (node:events:530:35)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EREQUEST',
+  originalError: Error: Connection lost - read ECONNRESET
+      at handleError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\mssql\lib\tedious\request.js:382:19)
+      at Connection.emit (node:events:530:35)
+      at Connection.emit (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:970:18)
+      at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:12)
+      at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
+      at Socket.emit (node:events:530:35)
+      at emitErrorNT (node:internal/streams/destroy:170:8)
+      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    info: ConnectionError: Connection lost - read ECONNRESET
+        at Connection.socketError (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1359:26)
+        at Socket.<anonymous> (C:\Users\W0024618\Desktop\laca-occupancy-backend\node_modules\tedious\lib\connection.js:1060:12)
+        at Socket.emit (node:events:530:35)
+        at emitErrorNT (node:internal/streams/destroy:170:8)
+        at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+        at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+      code: 'ESOCKET',
+      [cause]: [Error]
     }
-
-    // first swipe per person per date
-    const byDate = raw.reduce((acc, r) => {
-      if (!r.PersonGUID) {
-        console.warn('Skipping row without PersonGUID:', r);
-        return acc;
-      }
-
-      let iso = null;
-      if (r.LocaleMessageTime instanceof Date) {
-        iso = r.LocaleMessageTime.toISOString();
-      } else if (typeof r.LocaleMessageTime === 'string' && r.LocaleMessageTime.trim() !== '') {
-        iso = r.LocaleMessageTime;
-      } else {
-        console.warn('Skipping row with invalid LocaleMessageTime:', r);
-        return acc;
-      }
-
-      const date = iso.slice(0, 10);
-      acc[date] = acc[date] || {};
-
-      const prev = acc[date][r.PersonGUID];
-      if (!prev || new Date(iso) < new Date(prev.LocaleMessageTime)) {
-        acc[date][r.PersonGUID] = { ...r, LocaleMessageTime: iso };
-      }
-
-      return acc;
-    }, {});
-
-    const summaryByDate = [];
-    const details = [];
-
-    Object.keys(byDate).sort().forEach(date => {
-      const recs = Object.values(byDate[date]);
-      details.push(...recs);
-
-      const regionCounts = { total: 0, Employee: 0, Contractor: 0 };
-      if (location === 'CR.Costa Rica Partition') regionCounts.TempBadge = 0;
-
-      const partitionCounts = {};
-
-      recs.forEach(r => {
-        regionCounts.total++;
-        if (isTempBadgeType(r.PersonnelType)) regionCounts.TempBadge = (regionCounts.TempBadge || 0) + 1;
-        else if (isEmployeeType(r.PersonnelType)) regionCounts.Employee++;
-        else regionCounts.Contractor++;
-
-        if (!location) {
-          const p = r.PartitionName2 || 'Unknown';
-          if (!partitionCounts[p]) {
-            partitionCounts[p] = { total: 0, Employee: 0, Contractor: 0 };
-            if (p === 'CR.Costa Rica Partition') partitionCounts[p].TempBadge = 0;
-          }
-          partitionCounts[p].total++;
-          if (isTempBadgeType(r.PersonnelType)) partitionCounts[p].TempBadge = (partitionCounts[p].TempBadge || 0) + 1;
-          else if (isEmployeeType(r.PersonnelType)) partitionCounts[p].Employee++;
-          else partitionCounts[p].Contractor++;
-        }
-      });
-
-      summaryByDate.push({
-        date,
-        day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' }),
-        region: location
-          ? { name: location, ...regionCounts }
-          : { name: 'LACA', ...regionCounts },
-        partitions: location ? undefined : partitionCounts
-      });
-    });
-
-    return res.json({ success: true, summaryByDate, details });
-  } catch (err) {
-    console.error('Historical fetch failed:', err);
-    return res.status(500).json({ success: false, message: 'Historical fetch failed' });
-  }
-};
+  },
+  number: undefined,
+  lineNumber: undefined,
+  state: undefined,
+  class: undefined,
+  serverName: undefined,
+  procName: undefined
