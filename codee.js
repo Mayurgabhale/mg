@@ -1,3 +1,4 @@
+// src/components/CompositeChartCard.jsx
 import React from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import {
@@ -10,49 +11,118 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   LabelList,
-  Cell,
+  Cell
 } from 'recharts';
-import { Users, Database, TrendingUp } from 'lucide-react';
 
-const BAR_COLORS = [
-  '#2F80ED', '#56CCF2', '#6FCF97', '#F2C94C', '#BB6BD9',
-  '#EB5757', '#27AE60', '#F2994A', '#9B51E0', '#219653'
-];
+// Modern professional color palette
+const COLOR_SCHEME = {
+  // Primary colors for bars
+  bars: [
+    '#3B82F6', // Blue
+    '#10B981', // Emerald
+    '#8B5CF6', // Violet
+    '#F59E0B', // Amber
+    '#EF4444', // Red
+    '#06B6D4', // Cyan
+    '#84CC16', // Lime
+    '#F97316'  // Orange
+  ],
+  // Line and accent colors
+  line: '#8B5CF6',
+  capacityLine: '#6B7280',
+  // Text and background
+  text: {
+    primary: '#1F2937',
+    secondary: '#6B7280',
+    light: '#9CA3AF'
+  },
+  background: {
+    card: '#FFFFFF',
+    grid: '#F3F4F6'
+  }
+};
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <Box
+        sx={{
+          backgroundColor: 'white',
+          padding: 2,
+          border: '1px solid #E5E7EB',
+          borderRadius: 2,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          minWidth: 160
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ color: COLOR_SCHEME.text.primary, fontWeight: 600, mb: 1 }}>
+          {label}
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary }}>
+              Headcount:
+            </Typography>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.primary, fontWeight: 600 }}>
+              {data.headcount}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary }}>
+              Usage:
+            </Typography>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.primary, fontWeight: 600 }}>
+              {data.percentage}%
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary }}>
+              Capacity:
+            </Typography>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.primary, fontWeight: 600 }}>
+              {data.capacity}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
+  return null;
+};
 
 export default function CompositeChartCard({
   title,
   data,
-  lineColor = '#1976d2',
-  height = 230,
-  animationDuration = 1200,
-  animationEasing = 'ease-in-out'
+  height = 400,
+  animationDuration = 1000
 }) {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <Card
-        sx={{
+      <Card 
+        sx={{ 
           borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid rgba(0,0,0,0.1)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          border: '1px solid #E5E7EB'
         }}
       >
-        <CardContent>
-          <Typography variant="subtitle1" align="center" color="text.secondary">
+        <CardContent sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ color: COLOR_SCHEME.text.primary, mb: 1 }}>
             {title}
           </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
-            No realtime employee data
+          <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary }}>
+            No data available
           </Typography>
         </CardContent>
       </Card>
     );
   }
 
+  // Process data
   const enriched = data.map((d, i) => ({
     ...d,
-    percentage: d.capacity ? Math.round((d.headcount / d.capacity) * 100) : 0,
-    _color: BAR_COLORS[i % BAR_COLORS.length],
+    percentage: d.capacity ? Math.round(d.headcount / d.capacity * 100) : 0,
+    fill: COLOR_SCHEME.bars[i % COLOR_SCHEME.bars.length]
   }));
 
   const totalHeadcount = enriched.reduce((sum, d) => sum + (d.headcount || 0), 0);
@@ -63,137 +133,223 @@ export default function CompositeChartCard({
     <Card
       sx={{
         borderRadius: 2,
-        overflow: 'hidden',
-        bgcolor: 'background.paper',
-        border: '1px solid rgba(0,0,0,0.08)',
-        boxShadow: '0 3px 10px rgba(0,0,0,0.05)',
-        transition: 'all 0.25s ease',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        border: '1px solid #E5E7EB',
+        transition: 'all 0.3s ease',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
-        },
+          boxShadow: '0 4px 12px 0 rgba(0, 0, 0, 0.15)'
+        }
       }}
     >
-      <CardContent sx={{ p: 2 }}>
-        <Typography
-          variant="subtitle1"
-          align="center"
-          gutterBottom
-          sx={{
-            fontWeight: 600,
-            color: 'text.primary',
-            mb: 1.5,
-          }}
-        >
-          {title}
-        </Typography>
+      <CardContent sx={{ p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 3 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: COLOR_SCHEME.text.primary,
+              fontWeight: 600,
+              fontSize: '1.25rem'
+            }}
+          >
+            {title}
+          </Typography>
+        </Box>
 
+        {/* Chart */}
         <Box sx={{ width: '100%', height }}>
           <ResponsiveContainer>
             <ComposedChart
               data={enriched}
-              margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke={COLOR_SCHEME.background.grid}
+                vertical={false}
+              />
+              
               <XAxis
                 dataKey="name"
                 tickLine={false}
-                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-                stroke="rgba(0,0,0,0.6)"
+                axisLine={false}
+                tick={{ 
+                  fill: COLOR_SCHEME.text.secondary,
+                  fontSize: 12
+                }}
+                tickFormatter={(label) => {
+                  const strLabel = String(label);
+                  const match = strLabel.match(/\d+/);
+                  const floorNum = parseInt(match?.[0], 10);
+
+                  if (isNaN(floorNum)) return strLabel;
+
+                  const suffix = (n) => {
+                    if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+                    switch (n % 10) {
+                      case 1: return `${n}st`;
+                      case 2: return `${n}nd`;
+                      case 3: return `${n}rd`;
+                      default: return `${n}th`;
+                    }
+                  };
+                  return suffix(floorNum);
+                }}
               />
+
               <YAxis
                 yAxisId="left"
                 tickLine={false}
-                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-                stroke="rgba(0,0,0,0.6)"
+                axisLine={false}
+                tick={{ 
+                  fill: COLOR_SCHEME.text.secondary,
+                  fontSize: 12
+                }}
               />
+
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 tickLine={false}
-                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
-                stroke="rgba(0,0,0,0.6)"
+                axisLine={false}
                 domain={[0, 100]}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={val => `${val}%`}
+                tick={{ 
+                  fill: COLOR_SCHEME.text.secondary,
+                  fontSize: 12
+                }}
               />
 
-              <Tooltip
-                cursor={{ fill: 'rgba(25,118,210,0.05)' }}
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: 6,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  color: '#333',
-                }}
-                labelStyle={{ fontWeight: 600 }}
-                formatter={(val, key) => {
-                  if (key === 'percentage') return [`${val}%`, 'Usage'];
-                  return val;
-                }}
-              />
+              <Tooltip content={<CustomTooltip />} />
 
               {/* Headcount Bars */}
               <Bar
                 yAxisId="left"
                 dataKey="headcount"
-                radius={[6, 6, 0, 0]}
-                barSize={28}
-                isAnimationActive
-                animationDuration={animationDuration}
-                animationEasing={animationEasing}
+                name="Headcount"
+                barSize={50}
+                radius={[4, 4, 0, 0]}
               >
-                {enriched.map((entry, i) => (
-                  <Cell key={i} fill={entry._color} />
+                {enriched.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
+                
                 <LabelList
                   dataKey="headcount"
                   position="top"
-                  style={{ fill: '#333', fontSize: 12, fontWeight: 500 }}
+                  style={{ 
+                    fill: COLOR_SCHEME.text.primary,
+                    fontSize: 12,
+                    fontWeight: 600
+                  }}
                 />
               </Bar>
 
-              {/* Usage Line */}
+              {/* Usage Percentage Line */}
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="percentage"
-                stroke={lineColor}
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
+                name="Usage %"
+                stroke={COLOR_SCHEME.line}
+                strokeWidth={3}
+                dot={{ 
+                  fill: COLOR_SCHEME.line,
+                  strokeWidth: 2,
+                  stroke: '#FFFFFF',
+                  r: 6
+                }}
+                activeDot={{
+                  r: 8,
+                  fill: '#FFFFFF',
+                  stroke: COLOR_SCHEME.line,
+                  strokeWidth: 2
+                }}
                 isAnimationActive
                 animationDuration={animationDuration}
-                animationEasing={animationEasing}
+              />
+
+              {/* Capacity Line */}
+              <Line
+                yAxisId="left"
+                type="monotone"
+                dataKey="capacity"
+                name="Capacity"
+                stroke={COLOR_SCHEME.capacityLine}
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                dot={false}
+                isAnimationActive
+                animationDuration={animationDuration}
               />
             </ComposedChart>
           </ResponsiveContainer>
         </Box>
 
-        {/* Summary Row */}
+        {/* Summary Stats */}
         <Box
           sx={{
             display: 'flex',
-            justifyContent: 'space-around',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            borderTop: '1px solid rgba(0,0,0,0.05)',
-            mt: 2,
-            pt: 1,
-            color: 'text.secondary',
-            fontWeight: 500,
-            fontSize: 14,
+            mt: 3,
+            pt: 3,
+            borderTop: '1px solid #F3F4F6'
           }}
         >
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <Users size={16} color="#1976d2" />
-            <span>{totalHeadcount}</span>
+          <Box sx={{ textAlign: 'center', flex: 1 }}>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary, mb: 0.5 }}>
+              Total Headcount
+            </Typography>
+            <Typography variant="h6" sx={{ color: COLOR_SCHEME.bars[0], fontWeight: 700 }}>
+              {totalHeadcount}
+            </Typography>
           </Box>
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <Database size={16} color="#388E3C" />
-            <span>{totalCapacity}</span>
+          
+          <Box sx={{ textAlign: 'center', flex: 1 }}>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary, mb: 0.5 }}>
+              Total Capacity
+            </Typography>
+            <Typography variant="h6" sx={{ color: COLOR_SCHEME.bars[1], fontWeight: 700 }}>
+              {totalCapacity}
+            </Typography>
           </Box>
-          <Box display="flex" alignItems="center" gap={0.5}>
-            <TrendingUp size={16} color={avgUsage > 80 ? '#D32F2F' : '#F9A825'} />
-            <span>{avgUsage}%</span>
+          
+          <Box sx={{ textAlign: 'center', flex: 1 }}>
+            <Typography variant="body2" sx={{ color: COLOR_SCHEME.text.secondary, mb: 0.5 }}>
+              Usage Rate
+            </Typography>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: avgUsage > 80 ? '#EF4444' : avgUsage > 60 ? '#F59E0B' : '#10B981',
+                fontWeight: 700 
+              }}
+            >
+              {avgUsage}%
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Legend */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 12, height: 12, backgroundColor: COLOR_SCHEME.bars[0], borderRadius: 1 }} />
+            <Typography variant="caption" sx={{ color: COLOR_SCHEME.text.secondary }}>
+              Headcount
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 12, height: 2, backgroundColor: COLOR_SCHEME.line }} />
+            <Typography variant="caption" sx={{ color: COLOR_SCHEME.text.secondary }}>
+              Usage %
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 12, height: 2, backgroundColor: COLOR_SCHEME.capacityLine, backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 2px, #6B7280 2px, #6B7280 4px)' }} />
+            <Typography variant="caption" sx={{ color: COLOR_SCHEME.text.secondary }}>
+              Capacity
+            </Typography>
           </Box>
         </Box>
       </CardContent>
