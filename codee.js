@@ -1,7 +1,4 @@
-
-
-
-// // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+/ // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
 // // 📝📝📝📝 Responsive - Code📝📝📝📝 13-10 
 // // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
 
@@ -286,3 +283,280 @@ export default function Header() {
     </>
   );
 }
+
+Read above code,
+  and crate below page code responsive for eacha and every debice, and screen size. like above 
+only respnisve ok 
+
+// ── ALL IMPORTS AT THE VERY TOP ───────────────────────────────────────────────
+import React, { useEffect, useState } from 'react';
+
+// MUI core + pickers
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  IconButton,
+  Popover,
+  TextField,
+  Button
+} from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker, TimePicker } from '@mui/x-date-pickers';
+
+// Day.js + plugins
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// React Router
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+
+// Icons
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import InfoIcon from '@mui/icons-material/Info';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+
+// Assets & hooks
+import WuLogo from '../assets/wu-logo.png';
+import DenverFlag from '../assets/flags/denver.png';
+import MiamiFlag from '../assets/flags/miami.png';
+import NewYorkFlag from '../assets/flags/new-york.png';
+import AustinFlag from '../assets/flags/austin.png';
+import DefaultFlag from '../assets/flags/default.png';
+
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+// ── Initialize Day.js UTC/timezone ────────────────────────────────────────────
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('UTC');
+
+// ── Display name map ─────────────────────────────────────────────────────────
+const displayNameMap = {
+  'US.CO.OBS': 'Denver',
+  'US.FL.Miami': 'Miami',
+  'US.NYC': 'New York',
+  'USA/Canada Default': 'Austin Texas'
+};
+
+// ── Header Component ──────────────────────────────────────────────────────────
+export default function Header({
+  title,
+  mode,
+  onTimeSelect,
+  onLiveClick
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+
+  const [lastUpdate, setLastUpdate] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [draftDate, setDraftDate] = useState(dayjs().utc());
+
+  // Update the “last update” timestamp on each live fetch
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  
+
+
+  // ── Routing logic ──────────────────────────────────────────────────────────
+  // Update the routing logic to properly detect the current view
+  const segments = location.pathname.split('/').filter(Boolean);
+  const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
+  const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
+
+  // Detect current view more accurately
+  let currentView = null;
+  if (isPartitionPage && segments.length > 2) {
+    // For partition pages with a view (details/history)
+    currentView = segments[2];
+  } else if (segments.length === 1 && segments[0] === 'history') {
+    // For the standalone history page
+    currentView = 'history';
+  }
+
+
+  const flagMap = {
+    'US.CO.OBS': DenverFlag,
+    'US.FL.Miami': MiamiFlag,
+    'US.NYC': NewYorkFlag,
+    'USA/Canada Default': AustinFlag
+  };
+  const selectedFlag = flagMap[currentPartition] || DefaultFlag;
+
+
+
+
+
+
+  // Update handlePartitionChange to handle all cases
+  const handlePartitionChange = newPartition => {
+    if (!newPartition) return navigate('/');
+
+    let path = `/partition/${encodeURIComponent(newPartition)}`;
+
+    // Preserve the current view if it exists
+    if (currentView) {
+      path += `/${currentView}`;
+    } else if (location.pathname === '/history') {
+      // Special case: if we're on the standalone history page
+      path += '/history';
+    }
+
+    navigate(path);
+  };
+
+
+
+  // Update handleDetailsClick to be consistent
+  const handleDetailsClick = () => {
+    if (isPartitionPage) {
+      navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
+    } else {
+      navigate('/partition/US.CO.OBS/details');
+    }
+  };
+
+
+  // ── Date/Time popover handlers ─────────────────────────────────────────────
+  const openPopover = e => {
+    setDraftDate(dayjs().utc());
+    setAnchorEl(e.currentTarget);
+  };
+  const closePopover = () => setAnchorEl(null);
+  const handleGo = () => {
+    onTimeSelect(draftDate.toISOString());
+    closePopover();
+  };
+
+  return (
+    <>
+      <AppBar position="static" color="primary" sx={{ mb: 2 }}>
+        <Toolbar sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+
+          {/* ── Left: logo, title, nav & time/live icons ── */}
+          <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
+            <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: 36, mr: 2 }} />
+
+            <Typography variant="h6" sx={{ fontWeight: 600, mr: 3 }}>
+              {title}
+              {currentPartition ? ` • ${displayNameMap[currentPartition]}` : ''}
+            </Typography>
+
+          
+
+
+            <IconButton
+  component={Link}
+  to="/"
+  color="inherit"
+>
+  <HomeIcon />
+</IconButton>
+
+
+            <IconButton
+              component={Link}
+              to={
+                currentPartition
+                  ? `/partition/${encodeURIComponent(currentPartition)}/history`
+                  : '/history'
+              }
+              color="inherit"
+            >
+              <HistoryIcon />
+            </IconButton>
+
+            <IconButton onClick={handleDetailsClick} color="inherit">
+              <InfoIcon />
+            </IconButton>
+
+            <IconButton
+              color={mode === 'time' ? 'secondary' : 'inherit'}
+              onClick={openPopover}
+              title="Jump to specific time"
+            >
+              <AccessTimeIcon />
+            </IconButton>
+
+            <IconButton
+              color={mode === 'live' ? 'secondary' : 'inherit'}
+              onClick={onLiveClick}
+              title="Return to live"
+            >
+              <LiveTvIcon />
+            </IconButton>
+          </Box>
+
+          {/* ── Right: region selector, flag, last-update/historic label ── */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <Select
+              size="small"
+              value={currentPartition}
+              displayEmpty
+              onChange={e => handlePartitionChange(e.target.value)}
+              sx={{ bgcolor: 'background.paper', mr: 1, minWidth: 160 }}
+            >
+              <MenuItem value="">— Select Region —</MenuItem>
+              {partitionList.map(p => (
+                <MenuItem key={p} value={p}>
+                  {displayNameMap[p] || p}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Box component="img" src={selectedFlag} alt="Flag" sx={{ height: 32, mr: 2 }} />
+
+            <Typography variant="body2" sx={{ color: '#FFF' }}>
+              {mode === 'live'
+                ? `Last update: ${lastUpdate}`
+                : 'Viewing historic'}
+            </Typography>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Popover
+        open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={closePopover}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Box p={2} display="flex" flexDirection="column" gap={2}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Select Date (UTC)"
+              value={draftDate}
+              onChange={newVal => setDraftDate(newVal)}
+              renderInput={props => <TextField {...props} />}
+            />
+            <TimePicker
+              label="Select Time (UTC)"
+              value={draftDate}
+              onChange={newVal => setDraftDate(newVal)}
+              renderInput={props => <TextField {...props} />}
+            />
+          </LocalizationProvider>
+          <Box display="flex" justifyContent="flex-end" gap={1}>
+            <Button onClick={closePopover}>Cancel</Button>
+            <Button variant="contained" onClick={handleGo}>Go</Button>
+          </Box>
+        </Box>
+      </Popover>
+    </>
+  );
+}
+
+
+
