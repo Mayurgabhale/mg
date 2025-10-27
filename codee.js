@@ -12,30 +12,36 @@ import {
   LabelList,
   Cell,
 } from 'recharts';
-import { Users, BarChart2, Activity } from 'lucide-react';
+import { Users, Database, TrendingUp } from 'lucide-react';
 
-const GRADIENT_COLORS = [
-  '#00B4DB', '#0083B0', '#6A11CB', '#2575FC', '#5EFCE8',
-  '#7367F0', '#0F2027', '#203A43', '#2C5364', '#00C9FF',
-  '#92FE9D', '#43C6AC', '#191654', '#4776E6', '#8E54E9'
+const BAR_COLORS = [
+  '#2F80ED', '#56CCF2', '#6FCF97', '#F2C94C', '#BB6BD9',
+  '#EB5757', '#27AE60', '#F2994A', '#9B51E0', '#219653'
 ];
 
 export default function CompositeChartCard({
   title,
   data,
-  lineColor = '#00E5FF',
-  height = 240,
+  lineColor = '#1976d2',
+  height = 230,
   animationDuration = 1200,
   animationEasing = 'ease-in-out'
 }) {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <Card sx={{ borderRadius: 3, backdropFilter: 'blur(8px)', bgcolor: 'rgba(255,255,255,0.05)', color: '#ccc', p: 2 }}>
+      <Card
+        sx={{
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          border: '1px solid rgba(0,0,0,0.1)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        }}
+      >
         <CardContent>
-          <Typography variant="subtitle1" align="center" sx={{ color: '#aaa' }}>
+          <Typography variant="subtitle1" align="center" color="text.secondary">
             {title}
           </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 3 }}>
+          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
             No realtime employee data
           </Typography>
         </CardContent>
@@ -43,11 +49,10 @@ export default function CompositeChartCard({
     );
   }
 
-  // Enrich each datum
   const enriched = data.map((d, i) => ({
     ...d,
     percentage: d.capacity ? Math.round((d.headcount / d.capacity) * 100) : 0,
-    _color: GRADIENT_COLORS[i % GRADIENT_COLORS.length],
+    _color: BAR_COLORS[i % BAR_COLORS.length],
   }));
 
   const totalHeadcount = enriched.reduce((sum, d) => sum + (d.headcount || 0), 0);
@@ -57,25 +62,26 @@ export default function CompositeChartCard({
   return (
     <Card
       sx={{
-        borderRadius: 3,
+        borderRadius: 2,
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, rgba(18,18,18,0.85) 0%, rgba(35,35,35,0.8) 100%)',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        bgcolor: 'background.paper',
+        border: '1px solid rgba(0,0,0,0.08)',
+        boxShadow: '0 3px 10px rgba(0,0,0,0.05)',
+        transition: 'all 0.25s ease',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 12px 28px rgba(0,0,0,0.6)',
+          transform: 'translateY(-2px)',
+          boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
         },
       }}
     >
-      <CardContent sx={{ p: 2.5 }}>
+      <CardContent sx={{ p: 2 }}>
         <Typography
           variant="subtitle1"
           align="center"
+          gutterBottom
           sx={{
-            color: '#00E5FF',
             fontWeight: 600,
-            letterSpacing: 0.5,
+            color: 'text.primary',
             mb: 1.5,
           }}
         >
@@ -86,76 +92,74 @@ export default function CompositeChartCard({
           <ResponsiveContainer>
             <ComposedChart
               data={enriched}
-              margin={{ top: 10, right: 20, left: 10, bottom: 25 }}
+              margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
             >
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00C9FF" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#92FE9D" stopOpacity={0.8} />
-                </linearGradient>
-              </defs>
-
-              <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
               <XAxis
                 dataKey="name"
                 tickLine={false}
-                axisLine={false}
-                stroke="rgba(255,255,255,0.6)"
+                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
+                stroke="rgba(0,0,0,0.6)"
               />
               <YAxis
                 yAxisId="left"
                 tickLine={false}
-                axisLine={false}
-                stroke="rgba(255,255,255,0.6)"
+                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
+                stroke="rgba(0,0,0,0.6)"
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
                 tickLine={false}
-                axisLine={false}
-                stroke="rgba(255,255,255,0.6)"
+                axisLine={{ stroke: 'rgba(0,0,0,0.1)' }}
+                stroke="rgba(0,0,0,0.6)"
                 domain={[0, 100]}
                 tickFormatter={(v) => `${v}%`}
               />
 
               <Tooltip
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                cursor={{ fill: 'rgba(25,118,210,0.05)' }}
                 contentStyle={{
-                  backgroundColor: 'rgba(20,20,20,0.9)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: 8,
-                  color: '#fff',
+                  backgroundColor: '#fff',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: 6,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  color: '#333',
                 }}
-                labelStyle={{ fontWeight: 700, color: '#00E5FF' }}
-                formatter={(value, key) => {
-                  if (key === 'headcount') return [`${value}`, 'Headcount'];
-                  if (key === 'percentage') return [`${value}%`, 'Usage'];
-                  return value;
+                labelStyle={{ fontWeight: 600 }}
+                formatter={(val, key) => {
+                  if (key === 'percentage') return [`${val}%`, 'Usage'];
+                  return val;
                 }}
               />
 
+              {/* Headcount Bars */}
               <Bar
                 yAxisId="left"
                 dataKey="headcount"
-                radius={[8, 8, 0, 0]}
+                radius={[6, 6, 0, 0]}
                 barSize={28}
+                isAnimationActive
+                animationDuration={animationDuration}
+                animationEasing={animationEasing}
               >
-                {enriched.map((entry, index) => (
-                  <Cell key={index} fill={entry._color} />
+                {enriched.map((entry, i) => (
+                  <Cell key={i} fill={entry._color} />
                 ))}
                 <LabelList
                   dataKey="headcount"
                   position="top"
-                  style={{ fill: '#fff', fontSize: 12, fontWeight: 600 }}
+                  style={{ fill: '#333', fontSize: 12, fontWeight: 500 }}
                 />
               </Bar>
 
+              {/* Usage Line */}
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="percentage"
                 stroke={lineColor}
-                strokeWidth={3}
+                strokeWidth={2.5}
                 dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
                 isAnimationActive
                 animationDuration={animationDuration}
@@ -165,31 +169,31 @@ export default function CompositeChartCard({
           </ResponsiveContainer>
         </Box>
 
-        {/* Summary footer */}
+        {/* Summary Row */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-around',
             alignItems: 'center',
+            borderTop: '1px solid rgba(0,0,0,0.05)',
             mt: 2,
-            py: 1,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            color: '#ddd',
-            fontWeight: 600,
+            pt: 1,
+            color: 'text.secondary',
+            fontWeight: 500,
             fontSize: 14,
           }}
         >
-          <Box display="flex" alignItems="center" gap={1}>
-            <Users size={16} color="#00E5FF" />
-            <span>{totalHeadcount} Headcount</span>
+          <Box display="flex" alignItems="center" gap={0.5}>
+            <Users size={16} color="#1976d2" />
+            <span>{totalHeadcount}</span>
           </Box>
-          <Box display="flex" alignItems="center" gap={1}>
-            <BarChart2 size={16} color="#43C6AC" />
-            <span>{totalCapacity} Seats</span>
+          <Box display="flex" alignItems="center" gap={0.5}>
+            <Database size={16} color="#388E3C" />
+            <span>{totalCapacity}</span>
           </Box>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Activity size={16} color={avgUsage > 80 ? '#FF5252' : '#FFC107'} />
-            <span>{avgUsage}% Usage</span>
+          <Box display="flex" alignItems="center" gap={0.5}>
+            <TrendingUp size={16} color={avgUsage > 80 ? '#D32F2F' : '#F9A825'} />
+            <span>{avgUsage}%</span>
           </Box>
         </Box>
       </CardContent>
