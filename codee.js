@@ -1,8 +1,21 @@
+these color is very deal colors,
+  not good,
+  oner user see graph, they say waw, 
+  is vrey nice, 
+  i want more atractive and professal colors theme, 
+  look and feel alos more atractive. 
+const DARK_TO_LIGHT = [
+  '#FFD666', '#FFE599', '#FFF2CC', '#FFE599', '#E0E1DD',
+  '#FFD666', '#FFEE8C', '#F8DE7E', ' #FBEC5D', '#F0E68C',
+  ' #FFEE8C', '#21325E', '#415A77', '#6A7F9A', '#B0C4DE',
+  '#1A1F36', '#2B3353', '#4C6482', '#7B90B2', '#CAD3E9'
+];
+
 // Professional color palette - modern, sophisticated
 const PROFESSIONAL_COLORS = {
   // Primary colors - deep blues and teals
   primary: ['#2563EB', '#1E40AF', '#1E3A8A'], // Blue gradient
-  accent: ['#0D9488', '#0F766E', '#115E59'],   // Teal gradient
+  accent: ['#0D9488', '#0F766E', '#115E59'],   // Teal gradient 
   neutral: ['#64748B', '#475569', '#334155'],  // Gray gradient
   
   // Data visualization colors
@@ -13,12 +26,16 @@ const PROFESSIONAL_COLORS = {
   
   // Background and text
   background: 'rgba(15, 23, 42, 0.8)', // Dark blue with transparency
+
   text: {
     primary: '#F8FAFC',
     secondary: '#CBD5E1',
     accent: '#38BDF8'
+   
   }
 };
+
+
 
 // Updated gradient for bars - more professional
 const BAR_GRADIENT = [
@@ -27,11 +44,10 @@ const BAR_GRADIENT = [
   '#6366F1', '#8B5CF6', '#A855F7', '#C084FC',
   '#06B6D4', '#22D3EE', '#67E8F9', '#A5F3FC'
 ];
-
 return (
   <Card
     sx={{
-      borderRadius: 3,
+      borderRadius: 1,
       overflow: 'hidden',
       bgcolor: PROFESSIONAL_COLORS.background,
       backdropFilter: 'blur(10px)',
@@ -43,7 +59,7 @@ return (
       }
     }}
   >
-    <CardContent sx={{ p: 2 }}>
+    <CardContent sx={{ p: 0 }}>
       <Typography
         variant="h6"
         align="center"
@@ -51,8 +67,8 @@ return (
         sx={{ 
           color: PROFESSIONAL_COLORS.text.accent,
           fontWeight: 600,
-          fontSize: '1.1rem',
-          mb: 2
+          fontSize: '1.3rem',
+          mb: 1
         }}
       >
         {title}
@@ -250,8 +266,8 @@ return (
           justifyContent: 'center',
           gap: 4,
           alignItems: 'center',
-          mt: 2,
-          p: 2,
+          mt: 0,
+          p: 1,
           backgroundColor: 'rgba(30, 41, 59, 0.4)',
           borderRadius: 2,
           border: '1px solid rgba(255,255,255,0.05)'
