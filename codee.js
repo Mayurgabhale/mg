@@ -1,3 +1,5 @@
+this is is same color,
+  but i want different different colors..
 // Updated, premium dark-to-light set with branded tones (deep → vibrant → soft)
 const DARK_TO_LIGHT = [
   '#0F172A', '#1E293B', '#2563EB', '#0EA5E9', '#38BDF8',
