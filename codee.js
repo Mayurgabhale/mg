@@ -1,336 +1,254 @@
-// ── ALL IMPORTS AT THE VERY TOP ───────────────────────────────────────────────
-import React, { useEffect, useState } from 'react';
-import {
-  AppBar, Toolbar, Box, Typography, Select, MenuItem, IconButton,
-  Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip,
-  Popover, TextField, Button, useMediaQuery
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker, TimePicker } from '@mui/x-date-pickers';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-
-// ── ICONS ────────────────────────────────────────────────────────────────
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import HomeIcon from '@mui/icons-material/Home';
-import HistoryIcon from '@mui/icons-material/History';
-import InfoIcon from '@mui/icons-material/Info';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import LiveTvIcon from '@mui/icons-material/LiveTv';
-
-// ── ASSETS ────────────────────────────────────────────────────────────────
-import WuLogo from '../assets/wu-logo.png';
-import DenverFlag from '../assets/flags/denver.png';
-import MiamiFlag from '../assets/flags/miami.png';
-import NewYorkFlag from '../assets/flags/new-york.png';
-import AustinFlag from '../assets/flags/austin.png';
-import DefaultFlag from '../assets/flags/default.png';
-
-// ── SERVICES & HOOKS ──────────────────────────────────────────────────────
-import { partitionList } from '../services/occupancy.service';
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-
-// ── DAYJS INIT ────────────────────────────────────────────────────────────
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.tz.setDefault('UTC');
-
-// ── MAPPINGS ──────────────────────────────────────────────────────────────
-const displayNameMap = {
-  'US.CO.OBS': 'Denver',
-  'US.FL.Miami': 'Miami',
-  'US.NYC': 'New York',
-  'USA/Canada Default': 'Austin Texas',
-};
-
-const flagMap = {
-  'US.CO.OBS': DenverFlag,
-  'US.FL.Miami': MiamiFlag,
-  'US.NYC': NewYorkFlag,
-  'USA/Canada Default': AustinFlag,
-};
-
-// ── COMPONENT ─────────────────────────────────────────────────────────────
-export default function Header({ title, mode, onTimeSelect, onLiveClick }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
-
-  const { data } = useLiveOccupancy(1000);
-  const [lastUpdate, setLastUpdate] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [draftDate, setDraftDate] = useState(dayjs().utc());
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // ── LIVE UPDATE ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (data) setLastUpdate(new Date().toLocaleTimeString());
-  }, [data]);
-
-  // ── ROUTING ─────────────────────────────────────────────────────────────
-  const segments = location.pathname.split('/').filter(Boolean);
-  const isPartitionPage = segments[0] === 'partition' && Boolean(segments[1]);
-  const currentPartition = isPartitionPage ? decodeURIComponent(segments[1]) : '';
-  let currentView = null;
-  if (isPartitionPage && segments.length > 2) currentView = segments[2];
-  else if (segments.length === 1 && segments[0] === 'history') currentView = 'history';
-  const selectedFlag = flagMap[currentPartition] || DefaultFlag;
-
-  const handlePartitionChange = (newPartition) => {
-    if (!newPartition) return navigate('/');
-    let path = `/partition/${encodeURIComponent(newPartition)}`;
-    if (currentView) path += `/${currentView}`;
-    else if (location.pathname === '/history') path += '/history';
-    navigate(path);
-    setDrawerOpen(false);
-  };
-
-  const handleDetailsClick = () => {
-    if (isPartitionPage) navigate(`/partition/${encodeURIComponent(currentPartition)}/details`);
-    else navigate('/partition/US.CO.OBS/details');
-    setDrawerOpen(false);
-  };
-
-  // ── DATE/TIME PICKER HANDLERS ───────────────────────────────────────────
-  const openPopover = (e) => {
-    setDraftDate(dayjs().utc());
-    setAnchorEl(e.currentTarget);
-  };
-  const closePopover = () => setAnchorEl(null);
-  const handleGo = () => {
-    onTimeSelect(draftDate.toISOString());
-    closePopover();
-  };
-
-  // ── NAV ITEMS (reused in Drawer) ────────────────────────────────────────
-  const navItems = [
-    { label: 'Home', icon: <HomeIcon />, action: () => navigate('/') },
-    {
-      label: 'History',
-      icon: <HistoryIcon />,
-      action: () =>
-        navigate(
-          currentPartition
-            ? `/partition/${encodeURIComponent(currentPartition)}/history`
-            : '/history'
-        ),
-    },
-    { label: 'Details', icon: <InfoIcon />, action: handleDetailsClick },
-    { label: 'Jump to Time', icon: <AccessTimeIcon />, action: openPopover },
-    { label: 'Live View', icon: <LiveTvIcon />, action: onLiveClick },
-  ];
-
-  // ── RETURN ──────────────────────────────────────────────────────────────
-  return (
+create this dashboard for responsive for eacha and every device/ screen size
+i means page respnsive or every screen size.. 
+  ok 
+return (
     <>
-      <AppBar
-        position="static"
-        sx={{
-          background: 'linear-gradient(90deg, #003366, #002244)',
-          px: isMobile ? 1 : 2,
-          py: isMobile ? 0.5 : 0,
-        }}
+      <Header
+        title="NAMER Live Occupancy"
+        mode={mode}
+        onTimeSelect={handleTimeClick}
+        onLiveClick={handleLiveClick}
+      />
+
+      <Container
+        maxWidth={false}
+        disableGutters
+        sx={{ py: 1, px: 2, background: 'rgba(0,0,0,0.6)' }}
       >
-        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* ── LEFT SECTION ── */}
-          <Box display="flex" alignItems="center" gap={1}>
-            <Box component="img" src={WuLogo} alt="WU Logo" sx={{ height: isMobile ? 28 : 36 }} />
-            {!isMobile && (
-              <Typography
-                variant={isTablet ? 'h6' : 'h5'}
-                sx={{ color: '#FFC107', fontWeight: 600 }}
-              >
-                {title}
-                {currentPartition ? ` • ${displayNameMap[currentPartition]}` : ''}
-              </Typography>
-            )}
-          </Box>
 
-          {/* ── RIGHT SECTION ── */}
-          {isMobile ? (
-            <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
-              <MenuIcon />
-            </IconButton>
+        {/* summary cards */}
+        
+         <Box display="flex" flexWrap="wrap" gap={1} mb={1}>
+          {[
+            {
+              title: "Today's Total Headcount",
+
+              color: '#FFE599',
+              value: todayTot,
+              icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+              border: '#FFB300',
+
+            },
+            {
+              title: "Today's Employees Count",
+              value: todayEmp,
+              icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+              border: '#8BC34A'
+            },
+            {
+              title: "Today's Contractors Count",
+              value: todayCont,
+              icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+              border: '#E57373'
+            },
+            {
+              title: "Realtime Headcount",
+              value: realtimeTot,
+              icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />,
+              border: '#FFD180'
+            },
+            {
+              title: "Realtime Employees Count",
+              value: realtimeEmp,
+              icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />,
+              border: '#AED581'
+            },
+            {
+              title: "Realtime Contractors Count",
+              value: realtimeCont,
+              icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />,
+              border: '#E57373'
+            }
+          ].map(c => (
+            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+              <SummaryCard
+                title={c.title}
+                total={c.value}
+                stats={[]}
+                icon={c.icon}
+                sx={{ height: 140, border: `2px solid ${c.border}` }}
+              />
+            </Box>
+          ))}
+        </Box>
+
+        {/* partition cards */}
+        <Box display="flex" flexWrap="wrap" gap={1} mb={1.5}>
+          {loading ? (
+            <Skeleton variant="rectangular" width="90%" height={200} />
           ) : (
-            <Box display="flex" alignItems="center" gap={1.5}>
-              {/* NAV ICONS */}
-              <Box display="flex" alignItems="center" gap={1.2}>
-                {navItems.map((item, idx) => (
-                  <Tooltip key={idx} title={item.label} arrow placement="bottom">
-                    <IconButton color="inherit" onClick={item.action}>
-                      {React.cloneElement(item.icon, { fontSize: 'medium' })}
-                    </IconButton>
-                  </Tooltip>
-                ))}
-              </Box>
-
-              {/* SELECTOR */}
-              <Select
-                size={isTablet ? 'small' : 'medium'}
-                value={currentPartition}
-                displayEmpty
-                onChange={(e) => handlePartitionChange(e.target.value)}
-                sx={{
-                  bgcolor: '#fff',
-                  color: '#000',
-                  borderRadius: 1,
-                  minWidth: 160,
-                  height: 40,
-                }}
-                renderValue={(selected) =>
-                  selected ? (
-                    <Box display="flex" alignItems="center">
+            partitions.map((p, index) => {
+              const regionName = displayNameMap[p.name] || p.name.replace(/^.*\./, '');
+              return (
+                <Box key={p.name} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+                  <SummaryCard
+                    title={
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 'bold',
+                          color: '#FFC107',
+                          fontSize: '1.3rem'
+                        }}
+                      >
+                        {regionName}
+                      </Typography>
+                    }
+                    total={p.total}
+                    stats={[
+                      { label: 'Employees', value: p.Employee, color: '#40E0D0' },
+                      { label: 'Contractors', value: p.Contractor, color: 'green' }
+                    ]}
+                    sx={{
+                      width: '100%',
+                      border: `2px solid ${palette15[index % palette15.length]}`
+                    }}
+                    icon={
                       <Box
                         component="img"
-                        src={flagMap[selected] || DefaultFlag}
-                        alt={selected}
+                        src={p.flag}
                         sx={{
-                          width: 22,
-                          height: 15,
-                          mr: 1,
-                          border: '1px solid #555',
-                          objectFit: 'cover',
+                          width: 48,
+                          height: 32,
+                          border: '1px solid white',
+                          borderRadius: '2px',
+                          objectFit: 'cover'
                         }}
                       />
-                      {displayNameMap[selected] || selected}
-                    </Box>
-                  ) : (
-                    '— Select Region —'
-                  )
-                }
-              >
-                <MenuItem value="">— Select Region —</MenuItem>
-                {partitionList.map((p) => (
-                  <MenuItem key={p} value={p}>
-                    {displayNameMap[p] || p}
-                  </MenuItem>
-                ))}
-              </Select>
-
-              {/* LAST UPDATE LABEL */}
-              <Typography variant="body2" sx={{ color: '#FFC107' }}>
-                {mode === 'live'
-                  ? `Last update: ${lastUpdate}`
-                  : 'Viewing historic'}
-              </Typography>
-            </Box>
+                    }
+                  />
+                </Box>
+              );
+            })
           )}
-        </Toolbar>
-      </AppBar>
+        </Box>
 
-      {/* ── MOBILE DRAWER ── */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        PaperProps={{
-          sx: { width: 260, background: '#002244', color: '#fff' },
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <Box display="flex" justifyContent="flex-end">
-            <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#FFC107' }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
+        {/* charts & details */}
+        <Box display="flex" gap={2} flexWrap="wrap" mb={4}>
+          {[{
+            key: 'denver',
+            title: 'Denver',
+            body: denver.total === 0
+              ? <Typography color="white" align="center" py={6}>No Denver data</Typography>
+              : <CompositeChartCard
+                  data={floors.map(([f, h]) => ({
+                    name: f,
+                    headcount: h,
+                    capacity: buildingCapacities[f] || 0
+                  }))}
+                  lineColor={palette15[1]}
+                  height={300}
+                  sx={{ border: 'none' }}
+                />
+          },{
+            key: 'others',
+            title: 'North America',
+            body: <PieChartCard
+              data={others.map(o => ({ name: displayNameMap[o.name], value: o.total }))}
+              colors={[palette15[2], palette15[3], palette15[4]]}
+              height={300}
+              showZeroSlice
+              totalSeats={others.reduce((s, o) => s + seatCapacities[o.name], 0)}
+              sx={{ border: 'none' }}
+            />
+          },{
+            key: 'details',
+            title: 'Denver Floor Details',
+            body: loading
+              ? <Skeleton variant="rectangular" width="100%" height={300} />
+              : (
+                <Table size="small" sx={{
+                  color: 'white', borderCollapse: 'collapse',
+                  '& td, & th': { border: 'none' }
+                }}>
+                  <TableHead>
+                    <TableRow>
+                      {/* {['Floor', 'Headcount', 'Visitors', 'Security', 'Rejections', 'Avg Forecast'] */}
+                        {['Floor', 'Headcount', 'Visitors', 'Security', 'Rejections']
+                        .map(h => (
+                          <TableCell key={h} sx={{ color: '#FFC107' }}>{h}</TableCell>
+                        ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {floors.map(([floor, headcount]) => {
+                      const visitors = visitorsByFloor.find(v => v.Floor === floor)?.visitorCount || 0;
+                      const officerCount = officers.filter(o => o.floor === floor).length;
+                      const todayDate = new Date().toISOString().slice(0, 10);
+                      const rejectionCount = enrichedRejections
+                        .filter(d =>
+                          d.Location === 'US.CO.OBS' &&
+                          d.floor === floor &&
+                          d.DateOnly === todayDate
+                        )
+                        .length;
 
-          <Box display="flex" alignItems="center" mb={2}>
-            <Box component="img" src={WuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
-            <Typography variant="h6" sx={{ color: '#FFC107' }}>
-              {title}
-            </Typography>
-          </Box>
-
-          <List>
-            {navItems.map((item, i) => (
-              <ListItemButton key={i} onClick={item.action}>
-                <ListItemIcon sx={{ color: '#FFC107' }}>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
-            ))}
-          </List>
-
-          <Box mt={2}>
-            <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>
-              Select Region
-            </Typography>
-            <Select
-              fullWidth
-              size="small"
-              value={currentPartition}
-              displayEmpty
-              onChange={(e) => handlePartitionChange(e.target.value)}
+                      return (
+                        <TableRow key={floor}>
+                          <TableCell sx={{ color: 'white' }}>{floor}</TableCell>
+                          <TableCell sx={{ color: 'white' }}>{headcount}</TableCell>
+                          <TableCell sx={{ color: 'white' }}>{visitors}</TableCell>
+                          <TableCell sx={{ color: 'white' }}>
+                            {lo1 ? <Skeleton variant="text" width={24} /> : officerCount}
+                          </TableCell>
+                          <TableCell sx={{ color: 'white' }}>
+                            {lo2 ? <Skeleton variant="text" width={24} /> : rejectionCount}
+                          </TableCell>
+                          {/* <TableCell sx={{ color: 'white' }}>{avgForecast}</TableCell> */}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )
+          }].map(({ key, title, body }) => (
+            <Box
+              key={key}
               sx={{
-                bgcolor: '#fff',
-                color: '#000',
-                borderRadius: 1,
-                fontSize: '0.85rem',
+                flex: '1 1 32%',
+                minWidth: 280,
+                height: 390,
+                animation: 'fadeInUp 0.5s'
               }}
-              renderValue={(selected) =>
-                selected ? (
-                  <Box display="flex" alignItems="center">
-                    <Box
-                      component="img"
-                      src={flagMap[selected] || DefaultFlag}
-                      alt={selected}
-                      sx={{ width: 20, height: 14, mr: 1 }}
-                    />
-                    {displayNameMap[selected] || selected}
-                  </Box>
-                ) : (
-                  '— Select Region —'
-                )
-              }
             >
-              <MenuItem value="">— Select Region —</MenuItem>
-              {partitionList.map((p) => (
-                <MenuItem key={p} value={p}>
-                  {displayNameMap[p] || p}
-                </MenuItem>
-              ))}
-            </Select>
-          </Box>
+              <Paper sx={{
+                p: 2,
+                height: '100%',
+                background: 'rgba(0,0,0,0.4)',
+                border: '1px solid #FFC107',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <Typography variant="h6" sx={{ color: '#FFC107', mb: 2 }}>
+                  {title}
+                </Typography>
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                  {body}
+                </Box>
+              </Paper>
+            </Box>
+          ))}
         </Box>
-      </Drawer>
 
-      {/* ── DATE/TIME POPOVER ── */}
-      <Popover
-        open={Boolean(anchorEl)}
-        anchorEl={anchorEl}
-        onClose={closePopover}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Box p={2} display="flex" flexDirection="column" gap={2}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Select Date (UTC)"
-              value={draftDate}
-              onChange={(newVal) => setDraftDate(newVal)}
-              renderInput={(props) => <TextField {...props} />}
-            />
-            <TimePicker
-              label="Select Time (UTC)"
-              value={draftDate}
-              onChange={(newVal) => setDraftDate(newVal)}
-              renderInput={(props) => <TextField {...props} />}
-            />
-          </LocalizationProvider>
-
-          <Box display="flex" justifyContent="flex-end" gap={1}>
-            <Button onClick={closePopover}>Cancel</Button>
-            <Button variant="contained" onClick={handleGo}>
-              Go
-            </Button>
-          </Box>
-        </Box>
-      </Popover>
+        <footer style={{
+          backgroundColor: '#000',
+          color: '#FFC72C',
+          padding: '1.0rem 0',
+          textAlign: 'center',
+          marginTop: '0.1rem',
+          borderTop: '2px solid #FFC72C',
+          fontSize: '0.95rem',
+          lineHeight: '1.6'
+        }}>
+          <div>
+            <strong>Global Security Operations Center (GSOC)</strong><br/>
+            Live Occupancy dashboard for Western Union North America — Real-time occupancy, floor activity, and personnel insights.
+          </div>
+          <div style={{ marginTop: '0.75rem' }}>
+            Contact us: <a href="mailto:GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com" style={{ color: '#FFC72C', textDecoration: 'underline' }}>gsoc@westernunion.com</a> |
+            Landline: <span style={{ color: '#FFC72C' }}>+91-020-67632394</span>
+          </div>
+        </footer>
+      </Container>
     </>
   );
-}
