@@ -1,22 +1,288 @@
-PS D:\DASHBOARD\global-page\backend\attendance-analytics> .\.venv\Scripts\Activate.ps1
-(.venv) PS D:\DASHBOARD\global-page\backend\attendance-analytics> python -m uvicorn app:app --host 0.0.0.0 --port 8001
-INFO:     Started server process [9956]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-2025-10-27 11:31:40,037 INFO attendance_app: [5825055b] denver-attendance request received: year=None month=None from_date=2025-08-01 to_date=2025-10-31
-2025-10-27 11:31:40,039 INFO attendance_app: [5825055b] generating denver report for range 2025-08-01 -> 2025-10-31
-2025-10-27 11:33:01,244 ERROR attendance_app: [5825055b] Report generation failed
-Traceback (most recent call last):
-  File "D:\DASHBOARD\global-page\backend\attendance-analytics\app.py", line 5288, in api_denver_attendance
-    path = denver_mod.generate_monthly_denver_report(start_date=start_dt, end_date=end_dt, outdir=str(OUTPUT_DIR))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\DASHBOARD\global-page\backend\attendance-analytics\denverAttendance.py", line 169, in generate_monthly_denver_report
-    return _write_excel(df, ordered_days, months, outdir, start_date, end_date)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\DASHBOARD\global-page\backend\attendance-analytics\denverAttendance.py", line 176, in _write_excel
-    import xlsxwriter
-ModuleNotFoundError: No module named 'xlsxwriter'
-INFO:     10.199.22.57:60997 - "GET /reports/denver-attendance?from_date=2025-08-01&to_date=2025-10-31 HTTP/1.1" 500 Internal Server Error
-INFO:     10.199.46.101:51745 - "GET /ccure/stream HTTP/1.1" 200 OK
-INFO:     10.199.22.57:61047 - "GET /ccure/verify?raw=true HTTP/1.1" 200 OK
+
+
+
+// // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+// // 📝📝📝📝 Responsive - Code📝📝📝📝 13-10 
+// // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+
+
+// C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\components\Header.jsx
+import React, { useEffect, useState } from 'react';
+import {
+  AppBar, Toolbar, Box, Typography,
+  Select, MenuItem, IconButton, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+import MenuIcon from '@mui/icons-material/Menu';
+import HomeIcon from '@mui/icons-material/Home';
+import HistoryIcon from '@mui/icons-material/History';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import CloseIcon from '@mui/icons-material/Close';
+
+import wuLogo from '../assets/images/wu-logo.png';
+import IndiaFlag from '../assets/flags/india.png';
+import MalaysiaFlag from '../assets/flags/malaysia.png';
+import PhilippinesFlag from '../assets/flags/philippines.png';
+import JapanFlag from '../assets/flags/japan.png';
+import HYDFlag from '../assets/flags/india.png';
+
+import { partitionList } from '../services/occupancy.service';
+import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
+
+const displayNameMap = {
+  'IN.Pune': 'Pune',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig',
+  'JP.Tokyo': 'Tokyo',
+  'IN.HYD': 'Hyderabad',
+};
+
+const flagMap = {
+  'Pune': IndiaFlag,
+  'MY.Kuala Lumpur': MalaysiaFlag,
+  'Quezon City': PhilippinesFlag,
+  'Taguig City': PhilippinesFlag,
+  'JP.Tokyo': JapanFlag,
+  'IN.HYD': HYDFlag,
+};
+
+export default function Header() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data } = useLiveOccupancy(1000);
+  const [lastUpdate, setLastUpdate] = useState('');
+  const [selectedPartition, setSelectedPartition] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
+
+  useEffect(() => {
+    if (data) setLastUpdate(new Date().toLocaleTimeString());
+  }, [data]);
+
+  // Routing setup
+  const parts = location.pathname.split('/').filter(Boolean);
+  const isPartitionPath = parts[0] === 'partition' && Boolean(parts[1]);
+  const currentPartition = isPartitionPath ? decodeURIComponent(parts[1]) : '';
+  const suffixSegments = isPartitionPath
+    ? parts.slice(2)
+    : parts[0] === 'history'
+      ? ['history']
+      : [];
+
+  useEffect(() => {
+    setSelectedPartition(currentPartition);
+  }, [currentPartition]);
+
+  const makePartitionPath = (suffix) => {
+    const base = `/partition/${encodeURIComponent(currentPartition)}`;
+    return suffix ? `${base}/${suffix}` : base;
+  };
+
+  const handlePartitionChange = (newPartition) => {
+    if (!newPartition) return navigate('/');
+    setSelectedPartition(newPartition);
+    if (newPartition === 'Pune' && suffixSegments.length === 0) {
+      window.location.href = 'http://10.199.22.57:3011/';
+      return;
+    }
+
+    const base = `/partition/${encodeURIComponent(newPartition)}`;
+    const full = suffixSegments.length
+      ? `${base}/${suffixSegments.join('/')}`
+      : base;
+
+    navigate(full);
+    setDrawerOpen(false);
+  };
+
+  const navItems = [
+    { icon: <HomeIcon />, label: 'Home Page', action: () => navigate('/') },
+    { icon: <HistoryIcon />, label: 'History', action: () => navigate(currentPartition ? makePartitionPath('history') : '/history') },
+    { icon: <ListAltIcon />, label: 'Live Details Page', action: () => navigate(currentPartition ? makePartitionPath('details') : '/partition/Pune/details') },
+  ];
+
+  return (
+    <>
+      <AppBar
+        position="static"
+        sx={{
+          background: 'linear-gradient(90deg, #111, #222)',
+          px: isMobile ? 1 : 2,
+          py: isMobile ? 0.5 : 0,
+        }}
+      >
+        <Toolbar
+          disableGutters
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          {/* Left: Logo + Title */}
+          <Box display="flex" alignItems="center" sx={{ gap: 1 }}>
+            <Box component="img" src={wuLogo} alt="WU" border='1' sx={{ height: isMobile ? 28 : 36, border: '1px solid black' }} />
+            {!isMobile && (
+              <Typography
+                variant={isTablet ? 'h6' : 'h5'}
+                sx={{ color: '#FFC107', fontWeight: 600, ml: 1 }}
+              >
+                APAC Occupancy
+                {currentPartition && ` • ${displayNameMap[currentPartition] || currentPartition}`}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Right Section */}
+          {isMobile ? (
+            <IconButton color="inherit" onClick={() => setDrawerOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+          ) : (
+            <Box display="flex" alignItems="center" gap={2}>
+              {/* Icons with tooltips */}
+              
+              <Box display="flex" alignItems="center" gap={1.5}>
+                {navItems.map((item, idx) => (
+                  <Tooltip
+                    key={idx}
+                    title={
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                        {item.label}
+                      </Typography>
+                    }
+                    arrow
+                    placement="bottom"
+                  >
+                    <IconButton color="inherit" onClick={item.action}>
+                      {React.cloneElement(item.icon, { fontSize: 'medium' })}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Box>
+
+              {/* Selector */}
+              <Select
+                size={isTablet ? 'small' : 'medium'}
+                value={selectedPartition}
+                displayEmpty
+                onChange={(e) => handlePartitionChange(e.target.value)}
+                sx={{
+                  bgcolor: '#fff',
+                  color: '#000',
+                  borderRadius: 1,
+                  minWidth: 160,
+                  fontSize: '0.9rem',
+                  height: 40,
+                }}
+
+                renderValue={(selected) =>
+                  selected ? (
+                    <Box display="flex" alignItems="center">
+                      <Box
+                        component="img"
+                        src={flagMap[selected]}
+                        alt={selected}
+                        sx={{
+                          width: 22,
+                          height: 15,
+                          mr: 1,
+                          border: '1px solid #6a6868ff', // ✅ adds visible border
+                          
+                          objectFit: 'cover',
+                        }}
+                      />
+                      {displayNameMap[selected] || selected}
+                    </Box>
+                  ) : '— Select Site —'
+                }
+
+              >
+                <MenuItem value="">— Select Site —</MenuItem>
+                {partitionList.map((p) => (
+                  <MenuItem key={p} value={p}>
+                    {displayNameMap[p] || p}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* MOBILE DRAWER (unchanged) */}
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{ sx: { width: 260, background: '#111', color: '#fff' } }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Box display="flex" justifyContent="flex-end">
+            <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#FFC107' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Box display="flex" alignItems="center" mb={2}>
+            <Box component="img" src={wuLogo} alt="WU" sx={{ height: 30, mr: 1 }} />
+            <Typography variant="h6" sx={{ color: '#FFC107' }}>
+              APAC Occupancy
+            </Typography>
+          </Box>
+          <List>
+            {navItems.map((item, i) => (
+              <ListItemButton key={i} onClick={() => { item.action(); setDrawerOpen(false); }}>
+                <ListItemIcon sx={{ color: '#FFC107' }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+          </List>
+          <Box mt={2}>
+            <Typography variant="body2" sx={{ mb: 1, color: '#FFC107' }}>
+              Select Site
+            </Typography>
+            <Select
+              fullWidth
+              size="small"
+              value={selectedPartition}
+              displayEmpty
+              onChange={(e) => handlePartitionChange(e.target.value)}
+              sx={{
+                bgcolor: '#fff',
+                color: '#000',
+                borderRadius: 1,
+                fontSize: '0.85rem',
+              }}
+              renderValue={(selected) =>
+                selected ? (
+                  <Box display="flex" alignItems="center">
+                    <Box
+                      component="img"
+                      src={flagMap[selected]}
+                      alt={selected}
+                      sx={{ width: 20, height: 14, mr: 1 }}
+                    />
+                    {displayNameMap[selected] || selected}
+                  </Box>
+                ) : '— Select Site —'
+              }
+            >
+              <MenuItem value="">— Select Site —</MenuItem>
+              {partitionList.map((p) => (
+                <MenuItem key={p} value={p}>
+                  {displayNameMap[p] || p}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </Box>
+      </Drawer>
+    </>
+  );
+}
