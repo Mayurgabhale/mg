@@ -1,341 +1,284 @@
-// src/components/CompositeChartCard.jsx
-import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
-import {
-  ComposedChart,
-  Bar,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  LabelList,
-  Cell
-} from 'recharts';
-
-// Professional gradient color scheme
-const PROFESSIONAL_COLORS = [
-  '#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981',
-  '#3B82F6', '#06B6D4', '#84CC16', '#F97316', '#EF4444',
-  '#A855F7', '#14B8A6', '#EAB308', '#DC2626', '#7C3AED'
-];
-
-// Gradient generator for bars
-const getBarGradient = (baseColor, index) => {
-  const gradients = {
-    '#6366F1': ['#818CF8', '#6366F1'],
-    '#8B5CF6': ['#A78BFA', '#8B5CF6'],
-    '#EC4899': ['#F472B6', '#EC4899'],
-    '#F59E0B': ['#FBBF24', '#F59E0B'],
-    '#10B981': ['#34D399', '#10B981'],
-    '#3B82F6': ['#60A5FA', '#3B82F6'],
-    '#06B6D4': ['#22D3EE', '#06B6D4'],
-    '#84CC16': ['#A3E635', '#84CC16'],
-    '#F97316': ['#FB923C', '#F97316'],
-    '#EF4444': ['#F87171', '#EF4444']
-  };
-  return gradients[baseColor] || [baseColor, baseColor];
+// Professional color palette - modern, sophisticated
+const PROFESSIONAL_COLORS = {
+  // Primary colors - deep blues and teals
+  primary: ['#2563EB', '#1E40AF', '#1E3A8A'], // Blue gradient
+  accent: ['#0D9488', '#0F766E', '#115E59'],   // Teal gradient
+  neutral: ['#64748B', '#475569', '#334155'],  // Gray gradient
+  
+  // Data visualization colors
+  barFill: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE'],
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  
+  // Background and text
+  background: 'rgba(15, 23, 42, 0.8)', // Dark blue with transparency
+  text: {
+    primary: '#F8FAFC',
+    secondary: '#CBD5E1',
+    accent: '#38BDF8'
+  }
 };
 
-export default function CompositeChartCard({
-  title,
-  data,
-  lineColor = '#F59E0B',
-  height = 200,
-  animationDuration = 1500,
-  animationEasing = 'ease-in-out'
-}) {
-  if (!Array.isArray(data) || data.length === 0) {
-    return (
-      <Card sx={{ 
-        border: `1px solid rgba(255,255,255,0.2)`, 
-        bgcolor: 'rgba(15,23,42,0.8)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: 3
-      }}>
-        <CardContent>
-          <Typography variant="subtitle1" align="center" sx={{ color: '#F1F5F9' }}>
-            {title}
-          </Typography>
-          <Typography variant="body2" align="center" sx={{ mt: 4, color: '#94A3B8' }}>
-            No realtime employee data
-          </Typography>
-        </CardContent>
-      </Card>
-    );
-  }
+// Updated gradient for bars - more professional
+const BAR_GRADIENT = [
+  '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE',
+  '#0EA5E9', '#38BDF8', '#7DD3FC', '#BAE6FD',
+  '#6366F1', '#8B5CF6', '#A855F7', '#C084FC',
+  '#06B6D4', '#22D3EE', '#67E8F9', '#A5F3FC'
+];
 
-  // Enrich each datum with its usage percentage and colors
-  const enriched = data.map((d, i) => {
-    const baseColor = PROFESSIONAL_COLORS[i % PROFESSIONAL_COLORS.length];
-    const gradient = getBarGradient(baseColor, i);
-    
-    return {
-      ...d,
-      percentage: d.capacity ? Math.round(d.headcount / d.capacity * 100) : 0,
-      _color: baseColor,
-      _gradient: gradient
-    };
-  });
+return (
+  <Card
+    sx={{
+      borderRadius: 3,
+      overflow: 'hidden',
+      bgcolor: PROFESSIONAL_COLORS.background,
+      backdropFilter: 'blur(10px)',
+      border: `1px solid rgba(255,255,255,0.1)`,
+      transition: 'transform 0.3s, box-shadow 0.3s',
+      '&:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+      }
+    }}
+  >
+    <CardContent sx={{ p: 2 }}>
+      <Typography
+        variant="h6"
+        align="center"
+        gutterBottom
+        sx={{ 
+          color: PROFESSIONAL_COLORS.text.accent,
+          fontWeight: 600,
+          fontSize: '1.1rem',
+          mb: 2
+        }}
+      >
+        {title}
+      </Typography>
+      
+      <Box sx={{ width: '100%', height }}>
+        <ResponsiveContainer>
+          <ComposedChart
+            data={enriched}
+            margin={{ top: 15, right: 25, left: 10, bottom: 25 }}
+          >
+            {/* Enhanced grid */}
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="rgba(255,255,255,0.08)"
+              vertical={false}
+            />
+            
+            {/* XAxis with improved styling */}
+            <XAxis
+              dataKey="name"
+              tickLine={false}
+              axisLine={false}
+              stroke={PROFESSIONAL_COLORS.text.secondary}
+              tick={{ fill: PROFESSIONAL_COLORS.text.secondary, fontSize: 12 }}
+              tickFormatter={(label, index) => {
+                const strLabel = String(label);
+                const match = strLabel.match(/\d+/);
+                const floorNum = parseInt(match?.[0], 10);
 
-  const totalHeadcount = enriched.reduce((sum, d) => sum + (d.headcount || 0), 0);
-  const totalCapacity = enriched.reduce((sum, d) => sum + (d.capacity || 0), 0);
-  const avgUsage = totalCapacity ? Math.round((totalHeadcount / totalCapacity) * 100) : 0;
+                if (isNaN(floorNum)) return strLabel;
 
-  return (
-    <Card
-      sx={{
-        background: 'linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(30,41,59,0.8) 100%)',
-        border: `1px solid rgba(255,255,255,0.15)`,
-        borderRadius: 3,
-        overflow: 'hidden',
-        backdropFilter: 'blur(12px)',
-        transition: 'transform 0.3s, box-shadow 0.3s',
-        '&:hover': {
-          transform: 'scale(1.02)',
-          boxShadow: '0 8px 32px rgba(99, 102, 241, 0.3)'
-        }
-      }}
-    >
-      <CardContent sx={{ p: 2 }}>
-        <Typography
-          variant="subtitle1"
-          align="center"
-          gutterBottom
-          sx={{ 
-            color: '#F59E0B',
-            fontWeight: 600,
-            fontSize: '1.1rem',
-            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-          }}
-        >
-          {title}
-        </Typography>
-        
-        <Box sx={{ width: '100%', height }}>
-          <ResponsiveContainer>
-            <ComposedChart
-              data={enriched}
-              margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+                const suffix = (n) => {
+                  if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+                  switch (n % 10) {
+                    case 1: return `${n}st`;
+                    case 2: return `${n}nd`;
+                    case 3: return `${n}rd`;
+                    default: return `${n}th`;
+                  }
+                };
+                return suffix(floorNum);
+              }}
+            />
+
+            {/* Left YAxis */}
+            <YAxis
+              yAxisId="left"
+              tickLine={false}
+              axisLine={false}
+              stroke={PROFESSIONAL_COLORS.text.secondary}
+              tick={{ fill: PROFESSIONAL_COLORS.text.secondary, fontSize: 12 }}
+            />
+
+            {/* Right YAxis */}
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickLine={false}
+              axisLine={false}
+              stroke={PROFESSIONAL_COLORS.text.secondary}
+              tick={{ fill: PROFESSIONAL_COLORS.text.secondary, fontSize: 12 }}
+              domain={[0, 100]}
+              tickFormatter={val => `${val}%`}
+            />
+            
+            {/* Enhanced Tooltip */}
+            <Tooltip
+              contentStyle={{ 
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                border: `1px solid ${PROFESSIONAL_COLORS.primary[0]}`,
+                borderRadius: 8,
+                padding: 12,
+                backdropFilter: 'blur(8px)'
+              }}
+              content={({ active, payload, label }) => {
+                if (!active || !payload || !payload.length) return null;
+                const datum = payload[0].payload;
+                return (
+                  <div style={{
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    border: `1px solid ${PROFESSIONAL_COLORS.primary[0]}`,
+                    borderRadius: 8,
+                    padding: 12,
+                    color: PROFESSIONAL_COLORS.text.primary
+                  }}>
+                    <div style={{ 
+                      fontWeight: 700, 
+                      marginBottom: 8, 
+                      color: PROFESSIONAL_COLORS.text.accent,
+                      fontSize: 14
+                    }}>
+                      {label}
+                    </div>
+                    <div style={{ marginBottom: 4 }}>
+                      <span style={{ color: PROFESSIONAL_COLORS.text.secondary }}>Headcount: </span>
+                      <span style={{ color: PROFESSIONAL_COLORS.text.primary, fontWeight: 600 }}>{datum.headcount}</span>
+                    </div>
+                    <div style={{ marginBottom: 4 }}>
+                      <span style={{ color: PROFESSIONAL_COLORS.text.secondary }}>Usage %: </span>
+                      <span style={{ color: PROFESSIONAL_COLORS.text.primary, fontWeight: 600 }}>{datum.percentage}%</span>
+                    </div>
+                    <div>
+                      <span style={{ color: PROFESSIONAL_COLORS.text.secondary }}>Seat Capacity: </span>
+                      <span style={{ color: PROFESSIONAL_COLORS.text.primary, fontWeight: 600 }}>{datum.capacity}</span>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+
+            {/* Headcount bars with professional colors */}
+            <Bar
+              yAxisId="left"
+              dataKey="headcount"
+              name="Headcount"
+              barSize={600}
+              radius={[4, 4, 0, 0]}
+              isAnimationActive={false}
             >
-              <defs>
-                {enriched.map((entry, index) => (
-                  <linearGradient 
-                    key={index} 
-                    id={`gradient-${index}`} 
-                    x1="0" 
-                    y1="0" 
-                    x2="0" 
-                    y2="1"
-                  >
-                    <stop offset="0%" stopColor={entry._gradient[0]} />
-                    <stop offset="100%" stopColor={entry._gradient[1]} />
-                  </linearGradient>
-                ))}
-              </defs>
+              {enriched.map((entry, idx) => (
+                <Cell 
+                  key={`cell-${idx}`} 
+                  fill={BAR_GRADIENT[idx % BAR_GRADIENT.length]}
+                />
+              ))}
 
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="rgba(255,255,255,0.1)" 
-                vertical={false}
-              />
-              
-              <XAxis
-                dataKey="name"
-                tickLine={false}
-                axisLine={false}
-                stroke="rgba(255,255,255,0.7)"
-                tick={{ fill: '#E2E8F0', fontSize: 12 }}
-                tickFormatter={(label) => {
-                  const strLabel = String(label);
-                  const match = strLabel.match(/\d+/);
-                  const floorNum = parseInt(match?.[0], 10);
-
-                  if (isNaN(floorNum)) return strLabel;
-
-                  const suffix = (n) => {
-                    if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
-                    switch (n % 10) {
-                      case 1: return `${n}st`;
-                      case 2: return `${n}nd`;
-                      case 3: return `${n}rd`;
-                      default: return `${n}th`;
-                    }
-                  };
-                  return suffix(floorNum);
-                }}
-              />
-
-              <YAxis
-                yAxisId="left"
-                tickLine={false}
-                axisLine={false}
-                stroke="rgba(255,255,255,0.7)"
-                tick={{ fill: '#E2E8F0', fontSize: 12 }}
-              />
-
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                tickLine={false}
-                axisLine={false}
-                stroke="rgba(255,255,255,0.7)"
-                domain={[0, 100]}
-                tickFormatter={val => `${val}%`}
-                tick={{ fill: '#E2E8F0', fontSize: 12 }}
-              />
-
-              <Tooltip
-                contentStyle={{ 
-                  backgroundColor: 'rgba(15,23,42,0.95)',
-                  border: `1px solid ${lineColor}`,
-                  borderRadius: 8,
-                  padding: 12,
-                  backdropFilter: 'blur(8px)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
-                }}
-                labelStyle={{
-                  color: '#F59E0B',
-                  fontWeight: 600,
-                  marginBottom: 8
-                }}
-                itemStyle={{
-                  color: '#E2E8F0',
-                  fontSize: 13
-                }}
-                formatter={(value, name) => {
-                  if (name === 'Usage %') return [`${value}%`, name];
-                  return [value, name];
-                }}
-              />
-
-              {/* Headcount bars with gradient colors */}
-              <Bar
-                yAxisId="left"
+              {/* Top headcount label */}
+              <LabelList
                 dataKey="headcount"
-                name="Headcount"
-                barSize={60}
-                radius={[4, 4, 0, 0]}
-              >
-                {enriched.map((entry, idx) => (
-                  <Cell 
-                    key={`cell-${idx}`} 
-                    fill={`url(#gradient-${idx})`}
-                    stroke={entry._color}
-                    strokeWidth={1}
-                  />
-                ))}
+                position="top"
+                formatter={(val) => `${val}`}
+                style={{ 
+                  fill: PROFESSIONAL_COLORS.text.primary, 
+                  fontSize: 12, 
+                  fontWeight: 600 
+                }}
+              />
 
-                {/* Top headcount */}
-                <LabelList
-                  dataKey="headcount"
-                  position="top"
-                  formatter={(val) => `${val}`}
-                  style={{ 
-                    fill: '#FFFFFF', 
-                    fontSize: 12, 
-                    fontWeight: 700,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                  }}
-                />
-
-                {/* Inside percentage */}
-                <LabelList
-                  dataKey="percentage"
-                  position="insideTop"
-                  offset={10}
-                  formatter={(val) => `${val}%`}
-                  style={{ 
-                    fill: '#FFFFFF', 
-                    fontSize: 11, 
-                    fontWeight: 600,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                  }}
-                />
-              </Bar>
-
-              {/* Usage Percentage line */}
-              <Line
-                yAxisId="right"
-                type="monotone"
+              {/* Inside percentage label */}
+              <LabelList
                 dataKey="percentage"
-                name="Usage %"
-                stroke={lineColor}
-                strokeWidth={3}
-                dot={{
-                  fill: lineColor,
-                  strokeWidth: 2,
-                  stroke: '#FFFFFF',
-                  r: 4
+                position="inside"
+                valueAccessor={(entry) => entry.percentage}
+                formatter={(val) => `${val}%`}
+                style={{ 
+                  fill: PROFESSIONAL_COLORS.text.primary, 
+                  fontSize: 11, 
+                  fontWeight: 600 
                 }}
-                activeDot={{
-                  r: 6,
-                  fill: '#FFFFFF',
-                  stroke: lineColor,
-                  strokeWidth: 2
-                }}
-                isAnimationActive
-                animationDuration={animationDuration}
-                animationEasing={animationEasing}
               />
+            </Bar>
 
-              {/* Capacity line */}
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="capacity"
-                name="Total Seats"
-                stroke="#10B981"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={false}
-                isAnimationActive
-                animationDuration={animationDuration}
-                animationEasing={animationEasing}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </Box>
+            {/* Usage percentage line - enhanced */}
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="percentage"
+              name="Usage %"
+              stroke={PROFESSIONAL_COLORS.accent[0]}
+              strokeWidth={3}
+              dot={{ 
+                fill: PROFESSIONAL_COLORS.accent[0], 
+                strokeWidth: 2, 
+                r: 4,
+                stroke: PROFESSIONAL_COLORS.background
+              }}
+              activeDot={{ r: 6, fill: PROFESSIONAL_COLORS.accent[1] }}
+              isAnimationActive
+              animationDuration={animationDuration}
+              animationEasing={animationEasing}
+            />
 
-        {/* Summary Stats */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 4,
-            alignItems: 'center',
-            mt: 2,
-            pt: 2,
-            borderTop: '1px solid rgba(255,255,255,0.1)'
-          }}
-        >
-          <Box sx={{ 
-            color: '#60A5FA',
-            fontWeight: 'bold',
-            fontSize: 14,
-            textAlign: 'center'
-          }}>
-            Total Headcount: {totalHeadcount}
-          </Box>
-          <Box sx={{ 
-            color: '#10B981',
-            fontWeight: 'bold',
-            fontSize: 14,
-            textAlign: 'center'
-          }}>
-            Total Seats: {totalCapacity}
-          </Box>
-          <Box sx={{ 
-            color: avgUsage > 80 ? '#EF4444' : avgUsage > 60 ? '#F59E0B' : '#10B981',
-            fontWeight: 'bold',
-            fontSize: 14,
-            textAlign: 'center'
-          }}>
-            Usage: {avgUsage}%
-          </Box>
+            {/* Seat capacity line - enhanced */}
+            <Line
+              yAxisId="left"
+              type="monotone"
+              name="Total Seats"
+              stroke={PROFESSIONAL_COLORS.success}
+              strokeWidth={2}
+              strokeDasharray="4 4"
+              dot={false}
+              isAnimationActive
+              animationDuration={animationDuration}
+              animationEasing={animationEasing}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </Box>
+      
+      {/* Enhanced summary section */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 4,
+          alignItems: 'center',
+          mt: 2,
+          p: 2,
+          backgroundColor: 'rgba(30, 41, 59, 0.4)',
+          borderRadius: 2,
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}
+      >
+        <Box sx={{ 
+          color: PROFESSIONAL_COLORS.barFill[0],
+          fontWeight: 600,
+          fontSize: 14
+        }}>
+          Total Headcount: {totalHeadcount}
         </Box>
-      </CardContent>
-    </Card>
-  );
-}
+        <Box sx={{ 
+          color: PROFESSIONAL_COLORS.success,
+          fontWeight: 600,
+          fontSize: 14
+        }}>
+          Total Seats: {totalCapacity}
+        </Box>
+        <Box sx={{ 
+          color: PROFESSIONAL_COLORS.accent[0],
+          fontWeight: 600,
+          fontSize: 14
+        }}>
+          Usage: {avgUsage}%
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+);
