@@ -1,243 +1,222 @@
-import React, { useState } from "react";
-import axios from "axios";
+Upload failed. Please check the backend server or file format.
+(.venv) PS C:\Users\W0024618\Desktop\swipeData\Travel-Backend> uvicorn main:app --reload --port 8000
+INFO:     Will watch for changes in these directories: ['C:\\Users\\W0024618\\Desktop\\swipeData\\Travel-Backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [21980] using StatReload
+INFO:     Started server process [10756]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:55858 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55858 - "GET / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54769 - "POST /upload HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\applications.py", line 1134, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
+    await self.app(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\routing.py", line 124, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\routing.py", line 110, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\routing.py", line 423, in app
+    response = actual_response_class(content, **response_args)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\responses.py", line 190, in __init__
+    super().__init__(content, status_code, headers, media_type, background)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\responses.py", line 47, in __init__
+    self.body = self.render(content)
+                ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\responses.py", line 193, in render
+    return json.dumps(
+           ~~~~~~~~~~^
+        content,
+        ^^^^^^^^
+    ...<3 lines>...
+        separators=(",", ":"),
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ).encode("utf-8")
+    ^
+  File "C:\Program Files\Python313\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "C:\Program Files\Python313\Lib\json\encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "C:\Program Files\Python313\Lib\json\encoder.py", line 261, in iterencode
+    return _iterencode(o, 0)
+ValueError: Out of range float values are not JSON compliant: nan
 
-const EmployeeTravelDashboard = () => {
-  const [file, setFile] = useState(null);
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    country: "",
-    legType: "",
-  });
 
-  const handleFileChange = (e) => setFile(e.target.files[0]);
 
-  const uploadFile = async () => {
-    if (!file) return alert("Please upload an Excel or CSV file first.");
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+i want errro in toast notification"
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
+from io import BytesIO
+from dateutil import parser
+import re
+from datetime import datetime
+import zoneinfo
 
-      const res = await axios.post("http://localhost:8000/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+app = FastAPI(title="Employee Travel Dashboard — Parser")
 
-      setData(res.data);
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed. Please check the backend server or file format.");
-    } finally {
-      setLoading(false);
+# Allow local dev frontend (adjust origin in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Configure server timezone here
+SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
+
+# Helpful date parser that normalizes "23.00" -> "23:00" etc.
+def normalize_and_parse(dt_val):
+    if pd.isna(dt_val):
+        return None
+    s = str(dt_val).strip()
+    # convert 23.00 to 23:00
+    s = re.sub(r"(\d{1,2})\.(\d{1,2})(?!\d)", r"\1:\2", s)
+    try:
+        dt = parser.parse(s, dayfirst=False)
+        # if naive, attach server timezone then convert to UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=SERVER_TZ)
+        # return ISO UTC
+        return dt.astimezone(zoneinfo.ZoneInfo("UTC"))
+    except Exception:
+        return None
+
+
+@app.post("/upload")
+async def upload_excel(file: UploadFile = File(...)):
+    # Accept xlsx/xls
+    if not file.filename.lower().endswith((".xlsx", ".xls", ".csv")):
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    content = await file.read()
+    try:
+        if file.filename.lower().endswith(".csv"):
+            df = pd.read_csv(BytesIO(content))
+        else:
+            df = pd.read_excel(BytesIO(content))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read spreadsheet: {e}")
+
+    # Expected columns (case-insensitive match)
+    expected = [
+        "AGENCY ID","AGENCY NAME","LAST NAME","FIRST NAME","TRAVELER",
+        "EMP ID","EMAIL","PNR","LEG TYPE","BEGIN DATE","FROM LOCATION","FROM COUNTRY",
+        "END DATE","TO LOCATION","TO COUNTRY"
+    ]
+
+    # Normalize column names to canonical
+    cols_map = {c.lower().strip(): c for c in df.columns}
+
+    # Quick check — attempt to map fields
+    def get_col(ci):
+        # case-insensitive
+        for k,v in cols_map.items():
+            if k == ci.lower():
+                return v
+        # fallback: try contains
+        for k,v in cols_map.items():
+            if ci.lower() in k:
+                return v
+        return None
+
+    col_get = {c: get_col(c) for c in expected}
+
+    # Build a cleaned DataFrame with canonical column names (if present)
+    clean = {}
+    for canon, found in col_get.items():
+        clean[canon] = df[found] if found in df.columns else pd.Series([None]*len(df))
+
+    clean_df = pd.DataFrame(clean)
+
+    # Parse dates
+    clean_df['BEGIN_DT'] = clean_df['BEGIN DATE'].apply(normalize_and_parse)
+    clean_df['END_DT'] = clean_df['END DATE'].apply(normalize_and_parse)
+
+    # Compute active_now (compare against server local time normalized to UTC)
+    now_local = datetime.now(tz=SERVER_TZ)
+    now_utc = now_local.astimezone(zoneinfo.ZoneInfo('UTC'))
+
+    def is_active(row):
+        b = row['BEGIN_DT']
+        e = row['END_DT']
+        if b is None or e is None:
+            return False
+        return (b <= now_utc) and (e >= now_utc)
+
+    clean_df['active_now'] = clean_df.apply(is_active, axis=1)
+
+    # Build minimal JSON-serializable response
+    def row_to_obj(i, row):
+        return {
+            'index': int(i),
+            'agency_id': row.get('AGENCY ID'),
+            'agency_name': row.get('AGENCY NAME'),
+            'first_name': row.get('FIRST NAME'),
+            'last_name': row.get('LAST NAME'),
+            'emp_id': row.get('EMP ID'),
+            'email': row.get('EMAIL'),
+            'pnr': row.get('PNR'),
+            'leg_type': row.get('LEG TYPE'),
+            'begin_dt': row.get('BEGIN_DT').isoformat() if row.get('BEGIN_DT') is not None else None,
+            'end_dt': row.get('END_DT').isoformat() if row.get('END_DT') is not None else None,
+            'from_location': row.get('FROM LOCATION'),
+            'from_country': row.get('FROM COUNTRY'),
+            'to_location': row.get('TO LOCATION'),
+            'to_country': row.get('TO COUNTRY'),
+            'active_now': bool(row.get('active_now'))
+        }
+
+    items = [row_to_obj(i, r) for i,r in clean_df.iterrows()]
+
+    summary = {
+        'rows_received': len(clean_df),
+        'rows_with_parse_errors': int(clean_df['BEGIN_DT'].isna().sum() + clean_df['END_DT'].isna().sum()),
+        'active_now_count': int(clean_df['active_now'].sum())
     }
-  };
 
-  const filteredData = data.filter((row) => {
-    const countryMatch =
-      !filters.country || row["FROM COUNTRY"] === filters.country;
-    const legMatch = !filters.legType || row["LEG TYPE"] === filters.legType;
-    return countryMatch && legMatch;
-  });
-
-  return (
-    <div
-      style={{
-        backgroundColor: "#f9fafb",
-        minHeight: "100vh",
-        padding: "30px 60px",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        color: "#333",
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          padding: "30px",
-          borderRadius: "16px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-          maxWidth: "1200px",
-          margin: "0 auto",
-        }}
-      >
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: "20px",
-            fontSize: "28px",
-            fontWeight: "600",
-            color: "#1e293b",
-          }}
-        >
-          🌍 Employee Travel Dashboard
-        </h1>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "10px",
-            marginBottom: "20px",
-          }}
-        >
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileChange}
-            style={{
-              padding: "8px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              background: "#fff",
-            }}
-          />
-          <button
-            onClick={uploadFile}
-            disabled={loading}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "500",
-            }}
-          >
-            {loading ? "Processing..." : "Upload & Analyze"}
-          </button>
-        </div>
-
-        {data.length > 0 && (
-          <>
-            <h3
-              style={{
-                marginTop: "20px",
-                textAlign: "center",
-                color: "#334155",
-              }}
-            >
-              Total Travelers Today:{" "}
-              <span style={{ color: "#2563eb" }}>{filteredData.length}</span>
-            </h3>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "15px",
-                margin: "20px 0",
-              }}
-            >
-              <select
-                value={filters.country}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, country: e.target.value }))
-                }
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #d1d5db",
-                  background: "#fff",
-                }}
-              >
-                <option value="">All Countries</option>
-                {[...new Set(data.map((d) => d["FROM COUNTRY"]))].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={filters.legType}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, legType: e.target.value }))
-                }
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #d1d5db",
-                  background: "#fff",
-                }}
-              >
-                <option value="">All Travel Types</option>
-                {[...new Set(data.map((d) => d["LEG TYPE"]))].map((lt) => (
-                  <option key={lt} value={lt}>
-                    {lt}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div
-              style={{
-                overflowX: "auto",
-                borderRadius: "12px",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  backgroundColor: "white",
-                }}
-              >
-                <thead style={{ background: "#f1f5f9" }}>
-                  <tr>
-                    <th style={thStyle}>Name</th>
-                    <th style={thStyle}>Email</th>
-                    <th style={thStyle}>Travel Type</th>
-                    <th style={thStyle}>From</th>
-                    <th style={thStyle}>To</th>
-                    <th style={thStyle}>Begin</th>
-                    <th style={thStyle}>End</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.map((row, idx) => (
-                    <tr
-                      key={idx}
-                      style={{
-                        borderBottom: "1px solid #e5e7eb",
-                        backgroundColor:
-                          idx % 2 === 0 ? "#ffffff" : "#f9fafb",
-                      }}
-                    >
-                      <td style={tdStyle}>
-                        {row["FIRST NAME"]} {row["LAST NAME"]}
-                      </td>
-                      <td style={tdStyle}>{row["EMAIL"]}</td>
-                      <td style={tdStyle}>{row["LEG TYPE"]}</td>
-                      <td style={tdStyle}>{row["FROM LOCATION"]}</td>
-                      <td style={tdStyle}>{row["TO LOCATION"]}</td>
-                      <td style={tdStyle}>{row["BEGIN DATE"]}</td>
-                      <td style={tdStyle}>{row["END DATE"]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Styles for table headers & cells
-const thStyle = {
-  textAlign: "left",
-  padding: "10px",
-  fontWeight: "600",
-  color: "#1e293b",
-  borderBottom: "2px solid #e2e8f0",
-};
-
-const tdStyle = {
-  padding: "8px 10px",
-  color: "#334155",
-};
-
-export default EmployeeTravelDashboard;
+    return { 'summary': summary, 'items': items }
