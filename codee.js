@@ -7,6 +7,21 @@ Countries
 18
 Travel Types
 4
+#10
+Costa Rica
+2
+#11
+Romania
+2
+#12
+Unknown   <<<< ---
+2
+#13
+Austria
+1
+#14
+India
+1
 
 totla trvalers only 100
 but in this tow show extracal count for this reason 
