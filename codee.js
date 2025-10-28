@@ -1,14 +1,31 @@
+// ===== Loading overlay styles =====
+const overlay = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
+  background: "rgba(255, 255, 255, 0.7)",
+  zIndex: 9999,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  flexDirection: "column",
+  backdropFilter: "blur(3px)",
+};
 
-ERROR in [eslint]
-src\pages\EmployeeTravelDashboard.jsx
-  Line 343:1:   Import in body of module; reorder to top  import/first
-  Line 344:1:   Import in body of module; reorder to top  import/first
-  Line 345:1:   Import in body of module; reorder to top  import/first
-  Line 346:1:   Import in body of module; reorder to top  import/first
-  Line 347:1:   Import in body of module; reorder to top  import/first
-  Line 487:29:  'overlay' is not defined                  no-undef
-  Line 488:34:  'loader' is not defined                   no-undef
+const loader = {
+  width: "48px",
+  height: "48px",
+  border: "4px solid #3b82f6",
+  borderTop: "4px solid transparent",
+  borderRadius: "50%",
+  animation: "spin 1s linear infinite",
+};
 
-Search for the keywords to learn more about each error.
-
-webpack compiled with 1 error and 1 warning
+// CSS keyframes for loader animation
+const keyframes = `
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}`;
