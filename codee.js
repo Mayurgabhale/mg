@@ -1,3 +1,19 @@
+{
+  "detail": [
+    {
+      "type": "value_error",
+      "loc": [
+        "body",
+        "file"
+      ],
+      "msg": "Value error, Expected UploadFile, received: <class 'str'>",
+      "input": "string",
+      "ctx": {
+        "error": {}
+      }
+    }
+  ]
+}
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
