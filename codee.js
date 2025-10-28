@@ -3,7 +3,6 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-/* Helper to format date safely */
 const fmt = (iso) => {
   if (!iso) return "";
   try {
@@ -17,7 +16,7 @@ const fmt = (iso) => {
 const EmployeeTravelDashboard = () => {
   const [file, setFile] = useState(null);
   const [items, setItems] = useState([]);
-  const [summary, setSummary] = useState(null);
+  const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     country: "",
@@ -28,8 +27,7 @@ const EmployeeTravelDashboard = () => {
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
   const uploadFile = async () => {
-    if (!file) return toast.warn("Please select an Excel or CSV file.");
-
+    if (!file) return toast.warn("Please select an Excel or CSV file first.");
     setLoading(true);
     try {
       const formData = new FormData();
@@ -37,183 +35,215 @@ const EmployeeTravelDashboard = () => {
       const res = await axios.post("http://localhost:8000/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       const payload = res.data || {};
       const rows = payload.items || [];
       setItems(rows);
       setSummary(payload.summary || {});
-      toast.success(`✅ File uploaded successfully. ${rows.length} records found.`);
+      toast.success(`✅ Uploaded successfully. ${rows.length} records found.`);
     } catch (err) {
       console.error(err);
-      toast.error("❌ Upload failed. Please check backend or file format.");
+      toast.error("❌ Upload failed. Please check the backend or file format.");
     } finally {
       setLoading(false);
     }
   };
 
+  const safeItems = Array.isArray(items) ? items : [];
   const countries = useMemo(
-    () => [...new Set(items.map((r) => r.from_country).filter(Boolean))],
-    [items]
+    () => [...new Set(safeItems.map((r) => r.from_country).filter(Boolean))],
+    [safeItems]
   );
   const legTypes = useMemo(
-    () => [...new Set(items.map((r) => r.leg_type).filter(Boolean))],
-    [items]
+    () => [...new Set(safeItems.map((r) => r.leg_type).filter(Boolean))],
+    [safeItems]
   );
 
-  const safeItems = Array.isArray(items) ? items : [];
-
-  const filtered = safeItems.filter((row) => {
+  const filtered = safeItems.filter((r) => {
     const s = filters.search.toLowerCase();
     if (s) {
-      const haystack = `${row.first_name ?? ""} ${row.last_name ?? ""} ${row.email ?? ""}`.toLowerCase();
-      if (!haystack.includes(s)) return false;
+      const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""}`.toLowerCase();
+      if (!hay.includes(s)) return false;
     }
-    if (filters.country && row.from_country !== filters.country) return false;
-    if (filters.legType && row.leg_type !== filters.legType) return false;
+    if (filters.country && r.from_country !== filters.country) return false;
+    if (filters.legType && r.leg_type !== filters.legType) return false;
     return true;
   });
+
+  const countryStats = useMemo(() => {
+    const map = {};
+    for (const r of safeItems) {
+      const c = r.from_country || "Unknown";
+      map[c] = (map[c] || 0) + 1;
+    }
+    return Object.entries(map)
+      .map(([k, v]) => ({ country: k, count: v }))
+      .sort((a, b) => b.count - a.count);
+  }, [safeItems]);
 
   const exportCsv = () => {
     if (!filtered.length) return toast.info("No data to export.");
     const keys = Object.keys(filtered[0]);
-    const csvRows = [keys.join(",")];
-    for (const r of filtered) {
-      csvRows.push(
-        keys.map((k) => `"${String(r[k] ?? "").replace(/"/g, '""')}"`).join(",")
-      );
-    }
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+    const csv = [keys.join(",")];
+    filtered.forEach((r) =>
+      csv.push(keys.map((k) => `"${String(r[k] ?? "").replace(/"/g, '""')}"`).join(","))
+    );
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "EmployeeTravelData.csv";
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("📁 Exported to CSV");
+    toast.success("📁 CSV exported.");
   };
 
   return (
     <div style={page}>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
+      {/* HEADER */}
       <header style={header}>
         <h1 style={title}>🌍 Employee Travel Dashboard</h1>
       </header>
 
-      <div style={uploadRow}>
-        <input
-          type="file"
-          accept=".xlsx,.xls,.csv"
-          onChange={handleFileChange}
-          style={fileInput}
-        />
-        <button onClick={uploadFile} disabled={loading} style={primaryBtn}>
-          {loading ? "Processing..." : "Upload File"}
-        </button>
-        <button
-          onClick={() => {
-            setItems([]);
-            setSummary(null);
-            setFile(null);
-            toast.info("Data cleared.");
-          }}
-          style={secondaryBtn}
-        >
-          Clear
-        </button>
-      </div>
-
-      <div style={summaryGrid}>
-        <div style={summaryCard}>
-          <div style={summaryLabel}>Total Rows</div>
-          <div style={summaryValue}>{summary?.rows_received ?? items.length}</div>
-        </div>
-        <div style={summaryCard}>
-          <div style={summaryLabel}>Active Travelers</div>
-          <div style={summaryValue}>
-            {summary?.active_now_count ?? safeItems.filter((r) => r.active_now).length}
+      <div style={layout}>
+        {/* LEFT PANEL */}
+        <aside style={sidebar}>
+          <div style={sideCard}>
+            <h3 style={sideTitle}>📊 Overview</h3>
+            <div style={sideStat}>
+              <span>Total Travelers:</span>
+              <strong>{safeItems.length}</strong>
+            </div>
+            <div style={sideStat}>
+              <span>Active Now:</span>
+              <strong>{safeItems.filter((r) => r.active_now).length}</strong>
+            </div>
+            <div style={sideStat}>
+              <span>Countries:</span>
+              <strong>{countries.length}</strong>
+            </div>
+            <div style={sideStat}>
+              <span>Travel Types:</span>
+              <strong>{legTypes.length}</strong>
+            </div>
           </div>
-        </div>
-        <div style={summaryCard}>
-          <div style={summaryLabel}>Countries</div>
-          <div style={summaryValue}>{countries.length}</div>
-        </div>
-        <div style={summaryCard}>
-          <div style={summaryLabel}>Travel Types</div>
-          <div style={summaryValue}>{legTypes.length}</div>
-        </div>
-      </div>
 
-      <div style={filtersRow}>
-        <input
-          placeholder="🔍 Search name or email..."
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          style={searchInput}
-        />
-        <select
-          value={filters.country}
-          onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-          style={select}
-        >
-          <option value="">All Countries</option>
-          {countries.map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-        <select
-          value={filters.legType}
-          onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
-          style={select}
-        >
-          <option value="">All Travel Types</option>
-          {legTypes.map((t) => (
-            <option key={t}>{t}</option>
-          ))}
-        </select>
-        <button onClick={exportCsv} style={ghostBtn}>
-          ⬇ Export CSV
-        </button>
-      </div>
-
-      <div style={tableWrap}>
-        <table style={table}>
-          <thead style={thead}>
-            <tr>
-              <th style={th}>Active</th>
-              <th style={th}>Name</th>
-              <th style={th}>Email</th>
-              <th style={th}>Type</th>
-              <th style={th}>From</th>
-              <th style={th}>To</th>
-              <th style={th}>Begin</th>
-              <th style={th}>End</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan="8" style={emptyRow}>
-                  No matching results. Upload a file or adjust filters.
-                </td>
-              </tr>
+          <div style={sideCard}>
+            <h3 style={sideTitle}>🌎 Country-wise Travelers</h3>
+            {countryStats.length === 0 ? (
+              <p style={sideEmpty}>No data yet</p>
             ) : (
-              filtered.map((r, i) => (
-                <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
-                  <td style={td}>{r.active_now ? "✅" : ""}</td>
-                  <td style={td}>
-                    {r.first_name} {r.last_name}
-                  </td>
-                  <td style={td}>{r.email}</td>
-                  <td style={td}>{r.leg_type}</td>
-                  <td style={td}>{r.from_country}</td>
-                  <td style={td}>{r.to_country}</td>
-                  <td style={td}>{fmt(r.begin_dt)}</td>
-                  <td style={td}>{fmt(r.end_dt)}</td>
-                </tr>
-              ))
+              <ul style={countryList}>
+                {countryStats.map((c) => (
+                  <li key={c.country} style={countryItem}>
+                    <span>{c.country}</span>
+                    <strong>{c.count}</strong>
+                  </li>
+                ))}
+              </ul>
             )}
-          </tbody>
-        </table>
+          </div>
+        </aside>
+
+        {/* RIGHT PANEL */}
+        <main style={main}>
+          <div style={uploadRow}>
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileChange}
+              style={fileInput}
+            />
+            <button onClick={uploadFile} disabled={loading} style={primaryBtn}>
+              {loading ? "Processing..." : "Upload File"}
+            </button>
+            <button
+              onClick={() => {
+                setItems([]);
+                setSummary({});
+                setFile(null);
+                toast.info("Data cleared.");
+              }}
+              style={secondaryBtn}
+            >
+              Clear
+            </button>
+            <button onClick={exportCsv} style={ghostBtn}>
+              ⬇ Export CSV
+            </button>
+          </div>
+
+          <div style={filtersRow}>
+            <input
+              placeholder="🔍 Search name or email..."
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              style={searchInput}
+            />
+            <select
+              value={filters.country}
+              onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+              style={select}
+            >
+              <option value="">All Countries</option>
+              {countries.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={filters.legType}
+              onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
+              style={select}
+            >
+              <option value="">All Travel Types</option>
+              {legTypes.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={tableWrap}>
+            <table style={table}>
+              <thead style={thead}>
+                <tr>
+                  <th style={th}>Active</th>
+                  <th style={th}>Name</th>
+                  <th style={th}>Email</th>
+                  <th style={th}>Type</th>
+                  <th style={th}>From</th>
+                  <th style={th}>To</th>
+                  <th style={th}>Begin</th>
+                  <th style={th}>End</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" style={emptyRow}>
+                      No matching results. Upload a file or adjust filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((r, i) => (
+                    <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
+                      <td style={td}>{r.active_now ? "✅" : ""}</td>
+                      <td style={td}>
+                        {r.first_name} {r.last_name}
+                      </td>
+                      <td style={td}>{r.email}</td>
+                      <td style={td}>{r.leg_type}</td>
+                      <td style={td}>{r.from_country}</td>
+                      <td style={td}>{r.to_country}</td>
+                      <td style={td}>{fmt(r.begin_dt)}</td>
+                      <td style={td}>{fmt(r.end_dt)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </main>
       </div>
     </div>
   );
@@ -221,44 +251,61 @@ const EmployeeTravelDashboard = () => {
 
 /* === STYLES === */
 const page = {
-  backgroundColor: "#f8fafc",
+  backgroundColor: "#f9fafb",
   minHeight: "100vh",
-  padding: "30px",
+  padding: "20px",
   color: "#1e293b",
   fontFamily: "'Inter', system-ui, sans-serif",
+};
+const header = { textAlign: "center", marginBottom: "25px" };
+const title = { fontSize: "2rem", fontWeight: 700, color: "#0f172a" };
+const layout = {
+  display: "flex",
+  gap: "20px",
+  alignItems: "flex-start",
+  justifyContent: "center",
+  flexWrap: "wrap",
+};
+const sidebar = {
+  flex: "0 0 280px",
   display: "flex",
   flexDirection: "column",
-  alignItems: "center",
+  gap: "20px",
 };
-
-const header = {
-  width: "100%",
-  maxWidth: "1200px",
-  marginBottom: "20px",
-  textAlign: "center",
+const main = { flex: "1 1 700px", maxWidth: "900px" };
+const sideCard = {
+  background: "#fff",
+  borderRadius: "16px",
+  padding: "16px 20px",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
 };
-
-const title = {
-  fontSize: "2rem",
-  fontWeight: 700,
-  color: "#0f172a",
+const sideTitle = { fontSize: "1.1rem", fontWeight: 600, marginBottom: "10px" };
+const sideStat = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginBottom: "6px",
+  fontSize: "0.95rem",
 };
-
+const sideEmpty = { color: "#94a3b8", fontStyle: "italic" };
+const countryList = { listStyle: "none", padding: 0, margin: 0 };
+const countryItem = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "4px 0",
+  borderBottom: "1px solid #f1f5f9",
+};
 const uploadRow = {
   display: "flex",
   flexWrap: "wrap",
   gap: "10px",
   marginBottom: "20px",
-  justifyContent: "center",
 };
-
 const fileInput = {
   padding: "8px",
   borderRadius: "8px",
   border: "1px solid #cbd5e1",
   background: "#fff",
 };
-
 const primaryBtn = {
   background: "#2563eb",
   color: "#fff",
@@ -268,7 +315,6 @@ const primaryBtn = {
   cursor: "pointer",
   fontWeight: 600,
 };
-
 const secondaryBtn = {
   background: "#f1f5f9",
   border: "none",
@@ -277,46 +323,19 @@ const secondaryBtn = {
   cursor: "pointer",
   color: "#1e293b",
 };
-
 const ghostBtn = {
   background: "transparent",
   border: "1px solid #cbd5e1",
   padding: "8px 16px",
   borderRadius: "8px",
   cursor: "pointer",
-  color: "#1e293b",
 };
-
-const summaryGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: "12px",
-  marginBottom: "20px",
-  width: "100%",
-  maxWidth: "1200px",
-};
-
-const summaryCard = {
-  background: "#fff",
-  borderRadius: "12px",
-  padding: "16px",
-  textAlign: "center",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-};
-
-const summaryLabel = { fontSize: "0.9rem", color: "#64748b" };
-const summaryValue = { fontSize: "1.5rem", fontWeight: 700, color: "#0f172a" };
-
 const filtersRow = {
   display: "flex",
   flexWrap: "wrap",
   gap: "10px",
-  marginBottom: "15px",
-  justifyContent: "center",
-  width: "100%",
-  maxWidth: "1200px",
+  marginBottom: "10px",
 };
-
 const searchInput = {
   flex: 1,
   minWidth: "250px",
@@ -324,29 +343,18 @@ const searchInput = {
   borderRadius: "8px",
   border: "1px solid #cbd5e1",
 };
-
 const select = {
   padding: "10px",
   borderRadius: "8px",
   border: "1px solid #cbd5e1",
   background: "#fff",
-  minWidth: "160px",
 };
-
 const tableWrap = {
   overflowX: "auto",
-  width: "100%",
-  maxWidth: "1200px",
   borderRadius: "12px",
   boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
 };
-
-const table = {
-  width: "100%",
-  borderCollapse: "collapse",
-  background: "#fff",
-};
-
+const table = { width: "100%", borderCollapse: "collapse", background: "#fff" };
 const thead = { background: "#f1f5f9" };
 const th = {
   padding: "12px 16px",
