@@ -1,11 +1,22 @@
-can you desing this dashboard more atracitve and professla desing, 
-  use reals icons. 
-  and i want this dashboard wiht more professal desing and clean and atractive 
-
 import React, { useState, useMemo } from "react";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  Upload,
+  FileSpreadsheet,
+  Download,
+  Trash2,
+  Search,
+  Plane,
+  Users,
+  Globe,
+  MapPin,
+} from "lucide-react";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const fmt = (iso) => {
   if (!iso) return "";
@@ -17,7 +28,7 @@ const fmt = (iso) => {
   }
 };
 
-const EmployeeTravelDashboard = () => {
+export default function EmployeeTravelDashboard() {
   const [file, setFile] = useState(null);
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState({});
@@ -40,10 +51,9 @@ const EmployeeTravelDashboard = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const payload = res.data || {};
-      const rows = payload.items || [];
-      setItems(rows);
+      setItems(payload.items || []);
       setSummary(payload.summary || {});
-      toast.success(`✅ Uploaded successfully. ${rows.length} records found.`);
+      toast.success(`✅ Uploaded successfully. ${payload.items.length} records found.`);
     } catch (err) {
       console.error(err);
       toast.error("❌ Upload failed. Please check the backend or file format.");
@@ -102,145 +112,159 @@ const EmployeeTravelDashboard = () => {
   };
 
   return (
-    <div style={page}>
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-6">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
       {/* HEADER */}
-      <header style={header}>
-        <h1 style={title}>🌍 Employee Travel Dashboard</h1>
+      <header className="text-center mb-8">
+        <h1 className="text-3xl font-bold flex items-center justify-center gap-2 text-slate-900">
+          <Globe className="w-8 h-8 text-blue-600" />
+          Employee Travel Dashboard
+        </h1>
+        <p className="text-slate-500 text-sm mt-1">Monitor, filter, and export employee travel data easily.</p>
       </header>
 
-      <div style={layout}>
-        {/* LEFT PANEL */}
-        <aside style={sidebar}>
-          <div style={sideCard}>
-            <h3 style={sideTitle}>📊 Overview</h3>
-            <div style={sideStat}>
-              <span>Total Travelers:</span>
-              <strong>{safeItems.length}</strong>
-            </div>
-            <div style={sideStat}>
-              <span>Active Now:</span>
-              <strong>{safeItems.filter((r) => r.active_now).length}</strong>
-            </div>
-            <div style={sideStat}>
-              <span>Countries:</span>
-              <strong>{countries.length}</strong>
-            </div>
-            <div style={sideStat}>
-              <span>Travel Types:</span>
-              <strong>{legTypes.length}</strong>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* SIDEBAR */}
+        <div className="space-y-6 md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Users className="w-5 h-5" />
+                Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex justify-between"><span>Total Travelers</span><strong>{safeItems.length}</strong></div>
+              <div className="flex justify-between"><span>Active Now</span><strong>{safeItems.filter((r) => r.active_now).length}</strong></div>
+              <div className="flex justify-between"><span>Countries</span><strong>{countries.length}</strong></div>
+              <div className="flex justify-between"><span>Travel Types</span><strong>{legTypes.length}</strong></div>
+            </CardContent>
+          </Card>
 
-          <div style={sideCard}>
-            <h3 style={sideTitle}>🌎 Country-wise Travelers</h3>
-            {countryStats.length === 0 ? (
-              <p style={sideEmpty}>No data yet</p>
-            ) : (
-              <ul style={countryList}>
-                {countryStats.map((c) => (
-                  <li key={c.country} style={countryItem}>
-                    <span>{c.country}</span>
-                    <strong>{c.count}</strong>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <MapPin className="w-5 h-5" />
+                Country-wise Travelers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {countryStats.length === 0 ? (
+                <p className="text-slate-400 text-sm italic">No data yet</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 text-sm">
+                  {countryStats.map((c) => (
+                    <li key={c.country} className="flex justify-between py-1">
+                      <span>{c.country}</span>
+                      <strong>{c.count}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* RIGHT PANEL */}
-        <main style={main}>
-          <div style={uploadRow}>
-            <input
+        {/* MAIN CONTENT */}
+        <main className="md:col-span-3 space-y-6">
+          {/* Upload + Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <Input
               type="file"
               accept=".xlsx,.xls,.csv"
               onChange={handleFileChange}
-              style={fileInput}
+              className="flex-1 min-w-[220px]"
             />
-            <button onClick={uploadFile} disabled={loading} style={primaryBtn}>
-              {loading ? "Processing..." : "Upload File"}
-            </button>
-            <button
-              onClick={() => {
-                setItems([]);
-                setSummary({});
-                setFile(null);
-                toast.info("Data cleared.");
-              }}
-              style={secondaryBtn}
-            >
-              Clear
-            </button>
-            <button onClick={exportCsv} style={ghostBtn}>
-              ⬇ Export CSV
-            </button>
+            <Button onClick={uploadFile} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              <Upload className="w-4 h-4 mr-1" /> {loading ? "Processing..." : "Upload File"}
+            </Button>
+            <Button variant="secondary" onClick={() => { setItems([]); setSummary({}); setFile(null); toast.info("Data cleared."); }}>
+              <Trash2 className="w-4 h-4 mr-1" /> Clear
+            </Button>
+            <Button variant="outline" onClick={exportCsv}>
+              <Download className="w-4 h-4 mr-1" /> Export CSV
+            </Button>
           </div>
 
-          <div style={filtersRow}>
-            <input
-              placeholder="🔍 Search name or email..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              style={searchInput}
-            />
-            <select
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
+              <Input
+                placeholder="Search name or email..."
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                className="pl-9"
+              />
+            </div>
+
+            <Select
               value={filters.country}
-              onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-              style={select}
+              onValueChange={(v) => setFilters({ ...filters, country: v })}
             >
-              <option value="">All Countries</option>
-              {countries.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-            <select
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All Countries" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Countries</SelectItem>
+                {countries.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
               value={filters.legType}
-              onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
-              style={select}
+              onValueChange={(v) => setFilters({ ...filters, legType: v })}
             >
-              <option value="">All Travel Types</option>
-              {legTypes.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All Travel Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Travel Types</SelectItem>
+                {legTypes.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div style={tableWrap}>
-            <table style={table}>
-              <thead style={thead}>
+          {/* Data Table */}
+          <div className="overflow-x-auto rounded-xl shadow bg-white">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100 text-slate-700 text-left">
                 <tr>
-                  <th style={th}>Active</th>
-                  <th style={th}>Name</th>
-                  <th style={th}>Email</th>
-                  <th style={th}>Type</th>
-                  <th style={th}>From</th>
-                  <th style={th}>To</th>
-                  <th style={th}>Begin</th>
-                  <th style={th}>End</th>
+                  <th className="px-4 py-3">Active</th>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">From</th>
+                  <th className="px-4 py-3">To</th>
+                  <th className="px-4 py-3">Begin</th>
+                  <th className="px-4 py-3">End</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="8" style={emptyRow}>
+                    <td colSpan="8" className="text-center py-6 text-slate-400">
                       No matching results. Upload a file or adjust filters.
                     </td>
                   </tr>
                 ) : (
                   filtered.map((r, i) => (
-                    <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
-                      <td style={td}>{r.active_now ? "✅" : ""}</td>
-                      <td style={td}>
+                    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                      <td className="px-4 py-2">{r.active_now ? "✅" : ""}</td>
+                      <td className="px-4 py-2 font-medium">
                         {r.first_name} {r.last_name}
                       </td>
-                      <td style={td}>{r.email}</td>
-                      <td style={td}>{r.leg_type}</td>
-                      <td style={td}>{r.from_country}</td>
-                      <td style={td}>{r.to_country}</td>
-                      <td style={td}>{fmt(r.begin_dt)}</td>
-                      <td style={td}>{fmt(r.end_dt)}</td>
+                      <td className="px-4 py-2">{r.email}</td>
+                      <td className="px-4 py-2">{r.leg_type}</td>
+                      <td className="px-4 py-2">{r.from_country}</td>
+                      <td className="px-4 py-2">{r.to_country}</td>
+                      <td className="px-4 py-2">{fmt(r.begin_dt)}</td>
+                      <td className="px-4 py-2">{fmt(r.end_dt)}</td>
                     </tr>
                   ))
                 )}
@@ -251,129 +275,4 @@ const EmployeeTravelDashboard = () => {
       </div>
     </div>
   );
-};
-
-/* === STYLES === */
-const page = {
-  backgroundColor: "#f9fafb",
-  minHeight: "100vh",
-  padding: "20px",
-  color: "#1e293b",
-  fontFamily: "'Inter', system-ui, sans-serif",
-};
-const header = { textAlign: "center", marginBottom: "25px" };
-const title = { fontSize: "2rem", fontWeight: 700, color: "#0f172a" };
-const layout = {
-  display: "flex",
-  gap: "20px",
-  alignItems: "flex-start",
-  justifyContent: "center",
-  flexWrap: "wrap",
-};
-const sidebar = {
-  flex: "0 0 280px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "20px",
-};
-const main = { flex: "1 1 700px", maxWidth: "900px" };
-const sideCard = {
-  background: "#fff",
-  borderRadius: "16px",
-  padding: "16px 20px",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-};
-const sideTitle = { fontSize: "1.1rem", fontWeight: 600, marginBottom: "10px" };
-const sideStat = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: "6px",
-  fontSize: "0.95rem",
-};
-const sideEmpty = { color: "#94a3b8", fontStyle: "italic" };
-const countryList = { listStyle: "none", padding: 0, margin: 0 };
-const countryItem = {
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "4px 0",
-  borderBottom: "1px solid #f1f5f9",
-};
-const uploadRow = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "10px",
-  marginBottom: "20px",
-};
-const fileInput = {
-  padding: "8px",
-  borderRadius: "8px",
-  border: "1px solid #cbd5e1",
-  background: "#fff",
-};
-const primaryBtn = {
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  padding: "8px 16px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: 600,
-};
-const secondaryBtn = {
-  background: "#f1f5f9",
-  border: "none",
-  padding: "8px 16px",
-  borderRadius: "8px",
-  cursor: "pointer",
-  color: "#1e293b",
-};
-const ghostBtn = {
-  background: "transparent",
-  border: "1px solid #cbd5e1",
-  padding: "8px 16px",
-  borderRadius: "8px",
-  cursor: "pointer",
-};
-const filtersRow = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "10px",
-  marginBottom: "10px",
-};
-const searchInput = {
-  flex: 1,
-  minWidth: "250px",
-  padding: "10px",
-  borderRadius: "8px",
-  border: "1px solid #cbd5e1",
-};
-const select = {
-  padding: "10px",
-  borderRadius: "8px",
-  border: "1px solid #cbd5e1",
-  background: "#fff",
-};
-const tableWrap = {
-  overflowX: "auto",
-  borderRadius: "12px",
-  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-};
-const table = { width: "100%", borderCollapse: "collapse", background: "#fff" };
-const thead = { background: "#f1f5f9" };
-const th = {
-  padding: "12px 16px",
-  textAlign: "left",
-  fontWeight: 600,
-  color: "#1e293b",
-  borderBottom: "2px solid #e2e8f0",
-};
-const td = {
-  padding: "10px 16px",
-  borderBottom: "1px solid #e2e8f0",
-  color: "#334155",
-};
-const rowEven = { background: "#fff" };
-const rowOdd = { background: "#f8fafc" };
-const emptyRow = { textAlign: "center", padding: "18px", color: "#64748b" };
-
-export default EmployeeTravelDashboard;
+}
