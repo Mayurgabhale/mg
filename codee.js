@@ -1,19 +1,10 @@
-{
-  "detail": [
-    {
-      "type": "value_error",
-      "loc": [
-        "body",
-        "file"
-      ],
-      "msg": "Value error, Expected UploadFile, received: <class 'str'>",
-      "input": "string",
-      "ctx": {
-        "error": {}
-      }
-    }
-  ]
-}
+EMPLOYEES_TRAVELING_TODAY-202510280514.csv
+know, this is today, but i want ot see past how to do this ,
+any date that i was upload, 
+  and if alread upload then that type message, 
+  but first chekc all data are same then message alread uploaded ok like that.
+
+  
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
