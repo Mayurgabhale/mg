@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -92,6 +91,34 @@ async def upload_excel(file: UploadFile = File(...)):
     # ✅ Replace problematic NaN/inf values
     clean_df = clean_df.replace([np.nan, np.inf, -np.inf, pd.NaT], None)
 
+    # 🧹 Smart cleanup: remove empty and footer/metadata rows
+    import re
+
+    original_row_count = len(clean_df)
+
+    def is_footer_row(row):
+        combined = " ".join(str(v) for v in row.values if v is not None).lower()
+        footer_patterns = [
+            r"copyright", r"all rights reserved", r"gardaworld", r"utc",
+            r"\b\d{1,2}-[a-z]{3}-\d{4}\b"
+        ]
+        return any(re.search(p, combined) for p in footer_patterns)
+
+    # Drop completely empty rows
+    clean_df = clean_df.dropna(how="all")
+
+    # Drop rows that match footer patterns anywhere
+    clean_df = clean_df[~clean_df.apply(is_footer_row, axis=1)]
+
+    # Drop rows missing all key traveler identifiers
+    clean_df = clean_df[
+        clean_df["FIRST NAME"].notna() |
+        clean_df["LAST NAME"].notna() |
+        clean_df["EMAIL"].notna()
+    ]
+
+    removed_rows = original_row_count - len(clean_df)
+
     def row_to_obj(i, row):
         return {
             'index': int(i),
@@ -116,6 +143,7 @@ async def upload_excel(file: UploadFile = File(...)):
 
     summary = {
         'rows_received': len(clean_df),
+        'rows_removed_as_footer_or_empty': removed_rows,
         'rows_with_parse_errors': int(clean_df['BEGIN_DT'].isna().sum() + clean_df['END_DT'].isna().sum()),
         'active_now_count': int(clean_df['active_now'].sum())
     }
