@@ -3,6 +3,7 @@ I am starting a new project called Employee Travel Dashboard. In this project, u
   or other criteria, making it easy to track where employees are currently traveling or plan to travel in the future. 
   This project will help companies enhance employee security, monitor travel activity, and quickly identify travelers’ locations for safety and coordination purposes.
 
+  
   AGENCY ID	AGENCY NAME	LAST NAME	FIRST NAME	TRAVELER 	EMP ID	EMAIL	PNR	LEG TYPE	BEGIN DATE	FROM LOCATION	FROM COUNTRY	END DATE	TO LOCATION	TO COUNTRY
 728776	Western Union - Costa Rica	ORTIZ	JESSICA	TRAVELER	303012	jessica.ortizaraya@westernunion.com	WRAAAK	AIR	10/28/2025 19:31	Denver, Colorado	United States	10/28/2025 22:57	Houston, Texas	United States
 728775	Western Union - Argentina	MATTA	MATIAS	TRAVELER	328263	matias.matta@westernunion.com	JLIAFU	AIR	10/28/2025 5:15	Buenos Aires, Ciudad de Buenos Aires	Argentina	10/28/2025 7:15	Argentina	Argentina
