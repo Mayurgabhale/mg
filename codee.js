@@ -1,11 +1,22 @@
-{loading && (
-  <div style={overlayStyle}>
-    <Player
-      autoplay
-      loop
-      src="https://lottie.host/2f8b6c6e-bb9a-4cc9-9b29-2e79a3cc1884/1F5iALqUxl.json"
-      style={{ height: "160px", width: "160px" }}
-    />
-    <p style={overlayText}>Loading, please wait...</p>
-  </div>
-)}
+const overlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(255, 255, 255, 0.85)",
+  zIndex: 9999,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  transition: "opacity 0.3s ease",
+  backdropFilter: "blur(4px)",
+};
+
+const overlayText = {
+  marginTop: "16px",
+  fontSize: "18px",
+  color: "#1e293b",
+  fontWeight: 500,
+};
