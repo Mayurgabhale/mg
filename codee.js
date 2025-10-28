@@ -1,131 +1,63 @@
-import React from "react";
+Overview
+Total Travelers
+102
+Active Now
+87
+Countries
+18
+Travel Types
+4
 
-export default function PageLoader({ loading }) {
-  if (!loading) return null;
+totla trvalers only 100
+but in this tow show extracal count for this reason 
+one is emptyr row and secitn is this 28-Oct-2025 05:14 UTC Copyright GardaWorld 2000-2025. All rights reserved.			 
+  so how ot do this for correct count 
+728671	Western Union - United States	WHALEN	KAREN	TRAVELER	324994	karen.whalen@westernunion.com	GMKNTB	STOP	10/23/2025 19:48	New York City, New York	United States	11-09-2025 12.09	New York City, New York	United States
+728671	Western Union - United States	WYNNE	ADAM	TRAVELER	326332	adam.wynne@westernunion.com	ACWXUV	HOTEL	10/27/2025 0:00	Oakland, California	United States	10/29/2025 0:00	Oakland, California	United States
+728671	Western Union - United States	WYNNE	ADAM	TRAVELER	326332	adam.wynne@westernunion.com	ACWXUV	CAR	10/27/2025 12:00	Oakland, California	United States	10/29/2025 17:00	Oakland, California	United States
+														
+28-Oct-2025 05:14 UTC Copyright GardaWorld 2000-2025. All rights reserved.														
 
-  return (
-    <div style={styles.overlay}>
-      <span style={styles.loader}></span>
-      <p style={styles.text}>Processing, please wait...</p>
-      <style>{keyframes}</style>
-    </div>
-  );
+
+
+  
+{
+      "index": 100,
+      "agency_id": null,
+      "agency_name": null,
+      "first_name": null,
+      "last_name": null,
+      "emp_id": null,
+      "email": null,
+      "pnr": null,
+      "leg_type": null,
+      "begin_dt": null,
+      "end_dt": null,
+      "from_location": null,
+      "from_country": null,
+      "to_location": null,
+      "to_country": null,
+      "active_now": false
+    },
+    {
+      "index": 101,
+      "agency_id": "28-Oct-2025 05:14 UTC Copyright GardaWorld 2000-2025. All rights reserved.",
+      "agency_name": null,
+      "first_name": null,
+      "last_name": null,
+      "emp_id": null,
+      "email": null,
+      "pnr": null,
+      "leg_type": null,
+      "begin_dt": null,
+      "end_dt": null,
+      "from_location": null,
+      "from_country": null,
+      "to_location": null,
+      "to_country": null,
+      "active_now": false
+    }
+  ]
 }
-
-const styles = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0,0,0,0.4)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999,
-    color: "#fff",
-    fontSize: "16px",
-    backdropFilter: "blur(4px)",
-  },
-  loader: {
-    fontSize: "10px",
-    width: "1em",
-    height: "1em",
-    borderRadius: "50%",
-    position: "relative",
-    textIndent: "-9999em",
-    animation: "mulShdSpin 1.1s infinite ease",
-    transform: "translateZ(0)",
-  },
-  text: {
-    marginTop: "12px",
-  },
-};
-
-// Keyframes as string since inline styles can’t define them directly
-const keyframes = `
-@keyframes mulShdSpin {
-  0%, 100% {
-    box-shadow: 0em -2.6em 0em 0em #ffffff,
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.2),
-      2.5em 0em 0 0em rgba(255,255,255, 0.2),
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.2),
-      0em 2.5em 0 0em rgba(255,255,255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.2),
-      -2.6em 0em 0 0em rgba(255,255,255, 0.5),
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.7);
-  }
-  12.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.7),
-      1.8em -1.8em 0 0em #ffffff,
-      2.5em 0em 0 0em rgba(255,255,255, 0.2),
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.2),
-      0em 2.5em 0 0em rgba(255,255,255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.2),
-      -2.6em 0em 0 0em rgba(255,255,255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.5);
-  }
-  25% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.5),
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.7),
-      2.5em 0em 0 0em #ffffff,
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.2),
-      0em 2.5em 0 0em rgba(255,255,255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.2),
-      -2.6em 0em 0 0em rgba(255,255,255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  37.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2),
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.5),
-      2.5em 0em 0 0em rgba(255,255,255, 0.7),
-      1.75em 1.75em 0 0em #ffffff,
-      0em 2.5em 0 0em rgba(255,255,255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.2),
-      -2.6em 0em 0 0em rgba(255,255,255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  50% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2),
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.2),
-      2.5em 0em 0 0em rgba(255,255,255, 0.5),
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.7),
-      0em 2.5em 0 0em #ffffff,
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.2),
-      -2.6em 0em 0 0em rgba(255,255,255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  62.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2),
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.2),
-      2.5em 0em 0 0em rgba(255,255,255, 0.2),
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.5),
-      0em 2.5em 0 0em rgba(255,255,255, 0.7),
-      -1.8em 1.8em 0 0em #ffffff,
-      -2.6em 0em 0 0em rgba(255,255,255, 0.2),
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  75% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2),
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.2),
-      2.5em 0em 0 0em rgba(255,255,255, 0.2),
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.2),
-      0em 2.5em 0 0em rgba(255,255,255, 0.5),
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.7),
-      -2.6em 0em 0 0em #ffffff,
-      -1.8em -1.8em 0 0em rgba(255,255,255, 0.2);
-  }
-  87.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(255,255,255, 0.2),
-      1.8em -1.8em 0 0em rgba(255,255,255, 0.2),
-      2.5em 0em 0 0em rgba(255,255,255, 0.2),
-      1.75em 1.75em 0 0em rgba(255,255,255, 0.2),
-      0em 2.5em 0 0em rgba(255,255,255, 0.2),
-      -1.8em 1.8em 0 0em rgba(255,255,255, 0.5),
-      -2.6em 0em 0 0em rgba(255,255,255, 0.7),
-      -1.8em -1.8em 0 0em #ffffff;
-  }
-}
-`;
+Response headers
+ access-control-allow-credentials: true 
