@@ -1,7 +1,3 @@
-I am starting a new project called Employee Travel Dashboard. In this project, users will be able to upload an Excel sheet containing employee travel details such as agency name, employee ID, email, travel type, dates, and locations. 
-  The system will automatically read, analyze, and display this data on a single interactive dashboard page. The dashboard will allow users to filter and search travel information by country, city, employee, date, 
-  or other criteria, making it easy to track where employees are currently traveling or plan to travel in the future. 
-  This project will help companies enhance employee security, monitor travel activity, and quickly identify travelers’ locations for safety and coordination purposes.
 
   
   AGENCY ID	AGENCY NAME	LAST NAME	FIRST NAME	TRAVELER 	EMP ID	EMAIL	PNR	LEG TYPE	BEGIN DATE	FROM LOCATION	FROM COUNTRY	END DATE	TO LOCATION	TO COUNTRY
