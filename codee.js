@@ -1,209 +1,208 @@
-/* === EmployeeTravelDashboard.css === */
+const searchWrapper = {
+  position: "relative",
+  flex: "1",
+  minWidth: "250px",
+};
 
-.page {
-  background-color: #f8fafc;
-  min-height: 100vh;
-  padding: 24px;
-  color: #1e293b;
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-  line-height: 1.5;
-}
+const searchIcon = {
+  position: "absolute",
+  left: "12px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  color: "#9ca3af",
+  fontSize: "18px",
+};
 
-/* Header */
-.header {
-  margin-bottom: 32px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+const searchInput = {
+  width: "100%",
+  padding: "12px 12px 12px 40px",
+  borderRadius: "10px",
+  border: "1px solid #d1d5db",
+  background: "#ffffff",
+  fontSize: "14px",
+  transition: "all 0.2s ease",
+};
 
-.header-icon {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: white;
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+const select = {
+  padding: "12px 16px",
+  borderRadius: "10px",
+  border: "1px solid #d1d5db",
+  background: "#ffffff",
+  fontSize: "14px",
+  minWidth: "160px",
+  flex: "1",
+};
 
-.header-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
+const tableSection = {
+  marginTop: "8px",
+};
 
-.header-subtitle {
-  font-size: 16px;
-  color: #64748b;
-}
+const tableHeader = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: "16px",
+};
 
-/* Layout */
-.layout {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+const tableTitle = {
+  fontSize: "18px",
+  fontWeight: 600,
+  color: "#1e293b",
+  margin: 0,
+};
 
-/* Sidebar */
-.sidebar {
-  flex: 0 0 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+const tableBadge = {
+  background: "#eff6ff",
+  color: "#1d4ed8",
+  padding: "6px 12px",
+  borderRadius: "20px",
+  fontSize: "14px",
+  fontWeight: 600,
+};
 
-.side-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  border: 1px solid #e2e8f0;
-}
+const tableWrap = {
+  overflowX: "auto",
+  borderRadius: "12px",
+  border: "1px solid #e2e8f0",
+  boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+};
 
-.side-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
+const table = {
+  width: "100%",
+  borderCollapse: "collapse",
+  background: "#ffffff",
+  minWidth: "1000px",
+};
 
-.side-empty {
-  color: #9ca3af;
-  font-size: 14px;
-  text-align: center;
-}
+const thead = {
+  background: "#f8fafc",
+};
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px;
-  color: #9ca3af;
-}
+const th = {
+  padding: "16px 20px",
+  textAlign: "left",
+  fontWeight: 600,
+  color: "#374151",
+  borderBottom: "1px solid #e2e8f0",
+  fontSize: "14px",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+};
 
-/* Table */
-.table-section {
-  margin-top: 24px;
-}
+const td = {
+  padding: "16px 20px",
+  borderBottom: "1px solid #f1f5f9",
+  color: "#374151",
+  fontSize: "14px",
+};
 
-.table-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
+const rowEven = {
+  background: "#ffffff",
+};
 
-.table-title {
-  font-size: 18px;
-  font-weight: 600;
-}
+const rowOdd = {
+  background: "#f8fafc",
+};
 
-.table-badge {
-  background: #eff6ff;
-  color: #1d4ed8;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 14px;
-}
+const emptyRow = {
+  textAlign: "center",
+  padding: "60px 20px",
+  color: "#6b7280",
+};
 
-.table-wrap {
-  overflow-x: auto;
-}
+const emptyState = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+};
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
+const sideEmpty = {
+  color: "#9ca3af",
+  fontSize: "14px",
+  textAlign: "center",
+  margin: 0,
+};
 
-.table th,
-.table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
-  color: #374151;
-}
+const emptySubtext = {
+  color: "#9ca3af",
+  fontSize: "14px",
+  margin: "4px 0 0 0",
+};
 
-.table tr:nth-child(even) {
-  background: #f9fafb;
-}
+const activeBadge = {
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  background: "#dcfce7",
+  color: "#166534",
+  padding: "6px 10px",
+  borderRadius: "20px",
+  fontSize: "12px",
+  fontWeight: 500,
+  width: "fit-content",
+};
 
-.empty-row {
-  text-align: center;
-  color: #9ca3af;
-  padding: 24px;
-}
+const inactiveBadge = {
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  background: "#fef2f2",
+  color: "#991b1b",
+  padding: "6px 10px",
+  borderRadius: "20px",
+  fontSize: "12px",
+  fontWeight: 500,
+  width: "fit-content",
+};
 
-/* Badges */
-.active-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #dcfce7;
-  color: #16a34a;
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 13px;
-  font-weight: 600;
-}
+const userCell = {
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+};
 
-.inactive-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #fee2e2;
-  color: #b91c1c;
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 13px;
-  font-weight: 600;
-}
+const avatar = {
+  width: "32px",
+  height: "32px",
+  borderRadius: "50%",
+  background: "#eff6ff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#3b82f6",
+  fontSize: "14px",
+};
 
-.type-badge {
-  background: #fef3c7;
-  color: #92400e;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-}
+const emailCell = {
+  display: "flex",
+  alignItems: "center",
+};
 
-.user-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+const typeBadge = {
+  background: "#fef3c7",
+  color: "#92400e",
+  padding: "6px 12px",
+  borderRadius: "20px",
+  fontSize: "12px",
+  fontWeight: 500,
+};
 
-.avatar {
-  background: #e0e7ff;
-  color: #1e3a8a;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+const dateCell = {
+  display: "flex",
+  alignItems: "center",
+};
 
-.email-cell {
-  display: flex;
-  align-items: center;
-  color: #6b7280;
+// Add CSS animation for spinner
+const styles = `
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
+`;
 
-.date-cell {
-  display: flex;
-  align-items: center;
-  color: #6b7280;
-  font-size: 13px;
-}
+// Inject styles
+const styleSheet = document.styleSheets[0];
+styleSheet.insertRule(styles, styleSheet.cssRules.length);
 
-.empty-subtext {
-  font-size: 13px;
-  color: #9ca3af;
-  margin-top: 4px;
-}
+export default EmployeeTravelDashboard;
