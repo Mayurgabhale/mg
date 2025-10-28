@@ -1,3 +1,6 @@
+import { Player } from "@lottiefiles/react-lottie-player";
+
+
 const overlayStyle = {
   position: "fixed",
   top: 0,
