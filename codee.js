@@ -1,45 +1,51 @@
-{loading && (
-  <div className="page-loader-overlay">
-    <span className="loader"></span>
-    <p>Processing, please wait...</p>
-  </div>
-)}
+import React from "react";
 
+export default function PageLoader({ loading }) {
+  if (!loading) return null;
 
-
-
-
-
-/* 🔵 Full page overlay */
-.page-loader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  color: #fff;
-  font-size: 16px;
-  backdrop-filter: blur(4px);
+  return (
+    <div style={styles.overlay}>
+      <span style={styles.loader}></span>
+      <p style={styles.text}>Processing, please wait...</p>
+      <style>{keyframes}</style>
+    </div>
+  );
 }
 
-/* ⚪ Spinning loader circle */
-.loader {
-  font-size: 10px;
-  width: 1em;
-  height: 1em;
-  border-radius: 50%;
-  position: relative;
-  text-indent: -9999em;
-  animation: mulShdSpin 1.1s infinite ease;
-  transform: translateZ(0);
-}
+const styles = {
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.4)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+    color: "#fff",
+    fontSize: "16px",
+    backdropFilter: "blur(4px)",
+  },
+  loader: {
+    fontSize: "10px",
+    width: "1em",
+    height: "1em",
+    borderRadius: "50%",
+    position: "relative",
+    textIndent: "-9999em",
+    animation: "mulShdSpin 1.1s infinite ease",
+    transform: "translateZ(0)",
+  },
+  text: {
+    marginTop: "12px",
+  },
+};
 
+// Keyframes as string since inline styles can’t define them directly
+const keyframes = `
 @keyframes mulShdSpin {
   0%, 100% {
     box-shadow: 0em -2.6em 0em 0em #ffffff,
@@ -122,3 +128,4 @@
       -1.8em -1.8em 0 0em #ffffff;
   }
 }
+`;
