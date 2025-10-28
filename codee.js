@@ -1,33 +1,8 @@
-npm install @import { Player } from "@lottiefiles/react-lottie-player";
-
-export default function LoadingOverlay() {
-  return (
-    <div style={overlayStyle}>
-      <Player
-        autoplay
-        loop
-        src="https://lottie.host/2f8b6c6e-bb9a-4cc9-9b29-2e79a3cc1884/1F5iALqUxl.json"
-        style={{ height: "160px", width: "160px" }}
-      />
-      <p style={overlayText}>Loading, please wait...</p>
-    </div>
-  );
-}
-
-const overlayStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(255,255,255,0.8)",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  backdropFilter: "blur(4px)",
-  zIndex: 9999,
-};
-
-const overlayText = {
-  marginTop: "16px",
-  fontSize: "18px",
-  color: "#1e293b",
-};
+https://lottie.host/2f8b6c6e-bb9a-4cc9-9b29-2e79a3cc1884/1F5iALqUxl.json
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<Error>
+<Code>AccessDenied</Code>
+<Message>Access Denied</Message>
+<RequestId>8ZP6S8RR8GV4XY77</RequestId>
+<HostId>nbtTWB0662cNab17Uq4KQQaiAc2NzefRiOU1ZH5pGs2grbWta5h28E6XvVUGBHZGwb5IWL7fuuY4zkoS9obMTE4CLDHxKkG90f+od4p/Kjk=</HostId>
+</Error>
