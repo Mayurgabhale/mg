@@ -1,43 +1,40 @@
+Today's Total Headcount
+825
+Today's Employees Count
+788
+Today's Contractors Count
+37
 
-// replace:
-if (!live || !history) return <LoadingSpinner />;
-const today  = history.summaryByDate.at(-1).region;
 
-// with:
+
+above is wrong count... 
+
+ this wrong count is display 
+whne i updat  this --
+// if (!live || !history) return <LoadingSpinner />;
+  // const today  = history.summaryByDate.at(-1).region;
+ot this ---
 if (!live) return <LoadingSpinner />;
 const today = live.today;
 
-
-
-
-....
-
 Today's Total Headcount
-34
+35
 Today's Employees Count
 33
 Today's Contractors Count
-1
-
-this count is not display immeditaily, i take more time to diplsy. 
- Realtime Headcount
-33
+2
+Realtime Headcount
+27
 Realtime Employees Count
-32
+26
 Realtime Contractors Count
-1 in this not issue
-
-this count is display 
-
-how to slove this issu
-Today's Total Headcount
-34
-Today's Employees Count
-33
-Today's Contractors Count
 1
 
-... carefully
+
+
+
+
+
 
 
 import React, { useEffect, useState } from 'react';
@@ -88,9 +85,12 @@ export default function PartitionDetail() {
     });
   }, [partition]);
 
-  if (!live || !history) return <LoadingSpinner />;
+  // if (!live || !history) return <LoadingSpinner />;
+  // const today  = history.summaryByDate.at(-1).region;
 
-  const today  = history.summaryByDate.at(-1).region;
+if (!live) return <LoadingSpinner />;
+const today = live.today;
+
   const realtime = live.realtime[partition] || { total:0, Employee:0, Contractor:0, floors:{} };
 
   // Build floor entries
