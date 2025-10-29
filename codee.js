@@ -1,162 +1,26 @@
 
-
-AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
-    = CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE()))
-
-
-
-
-
-
-.....
-whne statit new day live occupany count is not update 
-i means this count is not update {
-  "success": true,
-  "today": {
-    "total": 849,
-    "Employee": 806,
-    "Contractor": 43
-  },
-read the below all code carefullym and chekc this issue. but cAREFYLLYM 
-  AND FIND OUT HE wher is the problme 
-  ----------
-{
-  "success": true,
-  "today": {
-    "total": 849,
-    "Employee": 806,
-    "Contractor": 43
-  },
-  "realtime": {
-    "LT.Vilnius": {
-      "total": 38,
-      "Employee": 33,
-      "Contractor": 5,
-      "floors": {
-        "9th Floor": 7,
-        "1st Floor": 19,
-        "7th Floor": 1,
-        "4th Floor": 2,
-        "5th Floor": 5,
-        "10th Floor": 2,
-        "6th Floor": 1,
-        "2nd Floor": 1
-      }
-    },
-    "MA.Casablanca": {
-      "total": 23,
-      "Employee": 22,
-      "Contractor": 1,
-      "floors": {
-        "7th Floor": 23
-      }
-    },
-    "IE.Dublin": {
-      "total": 12,
-      "Employee": 10,
-      "Contractor": 2,
-      "floors": {
-        "Dublin": 12
-      }
-    },
-    "AUT.Vienna": {
-      "total": 48,
-      "Employee": 40,
-      "Contractor": 8,
-      "floors": {
-        "11th Floor": 48
-      }
-    },
-    "DU.Abu Dhab": {
-      "total": 8,
-      "Employee": 8,
-      "Contractor": 0,
-      "floors": {
-        "Dubai": 8
-      }
-    },
-    "IT.Rome": {
-      "total": 3,
-      "Employee": 2,
-      "Contractor": 1,
-      "floors": {
-        "Rome": 3
-      }
-    },
-    "RU.Moscow": {
-      "total": 8,
-      "Employee": 7,
-      "Contractor": 1,
-      "floors": {
-        "Moscow": 8
-      }
-    }
-  },
-  "details": [
-    {
-      "LocaleMessageTime": "2025-10-28T22:36:10.000Z",
-      "Dateonly": "2025-10-28",
-      "Swipe_Time": "22:36:10",
-      "EmployeeID": "325505",
-      "PersonGUID": "2DFFD1AA-5A3E-4134-9176-D66A0AA6C232",
-      "ObjectName1": "Dubickij, Augustin",
-      "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-      "PersonnelType": "Employee",
-      "CardNumber": "614727",
-      "Text5": "Vilnius - Gama Business Center",
-      "PartitionName2": "LT.Vilnius",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "CompanyName": "WU Processing Lithuania, UAB",
-      "PrimaryLocation": "Vilnius - Gama Business Center",
-      "Floor": "9th Floor"
-    },
-
-
-    
-// //Abhishek// 1 //
-
-require('dotenv').config();
-const sql = require('mssql');
-
-// Pull in and trim env-vars
-const DB_USER     = (process.env.DB_USER     || '').trim();
-const DB_PASSWORD = (process.env.DB_PASSWORD || '').trim();
-const DB_SERVER   = (process.env.DB_SERVER   || '').trim();
-const DB_DATABASE = (process.env.DB_DATABASE || '').trim();
-const DB_PORT     = parseInt((process.env.DB_PORT || '').trim(), 10);
-
-const dbConfig = {
-  user: DB_USER,
-  password: DB_PASSWORD,
-  server: DB_SERVER,
-  port: DB_PORT,
-  database: DB_DATABASE,   // we keep it for compatibility, but not required for dynamic DB queries
-  options: { 
-    encrypt: false, 
-    trustServerCertificate: true, 
-    enableArithAbort: true 
-  },
-  pool: { 
-    max: 10, 
-    min: 0, 
-    idleTimeoutMillis: 30000 
-  },
-  requestTimeout: 1800000,     // 30 minutes query timeout
-  connectionTimeout: 60000    // 1 minute connection timeout
+this is time zone file.
+in occupnayc have different differnt time zone, 
+there todya count is not update after statin new day, 
+all count is update,
+    i wan tot use ther time zone and update the count on there time. i means stat new day then update count 
+ok 
+how ot do this 
+C:\Users\W0024618\Desktop\emea-occupancy-backend\src\utils\timezones.js
+module.exports = {
+  'AUT.Vienna':       'Europe/Vienna',
+  'DU.Abu Dhab':      'Asia/Dubai',
+  'IE.Dublin':        'Europe/Dublin',
+  'IT.Rome':          'Europe/Rome',
+  'LT.Vilnius':       'Europe/Vilnius',
+  'MA.Casablanca':    'Africa/Casablanca',
+  'RU.Moscow':        'Europe/Moscow',
+  'UK.London':        'Europe/London',
+  'ES.Madrid':        'Europe/Madrid',
 };
 
-const poolPromise = sql.connect(dbConfig)
-  .then(pool => {
-    console.log('✅ MSSQL  connected');
-    return pool;
-  })
-  .catch(err => {
-    console.error('❌ MSSQL  connection failed', err);
-    process.exit(1);
-  });
 
-module.exports = { sql, poolPromise };
+
 // C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
 
 const service = require('../services/occupancy.service');
@@ -221,85 +85,6 @@ exports.getLiveOccupancy = async (req, res) => {
     res.status(500).json({ success: false, message: 'Live occupancy fetch failed' });
   }
 };
-
-
-
-
-
-
-// exports.getLiveSummary = async (req, res) => {
-//   try {
-//     const swipes = await service.fetchLiveOccupancy();
-
-//     // 1. TODAY’S HEADCOUNT: first swipe per person
-//     const firstByPerson = {};
-//     swipes.forEach(r => {
-//       const prev = firstByPerson[r.PersonGUID];
-//       const t = new Date(r.LocaleMessageTime).getTime();
-//       if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
-//         firstByPerson[r.PersonGUID] = r;
-//       }
-//     });
-//     const todayRecs = Object.values(firstByPerson);
-//     const today = { total: 0, Employee: 0, Contractor: 0 };
-//     todayRecs.forEach(r => {
-//       today.total++;
-//       if (isEmployeeType(r.PersonnelType)) today.Employee++;
-//       else today.Contractor++;
-//     });
-
-//     // 2. REAL-TIME: last swipe per person, only InDirection
-//     const lastByPerson = {};
-//     swipes.forEach(r => {
-//       const prev = lastByPerson[r.PersonGUID];
-//       const t = new Date(r.LocaleMessageTime).getTime();
-//       if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
-//         lastByPerson[r.PersonGUID] = r;
-//       }
-//     });
-
-//     const realtime = {};
-//     const unmappedDoors = new Set();
-//     Object.values(lastByPerson).forEach(r => {
-//       // if (r.Direction !== 'InDirection') return;
-//      // only evict if the mapped outDirectionFloor is "Out of office"
-//      if (r.Direction === 'OutDirection') {
-//        const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
-//        if (floor === 'Out of office' || floor?.trim() === 'Out of office') {
-//          return; // true exit → skip
-//        }
-//      }
-
-//       const p = r.PartitionName2;
-//       // initialize per-partition counters
-//       if (!realtime[p]) {
-//         realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
-//       }
-//       realtime[p].total++;
-//       if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
-//       else realtime[p].Contractor++;
-
-//       const floor = lookupFloor(p, r.Door, r.Direction, unmappedDoors) || 'Unmapped';
-//       realtime[p].floors[floor] = (realtime[p].floors[floor] || 0) + 1;
-//     });
-
-//     if (unmappedDoors.size) {
-//       console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
-//     }
-
-//     return res.json({
-//       success: true,
-//       today,
-//       realtime,
-//       details: Object.values(lastByPerson)
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ success: false, message: 'Live summary failed' });
-//   }
-// };
-
-
 
 
 exports.getLiveSummary = async (req, res) => {
@@ -458,6 +243,9 @@ exports.getHistoricalOccupancy = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Historical fetch failed' });
   }
 };
+
+
+
 
 //C:\Users\W0024618\Desktop\emea-occupancy-backend\src\services\occupancy.service.js
 const { poolPromise, sql } = require('../config/db');
