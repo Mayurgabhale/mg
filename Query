@@ -1,0 +1,45 @@
+//⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ EMEA HEADCOUNT QUERY 
+-------------------------
+SELECT 
+    t1.[ObjectName1],
+    t1.[ObjectName2],
+   CASE
+        WHEN t2.[Int1] = 0 THEN t2.[Text12]
+        ELSE CAST(t2.[Int1] AS NVARCHAR)
+    END AS EmployeeID,
+    t2.[PersonnelTypeID],
+    t3.[Name],  -- Adding the PersonnelType from the third table
+    t2.text5,
+    t1.PartitionName2,
+    DATEADD(MINUTE, -1 * t1.[MessageLocaleOffset], t1.[MessageUTC]) AS LocaleMessageTime,
+    t1.MessageType
+INTO 
+    #CombinedEmployeeData  -- Temporary table
+FROM 
+    [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1  -- Replace with your actual table name
+INNER JOIN 
+    [ACVSCore].[Access].[Personnel] AS t2  -- Replace with the actual table name
+ON 
+    t1.ObjectIdentity1 = t2.GUID
+INNER JOIN 
+    [ACVSCore].[Access].[PersonnelType] AS t3  -- Replace with the actual table name containing PersonnelType
+ON 
+    t2.[PersonnelTypeId] = t3.[ObjectID];
+    SELECT DISTINCT
+    [ObjectName1],
+    [Name],
+    EmployeeID,
+    text5,
+    PartitionName2,
+    Messagetype,
+    CONVERT(DATE, LocaleMessageTime) AS Date
+    FROM 
+    #CombinedEmployeeData  -- Use the temporary table with combined data
+    WHERE 
+    CONVERT (DATE, LocaleMessageTime) = '2025-10-29' 
+    AND PartitionName2 IN ('LT.Vilnius', 'AUT.Vienna', 'IE.DUblin', 'DU.Abu Dhab', 'ES.Madrid', 'IT.Rome', 'MA.Casablanca', 'RU.Moscow',
+    'UK.London') 
+    AND MessageType = 'CardAdmitted';
+    DROP Table #CombinedEmployeeData;
+
+ ----------------------------------------
