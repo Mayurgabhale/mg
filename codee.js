@@ -1,521 +1,625 @@
-             no-unused-vars
-
-ERROR in [eslint]
-src\pages\EmployeeTravelDashboard.jsx
-  Line 343:1:  Import in body of module; reorder to top  import/first
-  Line 344:1:  Import in body of module; reorder to top  import/first
-  Line 345:1:  Import in body of module; reorder to top  import/first
-  Line 346:1:  Import in body of module; reorder to top  import/first
-  Line 347:1:  Import in body of module; reorder to top  import/first
-
-Search for the keywords to learn more about each error.
-
-webpack compiled with 1 error and 1 warning
-
-
-read the below code carefuly, and how to slove above issue
-import React, { useState, useMemo } from "react";
-import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import {
-  FiGlobe,
-  FiUsers,
-  FiMapPin,
-  FiFileText,
-  FiUpload,
-  FiFilter,
-  FiSearch,
-  FiDownload,
-  FiTrash2,
-  FiCheckCircle,
-  FiXCircle,
-  FiCalendar,
-  FiMail,
-  FiUser,
-  FiAward,
-  FiActivity,
-} from "react-icons/fi";
-
-
-
-
-
-const fmt = (iso) => {
-    if (!iso) return "";
-    try {
-        const d = new Date(iso);
-        return d.toLocaleDateString() + " " + d.toLocaleTimeString();
-    } catch {
-        return String(iso);
+whne statit new day live occupany count is not update 
+i means this count is not update {
+  "success": true,
+  "today": {
+    "total": 849,
+    "Employee": 806,
+    "Contractor": 43
+  },
+read the below all code carefullym and chekc this issue. but cAREFYLLYM 
+  AND FIND OUT HE wher is the problme 
+  ----------
+{
+  "success": true,
+  "today": {
+    "total": 849,
+    "Employee": 806,
+    "Contractor": 43
+  },
+  "realtime": {
+    "LT.Vilnius": {
+      "total": 38,
+      "Employee": 33,
+      "Contractor": 5,
+      "floors": {
+        "9th Floor": 7,
+        "1st Floor": 19,
+        "7th Floor": 1,
+        "4th Floor": 2,
+        "5th Floor": 5,
+        "10th Floor": 2,
+        "6th Floor": 1,
+        "2nd Floor": 1
+      }
+    },
+    "MA.Casablanca": {
+      "total": 23,
+      "Employee": 22,
+      "Contractor": 1,
+      "floors": {
+        "7th Floor": 23
+      }
+    },
+    "IE.Dublin": {
+      "total": 12,
+      "Employee": 10,
+      "Contractor": 2,
+      "floors": {
+        "Dublin": 12
+      }
+    },
+    "AUT.Vienna": {
+      "total": 48,
+      "Employee": 40,
+      "Contractor": 8,
+      "floors": {
+        "11th Floor": 48
+      }
+    },
+    "DU.Abu Dhab": {
+      "total": 8,
+      "Employee": 8,
+      "Contractor": 0,
+      "floors": {
+        "Dubai": 8
+      }
+    },
+    "IT.Rome": {
+      "total": 3,
+      "Employee": 2,
+      "Contractor": 1,
+      "floors": {
+        "Rome": 3
+      }
+    },
+    "RU.Moscow": {
+      "total": 8,
+      "Employee": 7,
+      "Contractor": 1,
+      "floors": {
+        "Moscow": 8
+      }
     }
+  },
+  "details": [
+    {
+      "LocaleMessageTime": "2025-10-28T22:36:10.000Z",
+      "Dateonly": "2025-10-28",
+      "Swipe_Time": "22:36:10",
+      "EmployeeID": "325505",
+      "PersonGUID": "2DFFD1AA-5A3E-4134-9176-D66A0AA6C232",
+      "ObjectName1": "Dubickij, Augustin",
+      "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+      "PersonnelType": "Employee",
+      "CardNumber": "614727",
+      "Text5": "Vilnius - Gama Business Center",
+      "PartitionName2": "LT.Vilnius",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "CompanyName": "WU Processing Lithuania, UAB",
+      "PrimaryLocation": "Vilnius - Gama Business Center",
+      "Floor": "9th Floor"
+    },
+
+
+    
+// //Abhishek// 1 //
+
+require('dotenv').config();
+const sql = require('mssql');
+
+// Pull in and trim env-vars
+const DB_USER     = (process.env.DB_USER     || '').trim();
+const DB_PASSWORD = (process.env.DB_PASSWORD || '').trim();
+const DB_SERVER   = (process.env.DB_SERVER   || '').trim();
+const DB_DATABASE = (process.env.DB_DATABASE || '').trim();
+const DB_PORT     = parseInt((process.env.DB_PORT || '').trim(), 10);
+
+const dbConfig = {
+  user: DB_USER,
+  password: DB_PASSWORD,
+  server: DB_SERVER,
+  port: DB_PORT,
+  database: DB_DATABASE,   // we keep it for compatibility, but not required for dynamic DB queries
+  options: { 
+    encrypt: false, 
+    trustServerCertificate: true, 
+    enableArithAbort: true 
+  },
+  pool: { 
+    max: 10, 
+    min: 0, 
+    idleTimeoutMillis: 30000 
+  },
+  requestTimeout: 1800000,     // 30 minutes query timeout
+  connectionTimeout: 60000    // 1 minute connection timeout
 };
 
-const EmployeeTravelDashboard = () => {
-    const [file, setFile] = useState(null);
-    const [items, setItems] = useState([]);
-    const [summary, setSummary] = useState({});
-    const [loading, setLoading] = useState(false);
-    const [filters, setFilters] = useState({ country: "", legType: "", search: "" });
-    const [pastUploads, setPastUploads] = useState([]);
+const poolPromise = sql.connect(dbConfig)
+  .then(pool => {
+    console.log('✅ MSSQL  connected');
+    return pool;
+  })
+  .catch(err => {
+    console.error('❌ MSSQL  connection failed', err);
+    process.exit(1);
+  });
 
-    const handleFileChange = (e) => setFile(e.target.files[0]);
+module.exports = { sql, poolPromise };
+// C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
 
-    const uploadFile = async () => {
-        if (!file) return toast.warn("Please select an Excel or CSV file first.");
+const service = require('../services/occupancy.service');
+ const doorMap = require('../utils/doorMap'); 
+//  const normalize  = name => name.trim();        // simple normalizer
 
-        // ✅ Enforce filename to contain a valid date like 20251028
-        const validName = /\d{8}/.test(file.name);
-        if (!validName) {
-            return toast.error(
-                "Filename must include a date (e.g. EMPLOYEES_TRAVELING_TODAY-20251028.csv)"
-            );
-        }
+ const normalize = s =>
+   s
+     .trim()
+     .toLowerCase()
+     .replace(/[^a-z0-9]+/g, ' ')   // non-alphanum → space
+     .replace(/\s+/g, ' ')          // collapse multi-spaces
+     .trim();
 
-        setLoading(true);
-        try {
-            const formData = new FormData();
-            formData.append("file", file);
-            const res = await axios.post("http://localhost:8000/upload", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
+/**
+ * Returns true if this PersonnelType counts as Employee.
+ * Everything else (including blank) counts as Contractor.
+ */
+function isEmployeeType(pt) {
+  return pt === 'Employee'
+      || pt === 'Terminated Employee'
+      || pt === 'Terminated Personnel';
+}
 
-            const data = res.data || {};
-            const rows = data.items || [];
-            setItems(rows);
-            setSummary(data.summary || {});
+/**
+ * Look up floor for a given record by matching door + partition.
+ */
 
-            if (data.status === "already_uploaded") {
-                toast.info(data.message || "File already uploaded earlier.");
-            } else {
-                toast.success(data.message || "File uploaded successfully.");
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error(err.response?.data?.detail || "Upload failed. Please check the backend or file format.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchUploads = async () => {
-        try {
-            const res = await axios.get("http://localhost:8000/uploads");
-            setPastUploads(res.data.uploads || []);
-            toast.success("Fetched past uploads.");
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to fetch uploads.");
-        }
-    };
-
-    const safeItems = Array.isArray(items) ? items : [];
-    const countries = useMemo(
-        () => [...new Set(safeItems.map((r) => r.from_country).filter(Boolean))],
-        [safeItems]
+function lookupFloor(partition, door, direction, unmappedSet) {
+  const normDoor = normalize(door);
+  // 1) try exact (post-normalization)
+  let entry = doorMap.find(d =>
+    d.partition === partition &&
+    normalize(d.door) === normDoor
+  );
+  // 2) fallback: partial match if exact fails
+  if (!entry) {
+    entry = doorMap.find(d =>
+      d.partition === partition &&
+      normalize(d.door).includes(normDoor)
     );
-    const legTypes = useMemo(
-        () => [...new Set(safeItems.map((r) => r.leg_type).filter(Boolean))],
-        [safeItems]
-    );
+  }
+  if (!entry) {
+    unmappedSet.add(`${partition} | ${door}`);
+    return null;
+  }
+  return direction === 'InDirection'
+    ? entry.inDirectionFloor
+    : entry.outDirectionFloor;
+}
 
-    const filtered = safeItems.filter((r) => {
-        const s = filters.search.toLowerCase();
-        if (s) {
-            const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""}`.toLowerCase();
-            if (!hay.includes(s)) return false;
-        }
-        if (filters.country && r.from_country !== filters.country) return false;
-        if (filters.legType && r.leg_type !== filters.legType) return false;
-        return true;
+
+
+
+
+exports.getLiveOccupancy = async (req, res) => {
+  try {
+    const data = await service.fetchLiveOccupancy();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Live occupancy fetch failed' });
+  }
+};
+
+
+
+
+
+
+// exports.getLiveSummary = async (req, res) => {
+//   try {
+//     const swipes = await service.fetchLiveOccupancy();
+
+//     // 1. TODAY’S HEADCOUNT: first swipe per person
+//     const firstByPerson = {};
+//     swipes.forEach(r => {
+//       const prev = firstByPerson[r.PersonGUID];
+//       const t = new Date(r.LocaleMessageTime).getTime();
+//       if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
+//         firstByPerson[r.PersonGUID] = r;
+//       }
+//     });
+//     const todayRecs = Object.values(firstByPerson);
+//     const today = { total: 0, Employee: 0, Contractor: 0 };
+//     todayRecs.forEach(r => {
+//       today.total++;
+//       if (isEmployeeType(r.PersonnelType)) today.Employee++;
+//       else today.Contractor++;
+//     });
+
+//     // 2. REAL-TIME: last swipe per person, only InDirection
+//     const lastByPerson = {};
+//     swipes.forEach(r => {
+//       const prev = lastByPerson[r.PersonGUID];
+//       const t = new Date(r.LocaleMessageTime).getTime();
+//       if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
+//         lastByPerson[r.PersonGUID] = r;
+//       }
+//     });
+
+//     const realtime = {};
+//     const unmappedDoors = new Set();
+//     Object.values(lastByPerson).forEach(r => {
+//       // if (r.Direction !== 'InDirection') return;
+//      // only evict if the mapped outDirectionFloor is "Out of office"
+//      if (r.Direction === 'OutDirection') {
+//        const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+//        if (floor === 'Out of office' || floor?.trim() === 'Out of office') {
+//          return; // true exit → skip
+//        }
+//      }
+
+//       const p = r.PartitionName2;
+//       // initialize per-partition counters
+//       if (!realtime[p]) {
+//         realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+//       }
+//       realtime[p].total++;
+//       if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+//       else realtime[p].Contractor++;
+
+//       const floor = lookupFloor(p, r.Door, r.Direction, unmappedDoors) || 'Unmapped';
+//       realtime[p].floors[floor] = (realtime[p].floors[floor] || 0) + 1;
+//     });
+
+//     if (unmappedDoors.size) {
+//       console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+//     }
+
+//     return res.json({
+//       success: true,
+//       today,
+//       realtime,
+//       details: Object.values(lastByPerson)
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ success: false, message: 'Live summary failed' });
+//   }
+// };
+
+
+
+
+exports.getLiveSummary = async (req, res) => {
+  try {
+    const swipes = await service.fetchLiveOccupancy();
+
+    // 1. TODAY’S HEADCOUNT: first swipe per person
+    const firstByPerson = {};
+    swipes.forEach(r => {
+      const prev = firstByPerson[r.PersonGUID];
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
+        firstByPerson[r.PersonGUID] = r;
+      }
+    });
+    const todayRecs = Object.values(firstByPerson);
+    const today = { total: 0, Employee: 0, Contractor: 0 };
+    todayRecs.forEach(r => {
+      today.total++;
+      if (isEmployeeType(r.PersonnelType)) today.Employee++;
+      else today.Contractor++;
     });
 
-    const countryStats = useMemo(() => {
-        const map = {};
-        for (const r of safeItems) {
-            const c = r.from_country || "Unknown";
-            map[c] = (map[c] || 0) + 1;
+    // 2. REAL-TIME: last swipe per person
+    const lastByPerson = {};
+    swipes.forEach(r => {
+      const prev = lastByPerson[r.PersonGUID];
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
+        lastByPerson[r.PersonGUID] = r;
+      }
+    });
+
+    const realtime = {};
+    const unmappedDoors = new Set();
+
+    Object.values(lastByPerson).forEach(r => {
+      // Resolve floor up-front (this will also populate unmappedDoors if necessary)
+      const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+      const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
+
+      // STRICT RULE: if resolved Floor equals "Out of office" -> skip counting
+      if (floorNorm === 'out of office') {
+        return;
+      }
+
+      // Continue with existing OutDirection logic only if needed (original intent preserved)
+      // (Note: we already removed any record whose mapped floor is "Out of office" regardless of direction)
+
+      const p = r.PartitionName2;
+      if (!realtime[p]) {
+        realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+      }
+
+      realtime[p].total++;
+      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+      else realtime[p].Contractor++;
+
+      const normFloorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
+      realtime[p].floors[normFloorLabel] = (realtime[p].floors[normFloorLabel] || 0) + 1;
+    });
+
+    if (unmappedDoors.size) {
+      console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+    }
+
+    // Build enriched details array, but filter out any whose resolved Floor is "Out of office"
+    const details = Object.values(lastByPerson)
+      .map(r => {
+        const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+        const floor = rawFloor ? String(rawFloor).trim() : null;
+        return {
+          ...r,
+          Floor: floor
+        };
+      })
+      // Strictly remove records whose Floor is "Out of office"
+      .filter(d => {
+        const f = d.Floor;
+        return !(f && String(f).trim().toLowerCase() === 'out of office');
+      });
+
+    return res.json({
+      success: true,
+      today,
+      realtime,
+      details
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Live summary failed' });
+  }
+};
+
+
+
+exports.getHistoricalOccupancy = async (req, res) => {
+  const location = req.params.location || null;
+  try {
+    const raw = await service.fetchHistoricalOccupancy(location);
+
+    // first swipe per person per date
+    const byDate = raw.reduce((acc, r) => {
+      const iso = (r.LocaleMessageTime instanceof Date)
+        ? r.LocaleMessageTime.toISOString()
+        : r.LocaleMessageTime;
+      const date = iso.slice(0,10);
+      acc[date] = acc[date] || {};
+      const prev = acc[date][r.PersonGUID];
+      if (!prev || new Date(iso) < new Date(prev.LocaleMessageTime)) {
+        acc[date][r.PersonGUID] = { ...r, LocaleMessageTime: iso };
+      }
+      return acc;
+    }, {});
+
+    const summaryByDate = [];
+    const details = [];
+
+    Object.keys(byDate).sort().forEach(date => {
+      const recs = Object.values(byDate[date]);
+      details.push(...recs);
+
+      // initialize counts
+      const regionCounts = { total: 0, Employee: 0, Contractor: 0 };
+      const partitionCounts = {};
+
+      recs.forEach(r => {
+        regionCounts.total++;
+        if (isEmployeeType(r.PersonnelType)) regionCounts.Employee++;
+        else regionCounts.Contractor++;
+
+        if (!location) {
+          const p = r.PartitionName2;
+          if (!partitionCounts[p]) {
+            partitionCounts[p] = { total: 0, Employee: 0, Contractor: 0 };
+          }
+          partitionCounts[p].total++;
+          if (isEmployeeType(r.PersonnelType)) partitionCounts[p].Employee++;
+          else partitionCounts[p].Contractor++;
         }
-        return Object.entries(map)
-            .map(([k, v]) => ({ country: k, count: v }))
-            .sort((a, b) => b.count - a.count);
-    }, [safeItems]);
+      });
 
-    const exportCsv = () => {
-        if (!filtered.length) return toast.info("No data to export.");
-        const keys = Object.keys(filtered[0]);
-        const csv = [keys.join(",")];
-        filtered.forEach((r) =>
-            csv.push(keys.map((k) => `"${String(r[k] ?? "").replace(/"/g, '""')}"`).join(","))
-        );
-        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "EmployeeTravelData.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("CSV exported successfully.");
-    };
+      summaryByDate.push({
+        date,
+        day: new Date(date).toLocaleDateString('en-US', { weekday:'long' }),
+        region: location
+          ? { name: location, ...regionCounts }
+          : { name: 'EMEA', ...regionCounts },
+        partitions: location ? undefined : partitionCounts
+      });
+    });
 
-    return (
-        <div style={page}>
-            <ToastContainer position="top-right" autoClose={3000} theme="light" />
-            {loading && (
-                <div style={overlay}>
-                    <span style={loader}></span>
-                    <style>{keyframes}</style>
-                </div>
-            )}
-
-            {/* HEADER */}
-            <header style={header}>
-                <div style={headerContent}>
-                    <div style={headerIcon}>
-                        <FiGlobe size={32} />
-                    </div>
-                    <div>
-                        <h1 style={title}>Travel Details</h1>
-                        <p style={subtitle}>Manage and monitor employee travel activities</p>
-                    </div>
-                </div>
-            </header>
-
-            <div style={layout}>
-                {/* LEFT PANEL */}
-                <aside style={sidebar}>
-                    <div style={sideCard}>
-                        <div style={cardHeader}>
-                            <FiActivity style={cardIcon} />
-                            <h3 style={sideTitle}>Overview</h3>
-                        </div>
-                        <div style={statsGrid}>
-                            <div style={statItem}>
-                                <div style={statIconWrapper}>
-                                    <FiUsers style={statIcon} />
-                                </div>
-                                <div style={statContent}>
-                                    <span style={statLabel}>Total Travelers</span>
-                                    <strong style={statValue}>{safeItems.length}</strong>
-                                </div>
-                            </div>
-                            <div style={statItem}>
-                                <div style={{ ...statIconWrapper, background: "#dcfce7" }}>
-                                    <FiCheckCircle style={{ ...statIcon, color: "#16a34a" }} />
-                                </div>
-                                <div style={statContent}>
-                                    <span style={statLabel}>Active Now</span>
-                                    <strong style={statValue}>
-                                        {safeItems.filter((r) => r.active_now).length}
-                                    </strong>
-                                </div>
-                            </div>
-                            <div style={statItem}>
-                                <div style={{ ...statIconWrapper, background: "#dbeafe" }}>
-                                    <FiMapPin style={{ ...statIcon, color: "#2563eb" }} />
-                                </div>
-                                <div style={statContent}>
-                                    <span style={statLabel}>Countries</span>
-                                    <strong style={statValue}>{countries.length}</strong>
-                                </div>
-                            </div>
-                            <div style={statItem}>
-                                <div style={{ ...statIconWrapper, background: "#fef3c7" }}>
-                                    <FiAward style={{ ...statIcon, color: "#d97706" }} />
-                                </div>
-                                <div style={statContent}>
-                                    <span style={statLabel}>Travel Types</span>
-                                    <strong style={statValue}>{legTypes.length}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={sideCard}>
-                        <div style={cardHeader}>
-                            <FiMapPin style={cardIcon} />
-                            <h3 style={sideTitle}>Country-wise Travelers</h3>
-                        </div>
-                        {countryStats.length === 0 ? (
-                            <div style={emptyState}>
-                                <FiFileText size={24} style={{ color: "#9ca3af", marginBottom: "8px" }} />
-                                <p style={sideEmpty}>No data available</p>
-                            </div>
-                        ) : (
-                            <ul style={countryList}>
-                                {countryStats.map((c, index) => (
-                                    <li key={c.country} style={countryItem}>
-                                        <div style={countryInfo}>
-                                            <span style={countryRank}>#{index + 1}</span>
-                                            <span style={countryName}>{c.country}</span>
-                                        </div>
-                                        <strong style={countryCount}>{c.count}</strong>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                </aside>
-
-                {/* RIGHT PANEL */}
-                <main style={main}>
-                    <div style={card}>
-                        <div style={uploadRow}>
-                            <div style={fileUploadWrapper}>
-                                <input
-                                    type="file"
-                                    accept=".xlsx,.xls,.csv"
-                                    onChange={handleFileChange}
-                                    style={fileInput}
-                                    id="file-upload"
-                                />
-                                <label htmlFor="file-upload" style={fileInputLabel}>
-                                    <FiUpload style={{ marginRight: "8px" }} />
-                                    {file ? file.name : "Choose File"}
-                                </label>
-                            </div>
-
-                            <div style={buttonGroup}>
-                                <button onClick={uploadFile} disabled={loading} style={loading ? disabledPrimaryBtn : primaryBtn}>
-                                    {loading ? (
-                                        <>
-                                            <div style={spinner}></div> Processing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FiUpload style={{ marginRight: "8px" }} /> Upload File
-                                        </>
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setItems([]);
-                                        setSummary({});
-                                        setFile(null);
-                                        toast.info("Data cleared successfully.");
-                                    }}
-                                    style={secondaryBtn}
-                                >
-                                    <FiTrash2 style={{ marginRight: "8px" }} /> Clear
-                                </button>
-                                <button onClick={exportCsv} style={ghostBtn}>
-                                    <FiDownload style={{ marginRight: "8px" }} /> Export CSV
-                                </button>
-                                <button onClick={fetchUploads} style={ghostBtn}>
-                                    <FiFileText style={{ marginRight: "8px" }} /> View Upload History
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Upload history table */}
-                        {pastUploads.length > 0 && (
-                            <div style={tableSection}>
-                                <div style={tableHeader}>
-                                    <h3 style={tableTitle}>Previous Uploads</h3>
-                                    <span style={tableBadge}>{pastUploads.length}</span>
-                                </div>
-                                <div style={tableWrap}>
-                                    <table style={table}>
-                                        <thead style={thead}>
-                                            <tr>
-                                                <th style={th}>File Date</th>
-                                                <th style={th}>Rows</th>
-                                                <th style={th}>Removed</th>
-                                                <th style={th}>Parse Errors</th>
-                                                <th style={th}>Active Now</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {pastUploads.map((u, i) => (
-                                                <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
-                                                    <td style={td}>{u.file_date}</td>
-                                                    <td style={td}>{u.rows_received}</td>
-                                                    <td style={td}>{u.rows_removed_as_footer_or_empty}</td>
-                                                    <td style={td}>{u.rows_with_parse_errors}</td>
-                                                    <td style={td}>{u.active_now_count}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-
-                        <div style={filtersSection}>
-                            <div style={filtersHeader}>
-                                <FiFilter style={{ marginRight: '8px', color: '#6b7280' }} />
-                                <span style={filtersTitle}>Filters</span>
-                            </div>
-                            <div style={filtersRow}>
-                                <div style={searchWrapper}>
-                                    <FiSearch style={searchIcon} />
-                                    <input
-                                        placeholder="Search by name or email..."
-                                        value={filters.search}
-                                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                        style={searchInput}
-                                    />
-                                </div>
-                                <select
-                                    value={filters.country}
-                                    onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-                                    style={select}
-                                >
-                                    <option value="">All Countries</option>
-                                    {countries.map((c) => (
-                                        <option key={c}>{c}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={filters.legType}
-                                    onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
-                                    style={select}
-                                >
-                                    <option value="">All Travel Types</option>
-                                    {legTypes.map((t) => (
-                                        <option key={t}>{t}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style={tableSection}>
-                            <div style={tableHeader}>
-                                <h3 style={tableTitle}>Travel Records</h3>
-                                <span style={tableBadge}>{filtered.length} records</span>
-                            </div>
-                            <div style={tableWrap}>
-                                <table style={table}>
-                                    <thead style={thead}>
-                                        <tr>
-                                            <th style={th}>Status</th>
-                                            <th style={th}>Traveler</th>
-                                            <th style={th}>Email</th>
-                                            <th style={th}>Type</th>
-                                            <th style={th}>From</th>
-                                            <th style={th}>To</th>
-                                            <th style={th}>Start Date</th>
-                                            <th style={th}>End Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filtered.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="8" style={emptyRow}>
-                                                    <div style={emptyState}>
-                                                        <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
-                                                        <p>No matching results found</p>
-                                                        <p style={emptySubtext}>Upload a file or adjust your filters</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            filtered.map((r, i) => (
-                                                <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
-                                                    <td style={td}>
-                                                        {r.active_now ? (
-                                                            <div style={activeBadge}>
-                                                                <FiCheckCircle size={14} />
-                                                                Active
-                                                            </div>
-                                                        ) : (
-                                                            <div style={inactiveBadge}>
-                                                                <FiXCircle size={14} />
-                                                                Inactive
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td style={td}>
-                                                        <div style={userCell}>
-                                                            <div style={avatar}>
-                                                                <FiUser size={14} />
-                                                            </div>
-                                                            <span>
-                                                                {r.first_name} {r.last_name}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={td}>
-                                                        <div style={emailCell}>
-                                                            <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                                            {r.email}
-                                                        </div>
-                                                    </td>
-                                                    <td style={td}>
-                                                        <span style={typeBadge}>{r.leg_type}</span>
-                                                    </td>
-                                                    <td style={td}>{r.from_country}</td>
-                                                    <td style={td}>{r.to_country}</td>
-                                                    <td style={td}>
-                                                        <div style={dateCell}>
-                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                                            {fmt(r.begin_dt)}
-                                                        </div>
-                                                    </td>
-                                                    <td style={td}>
-                                                        <div style={dateCell}>
-                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                                            {fmt(r.end_dt)}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </div>
-    );
+    return res.json({ success: true, summaryByDate, details });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Historical fetch failed' });
+  }
 };
 
+//C:\Users\W0024618\Desktop\emea-occupancy-backend\src\services\occupancy.service.js
+const { poolPromise, sql } = require('../config/db');
+
+/**
+ * EMEA partition list
+ */
+const partitionList = [
+  'AUT.Vienna',
+  'DU.Abu Dhab',
+  'IE.Dublin',
+  'IT.Rome',
+  'LT.Vilnius',
+  'MA.Casablanca',
+  'RU.Moscow',
+  'UK.London',
+  'ES.Madrid'
+];
 
 
+/**
+ * Live occupancy (today)
+ */
+exports.fetchLiveOccupancy = async () => {
+  const pool = await poolPromise;
+  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
 
+  const query = `
+    WITH CombinedQuery AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2            AS Door,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor')
+            THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END                       AS EmployeeID,
+        t2.text5                  AS Text5,
+        t1.PartitionName2         AS PartitionName2,
+        t1.ObjectIdentity1        AS PersonGUID,
+        t3.Name                   AS PersonnelType,
+        t2.Text4                   AS CompanyName,   -- ✅ company
+        t2.Text5                   AS PrimaryLocation, -- ✅ location
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                         AS CardNumber,
+        t5a.value                 AS AdmitCode,
+        t5d.value                 AS Direction
+      FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
+        ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+        ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxml] AS t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 IN (${partitionsSql})
+        AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
+            = CONVERT(DATE, GETDATE())
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      Door,
+      PersonnelType,
+      CardNumber,
+      Text5,
+      PartitionName2,
+      AdmitCode,
+      Direction,
+      CompanyName,
+      PrimaryLocation
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `;
 
-
-/* === ENHANCED STYLES === */
-
-
-const page = {
-    backgroundColor: "#f8fafc",
-    // backgroundColor: "#19191aff",
-    minHeight: "100vh",
-    padding: "24px",
-    color: "#1e293b",
-    // color: "#e7eaeeff",
-    fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-    lineHeight: "1.5",
+  const result = await pool.request().query(query);
+  return result.recordset;
 };
 
-const header = {
-    marginBottom: "32px",
+/**
+ * Core raw‐data fetch for the past N days, all or by location.
+ */
+exports.fetchHistoricalData = async ({ days = 7, location = null }) => {
+  const pool = await poolPromise;
+  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
+  const locationFilter = location
+    ? `AND t1.PartitionName2 = @location`
+    : `AND t1.PartitionName2 IN (${partitionsSql})`;
+
+  const query = `
+    WITH Hist AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2       AS Door,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END                   AS EmployeeID,
+        t2.text5             AS Text5,
+        t1.PartitionName2    AS PartitionName2,
+        t1.ObjectIdentity1   AS PersonGUID,
+        t3.Name              AS PersonnelType,
+        t2.Text4                   AS CompanyName,   -- ✅ company
+     t2.Text5                   AS PrimaryLocation, -- ✅ location
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                     AS CardNumber,
+        t5a.value            AS AdmitCode,
+        t5d.value            AS Direction,
+        CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) AS SwipeDate
+      FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
+        ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+        ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxml] AS t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        ${locationFilter}
+        AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
+            >= DATEADD(DAY, -${days}, CONVERT(DATE, GETDATE()))
+    )
+    SELECT *
+    FROM Hist
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const req = pool.request();
+  if (location) req.input('location', sql.NVarChar, location);
+  const result = await req.query(query);
+  return result.recordset;
 };
 
-const headerContent = {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
+/**
+ * Public wrapper: always last 7 days, all or by location.
+ */
+exports.fetchHistoricalOccupancy = async (location) => {
+  return exports.fetchHistoricalData({ days: 7, location: location || null });
 };
 
-const headerIcon = {
-    background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-    color: "white",
-    padding: "16px",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-};
+module.exports.partitionList = partitionList;
 
-const title = {
-    fontSize: "28px",
-    fontWeight: 700,
-    color: "#0
-    background: "#f1f5f9",
-    color: "#64748b",
-    fontSize: "12px",
-    fontWe
+
