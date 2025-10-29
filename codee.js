@@ -1,18 +1,19 @@
+             no-unused-vars
 
 ERROR in [eslint]
 src\pages\EmployeeTravelDashboard.jsx
-  Line 342:1:  Import in body of module; reorder to top  import/first
   Line 343:1:  Import in body of module; reorder to top  import/first
   Line 344:1:  Import in body of module; reorder to top  import/first
   Line 345:1:  Import in body of module; reorder to top  import/first
   Line 346:1:  Import in body of module; reorder to top  import/first
+  Line 347:1:  Import in body of module; reorder to top  import/first
 
 Search for the keywords to learn more about each error.
 
 webpack compiled with 1 error and 1 warning
 
 
-
+read the below code carefuly, and how to slove above issue
 import React, { useState, useMemo } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -501,4 +502,20 @@ const headerContent = {
 };
 
 const headerIcon = {
-    background: "linear-gradient(
+    background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+    color: "white",
+    padding: "16px",
+    borderRadius: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+};
+
+const title = {
+    fontSize: "28px",
+    fontWeight: 700,
+    color: "#0
+    background: "#f1f5f9",
+    color: "#64748b",
+    fontSize: "12px",
+    fontWe
