@@ -1,3 +1,25 @@
+// src/api/occupancy.service.js
+let controller;
+
+export async function fetchLiveSummary() {
+  if (controller) controller.abort(); // cancel previous
+  controller = new AbortController();
+
+  const res = await fetch('http://localhost:3005/api/occupancy/live-summary', {
+    signal: controller.signal,
+  });
+
+  if (!res.ok) throw new Error('Failed to fetch');
+  return res.json();
+}
+
+
+
+
+
+
+
+
 http://localhost:3005/api/occupancy/live-summary
 Response Time
 3.53 s
