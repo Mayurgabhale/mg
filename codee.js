@@ -1,117 +1,188 @@
-const timezones = require('../utils/timezones');
+Today's Total Headcount
+34
+Today's Employees Count
+33
+Today's Contractors Count
+1
+
+this count is not display immeditaily, i take more time to diplsy. 
+ Realtime Headcount
+33
+Realtime Employees Count
+32
+Realtime Contractors Count
+1 in this not issue
+
+this count is display 
+
+how to slove this issu
+Today's Total Headcount
+34
+Today's Employees Count
+33
+Today's Contractors Count
+1
+
+... carefully
+
+
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Container, Box, Typography, Button } from '@mui/material';
+
+import Header         from '../components/Header';
+import Footer         from '../components/Footer';
+import SummaryCard    from '../components/SummaryCard';
+import ChartCard      from '../components/ChartCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 
 
+import { fetchLiveSummary, fetchHistory } from '../api/occupancy.service';
+// import buildingCapacities                from '../data/buildingCapacities';
+import seatCapacities from '../data/buildingCapacities';
 
-....
+export default function PartitionDetail() {
+  const { partition } = useParams();
+  const navigate      = useNavigate();
 
+  const [live, setLive]         = useState(null);
+  const [history, setHistory]   = useState(null);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState('');
 
+  // Poll live
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      const json = await fetchLiveSummary();
+      if (!active) return;
+      setLive(json);
+      setLastUpdate(new Date().toLocaleTimeString());
+    };
+    load();
+    const iv = setInterval(load, 1000);
+    return () => { active = false; clearInterval(iv); };
+  }, [partition]);
 
-exports.getLiveSummary = async (req, res) => {
-  try {
-    const swipes = await service.fetchLiveOccupancy();
-
-    // helper: returns YYYY-MM-DD for a given date in the partition's timezone
-    function getLocalDateString(dateInput, partition) {
-      const tz = timezones[partition] || 'UTC';
-      try {
-        const d = new Date(dateInput);
-        // en-CA produces ISO-like YYYY-MM-DD in most Node runtimes
-        return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
-      } catch (e) {
-        // fallback to UTC iso date
-        return new Date(dateInput).toISOString().slice(0, 10);
-      }
-    }
-
-    // PRE-CALCULATE "today" per partition (so we don't call Intl repeatedly)
-    const partitionToday = {};
-    swipes.forEach(r => {
-      const p = r.PartitionName2;
-      if (!partitionToday[p]) {
-        partitionToday[p] = getLocalDateString(new Date(), p);
-      }
+  // Load history once
+  useEffect(() => {
+    setLoadingHistory(true);
+    fetchHistory(partition).then(json => {
+      setHistory(json);
+      setLoadingHistory(false);
     });
+  }, [partition]);
 
-    // 1. TODAY’S HEADCOUNT: first swipe per person **but only for swipes that fall on
-    //    the partition's current local date** (so each region's "today" is used).
-    const filteredSwipesForToday = swipes.filter(r => {
-      const p = r.PartitionName2;
-      return getLocalDateString(r.LocaleMessageTime, p) === partitionToday[p];
-    });
+  if (!live || !history) return <LoadingSpinner />;
 
-    const firstByPerson = {};
-    filteredSwipesForToday.forEach(r => {
-      const prev = firstByPerson[r.PersonGUID];
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
-        firstByPerson[r.PersonGUID] = r;
-      }
-    });
+  const today  = history.summaryByDate.at(-1).region;
+  const realtime = live.realtime[partition] || { total:0, Employee:0, Contractor:0, floors:{} };
 
-    const todayRecs = Object.values(firstByPerson);
-    const today = { total: 0, Employee: 0, Contractor: 0 };
-    todayRecs.forEach(r => {
-      today.total++;
-      if (isEmployeeType(r.PersonnelType)) today.Employee++;
-      else today.Contractor++;
-    });
+  // Build floor entries
+ const floorEntries = Object.entries(realtime.floors).map(([floor, cnt]) => {
+  const rawName = floor.trim();                   // original floor name
+  const name = rawName.split(' ')[0];             // extract first word (e.g. "London Floor 1" → "London")
+  const capacity = seatCapacities[name] || 0; // match with buildingCapacities.js
+  const percentage = capacity ? Math.round((cnt / capacity) * 100) : 0;
 
-    // 2. REAL-TIME: last swipe per person (unchanged)
-    const lastByPerson = {};
-    swipes.forEach(r => {
-      const prev = lastByPerson[r.PersonGUID];
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
-        lastByPerson[r.PersonGUID] = r;
-      }
-    });
+  console.log(`Floor: "${floor}" → name: "${name}", capacity: ${capacity}, percentage: ${percentage}`);
 
-    const realtime = {};
-    const unmappedDoors = new Set();
+  return {
+    name: rawName,         // keep full name for chart X-axis
+    headcount: cnt,
+    capacity,
+    percentage
+  };
+});
 
-    Object.values(lastByPerson).forEach(r => {
-      const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
-      const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
 
-      if (floorNorm === 'out of office') return;
 
-      const p = r.PartitionName2;
-      if (!realtime[p]) {
-        realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
-      }
 
-      realtime[p].total++;
-      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
-      else realtime[p].Contractor++;
 
-      const normFloorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
-      realtime[p].floors[normFloorLabel] = (realtime[p].floors[normFloorLabel] || 0) + 1;
-    });
-
-    if (unmappedDoors.size) {
-      console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
-    }
-
-    const details = Object.values(lastByPerson)
-      .map(r => {
-        const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
-        const floor = rawFloor ? String(rawFloor).trim() : null;
-        return { ...r, Floor: floor };
-      })
-      .filter(d => {
-        const f = d.Floor;
-        return !(f && String(f).trim().toLowerCase() === 'out of office');
-      });
-
-    return res.json({
-      success: true,
-      today,
-      realtime,
-      details
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Live summary failed' });
+  // Six cards
+  const cards = [
+  {
+    title: "Today's Total Headcount",
+    value: loadingHistory ? <LoadingSpinner size={25} /> : today.total,
+    icon: <i className="fa-solid fa-users" style={{ color: '#E57373', fontSize: 25 }} />,
+    border: '#FFB300'
+  },
+  {
+    title: "Today's Employees Count",
+    value: loadingHistory ? <LoadingSpinner size={25} /> : today.Employee,
+    icon: <i className="bi bi-people" style={{ color: '#81C784', fontSize: 25 }} />,
+    border: '#8BC34A'
+  },
+  {
+    title: "Today's Contractors Count",
+    value: loadingHistory ? <LoadingSpinner size={25} /> : today.Contractor,
+    icon: <i className="fa-solid fa-circle-user" style={{ color: '#81C784', fontSize: 25 }} />,
+    border: '#E57373'
+  },
+  {
+    title: "Realtime Headcount",
+    value: realtime.total,
+    icon: <i className="fa-solid fa-users" style={{ color: '#BA68C8', fontSize: 25 }} />,
+    border: '#FFD180'
+  },
+  {
+    title: "Realtime Employees Count",
+    value: realtime.Employee,
+    icon: <i className="bi bi-people" style={{ color: '#81C784', fontSize: 25 }} />,
+    border: '#AED581'
+  },
+  {
+    title: "Realtime Contractors Count",
+    value: realtime.Contractor,
+    icon: <i className="fa-solid fa-circle-user" style={{ color: '#BA68C8', fontSize: 25 }} />,
+    border: '#EF5350'
   }
-};
+];
+
+  return (
+    <>
+      <Header />
+
+      <Container maxWidth={false} disableGutters sx={{ px:2, py:2 }}>
+        <Box mb={1}>
+          <Button size="small" onClick={() => navigate(-1)}>← Back</Button>
+        </Box>
+
+        <Box display="flex" flexWrap="wrap" gap={1} mb={3}>
+          {cards.map(c => (
+            <Box key={c.title} sx={{ flex: '1 1 calc(16.66% - 8px)' }}>
+              <SummaryCard
+                title={c.title}
+                total={c.value}
+                stats={[]}
+                icon={c.icon}
+                sx={{ height: 140, border: `2px solid ${c.border}` }}
+              />
+            </Box>
+          ))}
+        </Box>
+
+        <Box sx={{ border:'2px solid #FFC107', p:2, borderRadius:2, background:'rgba(0,0,0,0.6)' }}>
+          <Box display="flex" justifyContent="space-between" mb={1}>
+            <Typography variant="h6">Live Floor Headcount vs Capacity</Typography>
+            <Typography variant="body2" color="textSecondary">Last updated: {lastUpdate}</Typography>
+          </Box>
+
+          <ChartCard
+            data={floorEntries}
+            dataKey="headcount"
+            chartHeight={320}
+            colors={{ head:'#28B463', cap:'#FDDA0D' }}
+            axisProps={{
+              xAxis: { tick:{ fill:'#fff' }, angle: -0, textAnchor:'end' },
+              yAxis: { tick:{ fill:'#fff' } }
+            }}
+          />
+        </Box>
+      </Container>
+
+      <Footer />
+    </>
+  );
+}
