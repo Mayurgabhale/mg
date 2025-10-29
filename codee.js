@@ -1,3 +1,17 @@
+
+// replace:
+if (!live || !history) return <LoadingSpinner />;
+const today  = history.summaryByDate.at(-1).region;
+
+// with:
+if (!live) return <LoadingSpinner />;
+const today = live.today;
+
+
+
+
+....
+
 Today's Total Headcount
 34
 Today's Employees Count
