@@ -1,4 +1,14 @@
 
+
+AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
+    = CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE()))
+
+
+
+
+
+
+.....
 whne statit new day live occupany count is not update 
 i means this count is not update {
   "success": true,
