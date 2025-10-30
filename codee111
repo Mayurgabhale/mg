@@ -1,146 +1,115 @@
-in today only + 10/30/2025 this date only 25 count or show 
-{
-  "success": true,
-  "today": {
-    "total": 19,
-    "Employee": 16,
-    "Contractor": 3
-  },
-  in his
-  only two region are count i want ot show because only right now onoy this regiosn are employe came 
-  othe region are empllye are right know not come ok 
-  and remove past count ro swipe when start new day.  ok ... 
-Abi Nader, Fadi	Employee	322695	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Aghazada, Kanan	Employee	325710	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Anderson, Stacey-Ann Natasha	Employee	319488	Dubai - Dubai Media City	DU.Abu Dhab	CardAdmitted	10/30/2025
-Blazys, Aurimas	Employee	319213	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Elcin, Bunyamin	Employee	325182	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-George, Josen	Employee	319033	Dubai - Dubai Media City	DU.Abu Dhab	CardAdmitted	10/30/2025
-Grybeniene, Viktorija	Employee	314803	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Jhorar, Kapil	Employee	326022	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Kusi-Asante, Michelle	Employee	325004	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Laseviciene, Stasele	Contractor	W0021570	Vilnius - Technopolis	LT.Vilnius	CardAdmitted	10/30/2025
-Loufa, Hamza	Employee	321072	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Mahbub, Arif	Employee	322438	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Marhaba, Ahmed	Contractor	W0020932	Casablanca - 1100 Boulevard Al	MA.Casablanca	CardAdmitted	10/30/2025
-Masiulyte, Meile	Employee	318523	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Miskis, Tatjana	Contractor	W0014254	Vilnius - Technopolis	LT.Vilnius	CardAdmitted	10/30/2025
-Moradi, Moei	Employee	326933	Vilnius - Technopolis	LT.Vilnius	CardAdmitted	10/30/2025
-Nkwakep, Fandio Russel Franck	Employee	325529	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Ntoh Yuh, Juliette	Employee	322295	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Odio Amrhein, Diego	Employee	325736	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Panin, Dmitrij	Employee	305231	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Pelanis, Vilgirdas	Employee	323145	Vilnius - Gama Business Center	LT.Vilnius	CardAdmitted	10/30/2025
-Pswarayi, Toziveyi	Employee	314605	Dubai - Dubai Media City	DU.Abu Dhab	CardAdmitted	10/30/2025
-Sablinskaja, Helena	Contractor	W0024344	Vilnius - Technopolis	LT.Vilnius	CardAdmitted	10/30/2025
-Valiunas, Sigitas	Contractor	86142356	Vilnius - Technopolis	LT.Vilnius	CardAdmitted	10/30/2025
-VOLSKAJA, TERESA	Contractor	75183902	Vilnius - Technopolis	LT.Vilnius	CardAdmitted	10/30/2025
+// 📝 Updated getLiveSummary — enforces partition-local "today" for both today + realtime
+exports.getLiveSummary = async (req, res) => {
+  try {
+    const swipes = await service.fetchLiveOccupancy();
 
-
-and this 
-are remove 
-"realtime": {
-    "LT.Vilnius": {
-      "total": 46,
-      "Employee": 39,
-      "Contractor": 7,
-      "floors": {
-        "9th Floor": 9,
-        "1st Floor": 28,
-        "4th Floor": 2,
-        "7th Floor": 2,
-        "8th Floor": 2,
-        "5th Floor": 2,
-        "2nd Floor": 1
-      }
-    },
-    "MA.Casablanca": {
-      "total": 29,
-      "Employee": 28,
-      "Contractor": 1,
-      "floors": {
-        "7th Floor": 29
-      }
-    },
-    "AUT.Vienna": {
-      "total": 44,
-      "Employee": 38,
-      "Contractor": 6,
-      "floors": {
-        "11th Floor": 44
-      }
-    },
-    "IE.Dublin": {
-      "total": 14,
-      "Employee": 11,
-      "Contractor": 3,
-      "floors": {
-        "Dublin": 14
-      }
-    },
-    "DU.Abu Dhab": {
-      "total": 4,
-      "Employee": 4,
-      "Contractor": 0,
-      "floors": {
-        "Dubai": 4
-      }
-    },
-    "IT.Rome": {
-      "total": 5,
-      "Employee": 5,
-      "Contractor": 0,
-      "floors": {
-        "Rome": 5
-      }
-    },
-    "RU.Moscow": {
-      "total": 11,
-      "Employee": 9,
-      "Contractor": 2,
-      "floors": {
-        "Moscow": 11
+    // helper: returns YYYY-MM-DD for a given date in the partition's timezone
+    function getLocalDateString(dateInput, partition) {
+      const tz = timezones[partition] || 'UTC';
+      try {
+        const d = new Date(dateInput);
+        return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
+      } catch (e) {
+        return new Date(dateInput).toISOString().slice(0, 10);
       }
     }
-  },
-  "details": [
-    {
-      "LocaleMessageTime": "2025-10-29T15:06:28.000Z",
-      "Dateonly": "2025-10-29",
-      "Swipe_Time": "15:06:28",
-      "EmployeeID": "322295",
-      "PersonGUID": "2E9EB940-E128-4AC5-8DAF-F2811A69EED5",
-      "ObjectName1": "Ntoh Yuh, Juliette",
-      "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-      "PersonnelType": "Employee",
-      "CardNumber": "607294",
-      "Text5": "Vilnius - Gama Business Center",
-      "PartitionName2": "LT.Vilnius",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "CompanyName": "WU Processing Lithuania, UAB",
-      "PrimaryLocation": "Vilnius - Gama Business Center",
-      "Floor": "9th Floor"
-    },
-    {
-      "LocaleMessageTime": "2025-10-29T22:37:40.000Z",
-      "Dateonly": "2025-10-29",
-      "Swipe_Time": "22:37:40",
-      "EmployeeID": "322438",
-      "PersonGUID": "25E51F35-1F49-44F2-BA69-C26F12D5D02C",
-      "ObjectName1": "Mahbub, Arif",
-      "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-      "PersonnelType": "Employee",
-      "CardNumber": "607293",
-      "Text5": "Vilnius - Gama Business Center",
-      "PartitionName2": "LT.Vilnius",
-      "AdmitCode": "Admit",
-      "Direction": "InDirection",
-      "CompanyName": "WU Processing Lithuania, UAB",
-      "PrimaryLocation": "Vilnius - Gama Business Center",
-      "Floor": "9th Floor"
-    },
-    {
-      "LocaleMessageTime": "2025-10-29T22:12:14.000Z",
-      "Dateonly": "2025-10-29",
-      "Swipe_Time": "22:12:14",
+
+    // PRE-CALCULATE "today" per partition (so we don't call Intl repeatedly)
+    const partitionToday = {};
+    swipes.forEach(r => {
+      const p = r.PartitionName2;
+      if (!partitionToday[p]) {
+        partitionToday[p] = getLocalDateString(new Date(), p);
+      }
+    });
+
+    // --- 1) TODAY’S HEADCOUNT: first swipe per person but ONLY for swipes where
+    // the swipe's partition-local date === that partition's current local date.
+    const filteredSwipesForToday = swipes.filter(r => {
+      const p = r.PartitionName2;
+      return getLocalDateString(r.LocaleMessageTime, p) === partitionToday[p];
+    });
+
+    const firstByPerson = {};
+    filteredSwipesForToday.forEach(r => {
+      const prev = firstByPerson[r.PersonGUID];
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
+        firstByPerson[r.PersonGUID] = r;
+      }
+    });
+
+    const todayRecs = Object.values(firstByPerson);
+    const today = { total: 0, Employee: 0, Contractor: 0 };
+    todayRecs.forEach(r => {
+      today.total++;
+      if (isEmployeeType(r.PersonnelType)) today.Employee++;
+      else today.Contractor++;
+    });
+
+    // --- 2) REALTIME: build lastByPerson, but only from swipes that are on the partition's LOCAL "today".
+    // This removes partitions that only have older swipes.
+    const lastByPerson = {};
+    swipes.forEach(r => {
+      const p = r.PartitionName2;
+      // skip any swipe that is NOT on this partition's current local date
+      if (getLocalDateString(r.LocaleMessageTime, p) !== partitionToday[p]) return;
+
+      const prev = lastByPerson[r.PersonGUID];
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
+        lastByPerson[r.PersonGUID] = r;
+      }
+    });
+
+    // Build realtime counts only from the filtered lastByPerson
+    const realtime = {};
+    const unmappedDoors = new Set();
+
+    Object.values(lastByPerson).forEach(r => {
+      const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+      const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
+
+      // STRICT: drop 'Out of office' from realtime details and counts
+      if (floorNorm === 'out of office') return;
+
+      const p = r.PartitionName2;
+      if (!realtime[p]) {
+        realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+      }
+
+      realtime[p].total++;
+      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+      else realtime[p].Contractor++;
+
+      const normFloorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
+      realtime[p].floors[normFloorLabel] = (realtime[p].floors[normFloorLabel] || 0) + 1;
+    });
+
+    if (unmappedDoors.size) {
+      console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+    }
+
+    // details: use the filtered lastByPerson values (and drop Out of office)
+    const details = Object.values(lastByPerson)
+      .map(r => {
+        const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+        const floor = rawFloor ? String(rawFloor).trim() : null;
+        return { ...r, Floor: floor };
+      })
+      .filter(d => {
+        const f = d.Floor;
+        return !(f && String(f).trim().toLowerCase() === 'out of office');
+      });
+
+    return res.json({
+      success: true,
+      today,
+      realtime,
+      details
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Live summary failed' });
+  }
+};
