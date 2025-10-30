@@ -5,290 +5,146 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Western Union TEC Hyderabad - Security Protocols</title>
 <style>
-  :root {
-    --primary: #0046BE; /* Western Union blue */
-    --secondary: #FFD200; /* Western Union yellow */
-    --accent: #E31837; /* Western Union red for emphasis */
-    --dark: #1A1A1A;
-    --light: #FFFFFF;
-    --gray: #F5F5F5;
-    --text: #333333;
-  }
-  
   body {
-    background-color: #f0f2f5;
+    background-color: #333;
     margin: 0;
     padding: 40px 0;
-    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    font-family: "Segoe UI", Arial, sans-serif;
   }
 
   .poster {
-    width: 850px;
+    width: 800px;
     margin: 0 auto;
-    background-color: var(--light);
-    color: var(--text);
-    border-radius: 12px;
-    padding: 45px 50px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Decorative elements */
-  .poster::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 6px;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-  }
-
-  .corner-decoration {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    bottom: -40px;
-    right: -40px;
-    background-color: var(--secondary);
-    opacity: 0.1;
-    border-radius: 50%;
+    background-color: #ffd200;
+    color: #000;
+    border-radius: 10px;
+    padding: 40px 50px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   }
 
   header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 2px solid var(--primary);
-    padding-bottom: 15px;
-    margin-bottom: 30px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
   }
 
-  .title-container {
-    flex: 1;
+  header .title {
+    font-weight: bold;
   }
 
-  .title-container h1 {
-    font-size: 36px;
+  header .title h1 {
+    font-size: 34px;
     margin: 0;
-    line-height: 1.1;
-    color: var(--primary);
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    line-height: 1.2;
   }
 
-  .title-container h2 {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 8px 0 0;
-    color: var(--dark);
+  header .title h2 {
+    font-size: 22px;
+    font-weight: normal;
+    margin: 4px 0 0;
+  }
+
+  header .logo-placeholder {
+    font-size: 40px;
+    font-weight: bold;
     letter-spacing: 1px;
-  }
-
-  .logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 140px;
-    height: 80px;
-    background-color: var(--primary);
-    border-radius: 6px;
-    color: var(--light);
-    font-weight: 700;
-    font-size: 14px;
-    text-align: center;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(0, 70, 190, 0.2);
   }
 
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 20px;
+    gap: 35px;
   }
 
   .section {
-    margin-bottom: 25px;
-    background-color: var(--gray);
-    border-radius: 8px;
-    padding: 20px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 4px solid var(--primary);
-  }
-
-  .section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
   }
 
   .section h3 {
     display: flex;
     align-items: center;
-    font-size: 18px;
-    margin: 0 0 12px 0;
-    font-weight: 600;
-    color: var(--primary);
+    font-size: 17px;
+    margin-bottom: 10px;
+    font-weight: bold;
   }
 
-  .section h3 .icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background-color: var(--primary);
-    border-radius: 50%;
-    margin-right: 12px;
-    color: white;
-    font-size: 16px;
+  .section h3 img {
+    width: 22px;
+    margin-right: 8px;
   }
 
   ul {
     margin: 0;
-    padding-left: 20px;
+    padding-left: 25px;
     font-size: 15px;
     line-height: 1.6;
-    color: var(--text);
-  }
-
-  ul li {
-    margin-bottom: 8px;
-  }
-
-  .highlight {
-    color: var(--accent);
-    font-weight: 600;
   }
 
   .emergency {
-    background-color: var(--primary);
-    color: var(--light);
+    background-color: #000;
+    color: #fff;
     border-radius: 8px;
-    padding: 25px;
-    margin-top: 30px;
-    box-shadow: 0 5px 15px rgba(0, 70, 190, 0.2);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .emergency::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 80px;
-    height: 80px;
-    background-color: var(--secondary);
-    opacity: 0.1;
-    border-radius: 50%;
-    transform: translate(30px, -30px);
+    padding: 15px 20px;
+    margin-top: 35px;
   }
 
   .emergency h3 {
-    display: flex;
-    align-items: center;
     margin-top: 0;
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 15px;
-  }
-
-  .emergency h3 .icon {
-    margin-right: 10px;
-    font-size: 24px;
+    font-size: 16px;
+    font-weight: bold;
   }
 
   .emergency ul {
-    padding-left: 20px;
-    font-size: 15px;
+    padding-left: 18px;
+    font-size: 14px;
     line-height: 1.6;
-  }
-
-  .emergency ul li {
-    margin-bottom: 8px;
-  }
-
-  .emergency b {
-    color: var(--secondary);
   }
 
   footer {
     text-align: center;
-    margin-top: 30px;
-    font-size: 14px;
-    color: var(--dark);
-    padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
-    font-weight: 500;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 900px) {
-    .poster {
-      width: 95%;
-      padding: 30px 25px;
-    }
-    
-    .grid {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-    
-    header {
-      flex-direction: column;
-    }
-    
-    .logo-container {
-      margin-top: 15px;
-      align-self: flex-start;
-    }
+    margin-top: 25px;
+    font-size: 13px;
+    color: #111;
   }
 </style>
 </head>
 <body>
   <div class="poster">
-    <div class="corner-decoration"></div>
-    
     <header>
-      <div class="title-container">
+      <div class="title">
         <h1>Western Union<br>TEC Hyderabad</h1>
         <h2>SECURITY PROTOCOLS</h2>
       </div>
-      <div class="logo-container">
-        WESTERN<br>UNION<br>LOGO
-      </div>
+      <div class="logo-placeholder">[ LOGO ]</div>
     </header>
 
     <div class="grid">
       <div class="section">
-        <h3><span class="icon">🔐</span>ACCESS & IDENTIFICATION</h3>
+        <h3><img src="https://img.icons8.com/ios-filled/50/000000/id-badge.png"/>ACCESS & IDENTIFICATION</h3>
         <ul>
           <li>Always display your photo ID card on site.</li>
           <li>Use your access card at readers during entry and exit.</li>
           <li>Do not lend or borrow ID cards.</li>
-          <li>No tailgating or proxy punching — <span class="highlight">Zero Tolerance Policy</span>.</li>
+          <li>No tailgating or proxy punching — Zero Tolerance Policy.</li>
           <li>Restricted area access requires approval via iPads ticket.</li>
         </ul>
       </div>
 
       <div class="section">
-        <h3><span class="icon">📞</span>COMMUNICATION & VIOLATIONS</h3>
+        <h3><img src="https://img.icons8.com/ios-filled/50/000000/communication.png"/>COMMUNICATION & VIOLATIONS</h3>
         <ul>
           <li>Respond to GSOC emails about access violations.</li>
           <li>Report lost cards immediately to GSOC.</li>
           <li>For access issues, email:<br>
-          <span class="highlight">GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com</span></li>
+          <b>GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com</b></li>
         </ul>
       </div>
 
       <div class="section">
-        <h3><span class="icon">🏢</span>PREMISES SECURITY</h3>
+        <h3><img src="https://img.icons8.com/ios-filled/50/000000/security-checked.png"/>PREMISES SECURITY</h3>
         <ul>
           <li>Close doors properly to avoid triggering alarms.</li>
           <li>Visitors must register at reception and be escorted at all times.</li>
@@ -297,9 +153,9 @@
       </div>
 
       <div class="section">
-        <h3><span class="icon">🕒</span>WORKING HOURS & LATE WORK PROTOCOL</h3>
+        <h3><img src="https://img.icons8.com/ios-filled/50/000000/clock.png"/>WORKING HOURS & LATE WORK PROTOCOL</h3>
         <ul>
-          <li><span class="highlight">Office hours:</span> 8 AM – 8 PM daily.</li>
+          <li><b>Office hours:</b> 8 AM – 8 PM daily.</li>
           <li>Female employees working after 8 PM must:
             <ul>
               <li>Obtain approval from Manager & HR.</li>
@@ -311,7 +167,7 @@
       </div>
 
       <div class="section">
-        <h3><span class="icon">✅</span>END-OF-DAY CHECKLIST</h3>
+        <h3><img src="https://img.icons8.com/ios-filled/50/000000/checklist.png"/>END-OF-DAY CHECKLIST</h3>
         <ul>
           <li>Tidy your desk and secure sensitive materials.</li>
           <li>Lock drawers, cabinets, and expensive equipment.</li>
@@ -321,7 +177,7 @@
     </div>
 
     <div class="emergency">
-      <h3><span class="icon">🚨</span>EMERGENCY CONTACTS</h3>
+      <h3>🚨 EMERGENCY CONTACTS</h3>
       <ul>
         <li>Nearest Security Personnel</li>
         <li>2nd Floor – Security Reception: <b>__________</b> (internal) / <b>+91 __________</b> (external)</li>
