@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Western Union TEC Hyderabad - Security Protocols</title>
+<title>Western Union Security Protocols</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   * {
@@ -13,27 +13,27 @@
   }
   
   body {
-    background: #f5f5f5;
+    background: #1a1a1a;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 20px;
+    padding: 10px;
   }
   
-  .email-container {
+  .container {
     width: 100%;
-    max-width: 800px;
+    max-width: 700px;
     background: white;
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   }
   
   .header {
     background: linear-gradient(135deg, #FFD200 0%, #FFC000 100%);
-    padding: 25px 30px;
+    padding: 20px 25px;
     color: #333;
     position: relative;
     overflow: hidden;
@@ -42,22 +42,11 @@
   .header::before {
     content: '';
     position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 150px;
-    height: 150px;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-  }
-  
-  .header::after {
-    content: '';
-    position: absolute;
-    bottom: -30px;
-    left: -30px;
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.15);
     border-radius: 50%;
   }
   
@@ -70,92 +59,87 @@
   }
   
   .title h1 {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     line-height: 1.1;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
   }
   
   .title h2 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     letter-spacing: 1px;
   }
   
   .logo {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     background: #0055A4;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
   }
   
   .logo i {
-    font-size: 32px;
+    font-size: 28px;
     color: #FFD200;
   }
   
   .content {
-    padding: 30px;
+    padding: 20px 25px;
     background: white;
   }
   
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 15px;
+    margin-bottom: 15px;
   }
   
   .section {
     background: #FFFDF0;
-    border-radius: 8px;
-    padding: 18px;
+    border-radius: 6px;
+    padding: 15px;
     border-left: 4px solid #FFD200;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s;
-  }
-  
-  .section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   }
   
   .section h3 {
     display: flex;
     align-items: center;
     font-size: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     color: #333;
     font-weight: 600;
   }
   
   .section h3 i {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     background: #FFD200;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-right: 10px;
+    margin-right: 8px;
     color: #333;
-    font-size: 14px;
+    font-size: 13px;
+    flex-shrink: 0;
   }
   
   ul {
     margin: 0;
-    padding-left: 20px;
+    padding-left: 18px;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.4;
     color: #444;
   }
   
   ul li {
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
   
   b {
@@ -166,10 +150,10 @@
   .emergency {
     background: linear-gradient(135deg, #E63946 0%, #C1121F 100%);
     color: white;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 6px;
+    padding: 18px;
     margin-top: 10px;
-    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+    box-shadow: 0 3px 10px rgba(230, 57, 70, 0.3);
     position: relative;
     overflow: hidden;
   }
@@ -177,45 +161,78 @@
   .emergency::before {
     content: '';
     position: absolute;
-    top: -20px;
-    right: -20px;
-    width: 80px;
-    height: 80px;
+    top: -15px;
+    right: -15px;
+    width: 70px;
+    height: 70px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
   }
   
   .emergency h3 {
-    font-size: 18px;
-    margin-bottom: 12px;
+    font-size: 17px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
   }
   
   .emergency h3 i {
-    margin-right: 10px;
-    font-size: 20px;
+    margin-right: 8px;
+    font-size: 18px;
   }
   
   .emergency ul {
     color: white;
-    padding-left: 18px;
+    padding-left: 16px;
     font-size: 14px;
   }
   
   .footer {
     text-align: center;
-    padding: 15px;
+    padding: 12px;
     background: #f8f8f8;
     color: #666;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     border-top: 1px solid #eee;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    
+    .header {
+      padding: 15px 20px;
+    }
+    
+    .content {
+      padding: 15px 20px;
+    }
+    
+    .title h1 {
+      font-size: 24px;
+    }
+    
+    .title h2 {
+      font-size: 16px;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
+    }
+    
+    .logo i {
+      font-size: 24px;
+    }
   }
 </style>
 </head>
 <body>
-  <div class="email-container">
+  <div class="container">
     <div class="header">
       <div class="title-container">
         <div class="title">
