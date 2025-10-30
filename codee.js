@@ -1,6 +1,3 @@
-dont changy anythikg,
-  i want only anything is happen or issue, or errom i want auto connect again ok 
-dont chagne anythikg carefyllym 
 require('dotenv').config();
 const sql = require('mssql');
 
@@ -31,7 +28,8 @@ const dbConfig = {
   connectionTimeout: 60000    // 1 minute connection timeout
 };
 
-const poolPromise = sql.connect(dbConfig)
+// ---- ORIGINAL CODE ----
+let poolPromise = sql.connect(dbConfig)
   .then(pool => {
     console.log('✅ MSSQL  connected');
     return pool;
@@ -40,5 +38,38 @@ const poolPromise = sql.connect(dbConfig)
     console.error('❌ MSSQL  connection failed', err);
     process.exit(1);
   });
+
+// ---- AUTO-RECONNECT ADDED BELOW ----
+
+// 1️⃣ Reconnect automatically if connection is lost
+sql.on('error', err => {
+  console.error('⚠️  SQL global error:', err.message);
+  console.log('🔁 Attempting MSSQL reconnection...');
+  poolPromise = sql.connect(dbConfig)
+    .then(pool => {
+      console.log('✅ MSSQL reconnected successfully');
+      return pool;
+    })
+    .catch(e => {
+      console.error('❌ MSSQL reconnection failed:', e.message);
+    });
+});
+
+// 2️⃣ Optional: keep-alive ping every 2 minutes
+setInterval(async () => {
+  try {
+    const pool = await poolPromise;
+    await pool.request().query('SELECT 1');
+    // console.log('✅ DB keep-alive OK');
+  } catch (err) {
+    console.error('💀 Keep-alive failed, reconnecting...', err.message);
+    poolPromise = sql.connect(dbConfig)
+      .then(pool => {
+        console.log('✅ MSSQL reconnected after keep-alive failure');
+        return pool;
+      })
+      .catch(e => console.error('❌ Reconnect after keep-alive failed:', e.message));
+  }
+}, 120000); // every 2 minutes
 
 module.exports = { sql, poolPromise };
