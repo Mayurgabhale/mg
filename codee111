@@ -1,3 +1,391 @@
+PS C:\Users\W0024618\Desktop\emea-occupancy-backend> node server.js
+🚀 Server running on port 3005
+✅ MSSQL  connected
+TypeError: normalizeDoorName is not a function
+    at mapDoorToZone (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:719:15)
+    at C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:775:20
+    at Array.map (<anonymous>)
+    at exports.getLiveSummary (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:773:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+TypeError: normalizeDoorName is not a function
+    at mapDoorToZone (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:719:15)
+    at C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:775:20
+    at Array.map (<anonymous>)
+    at exports.getLiveSummary (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:773:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+TypeError: normalizeDoorName is not a function
+    at mapDoorToZone (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:719:15)
+    at C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:775:20
+    at Array.map (<anonymous>)
+    at exports.getLiveSummary (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:773:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+TypeError: normalizeDoorName is not a function
+    at mapDoorToZone (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:719:15)
+    at C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:775:20
+    at Array.map (<anonymous>)
+    at exports.getLiveSummary (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:773:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+TypeError: normalizeDoorName is not a function
+    at mapDoorToZone (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:719:15)
+    at C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:775:20
+    at Array.map (<anonymous>)
+    at exports.getLiveSummary (C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js:773:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+http://localhost:3005/api/occupancy/live-summary{"success":false,"message":"Summary failed"}
+
+// // C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
+
+// const service = require('../services/occupancy.service');
+//  const doorMap = require('../utils/doorMap'); 
+//  const timezones = require('../utils/timezones');
+// //  const normalize  = name => name.trim();        // simple normalizer
+
+//  const normalize = s =>
+//    s
+//      .trim()
+//      .toLowerCase()
+//      .replace(/[^a-z0-9]+/g, ' ')   // non-alphanum → space
+//      .replace(/\s+/g, ' ')          // collapse multi-spaces
+//      .trim();
+
+// /**
+//  * Returns true if this PersonnelType counts as Employee.
+//  * Everything else (including blank) counts as Contractor.
+//  */
+// function isEmployeeType(pt) {
+//   return pt === 'Employee'
+//       || pt === 'Terminated Employee'
+//       || pt === 'Terminated Personnel';
+// }
+
+// /**
+//  * Look up floor for a given record by matching door + partition.
+//  */
+
+// function lookupFloor(partition, door, direction, unmappedSet) {
+//   const normDoor = normalize(door);
+//   // 1) try exact (post-normalization)
+//   let entry = doorMap.find(d =>
+//     d.partition === partition &&
+//     normalize(d.door) === normDoor
+//   );
+//   // 2) fallback: partial match if exact fails
+//   if (!entry) {
+//     entry = doorMap.find(d =>
+//       d.partition === partition &&
+//       normalize(d.door).includes(normDoor)
+//     );
+//   }
+//   if (!entry) {
+//     unmappedSet.add(`${partition} | ${door}`);
+//     return null;
+//   }
+//   return direction === 'InDirection'
+//     ? entry.inDirectionFloor
+//     : entry.outDirectionFloor;
+// }
+
+// exports.getLiveOccupancy = async (req, res) => {
+//   try {
+//     const data = await service.fetchLiveOccupancy();
+//     res.json({ success: true, count: data.length, data });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, message: 'Live occupancy fetch failed' });
+//   }
+// };
+
+
+// // exports.getLiveSummary = async (req, res) => {
+// //   try {
+// //     const swipes = await service.fetchLiveOccupancy();
+
+// //     // 1. TODAY’S HEADCOUNT: first swipe per person
+// //     const firstByPerson = {};
+// //     swipes.forEach(r => {
+// //       const prev = firstByPerson[r.PersonGUID];
+// //       const t = new Date(r.LocaleMessageTime).getTime();
+// //       if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
+// //         firstByPerson[r.PersonGUID] = r;
+// //       }
+// //     });
+// //     const todayRecs = Object.values(firstByPerson);
+// //     const today = { total: 0, Employee: 0, Contractor: 0 };
+// //     todayRecs.forEach(r => {
+// //       today.total++;
+// //       if (isEmployeeType(r.PersonnelType)) today.Employee++;
+// //       else today.Contractor++;
+// //     });
+
+// //     // 2. REAL-TIME: last swipe per person
+// //     const lastByPerson = {};
+// //     swipes.forEach(r => {
+// //       const prev = lastByPerson[r.PersonGUID];
+// //       const t = new Date(r.LocaleMessageTime).getTime();
+// //       if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
+// //         lastByPerson[r.PersonGUID] = r;
+// //       }
+// //     });
+
+// //     const realtime = {};
+// //     const unmappedDoors = new Set();
+
+// //     Object.values(lastByPerson).forEach(r => {
+// //       // Resolve floor up-front (this will also populate unmappedDoors if necessary)
+// //       const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+// //       const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
+
+// //       // STRICT RULE: if resolved Floor equals "Out of office" -> skip counting
+// //       if (floorNorm === 'out of office') {
+// //         return;
+// //       }
+
+// //       // Continue with existing OutDirection logic only if needed (original intent preserved)
+// //       // (Note: we already removed any record whose mapped floor is "Out of office" regardless of direction)
+
+// //       const p = r.PartitionName2;
+// //       if (!realtime[p]) {
+// //         realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+// //       }
+
+// //       realtime[p].total++;
+// //       if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+// //       else realtime[p].Contractor++;
+
+// //       const normFloorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
+// //       realtime[p].floors[normFloorLabel] = (realtime[p].floors[normFloorLabel] || 0) + 1;
+// //     });
+
+// //     if (unmappedDoors.size) {
+// //       console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+// //     }
+
+// //     // Build enriched details array, but filter out any whose resolved Floor is "Out of office"
+// //     const details = Object.values(lastByPerson)
+// //       .map(r => {
+// //         const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+// //         const floor = rawFloor ? String(rawFloor).trim() : null;
+// //         return {
+// //           ...r,
+// //           Floor: floor
+// //         };
+// //       })
+// //       // Strictly remove records whose Floor is "Out of office"
+// //       .filter(d => {
+// //         const f = d.Floor;
+// //         return !(f && String(f).trim().toLowerCase() === 'out of office');
+// //       });
+
+// //     return res.json({
+// //       success: true,
+// //       today,
+// //       realtime,
+// //       details
+// //     });
+// //   } catch (err) {
+// //     console.error(err);
+// //     return res.status(500).json({ success: false, message: 'Live summary failed' });
+// //   }
+// // };
+
+
+
+
+
+
+// // 📝📝📝📝📝 new code wiht time zone  ⬇️⬇️start
+
+// // 📝 Updated getLiveSummary — enforces partition-local "today" for both today + realtime
+// exports.getLiveSummary = async (req, res) => {
+//   try {
+//     const swipes = await service.fetchLiveOccupancy();
+
+//     // helper: returns YYYY-MM-DD for a given date in the partition's timezone
+//     function getLocalDateString(dateInput, partition) {
+//       const tz = timezones[partition] || 'UTC';
+//       try {
+//         const d = new Date(dateInput);
+//         return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
+//       } catch (e) {
+//         return new Date(dateInput).toISOString().slice(0, 10);
+//       }
+//     }
+
+//     // PRE-CALCULATE "today" per partition (so we don't call Intl repeatedly)
+//     const partitionToday = {};
+//     swipes.forEach(r => {
+//       const p = r.PartitionName2;
+//       if (!partitionToday[p]) {
+//         partitionToday[p] = getLocalDateString(new Date(), p);
+//       }
+//     });
+
+//     // --- 1) TODAY’S HEADCOUNT: first swipe per person but ONLY for swipes where
+//     // the swipe's partition-local date === that partition's current local date.
+//     const filteredSwipesForToday = swipes.filter(r => {
+//       const p = r.PartitionName2;
+//       return getLocalDateString(r.LocaleMessageTime, p) === partitionToday[p];
+//     });
+
+//     const firstByPerson = {};
+//     filteredSwipesForToday.forEach(r => {
+//       const prev = firstByPerson[r.PersonGUID];
+//       const t = new Date(r.LocaleMessageTime).getTime();
+//       if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
+//         firstByPerson[r.PersonGUID] = r;
+//       }
+//     });
+
+//     const todayRecs = Object.values(firstByPerson);
+//     const today = { total: 0, Employee: 0, Contractor: 0 };
+//     todayRecs.forEach(r => {
+//       today.total++;
+//       if (isEmployeeType(r.PersonnelType)) today.Employee++;
+//       else today.Contractor++;
+//     });
+
+//     // --- 2) REALTIME: build lastByPerson, but only from swipes that are on the partition's LOCAL "today".
+//     // This removes partitions that only have older swipes.
+//     const lastByPerson = {};
+//     swipes.forEach(r => {
+//       const p = r.PartitionName2;
+//       // skip any swipe that is NOT on this partition's current local date
+//       if (getLocalDateString(r.LocaleMessageTime, p) !== partitionToday[p]) return;
+
+//       const prev = lastByPerson[r.PersonGUID];
+//       const t = new Date(r.LocaleMessageTime).getTime();
+//       if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
+//         lastByPerson[r.PersonGUID] = r;
+//       }
+//     });
+
+//     // Build realtime counts only from the filtered lastByPerson
+//     const realtime = {};
+//     const unmappedDoors = new Set();
+
+//     Object.values(lastByPerson).forEach(r => {
+//       const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+//       const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
+
+//       // STRICT: drop 'Out of office' from realtime details and counts
+//       if (floorNorm === 'out of office') return;
+
+//       const p = r.PartitionName2;
+//       if (!realtime[p]) {
+//         realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+//       }
+
+//       realtime[p].total++;
+//       if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+//       else realtime[p].Contractor++;
+
+//       const normFloorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
+//       realtime[p].floors[normFloorLabel] = (realtime[p].floors[normFloorLabel] || 0) + 1;
+//     });
+
+//     if (unmappedDoors.size) {
+//       console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+//     }
+
+//     // details: use the filtered lastByPerson values (and drop Out of office)
+//     const details = Object.values(lastByPerson)
+//       .map(r => {
+//         const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+//         const floor = rawFloor ? String(rawFloor).trim() : null;
+//         return { ...r, Floor: floor };
+//       })
+//       .filter(d => {
+//         const f = d.Floor;
+//         return !(f && String(f).trim().toLowerCase() === 'out of office');
+//       });
+
+//     return res.json({
+//       success: true,
+//       today,
+//       realtime,
+//       details
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ success: false, message: 'Live summary failed' });
+//   }
+// };
+
+// // 📝📝📝📝📝📝new code wiht time zone end
+
+
+
+
+// exports.getHistoricalOccupancy = async (req, res) => {
+//   const location = req.params.location || null;
+//   try {
+//     const raw = await service.fetchHistoricalOccupancy(location);
+
+//     // first swipe per person per date
+//     const byDate = raw.reduce((acc, r) => {
+//       const iso = (r.LocaleMessageTime instanceof Date)
+//         ? r.LocaleMessageTime.toISOString()
+//         : r.LocaleMessageTime;
+//       const date = iso.slice(0,10);
+//       acc[date] = acc[date] || {};
+//       const prev = acc[date][r.PersonGUID];
+//       if (!prev || new Date(iso) < new Date(prev.LocaleMessageTime)) {
+//         acc[date][r.PersonGUID] = { ...r, LocaleMessageTime: iso };
+//       }
+//       return acc;
+//     }, {});
+
+//     const summaryByDate = [];
+//     const details = [];
+
+//     Object.keys(byDate).sort().forEach(date => {
+//       const recs = Object.values(byDate[date]);
+//       details.push(...recs);
+
+//       // initialize counts
+//       const regionCounts = { total: 0, Employee: 0, Contractor: 0 };
+//       const partitionCounts = {};
+
+//       recs.forEach(r => {
+//         regionCounts.total++;
+//         if (isEmployeeType(r.PersonnelType)) regionCounts.Employee++;
+//         else regionCounts.Contractor++;
+
+//         if (!location) {
+//           const p = r.PartitionName2;
+//           if (!partitionCounts[p]) {
+//             partitionCounts[p] = { total: 0, Employee: 0, Contractor: 0 };
+//           }
+//           partitionCounts[p].total++;
+//           if (isEmployeeType(r.PersonnelType)) partitionCounts[p].Employee++;
+//           else partitionCounts[p].Contractor++;
+//         }
+//       });
+
+//       summaryByDate.push({
+//         date,
+//         day: new Date(date).toLocaleDateString('en-US', { weekday:'long' }),
+//         region: location
+//           ? { name: location, ...regionCounts }
+//           : { name: 'EMEA', ...regionCounts },
+//         partitions: location ? undefined : partitionCounts
+//       });
+//     });
+
+//     return res.json({ success: true, summaryByDate, details });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ success: false, message: 'Historical fetch failed' });
+//   }
+// };
+
+
+
+
+
+// //////////⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ all new code 
+
+
 // C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
 
 const service = require('../services/occupancy.service');
@@ -296,218 +684,3 @@ exports.getHistoricalOccupancy = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
-
-
-
-.....
-.
-
-
-
-
-// C:\Users\W0024618\Desktop\emea-occupancy-backend\src\services\occupancy.service.js
-
-const { poolPromise, sql } = require('../config/db');
-
-const partitionList = [
-  'AUT.Vienna',
-  'DU.Abu Dhab',
-  'IE.Dublin',
-  'IT.Rome',
-  'LT.Vilnius',
-  'MA.Casablanca',
-  'RU.Moscow',
-  'UK.London',
-  'ES.Madrid'
-];
-
-function quoteList(arr) {
-  return arr.map(p => `'${p.replace("'", "''")}'`).join(',');
-}
-
-/**
- * Live occupancy (today) for EMEA
- *
- * NOTE: this mirrors APAC approach — we compute LocaleMessageTime in the query,
- * include PartitionName2 values and return one row per PersonGUID (latest).
- */
-exports.fetchLiveOccupancy = async () => {
-  const pool = await poolPromise;
-  const parts = quoteList(partitionList);
-
-  const query = `
-
-    WITH CombinedEmployeeData AS (
-      SELECT
-        t1.ObjectName1,
-        t1.ObjectName2             AS Door,
-        CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-        t3.Name                    AS PersonnelType,
-        t1.ObjectIdentity1         AS PersonGUID,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        )                          AS CardNumber,
-        -- if you have site-specific door patterns you may map here; else use PartitionName2 directly
-        CASE
-          WHEN t1.ObjectName2 LIKE 'EMEA_LT_VNO%' THEN 'LT.Vilnius'
-          WHEN t1.ObjectName2 LIKE 'EMEA_MA%' THEN 'MA.Casablanca'
-          -- add special mappings if needed
-          ELSE t1.PartitionName2
-        END                        AS PartitionName2,
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t5d.value                  AS Direction,
-        t2.Text4                   AS CompanyName,
-        t2.Text5                   AS PrimaryLocation
-      FROM [ACVSUJournal_00011029].dbo.ACVSUJournalLog t1
-      JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
-      JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
-
-      LEFT JOIN [ACVSUJournal_00011029].dbo.ACVSUJournalLogxmlShred t5d
-      ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-
-      LEFT JOIN [ACVSUJournal_00011029].dbo.ACVSUJournalLogxml t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00011029].dbo.ACVSUJournalLogxmlShred
-        WHERE Name IN ('Card','CHUID')
-      ) AS sc
-        ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        AND t1.PartitionName2 IN (${parts})
-        -- keep rows for today per DB server date (controller will apply final mapping)
-        AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
-            = CONVERT(DATE, GETDATE())
-    ), Ranked AS (
-      SELECT *,
-        ROW_NUMBER() OVER (PARTITION BY PersonGUID ORDER BY LocaleMessageTime DESC) AS rn
-      FROM CombinedEmployeeData
-    )
-    SELECT
-      ObjectName1,
-      Door,
-      PersonnelType,
-      EmployeeID,
-      CardNumber,
-      PartitionName2,
-      LocaleMessageTime,
-      Direction,
-      PersonGUID,
-      CompanyName,
-      PrimaryLocation
-    FROM Ranked
-    WHERE rn = 1;
-  `;
-
-  const result = await pool.request().query(query);
-  return result.recordset;
-};
-
-
-/**
- * Historical fetch — returns last 7 days (or by location)
- * Mirrors APAC fetchHistoricalData logic but uses the EMEA journal DB.
- */
-exports.fetchHistoricalData = async ({ location = null }) => {
-  const pool = await poolPromise;
-
-  // 1. Get all ACVSUJournal_* database names dynamically
-  const dbResult = await pool.request().query(`
-    SELECT name 
-    FROM sys.databases
-    WHERE name LIKE 'ACVSUJournal[_]%'
-    ORDER BY CAST(REPLACE(name, 'ACVSUJournal_', '') AS INT)
-  `);
-
-  // Map DBs and pick last 2 only
-  const databases = dbResult.recordset.map(r => r.name);
-  const selectedDbs = databases.slice(-2); // newest and previous
-
-  if (selectedDbs.length === 0) {
-    throw new Error("No ACVSUJournal_* databases found.");
-  }
-
-  // 2. Outer filter
-  const outerFilter = location
-    ? `WHERE PartitionNameFriendly = @location`
-    : `WHERE PartitionNameFriendly IN (${quoteList([
-        'LT.Vilnius','MA.Casablanca','IE.Dublin','AUT.Vienna','DU.Abu Dhab','RU.Moscow','UK.London','ES.Madrid','IT.Rome'
-      ])})`;
-
-  // 3. Build UNION ALL query across selected DBs only
-  const unionQueries = selectedDbs.map(db => `
-    SELECT
-      DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-      t1.ObjectName1,
-      t1.ObjectName2               AS Door,
-      CASE WHEN t2.Int1 = 0 THEN t2.Text12 ELSE CAST(t2.Int1 AS NVARCHAR) END AS EmployeeID,
-      t3.Name                      AS PersonnelType,
-      t1.ObjectIdentity1           AS PersonGUID,
-      t2.Text4                     AS CompanyName,
-      t2.Text5                     AS PrimaryLocation,
-      COALESCE(
-        CASE
-          WHEN t1.ObjectName2 LIKE 'EMEA_LT_VNO%' THEN 'LT.Vilnius'
-          WHEN t1.ObjectName2 LIKE 'EMEA_MA%' THEN 'MA.Casablanca'
-          ELSE t1.PartitionName2
-        END,
-        'EMEA.Default'
-      ) AS PartitionNameFriendly,
-      COALESCE(
-        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-        TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-        sc.value
-      ) AS CardNumber,
-      t5d.value AS Direction
-    FROM ${db}.dbo.ACVSUJournalLog t1
-    JOIN ACVSCore.Access.Personnel       t2 ON t1.ObjectIdentity1 = t2.GUID
-    JOIN ACVSCore.Access.PersonnelType   t3 ON t2.PersonnelTypeID = t3.ObjectID
-
-    LEFT JOIN ${db}.dbo.ACVSUJournalLogxmlShred t5d
-      ON t1.XmlGUID = t5d.GUID 
-      AND t5d.Value IN ('InDirection','OutDirection')
-
-    LEFT JOIN ${db}.dbo.ACVSUJournalLogxml t_xml
-      ON t1.XmlGUID = t_xml.GUID
-
-    LEFT JOIN (
-      SELECT GUID, value
-      FROM ${db}.dbo.ACVSUJournalLogxmlShred
-      WHERE Name IN ('Card','CHUID')
-    ) AS sc
-      ON t1.XmlGUID = sc.GUID
-    WHERE t1.MessageType = 'CardAdmitted'
-  `).join('\nUNION ALL\n');
-
-  // 4. Final query
-  const query = `
-    WITH Hist AS (
-      ${unionQueries}
-    )
-    SELECT *
-    FROM Hist
-    ${outerFilter}
-    ORDER BY LocaleMessageTime ASC;
-  `;
-
-  const req = pool.request();
-  if (location) {
-    req.input('location', sql.NVarChar, location);
-  }
-  const result = await req.query(query);
-  return result.recordset;
-};
-
-exports.fetchHistoricalOccupancy = async (location) =>
-  exports.fetchHistoricalData({ location: location || null });
-
-module.exports.partitionList = partitionList;
