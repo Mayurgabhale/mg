@@ -1,193 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Western Union TEC Hyderabad - Security Protocols</title>
-<style>
-  body {
-    background-color: #333;
-    margin: 0;
-    padding: 40px 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-  }
+Hyderabad welcome email draft.
 
-  .poster {
-    width: 800px;
-    margin: 0 auto;
-    background-color: #ffd200;
-    color: #000;
-    border-radius: 10px;
-    padding: 40px 50px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-  }
+Dear----------,
 
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    border-bottom: 2px solid #000;
-    padding-bottom: 10px;
-    margin-bottom: 25px;
-  }
+Welcome to the Western Union TEC (Technology Engineering Center) Hyderabad. 
 
-  header .title {
-    font-weight: bold;
-  }
+TEC premises are secured, and access is restricted. We would like to provide you with information on the security protocols you must adhere to throughout your time with us. 
 
-  header .title h1 {
-    font-size: 34px;
-    margin: 0;
-    line-height: 1.2;
-  }
+•	Your photo ID card must be always displayed on site while you are at the Western Union premises.
+•	During entry and exit from the premises, make sure to flash your access card at the card reader.
+•	Do not lend your access card to anyone. Avoid borrowing someone else's ID Card.
+•	Do not engage in tailgating or proxy punching.
+•	Approval from the Process Owner is required to grant or revoke access to certain restricted work areas. You need to create a separate iPads ticket for the same.
+•	Please acknowledge and respond to any email sent from the Global Security Operation Center (GSOC) regarding any access violation.
+•	Failure to close a door on the premises will cause the door delay alarm to be triggered in the access control system. 
+•	It is important to close the door behind you when entering or exiting.
+•	Your visitors are required to register at the reception during their entry. Make sure your visitors are escorted and accompanied throughout their visit. 
+•	Be alert and aware. If you encounter any strange, suspicious, or unusual behavior or event, report it to the on-site security.
+•	Report the loss of the card immediately to the Global Security Operation Center (GSOC). 
+•	The office is open between 8am and 8pm every day. 
+•	In case a female colleague needs to work late after 8 PM, it is important to obtain approval from both your manager and local HR.  After approval, inform the Site Operations Team and Security 
+and book your transport ahead of time.
 
-  header .title h2 {
-    font-size: 22px;
-    font-weight: normal;
-    margin: 4px 0 0;
-  }
+At the end of the day:
 
-  header .logo-placeholder {
-    font-size: 40px;
-    font-weight: bold;
-    letter-spacing: 1px;
-  }
+•	Tidy your desk.
+•	Make sure any sensitive material is secured.
+•	Secure drawers, file cabinets, and other items.
+•	Make sure that expensive equipment such as laptops and other devices are secured.
+•	Ensure that your personal belongings are secure. For example, mobile phones, chargers, and wallets.
+•	Keeping them under lock and key or in a secure location when you're not on your workstation is crucial.
+•	Should there be any problems with access, kindly send an email to GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com.
 
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 35px;
-  }
 
-  .section {
-    margin-bottom: 20px;
-  }
+Do not panic if there is an emergency. Immediately contact:
 
-  .section h3 {
-    display: flex;
-    align-items: center;
-    font-size: 17px;
-    margin-bottom: 10px;
-    font-weight: bold;
-  }
+1.	Nearest Security Personnel
+2.	2nd Floor - Security Reception phone number is -------------(internal) or +--------------- (external)
+3.	Sravya Uppuluri @
+4.	GSOC - 7632394 (internal) or +91 20-67632394 (external)
+5.	Lloyd Dass @ +91 9158998853
 
-  .section h3 img {
-    width: 22px;
-    margin-right: 8px;
-  }
 
-  ul {
-    margin: 0;
-    padding-left: 25px;
-    font-size: 15px;
-    line-height: 1.6;
-  }
+Thanks & Regards
+Global Security Operations Team
 
-  .emergency {
-    background-color: #000;
-    color: #fff;
-    border-radius: 8px;
-    padding: 15px 20px;
-    margin-top: 35px;
-  }
 
-  .emergency h3 {
-    margin-top: 0;
-    font-size: 16px;
-    font-weight: bold;
-  }
-
-  .emergency ul {
-    padding-left: 18px;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  footer {
-    text-align: center;
-    margin-top: 25px;
-    font-size: 13px;
-    color: #111;
-  }
-</style>
-</head>
-<body>
-  <div class="poster">
-    <header>
-      <div class="title">
-        <h1>Western Union<br>TEC Hyderabad</h1>
-        <h2>SECURITY PROTOCOLS</h2>
-      </div>
-      <div class="logo-placeholder">[ LOGO ]</div>
-    </header>
-
-    <div class="grid">
-      <div class="section">
-        <h3><img src="https://img.icons8.com/ios-filled/50/000000/id-badge.png"/>ACCESS & IDENTIFICATION</h3>
-        <ul>
-          <li>Always display your photo ID card on site.</li>
-          <li>Use your access card at readers during entry and exit.</li>
-          <li>Do not lend or borrow ID cards.</li>
-          <li>No tailgating or proxy punching — Zero Tolerance Policy.</li>
-          <li>Restricted area access requires approval via iPads ticket.</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3><img src="https://img.icons8.com/ios-filled/50/000000/communication.png"/>COMMUNICATION & VIOLATIONS</h3>
-        <ul>
-          <li>Respond to GSOC emails about access violations.</li>
-          <li>Report lost cards immediately to GSOC.</li>
-          <li>For access issues, email:<br>
-          <b>GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com</b></li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3><img src="https://img.icons8.com/ios-filled/50/000000/security-checked.png"/>PREMISES SECURITY</h3>
-        <ul>
-          <li>Close doors properly to avoid triggering alarms.</li>
-          <li>Visitors must register at reception and be escorted at all times.</li>
-          <li>Report any suspicious behavior to on-site security immediately.</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3><img src="https://img.icons8.com/ios-filled/50/000000/clock.png"/>WORKING HOURS & LATE WORK PROTOCOL</h3>
-        <ul>
-          <li><b>Office hours:</b> 8 AM – 8 PM daily.</li>
-          <li>Female employees working after 8 PM must:
-            <ul>
-              <li>Obtain approval from Manager & HR.</li>
-              <li>Inform Site Operations & Security.</li>
-              <li>Book transport in advance.</li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3><img src="https://img.icons8.com/ios-filled/50/000000/checklist.png"/>END-OF-DAY CHECKLIST</h3>
-        <ul>
-          <li>Tidy your desk and secure sensitive materials.</li>
-          <li>Lock drawers, cabinets, and expensive equipment.</li>
-          <li>Secure laptops, phones, and personal belongings.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="emergency">
-      <h3>🚨 EMERGENCY CONTACTS</h3>
-      <ul>
-        <li>Nearest Security Personnel</li>
-        <li>2nd Floor – Security Reception: <b>__________</b> (internal) / <b>+91 __________</b> (external)</li>
-        <li>Sravya Uppuluri – __________</li>
-        <li>GSOC – 7632394 (internal) / +91 20-67632394 (external)</li>
-        <li>Lloyd Dass – +91 9158998853</li>
-      </ul>
-    </div>
-
-    <footer>© Western Union TEC Hyderabad | Global Security Operations Team</footer>
-  </div>
-</body>
-</html>
