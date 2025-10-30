@@ -1,8 +1,30 @@
-// 🆕 Find travelers who are traveling today (30-10-2025)
-const today = new Date("2025-10-30"); // you can change this to new Date() in production
+{/* 🆕 TODAY'S TRAVELERS SECTION */}
+<div style={sideCard}>
+  <div style={cardHeader}>
+    <FiCalendar style={cardIcon} />
+    <h3 style={sideTitle}>Today's Travelers ({today.toLocaleDateString()})</h3>
+  </div>
 
-const todayTravelers = safeItems.filter((r) => {
-  const start = new Date(r.begin_dt);
-  const end = new Date(r.end_dt);
-  return start <= today && end >= today; // trip includes today
-});
+  {todayTravelers.length === 0 ? (
+    <div style={emptyState}>
+      <FiFileText size={24} style={{ color: '#9ca3af', marginBottom: '8px' }} />
+      <p style={sideEmpty}>No one is traveling today</p>
+    </div>
+  ) : (
+    <ul style={countryList}>
+      {todayTravelers.map((t, i) => (
+        <li key={i} style={countryItem}>
+          <div style={countryInfo}>
+            <span style={countryRank}>{i + 1}</span>
+            <span style={countryName}>
+              {t.first_name} {t.last_name}
+            </span>
+          </div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            {t.from_country} → {t.to_country}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
