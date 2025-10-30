@@ -1,5 +1,7 @@
 
-import React, { useState, useMemo } from "react";
+// import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -46,6 +48,27 @@ const EmployeeTravelDashboard = () => {
         search: "",
     });
 
+
+
+      // 🆕 Load saved data on page reload
+  useEffect(() => {
+    const loadPreviousData = async () => {
+      try {
+        const res = await axios.get("http://localhost:8000/data");
+        const payload = res.data || {};
+        const rows = payload.items || [];
+        setItems(rows);
+        setSummary(payload.summary || {});
+        if (rows.length > 0) {
+          toast.info(`Loaded ${rows.length} saved records from previous session.`);
+        }
+      } catch (err) {
+        console.log("No saved data found yet.");
+      }
+    };
+    loadPreviousData();
+  }, []);
+
     const handleFileChange = (e) => setFile(e.target.files[0]);
 
     const uploadFile = async () => {
@@ -80,16 +103,33 @@ const EmployeeTravelDashboard = () => {
         [safeItems]
     );
 
-    const filtered = safeItems.filter((r) => {
-        const s = filters.search.toLowerCase();
-        if (s) {
-            const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""}`.toLowerCase();
-            if (!hay.includes(s)) return false;
-        }
-        if (filters.country && r.from_country !== filters.country) return false;
-        if (filters.legType && r.leg_type !== filters.legType) return false;
-        return true;
-    });
+    // const filtered = safeItems.filter((r) => {
+    //     const s = filters.search.toLowerCase();
+    //     if (s) {
+    //         const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""}`.toLowerCase();
+    //         if (!hay.includes(s)) return false;
+    //     }
+    //     if (filters.country && r.from_country !== filters.country) return false;
+    //     if (filters.legType && r.leg_type !== filters.legType) return false;
+    //     return true;
+    // });
+
+
+
+const filtered = safeItems
+  .filter((r) => {
+    const s = filters.search.toLowerCase();
+    if (s) {
+      const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""}`.toLowerCase();
+      if (!hay.includes(s)) return false;
+    }
+    if (filters.country && r.from_country !== filters.country) return false;
+    if (filters.legType && r.leg_type !== filters.legType) return false;
+    return true;
+  })
+  // 🆕 Sort so active travelers appear first
+  .sort((a, b) => (b.active_now === true) - (a.active_now === true));
+
 
     const countryStats = useMemo(() => {
         const map = {};
@@ -216,7 +256,7 @@ const EmployeeTravelDashboard = () => {
                                 {countryStats.slice().map((c, index) => (
                                     <li key={c.country} style={countryItem}>
                                         <div style={countryInfo}>
-                                            <span style={countryRank}>#{index + 1}</span>
+                                            <span style={countryRank}>{index + 1}</span>
                                             <span style={countryName}>{c.country}</span>
                                         </div>
                                         <strong style={countryCount}>{c.count}</strong>
