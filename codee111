@@ -1,123 +1,308 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Welcome to Western Union TEC Hyderabad</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #f7f7f7;
-      margin: 0;
-      padding: 0;
-      color: #333;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Western Union TEC Hyderabad - Security Protocols</title>
+<style>
+  :root {
+    --primary: #0046BE; /* Western Union blue */
+    --secondary: #FFD200; /* Western Union yellow */
+    --accent: #E31837; /* Western Union red for emphasis */
+    --dark: #1A1A1A;
+    --light: #FFFFFF;
+    --gray: #F5F5F5;
+    --text: #333333;
+  }
+  
+  body {
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 40px 0;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .poster {
+    width: 850px;
+    margin: 0 auto;
+    background-color: var(--light);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 45px 50px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative elements */
+  .poster::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  }
+
+  .corner-decoration {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    bottom: -40px;
+    right: -40px;
+    background-color: var(--secondary);
+    opacity: 0.1;
+    border-radius: 50%;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+  }
+
+  .title-container {
+    flex: 1;
+  }
+
+  .title-container h1 {
+    font-size: 36px;
+    margin: 0;
+    line-height: 1.1;
+    color: var(--primary);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .title-container h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 8px 0 0;
+    color: var(--dark);
+    letter-spacing: 1px;
+  }
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 80px;
+    background-color: var(--primary);
+    border-radius: 6px;
+    color: var(--light);
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 70, 190, 0.2);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 20px;
+  }
+
+  .section {
+    margin-bottom: 25px;
+    background-color: var(--gray);
+    border-radius: 8px;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 4px solid var(--primary);
+  }
+
+  .section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .section h3 {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    margin: 0 0 12px 0;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .section h3 .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    margin-right: 12px;
+    color: white;
+    font-size: 16px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  ul li {
+    margin-bottom: 8px;
+  }
+
+  .highlight {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .emergency {
+    background-color: var(--primary);
+    color: var(--light);
+    border-radius: 8px;
+    padding: 25px;
+    margin-top: 30px;
+    box-shadow: 0 5px 15px rgba(0, 70, 190, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .emergency::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background-color: var(--secondary);
+    opacity: 0.1;
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+  }
+
+  .emergency h3 {
+    display: flex;
+    align-items: center;
+    margin-top: 0;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 15px;
+  }
+
+  .emergency h3 .icon {
+    margin-right: 10px;
+    font-size: 24px;
+  }
+
+  .emergency ul {
+    padding-left: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .emergency ul li {
+    margin-bottom: 8px;
+  }
+
+  .emergency b {
+    color: var(--secondary);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 14px;
+    color: var(--dark);
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+    font-weight: 500;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 900px) {
+    .poster {
+      width: 95%;
+      padding: 30px 25px;
     }
-    .container {
-      background-color: #fff;
-      max-width: 750px;
-      margin: 40px auto;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
     }
-    .header {
-      background-color: #ffd200;
-      padding: 20px 30px;
-      text-align: center;
-      color: #000;
+    
+    header {
+      flex-direction: column;
     }
-    .header h1 {
-      margin: 0;
-      font-size: 24px;
-      letter-spacing: 0.5px;
+    
+    .logo-container {
+      margin-top: 15px;
+      align-self: flex-start;
     }
-    .content {
-      padding: 30px;
-      line-height: 1.6;
-      font-size: 15px;
-    }
-    .section {
-      margin-bottom: 20px;
-    }
-    .section h2 {
-      color: #004b8d;
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .section h2 img {
-      width: 20px;
-      margin-right: 8px;
-    }
-    ul {
-      padding-left: 20px;
-      margin: 8px 0;
-    }
-    .footer {
-      background-color: #004b8d;
-      color: #fff;
-      text-align: center;
-      padding: 15px;
-      font-size: 13px;
-    }
-    .highlight {
-      background-color: #fffae6;
-      border-left: 4px solid #ffd200;
-      padding: 10px;
-      border-radius: 6px;
-      margin-top: 10px;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Welcome to Western Union TEC Hyderabad</h1>
-      <p><strong>Security Protocols & Access Guidelines</strong></p>
-    </div>
+  <div class="poster">
+    <div class="corner-decoration"></div>
     
-    <div class="content">
-      <p>Dear <strong>__________</strong>,</p>
+    <header>
+      <div class="title-container">
+        <h1>Western Union<br>TEC Hyderabad</h1>
+        <h2>SECURITY PROTOCOLS</h2>
+      </div>
+      <div class="logo-container">
+        WESTERN<br>UNION<br>LOGO
+      </div>
+    </header>
 
-      <p>Welcome to the Western Union Technology Engineering Center (TEC) Hyderabad.</p>
-      <p>To ensure a secure and efficient work environment, please follow the security protocols below:</p>
-      
+    <div class="grid">
       <div class="section">
-        <h2><img src="https://img.icons8.com/ios-filled/50/000000/id-badge.png"/> Access & Identification</h2>
+        <h3><span class="icon">🔐</span>ACCESS & IDENTIFICATION</h3>
         <ul>
-          <li>Always display your photo ID card while on site.</li>
+          <li>Always display your photo ID card on site.</li>
           <li>Use your access card at readers during entry and exit.</li>
-          <li>Do not lend or borrow ID/access cards.</li>
-          <li>No tailgating or proxy punching.</li>
-          <li>Access to restricted areas requires approval via iPads ticket.</li>
+          <li>Do not lend or borrow ID cards.</li>
+          <li>No tailgating or proxy punching — <span class="highlight">Zero Tolerance Policy</span>.</li>
+          <li>Restricted area access requires approval via iPads ticket.</li>
         </ul>
       </div>
 
       <div class="section">
-        <h2><img src="https://img.icons8.com/ios-filled/50/000000/security-checked.png"/> Premises Security</h2>
+        <h3><span class="icon">📞</span>COMMUNICATION & VIOLATIONS</h3>
+        <ul>
+          <li>Respond to GSOC emails about access violations.</li>
+          <li>Report lost cards immediately to GSOC.</li>
+          <li>For access issues, email:<br>
+          <span class="highlight">GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com</span></li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3><span class="icon">🏢</span>PREMISES SECURITY</h3>
         <ul>
           <li>Close doors properly to avoid triggering alarms.</li>
-          <li>Ensure visitors register at reception and are escorted at all times.</li>
-          <li>Report any suspicious activity immediately to on-site security.</li>
+          <li>Visitors must register at reception and be escorted at all times.</li>
+          <li>Report any suspicious behavior to on-site security immediately.</li>
         </ul>
       </div>
 
       <div class="section">
-        <h2><img src="https://img.icons8.com/ios-filled/50/000000/communication.png"/> Communication & Violations</h2>
+        <h3><span class="icon">🕒</span>WORKING HOURS & LATE WORK PROTOCOL</h3>
         <ul>
-          <li>Respond promptly to GSOC emails regarding access violations.</li>
-          <li>Report lost cards immediately to GSOC.</li>
-          <li>For access issues, email <strong>GSOC-GlobalSecurityOperationCenter.SharedMailbox@westernunion.com</strong></li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h2><img src="https://img.icons8.com/ios-filled/50/000000/clock.png"/> Working Hours & Late Work Protocol</h2>
-        <ul>
-          <li>Office hours: <strong>8 AM – 8 PM daily</strong></li>
+          <li><span class="highlight">Office hours:</span> 8 AM – 8 PM daily.</li>
           <li>Female employees working after 8 PM must:
             <ul>
-              <li>Obtain approval from their Manager and HR.</li>
+              <li>Obtain approval from Manager & HR.</li>
               <li>Inform Site Operations & Security.</li>
               <li>Book transport in advance.</li>
             </ul>
@@ -126,34 +311,27 @@
       </div>
 
       <div class="section">
-        <h2><img src="https://img.icons8.com/ios-filled/50/000000/checklist.png"/> End-of-Day Checklist</h2>
+        <h3><span class="icon">✅</span>END-OF-DAY CHECKLIST</h3>
         <ul>
           <li>Tidy your desk and secure sensitive materials.</li>
           <li>Lock drawers, cabinets, and expensive equipment.</li>
-          <li>Secure laptops, mobile devices, and personal belongings.</li>
+          <li>Secure laptops, phones, and personal belongings.</li>
         </ul>
       </div>
-
-      <div class="highlight">
-        <h3>🚨 Emergency Contacts</h3>
-        <ul>
-          <li>Nearest Security Personnel</li>
-          <li>Security Reception (2nd Floor): <strong>____________ (internal)</strong> / <strong>+91 ___________ (external)</strong></li>
-          <li>Sravya Uppuluri – ____________</li>
-          <li>GSOC: <strong>7632394 (internal)</strong> / <strong>+91 20 67632394 (external)</strong></li>
-          <li>Lloyd Dass: <strong>+91 9158998853</strong></li>
-        </ul>
-      </div>
-
-      <p>Thank you for your cooperation and commitment to maintaining a safe and secure workplace.</p>
-
-      <p><strong>Regards,</strong><br>
-      Global Security Operations Team</p>
     </div>
 
-    <div class="footer">
-      © Western Union TEC Hyderabad | Global Security Operations Center
+    <div class="emergency">
+      <h3><span class="icon">🚨</span>EMERGENCY CONTACTS</h3>
+      <ul>
+        <li>Nearest Security Personnel</li>
+        <li>2nd Floor – Security Reception: <b>__________</b> (internal) / <b>+91 __________</b> (external)</li>
+        <li>Sravya Uppuluri – __________</li>
+        <li>GSOC – 7632394 (internal) / +91 20-67632394 (external)</li>
+        <li>Lloyd Dass – +91 9158998853</li>
+      </ul>
     </div>
+
+    <footer>© Western Union TEC Hyderabad | Global Security Operations Team</footer>
   </div>
 </body>
 </html>
