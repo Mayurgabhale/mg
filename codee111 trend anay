@@ -1,238 +1,3 @@
-{modalRow &&
-  <div className="modal" onClick={closeModal}>
-    <div className="modal-inner" onClick={function (e) { e.stopPropagation(); }}>
-      {/* Enhanced Header */}
-      <div className="modal-header">
-        <div className="header-content">
-          <div className="header-icon">
-            <i className="bi bi-clipboard2-data-fill"></i>
-          </div>
-          <div className="header-text">
-            <h3>Details — Evidence</h3>
-            <p className="header-subtitle">Comprehensive analysis and supporting documents</p>
-          </div>
-        </div>
-        <button className="close-btn" onClick={closeModal}>
-          <i className="bi bi-x-lg"></i>
-          Close
-        </button>
-      </div>
-
-      <div className="modal-body">
-        {modalLoading && (
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <span>Loading evidence…</span>
-          </div>
-        )}
-
-        {/* Enhanced Top Section */}
-        <div className="modal-top" role="region" aria-label="evidence summary">
-          {/* Column 1 - Enhanced Image with Multi-color Border */}
-          <div className="image-section">
-            <div className="image-container">
-              <div className="multi-color-border">
-                <div className="color-ring color-1"></div>
-                <div className="color-ring color-2"></div>
-                <div className="color-ring color-3"></div>
-                <div className="color-ring color-4"></div>
-                <div className="image-content">
-                  {(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows.length > 0) ? (
-                    (() => {
-                      const md = modalDetails.aggregated_rows[0];
-                      if (md && md.imageUrl) {
-                        return (
-                          <img 
-                            className="modal-image" 
-                            src={API_BASE + md.imageUrl} 
-                            alt="Employee" 
-                            onError={(e) => { 
-                              e.target.style.display = 'none'; 
-                              e.target.nextSibling.style.display = 'flex';
-                            }} 
-                          />
-                        );
-                      } else {
-                        return <div className="modal-image-placeholder">No image</div>;
-                      }
-                    })()
-                  ) : (
-                    <div className="modal-image-placeholder">
-                      <i className="bi bi-person-square"></i>
-                      <span>No image</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Column 2 - Enhanced Employee Details */}
-          <div className="modal-details">
-            <div className="details-header">
-              <div className="emp-name">{sanitizeName(modalRow) || "—"}</div>
-              <div className="emp-badge">
-                <i className="bi bi-person-badge"></i>
-                ID: {modalRow.EmployeeID || "—"}
-              </div>
-            </div>
-            
-            <div className="details-grid">
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-credit-card"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Card Number</label>
-                  <span>{modalRow.CardNumber || "—"}</span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-envelope"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Email</label>
-                  <span>{(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0] && modalDetails.aggregated_rows[0].EmployeeEmail) ? modalDetails.aggregated_rows[0].EmployeeEmail : <span className="muted">—</span>}</span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-calendar-date"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Date</label>
-                  <span>{safeDateDisplay(modalRow.Date || modalRow.FirstSwipe)}</span>
-                </div>
-              </div>
-              
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-clock"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Duration</label>
-                  <span className="duration-badge">
-                    {modalRow.Duration || (modalRow.DurationMinutes ? Math.round(modalRow.DurationMinutes) + " min" : "—")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Column 3 - Enhanced Reasons & Why Section */}
-          <div className="modal-reasons">
-            <div className="reasons-header">
-              <i className="bi bi-flag-fill"></i>
-              <span>Flag Analysis</span>
-            </div>
-            
-            <div className="reasons-section">
-              <div className="section-title">
-                <i className="bi bi-list-check"></i>
-                Reasons Flagged
-              </div>
-              <div className="reasons-list">
-                {renderReasonChips(modalRow.Reasons)}
-              </div>
-            </div>
-
-            <div className="why-section">
-              <div className="section-title">
-                <i className="bi bi-question-circle"></i>
-                Why Highlighted
-              </div>
-              <div className="why-box">
-                <div>
-                  {renderReasonExplanations(modalRow.Reasons)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Evidence Files Section */}
-        <div className="evidence-section">
-          <div className="section-header">
-            <i className="bi bi-folder2-open"></i>
-            <h4>Available Evidence Files</h4>
-          </div>
-          <div className="files-container">
-            {modalDetails && modalDetails.raw_swipe_files && modalDetails.raw_swipe_files.length > 0 ? (
-              <div className="files-list">
-                {modalDetails.raw_swipe_files.map((f, i) => (
-                  <div key={i} className="file-item">
-                    <i className="bi bi-file-earmark-text"></i>
-                    <span className="file-name">{f}</span>
-                    <button 
-                      className="download-btn"
-                      onClick={function () { window.location = API_BASE + "/swipes/" + encodeURIComponent(f); }}
-                    >
-                      <i className="bi bi-download"></i>
-                      Download
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="no-files">
-                <i className="bi bi-folder-x"></i>
-                <span>No raw swipe files found for this person/date.</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Enhanced Timeline Section */}
-        <div className="timeline-section">
-          <div className="section-header">
-            <i className="bi bi-clock-history"></i>
-            <h4>Swipe Timeline</h4>
-            <span className="subtitle">Filtered for this person/date</span>
-          </div>
-          <div className="timeline-content">
-            {modalDetails ? renderSwipeTimeline(modalDetails, modalRow) : (
-              <div className="loading-timeline">
-                <i className="bi bi-hourglass-split"></i>
-                <span>Evidence not loaded yet.</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Raw JSON Toggle */}
-        <div className="raw-json-section">
-          <label className="toggle-label">
-            <input 
-              type="checkbox" 
-              id="showraw" 
-              onChange={function (e) {
-                const el = document.getElementById('rawpayload');
-                if (el) el.style.display = e.target.checked ? 'block' : 'none';
-              }} 
-            />
-            <span className="toggle-slider"></span>
-            <span className="toggle-text">
-              <i className="bi bi-code-slash"></i>
-              Show raw aggregated JSON
-            </span>
-          </label>
-          <div id="rawpayload" className="raw-json">
-            <pre>{JSON.stringify(modalRow, null, 2)}</pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-
-
-
-
-
 /* ---------- Enhanced Evidence Modal Styles ---------- */
 .modal {
   position: fixed;
@@ -244,8 +9,14 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  background: rgba(3, 6, 23, 0.65);
-  backdrop-filter: blur(8px);
+  background: rgba(3, 6, 23, 0.8);
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-inner {
@@ -254,15 +25,28 @@
   max-width: 96%;
   max-height: 92%;
   overflow: hidden;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
   padding: 0;
   box-shadow: 
-    0 32px 64px rgba(2, 6, 23, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+    0 40px 80px rgba(2, 6, 23, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Enhanced Header */
@@ -270,8 +54,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-radius: 16px 16px 0 0;
+  padding: 24px 28px;
+  border-radius: 20px 20px 0 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   position: relative;
@@ -285,553 +69,458 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
   animation: shimmer 3s infinite;
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-}
-
-.header-icon i {
-  font-size: 20px;
-}
-
-.header-text h3 {
+.modal-header h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: white;
-}
-
-.header-subtitle {
-  margin: 2px 0 0 0;
-  font-size: 13px;
-  opacity: 0.9;
-  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  letter-spacing: -0.2px;
 }
 
 .close-btn {
   background: rgba(255, 255, 255, 0.2);
   color: white;
-  border-radius: 10px;
-  padding: 10px 16px;
+  border-radius: 12px;
+  padding: 12px 20px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   cursor: pointer;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  font-size: 14px;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 /* Enhanced Modal Body */
 .modal-body {
-  padding: 24px;
+  padding: 28px;
   overflow: auto;
   flex: 1;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-/* Loading State */
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px;
+.muted {
   color: #64748b;
-  font-weight: 600;
-}
-
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e2e8f0;
-  border-top: 2px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  font-style: italic;
+  text-align: center;
+  padding: 40px;
+  font-size: 15px;
 }
 
 /* Enhanced Top Section */
 .modal-top {
   display: grid;
-  grid-template-columns: 280px 1fr 360px;
-  gap: 20px;
+  grid-template-columns: 260px 1fr 340px;
+  gap: 24px;
   align-items: start;
   background: white;
-  padding: 24px;
+  padding: 28px;
   border-radius: 16px;
   box-shadow: 
-    0 8px 32px rgba(2, 6, 23, 0.08),
-    0 2px 4px rgba(2, 6, 23, 0.02);
-  border: 1px solid #f1f5f9;
+    0 12px 40px rgba(2, 6, 23, 0.08),
+    0 4px 8px rgba(2, 6, 23, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   margin-bottom: 24px;
-}
-
-/* Multi-color Image Border */
-.image-section {
-  display: flex;
-  justify-content: center;
-}
-
-.image-container {
   position: relative;
+  overflow: hidden;
 }
 
-.multi-color-border {
-  position: relative;
-  padding: 8px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #667eea, #f093fb, #f5576c, #4facfe);
-  animation: rotateColors 4s linear infinite;
+.modal-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #f093fb, #f5576c, #4facfe);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
 }
 
-@keyframes rotateColors {
+@keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-.color-ring {
-  position: absolute;
-  border-radius: 12px;
-  animation: pulse 2s infinite;
-}
-
-.color-1 { top: 2px; left: 2px; right: 2px; bottom: 2px; background: linear-gradient(45deg, #667eea, transparent); animation-delay: 0s; }
-.color-2 { top: 4px; left: 4px; right: 4px; bottom: 4px; background: linear-gradient(135deg, #f093fb, transparent); animation-delay: 0.5s; }
-.color-3 { top: 6px; left: 6px; right: 6px; bottom: 6px; background: linear-gradient(225deg, #f5576c, transparent); animation-delay: 1s; }
-.color-4 { top: 8px; left: 8px; right: 8px; bottom: 8px; background: linear-gradient(315deg, #4facfe, transparent); animation-delay: 1.5s; }
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-.image-content {
+/* Enhanced Image Section */
+.image-wrap {
+  width: 240px;
+  height: 260px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  padding: 6px;
+  box-sizing: border-box;
+  box-shadow: 
+    0 12px 32px rgba(102, 126, 234, 0.25),
+    0 4px 8px rgba(102, 126, 234, 0.1);
   position: relative;
-  z-index: 2;
-  border-radius: 12px;
   overflow: hidden;
-  background: white;
+  transition: all 0.3s ease;
+}
+
+.image-wrap:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 48px rgba(102, 126, 234, 0.35),
+    0 8px 16px rgba(102, 126, 234, 0.15);
+}
+
+.image-wrap::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
+  border-radius: 18px;
+  z-index: -1;
+  animation: rotate 3s linear infinite;
+  background-size: 400% 400%;
+}
+
+@keyframes rotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .modal-image {
   width: 100%;
-  height: 250px;
+  height: 100%;
   object-fit: cover;
-  display: block;
+  border-radius: 12px;
+  border: 3px solid white;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.modal-image:hover {
+  transform: scale(1.02);
 }
 
 .modal-image-placeholder {
   width: 100%;
-  height: 250px;
+  height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   color: #64748b;
   background: linear-gradient(135deg, #f8fafc, #e2e8f0);
   border-radius: 12px;
+  border: 3px solid white;
   font-weight: 600;
-  gap: 8px;
-}
-
-.modal-image-placeholder i {
-  font-size: 48px;
-  opacity: 0.5;
+  font-size: 15px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
 }
 
 /* Enhanced Details Section */
 .modal-details {
-  padding: 0;
-}
-
-.details-header {
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f1f5f9;
+  padding: 8px 4px;
 }
 
 .emp-name {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 8px;
-  background: linear-gradient(135deg, #0f172a, #334155);
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #0f172a, #334155, #475569);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
-.emp-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #f1f5f9;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.details-grid {
+.emp-meta {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  color: #12263b;
+  font-weight: 600;
 }
 
-.detail-item {
+.meta-row {
   display: flex;
-  align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
-  transition: all 0.3s ease;
-}
-
-.detail-item:hover {
-  background: white;
-  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.05);
-  transform: translateY(-1px);
-}
-
-.detail-icon {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 8px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.detail-icon i {
-  font-size: 16px;
+.meta-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.detail-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+.meta-row:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.08);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
-.detail-content label {
-  font-size: 12px;
-  font-weight: 600;
+.meta-row:hover::before {
+  opacity: 1;
+}
+
+.meta-label {
+  min-width: 140px;
   color: #64748b;
+  font-weight: 700;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 2px;
 }
 
-.detail-content span {
+.meta-value {
+  color: #0b1720;
+  font-weight: 700;
   font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.duration-badge {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  flex: 1;
 }
 
 /* Enhanced Reasons Section */
 .modal-reasons {
-  padding: 20px;
+  padding: 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #ffffff, #f8fafc);
-  border: 1px solid #f1f5f9;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   display: flex;
   flex-direction: column;
   gap: 20px;
+  box-shadow: 
+    0 8px 32px rgba(2, 6, 23, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.reasons-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 700;
+.reasons-title {
+  font-weight: 800;
+  margin-bottom: 4px;
   color: #0f172a;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f1f5f9;
-}
-
-.reasons-header i {
-  color: #ef4444;
-}
-
-.section-title {
+  font-size: 18px;
+  letter-spacing: -0.3px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 12px;
 }
 
-.section-title i {
-  color: #667eea;
+.reasons-title::before {
+  content: '🔍';
+  font-size: 16px;
 }
 
 .reasons-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  max-height: 80px;
+  gap: 10px;
+  max-height: 84px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 4px;
+  margin: -4px;
 }
 
 .why-box {
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  border-left: 4px solid #667eea;
-  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.03);
-  max-height: 140px;
-  overflow: auto;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-/* Enhanced Evidence Files */
-.evidence-section {
-  background: white;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #fef7ff 100%);
   padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.03);
-  border: 1px solid #f1f5f9;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  border-left: 6px solid #667eea;
+  box-shadow: 
+    0 6px 24px rgba(2, 6, 23, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  max-height: 150px;
+  overflow: auto;
+  padding-right: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.section-header h4 {
-  margin: 0;
+.why-box > div:first-child {
+  font-weight: 800;
+  margin-bottom: 12px;
   color: #0f172a;
   font-size: 16px;
-  font-weight: 700;
-}
-
-.section-header i {
-  color: #667eea;
-}
-
-.files-list {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
 }
 
-.file-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.why-box > div:first-child::before {
+  content: '💡';
+  font-size: 14px;
 }
 
-.file-name {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.download-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+/* Enhanced Content Sections */
+hr {
   border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+  margin: 28px 0;
+}
+
+h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #0f172a, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Files List */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+li {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
   transition: all 0.3s ease;
 }
 
-.download-btn:hover {
-  transform: translateY(-1px);
+li:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(2, 6, 23, 0.1),
+    0 2px 4px rgba(2, 6, 23, 0.02);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+li b {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+li button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.no-files {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 20px;
-  justify-content: center;
-  color: #64748b;
-  font-weight: 600;
+li button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 /* Enhanced Timeline Section */
-.timeline-section {
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.03);
-  border: 1px solid #f1f5f9;
-  margin-bottom: 20px;
-}
-
-.timeline-content {
-  margin-top: 12px;
-}
-
-.loading-timeline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 20px;
-  justify-content: center;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.subtitle {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-  margin-left: 8px;
+strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  display: block;
+  margin-bottom: 12px;
 }
 
 /* Enhanced Raw JSON Section */
-.raw-json-section {
-  background: white;
-  padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.03);
-  border: 1px solid #f1f5f9;
-}
-
-.toggle-label {
+label {
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s ease;
   font-weight: 600;
   color: #374151;
 }
 
-.toggle-slider {
-  width: 44px;
-  height: 24px;
-  background: #e2e8f0;
-  border-radius: 12px;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  top: 3px;
-  left: 3px;
-  transition: all 0.3s ease;
+label:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.06);
 }
 
 input[type="checkbox"] {
-  display: none;
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
 }
 
-input[type="checkbox"]:checked + .toggle-slider {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
-
-input[type="checkbox"]:checked + .toggle-slider::before {
-  transform: translateX(20px);
-}
-
-.toggle-text {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.raw-json {
+#rawpayload {
   display: none;
   margin-top: 16px;
   background: #1e293b;
   color: #e2e8f0;
-  padding: 16px;
-  border-radius: 8px;
+  padding: 20px;
+  border-radius: 12px;
   overflow: auto;
-  max-height: 200px;
+  max-height: 240px;
+  box-shadow: 
+    inset 0 2px 8px rgba(0,0,0,0.2),
+    0 4px 16px rgba(0,0,0,0.1);
+  border: 1px solid #334155;
 }
 
-.raw-json pre {
+#rawpayload pre {
   margin: 0;
   font-size: 12px;
-  font-family: 'Courier New', monospace;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  line-height: 1.4;
 }
 
-/* Hide scrollbars */
+/* Hide scrollbars but keep functionality */
 .reasons-list,
 .why-box,
-.raw-json {
-  -ms-overflow-style: none;
+#rawpayload {
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .reasons-list::-webkit-scrollbar,
 .why-box::-webkit-scrollbar,
-.raw-json::-webkit-scrollbar {
+#rawpayload::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
@@ -840,11 +529,12 @@ input[type="checkbox"]:checked + .toggle-slider::before {
 /* Responsive adjustments */
 @media (max-width: 1100px) {
   .modal-top {
-    grid-template-columns: 240px 1fr 320px;
+    grid-template-columns: 220px 1fr 300px;
+    gap: 20px;
   }
   
-  .modal-image,
-  .modal-image-placeholder {
+  .image-wrap {
+    width: 200px;
     height: 220px;
   }
 }
@@ -860,7 +550,21 @@ input[type="checkbox"]:checked + .toggle-slider::before {
     gap: 20px;
   }
   
-  .image-section {
-    justify-content: center;
+  .image-wrap {
+    width: 180px;
+    height: 200px;
+    margin: 0 auto;
   }
+}
+
+/* Smooth scrolling */
+.modal-body {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
 }
