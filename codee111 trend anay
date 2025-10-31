@@ -74,6 +74,8 @@
         <h3 className="section-title">Analysis Summary</h3>
         <div className="explanation-content">
           {renderReasonExplanations(modalRow.Reasons)}
+
+
         </div>
       </div>
     </div>
@@ -81,3 +83,280 @@
 
   <div className="modal-divider"></div>
 </div>
+
+
+
+
+
+
+
+
+
+.modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Main Grid Layout */
+.modal-top {
+  display: grid;
+  grid-template-columns: 240px 1fr 380px;
+  gap: 24px;
+  align-items: start;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+/* Profile Image Section */
+.profile-section {
+  display: flex;
+  justify-content: center;
+}
+
+.profile-image-container {
+  position: relative;
+}
+
+.image-frame {
+  width: 200px;
+  height: 220px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+  padding: 4px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 3px solid white;
+}
+
+.profile-image-placeholder {
+  width: 200px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  border: 2px dashed #cbd5e1;
+}
+
+/* Employee Details Section */
+.details-section {
+  padding: 8px 0;
+}
+
+.employee-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.employee-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.employee-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.details-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.detail-value.highlight {
+  color: #059669;
+  font-weight: 700;
+}
+
+/* Analysis Section */
+.analysis-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reasons-container,
+.explanation-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border-radius: 2px;
+}
+
+.reasons-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 84px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.explanation-content {
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+/* Scrollbar Styling */
+.reasons-chips::-webkit-scrollbar,
+.explanation-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.reasons-chips::-webkit-scrollbar-track,
+.explanation-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.reasons-chips::-webkit-scrollbar-thumb,
+.explanation-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+/* Divider */
+.modal-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+  margin: 0 24px;
+}
+
+/* Enhanced Chip Styles (update your existing chip styles) */
+.chip {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #fbbf24;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .modal-top {
+    grid-template-columns: 200px 1fr 340px;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .image-frame,
+  .profile-image-placeholder {
+    width: 180px;
+    height: 200px;
+  }
+}
+
+@media (max-width: 968px) {
+  .modal-top {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .profile-section {
+    justify-content: center;
+  }
+  
+  .employee-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Animation for smooth interactions */
+.modal-container {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
