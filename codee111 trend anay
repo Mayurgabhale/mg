@@ -1,56 +1,31 @@
-<div className="cards" aria-hidden={loading}>
-                  <div className="card" title="Rows analysed">
-                    <h3>{ (rowsCount !== undefined && rowsCount !== null) ? rowsCount : 0 }</h3>
-                    <p>Rows analysed</p>
-                  </div>
-                  <div className="card" title="Flagged rows">
-                    <h3>{ (flaggedCount !== undefined && flaggedCount !== null) ? flaggedCount : 0 }</h3>
-                    <p>Flagged rows</p>
-                  </div>
-                  <div className="card" title="Flagged rate">
-                    <h3>{ flaggedPct }%</h3>
-                    <p>Flagged rate</p>
-                  </div>
-                </div>
+import { Database, Flag, Activity } from "lucide-react";
 
+export default function StatsCards({ rowsCount, flaggedCount, flaggedPct, loading }) {
+  return (
+    <div className="cards" aria-hidden={loading}>
+      <div className="card" title="Rows analysed">
+        <div className="card-icon rows">
+          <Database />
+        </div>
+        <h3>{rowsCount ?? 0}</h3>
+        <p>Rows analysed</p>
+      </div>
 
-    /* ---------- Main card area ---------- */
-    .card-shell {
-      background: var(--card-bg);
-      padding: 10px 14px 14px 14px;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
-      margin-top: 4px;
-    }
+      <div className="card" title="Flagged rows">
+        <div className="card-icon flagged">
+          <Flag />
+        </div>
+        <h3>{flaggedCount ?? 0}</h3>
+        <p>Flagged rows</p>
+      </div>
 
-    .cards {
-      display: flex;
-      gap: 10px;
-      margin: 6px 0 10px 0;
-      padding: 6px 0;
-      align-items: stretch;
-    }
-
-    .card {
-      flex: 1;
-      background: linear-gradient(180deg, #fff, #fbfdff);
-      padding: 12px 12px;
-      border-radius: 8px;
-      text-align: center;
-      border: 2px solid rgba(255, 212, 66, 0.16);
-      box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
-      min-width: 120px;
-    }
-
-    .card h3 {
-      margin: 4px 0;
-      font-size: 20px;
-      color: #0f172a;
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
+      <div className="card" title="Flagged rate">
+        <div className="card-icon rate">
+          <Activity />
+        </div>
+        <h3>{flaggedPct}%</h3>
+        <p>Flagged rate</p>
+      </div>
+    </div>
+  );
+}
