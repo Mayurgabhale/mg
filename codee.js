@@ -4,6 +4,7 @@ AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
 
 
 
+        
 
 .........
 
