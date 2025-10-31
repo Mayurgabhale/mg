@@ -1,5 +1,6 @@
 
 in this all is ok, but the issue is the 
+
 this all count is update india 11:30 am...
   but i want to update the count when the at there  new day, 
   i measn releted to region on ther time.. when that region start new day that time remove privius count or data then disply new day count,
