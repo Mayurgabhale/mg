@@ -1,280 +1,83 @@
-can you desing this more atractive. UI look like professal desing 
+<div className="modal-container" role="region" aria-label="evidence summary">
+  {/* Main Content Grid */}
+  <div className="modal-top">
+    {/* Column 1 - Profile Image with Enhanced Design */}
+    <div className="profile-section">
+      <div className="profile-image-container">
+        {(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows.length > 0) ? (
+          (() => {
+            const md = modalDetails.aggregated_rows[0];
+            if (md && md.imageUrl) {
+              return (
+                <div className="image-frame">
+                  <img 
+                    className="profile-image" 
+                    src={API_BASE + md.imageUrl} 
+                    alt="Employee portrait" 
+                    onError={(e) => { e.target.style.display = 'none'; }} 
+                  />
+                </div>
+              );
+            } else {
+              return <div className="profile-image-placeholder">No photo available</div>;
+            }
+          })()
+        ) : (
+          <div className="profile-image-placeholder">—</div>
+        )}
+      </div>
+    </div>
 
-<div className="modal-top" role="region" aria-label="evidence summary">
-                      {/* Column 1 - Image (wrap to create yellow ring) */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div className="image-wrap">
-                          {(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows.length > 0) ? (
-                            (() => {
-                              const md = modalDetails.aggregated_rows[0];
-                              if (md && md.imageUrl) {
-                                return <img className="modal-image" src={API_BASE + md.imageUrl} alt="Employee" onError={(e) => { e.target.style.display = 'none'; }} />;
-                              } else {
-                                return <div className="modal-image-placeholder">No image</div>;
-                              }
-                            })()
-                          ) : (
-                            <div className="modal-image-placeholder">—</div>
-                          )}
-                        </div>
-                      </div>
+    {/* Column 2 - Employee Details */}
+    <div className="details-section">
+      <div className="employee-header">
+        <h2 className="employee-name">{sanitizeName(modalRow) || "—"}</h2>
+        <div className="employee-badge">{modalRow.EmployeeID || "—"}</div>
+      </div>
+      
+      <div className="details-grid">
+        <div className="detail-item">
+          <span className="detail-label">Card Number</span>
+          <span className="detail-value">{modalRow.CardNumber || "—"}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Email</span>
+          <span className="detail-value">
+            {(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0] && modalDetails.aggregated_rows[0].EmployeeEmail) 
+              ? modalDetails.aggregated_rows[0].EmployeeEmail 
+              : <span className="muted">—</span>}
+          </span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Date</span>
+          <span className="detail-value">{safeDateDisplay(modalRow.Date || modalRow.FirstSwipe)}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-label">Duration</span>
+          <span className="detail-value highlight">
+            {modalRow.Duration || (modalRow.DurationMinutes ? Math.round(modalRow.DurationMinutes) + " min" : "—")}
+          </span>
+        </div>
+      </div>
+    </div>
 
-                      {/* Column 2 - Employee details */}
-                      <div className="modal-details">
-                        <div className="emp-name">{sanitizeName(modalRow) || "—"}</div>
-                        <div className="emp-meta">
-                          <div className="meta-row"><div className="meta-label">Employee ID</div><div className="meta-value">{modalRow.EmployeeID || "—"}</div></div>
-                          <div className="meta-row"><div className="meta-label">Card</div><div className="meta-value">{modalRow.CardNumber || "—"}</div></div>
-                          <div className="meta-row"><div className="meta-label">Employee Email</div><div className="meta-value">{(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0] && modalDetails.aggregated_rows[0].EmployeeEmail) ? modalDetails.aggregated_rows[0].EmployeeEmail : <span className="muted">—</span>}</div></div>
-                          <div className="meta-row"><div className="meta-label">Date</div><div className="meta-value">{safeDateDisplay(modalRow.Date || modalRow.FirstSwipe)}</div></div>
-                          <div className="meta-row"><div className="meta-label">Duration</div><div className="meta-value">{modalRow.Duration || (modalRow.DurationMinutes ? Math.round(modalRow.DurationMinutes) + " min" : "—")}</div></div>
-                        </div>
-                      </div>
+    {/* Column 3 - Analysis Section */}
+    <div className="analysis-section">
+      <div className="reasons-container">
+        <h3 className="section-title">Flagged Reasons</h3>
+        <div className="reasons-chips">
+          {renderReasonChips(modalRow.Reasons)}
+        </div>
+      </div>
 
-                      {/* Column 3 - Reasons & Why highlighted (compact, scrollable, no scrollbar) */}
-                      <div className="modal-reasons">
-                        <div className="reasons-title">Reasons</div>
-                        <div className="reasons-list">
-                          {renderReasonChips(modalRow.Reasons)}
-                        </div>
+      <div className="explanation-container">
+        <h3 className="section-title">Analysis Summary</h3>
+        <div className="explanation-content">
+          {renderReasonExplanations(modalRow.Reasons)}
+        </div>
+      </div>
+    </div>
+  </div>
 
-                        <div className="why-box">
-                          <div style={{ fontWeight: 800, marginBottom: 8 }}>Why highlighted</div>
-                          <div>
-                            {renderReasonExplanations(modalRow.Reasons)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <hr style={{ marginTop: 18, marginBottom: 14 }} />
-
-
-
-
-
-    /* top area card */
-    .modal-top {
-      display: grid;
-      grid-template-columns: 220px 1fr 360px;
-      gap: 14px;
-      align-items: start;
-      background: linear-gradient(180deg, #ffffff, #fbfdff);
-      padding: 14px;
-      border-radius: 8px;
-      box-shadow: 0 6px 20px rgba(10, 20, 40, 0.03);
-      border: 1px solid #eef3f8;
-    }
-
-    /* employee photo styling — square, full-fit for clear image */
-    .modal-image {
-      width: 250px;
-      height: 270px;
-      object-fit: cover;
-      /* ensures the image fully fills and is cropped nicely */
-      border-radius: 2px;
-      /* square corners with slight rounding */
-      border: 0px solid #fff;
-      /* inner white ring for separation */
-      box-shadow: 0 6px 22px rgba(2, 6, 23, 0.12);
-      display: block;
-      image-rendering: auto;
-      /* keep smoothing for photos */
-    }
-
-    /* yellow outer ring wrapper adapted for square */
-    .image-wrap {
-      width: 250px;
-      height: 270px;
-      border-radius: 0px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(180deg, rgba(255, 212, 66, 0.98), rgba(255, 212, 66, 0.85));
-      padding: 0px;
-      /* outer ring */
-      box-sizing: content-box;
-    }
-
-    .modal-image-placeholder {
-      width: 250px;
-      height: 270px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #64748b;
-      background: #f3f4f6;
-      border-radius: 1px;
-      border: 1px dashed #e6edf3;
-      font-weight: 600;
-    }
-
-    /* details column — smaller, tighter typography */
-    .modal-details {
-      padding: 6px 4px;
-    }
-
-    .emp-name {
-      font-size: 16px;
-      /* reduced from 20 */
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 6px;
-    }
-
-    .emp-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      color: #12263b;
-      font-weight: 600;
-      font-size: 13px;
-      /* slightly smaller */
-    }
-
-    .meta-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .meta-label {
-      min-width: 100px;
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 13px;
-    }
-
-    .meta-value {
-      color: #0b1720;
-      font-weight: 700;
-      font-size: 13px;
-    }
-
-    /* reasons/why column compact + scrollable but hide scrollbar */
-    .modal-reasons {
-      padding: 6px;
-      border-radius: 8px;
-      background: linear-gradient(180deg, #fbfdff, #f8fafc);
-      border: 1px solid #eef3f8;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .reasons-title {
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: #0f172a;
-      font-size: 14px;
-    }
-
-    .reasons-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      max-height: 72px;
-      /* compact area for chips */
-      overflow: auto;
-      padding-right: 6px;
-      font-size: 12px;
-    }
-
-    .why-box {
-      margin-top: 0;
-      background: linear-gradient(180deg, #fff, #fff);
-      padding: 8px;
-      border-radius: 8px;
-      border-left: 4px solid var(--wu-yellow);
-      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.03);
-      max-height: 140px;
-      /* reduced height */
-      overflow: auto;
-      padding-right: 8px;
-      font-size: 13px;
-      line-height: 1.25;
-    }
-
-    .why-item {
-      margin-bottom: 8px;
-    }
-
-    .why-item b {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 4px;
-      color: #0b1720;
-      font-size: 13px;
-    }
-
-    .why-item .small {
-      color: #475569;
-      font-weight: 600;
-      font-size: 12px;
-    }
-
-    /* hide scrollbars for reasons and why-box (cross-browser) */
-    .reasons-list,
-    .why-box {
-      -ms-overflow-style: none;
-      /* IE/Edge */
-      scrollbar-width: none;
-      /* Firefox */
-    }
-
-    .reasons-list::-webkit-scrollbar,
-    .why-box::-webkit-scrollbar {
-      display: none;
-      width: 0;
-      height: 0;
-    }
-
-    /* small tweak: slightly smaller chips for compact layout */
-    .pill,
-    .chip {
-      line-height: 1;
-    }
-
-    /* responsive adjustments */
-    @media (max-width: 1100px) {
-      .modal-top {
-        grid-template-columns: 180px 1fr 300px;
-      }
-
-      .image-wrap {
-        width: 188px;
-        height: 188px;
-      }
-
-      .modal-image {
-        width: 180px;
-        height: 180px;
-        border-radius: 6px;
-      }
-
-      .modal-image-placeholder {
-        width: 180px;
-        height: 180px;
-        border-radius: 6px;
-      }
-    }
-
-    @media (max-width: 860px) {
-      .modal-inner {
-        width: 92%;
-        height: 82vh;
-      }
-
-      .modal-top {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
-      .image-wrap {
-        justify-content: flex-start;
-      }
-    }
-
-
-
-
+  <div className="modal-divider"></div>
+</div>
