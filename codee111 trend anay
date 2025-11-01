@@ -1,110 +1,41 @@
-i want line chart,
-so how to do this. 
-
-<div className="chart-wrap" aria-label="Risk level chart">
-                    <canvas ref={chartRef}></canvas>
-                    <div style={{ position:'absolute', right:12, top:12, fontSize:12, color:'#6b7280' }}>
-                      <span>Click a bar to filter</span>
-                    </div>
-                  </div>
-
-
- const chartRef = useRef(null);
-        const chartInst = useRef(null);
-
-
-        // chart build function uses selectedRiskFilter to adjust colors
-        function buildChart(rcounts) {
-          var labels = RISK_LABELS;
-          var values = labels.map(l => rcounts && rcounts[l] ? rcounts[l] : 0);
-          var colors = labels.map(l => {
-            if (selectedRiskFilter) {
-              return (l === selectedRiskFilter) ? RISK_COLORS[l] : '#e6edf3';
-            } else {
-              return RISK_COLORS[l] || '#cccccc';
-            }
-          });
-
-          var ctx = chartRef.current && chartRef.current.getContext ? chartRef.current.getContext('2d') : null;
-          if (!ctx) return;
-          try { if (chartInst.current) chartInst.current.destroy(); } catch (e) { }
-          chartInst.current = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: labels, datasets: [{ label: 'Flagged by Risk Level', data: values, backgroundColor: colors, borderRadius:6 }] },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      return context.parsed.y + ' cases';
-                    }
-                  }
-                }
-              },
-              onClick: function (evt, elements) {
-                if (elements && elements.length > 0) {
-                  var idx = elements[0].index;
-                  var label = this.data.labels[idx];
-                  handleRiskBarClick(label);
-                }
-              },
-              scales: {
-                y: { beginAtZero: true, ticks: { precision:0 } }
-              }
-            }
-          });
-        }
-
-        // Rebuild chart when riskCounts or selectedRiskFilter changes
-        useEffect(function () {
-          buildChart(riskCounts);
-          // eslint-disable-next-line
-        }, [riskCounts, selectedRiskFilter]);
-
-        // filtering & pagination helpers (now includes risk filter)
-        var filtered = (rows || []).filter(function (r) {
-          var hay = (sanitizeName(r) + " " + (r.EmployeeID || "") + " " + (r.CardNumber || "") + " " + (r.Reasons || "")).toLowerCase();
-          var textOk = !filterText || hay.indexOf(filterText.toLowerCase()) !== -1;
-          var reasonOk = !selectedReason || (r.Reasons && ((";" + String(r.Reasons) + ";").indexOf(selectedReason) !== -1));
-          var riskOk = true;
-          if (selectedRiskFilter) {
-            var rl = getRiskLabelForRow(r);
-            if (!rl) { riskOk = false; }
-            else riskOk = (String(rl) === String(selectedRiskFilter));
+chartInst.current = new Chart(ctx, {
+  type: 'line',
+  data: { 
+    labels: labels, 
+    datasets: [{
+      label: 'Flagged by Risk Level',
+      data: values,
+      borderColor: '#2563eb',       // blue line
+      backgroundColor: 'rgba(37,99,235,0.2)', // light fill under line
+      fill: true,                   // fill area under line
+      tension: 0.3,                 // smooth the line
+      pointBackgroundColor: colors, // use risk colors for points
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return context.parsed.y + ' cases';
           }
-          return textOk && reasonOk && riskOk;
-        });
-        var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-        var pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
-
-        function exportFiltered() { downloadCSV(filtered, "trend_filtered_export.csv"); }
-
-        function onReasonClick(reason) {
-          if (!reason) { setSelectedReason(""); return; }
-          if (selectedReason === reason) setSelectedReason(""); else setSelectedReason(reason);
-          setPage(1);
         }
-
-        // open evidence modal (explicit Evidence button)
-        async function openEvidence(row) {
-          setModalRow(row);
-          setModalDetails(null);
-          setModalLoading(true);
-          try {
-            // Query API for aggregated and raw swipe details. Backend endpoint is /record?employee_id=...
-            const q = encodeURIComponent(row.EmployeeID || row.person_uid || "");
-            const resp = await fetch(API_BASE + "/record?employee_id=" + q);
-            if (!resp.ok) { const txt = await resp.text(); throw new Error("record failed: " + resp.status + " - " + txt); }
-            const js = await resp.json();
-            const details = { aggregated_rows: js.aggregated_rows || [], raw_swipe_files: js.raw_swipe_files || [], raw_swipes: js.raw_swipes || [] };
-            setModalDetails(details);
-          } catch (e) {
-            alert("Failed loading details: " + e.message);
-            console.error(e);
-          } finally { setModalLoading(false); }
-        }
-
-        function closeModal() { setModalRow(null); setModalDetails(null); }
+      }
+    },
+    onClick: function (evt, elements) {
+      if (elements && elements.length > 0) {
+        var idx = elements[0].index;
+        var label = this.data.labels[idx];
+        handleRiskBarClick(label);
+      }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { precision: 0 } }
+    }
+  }
+});
