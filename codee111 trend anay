@@ -1,33 +1,21 @@
-<div className="details-header">
-  <div className="emp-info">
-    <div className="emp-name">
-      {sanitizeName(modalRow) || "—"}
-      <span
-        className="risk-badge"
-        style={{
-          marginLeft: "12px",
-          background:
-            RISK_COLORS[modalRow.RiskLevel] ||
-            RISK_COLORS[getRiskLabelForRow(modalRow)] ||
-            RISK_COLORS["Low"],
-        }}
-      >
-        {modalRow.RiskLevel ||
-          (modalRow.RiskScore ? "Score " + modalRow.RiskScore : "Low")}
-      </span>
-    </div>
-    <div className="emp-badge">
-      <i className="bi bi-person-badge"></i>
-      ID: {modalRow.EmployeeID || "—"}
-    </div>
-  </div>
-</div>
-
-
-
-
-
-....
+risk badg text alwats color i want balck ok, 
+<div className="emp-name">
+                                {sanitizeName(modalRow) || "—"}
+                                <span
+                                  className="risk-badge"
+                                  style={{
+                                    marginLeft: "12px",
+                                    background:
+                                      RISK_COLORS[modalRow.RiskLevel] ||
+                                      RISK_COLORS[getRiskLabelForRow(modalRow)] ||
+                                      RISK_COLORS["Low"],
+                                  }}
+                                >
+                                  {modalRow.RiskLevel ||
+                                    (modalRow.RiskScore ? "Score " + modalRow.RiskScore : "Low")}
+                                </span>
+                              </div>
+                              <div className="emp-
 
 .details-header {
   margin-bottom: 5px;
@@ -54,3 +42,126 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+/* .................... */
+
+
+    .details-header {
+      margin-bottom: 5px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+
+    .emp-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #0f172a, #334155);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .emp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .details-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+
+    .risk-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      color: #0a0909;
+      font-size: 30px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .risk-small {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .risk-chip {
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #e6edf3;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .risk-chip.active {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
+
+    .risk-chips {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .clear-filter {
+      background: transparent;
+      border: none;
+      color: #0366d6;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+
+
+
+    /* ..................... */
+
+
+
+
+                          <div className="details-header">
+                            <div className="emp-info">
+                              <div className="emp-name">
+                                {sanitizeName(modalRow) || "—"}
+                                <span
+                                  className="risk-badge"
+                                  style={{
+                                    marginLeft: "12px",
+                                    background:
+                                      RISK_COLORS[modalRow.RiskLevel] ||
+                                      RISK_COLORS[getRiskLabelForRow(modalRow)] ||
+                                      RISK_COLORS["Low"],
+                                  }}
+                                >
+                                  {modalRow.RiskLevel ||
+                                    (modalRow.RiskScore ? "Score " + modalRow.RiskScore : "Low")}
+                                </span>
+                              </div>
+                              <div className="emp-badge">
+                                <i className="bi bi-person-badge"></i>
+                                ID: {modalRow.EmployeeID || "—"}
+                              </div>
+                            </div>
+                          </div>
