@@ -1,570 +1,110 @@
-/* ---------- Enhanced Evidence Modal Styles ---------- */
-.modal {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  background: rgba(3, 6, 23, 0.8);
-  backdrop-filter: blur(12px);
-  animation: fadeIn 0.3s ease;
-}
+i want line chart,
+so how to do this. 
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+<div className="chart-wrap" aria-label="Risk level chart">
+                    <canvas ref={chartRef}></canvas>
+                    <div style={{ position:'absolute', right:12, top:12, fontSize:12, color:'#6b7280' }}>
+                      <span>Click a bar to filter</span>
+                    </div>
+                  </div>
 
-.modal-inner {
-  width: 1000px;
-  height: 640px;
-  max-width: 96%;
-  max-height: 92%;
-  overflow: hidden;
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
-  padding: 0;
-  box-shadow: 
-    0 40px 80px rgba(2, 6, 23, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.4s ease;
-}
 
-@keyframes slideUp {
-  from { 
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to { 
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+ const chartRef = useRef(null);
+        const chartInst = useRef(null);
 
-/* Enhanced Header */
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 28px;
-  border-radius: 20px 20px 0 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  position: relative;
-  overflow: hidden;
-}
 
-.modal-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
-  animation: shimmer 3s infinite;
-}
+        // chart build function uses selectedRiskFilter to adjust colors
+        function buildChart(rcounts) {
+          var labels = RISK_LABELS;
+          var values = labels.map(l => rcounts && rcounts[l] ? rcounts[l] : 0);
+          var colors = labels.map(l => {
+            if (selectedRiskFilter) {
+              return (l === selectedRiskFilter) ? RISK_COLORS[l] : '#e6edf3';
+            } else {
+              return RISK_COLORS[l] || '#cccccc';
+            }
+          });
 
-.modal-header h3 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  letter-spacing: -0.2px;
-}
+          var ctx = chartRef.current && chartRef.current.getContext ? chartRef.current.getContext('2d') : null;
+          if (!ctx) return;
+          try { if (chartInst.current) chartInst.current.destroy(); } catch (e) { }
+          chartInst.current = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Flagged by Risk Level', data: values, backgroundColor: colors, borderRadius:6 }] },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return context.parsed.y + ' cases';
+                    }
+                  }
+                }
+              },
+              onClick: function (evt, elements) {
+                if (elements && elements.length > 0) {
+                  var idx = elements[0].index;
+                  var label = this.data.labels[idx];
+                  handleRiskBarClick(label);
+                }
+              },
+              scales: {
+                y: { beginAtZero: true, ticks: { precision:0 } }
+              }
+            }
+          });
+        }
 
-.close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border-radius: 12px;
-  padding: 12px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  backdrop-filter: blur(20px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
+        // Rebuild chart when riskCounts or selectedRiskFilter changes
+        useEffect(function () {
+          buildChart(riskCounts);
+          // eslint-disable-next-line
+        }, [riskCounts, selectedRiskFilter]);
 
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
+        // filtering & pagination helpers (now includes risk filter)
+        var filtered = (rows || []).filter(function (r) {
+          var hay = (sanitizeName(r) + " " + (r.EmployeeID || "") + " " + (r.CardNumber || "") + " " + (r.Reasons || "")).toLowerCase();
+          var textOk = !filterText || hay.indexOf(filterText.toLowerCase()) !== -1;
+          var reasonOk = !selectedReason || (r.Reasons && ((";" + String(r.Reasons) + ";").indexOf(selectedReason) !== -1));
+          var riskOk = true;
+          if (selectedRiskFilter) {
+            var rl = getRiskLabelForRow(r);
+            if (!rl) { riskOk = false; }
+            else riskOk = (String(rl) === String(selectedRiskFilter));
+          }
+          return textOk && reasonOk && riskOk;
+        });
+        var totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        var pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-/* Enhanced Modal Body */
-.modal-body {
-  padding: 28px;
-  overflow: auto;
-  flex: 1;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
+        function exportFiltered() { downloadCSV(filtered, "trend_filtered_export.csv"); }
 
-.muted {
-  color: #64748b;
-  font-style: italic;
-  text-align: center;
-  padding: 40px;
-  font-size: 15px;
-}
+        function onReasonClick(reason) {
+          if (!reason) { setSelectedReason(""); return; }
+          if (selectedReason === reason) setSelectedReason(""); else setSelectedReason(reason);
+          setPage(1);
+        }
 
-/* Enhanced Top Section */
-.modal-top {
-  display: grid;
-  grid-template-columns: 260px 1fr 340px;
-  gap: 24px;
-  align-items: start;
-  background: white;
-  padding: 28px;
-  border-radius: 16px;
-  box-shadow: 
-    0 12px 40px rgba(2, 6, 23, 0.08),
-    0 4px 8px rgba(2, 6, 23, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  margin-bottom: 24px;
-  position: relative;
-  overflow: hidden;
-}
+        // open evidence modal (explicit Evidence button)
+        async function openEvidence(row) {
+          setModalRow(row);
+          setModalDetails(null);
+          setModalLoading(true);
+          try {
+            // Query API for aggregated and raw swipe details. Backend endpoint is /record?employee_id=...
+            const q = encodeURIComponent(row.EmployeeID || row.person_uid || "");
+            const resp = await fetch(API_BASE + "/record?employee_id=" + q);
+            if (!resp.ok) { const txt = await resp.text(); throw new Error("record failed: " + resp.status + " - " + txt); }
+            const js = await resp.json();
+            const details = { aggregated_rows: js.aggregated_rows || [], raw_swipe_files: js.raw_swipe_files || [], raw_swipes: js.raw_swipes || [] };
+            setModalDetails(details);
+          } catch (e) {
+            alert("Failed loading details: " + e.message);
+            console.error(e);
+          } finally { setModalLoading(false); }
+        }
 
-.modal-top::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #f093fb, #f5576c, #4facfe);
-  background-size: 400% 400%;
-  animation: gradientShift 3s ease infinite;
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Enhanced Image Section */
-.image-wrap {
-  width: 240px;
-  height: 260px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  padding: 6px;
-  box-sizing: border-box;
-  box-shadow: 
-    0 12px 32px rgba(102, 126, 234, 0.25),
-    0 4px 8px rgba(102, 126, 234, 0.1);
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.image-wrap:hover {
-  transform: translateY(-4px);
-  box-shadow: 
-    0 20px 48px rgba(102, 126, 234, 0.35),
-    0 8px 16px rgba(102, 126, 234, 0.15);
-}
-
-.image-wrap::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
-  border-radius: 18px;
-  z-index: -1;
-  animation: rotate 3s linear infinite;
-  background-size: 400% 400%;
-}
-
-@keyframes rotate {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.modal-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 3px solid white;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-}
-
-.modal-image:hover {
-  transform: scale(1.02);
-}
-
-.modal-image-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  border-radius: 12px;
-  border: 3px solid white;
-  font-weight: 600;
-  font-size: 15px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-}
-
-/* Enhanced Details Section */
-.modal-details {
-  padding: 8px 4px;
-}
-
-.emp-name {
-  font-size: 26px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #0f172a, #334155, #475569);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
-  line-height: 1.2;
-}
-
-.emp-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  color: #12263b;
-  font-weight: 600;
-}
-
-.meta-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.meta-row::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, #667eea, #764ba2);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.meta-row:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.08);
-  border-color: rgba(102, 126, 234, 0.3);
-}
-
-.meta-row:hover::before {
-  opacity: 1;
-}
-
-.meta-label {
-  min-width: 140px;
-  color: #64748b;
-  font-weight: 700;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.meta-value {
-  color: #0b1720;
-  font-weight: 700;
-  font-size: 14px;
-  flex: 1;
-}
-
-/* Enhanced Reasons Section */
-.modal-reasons {
-  padding: 24px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-shadow: 
-    0 8px 32px rgba(2, 6, 23, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.reasons-title {
-  font-weight: 800;
-  margin-bottom: 4px;
-  color: #0f172a;
-  font-size: 18px;
-  letter-spacing: -0.3px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.reasons-title::before {
-  content: '🔍';
-  font-size: 16px;
-}
-
-.reasons-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  max-height: 84px;
-  overflow: auto;
-  padding: 4px;
-  margin: -4px;
-}
-
-.why-box {
-  margin-top: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #fef7ff 100%);
-  padding: 20px;
-  border-radius: 12px;
-  border-left: 6px solid #667eea;
-  box-shadow: 
-    0 6px 24px rgba(2, 6, 23, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  max-height: 150px;
-  overflow: auto;
-  padding-right: 16px;
-  font-size: 14px;
-  line-height: 1.5;
-  position: relative;
-}
-
-.why-box > div:first-child {
-  font-weight: 800;
-  margin-bottom: 12px;
-  color: #0f172a;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.why-box > div:first-child::before {
-  content: '💡';
-  font-size: 14px;
-}
-
-/* Enhanced Content Sections */
-hr {
-  border: none;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-  margin: 28px 0;
-}
-
-h4 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #0f172a, #374151);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Enhanced Files List */
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  transition: all 0.3s ease;
-}
-
-li:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 24px rgba(2, 6, 23, 0.1),
-    0 2px 4px rgba(2, 6, 23, 0.02);
-  border-color: rgba(102, 126, 234, 0.3);
-}
-
-li b {
-  color: #0f172a;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-li button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-li button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-/* Enhanced Timeline Section */
-strong {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  display: block;
-  margin-bottom: 12px;
-}
-
-/* Enhanced Raw JSON Section */
-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  transition: all 0.3s ease;
-  font-weight: 600;
-  color: #374151;
-}
-
-label:hover {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-color: rgba(102, 126, 234, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.06);
-}
-
-input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #667eea;
-}
-
-#rawpayload {
-  display: none;
-  margin-top: 16px;
-  background: #1e293b;
-  color: #e2e8f0;
-  padding: 20px;
-  border-radius: 12px;
-  overflow: auto;
-  max-height: 240px;
-  box-shadow: 
-    inset 0 2px 8px rgba(0,0,0,0.2),
-    0 4px 16px rgba(0,0,0,0.1);
-  border: 1px solid #334155;
-}
-
-#rawpayload pre {
-  margin: 0;
-  font-size: 12px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  line-height: 1.4;
-}
-
-/* Hide scrollbars but keep functionality */
-.reasons-list,
-.why-box,
-#rawpayload {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.reasons-list::-webkit-scrollbar,
-.why-box::-webkit-scrollbar,
-#rawpayload::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1100px) {
-  .modal-top {
-    grid-template-columns: 220px 1fr 300px;
-    gap: 20px;
-  }
-  
-  .image-wrap {
-    width: 200px;
-    height: 220px;
-  }
-}
-
-@media (max-width: 860px) {
-  .modal-inner {
-    width: 92%;
-    height: 82vh;
-  }
-  
-  .modal-top {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .image-wrap {
-    width: 180px;
-    height: 200px;
-    margin: 0 auto;
-  }
-}
-
-/* Smooth scrolling */
-.modal-body {
-  scroll-behavior: smooth;
-}
-
-/* Focus styles for accessibility */
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
+        function closeModal() { setModalRow(null); setModalDetails(null); }
