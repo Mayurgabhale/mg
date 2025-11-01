@@ -1,274 +1,117 @@
-{modalRow &&
-  <div className="modal" onClick={closeModal}>
-    <div className="modal-inner" onClick={function (e) { e.stopPropagation(); }}>
-      {/* Enhanced Header */}
-      <div className="modal-header">
-        <div className="header-content">
-          <div className="header-icon">
-            <i className="bi bi-clipboard2-data-fill"></i>
-          </div>
-          <div className="header-text">
-            <h3>Details — Evidence</h3>
-            {/* ✅ Missing subtitle added back */}
-            <div className="header-subtitle small">Evidence & explanation for selected row</div>
-          </div>
-        </div>
-        <button className="close-btn" onClick={closeModal}>
-          <i className="bi bi-x-lg"></i>
-          Close
-        </button>
-      </div>
 
-      <div className="modal-body">
-        {modalLoading && (
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <span>Loading evidence…</span>
-          </div>
-        )}
 
-        {/* Enhanced Top Section */}
-        <div className="modal-top" role="region" aria-label="evidence summary">
-          {/* Column 1 - Enhanced Image with Multi-color Border */}
-          <div className="image-section">
-            <div className="image-container">
-              <div className="multi-color-border">
-                <div className="color-ring color-1"></div>
-                <div className="color-ring color-2"></div>
-                <div className="color-ring color-3"></div>
-                <div className="color-ring color-4"></div>
-                <div className="image-content">
-                  {(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows.length > 0) ? (
-                    (() => {
-                      const md = modalDetails.aggregated_rows[0];
-                      if (md && md.imageUrl) {
-                        return (
-                          <img
-                            className="modal-image"
-                            src={API_BASE + md.imageUrl}
-                            alt="Employee"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        );
-                      } else {
-                        return <div className="modal-image-placeholder">No image</div>;
-                      }
-                    })()
-                  ) : (
-                    <div className="modal-image-placeholder">
-                      <i className="bi bi-person-square"></i>
-                      <span>No image</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+Kannan, Balaji
+ID: 328291
+Medium  
+.risk-badge i want to disply in right side of..  name 
+like this
+Kannan, Balaji   Medium   like this ok 
+    .details-header {
+      margin-bottom: 5px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f1f5f9;
+    }
 
-          {/* Column 2 - Enhanced Employee Details */}
-          <div className="modal-details">
-            <div className="details-header">
-              <div className="emp-name">{sanitizeName(modalRow) || "—"}</div>
-              <div className="emp-badge">
-                <i className="bi bi-person-badge"></i>
-                ID: {modalRow.EmployeeID || "—"}
-              </div>
-            </div>
+    .emp-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #0f172a, #334155);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-            {/* ✅ Missing risk badge and violation days section added back */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginTop: 6 }}>
-              <div></div>
-              <div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <div
-                    className="risk-badge"
-                    style={{
-                      background: RISK_COLORS[modalRow.RiskLevel] ||
-                        RISK_COLORS[getRiskLabelForRow(modalRow)] ||
-                        RISK_COLORS["Low"]
-                    }}
-                  >
-                    {modalRow.RiskLevel || (modalRow.RiskScore ? ("Score " + modalRow.RiskScore) : "Low")}
-                  </div>
-                </div>
-                <div style={{ marginTop: 8, textAlign: 'right' }}>
-                  <div className="muted">Violation days (90d)</div>
-                  <div style={{ fontWeight: 700 }}>
-                    {(modalRow.ViolationDaysLast90 !== undefined && modalRow.ViolationDaysLast90 !== null)
-                      ? modalRow.ViolationDaysLast90
-                      : 0}
-                  </div>
-                </div>
-              </div>
-            </div>
+    .emp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+    }
 
-            <div className="details-grid">
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-credit-card"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Card Number</label>
-                  <span>{modalRow.CardNumber || "—"}</span>
-                </div>
-              </div>
 
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-envelope"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Email</label>
-                  <span>
-                    {(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0] && modalDetails.aggregated_rows[0].EmployeeEmail)
-                      ? modalDetails.aggregated_rows[0].EmployeeEmail
-                      : <span className="muted">—</span>}
-                  </span>
-                </div>
-              </div>
 
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-calendar-date"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Date</label>
-                  <span>{safeDateDisplay(modalRow.Date || modalRow.FirstSwipe)}</span>
-                </div>
-              </div>
 
-              <div className="detail-item">
-                <div className="detail-icon">
-                  <i className="bi bi-clock"></i>
-                </div>
-                <div className="detail-content">
-                  <label>Duration</label>
-                  <span className="duration-badge">
-                    {modalRow.Duration || (modalRow.DurationMinutes ? Math.round(modalRow.DurationMinutes) + " min" : "—")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+    .risk-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      color: #fff;
+      font-size: 13px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
 
-          {/* Column 3 - Enhanced Reasons & Why Section */}
-          <div className="modal-reasons">
-            <div className="reasons-section">
-              <div className="section-title">
-                <i className="bi bi-list-check"></i>
-                Reasons Flagged
-              </div>
-              <div className="reasons-list">
-                {renderReasonChips(modalRow.Reasons)}
-              </div>
-            </div>
+    .risk-small {
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-            <div className="why-section">
-              <div className="section-title">
-                <i className="bi bi-question-circle"></i>
-                Why Highlighted
-              </div>
-              <div className="why-box">
-                <div>
-                  {renderReasonExplanations(modalRow.Reasons)}
-                </div>
-              </div>
-            </div>
+    .risk-chip {
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #e6edf3;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-            {/* ✅ Missing Explanation section added back */}
-            <div className="explanation-section" style={{ marginTop: 12 }}>
-              <div style={{ fontWeight: 700 }}>Explanation</div>
-              <div style={{
-                marginTop: 8,
-                maxHeight: 160,
-                overflow: 'auto',
-                background: '#fff',
-                border: '1px solid #eef2f7',
-                padding: 8,
-                borderRadius: 6
-              }}>
-                {modalRow.Explanation
-                  ? <div style={{ whiteSpace: 'pre-wrap' }}>{modalRow.Explanation}</div>
-                  : <div className="muted">No explanation provided.</div>}
-              </div>
-            </div>
-          </div>
-        </div>
+    .risk-chip.active {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-weight: 700;
+    }
 
-        {/* Enhanced Evidence Files Section */}
-        <div className="evidence-section">
-          <div className="section-header">
-            <i className="bi bi-folder2-open"></i>
-            <h4>Available Evidence Files</h4>
-          </div>
-          <div className="files-container">
-            {modalDetails && modalDetails.raw_swipe_files && modalDetails.raw_swipe_files.length > 0 ? (
-              <div className="files-list">
-                {modalDetails.raw_swipe_files.map((f, i) => (
-                  <div key={i} className="file-item">
-                    <i className="bi bi-file-earmark-text"></i>
-                    <span className="file-name">{f}</span>
-                    <button
-                      className="download-btn"
-                      onClick={function () { window.location = API_BASE + "/swipes/" + encodeURIComponent(f); }}
-                    >
-                      <i className="bi bi-download"></i>
-                      Download
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="no-files">
-                <i className="bi bi-folder-x"></i>
-                <span>No raw swipe files found for this person/date.</span>
-              </div>
-            )}
-          </div>
-        </div>
+    .risk-chips {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
 
-        {/* Enhanced Timeline Section */}
-        <div className="timeline-section">
-          <div className="section-header">
-            <i className="bi bi-clock-history"></i>
-            <h4>Swipe Timeline</h4>
-            <span className="subtitle">Filtered for this person/date</span>
-          </div>
-          <div className="timeline-content">
-            {modalDetails ? renderSwipeTimeline(modalDetails, modalRow) : (
-              <div className="loading-timeline">
-                <i className="bi bi-hourglass-split"></i>
-                <span>Evidence not loaded yet.</span>
-              </div>
-            )}
-          </div>
-        </div>
+    .chart-legend {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 6px;
+    }
 
-        {/* Raw JSON Toggle */}
-        <div className="raw-json-section">
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              id="showraw"
-              onChange={function (e) {
-                const el = document.getElementById('rawpayload');
-                if (el) el.style.display = e.target.checked ? 'block' : 'none';
-              }}
-            />
-            <span className="toggle-slider"></span>
-            <span className="toggle-text">
-              <i className="bi bi-code-slash"></i>
-              Show raw aggregated JSON
-            </span>
-          </label>
-          <div id="rawpayload" className="raw-json">
-            <pre>{JSON.stringify(modalRow, null, 2)}</pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-}
+    .clear-filter {
+      background: transparent;
+      border: none;
+      color: #0366d6;
+
+
+<div className="details-header">
+                            <div className="emp-name">{sanitizeName(modalRow) || "—"}</div>
+                            <div className="emp-badge">
+                              <i className="bi bi-person-badge"></i>
+                              ID: {modalRow.EmployeeID || "—"}
+                            </div>
+                            {/* ✅ Missing risk badge and violation days section added back */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginTop: 6 }}>
+                              <div></div>
+                              <div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  <div
+                                    className="risk-badge"
+                                    style={{
+                                      background: RISK_COLORS[modalRow.RiskLevel] ||
+                                        RISK_COLORS[getRiskLabelForRow(modalRow)] ||
+                                        RISK_COLORS["Low"]
+                                    }}
+                                  >
+                                    {modalRow.RiskLevel || (modalRow.RiskScore ? ("Score " + modalRow.RiskScore) : "Low")}
+                                  </div>
+                                </div>
+                               
+                              </div>
+                            </div>
+
+                          </div>
