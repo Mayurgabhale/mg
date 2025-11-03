@@ -1,130 +1,64 @@
-{/* Dynamic Content based on Active Tab */}
-{activeTab === "overview" && (
-    <div style={styles.card}>
-        <div style={styles.tableHeader}>
-            <h3 style={styles.tableTitle}>All Travel Records</h3>
-            <span style={styles.tableBadge}>{filtered.length} records</span>
-        </div>
-        <div style={styles.tableWrap}>
-            <table style={styles.table}>
-                <thead style={styles.thead}>
-                    <tr>
-                        <th style={styles.th}>Status</th>
-                        <th style={styles.th}>Traveler</th>
-                        <th style={styles.th}>Emp ID</th>
-                        <th style={styles.th}>Email</th>
-                        <th style={styles.th}>Type</th>
-                        <th style={styles.th}>From</th>
-                        <th style={styles.th}>To</th>
-                        <th style={styles.th}>Start Date</th>
-                        <th style={styles.th}>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filtered.length === 0 ? (
-                        <tr>
-                            <td colSpan="9" style={styles.emptyRow}>
-                                <div style={styles.emptyState}>
-                                    <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
-                                    <p>No matching results found</p>
-                                    <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
-                                </div>
-                            </td>
-                        </tr>
-                    ) : (
-                        filtered.map((r, i) => (
-                            <tr key={i} style={i % 2 === 0 ? styles.rowEven : styles.rowOdd}>
-                                <td style={styles.td}>
-                                    {r.active_now ? (
-                                        <div style={styles.activeBadge}>
-                                            <FiCheckCircle size={14} />
-                                            Active
-                                        </div>
-                                    ) : (
-                                        <div style={styles.inactiveBadge}>
-                                            <FiXCircle size={14} />
-                                            Inactive
-                                        </div>
-                                    )}
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={styles.userCell}>
-                                        <div style={styles.avatar}>
-                                            <FiUser size={14} />
-                                        </div>
-                                        <span>
-                                            {r.first_name} {r.last_name}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={styles.userCell}>
-                                        <span style={styles.empId}>
-                                            {r.emp_id || 'N/A'}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={styles.emailCell}>
-                                        <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                        {r.email}
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <span style={styles.typeBadge}>{r.leg_type}</span>
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={styles.combinedLocationCell}>
-                                        <div style={styles.locationRow}>
-                                            <FiMapPin size={12} style={{ marginRight: '4px', color: '#ef4444' }} />
-                                            <span style={styles.locationText}>
-                                                {r.from_location || 'N/A'}
-                                            </span>
-                                        </div>
-                                        <div style={styles.countryRow}>
-                                            <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
-                                            <span style={styles.countryText}>
-                                                {r.from_country || 'Unknown'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={styles.combinedLocationCell}>
-                                        <div style={styles.locationRow}>
-                                            <FiMapPin size={12} style={{ marginRight: '4px', color: '#10b981' }} />
-                                            <span style={styles.locationText}>
-                                                {r.to_location || 'N/A'}
-                                            </span>
-                                        </div>
-                                        <div style={styles.countryRow}>
-                                            <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
-                                            <span style={styles.countryText}>
-                                                {r.to_country || 'Unknown'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={styles.dateCell}>
-                                        <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                        {fmt(r.begin_dt)}
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <button
-                                        onClick={() => setSelectedTraveler(r)}
-                                        style={styles.viewButton}
-                                    >
-                                        <FiEye size={14} />
-                                        View
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
-    </div>
-)}
+const getStyles = (isDark) => ({
+    // ... existing styles ...
+
+    // Combined Location Styles
+    combinedLocationCell: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2px',
+        minWidth: '120px',
+        maxWidth: '180px',
+    },
+
+    locationRow: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '13px',
+        lineHeight: '1.2',
+    },
+
+    countryRow: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '11px',
+        lineHeight: '1.2',
+        opacity: '0.8',
+    },
+
+    locationText: {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        flex: 1,
+    },
+
+    countryText: {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        flex: 1,
+        color: isDark ? '#9ca3af' : '#6b7280',
+        fontWeight: '400',
+    },
+
+    // Remove or keep these if you want to use them elsewhere
+    locationCell: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '14px',
+    },
+
+    countryCell: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: isDark ? '#cbd5e1' : '#374151',
+    },
+
+    empId: {
+        fontSize: '14px',
+        fontWeight: '500',
+        color: isDark ? '#cbd5e1' : '#374151',
+    },
+});
