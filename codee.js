@@ -1,3 +1,6 @@
+I'll enhance your dashboard with more features, user-friendly popups, and multiple analysis sections. Here's the improved version:
+
+```jsx
 // C:\Users\W0024618\Desktop\swipeData\client\src\pages\EmployeeTravelDashboard.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
@@ -474,6 +477,4 @@ const EmployeeTravelDashboard = () => {
                                         toast.info("Data cleared successfully.");
                                     }}
                                     style={secondaryBtn}
-                                >
-                                    <FiTrash2 style={{ marginRight: '8px' }} />
-                           
+  
