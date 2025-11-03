@@ -1,192 +1,277 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import pandas as pd
-import numpy as np
-from io import BytesIO, StringIO
-from dateutil import parser
-from datetime import datetime
-import re, zoneinfo
+i want to use alos this.. 
+"from_location": "Buenos Aires, Ciudad de Buenos Aires",
+    
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
 
-app = FastAPI(title="Employee Travel Dashboard — Parser")
+              {/* Dynamic Content based on Active Tab */}
+                    {activeTab === "overview" && (
+                        <div style={styles.card}>
+                            <div style={styles.tableHeader}>
+                                <h3 style={styles.tableTitle}>All Travel Records</h3>
+                                <span style={styles.tableBadge}>{filtered.length} records</span>
+                            </div>
+                            <div style={styles.tableWrap}>
+                                <table style={styles.table}>
+                                    <thead style={styles.thead}>
+                                        <tr>
+                                            <th style={styles.th}>Status</th>
+                                            <th style={styles.th}>Traveler</th>
+                                            <th style={styles.th}>Emp Id</th>
+                                            <th style={styles.th}>Email</th>
+                                            <th style={styles.th}>Type</th>
+                                            <th style={styles.th}>From</th>
+                                            <th style={styles.th}>To</th>
+                                            <th style={styles.th}>Start Date</th>
+                                            <th style={styles.th}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filtered.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="8" style={styles.emptyRow}>
+                                                    <div style={styles.emptyState}>
+                                                        <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
+                                                        <p>No matching results found</p>
+                                                        <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filtered.map((r, i) => (
+                                                <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
+                                                    <td style={styles.td}>
+                                                        {r.active_now ? (
+                                                            <div style={styles.activeBadge}>
+                                                                <FiCheckCircle size={14} />
+                                                                Active
+                                                            </div>
+                                                        ) : (
+                                                            <div style={styles.inactiveBadge}>
+                                                                <FiXCircle size={14} />
+                                                                Inactive
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.userCell}>
+                                                            <div style={styles.avatar}>
+                                                                <FiUser size={14} />
+                                                            </div>
+                                                            <span>
+                                                                {r.first_name} {r.last_name}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                     <td style={styles.td}>
+                                                        <div style={styles.userCell}>
+                                                           
+                                                            <span>
+                                                                 {r.emp_id} 
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.emailCell}>
+                                                            <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {r.email}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <span style={styles.typeBadge}>{r.leg_type}</span>
+                                                    </td>
+                                                    <td style={styles.td}>{r.from_country}</td>
+                                                    <td style={styles.td}>{r.to_country}</td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.dateCell}>
+                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {fmt(r.begin_dt)}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <button
+                                                            onClick={() => setSelectedTraveler(r)}
+                                                            style={styles.viewButton}
+                                                        >
+                                                            <FiEye size={14} />
+                                                            View
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+// 🆕 Enhanced Traveler Detail Popup Component
+const TravelerDetailPopup = ({ traveler, onClose }) => {
+    if (!traveler) return null;
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    const TravelTypeIcon = getTravelTypeIcon(traveler.leg_type);
+    const travelTypeColor = getTravelTypeColor(traveler.leg_type);
 
-SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
-previous_data = {"summary": None, "items": None}
+    return (
+        <div style={styles.popupOverlay}>
+            <div style={styles.popupContent}>
+                <div style={styles.popupHeader}>
+                    <div style={styles.popupHeaderLeft}>
+                        <div style={styles.avatarLarge}>
+                            <FiUser size={24} />
+                        </div>
+                        <div>
+                            <h3 style={styles.popupTitle}>
+                                {traveler.first_name} {traveler.last_name}
+                            </h3>
+                            <p style={styles.employeeId}>ID: {traveler.emp_id || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} style={styles.popupCloseBtn}>
+                        <FiX size={20} />
+                    </button>
+                </div>
 
+                <div style={styles.popupBody}>
+                    {/* Status & Travel Type Banner */}
+                    <div style={styles.bannerSection}>
+                        <div style={{
+                            ...styles.statusBadge,
+                            ...(traveler.active_now ? styles.activeStatus : styles.inactiveStatus)
+                        }}>
+                            <div style={styles.statusDot}></div>
+                            {traveler.active_now ? "Currently Traveling" : "Travel Completed"}
+                        </div>
+                        <div style={{
+                            ...styles.travelTypeBadge,
+                            background: `${travelTypeColor}15`,
+                            border: `1px solid ${travelTypeColor}30`,
+                            color: travelTypeColor
+                        }}>
+                            <TravelTypeIcon size={16} style={{ marginRight: '6px' }} />
+                            {traveler.leg_type || 'Unknown Type'}
+                        </div>
+                    </div>
 
-# ✅ 1. Normalizes and parses date safely
-def normalize_and_parse(dt_val):
-    if pd.isna(dt_val):
-        return None
-    s = str(dt_val).strip()
-    s = re.sub(r"(\d{1,2})\.(\d{1,2})(?!\d)", r"\1:\2", s)
-    try:
-        dt = parser.parse(s, dayfirst=False)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=SERVER_TZ)
-        return dt.astimezone(zoneinfo.ZoneInfo("UTC"))
-    except Exception:
-        return None
+                    <div style={styles.detailGrid}>
+                        {/* Personal Information */}
+                        <div style={styles.detailGroup}>
+                            <h4 style={styles.detailGroupTitle}>
+                                <FiUser style={styles.detailGroupIcon} />
+                                Personal Information
+                            </h4>
+                            <div style={styles.detailItems}>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Employee ID</strong>
+                                    <span style={styles.detailValue}>{traveler.emp_id || 'Not Provided'}</span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Full Name</strong>
+                                    <span style={styles.detailValue}>{traveler.first_name} {traveler.last_name}</span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Email</strong>
+                                    <span style={styles.detailValue}>
+                                        <FiMail size={14} style={{ marginRight: '6px' }} />
+                                        {traveler.email || 'Not Provided'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
+                        {/* Travel Information */}
+                        <div style={styles.detailGroup}>
+                            <h4 style={styles.detailGroupTitle}>
+                                <FiGlobe style={styles.detailGroupIcon} />
+                                Travel Information
+                            </h4>
+                            <div style={styles.detailItems}>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>From Country</strong>
+                                    <span style={styles.detailValue}>
+                                        <FiMapPin size={14} style={{ marginRight: '6px', color: '#ef4444' }} />
+                                        {traveler.from_country || 'Unknown'}
+                                    </span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>To Country</strong>
+                                    <span style={styles.detailValue}>
+                                        <FiMapPin size={14} style={{ marginRight: '6px', color: '#10b981' }} />
+                                        {traveler.to_country || 'Unknown'}
+                                    </span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Travel Type</strong>
+                                    <span style={{
+                                        ...styles.travelTypeDisplay,
+                                        color: travelTypeColor
+                                    }}>
+                                        <TravelTypeIcon size={16} style={{ marginRight: '6px' }} />
+                                        {traveler.leg_type || 'Unknown'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
-# ✅ 2. Smart universal reader for Excel/CSV (auto-detect header row)
-def read_any_format(content: bytes, filename: str) -> pd.DataFrame:
-    EXPECTED_COLS = [
-        "AGENCY ID","AGENCY NAME","LAST NAME","FIRST NAME","TRAVELER",
-        "EMP ID","EMAIL","PNR","LEG TYPE","BEGIN DATE","FROM LOCATION",
-        "FROM COUNTRY","END DATE","TO LOCATION","TO COUNTRY"
-    ]
+                        {/* Timeline Information */}
+                        <div style={styles.detailGroup}>
+                            <h4 style={styles.detailGroupTitle}>
+                                <FiCalendar style={styles.detailGroupIcon} />
+                                Travel Timeline
+                            </h4>
+                            <div style={styles.detailItems}>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Start Date</strong>
+                                    <span style={styles.detailValue}>
+                                        <FiClock size={14} style={{ marginRight: '6px' }} />
+                                        {fmt(traveler.begin_dt) || 'Not Set'}
+                                    </span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>End Date</strong>
+                                    <span style={styles.detailValue}>
+                                        <FiClock size={14} style={{ marginRight: '6px' }} />
+                                        {fmt(traveler.end_dt) || 'Not Set'}
+                                    </span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Duration</strong>
+                                    <span style={styles.detailValue}>
+                                        {traveler.begin_dt && traveler.end_dt ? 
+                                            `${Math.ceil((new Date(traveler.end_dt) - new Date(traveler.begin_dt)) / (1000 * 60 * 60 * 24))} days` : 
+                                            'Unknown'
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
-    # --- CSV ---
-    if filename.lower().endswith(".csv"):
-        text = content.decode(errors="ignore").splitlines()
-        header_row = None
-        for i, line in enumerate(text[:50]):  # check first 50 lines
-            if any(h.lower() in line.lower() for h in EXPECTED_COLS):
-                header_row = i
-                break
-        if header_row is None:
-            raise ValueError("Header row not found in CSV file")
-        df = pd.read_csv(StringIO("\n".join(text)), skiprows=header_row)
-
-    # --- Excel ---
-    else:
-        bio = BytesIO(content)
-        preview = pd.read_excel(bio, header=None, nrows=50)
-        header_row = None
-        for i in range(len(preview)):
-            joined = " ".join(str(v).strip().lower() for v in preview.iloc[i].values if pd.notna(v))
-            if any(h.lower() in joined for h in EXPECTED_COLS):
-                header_row = i
-                break
-        if header_row is None:
-            raise ValueError("Header row not found in Excel file")
-        bio.seek(0)
-        df = pd.read_excel(bio, header=header_row)
-
-    # --- Normalize headers ---
-    df.columns = [str(c).strip().upper() for c in df.columns]
-
-    # --- Ensure all expected columns exist ---
-    for col in EXPECTED_COLS:
-        if col not in df.columns:
-            df[col] = None
-
-    df = df[EXPECTED_COLS]
-
-    # --- Drop empty & footer rows ---
-    def looks_like_footer(row):
-        s = " ".join(str(v).lower() for v in row if pd.notna(v))
-        return bool(re.search(r"copyright|all rights reserved|gardaworld|utc", s))
-
-    df = df.dropna(how="all")
-    df = df[~df.apply(looks_like_footer, axis=1)]
-
-    return df
-
-
-# ✅ 3. Main upload endpoint
-@app.post("/upload")
-async def upload_excel(file: UploadFile = File(None)):
-    global previous_data
-
-    if file is None:
-        if previous_data["items"] is not None:
-            return JSONResponse(content={
-                "summary": previous_data["summary"],
-                "items": previous_data["items"],
-                "message": "Returned previously uploaded data (no new file uploaded)"
-            })
-        else:
-            raise HTTPException(status_code=400, detail="No file uploaded and no previous data found.")
-
-    if not file.filename.lower().endswith((".xlsx", ".xls", ".csv")):
-        raise HTTPException(status_code=400, detail="Unsupported file type")
-
-    content = await file.read()
-
-    try:
-        df = read_any_format(content, file.filename)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"File parsing failed: {e}")
-
-    # --- Date parsing ---
-    df['BEGIN_DT'] = df['BEGIN DATE'].apply(normalize_and_parse)
-    df['END_DT'] = df['END DATE'].apply(normalize_and_parse)
-
-    now_local = datetime.now(tz=SERVER_TZ)
-    now_utc = now_local.astimezone(zoneinfo.ZoneInfo('UTC'))
-
-    def is_active(row):
-        b, e = row['BEGIN_DT'], row['END_DT']
-        return bool(b and e and b <= now_utc <= e)
-
-    df['active_now'] = df.apply(is_active, axis=1)
-    df = df.replace([np.nan, np.inf, -np.inf, pd.NaT], None)
-
-    # --- Convert to response-friendly structure ---
-    def row_to_obj(i, row):
-        return {
-            'index': int(i),
-            'agency_id': row.get('AGENCY ID'),
-            'agency_name': row.get('AGENCY NAME'),
-            'first_name': row.get('FIRST NAME'),
-            'last_name': row.get('LAST NAME'),
-            'emp_id': row.get('EMP ID'),
-            'email': row.get('EMAIL'),
-            'pnr': row.get('PNR'),
-            'leg_type': row.get('LEG TYPE'),
-            'begin_dt': row.get('BEGIN_DT').isoformat() if row.get('BEGIN_DT') else None,
-            'end_dt': row.get('END_DT').isoformat() if row.get('END_DT') else None,
-            'from_location': row.get('FROM LOCATION'),
-            'from_country': row.get('FROM COUNTRY'),
-            'to_location': row.get('TO LOCATION'),
-            'to_country': row.get('TO COUNTRY'),
-            'active_now': bool(row.get('active_now'))
-        }
-
-    items = [row_to_obj(i, r) for i, r in df.iterrows()]
-
-    summary = {
-        'rows_received': len(df),
-        'rows_removed_as_footer_or_empty': 0,  # already cleaned
-        'rows_with_parse_errors': int(df['BEGIN_DT'].isna().sum() + df['END_DT'].isna().sum()),
-        'active_now_count': int(df['active_now'].sum())
-    }
-
-    previous_data["summary"] = summary
-    previous_data["items"] = items
-
-    return JSONResponse(content={
-        'summary': summary,
-        'items': items,
-        'message': 'New file uploaded and processed successfully'
-    })
-
-
-# ✅ 4. Reuse endpoint
-@app.get("/data")
-async def get_previous_data():
-    if previous_data["items"] is not None:
-        return JSONResponse(content={
-            "summary": previous_data["summary"],
-            "items": previous_data["items"],
-            "message": "Loaded saved data from memory"
-        })
-    else:
-        raise HTTPException(status_code=404, detail="No previously uploaded data found.")
+                        {/* Additional Information */}
+                        <div style={styles.detailGroup}>
+                            <h4 style={styles.detailGroupTitle}>
+                                <FiAward style={styles.detailGroupIcon} />
+                                Additional Details
+                            </h4>
+                            <div style={styles.detailItems}>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Status</strong>
+                                    <span style={{
+                                        ...styles.statusIndicator,
+                                        ...(traveler.active_now ? styles.activeIndicator : styles.inactiveIndicator)
+                                    }}>
+                                        {traveler.active_now ? 'Active' : 'Completed'}
+                                    </span>
+                                </div>
+                                <div style={styles.detailItem}>
+                                    <strong style={styles.detailLabel}>Last Updated</strong>
+                                    <span style={styles.detailValue}>
+                                        {new Date().toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
