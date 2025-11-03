@@ -1,24 +1,20 @@
-// Add these imports at the top
-import { FiSun, FiMoon } from "react-icons/fi";
-
-const EmployeeTravelDashboard = () => {
-    const [file, setFile] = useState(null);
-    const [items, setItems] = useState([]);
-    const [summary, setSummary] = useState({});
-    const [loading, setLoading] = useState(false);
-    const [filters, setFilters] = useState({
-        country: "",
-        legType: "",
-        search: "",
-        status: ""
-    });
-    const [selectedTraveler, setSelectedTraveler] = useState(null);
-    const [activeTab, setActiveTab] = useState("overview");
-    
-    // 🆕 Add theme state
-    const [isDarkTheme, setIsDarkTheme] = useState(false);
-
-    // 🆕 Toggle theme function
-    const toggleTheme = () => {
-        setIsDarkTheme(!isDarkTheme);
-    };
+{/* HEADER */}
+<header style={header}>
+    <div style={headerContent}>
+        <div style={headerIcon}>
+            <FiGlobe size={32} />
+        </div>
+        <div style={{ flex: 1 }}>
+            <h1 style={title}>Employee Travel Analytics Dashboard</h1>
+            <p style={subtitle}>Comprehensive travel management and monitoring system</p>
+        </div>
+        {/* 🆕 Theme Toggle Button */}
+        <button 
+            onClick={toggleTheme}
+            style={themeToggleBtn}
+            title={isDarkTheme ? "Switch to light mode" : "Switch to dark mode"}
+        >
+            {isDarkTheme ? <FiSun size={20} /> : <FiMoon size={20} />}
+        </button>
+    </div>
+</header>
