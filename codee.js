@@ -1,72 +1,19 @@
-const locations = useMemo(() => {
-    const allLocations = [
-        ...new Set([
-            ...safeItems.map((r) => r.from_location).filter(Boolean),
-            ...safeItems.map((r) => r.to_location).filter(Boolean)
-        ])
-    ];
-    return allLocations.sort();
-}, [safeItems]);
-
-
-
-
-
-
-{/* Filters Section */}
-<div style={styles.filtersSection}>
-    <div style={styles.filtersHeader}>
-        <FiFilter style={{ marginRight: '8px', color: '#6b7280' }} />
-        <span style={styles.filtersTitle}>Filters & Search</span>
-    </div>
-    <div style={styles.filtersRow}>
-        <div style={styles.searchWrapper}>
-            <FiSearch style={styles.searchIcon} />
-            <input
-                placeholder="Search by name, email, or location..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                style={styles.searchInput}
-            />
-        </div>
-        <select
-            value={filters.country}
-            onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-            style={styles.select}
-        >
-            <option value="">All Countries</option>
-            {countries.map((c) => (
-                <option key={c}>{c}</option>
-            ))}
-        </select>
-        <select
-            value={filters.location}
-            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-            style={styles.select}
-        >
-            <option value="">All Locations</option>
-            {locations.map((loc) => (
-                <option key={loc}>{loc}</option>
-            ))}
-        </select>
-        <select
-            value={filters.legType}
-            onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
-            style={styles.select}
-        >
-            <option value="">All Travel Types</option>
-            {legTypes.map((t) => (
-                <option key={t}>{t}</option>
-            ))}
-        </select>
-        <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            style={styles.select}
-        >
-            <option value="">All Status</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-        </select>
-    </div>
-</div>
+const filtered = safeItems
+    .filter((r) => {
+        const s = filters.search.toLowerCase();
+        if (s) {
+            const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""} ${r.from_location ?? ""} ${r.to_location ?? ""}`.toLowerCase();
+            if (!hay.includes(s)) return false;
+        }
+        if (filters.country && r.from_country !== filters.country) return false;
+        if (filters.location) {
+            const fromLocationMatch = r.from_location && r.from_location.toLowerCase().includes(filters.location.toLowerCase());
+            const toLocationMatch = r.to_location && r.to_location.toLowerCase().includes(filters.location.toLowerCase());
+            if (!fromLocationMatch && !toLocationMatch) return false;
+        }
+        if (filters.legType && r.leg_type !== filters.legType) return false;
+        if (filters.status === "active" && !r.active_now) return false;
+        if (filters.status === "inactive" && r.active_now) return false;
+        return true;
+    })
+    .sort((a, b) => (b.active_now === true) - (a.active_now === true));
