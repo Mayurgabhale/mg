@@ -1,213 +1,111 @@
-// Enhanced Traveler Detail Popup Component
-const TravelerDetailPopup = ({ traveler, onClose }) => {
-    if (!traveler) return null;
+const getStyles = (isDark) => ({
+    // ... existing styles ...
 
-    const TravelTypeIcon = getTravelTypeIcon(traveler.leg_type);
-    const travelTypeColor = getTravelTypeColor(traveler.leg_type);
+    // Table Styles
+    locationCell: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '14px',
+        maxWidth: '150px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    },
 
-    // Calculate duration
-    const getDuration = () => {
-        if (!traveler.begin_dt || !traveler.end_dt) return 'Unknown';
-        const start = new Date(traveler.begin_dt);
-        const end = new Date(traveler.end_dt);
-        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-        return `${days} day${days !== 1 ? 's' : ''}`;
-    };
+    countryCell: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: isDark ? '#cbd5e1' : '#374151',
+    },
 
-    return (
-        <div style={styles.popupOverlay}>
-            <div style={styles.popupContent}>
-                {/* Header */}
-                <div style={styles.popupHeader}>
-                    <div style={styles.headerContent}>
-                        <div style={styles.avatarSection}>
-                            <div style={styles.avatarLarge}>
-                                <FiUser size={24} />
-                            </div>
-                        </div>
-                        <div style={styles.headerInfo}>
-                            <h3 style={styles.popupTitle}>
-                                {traveler.first_name} {traveler.last_name}
-                            </h3>
-                            <p style={styles.employeeId}>Employee ID: {traveler.emp_id || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} style={styles.popupCloseBtn}>
-                        <FiX size={20} />
-                    </button>
-                </div>
+    empId: {
+        fontSize: '14px',
+        fontWeight: '500',
+        color: isDark ? '#cbd5e1' : '#374151',
+    },
 
-                {/* Body */}
-                <div style={styles.popupBody}>
-                    {/* Status Banner */}
-                    <div style={styles.statusBanner}>
-                        <div style={{
-                            ...styles.statusBadge,
-                            ...(traveler.active_now ? styles.activeStatus : styles.inactiveStatus)
-                        }}>
-                            <div style={{
-                                ...styles.statusDot,
-                                ...(traveler.active_now ? styles.activeDot : styles.inactiveDot)
-                            }}></div>
-                            {traveler.active_now ? "Currently Traveling" : "Travel Completed"}
-                        </div>
-                        
-                        <div style={{
-                            ...styles.travelTypeBadge,
-                            background: `${travelTypeColor}15`,
-                            border: `1px solid ${travelTypeColor}30`,
-                            color: travelTypeColor
-                        }}>
-                            <TravelTypeIcon size={16} />
-                            <span style={styles.travelTypeText}>
-                                {traveler.leg_type || 'Unknown Type'}
-                            </span>
-                        </div>
-                    </div>
+    // Popup Styles
+    detailsContainer: {
+        padding: '0',
+    },
 
-                    {/* Details Container */}
-                    <div style={styles.detailsContainer}>
-                        {/* Personal Info */}
-                        <div style={styles.detailSection}>
-                            <div style={styles.sectionHeader}>
-                                <FiUser style={styles.sectionIcon} />
-                                <h4 style={styles.sectionTitle}>Personal Information</h4>
-                            </div>
-                            <div style={styles.detailList}>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Employee ID</span>
-                                    <span style={styles.detailValue}>{traveler.emp_id || 'Not Provided'}</span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Full Name</span>
-                                    <span style={styles.detailValue}>{traveler.first_name} {traveler.last_name}</span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Email</span>
-                                    <span style={styles.detailValue}>
-                                        <FiMail size={14} style={styles.inlineIcon} />
-                                        {traveler.email || 'Not Provided'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    detailSection: {
+        padding: '20px 24px',
+        borderBottom: isDark ? '1px solid #374151' : '1px solid #f3f4f6',
+        ':last-child': {
+            borderBottom: 'none',
+        }
+    },
 
-                        {/* Travel Info - From */}
-                        <div style={styles.detailSection}>
-                            <div style={styles.sectionHeader}>
-                                <FiMapPin style={{...styles.sectionIcon, color: '#ef4444'}} />
-                                <h4 style={styles.sectionTitle}>Departure Details</h4>
-                            </div>
-                            <div style={styles.detailList}>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>From Location</span>
-                                    <span style={styles.detailValue}>
-                                        <FiMapPin size={14} style={{...styles.inlineIcon, color: '#ef4444'}} />
-                                        {traveler.from_location || 'Not specified'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>From Country</span>
-                                    <span style={styles.detailValue}>
-                                        <FiGlobe size={14} style={{...styles.inlineIcon, color: '#3b82f6'}} />
-                                        {traveler.from_country || 'Unknown'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    sectionHeader: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '16px',
+    },
 
-                        {/* Travel Info - To */}
-                        <div style={styles.detailSection}>
-                            <div style={styles.sectionHeader}>
-                                <FiMapPin style={{...styles.sectionIcon, color: '#10b981'}} />
-                                <h4 style={styles.sectionTitle}>Destination Details</h4>
-                            </div>
-                            <div style={styles.detailList}>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>To Location</span>
-                                    <span style={styles.detailValue}>
-                                        <FiMapPin size={14} style={{...styles.inlineIcon, color: '#10b981'}} />
-                                        {traveler.to_location || 'Not specified'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>To Country</span>
-                                    <span style={styles.detailValue}>
-                                        <FiGlobe size={14} style={{...styles.inlineIcon, color: '#3b82f6'}} />
-                                        {traveler.to_country || 'Unknown'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Travel Type</span>
-                                    <span style={{
-                                        ...styles.detailValue,
-                                        color: travelTypeColor,
-                                        fontWeight: '600'
-                                    }}>
-                                        <TravelTypeIcon size={14} style={styles.inlineIcon} />
-                                        {traveler.leg_type || 'Unknown'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    sectionIcon: {
+        color: '#3b82f6',
+        fontSize: '16px',
+    },
 
-                        {/* Timeline */}
-                        <div style={styles.detailSection}>
-                            <div style={styles.sectionHeader}>
-                                <FiCalendar style={styles.sectionIcon} />
-                                <h4 style={styles.sectionTitle}>Travel Timeline</h4>
-                            </div>
-                            <div style={styles.detailList}>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Start Date</span>
-                                    <span style={styles.detailValue}>
-                                        <FiClock size={14} style={styles.inlineIcon} />
-                                        {fmt(traveler.begin_dt) || 'Not Set'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>End Date</span>
-                                    <span style={styles.detailValue}>
-                                        <FiClock size={14} style={styles.inlineIcon} />
-                                        {fmt(traveler.end_dt) || 'Not Set'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Duration</span>
-                                    <span style={styles.detailValue}>
-                                        {getDuration()}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    sectionTitle: {
+        fontSize: '16px',
+        fontWeight: '600',
+        color: isDark ? '#f3f4f6' : '#374151',
+        margin: 0,
+    },
 
-                        {/* Additional Info */}
-                        <div style={styles.detailSection}>
-                            <div style={styles.sectionHeader}>
-                                <FiAward style={styles.sectionIcon} />
-                                <h4 style={styles.sectionTitle}>Additional Details</h4>
-                            </div>
-                            <div style={styles.detailList}>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Status</span>
-                                    <span style={{
-                                        ...styles.statusTag,
-                                        ...(traveler.active_now ? styles.activeTag : styles.inactiveTag)
-                                    }}>
-                                        {traveler.active_now ? 'Active' : 'Completed'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailRow}>
-                                    <span style={styles.detailLabel}>Last Updated</span>
-                                    <span style={styles.detailValue}>
-                                        {new Date().toLocaleDateString()}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+    detailList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+    },
+
+    detailRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+
+    detailLabel: {
+        fontSize: '14px',
+        color: isDark ? '#9ca3af' : '#6b7280',
+        fontWeight: '500',
+        flex: 1,
+    },
+
+    detailValue: {
+        fontSize: '14px',
+        color: isDark ? '#e5e7eb' : '#374151',
+        fontWeight: '400',
+        flex: 1,
+        textAlign: 'right',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+    },
+
+    inlineIcon: {
+        marginRight: '6px',
+    },
+
+    statusTag: {
+        padding: '4px 8px',
+        borderRadius: '6px',
+        fontSize: '12px',
+        fontWeight: '500',
+    },
+
+    activeTag: {
+        background: isDark ? '#065f46' : '#dcfce7',
+        color: isDark ? '#34d399' : '#16a34a',
+    },
+
+    inactiveTag: {
+        background: isDark ? '#374151' : '#f3f4f6',
+        color: isDark ? '#9ca3af' : '#6b7280',
+    },
+});
