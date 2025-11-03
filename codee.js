@@ -1,9 +1,24 @@
+
+<ToastContainer 
+    position="top-right" 
+    autoClose={3000} 
+    theme={isDarkTheme ? "dark" : "light"}
+/>
+
+
+
+
+
 // Inside the component, get the styles based on current theme
 const styles = getStyles(isDarkTheme);
 
 // Then update ALL style references in the JSX to use styles object
 // For example:
-return (
+return (<ToastContainer 
+    position="top-right" 
+    autoClose={3000} 
+    theme={isDarkTheme ? "dark" : "light"}
+/>
     <div style={styles.page}>
         {/* ... rest of the component ... */}
     </div>
