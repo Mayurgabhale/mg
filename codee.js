@@ -1,3 +1,18 @@
+const locations = useMemo(() => {
+    const allLocations = [
+        ...new Set([
+            ...safeItems.map((r) => r.from_location).filter(Boolean),
+            ...safeItems.map((r) => r.to_location).filter(Boolean)
+        ])
+    ];
+    return allLocations.sort();
+}, [safeItems]);
+
+
+
+
+
+
 {/* Filters Section */}
 <div style={styles.filtersSection}>
     <div style={styles.filtersHeader}>
