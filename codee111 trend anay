@@ -1,11 +1,11 @@
-.risk-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 14px;
-  color: #000 !important; /* ✅ always black text */
-  background: #f1f5f9; /* fallback background */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  vertical-align: middle;
-}
+DB_SERVER=SRVWUPNQ0986V
+DB_USER=GSOC_Test
+DB_PASSWORD=Westernccure@2025
+DB_DATABASE=ACVSCore
+
+ SELECT AI.Image AS ImageBuffer
+        FROM ACVSCore.Access.Images AI
+        WHERE AI.ParentId = @id
+
+
+
