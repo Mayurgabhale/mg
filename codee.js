@@ -1,74 +1,106 @@
-{/* LEFT PANEL - Navigation */}
-<aside style={styles.sidebar}>
-    <nav style={styles.nav}>
-        {[
-            { id: "overview", label: "Overview", icon: FiActivity },
-            { id: "analytics", label: "Analytics", icon: FiBarChart2 },
-            { id: "recent", label: "Recent Travels", icon: FiClock },
-            { id: "countries", label: "Country Analysis", icon: FiMapPin },
-            { id: "types", label: "Travel Types", icon: FiAward }
-        ].map(item => (
-            <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{
-                    ...styles.navItem,
-                    ...(activeTab === item.id ? styles.navItemActive : {})
-                }}
-            >
-                <item.icon style={styles.navIcon} />
-                {item.label}
-            </button>
-        ))}
-    </nav>
-
-    {/* Quick Stats */}
-    <div style={styles.sideCard}>
-        <div style={styles.cardHeader}>
-            <FiTrendingUp style={styles.cardIcon} />
-            <h3 style={styles.sideTitle}>Quick Stats</h3>
-        </div>
-        <div style={styles.statsGrid}>
-            <div style={styles.statItem}>
-                <div style={styles.statIconWrapper}>
-                    <FiUsers style={styles.statIcon} />
-                </div>
-                <div style={styles.statContent}>
-                    <span style={styles.statLabel}>Total Travelers</span>
-                    <strong style={styles.statValue}>{analytics.totalTravelers}</strong>
-                </div>
+{/* MAIN CONTENT */}
+<main style={styles.main}>
+    {/* File Upload Section */}
+    <div style={styles.card}>
+        <div style={styles.uploadRow}>
+            <div style={styles.fileUploadWrapper}>
+                <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleFileChange}
+                    style={styles.fileInput}
+                    id="file-upload"
+                />
+                <label htmlFor="file-upload" style={styles.fileInputLabel}>
+                    <FiUpload style={{ marginRight: '8px' }} />
+                    {file ? file.name : "Choose File"}
+                </label>
             </div>
-            {/* ... other stat items */}
+            <div style={styles.buttonGroup}>
+                <button
+                    onClick={uploadFile}
+                    disabled={loading}
+                    style={loading ? styles.disabledPrimaryBtn : styles.primaryBtn}
+                >
+                    {loading ? (
+                        <>
+                            <div style={styles.spinner}></div>
+                            Processing...
+                        </>
+                    ) : (
+                        <>
+                            <FiUpload style={{ marginRight: '8px' }} />
+                            Upload File
+                        </>
+                    )}
+                </button>
+                <button
+                    onClick={() => {
+                        setItems([]);
+                        setSummary({});
+                        setFile(null);
+                        toast.info("Data cleared successfully.");
+                    }}
+                    style={styles.secondaryBtn}
+                >
+                    <FiTrash2 style={{ marginRight: '8px' }} />
+                    Clear
+                </button>
+                <button onClick={exportCsv} style={styles.ghostBtn}>
+                    <FiDownload style={{ marginRight: '8px' }} />
+                    Export CSV
+                </button>
+            </div>
+        </div>
+
+        {/* Filters Section */}
+        <div style={styles.filtersSection}>
+            <div style={styles.filtersHeader}>
+                <FiFilter style={{ marginRight: '8px', color: '#6b7280' }} />
+                <span style={styles.filtersTitle}>Filters & Search</span>
+            </div>
+            <div style={styles.filtersRow}>
+                <div style={styles.searchWrapper}>
+                    <FiSearch style={styles.searchIcon} />
+                    <input
+                        placeholder="Search by name or email..."
+                        value={filters.search}
+                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                        style={styles.searchInput}
+                    />
+                </div>
+                <select
+                    value={filters.country}
+                    onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+                    style={styles.select}
+                >
+                    <option value="">All Countries</option>
+                    {countries.map((c) => (
+                        <option key={c}>{c}</option>
+                    ))}
+                </select>
+                <select
+                    value={filters.legType}
+                    onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
+                    style={styles.select}
+                >
+                    <option value="">All Travel Types</option>
+                    {legTypes.map((t) => (
+                        <option key={t}>{t}</option>
+                    ))}
+                </select>
+                <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                    style={styles.select}
+                >
+                    <option value="">All Status</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                </select>
+            </div>
         </div>
     </div>
 
-    {/* Today's Travelers */}
-    <div style={styles.sideCard}>
-        <div style={styles.cardHeader}>
-            <FiCalendar style={styles.cardIcon} />
-            <h3 style={styles.sideTitle}>Today's Travelers</h3>
-        </div>
-        {todayTravelers.length === 0 ? (
-            <div style={styles.emptyState}>
-                <FiFileText size={24} style={{ color: '#9ca3af', marginBottom: '8px' }} />
-                <p style={styles.sideEmpty}>No travels today</p>
-            </div>
-        ) : (
-            <ul style={styles.countryList}>
-                {todayTravelers.slice(0, 5).map((t, i) => (
-                    <li key={i} style={styles.countryItem}>
-                        <div style={styles.countryInfo}>
-                            <span style={styles.countryRank}>{i + 1}</span>
-                            <span style={styles.countryName}>
-                                {t.first_name} {t.last_name}
-                            </span>
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                            {t.from_country} → {t.to_country}
-                        </div>
-                    </li>
-                ))}
-            </ul>
-        )}
-    </div>
-</aside>
+    {/* Continue updating ALL style references in the rest of your component... */}
+</main>
