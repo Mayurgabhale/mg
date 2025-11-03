@@ -1,218 +1,246 @@
-// Add these new icons at the top with other imports
-import {
-    // ... existing icons
-    FiCar,
-    FiTruck,
-    FiTrain,
-    FiPlane,
-    FiShip,
-    FiBike,
-    FiNavigation,
-    FiUser,
-    FiMail,
-    FiMapPin,
-    FiCalendar,
-    FiClock,
-    FiGlobe,
-    FiAward
-} from "react-icons/fi";
+// Add these styles to your getStyles function
+const getStyles = (isDark) => ({
+    // ... existing styles ...
 
-// 🆕 Travel Type Icons Mapping
-const getTravelTypeIcon = (type) => {
-    if (!type) return FiGlobe;
-    
-    const typeLower = type.toLowerCase();
-    if (typeLower.includes('car') || typeLower.includes('vehicle')) return FiCar;
-    if (typeLower.includes('truck') || typeLower.includes('bus')) return FiTruck;
-    if (typeLower.includes('train') || typeLower.includes('rail')) return FiTrain;
-    if (typeLower.includes('plane') || typeLower.includes('air') || typeLower.includes('flight')) return FiPlane;
-    if (typeLower.includes('ship') || typeLower.includes('boat') || typeLower.includes('sea')) return FiShip;
-    if (typeLower.includes('bike') || typeLower.includes('cycle')) return FiBike;
-    return FiNavigation;
-};
+    // 🆕 Enhanced Popup Styles
+    popupOverlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0, 0, 0, 0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: "20px",
+        backdropFilter: "blur(4px)",
+    },
 
-// 🆕 Travel Type Color Mapping
-const getTravelTypeColor = (type) => {
-    if (!type) return '#6b7280';
-    
-    const typeLower = type.toLowerCase();
-    if (typeLower.includes('car') || typeLower.includes('vehicle')) return '#dc2626';
-    if (typeLower.includes('truck') || typeLower.includes('bus')) return '#ea580c';
-    if (typeLower.includes('train') || typeLower.includes('rail')) return '#16a34a';
-    if (typeLower.includes('plane') || typeLower.includes('air') || typeLower.includes('flight')) return '#2563eb';
-    if (typeLower.includes('ship') || typeLower.includes('boat') || typeLower.includes('sea')) return '#7c3aed';
-    if (typeLower.includes('bike') || typeLower.includes('cycle')) return '#ca8a04';
-    return '#475569';
-};
+    popupContent: {
+        background: isDark ? "#1e293b" : "white",
+        borderRadius: "16px",
+        padding: "0",
+        maxWidth: "600px",
+        width: "100%",
+        maxHeight: "85vh",
+        overflow: "hidden",
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
+    },
 
-// 🆕 Enhanced Traveler Detail Popup Component
-const TravelerDetailPopup = ({ traveler, onClose }) => {
-    if (!traveler) return null;
+    popupHeader: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        padding: "24px",
+        borderBottom: isDark ? "1px solid #374151" : "1px solid #f3f4f6",
+        background: isDark ? "linear-gradient(135deg, #1e293b, #374151)" : "linear-gradient(135deg, #f8fafc, #f1f5f9)",
+    },
 
-    const TravelTypeIcon = getTravelTypeIcon(traveler.leg_type);
-    const travelTypeColor = getTravelTypeColor(traveler.leg_type);
+    popupHeaderLeft: {
+        display: "flex",
+        alignItems: "center",
+        gap: "16px",
+        flex: 1,
+    },
 
-    return (
-        <div style={styles.popupOverlay}>
-            <div style={styles.popupContent}>
-                <div style={styles.popupHeader}>
-                    <div style={styles.popupHeaderLeft}>
-                        <div style={styles.avatarLarge}>
-                            <FiUser size={24} />
-                        </div>
-                        <div>
-                            <h3 style={styles.popupTitle}>
-                                {traveler.first_name} {traveler.last_name}
-                            </h3>
-                            <p style={styles.employeeId}>ID: {traveler.emp_id || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} style={styles.popupCloseBtn}>
-                        <FiX size={20} />
-                    </button>
-                </div>
+    avatarLarge: {
+        width: "60px",
+        height: "60px",
+        borderRadius: "50%",
+        background: isDark ? "linear-gradient(135deg, #3b82f6, #1d4ed8)" : "linear-gradient(135deg, #3b82f6, #60a5fa)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontSize: "24px",
+    },
 
-                <div style={styles.popupBody}>
-                    {/* Status & Travel Type Banner */}
-                    <div style={styles.bannerSection}>
-                        <div style={{
-                            ...styles.statusBadge,
-                            ...(traveler.active_now ? styles.activeStatus : styles.inactiveStatus)
-                        }}>
-                            <div style={styles.statusDot}></div>
-                            {traveler.active_now ? "Currently Traveling" : "Travel Completed"}
-                        </div>
-                        <div style={{
-                            ...styles.travelTypeBadge,
-                            background: `${travelTypeColor}15`,
-                            border: `1px solid ${travelTypeColor}30`,
-                            color: travelTypeColor
-                        }}>
-                            <TravelTypeIcon size={16} style={{ marginRight: '6px' }} />
-                            {traveler.leg_type || 'Unknown Type'}
-                        </div>
-                    </div>
+    popupTitle: {
+        fontSize: "20px",
+        fontWeight: 700,
+        color: isDark ? "#f9fafb" : "#111827",
+        margin: "0 0 4px 0",
+        lineHeight: "1.3",
+    },
 
-                    <div style={styles.detailGrid}>
-                        {/* Personal Information */}
-                        <div style={styles.detailGroup}>
-                            <h4 style={styles.detailGroupTitle}>
-                                <FiUser style={styles.detailGroupIcon} />
-                                Personal Information
-                            </h4>
-                            <div style={styles.detailItems}>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Employee ID</strong>
-                                    <span style={styles.detailValue}>{traveler.emp_id || 'Not Provided'}</span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Full Name</strong>
-                                    <span style={styles.detailValue}>{traveler.first_name} {traveler.last_name}</span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Email</strong>
-                                    <span style={styles.detailValue}>
-                                        <FiMail size={14} style={{ marginRight: '6px' }} />
-                                        {traveler.email || 'Not Provided'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    employeeId: {
+        fontSize: "14px",
+        color: isDark ? "#9ca3af" : "#6b7280",
+        margin: 0,
+        fontWeight: 500,
+    },
 
-                        {/* Travel Information */}
-                        <div style={styles.detailGroup}>
-                            <h4 style={styles.detailGroupTitle}>
-                                <FiGlobe style={styles.detailGroupIcon} />
-                                Travel Information
-                            </h4>
-                            <div style={styles.detailItems}>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>From Country</strong>
-                                    <span style={styles.detailValue}>
-                                        <FiMapPin size={14} style={{ marginRight: '6px', color: '#ef4444' }} />
-                                        {traveler.from_country || 'Unknown'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>To Country</strong>
-                                    <span style={styles.detailValue}>
-                                        <FiMapPin size={14} style={{ marginRight: '6px', color: '#10b981' }} />
-                                        {traveler.to_country || 'Unknown'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Travel Type</strong>
-                                    <span style={{
-                                        ...styles.travelTypeDisplay,
-                                        color: travelTypeColor
-                                    }}>
-                                        <TravelTypeIcon size={16} style={{ marginRight: '6px' }} />
-                                        {traveler.leg_type || 'Unknown'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    popupCloseBtn: {
+        background: isDark ? "#374151" : "#f3f4f6",
+        border: "none",
+        color: isDark ? "#9ca3af" : "#6b7280",
+        cursor: "pointer",
+        padding: "8px",
+        borderRadius: "8px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "all 0.2s ease",
+        ':hover': {
+            background: isDark ? "#4b5563" : "#e5e7eb",
+        }
+    },
 
-                        {/* Timeline Information */}
-                        <div style={styles.detailGroup}>
-                            <h4 style={styles.detailGroupTitle}>
-                                <FiCalendar style={styles.detailGroupIcon} />
-                                Travel Timeline
-                            </h4>
-                            <div style={styles.detailItems}>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Start Date</strong>
-                                    <span style={styles.detailValue}>
-                                        <FiClock size={14} style={{ marginRight: '6px' }} />
-                                        {fmt(traveler.begin_dt) || 'Not Set'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>End Date</strong>
-                                    <span style={styles.detailValue}>
-                                        <FiClock size={14} style={{ marginRight: '6px' }} />
-                                        {fmt(traveler.end_dt) || 'Not Set'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Duration</strong>
-                                    <span style={styles.detailValue}>
-                                        {traveler.begin_dt && traveler.end_dt ? 
-                                            `${Math.ceil((new Date(traveler.end_dt) - new Date(traveler.begin_dt)) / (1000 * 60 * 60 * 24))} days` : 
-                                            'Unknown'
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    popupBody: {
+        padding: "0",
+        maxHeight: "calc(85vh - 120px)",
+        overflowY: "auto",
+    },
 
-                        {/* Additional Information */}
-                        <div style={styles.detailGroup}>
-                            <h4 style={styles.detailGroupTitle}>
-                                <FiAward style={styles.detailGroupIcon} />
-                                Additional Details
-                            </h4>
-                            <div style={styles.detailItems}>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Status</strong>
-                                    <span style={{
-                                        ...styles.statusIndicator,
-                                        ...(traveler.active_now ? styles.activeIndicator : styles.inactiveIndicator)
-                                    }}>
-                                        {traveler.active_now ? 'Active' : 'Completed'}
-                                    </span>
-                                </div>
-                                <div style={styles.detailItem}>
-                                    <strong style={styles.detailLabel}>Last Updated</strong>
-                                    <span style={styles.detailValue}>
-                                        {new Date().toLocaleDateString()}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+    bannerSection: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "20px 24px",
+        background: isDark ? "linear-gradient(90deg, #1e293b, #374151)" : "linear-gradient(90deg, #f8fafc, #f1f5f9)",
+        borderBottom: isDark ? "1px solid #374151" : "1px solid #f3f4f6",
+    },
+
+    statusBadge: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 16px",
+        borderRadius: "20px",
+        fontSize: "14px",
+        fontWeight: 600,
+        border: "1px solid",
+    },
+
+    activeStatus: {
+        background: isDark ? "#065f4620" : "#dcfce7",
+        color: isDark ? "#34d399" : "#16a34a",
+        borderColor: isDark ? "#065f46" : "#bbf7d0",
+    },
+
+    inactiveStatus: {
+        background: isDark ? "#374151" : "#f3f4f6",
+        color: isDark ? "#9ca3af" : "#6b7280",
+        borderColor: isDark ? "#4b5563" : "#e5e7eb",
+    },
+
+    statusDot: {
+        width: "8px",
+        height: "8px",
+        borderRadius: "50%",
+    },
+
+    activeStatusDot: {
+        background: "#10b981",
+        animation: "pulse 2s infinite",
+    },
+
+    inactiveStatusDot: {
+        background: "#6b7280",
+    },
+
+    travelTypeBadge: {
+        display: "flex",
+        alignItems: "center",
+        padding: "8px 16px",
+        borderRadius: "12px",
+        fontSize: "14px",
+        fontWeight: 600,
+        border: "1px solid",
+    },
+
+    detailGrid: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "0",
+    },
+
+    detailGroup: {
+        padding: "24px",
+        borderBottom: isDark ? "1px solid #374151" : "1px solid #f3f4f6",
+        ':nth-child(odd)': {
+            borderRight: isDark ? "1px solid #374151" : "1px solid #f3f4f6",
+        }
+    },
+
+    detailGroupTitle: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        fontSize: "16px",
+        fontWeight: 600,
+        color: isDark ? "#f3f4f6" : "#374151",
+        margin: "0 0 16px 0",
+    },
+
+    detailGroupIcon: {
+        color: "#3b82f6",
+    },
+
+    detailItems: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+    },
+
+    detailItem: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+    },
+
+    detailLabel: {
+        fontSize: "12px",
+        fontWeight: 600,
+        color: isDark ? "#9ca3af" : "#6b7280",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+        marginBottom: "2px",
+    },
+
+    detailValue: {
+        fontSize: "14px",
+        color: isDark ? "#e5e7eb" : "#374151",
+        fontWeight: 500,
+        display: "flex",
+        alignItems: "center",
+    },
+
+    travelTypeDisplay: {
+        display: "flex",
+        alignItems: "center",
+        fontSize: "14px",
+        fontWeight: 600,
+        padding: "4px 0",
+    },
+
+    statusIndicator: {
+        padding: "4px 12px",
+        borderRadius: "12px",
+        fontSize: "12px",
+        fontWeight: 600,
+        width: "fit-content",
+    },
+
+    activeIndicator: {
+        background: isDark ? "#065f4620" : "#dcfce7",
+        color: isDark ? "#34d399" : "#16a34a",
+    },
+
+    inactiveIndicator: {
+        background: isDark ? "#374151" : "#f3f4f6",
+        color: isDark ? "#9ca3af" : "#6b7280",
+    },
+});
+
+// Add this CSS animation for the active status dot
+const keyframes = `
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+${/* your existing keyframes */ ''}
+`;
