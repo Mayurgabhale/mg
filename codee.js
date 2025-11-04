@@ -1,4 +1,10 @@
-     <div style={{ margin: "20px 0" }}>
+ <div style={layout}>
+                {/* LEFT PANEL - Navigation */}
+                <aside style={styles.sidebar}>
+
+                    {/* ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ */}
+
+                    <div style={{ margin: "20px 0" }}>
                         <button
                             onClick={() => setShowAddForm(!showAddForm)}
                             style={{
@@ -57,3 +63,4 @@
                             </div>
                         )}
                     </div>
+                    {/* ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ */}
