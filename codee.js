@@ -1,220 +1,167 @@
-const getStyles = (isDark) => ({
-    // ... your existing styles ...
+ { id: "analytics", label: "Analytics", icon: FiBarChart2 },
+i want like this like.. after  ok 
+{/* HEADER */}
+            <header style={styles.header}>
+                <div style={styles.headerContent}>
+                    <div style={styles.headerIcon}>
+                        <FiGlobe size={32} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <h1 style={styles.title}>Employee Travel Details Dashboard</h1>
 
-    // 🆕 Add Traveler Section Styles
-    addTravelerSection: {
-        margin: "24px 0",
-        padding: "0",
-    },
+                    </div>
+                    {/* 🆕 Theme Toggle Button */}
+                    <button
+                        onClick={toggleTheme}
+                        style={styles.themeToggleBtn}
+                        title={isDarkTheme ? "Switch to light mode" : "Switch to dark mode"}
+                    >
+                        {isDarkTheme ? <FiSun size={20} /> : <FiMoon size={20} />}
+                    </button>
+                </div>
+            </header>
 
-    addButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #2563eb, #1d4ed8)" : 
-            "linear-gradient(135deg, #3b82f6, #2563eb)",
-        color: "white",
-        padding: "12px 20px",
-        borderRadius: "12px",
-        border: "none",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        width: "100%",
-        transition: "all 0.3s ease",
-        boxShadow: isDark ? 
-            "0 4px 12px rgba(37, 99, 235, 0.3)" : 
-            "0 4px 12px rgba(37, 99, 235, 0.2)",
-        ':hover': {
-            transform: "translateY(-2px)",
-            boxShadow: isDark ? 
-                "0 8px 20px rgba(37, 99, 235, 0.4)" : 
-                "0 8px 20px rgba(37, 99, 235, 0.3)",
-        }
-    },
+            <div style={layout}>
+                {/* LEFT PANEL - Navigation */}
+                <aside style={styles.sidebar}>
 
-    cancelButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #6b7280, #4b5563)" : 
-            "linear-gradient(135deg, #9ca3af, #6b7280)",
-        color: "white",
-        padding: "12px 20px",
-        borderRadius: "12px",
-        border: "none",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        width: "100%",
-        transition: "all 0.3s ease",
-        boxShadow: isDark ? 
-            "0 4px 12px rgba(107, 114, 128, 0.3)" : 
-            "0 4px 12px rgba(107, 114, 128, 0.2)",
-        ':hover': {
-            transform: "translateY(-2px)",
-            boxShadow: isDark ? 
-                "0 8px 20px rgba(107, 114, 128, 0.4)" : 
-                "0 8px 20px rgba(107, 114, 128, 0.3)",
-        }
-    },
+                    {/* ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ */}
 
-    buttonContent: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-    },
+                  {/* 🆕 Enhanced Add Traveler Section */}
+        <div style={styles.addTravelerSection}>
+            <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                style={showAddForm ? styles.cancelButton : styles.addButton}
+            >
+                <div style={styles.buttonContent}>
+                    {showAddForm ? (
+                        <>
+                            <FiX size={16} />
+                            Cancel
+                        </>
+                    ) : (
+                        <>
+                            <FiUserPlus size={16} />
+                            Add New Traveler
+                        </>
+                    )}
+                </div>
+            </button>
 
-    addFormContainer: {
-        marginTop: "16px",
-        padding: "20px",
-        background: isDark ? 
-            "linear-gradient(135deg, #1f2937, #111827)" : 
-            "linear-gradient(135deg, #ffffff, #f9fafb)",
-        borderRadius: "16px",
-        boxShadow: isDark ? 
-            "0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1)" : 
-            "0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.05)",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.05)",
-        backdropFilter: "blur(10px)",
-    },
+            {showAddForm && (
+                <div style={styles.addFormContainer}>
+                    {/* Form Header */}
+                    <div style={styles.formHeader}>
+                        <div style={styles.formIcon}>
+                            <FiUserPlus size={20} />
+                        </div>
+                        <div>
+                            <h3 style={styles.formTitle}>Add Traveler Details</h3>
+                            <p style={styles.formSubtitle}>Enter new traveler information</p>
+                        </div>
+                    </div>
 
-    formHeader: {
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        marginBottom: "20px",
-        paddingBottom: "16px",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
-    },
+                    {/* Form Fields Grid */}
+                    <div style={styles.formGrid}>
+                        {[
+                            { key: 'first_name', label: 'First Name', type: 'text', icon: FiUser },
+                            { key: 'last_name', label: 'Last Name', type: 'text', icon: FiUser },
+                            { key: 'emp_id', label: 'Employee ID', type: 'text', icon: FiAward },
+                            { key: 'email', label: 'Email', type: 'email', icon: FiMail },
+                            { key: 'leg_type', label: 'Travel Type', type: 'text', icon: FiNavigation },
+                            { key: 'from_location', label: 'From Location', type: 'text', icon: FiMapPin },
+                            { key: 'from_country', label: 'From Country', type: 'text', icon: FiGlobe },
+                            { key: 'to_location', label: 'To Location', type: 'text', icon: FiMapPin },
+                            { key: 'to_country', label: 'To Country', type: 'text', icon: FiGlobe },
+                            { key: 'begin_dt', label: 'Start Date', type: 'datetime-local', icon: FiCalendar },
+                            { key: 'end_dt', label: 'End Date', type: 'datetime-local', icon: FiCalendar },
+                        ].map(({ key, label, type, icon: Icon }) => (
+                            <div key={key} style={styles.inputGroup}>
+                                <label style={styles.inputLabel}>
+                                    <Icon size={14} style={styles.labelIcon} />
+                                    {label}
+                                </label>
+                                <input
+                                    type={type}
+                                    value={newTraveler[key] || ''}
+                                    onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                    style={styles.formInput}
+                                    placeholder={`Enter ${label.toLowerCase()}`}
+                                />
+                            </div>
+                        ))}
+                    </div>
 
-    formIcon: {
-        background: isDark ? 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)" : 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)",
-        color: "white",
-        padding: "10px",
-        borderRadius: "10px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    },
+                    {/* Form Actions */}
+                    <div style={styles.formActions}>
+                        <button
+                            onClick={() => setShowAddForm(false)}
+                            style={styles.secondaryButton}
+                        >
+                            <FiX size={16} />
+                            Cancel
+                        </button>
+                        <button
+                            onClick={addTraveler}
+                            style={styles.saveButton}
+                        >
+                            <FiSave size={16} />
+                            Save Traveler
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
 
-    formTitle: {
-        fontSize: "18px",
-        fontWeight: "700",
-        color: isDark ? "#f9fafb" : "#111827",
-        margin: "0 0 4px 0",
-    },
+                    {/* ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ */}
 
-    formSubtitle: {
-        fontSize: "12px",
-        color: isDark ? "#9ca3af" : "#6b7280",
-        margin: 0,
-    },
+                    <nav style={styles.nav}>
+                        {[
+                            { id: "overview", label: "Overview", icon: FiActivity },
+                            { id: "analytics", label: "Analytics", icon: FiBarChart2 },
+                            { id: "recent", label: "Recent Travels", icon: FiClock },
+                            { id: "countries", label: "Country Analysis", icon: FiMapPin },
+                            { id: "types", label: "Travel Types", icon: FiAward }
+                        ].map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                style={{
+                                    ...styles.navItem,
+                                    ...(activeTab === item.id ? styles.navItemActive : {})
+                                }}
+                            >
+                                <item.icon style={styles.navIcon} />
+                                {item.label}
+                            </button>
+                        ))}
+                    </nav>
 
-    formGrid: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "16px",
-        marginBottom: "20px",
-    },
+                    {/* Quick Stats */}
+                    <div style={styles.sideCard}>
+                        <div style={styles.cardHeader}>
+                            <FiTrendingUp style={styles.cardIcon} />
+                            <h3 style={styles.sideTitle}>Quick Stats</h3>
+                        </div>
+                        <div style={styles.statsGrid}>
+                            <div style={styles.statItem}>
+                                <div style={styles.statIconWrapper}>
+                                    <FiUsers style={styles.statIcon} />
+                                </div>
+                                <div style={styles.statContent}>
+                                    <span style={styles.statLabel}>Total Travelers</span>
+                                    <strong style={styles.statValue}>{analytics.totalTravelers}</strong>
+                                </div>
+                            </div>
+                            <div style={styles.statItem}>
+                                <div style={{ ...styles.statIconWrapper, background: '#dcfce7' }}>
+                                    <FiCheckCircle style={{ ...styles.statIcon, color: '#16a34a' }} />
+                                </div>
+                                <div style={statContent}>
+                                    <span style={styles.statLabel}>Active Now</span>
+                                    <strong style={styles.statValue}>{analytics.active}</strong>
+                                </div>
+                            </div>
 
-    inputGroup: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-    },
-
-    inputLabel: {
-        fontSize: "12px",
-        fontWeight: "600",
-        color: isDark ? "#d1d5db" : "#374151",
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-    },
-
-    labelIcon: {
-        color: isDark ? "#9ca3af" : "#6b7280",
-        opacity: "0.7",
-    },
-
-    formInput: {
-        padding: "10px 12px",
-        borderRadius: "8px",
-        border: isDark ? 
-            "1px solid rgba(255,255,255,0.2)" : 
-            "1px solid #d1d5db",
-        background: isDark ? "rgba(17, 24, 39, 0.5)" : "white",
-        color: isDark ? "#f9fafb" : "#111827",
-        fontSize: "14px",
-        transition: "all 0.2s ease",
-        outline: "none",
-        ':focus': {
-            borderColor: isDark ? "#3b82f6" : "#2563eb",
-            boxShadow: isDark ? 
-                "0 0 0 3px rgba(59, 130, 246, 0.1)" : 
-                "0 0 0 3px rgba(37, 99, 235, 0.1)",
-        },
-        '::placeholder': {
-            color: isDark ? "#6b7280" : "#9ca3af",
-        }
-    },
-
-    formActions: {
-        display: "flex",
-        gap: "12px",
-        justifyContent: "flex-end",
-        paddingTop: "16px",
-        borderTop: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
-    },
-
-    secondaryButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #4b5563, #374151)" : 
-            "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
-        color: isDark ? "#d1d5db" : "#374151",
-        border: "none",
-        padding: "10px 20px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "all 0.3s ease",
-        ':hover': {
-            transform: "translateY(-1px)",
-            boxShadow: isDark ? 
-                "0 4px 12px rgba(0, 0, 0, 0.3)" : 
-                "0 4px 12px rgba(0, 0, 0, 0.1)",
-        }
-    },
-
-    saveButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #059669, #047857)" : 
-            "linear-gradient(135deg, #10b981, #059669)",
-        color: "white",
-        border: "none",
-        padding: "10px 20px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "all 0.3s ease",
-        boxShadow: isDark ? 
-            "0 4px 12px rgba(5, 150, 105, 0.3)" : 
-            "0 4px 12px rgba(5, 150, 105, 0.2)",
-        ':hover': {
-            transform: "translateY(-1px)",
-            boxShadow: isDark ? 
-                "0 8px 20px rgba(5, 150, 105, 0.4)" : 
-                "0 8px 20px rgba(5, 150, 105, 0.3)",
-        }
-    },
-});
+                        </div>
+          
