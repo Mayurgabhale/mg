@@ -2,6 +2,7 @@
 ok,
     now i want to add one more sectin in this..
 where trveller or any one can add manulayt travellre  details ok 
+and after add this dispoly in dashboard ok like tath 
 i want this 
 can you do this 
 //
