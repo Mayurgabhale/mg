@@ -1,66 +1,92 @@
- <div style={layout}>
-                {/* LEFT PANEL - Navigation */}
-                <aside style={styles.sidebar}>
+<div style={layout}>
+    {/* LEFT PANEL - Navigation */}
+    <aside style={styles.sidebar}>
 
-                    {/* ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ */}
+        {/* 🆕 Enhanced Add Traveler Section */}
+        <div style={styles.addTravelerSection}>
+            <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                style={showAddForm ? styles.cancelButton : styles.addButton}
+            >
+                <div style={styles.buttonContent}>
+                    {showAddForm ? (
+                        <>
+                            <FiX size={16} />
+                            Cancel
+                        </>
+                    ) : (
+                        <>
+                            <FiUserPlus size={16} />
+                            Add New Traveler
+                        </>
+                    )}
+                </div>
+            </button>
 
-                    <div style={{ margin: "20px 0" }}>
-                        <button
-                            onClick={() => setShowAddForm(!showAddForm)}
-                            style={{
-                                background: "#2563eb",
-                                color: "white",
-                                padding: "8px 16px",
-                                borderRadius: "8px",
-                                border: "none",
-                                cursor: "pointer",
-                            }}
-                        >
-                            {showAddForm ? "Cancel" : "➕ Add Traveler"}
-                        </button>
-
-                        {showAddForm && (
-                            <div style={{
-                                marginTop: "16px",
-                                padding: "16px",
-                                background: isDarkTheme ? "#1f2937" : "#f9fafb",
-                                borderRadius: "12px",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                            }}>
-                                <h3>Add Traveler Details</h3>
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
-                                    {Object.keys(newTraveler).map((key) => (
-                                        <input
-                                            key={key}
-                                            type={key.includes("dt") ? "datetime-local" : "text"}
-                                            placeholder={key.replace("_", " ").toUpperCase()}
-                                            value={newTraveler[key]}
-                                            onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
-                                            style={{
-                                                padding: "8px",
-                                                borderRadius: "6px",
-                                                border: "1px solid #d1d5db",
-                                                background: isDarkTheme ? "#374151" : "white",
-                                                color: isDarkTheme ? "white" : "black",
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={addTraveler}
-                                    style={{
-                                        marginTop: "12px",
-                                        background: "#16a34a",
-                                        color: "white",
-                                        padding: "8px 16px",
-                                        borderRadius: "8px",
-                                        border: "none",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Save Traveler
-                                </button>
-                            </div>
-                        )}
+            {showAddForm && (
+                <div style={styles.addFormContainer}>
+                    {/* Form Header */}
+                    <div style={styles.formHeader}>
+                        <div style={styles.formIcon}>
+                            <FiUserPlus size={20} />
+                        </div>
+                        <div>
+                            <h3 style={styles.formTitle}>Add Traveler Details</h3>
+                            <p style={styles.formSubtitle}>Enter new traveler information</p>
+                        </div>
                     </div>
-                    {/* ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ */}
+
+                    {/* Form Fields Grid */}
+                    <div style={styles.formGrid}>
+                        {[
+                            { key: 'first_name', label: 'First Name', type: 'text', icon: FiUser },
+                            { key: 'last_name', label: 'Last Name', type: 'text', icon: FiUser },
+                            { key: 'emp_id', label: 'Employee ID', type: 'text', icon: FiAward },
+                            { key: 'email', label: 'Email', type: 'email', icon: FiMail },
+                            { key: 'leg_type', label: 'Travel Type', type: 'text', icon: FiNavigation },
+                            { key: 'from_location', label: 'From Location', type: 'text', icon: FiMapPin },
+                            { key: 'from_country', label: 'From Country', type: 'text', icon: FiGlobe },
+                            { key: 'to_location', label: 'To Location', type: 'text', icon: FiMapPin },
+                            { key: 'to_country', label: 'To Country', type: 'text', icon: FiGlobe },
+                            { key: 'begin_dt', label: 'Start Date', type: 'datetime-local', icon: FiCalendar },
+                            { key: 'end_dt', label: 'End Date', type: 'datetime-local', icon: FiCalendar },
+                        ].map(({ key, label, type, icon: Icon }) => (
+                            <div key={key} style={styles.inputGroup}>
+                                <label style={styles.inputLabel}>
+                                    <Icon size={14} style={styles.labelIcon} />
+                                    {label}
+                                </label>
+                                <input
+                                    type={type}
+                                    value={newTraveler[key] || ''}
+                                    onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                    style={styles.formInput}
+                                    placeholder={`Enter ${label.toLowerCase()}`}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Form Actions */}
+                    <div style={styles.formActions}>
+                        <button
+                            onClick={() => setShowAddForm(false)}
+                            style={styles.secondaryButton}
+                        >
+                            <FiX size={16} />
+                            Cancel
+                        </button>
+                        <button
+                            onClick={addTraveler}
+                            style={styles.saveButton}
+                        >
+                            <FiSave size={16} />
+                            Save Traveler
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+
+        {/* Rest of your sidebar content... */}
+    </aside>
