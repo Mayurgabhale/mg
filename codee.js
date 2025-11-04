@@ -1,12 +1,23 @@
-from datetime import datetime
+const [lastUpdated, setLastUpdated] = useState(null);
 
-# Inside /upload
-previous_data["last_updated"] = datetime.now().isoformat()
+useEffect(() => {
+    const fetchLatest = async () => {
+        try {
+            const res = await axios.get("http://localhost:8000/data");
+            const payload = res.data || {};
 
-# Inside /data
-return JSONResponse(content={
-    "summary": previous_data["summary"],
-    "items": previous_data["items"],
-    "last_updated": previous_data.get("last_updated"),
-    "message": "Loaded saved data from memory"
-})
+            // Only update UI if new data detected
+            if (payload.last_updated && payload.last_updated !== lastUpdated) {
+                setLastUpdated(payload.last_updated);
+                setItems(payload.items || []);
+                setSummary(payload.summary || {});
+                toast.info("Dashboard auto-updated with new upload data.");
+            }
+        } catch {
+            console.warn("No data yet or backend not responding...");
+        }
+    };
+
+    const interval = setInterval(fetchLatest, 10000);
+    return () => clearInterval(interval);
+}, [lastUpdated]);
