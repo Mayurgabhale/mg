@@ -1,5 +1,29 @@
 i say like this 
 create this more atractive desing 
+
+and remove this button 
+  <button
+                                onClick={() => setShowAddForm(!showAddForm)}
+                                style={showAddForm ? styles.cancelButton : styles.addButton}
+                            >
+                                <div style={styles.buttonContent}>
+                                    {showAddForm ? (
+                                        <>
+                                            <FiX size={16} />
+                                            Cancel
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiUserPlus size={16} />
+                                            Add New Traveler
+                                        </>
+                                    )}
+                                </div>
+                            </button>
+
+                            {showAddForm 
+
+                             ...
  {/* //////// */}
                     {activeTab === "addTravel" && (
 
