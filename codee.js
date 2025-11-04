@@ -283,3 +283,353 @@ async def get_previous_data():
         })
     else:
         raise HTTPException(status_code=404, detail="No previously uploaded data found.")
+
+
+
+
+
+   {/* Quick Stats */}
+                    <div style={styles.sideCard}>
+                        <div style={styles.cardHeader}>
+                            <FiTrendingUp style={styles.cardIcon} />
+                            <h3 style={styles.sideTitle}>Quick Stats</h3>
+                        </div>
+                        <div style={styles.statsGrid}>
+                            <div style={styles.statItem}>
+                                <div style={styles.statIconWrapper}>
+                                    <FiUsers style={styles.statIcon} />
+                                </div>
+                                <div style={styles.statContent}>
+                                    <span style={styles.statLabel}>Total Travelers</span>
+                                    <strong style={styles.statValue}>{analytics.totalTravelers}</strong>
+                                </div>
+                            </div>
+                            <div style={styles.statItem}>
+                                <div style={{ ...styles.statIconWrapper, background: '#dcfce7' }}>
+                                    <FiCheckCircle style={{ ...styles.statIcon, color: '#16a34a' }} />
+                                </div>
+                                <div style={statContent}>
+                                    <span style={styles.statLabel}>Active Now</span>
+                                    <strong style={styles.statValue}>{analytics.active}</strong>
+                                </div>
+                            </div>
+                            <div style={styles.statItem}>
+                                <div style={{ ...styles.statIconWrapper, background: '#dbeafe' }}>
+                                    <FiClock style={{ ...styles.statIcon, color: '#2563eb' }} />
+                                </div>
+                                <div style={statContent}>
+                                    <span style={styles.statLabel}>Upcoming</span>
+                                    <strong style={styles.statValue}>{analytics.upcoming}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dynamic Content based on Active Tab */}
+                    {activeTab === "overview" && (
+                        <div style={styles.card}>
+                            <div style={styles.tableHeader}>
+                                <h3 style={styles.tableTitle}>All Travel Records</h3>
+                                <span style={styles.tableBadge}>{filtered.length} records</span>
+                            </div>
+                            <div style={styles.tableWrap}>
+                                <table style={styles.table}>
+                                    <thead style={styles.thead}>
+                                        <tr>
+                                            <th style={styles.th}>Status</th>
+                                            <th style={styles.th}>Traveler</th>
+                                            <th style={styles.th}>Emp ID</th>
+                                            <th style={styles.th}>Email</th>
+                                            <th style={styles.th}>Type</th>
+                                            <th style={styles.th}>From</th>
+                                            <th style={styles.th}>To</th>
+                                            <th style={styles.th}>Start Date</th>
+                                            <th style={styles.th}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filtered.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="9" style={styles.emptyRow}>
+                                                    <div style={styles.emptyState}>
+                                                        <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
+                                                        <p>No matching results found</p>
+                                                        <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filtered.map((r, i) => (
+                                                <tr key={i} style={i % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                                                    <td style={styles.td}>
+                                                        {r.active_now ? (
+                                                            <div style={styles.activeBadge}>
+                                                                <FiCheckCircle size={14} />
+                                                                Active
+                                                            </div>
+                                                        ) : (
+                                                            <div style={styles.inactiveBadge}>
+                                                                <FiXCircle size={14} />
+                                                                Inactive
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.userCell}>
+                                                            <div style={styles.avatar}>
+                                                                <FiUser size={14} />
+                                                            </div>
+                                                            <span>
+                                                                {r.first_name} {r.last_name}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.userCell}>
+                                                            <span style={styles.empId}>
+                                                                {r.emp_id || 'N/A'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.emailCell}>
+                                                            <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {r.email}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <span style={styles.typeBadge}>{r.leg_type}</span>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.combinedLocationCell}>
+                                                            <div style={styles.locationRow}>
+                                                                <FiMapPin size={12} style={{ marginRight: '4px', color: '#ef4444' }} />
+                                                                <span style={styles.locationText}>
+                                                                    {r.from_location || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div style={styles.countryRow}>
+                                                                <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                <span style={styles.countryText}>
+                                                                    {r.from_country || 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.combinedLocationCell}>
+                                                            <div style={styles.locationRow}>
+                                                                <FiMapPin size={12} style={{ marginRight: '4px', color: '#10b981' }} />
+                                                                <span style={styles.locationText}>
+                                                                    {r.to_location || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div style={styles.countryRow}>
+                                                                <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                <span style={styles.countryText}>
+                                                                    {r.to_country || 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.dateCell}>
+                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {fmt(r.begin_dt)}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <button
+                                                            onClick={() => setSelectedTraveler(r)}
+                                                            style={styles.viewButton}
+                                                        >
+                                                            <FiEye size={14} />
+                                                            View
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === "analytics" && (
+                        <div style={styles.analyticsGrid}>
+                            <div style={styles.analyticsCard}>
+                                <h4 style={styles.analyticsTitle}>Travel Analytics</h4>
+                                <div style={styles.analyticsStats}>
+                                    <div style={styles.analyticsStat}>
+                                        <span style={styles.analyticsLabel}>Average Duration</span>
+                                        <strong style={styles.analyticsValue}>{analytics.avgDuration} days</strong>
+                                    </div>
+                                    <div style={styles.analyticsStat}>
+                                        <span style={styles.analyticsLabel}>Total Countries</span>
+                                        <strong style={styles.analyticsValue}>{analytics.totalCountries}</strong>
+                                    </div>
+                                    <div style={styles.analyticsStat}>
+                                        <span style={styles.analyticsLabel}>Travel Types</span>
+                                        <strong style={styles.analyticsValue}>{analytics.totalTypes}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={styles.analyticsCard}>
+                                <h4 style={styles.analyticsTitle}>Country Distribution</h4>
+                                <div style={styles.countryChart}>
+                                    {countryStats.slice(0, 5).map((stat, index) => (
+                                        <div key={stat.country} style={chartBarWrapper}>
+                                            <div style={chartBarLabel}>
+                                                <span>{stat.country}</span>
+                                                <span>{stat.count}</span>
+                                            </div>
+                                            <div style={styles.chartBarTrack}>
+                                                <div
+                                                    style={{
+                                                        ...styles.chartBarFill,
+                                                        width: `${(stat.count / Math.max(...countryStats.map(s => s.count))) * 100}%`
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "recent" && (
+                        <div style={styles.card}>
+                            <div style={styles.tableHeader}>
+                                <h3 style={styles.tableTitle}>Recent Travels (Last 7 Days)</h3>
+                            </div>
+                            <div style={styles.tableWrap}>
+                                <table style={styles.table}>
+                                    <thead style={styles.thead}>
+                                        <tr>
+                                            <th style={styles.th}>Traveler</th>
+                                            <th style={styles.th}>Destination</th>
+                                            <th style={styles.th}>Type</th>
+                                            <th style={styles.th}>Start Date</th>
+                                            <th style={styles.th}>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {recentTravelers.map((r, i) => (
+                                            <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
+                                                <td style={styles.td}>
+                                                    <div style={styles.userCell}>
+                                                        <div style={styles.avatar}>
+                                                            <FiUser size={14} />
+                                                        </div>
+                                                        {r.first_name} {r.last_name}
+                                                    </div>
+                                                </td>
+                                                <td style={styles.td}>{r.to_country}</td>
+                                                <td style={styles.td}>
+                                                    <span style={styles.typeBadge}>{r.leg_type}</span>
+                                                </td>
+                                                <td style={styles.td}>{fmt(r.begin_dt)}</td>
+                                                <td style={styles.td}>
+                                                    {r.active_now ? (
+                                                        <div style={styles.activeBadge}>
+                                                            <FiCheckCircle size={14} />
+                                                            Active
+                                                        </div>
+                                                    ) : (
+                                                        <div style={styles.inactiveBadge}>
+                                                            <FiXCircle size={14} />
+                                                            Completed
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "countries" && (
+                        <div style={styles.card}>
+                            <div style={styles.tableHeader}>
+                                <h3 style={styles.tableTitle}>Country-wise Analysis</h3>
+                            </div>
+                            <div style={styles.tableWrap}>
+                                <table style={styles.table}>
+                                    <thead style={styles.thead}>
+                                        <tr>
+                                            <th style={styles.th}>Country</th>
+                                            <th style={styles.th}>Total Travels</th>
+                                            <th style={styles.th}>Active</th>
+                                            <th style={styles.th}>Unique Travelers</th>
+                                            <th style={styles.th}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {countryStats.map((stat, i) => (
+                                            <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
+                                                <td style={styles.td}>
+                                                    <strong>{stat.country}</strong>
+                                                </td>
+                                                <td style={styles.td}>{stat.count}</td>
+                                                <td style={styles.td}>
+                                                    <span style={{ color: stat.active > 0 ? '#16a34a' : '#6b7280' }}>
+                                                        {stat.active}
+                                                    </span>
+                                                </td>
+                                                <td style={styles.td}>{stat.travelerCount}</td>
+                                                <td style={styles.td}>
+                                                    <button style={viewButton}>
+                                                        <FiEye size={14} />
+                                                        Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "types" && (
+                        <div style={styles.card}>
+                            <div style={styles.tableHeader}>
+                                <h3 style={styles.tableTitle}>Travel Type Analysis</h3>
+                            </div>
+                            <div style={styles.tableWrap}>
+                                <table style={styles.table}>
+                                    <thead style={styles.thead}>
+                                        <tr>
+                                            <th style={styles.th}>Travel Type</th>
+                                            <th style={styles.th}>Total</th>
+                                            <th style={styles.th}>Active</th>
+                                            <th style={styles.th}>Countries</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {travelTypeStats.map((stat, i) => (
+                                            <tr key={i} style={i % 2 === 0 ? rowEven : rowOdd}>
+                                                <td style={styles.td}>
+                                                    <strong>{stat.type}</strong>
+                                                </td>
+                                                <td style={styles.td}>{stat.count}</td>
+                                                <td style={styles.td}>
+                                                    <span style={{ color: stat.active > 0 ? '#16a34a' : '#6b7280' }}>
+                                                        {stat.active}
+                                                    </span>
+                                                </td>
+                                                <td style={styles.td}>{stat.countryCount}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </main>
+            </div>
+        </div>
