@@ -1,33 +1,16 @@
-but i search this time.
-  we got thi 0 this is wrong.. 
-  please correct it. read all code carefully, and write correct ok read full file code and correct it ok. read boht file that i upload in below ok 
+hi,
+in emea i want ot add new futue for TimeTravel.
+TimeTravel means. when i select any date or time i want ot disply that select time occupnay on the dashboard..
+i means when i selct 05-11-2025 and time is 10:40 am , i want to disply that time occupnayc ok... 
+can you help me to crete this future ok. 
 
-http://localhost:3005/api/occupancy/time-travel?date=2025-11-05&time=10:00:00
-{"success":true,"scope":"EMEA","asOfLocal":"2025-11-05T10:00:00.000Z","asOfUTC":"2025-11-05T10:00:00.000Z","snapshot":{"total":0,"Employee":0,"Contractor":0,"byPartition":{}},"details":[]}
+    
 
-
-// C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
+    // C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
 
 const service = require('../services/occupancy.service');
  const doorMap = require('../utils/doorMap'); 
 //  const normalize  = name => name.trim();        // simple normalizer
-
-
-const { DateTime } = require('luxon');
-
-
-// Partition → timezone map
-const siteTimezones = {
-  'AUT.Vienna': 'Europe/Vienna',
-  'DU.Abu Dhab': 'Asia/Dubai',
-  'IE.Dublin': 'Europe/Dublin',
-  'IT.Rome': 'Europe/Rome',
-  'LT.Vilnius': 'Europe/Vilnius',
-  'MA.Casablanca': 'Africa/Casablanca',
-  'RU.Moscow': 'Europe/Moscow',
-  'UK.London': 'Europe/London',
-  'ES.Madrid': 'Europe/Madrid'
-};
 
  const normalize = s =>
    s
@@ -246,113 +229,9 @@ exports.getHistoricalOccupancy = async (req, res) => {
 };
 
 
+------------------
 
-
-
-
-
-
-// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-
-// --- NEW: Time Travel Endpoint ---
-exports.getTimeTravelOccupancy = async (req, res) => {
-  try {
-    const { date, time, location } = req.query;
-    if (!date || !time) {
-      return res.status(400).json({ success: false, message: 'Missing date or time' });
-    }
-
-    const atDt = DateTime.fromISO(`${date}T${time}`, { zone: 'utc' });
-
-    // Fetch last 7 days of swipes (historical)
-    const raw = await service.fetchHistoricalData({ days: 7, location: location || null });
-    if (!raw?.length) {
-      return res.json({
-        success: true,
-        scope: location || 'EMEA',
-        asOfLocal: atDt.toISO(),
-        asOfUTC: atDt.toUTC().toISO(),
-        snapshot: { total: 0, Employee: 0, Contractor: 0, byPartition: {} },
-        details: []
-      });
-    }
-
-    // Group by person
-    const lastSwipe = {};
-    raw.forEach(r => {
-      const t = DateTime.fromISO(r.LocaleMessageTime, { zone: 'utc' });
-      if (t <= atDt) {
-        const prev = lastSwipe[r.PersonGUID];
-        if (!prev || t > DateTime.fromISO(prev.LocaleMessageTime, { zone: 'utc' })) {
-          lastSwipe[r.PersonGUID] = r;
-        }
-      }
-    });
-
-    const snapshot = { total: 0, Employee: 0, Contractor: 0, byPartition: {} };
-    const details = [];
-    const unmappedDoors = new Set();
-
-    const isEmployeeType = pt =>
-      pt === 'Employee' || pt === 'Terminated Employee' || pt === 'Terminated Personnel';
-
-    const isMidnightAtSite = (partition, dtUTC) => {
-      const zone = siteTimezones[partition] || 'Europe/London';
-      const local = dtUTC.setZone(zone);
-      return local.hour === 0 && local.minute === 0 && local.second === 0;
-    };
-
-    Object.values(lastSwipe).forEach(r => {
-      const p = r.PartitionName2;
-      if (!snapshot.byPartition[p]) {
-        snapshot.byPartition[p] = { total: 0, Employee: 0, Contractor: 0 };
-      }
-
-      // Reset to zero if it's local midnight at that site
-      if (isMidnightAtSite(p, atDt)) return;
-
-      const floorEntry = doorMap.find(d => d.partition === p);
-      const floorNorm = floorEntry ? String(floorEntry.inDirectionFloor || '').trim().toLowerCase() : '';
-
-      // skip out of office
-      if (floorNorm === 'out of office') return;
-
-      snapshot.byPartition[p].total++;
-      if (isEmployeeType(r.PersonnelType)) snapshot.byPartition[p].Employee++;
-      else snapshot.byPartition[p].Contractor++;
-
-      snapshot.total++;
-      if (isEmployeeType(r.PersonnelType)) snapshot.Employee++;
-      else snapshot.Contractor++;
-
-      details.push({
-        MessageUTC: r.MessageUTC,
-        ObjectName1: r.ObjectName1,
-        Door: r.Door,
-        PartitionName2: r.PartitionName2,
-        PersonGUID: r.PersonGUID,
-        PersonnelType: r.PersonnelType,
-        Direction: r.Direction,
-        LocaleMessageTime: r.LocaleMessageTime
-      });
-    });
-
-    return res.json({
-      success: true,
-      scope: location || 'EMEA',
-      asOfLocal: atDt.toISO(),
-      asOfUTC: atDt.toUTC().toISO(),
-      snapshot,
-      details
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Time Travel fetch failed' });
-  }
-};
-
-
-
+    
 //C:\Users\W0024618\Desktop\emea-occupancy-backend\src\services\occupancy.service.js
 const { poolPromise, sql } = require('../config/db');
 
@@ -527,52 +406,20 @@ exports.fetchHistoricalOccupancy = async (location) => {
   return exports.fetchHistoricalData({ days: 7, location: location || null });
 };
 
-
-
-
-
-
-
-
-exports.fetchOccupancyAtTime = async (location, untilUtc) => {
-  const pool = await poolPromise;
-  const query = `
-    SELECT
-      t1.MessageUTC,
-      t1.ObjectName1,
-      t1.ObjectName2 AS Door,
-      t1.PartitionName2,
-      t1.ObjectIdentity1 AS PersonGUID,
-      t3.Name AS PersonnelType,
-      t5d.value AS Direction
-    FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
-    LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2 ON t1.ObjectIdentity1 = t2.GUID
-    LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3 ON t2.PersonnelTypeId = t3.ObjectID
-    LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
-      ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-    WHERE
-      t1.MessageType = 'CardAdmitted'
-      AND t1.PartitionName2 = @location
-      AND t1.MessageUTC <= @until
-      AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
-    ORDER BY t1.MessageUTC ASC;
-  `;
-  const req = pool.request();
-  req.input('location', sql.NVarChar, location);
-  req.input('until', sql.DateTime2, untilUtc);
-  const result = await req.query(query);
-  return result.recordset;
-};
-
-
-
-
-
 module.exports.partitionList = partitionList;
 
+----------
+    C:\Users\W0024618\Desktop\emea-occupancy-backend\src\routes\occupancy.routes.js
+const express = require('express');
+const router  = express.Router();
+const controller = require('../controllers/occupancy.controller');
 
-read above all code carefullyma correc it ok... 
-in emea i want ot add new futue for TimeTravel.
-TimeTravel means. when i select any date or time i want ot disply that select time occupnay on the dashboard..
-i means when i selct 05-11-2025 and time is 10:40 am , i want to disply that time occupnayc ok... 
-can you help me to crete this future ok.
+// Live raw and summary
+router.get('/live',         controller.getLiveOccupancy);
+router.get('/live-summary', controller.getLiveSummary);
+
+// History: all partitions or a single one
+router.get('/history',           controller.getHistoricalOccupancy);
+router.get('/history/:location', controller.getHistoricalOccupancy);
+
+module.exports = router;
