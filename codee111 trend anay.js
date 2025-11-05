@@ -1,61 +1,114 @@
-COUNTRY_TO_REGION = {
-    # ---------------- APAC ----------------
-    'india': 'APAC', 'pune': 'APAC', 'mumbai': 'APAC', 'hyderabad': 'APAC', 'chennai': 'APAC',
-    'bangalore': 'APAC', 'delhi': 'APAC', 'gurgaon': 'APAC', 'quezon city': 'APAC',
-    'taguig city': 'APAC', 'manila': 'APAC', 'philippines': 'APAC',
-    'china': 'APAC', 'shanghai': 'APAC', 'beijing': 'APAC', 'hong kong': 'APAC',
-    'japan': 'APAC', 'tokyo': 'APAC', 'osaka': 'APAC',
-    'australia': 'APAC', 'sydney': 'APAC', 'melbourne': 'APAC', 'hobart': 'APAC',
-    'singapore': 'APAC', 'singapore city': 'APAC',
-    'malaysia': 'APAC', 'kuala lumpur': 'APAC',
-    'indonesia': 'APAC', 'jakarta': 'APAC', 'bali': 'APAC',
-    'thailand': 'APAC', 'bangkok': 'APAC',
-    'vietnam': 'APAC', 'hanoi': 'APAC',
-    'south korea': 'APAC', 'seoul': 'APAC',
-    'pakistan': 'APAC', 'karachi': 'APAC',
-    'bangladesh': 'APAC', 'dhaka': 'APAC',
-    'new zealand': 'APAC', 'auckland': 'APAC',
+in this i want ot add this region 
+ok inlcude global ok 
+<div style={styles.card}>
+                        <div style={styles.uploadRow}>
+                            <div style={styles.fileUploadWrapper}>
+                                <input
+                                    type="file"
+                                    accept=".xlsx,.xls,.csv"
+                                    onChange={handleFileChange}
+                                    style={styles.fileInput}
+                                    id="file-upload"
+                                />
+                                <label htmlFor="file-upload" style={styles.fileInputLabel}>
+                                    <FiUpload style={{ marginRight: '8px' }} />
+                                    {file ? file.name : "Choose File"}
+                                </label>
+                            </div>
+                            <div style={styles.buttonGroup}>
+                                <button
+                                    onClick={uploadFile}
+                                    disabled={loading}
+                                    style={loading ? styles.disabledPrimaryBtn : styles.primaryBtn}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div style={styles.spinner}></div>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiUpload style={{ marginRight: '8px' }} />
+                                            Upload File
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setItems([]);
+                                        setSummary({});
+                                        setFile(null);
+                                        toast.info("Data cleared successfully.");
+                                    }}
+                                    style={styles.secondaryBtn}
+                                >
+                                    <FiTrash2 style={{ marginRight: '8px' }} />
+                                    Clear
+                                </button>
+                                <button onClick={exportCsv} style={styles.ghostBtn}>
+                                    <FiDownload style={{ marginRight: '8px' }} />
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
 
-    # ---------------- NAMER ----------------
-    'united states': 'NAMER', 'usa': 'NAMER', 'us': 'NAMER',
-    'new york': 'NAMER', 'los angeles': 'NAMER', 'houston': 'NAMER', 'denver': 'NAMER',
-    'boston': 'NAMER', 'atlanta': 'NAMER', 'newark': 'NAMER',
-    'canada': 'NAMER', 'toronto': 'NAMER', 'vancouver': 'NAMER', 'montreal': 'NAMER', 'regina': 'NAMER',
-    'mexico': 'NAMER', 'mexico city': 'NAMER',
+                        {/* Filters Section */}
+                        <div style={styles.filtersSection}>
+                            <div style={styles.filtersHeader}>
+                                <FiFilter style={{ marginRight: '8px', color: '#6b7280' }} />
+                                <span style={styles.filtersTitle}>Filters & Search</span>
+                            </div>
+                            <div style={styles.filtersRow}>
+                                <div style={styles.searchWrapper}>
+                                    <FiSearch style={styles.searchIcon} />
+                                    <input
+                                        placeholder="Search by name, email, or location..."
+                                        value={filters.search}
+                                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                        style={styles.searchInput}
+                                    />
+                                </div>
+                                <select
+                                    value={filters.country}
+                                    onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+                                    style={styles.select}
+                                >
+                                    <option value="">All Countries</option>
+                                    {countries.map((c) => (
+                                        <option key={c}>{c}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={filters.location}
+                                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                                    style={styles.select}
+                                >
+                                    <option value="">All Locations</option>
+                                    {locations.map((loc) => (
+                                        <option key={loc}>{loc}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={filters.legType}
+                                    onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
+                                    style={styles.select}
+                                >
+                                    <option value="">All Travel Types</option>
+                                    {legTypes.map((t) => (
+                                        <option key={t}>{t}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={filters.status}
+                                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                                    style={styles.select}
+                                >
+                                    <option value="">All Status</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="inactive">Inactive Only</option>
+                                </select>
+                            </div>
+                        </div>
 
-    # ---------------- LACA ----------------
-    'brazil': 'LACA', 'são paulo': 'LACA', 'rio de janeiro': 'LACA',
-    'argentina': 'LACA', 'buenos aires': 'LACA',
-    'chile': 'LACA', 'santiago': 'LACA',
-    'colombia': 'LACA', 'bogotá': 'LACA',
-    'peru': 'LACA', 'lima': 'LACA',
-    'venezuela': 'LACA', 'caracas': 'LACA',
-    'panama': 'LACA', 'panama city': 'LACA',
-    'costa rica': 'LACA', 'san josé': 'LACA', 'san jose': 'LACA',
-    'guatemala': 'LACA', 'guatemala city': 'LACA',
-    'paraguay': 'LACA', 'asunción': 'LACA', 'asuncion': 'LACA',
-    'uruguay': 'LACA', 'montevideo': 'LACA',
-    'ecuador': 'LACA', 'quito': 'LACA',
 
-    # ---------------- EMEA ----------------
-    'united kingdom': 'EMEA', 'uk': 'EMEA', 'london': 'EMEA', 'manchester': 'EMEA',
-    'ireland': 'EMEA', 'dublin': 'EMEA', 'cork': 'EMEA',
-    'spain': 'EMEA', 'madrid': 'EMEA', 'valencia': 'EMEA', 'bilbao': 'EMEA',
-    'palma de mallorca': 'EMEA', 'ibiza': 'EMEA',
-    'italy': 'EMEA', 'rome': 'EMEA', 'milan': 'EMEA', 'trieste': 'EMEA',
-    'france': 'EMEA', 'paris': 'EMEA',
-    'germany': 'EMEA', 'berlin': 'EMEA', 'munich': 'EMEA', 'frankfurt': 'EMEA',
-    'austria': 'EMEA', 'vienna': 'EMEA',
-    'lithuania': 'EMEA', 'vilnius': 'EMEA',
-    'romania': 'EMEA', 'oradea': 'EMEA', 'bucharest': 'EMEA',
-    'greece': 'EMEA', 'athens': 'EMEA',
-    'portugal': 'EMEA', 'lisbon': 'EMEA',
-    'russia': 'EMEA', 'moscow': 'EMEA',
-    'uae': 'EMEA', 'abu dhabi': 'EMEA', 'dubai': 'EMEA',
-    'morocco': 'EMEA', 'casablanca': 'EMEA',
-    'netherlands': 'EMEA', 'amsterdam': 'EMEA',
-    'poland': 'EMEA', 'warsaw': 'EMEA',
-    'saudi arabia': 'EMEA', 'riyadh': 'EMEA',
-    'south africa': 'EMEA', 'johannesburg': 'EMEA',
-    'egypt': 'EMEA', 'cairo': 'EMEA',
-}
+                    </div>
