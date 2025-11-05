@@ -1,3 +1,14 @@
+i want to move for advanced future,
+i want to diplsply count
+our office in global. ok 
+i want to diplsy count like
+global traveller in
+in region like apac | emea| laca|Namer|
+and in this dyanamicly disply if in apac like pune, hyderbad
+and philiminc - manila like i want this dynamic ok 
+so how to do this 
+can you do this. 
+
 
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
