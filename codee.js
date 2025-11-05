@@ -1,102 +1,113 @@
-on this time the occupancy can you show 0.
-yes 
-http://localhost:3005/api/occupancy/time-travel?date=2025-11-05&time=00:00:00
-{
-  "success": true,
-  "scope": "EMEA",
-  "asOfLocal": "2025-11-05T00:00:00.000+00:00",
-  "asOfUTC": "2025-11-05T00:00:00.000Z",
-  "snapshot": {
-    "total": 890,
-    "Employee": 842,
-    "Contractor": 48,
-    "byPartition": {
-      "AUT.Vienna": {
-        "total": 57,
-        "Employee": 47,
-        "Contractor": 10
-      },
-      "DU.Abu Dhab": {
-        "total": 40,
-        "Employee": 39,
-        "Contractor": 1
-      },
-      "IE.Dublin": {
-        "total": 38,
-        "Employee": 34,
-        "Contractor": 4
-      },
-      "IT.Rome": {
-        "total": 36,
-        "Employee": 34,
-        "Contractor": 2
-      },
-      "LT.Vilnius": {
-        "total": 587,
-        "Employee": 561,
-        "Contractor": 26
-      },
-      "MA.Casablanca": {
-        "total": 33,
-        "Employee": 32,
-        "Contractor": 1
-      },
-      "RU.Moscow": {
-        "total": 1,
-        "Employee": 1,
-        "Contractor": 0
-      },
-      "UK.London": {
-        "total": 33,
-        "Employee": 32,
-        "Contractor": 1
-      },
-      "ES.Madrid": {
-        "total": 65,
-        "Employee": 62,
-        "Contractor": 3
-      }
+const { DateTime } = require('luxon');
+const service = require('../services/occupancy.service');
+const doorMap = require('../utils/doorMap');
+
+// Partition → timezone map
+const siteTimezones = {
+  'AUT.Vienna': 'Europe/Vienna',
+  'DU.Abu Dhab': 'Asia/Dubai',
+  'IE.Dublin': 'Europe/Dublin',
+  'IT.Rome': 'Europe/Rome',
+  'LT.Vilnius': 'Europe/Vilnius',
+  'MA.Casablanca': 'Africa/Casablanca',
+  'RU.Moscow': 'Europe/Moscow',
+  'UK.London': 'Europe/London',
+  'ES.Madrid': 'Europe/Madrid'
+};
+
+// --- NEW: Time Travel Endpoint ---
+exports.getTimeTravelOccupancy = async (req, res) => {
+  try {
+    const { date, time, location } = req.query;
+    if (!date || !time) {
+      return res.status(400).json({ success: false, message: 'Missing date or time' });
     }
-  },
-  "details": [
-    {
-      "MessageUTC": "2025-11-04T09:22:31.000Z",
-      "ObjectName1": "Pietrzak, Danuta Anna",
-      "Door": "EMEA_AUT_VIENNA_ICON_11FLR_Reception to WUIB Restrict",
-      "PartitionName2": "AUT.Vienna",
-      "PersonGUID": "D73A83A8-12A6-4DDF-BAFB-E3198AF0284E",
-      "PersonnelType": "Property Management",
-      "Direction": "InDirection",
-      "LocaleMessageTime": "2025-11-04T09:22:31.000+00:00"
-    },
-    {
-      "MessageUTC": "2025-11-04T11:25:55.000Z",
-      "ObjectName1": "Vrapi, Ervis",
-      "Door": "EMEA_AUT_VIENNA_ICON_11FLR_WUIB Restricted Main Entrance 2 Door",
-      "PartitionName2": "AUT.Vienna",
-      "PersonGUID": "C27620A0-0AA6-4483-B8A1-F2641BA9759A",
-      "PersonnelType": "Employee",
-      "Direction": "InDirection",
-      "LocaleMessageTime": "2025-11-04T11:25:55.000+00:00"
-    },
-    {
-      "MessageUTC": "2025-11-04T13:12:57.000Z",
-      "ObjectName1": "Mayer, Christoph",
-      "Door": "EMEA_AUT_VIENNA_ICON_11FLR_WUPSIL to WUIB Kitchen Door",
-      "PartitionName2": "AUT.Vienna",
-      "PersonGUID": "D17D5240-AF93-452F-9678-C0494BCB6EFC",
-      "PersonnelType": "Employee",
-      "Direction": "InDirection",
-      "LocaleMessageTime": "2025-11-04T13:12:57.000+00:00"
-    },
-    {
-      "MessageUTC": "2025-11-04T13:14:24.000Z",
-      "ObjectName1": "Jasiunaite Ozgur, Julija",
-      "Door": "EMEA_AUT_VIENNA_ICON_11FLR_WUIB Restricted Main Entrance 2 Door",
-      "PartitionName2": "AUT.Vienna",
-      "PersonGUID": "67CCF39E-5252-436E-A0B4-2E637FB1FBD4",
-      "PersonnelType": "Employee",
-      "Direction": "InDirection",
-      "LocaleMessageTime": "2025-11-04T13:14:24.000+00:00"
-    },
-    {
+
+    const atDt = DateTime.fromISO(`${date}T${time}`, { zone: 'utc' });
+
+    // Fetch last 7 days of swipes (historical)
+    const raw = await service.fetchHistoricalData({ days: 7, location: location || null });
+    if (!raw?.length) {
+      return res.json({
+        success: true,
+        scope: location || 'EMEA',
+        asOfLocal: atDt.toISO(),
+        asOfUTC: atDt.toUTC().toISO(),
+        snapshot: { total: 0, Employee: 0, Contractor: 0, byPartition: {} },
+        details: []
+      });
+    }
+
+    // Group by person
+    const lastSwipe = {};
+    raw.forEach(r => {
+      const t = DateTime.fromISO(r.LocaleMessageTime, { zone: 'utc' });
+      if (t <= atDt) {
+        const prev = lastSwipe[r.PersonGUID];
+        if (!prev || t > DateTime.fromISO(prev.LocaleMessageTime, { zone: 'utc' })) {
+          lastSwipe[r.PersonGUID] = r;
+        }
+      }
+    });
+
+    const snapshot = { total: 0, Employee: 0, Contractor: 0, byPartition: {} };
+    const details = [];
+    const unmappedDoors = new Set();
+
+    const isEmployeeType = pt =>
+      pt === 'Employee' || pt === 'Terminated Employee' || pt === 'Terminated Personnel';
+
+    const isMidnightAtSite = (partition, dtUTC) => {
+      const zone = siteTimezones[partition] || 'Europe/London';
+      const local = dtUTC.setZone(zone);
+      return local.hour === 0 && local.minute === 0 && local.second === 0;
+    };
+
+    Object.values(lastSwipe).forEach(r => {
+      const p = r.PartitionName2;
+      if (!snapshot.byPartition[p]) {
+        snapshot.byPartition[p] = { total: 0, Employee: 0, Contractor: 0 };
+      }
+
+      // Reset to zero if it's local midnight at that site
+      if (isMidnightAtSite(p, atDt)) return;
+
+      const floorEntry = doorMap.find(d => d.partition === p);
+      const floorNorm = floorEntry ? String(floorEntry.inDirectionFloor || '').trim().toLowerCase() : '';
+
+      // skip out of office
+      if (floorNorm === 'out of office') return;
+
+      snapshot.byPartition[p].total++;
+      if (isEmployeeType(r.PersonnelType)) snapshot.byPartition[p].Employee++;
+      else snapshot.byPartition[p].Contractor++;
+
+      snapshot.total++;
+      if (isEmployeeType(r.PersonnelType)) snapshot.Employee++;
+      else snapshot.Contractor++;
+
+      details.push({
+        MessageUTC: r.MessageUTC,
+        ObjectName1: r.ObjectName1,
+        Door: r.Door,
+        PartitionName2: r.PartitionName2,
+        PersonGUID: r.PersonGUID,
+        PersonnelType: r.PersonnelType,
+        Direction: r.Direction,
+        LocaleMessageTime: r.LocaleMessageTime
+      });
+    });
+
+    return res.json({
+      success: true,
+      scope: location || 'EMEA',
+      asOfLocal: atDt.toISO(),
+      asOfUTC: atDt.toUTC().toISO(),
+      snapshot,
+      details
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Time Travel fetch failed' });
+  }
+};
