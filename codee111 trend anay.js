@@ -507,8 +507,6 @@ const EmployeeTravelDashboard = () => {
     const toggleTheme = () => {
         setIsDarkTheme(!isDarkTheme);
     };
-
-
     // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
     const [showAddForm, setShowAddForm] = useState(false);
     const [newTraveler, setNewTraveler] = useState({
@@ -523,11 +521,7 @@ const EmployeeTravelDashboard = () => {
         to_location: "",
         to_country: "",
         leg_type: "",
-    });
-
-
-
-
+    })
     const addTraveler = async () => {
         try {
             await axios.post("http://localhost:8000/add_traveler", newTraveler);
@@ -555,77 +549,9 @@ const EmployeeTravelDashboard = () => {
             toast.error("Failed to add traveler. Check backend.");
         }
     };
-    // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-
-
-
+    // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
     const styles = getStyles(isDarkTheme);
-
     const [lastUpdated, setLastUpdated] = useState(null);
-
-
-
-    // 🆕 Load saved data on page reload
-    // useEffect(() => {
-    //     const loadPreviousData = async () => {
-    //         try {
-    //             const res = await axios.get("http://localhost:8000/data");
-    //             const payload = res.data || {};
-    //             const rows = payload.items || [];
-    //             setItems(rows);
-    //             setSummary(payload.summary || {});
-    //             if (rows.length > 0) {
-    //                 toast.info(`Loaded ${rows.length} saved records from previous session.`);
-    //             }
-    //         } catch (err) {
-    //             console.log("No saved data found yet.");
-    //         }
-    //     };
-    //     loadPreviousData();
-    // }, []);
-
-
-    // useEffect(() => {
-    //     const fetchLatest = async () => {
-    //         try {
-    //             const res = await axios.get("http://localhost:8000/data");
-    //             const payload = res.data || {};
-    //             setItems(payload.items || []);
-    //             setSummary(payload.summary || {});
-    //         } catch (err) {
-    //             console.warn("No data yet or backend not responding...");
-    //         }
-    //     };
-
-    //     const interval = setInterval(fetchLatest, 10000); // refresh every 10 seconds
-    //     return () => clearInterval(interval);
-    // }, []);
-
-
-
-
-    // useEffect(() => {
-    //     const fetchLatest = async () => {
-    //         try {
-    //             const res = await axios.get("http://localhost:8000/data");
-    //             const payload = res.data || {};
-
-    //             // Only update UI if new data detected
-    //             if (payload.last_updated && payload.last_updated !== lastUpdated) {
-    //                 setLastUpdated(payload.last_updated);
-    //                 setItems(payload.items || []);
-    //                 setSummary(payload.summary || {});
-    //                 toast.info("Dashboard auto-updated with new upload data.");
-    //             }
-    //         } catch {
-    //             console.warn("No data yet or backend not responding...");
-    //         }
-    //     };
-
-    //     const interval = setInterval(fetchLatest, 10000);
-    //     return () => clearInterval(interval);
-    // }, [lastUpdated]);
-
     // ✅ Load saved data immediately on refresh + auto-refresh every 10 seconds
     useEffect(() => {
         const fetchLatest = async (showToast = false) => {
@@ -661,9 +587,6 @@ const EmployeeTravelDashboard = () => {
         const interval = setInterval(() => fetchLatest(false), 10000);
         return () => clearInterval(interval);
     }, []);
-
-
-
 
     const handleFileChange = (e) => setFile(e.target.files[0]);
 
@@ -853,22 +776,6 @@ const EmployeeTravelDashboard = () => {
         })
         .sort((a, b) => (b.active_now === true) - (a.active_now === true));
 
-    const exportCsv = () => {
-        if (!filtered.length) return toast.info("No data to export.");
-        const keys = Object.keys(filtered[0]);
-        const csv = [keys.join(",")];
-        filtered.forEach((r) =>
-            csv.push(keys.map((k) => `"${String(r[k] ?? "").replace(/"/g, '""')}"`).join(","))
-        );
-        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "EmployeeTravelData.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("CSV exported successfully.");
-    };
 
     // Enhanced Traveler Detail Popup Component
     const TravelerDetailPopup = ({ traveler, onClose }) => {
@@ -1183,33 +1090,7 @@ const EmployeeTravelDashboard = () => {
                     <div style={styles.sideCard}>
                         <div style={styles.cardHeader}>
                             <FiCalendar style={styles.cardIcon} />
-                            <h3 style={styles.sideTitle}>Today's Travelers</h3>
-                        </div>
-                        {todayTravelers.length === 0 ? (
-                            <div style={styles.emptyState}>
-                                <FiFileText size={24} style={{ color: '#9ca3af', marginBottom: '8px' }} />
-                                <p style={styles.sideEmpty}>No travels today</p>
-                            </div>
-                        ) : (
-                            <ul style={styles.countryList}>
-                                {todayTravelers.slice(0, 5).map((t, i) => (
-                                    <li key={i} style={styles.countryItem}>
-                                        <div style={styles.countryInfo}>
-                                            <span style={styles.countryRank}>{i + 1}</span>
-                                            <span style={styles.countryName}>
-                                                {t.first_name} {t.last_name}
-                                            </span>
-                                        </div>
-                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                            {t.from_country} → {t.to_country}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                </aside>
-
+         
                 {/* MAIN CONTENT */}
                 <main style={styles.main}>
                     {/* File Upload Section */}
@@ -1295,38 +1176,7 @@ const EmployeeTravelDashboard = () => {
                                     value={filters.location}
                                     onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                                     style={styles.select}
-                                >
-                                    <option value="">All Locations</option>
-                                    {locations.map((loc) => (
-                                        <option key={loc}>{loc}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={filters.legType}
-                                    onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
-                                    style={styles.select}
-                                >
-                                    <option value="">All Travel Types</option>
-                                    {legTypes.map((t) => (
-                                        <option key={t}>{t}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={filters.status}
-                                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                                    style={styles.select}
-                                >
-                                    <option value="">All Status</option>
-                                    <option value="active">Active Only</option>
-                                    <option value="inactive">Inactive Only</option>
-                                </select>
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    {/* Dynamic Content based on Active Tab */}
+         
 
 
                     {/* //////// */}
@@ -1519,9 +1369,6 @@ const EmployeeTravelDashboard = () => {
         </div>
     </div>
 )}
-                    {/* //////// */}
-
-
                     {activeTab === "overview" && (
                         <div style={styles.card}>
                             <div style={styles.tableHeader}>
@@ -1534,127 +1381,4 @@ const EmployeeTravelDashboard = () => {
                                         <tr>
                                             <th style={styles.th}>Status</th>
                                             <th style={styles.th}>Traveler</th>
-                                            <th style={styles.th}>Emp ID</th>
-                                            <th style={styles.th}>Email</th>
-                                            <th style={styles.th}>Type</th>
-                                            <th style={styles.th}>From</th>
-                                            <th style={styles.th}>To</th>
-                                            <th style={styles.th}>Start Date</th>
-                                            <th style={styles.th}>End Date</th>
-                                            <th style={styles.th}>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filtered.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="9" style={styles.emptyRow}>
-                                                    <div style={styles.emptyState}>
-                                                        <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
-                                                        <p>No matching results found</p>
-                                                        <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            filtered.map((r, i) => (
-                                                <tr key={i} style={i % 2 === 0 ? styles.rowEven : styles.rowOdd}>
-                                                    <td style={styles.td}>
-                                                        {r.active_now ? (
-                                                            <div style={styles.activeBadge}>
-                                                                <FiCheckCircle size={14} />
-                                                                Active
-                                                            </div>
-                                                        ) : (
-                                                            <div style={styles.inactiveBadge}>
-                                                                <FiXCircle size={14} />
-                                                                Inactive
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.userCell}>
-                                                            <div style={styles.avatar}>
-                                                                <FiUser size={14} />
-                                                            </div>
-                                                            <span>
-                                                                {r.first_name} {r.last_name}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.userCell}>
-                                                            <span style={styles.empId}>
-                                                                {r.emp_id || 'N/A'}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.emailCell}>
-                                                            <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                                            {r.email}
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <span style={styles.typeBadge}>{r.leg_type}</span>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.combinedLocationCell}>
-                                                            <div style={styles.locationRow}>
-                                                                <FiMapPin size={12} style={{ marginRight: '4px', color: '#ef4444' }} />
-                                                                <span style={styles.locationText}>
-                                                                    {r.from_location || 'N/A'}
-                                                                </span>
-                                                            </div>
-                                                            <div style={styles.countryRow}>
-                                                                <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
-                                                                <span style={styles.countryText}>
-                                                                    {r.from_country || 'Unknown'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.combinedLocationCell}>
-                                                            <div style={styles.locationRow}>
-                                                                <FiMapPin size={12} style={{ marginRight: '4px', color: '#10b981' }} />
-                                                                <span style={styles.locationText}>
-                                                                    {r.to_location || 'N/A'}
-                                                                </span>
-                                                            </div>
-                                                            <div style={styles.countryRow}>
-                                                                <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
-                                                                <span style={styles.countryText}>
-                                                                    {r.to_country || 'Unknown'}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.dateCell}>
-                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                                            {fmt(r.begin_dt)}
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <div style={styles.dateCell}>
-                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
-                                                            {fmt(r.end_dt)}
-                                                        </div>
-                                                    </td>
-                                                    <td style={styles.td}>
-                                                        <button
-                                                            onClick={() => setSelectedTraveler(r)}
-                                                            style={styles.viewButton}
-                                                        >
-                                                            <FiEye size={14} />
-                                                            View
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
+                                 
