@@ -1,3 +1,85 @@
+
+exports.getTimeTravelOccupancy = async (req, res) => {
+  try {
+    const datetime = req.query.datetime;
+    const location = req.query.location || null;
+
+    if (!datetime) {
+      return res.status(400).json({ success: false, message: 'query param "datetime" required (ISO format like 2025-11-04T23:50:00)' });
+    }
+
+    // Validate format strictly: YYYY-MM-DDTHH:mm:ss (optional fractional seconds allowed)
+    const isoNoTZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?$/;
+    if (!isoNoTZ.test(datetime)) {
+      return res.status(400).json({
+        success: false,
+        message: 'invalid datetime. Use ISO format WITHOUT timezone offset, e.g. 2025-11-04T23:50:00'
+      });
+    }
+
+    // fetch the snapshot (last swipe per person <= the literal datetime string)
+    const swipes = await service.fetchTimeTravelOccupancy(datetime, location);
+
+    const summary = { total: 0, Employee: 0, Contractor: 0 };
+    const partitions = {};
+    const unmappedDoors = new Set();
+
+    swipes.forEach(r => {
+      const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+      const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
+
+      if (floorNorm === 'out of office') return;
+
+      summary.total++;
+      if (isEmployeeType(r.PersonnelType)) summary.Employee++;
+      else summary.Contractor++;
+
+      if (!location) {
+        const p = r.PartitionName2;
+        if (!partitions[p]) partitions[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+        partitions[p].total++;
+        if (isEmployeeType(r.PersonnelType)) partitions[p].Employee++;
+        else partitions[p].Contractor++;
+
+        const floorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
+        partitions[p].floors[floorLabel] = (partitions[p].floors[floorLabel] || 0) + 1;
+      }
+    });
+
+    if (unmappedDoors.size) {
+      console.warn('TimeTravel - Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+    }
+
+    const details = swipes
+      .map(r => {
+        const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+        const floor = rawFloor ? String(rawFloor).trim() : null;
+        return { ...r, Floor: floor };
+      })
+      .filter(d => {
+        const f = d.Floor;
+        return !(f && String(f).trim().toLowerCase() === 'out of office');
+      });
+
+    // IMPORTANT: return the exact datetime string the user sent — no toISOString() conversion
+    return res.json({
+      success: true,
+      datetime: datetime,        // <<-- exact literal sent by client
+      summary,
+      partitions: location ? undefined : partitions,
+      details
+    });
+  } catch (err) {
+    console.error('TimeTravel error', err);
+    return res.status(500).json({ success: false, message: 'TimeTravel occupancy failed' });
+  }
+};
+
+
+
+
+....
+
 exports.fetchTimeTravelOccupancy = async (datetimeISO, location = null) => {
   const pool = await poolPromise;
   const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
