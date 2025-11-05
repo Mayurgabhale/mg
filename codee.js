@@ -1,333 +1,189 @@
-// Add these styles to your getStyles function
-const getStyles = (isDark) => ({
-    // ... your existing styles ...
+{/* Add New Traveler Tab */}
+{activeTab === "addTravel" && (
+    <div style={styles.addTravelContainer}>
+        {/* Header Section */}
+        <div style={styles.addTravelHeader}>
+            <div style={styles.headerLeft}>
+                <div style={styles.headerIconLarge}>
+                    <FiUserPlus size={32} />
+                </div>
+                <div>
+                    <h2 style={styles.addTravelTitle}>Add New Traveler</h2>
+                    <p style={styles.addTravelSubtitle}>Enter details for the new travel record</p>
+                </div>
+            </div>
+            <div style={styles.headerStats}>
+                <div style={styles.statCard}>
+                    <FiUsers size={20} style={{ color: '#3b82f6' }} />
+                    <div>
+                        <span style={styles.statNumber}>{analytics.totalTravelers}</span>
+                        <span style={styles.statLabel}>Total Travelers</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    // 🆕 Add New Traveler Tab Styles
-    addTravelContainer: {
-        padding: "0",
-    },
+        {/* Form Container */}
+        <div style={styles.formMainContainer}>
+            <div style={styles.formCard}>
+                {/* Form Header */}
+                <div style={styles.formHeader}>
+                    <div style={styles.formIcon}>
+                        <FiUserPlus size={24} />
+                    </div>
+                    <div>
+                        <h3 style={styles.formTitle}>Traveler Information</h3>
+                        <p style={styles.formSubtitle}>Fill in all required details</p>
+                    </div>
+                </div>
 
-    addTravelHeader: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "24px",
-        background: isDark ? 
-            "linear-gradient(135deg, #1e293b, #0f172a)" : 
-            "linear-gradient(135deg, #f8fafc, #e2e8f0)",
-        borderRadius: "12px",
-        marginBottom: "24px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.05)",
-    },
+                {/* Form Sections */}
+                <div style={styles.formSections}>
+                    {/* Personal Information */}
+                    <div style={styles.formSection}>
+                        <h4 style={styles.sectionTitle}>
+                            <FiUser style={styles.sectionIcon} />
+                            Personal Information
+                        </h4>
+                        <div style={styles.sectionGrid}>
+                            {[
+                                { key: 'first_name', label: 'First Name', type: 'text', icon: FiUser, required: true },
+                                { key: 'last_name', label: 'Last Name', type: 'text', icon: FiUser, required: true },
+                                { key: 'emp_id', label: 'Employee ID', type: 'text', icon: FiAward, required: true },
+                                { key: 'email', label: 'Email Address', type: 'email', icon: FiMail, required: true },
+                            ].map(({ key, label, type, icon: Icon, required }) => (
+                                <div key={key} style={styles.inputGroup}>
+                                    <label style={styles.inputLabel}>
+                                        <Icon size={16} style={styles.labelIcon} />
+                                        {label}
+                                        {required && <span style={styles.required}>*</span>}
+                                    </label>
+                                    <input
+                                        type={type}
+                                        value={newTraveler[key] || ''}
+                                        onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                        style={styles.formInput}
+                                        placeholder={`Enter ${label.toLowerCase()}`}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
-    headerLeft: {
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-    },
+                    {/* Travel Details */}
+                    <div style={styles.formSection}>
+                        <h4 style={styles.sectionTitle}>
+                            <FiGlobe style={styles.sectionIcon} />
+                            Travel Details
+                        </h4>
+                        <div style={styles.sectionGrid}>
+                            {[
+                                { key: 'leg_type', label: 'Travel Type', type: 'text', icon: FiNavigation, required: true },
+                                { key: 'from_location', label: 'From Location', type: 'text', icon: FiMapPin, required: true },
+                                { key: 'from_country', label: 'From Country', type: 'text', icon: FiGlobe, required: true },
+                                { key: 'to_location', label: 'To Location', type: 'text', icon: FiMapPin, required: true },
+                                { key: 'to_country', label: 'To Country', type: 'text', icon: FiGlobe, required: true },
+                            ].map(({ key, label, type, icon: Icon, required }) => (
+                                <div key={key} style={styles.inputGroup}>
+                                    <label style={styles.inputLabel}>
+                                        <Icon size={16} style={styles.labelIcon} />
+                                        {label}
+                                        {required && <span style={styles.required}>*</span>}
+                                    </label>
+                                    <input
+                                        type={type}
+                                        value={newTraveler[key] || ''}
+                                        onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                        style={styles.formInput}
+                                        placeholder={`Enter ${label.toLowerCase()}`}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
-    headerIconLarge: {
-        background: isDark ? 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)" : 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)",
-        color: "white",
-        padding: "16px",
-        borderRadius: "12px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    },
+                    {/* Timeline */}
+                    <div style={styles.formSection}>
+                        <h4 style={styles.sectionTitle}>
+                            <FiCalendar style={styles.sectionIcon} />
+                            Travel Timeline
+                        </h4>
+                        <div style={styles.sectionGrid}>
+                            {[
+                                { key: 'begin_dt', label: 'Start Date & Time', type: 'datetime-local', icon: FiCalendar, required: true },
+                                { key: 'end_dt', label: 'End Date & Time', type: 'datetime-local', icon: FiCalendar, required: true },
+                            ].map(({ key, label, type, icon: Icon, required }) => (
+                                <div key={key} style={styles.inputGroup}>
+                                    <label style={styles.inputLabel}>
+                                        <Icon size={16} style={styles.labelIcon} />
+                                        {label}
+                                        {required && <span style={styles.required}>*</span>}
+                                    </label>
+                                    <input
+                                        type={type}
+                                        value={newTraveler[key] || ''}
+                                        onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                        style={styles.formInput}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
 
-    addTravelTitle: {
-        fontSize: "24px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        margin: "0 0 4px 0",
-    },
+                {/* Form Actions */}
+                <div style={styles.formActions}>
+                    <button
+                        onClick={() => setActiveTab('overview')}
+                        style={styles.secondaryButton}
+                    >
+                        <FiArrowLeft size={16} />
+                        Back to Overview
+                    </button>
+                    <div style={styles.primaryActions}>
+                        <button
+                            onClick={() => setNewTraveler({})}
+                            style={styles.clearButton}
+                        >
+                            <FiRefreshCw size={16} />
+                            Clear Form
+                        </button>
+                        <button
+                            onClick={addTraveler}
+                            style={styles.saveButton}
+                        >
+                            <FiSave size={16} />
+                            Save Traveler
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-    addTravelSubtitle: {
-        fontSize: "14px",
-        color: isDark ? "#94a3b8" : "#64748b",
-        margin: "0",
-    },
-
-    headerStats: {
-        display: "flex",
-        gap: "16px",
-    },
-
-    statCard: {
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        padding: "12px 16px",
-        background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
-        borderRadius: "8px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.05)",
-    },
-
-    statNumber: {
-        fontSize: "18px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        display: "block",
-    },
-
-    statLabel: {
-        fontSize: "12px",
-        color: isDark ? "#94a3b8" : "#64748b",
-        display: "block",
-    },
-
-    formMainContainer: {
-        display: "grid",
-        gridTemplateColumns: "1fr 300px",
-        gap: "24px",
-        alignItems: "start",
-    },
-
-    formCard: {
-        background: isDark ? "#1e293b" : "white",
-        padding: "24px",
-        borderRadius: "12px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-        boxShadow: isDark ? 
-            "0 4px 6px -1px rgba(0, 0, 0, 0.3)" : 
-            "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-    },
-
-    formHeader: {
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-        marginBottom: "32px",
-        paddingBottom: "20px",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-    },
-
-    formIcon: {
-        background: isDark ? 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)" : 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)",
-        color: "white",
-        padding: "12px",
-        borderRadius: "10px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    formTitle: {
-        fontSize: "20px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        margin: "0 0 4px 0",
-    },
-
-    formSubtitle: {
-        fontSize: "14px",
-        color: isDark ? "#94a3b8" : "#64748b",
-        margin: "0",
-    },
-
-    formSections: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "32px",
-    },
-
-    formSection: {
-        padding: "0",
-    },
-
-    sectionTitle: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        fontSize: "16px",
-        fontWeight: "600",
-        color: isDark ? "#e2e8f0" : "#374151",
-        margin: "0 0 20px 0",
-        paddingBottom: "12px",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #f1f5f9",
-    },
-
-    sectionIcon: {
-        color: "#3b82f6",
-    },
-
-    sectionGrid: {
-        display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
-        gap: "20px",
-    },
-
-    inputGroup: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-    },
-
-    inputLabel: {
-        fontSize: "14px",
-        fontWeight: "600",
-        color: isDark ? "#e2e8f0" : "#374151",
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-    },
-
-    labelIcon: {
-        color: isDark ? "#94a3b8" : "#6b7280",
-        opacity: "0.8",
-    },
-
-    required: {
-        color: "#ef4444",
-        marginLeft: "2px",
-    },
-
-    formInput: {
-        padding: "12px 16px",
-        borderRadius: "8px",
-        border: isDark ? 
-            "1px solid rgba(255,255,255,0.2)" : 
-            "1px solid #d1d5db",
-        background: isDark ? "rgba(15, 23, 42, 0.5)" : "white",
-        color: isDark ? "#f9fafb" : "#111827",
-        fontSize: "14px",
-        transition: "all 0.2s ease",
-        outline: "none",
-        ':focus': {
-            borderColor: isDark ? "#3b82f6" : "#2563eb",
-            boxShadow: isDark ? 
-                "0 0 0 3px rgba(59, 130, 246, 0.1)" : 
-                "0 0 0 3px rgba(37, 99, 235, 0.1)",
-        },
-        '::placeholder': {
-            color: isDark ? "#6b7280" : "#9ca3af",
-        }
-    },
-
-    formActions: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingTop: "24px",
-        marginTop: "32px",
-        borderTop: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-    },
-
-    secondaryButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #4b5563, #374151)" : 
-            "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
-        color: isDark ? "#d1d5db" : "#374151",
-        border: "none",
-        padding: "12px 20px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "all 0.3s ease",
-        ':hover': {
-            transform: "translateY(-1px)",
-            boxShadow: isDark ? 
-                "0 4px 12px rgba(0, 0, 0, 0.3)" : 
-                "0 4px 12px rgba(0, 0, 0, 0.1)",
-        }
-    },
-
-    primaryActions: {
-        display: "flex",
-        gap: "12px",
-    },
-
-    clearButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #6b7280, #4b5563)" : 
-            "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
-        color: isDark ? "#d1d5db" : "#374151",
-        border: "none",
-        padding: "12px 20px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "all 0.3s ease",
-        ':hover': {
-            transform: "translateY(-1px)",
-            boxShadow: isDark ? 
-                "0 4px 12px rgba(0, 0, 0, 0.3)" : 
-                "0 4px 12px rgba(0, 0, 0, 0.1)",
-        }
-    },
-
-    saveButton: {
-        background: isDark ? 
-            "linear-gradient(135deg, #059669, #047857)" : 
-            "linear-gradient(135deg, #10b981, #059669)",
-        color: "white",
-        border: "none",
-        padding: "12px 24px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        transition: "all 0.3s ease",
-        boxShadow: isDark ? 
-            "0 4px 12px rgba(5, 150, 105, 0.3)" : 
-            "0 4px 12px rgba(5, 150, 105, 0.2)",
-        ':hover': {
-            transform: "translateY(-1px)",
-            boxShadow: isDark ? 
-                "0 8px 20px rgba(5, 150, 105, 0.4)" : 
-                "0 8px 20px rgba(5, 150, 105, 0.3)",
-        }
-    },
-
-    tipsCard: {
-        background: isDark ? "#1e293b" : "white",
-        padding: "20px",
-        borderRadius: "12px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-        boxShadow: isDark ? 
-            "0 4px 6px -1px rgba(0, 0, 0, 0.3)" : 
-            "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        position: "sticky",
-        top: "20px",
-    },
-
-    tipsTitle: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        fontSize: "16px",
-        fontWeight: "600",
-        color: isDark ? "#e2e8f0" : "#374151",
-        margin: "0 0 16px 0",
-    },
-
-    tipsList: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-    },
-
-    tipItem: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        fontSize: "14px",
-        color: isDark ? "#cbd5e1" : "#6b7280",
-    },
-});
+            {/* Quick Tips Sidebar */}
+            <div style={styles.tipsCard}>
+                <h4 style={styles.tipsTitle}>
+                    <FiInfo size={18} />
+                    Quick Tips
+                </h4>
+                <div style={styles.tipsList}>
+                    <div style={styles.tipItem}>
+                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                        <span>Fill all required fields marked with *</span>
+                    </div>
+                    <div style={styles.tipItem}>
+                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                        <span>Use proper date and time format</span>
+                    </div>
+                    <div style={styles.tipItem}>
+                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                        <span>Double-check email addresses</span>
+                    </div>
+                    <div style={styles.tipItem}>
+                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                        <span>Ensure employee ID is unique</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+)}
