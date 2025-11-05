@@ -1,189 +1,424 @@
-{/* Add New Traveler Tab */}
-{activeTab === "addTravel" && (
-    <div style={styles.addTravelContainer}>
-        {/* Header Section */}
-        <div style={styles.addTravelHeader}>
-            <div style={styles.headerLeft}>
-                <div style={styles.headerIconLarge}>
-                    <FiUserPlus size={32} />
-                </div>
-                <div>
-                    <h2 style={styles.addTravelTitle}>Add New Traveler</h2>
-                    <p style={styles.addTravelSubtitle}>Enter details for the new travel record</p>
-                </div>
-            </div>
-            <div style={styles.headerStats}>
-                <div style={styles.statCard}>
-                    <FiUsers size={20} style={{ color: '#3b82f6' }} />
-                    <div>
-                        <span style={styles.statNumber}>{analytics.totalTravelers}</span>
-                        <span style={styles.statLabel}>Total Travelers</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+hi,
+in emea i want ot add new futue for TimeTravel.
+TimeTravel means. when i select any date or time i want ot disply that select time occupnay on the dashboard..
+i means when i selct 05-11-2025 and time is 10:40 am , i want to disply that time occupnayc ok... 
+can you help me to crete this future ok. 
 
-        {/* Form Container */}
-        <div style={styles.formMainContainer}>
-            <div style={styles.formCard}>
-                {/* Form Header */}
-                <div style={styles.formHeader}>
-                    <div style={styles.formIcon}>
-                        <FiUserPlus size={24} />
-                    </div>
-                    <div>
-                        <h3 style={styles.formTitle}>Traveler Information</h3>
-                        <p style={styles.formSubtitle}>Fill in all required details</p>
-                    </div>
-                </div>
 
-                {/* Form Sections */}
-                <div style={styles.formSections}>
-                    {/* Personal Information */}
-                    <div style={styles.formSection}>
-                        <h4 style={styles.sectionTitle}>
-                            <FiUser style={styles.sectionIcon} />
-                            Personal Information
-                        </h4>
-                        <div style={styles.sectionGrid}>
-                            {[
-                                { key: 'first_name', label: 'First Name', type: 'text', icon: FiUser, required: true },
-                                { key: 'last_name', label: 'Last Name', type: 'text', icon: FiUser, required: true },
-                                { key: 'emp_id', label: 'Employee ID', type: 'text', icon: FiAward, required: true },
-                                { key: 'email', label: 'Email Address', type: 'email', icon: FiMail, required: true },
-                            ].map(({ key, label, type, icon: Icon, required }) => (
-                                <div key={key} style={styles.inputGroup}>
-                                    <label style={styles.inputLabel}>
-                                        <Icon size={16} style={styles.labelIcon} />
-                                        {label}
-                                        {required && <span style={styles.required}>*</span>}
-                                    </label>
-                                    <input
-                                        type={type}
-                                        value={newTraveler[key] || ''}
-                                        onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
-                                        style={styles.formInput}
-                                        placeholder={`Enter ${label.toLowerCase()}`}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+    // C:\Users\W0024618\Desktop\emea-occupancy-backend\src\controllers\occupancy.controller.js
 
-                    {/* Travel Details */}
-                    <div style={styles.formSection}>
-                        <h4 style={styles.sectionTitle}>
-                            <FiGlobe style={styles.sectionIcon} />
-                            Travel Details
-                        </h4>
-                        <div style={styles.sectionGrid}>
-                            {[
-                                { key: 'leg_type', label: 'Travel Type', type: 'text', icon: FiNavigation, required: true },
-                                { key: 'from_location', label: 'From Location', type: 'text', icon: FiMapPin, required: true },
-                                { key: 'from_country', label: 'From Country', type: 'text', icon: FiGlobe, required: true },
-                                { key: 'to_location', label: 'To Location', type: 'text', icon: FiMapPin, required: true },
-                                { key: 'to_country', label: 'To Country', type: 'text', icon: FiGlobe, required: true },
-                            ].map(({ key, label, type, icon: Icon, required }) => (
-                                <div key={key} style={styles.inputGroup}>
-                                    <label style={styles.inputLabel}>
-                                        <Icon size={16} style={styles.labelIcon} />
-                                        {label}
-                                        {required && <span style={styles.required}>*</span>}
-                                    </label>
-                                    <input
-                                        type={type}
-                                        value={newTraveler[key] || ''}
-                                        onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
-                                        style={styles.formInput}
-                                        placeholder={`Enter ${label.toLowerCase()}`}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+const service = require('../services/occupancy.service');
+ const doorMap = require('../utils/doorMap'); 
+//  const normalize  = name => name.trim();        // simple normalizer
 
-                    {/* Timeline */}
-                    <div style={styles.formSection}>
-                        <h4 style={styles.sectionTitle}>
-                            <FiCalendar style={styles.sectionIcon} />
-                            Travel Timeline
-                        </h4>
-                        <div style={styles.sectionGrid}>
-                            {[
-                                { key: 'begin_dt', label: 'Start Date & Time', type: 'datetime-local', icon: FiCalendar, required: true },
-                                { key: 'end_dt', label: 'End Date & Time', type: 'datetime-local', icon: FiCalendar, required: true },
-                            ].map(({ key, label, type, icon: Icon, required }) => (
-                                <div key={key} style={styles.inputGroup}>
-                                    <label style={styles.inputLabel}>
-                                        <Icon size={16} style={styles.labelIcon} />
-                                        {label}
-                                        {required && <span style={styles.required}>*</span>}
-                                    </label>
-                                    <input
-                                        type={type}
-                                        value={newTraveler[key] || ''}
-                                        onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
-                                        style={styles.formInput}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+ const normalize = s =>
+   s
+     .trim()
+     .toLowerCase()
+     .replace(/[^a-z0-9]+/g, ' ')   // non-alphanum → space
+     .replace(/\s+/g, ' ')          // collapse multi-spaces
+     .trim();
 
-                {/* Form Actions */}
-                <div style={styles.formActions}>
-                    <button
-                        onClick={() => setActiveTab('overview')}
-                        style={styles.secondaryButton}
-                    >
-                        <FiArrowLeft size={16} />
-                        Back to Overview
-                    </button>
-                    <div style={styles.primaryActions}>
-                        <button
-                            onClick={() => setNewTraveler({})}
-                            style={styles.clearButton}
-                        >
-                            <FiRefreshCw size={16} />
-                            Clear Form
-                        </button>
-                        <button
-                            onClick={addTraveler}
-                            style={styles.saveButton}
-                        >
-                            <FiSave size={16} />
-                            Save Traveler
-                        </button>
-                    </div>
-                </div>
-            </div>
+/**
+ * Returns true if this PersonnelType counts as Employee.
+ * Everything else (including blank) counts as Contractor.
+ */
+function isEmployeeType(pt) {
+  return pt === 'Employee'
+      || pt === 'Terminated Employee'
+      || pt === 'Terminated Personnel';
+}
 
-            {/* Quick Tips Sidebar */}
-            <div style={styles.tipsCard}>
-                <h4 style={styles.tipsTitle}>
-                    <FiInfo size={18} />
-                    Quick Tips
-                </h4>
-                <div style={styles.tipsList}>
-                    <div style={styles.tipItem}>
-                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
-                        <span>Fill all required fields marked with *</span>
-                    </div>
-                    <div style={styles.tipItem}>
-                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
-                        <span>Use proper date and time format</span>
-                    </div>
-                    <div style={styles.tipItem}>
-                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
-                        <span>Double-check email addresses</span>
-                    </div>
-                    <div style={styles.tipItem}>
-                        <FiCheckCircle size={14} style={{ color: '#10b981' }} />
-                        <span>Ensure employee ID is unique</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-)}
+/**
+ * Look up floor for a given record by matching door + partition.
+ */
+
+function lookupFloor(partition, door, direction, unmappedSet) {
+  const normDoor = normalize(door);
+  // 1) try exact (post-normalization)
+  let entry = doorMap.find(d =>
+    d.partition === partition &&
+    normalize(d.door) === normDoor
+  );
+  // 2) fallback: partial match if exact fails
+  if (!entry) {
+    entry = doorMap.find(d =>
+      d.partition === partition &&
+      normalize(d.door).includes(normDoor)
+    );
+  }
+  if (!entry) {
+    unmappedSet.add(`${partition} | ${door}`);
+    return null;
+  }
+  return direction === 'InDirection'
+    ? entry.inDirectionFloor
+    : entry.outDirectionFloor;
+}
+
+
+
+
+
+exports.getLiveOccupancy = async (req, res) => {
+  try {
+    const data = await service.fetchLiveOccupancy();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Live occupancy fetch failed' });
+  }
+};
+
+exports.getLiveSummary = async (req, res) => {
+  try {
+    const swipes = await service.fetchLiveOccupancy();
+
+    // 1. TODAY’S HEADCOUNT: first swipe per person
+    const firstByPerson = {};
+    swipes.forEach(r => {
+      const prev = firstByPerson[r.PersonGUID];
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!prev || t < new Date(prev.LocaleMessageTime).getTime()) {
+        firstByPerson[r.PersonGUID] = r;
+      }
+    });
+    const todayRecs = Object.values(firstByPerson);
+    const today = { total: 0, Employee: 0, Contractor: 0 };
+    todayRecs.forEach(r => {
+      today.total++;
+      if (isEmployeeType(r.PersonnelType)) today.Employee++;
+      else today.Contractor++;
+    });
+
+    // 2. REAL-TIME: last swipe per person
+    const lastByPerson = {};
+    swipes.forEach(r => {
+      const prev = lastByPerson[r.PersonGUID];
+      const t = new Date(r.LocaleMessageTime).getTime();
+      if (!prev || t > new Date(prev.LocaleMessageTime).getTime()) {
+        lastByPerson[r.PersonGUID] = r;
+      }
+    });
+
+    const realtime = {};
+    const unmappedDoors = new Set();
+
+    Object.values(lastByPerson).forEach(r => {
+      // Resolve floor up-front (this will also populate unmappedDoors if necessary)
+      const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+      const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
+
+      // STRICT RULE: if resolved Floor equals "Out of office" -> skip counting
+      if (floorNorm === 'out of office') {
+        return;
+      }
+
+      // Continue with existing OutDirection logic only if needed (original intent preserved)
+      // (Note: we already removed any record whose mapped floor is "Out of office" regardless of direction)
+
+      const p = r.PartitionName2;
+      if (!realtime[p]) {
+        realtime[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
+      }
+
+      realtime[p].total++;
+      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
+      else realtime[p].Contractor++;
+
+      const normFloorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
+      realtime[p].floors[normFloorLabel] = (realtime[p].floors[normFloorLabel] || 0) + 1;
+    });
+
+    if (unmappedDoors.size) {
+      console.warn('Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+    }
+
+    // Build enriched details array, but filter out any whose resolved Floor is "Out of office"
+    const details = Object.values(lastByPerson)
+      .map(r => {
+        const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
+        const floor = rawFloor ? String(rawFloor).trim() : null;
+        return {
+          ...r,
+          Floor: floor
+        };
+      })
+      // Strictly remove records whose Floor is "Out of office"
+      .filter(d => {
+        const f = d.Floor;
+        return !(f && String(f).trim().toLowerCase() === 'out of office');
+      });
+
+    return res.json({
+      success: true,
+      today,
+      realtime,
+      details
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Live summary failed' });
+  }
+};
+
+
+
+exports.getHistoricalOccupancy = async (req, res) => {
+  const location = req.params.location || null;
+  try {
+    const raw = await service.fetchHistoricalOccupancy(location);
+
+    // first swipe per person per date
+    const byDate = raw.reduce((acc, r) => {
+      const iso = (r.LocaleMessageTime instanceof Date)
+        ? r.LocaleMessageTime.toISOString()
+        : r.LocaleMessageTime;
+      const date = iso.slice(0,10);
+      acc[date] = acc[date] || {};
+      const prev = acc[date][r.PersonGUID];
+      if (!prev || new Date(iso) < new Date(prev.LocaleMessageTime)) {
+        acc[date][r.PersonGUID] = { ...r, LocaleMessageTime: iso };
+      }
+      return acc;
+    }, {});
+
+    const summaryByDate = [];
+    const details = [];
+
+    Object.keys(byDate).sort().forEach(date => {
+      const recs = Object.values(byDate[date]);
+      details.push(...recs);
+
+      // initialize counts
+      const regionCounts = { total: 0, Employee: 0, Contractor: 0 };
+      const partitionCounts = {};
+
+      recs.forEach(r => {
+        regionCounts.total++;
+        if (isEmployeeType(r.PersonnelType)) regionCounts.Employee++;
+        else regionCounts.Contractor++;
+
+        if (!location) {
+          const p = r.PartitionName2;
+          if (!partitionCounts[p]) {
+            partitionCounts[p] = { total: 0, Employee: 0, Contractor: 0 };
+          }
+          partitionCounts[p].total++;
+          if (isEmployeeType(r.PersonnelType)) partitionCounts[p].Employee++;
+          else partitionCounts[p].Contractor++;
+        }
+      });
+
+      summaryByDate.push({
+        date,
+        day: new Date(date).toLocaleDateString('en-US', { weekday:'long' }),
+        region: location
+          ? { name: location, ...regionCounts }
+          : { name: 'EMEA', ...regionCounts },
+        partitions: location ? undefined : partitionCounts
+      });
+    });
+
+    return res.json({ success: true, summaryByDate, details });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Historical fetch failed' });
+  }
+};
+
+
+------------------
+
+    
+//C:\Users\W0024618\Desktop\emea-occupancy-backend\src\services\occupancy.service.js
+const { poolPromise, sql } = require('../config/db');
+
+/**
+ * EMEA partition list
+ */
+const partitionList = [
+  'AUT.Vienna',
+  'DU.Abu Dhab',
+  'IE.Dublin',
+  'IT.Rome',
+  'LT.Vilnius',
+  'MA.Casablanca',
+  'RU.Moscow',
+  'UK.London',
+  'ES.Madrid'
+];
+
+
+/**
+ * Live occupancy (today)
+ */
+exports.fetchLiveOccupancy = async () => {
+  const pool = await poolPromise;
+  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
+
+  const query = `
+    WITH CombinedQuery AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2            AS Door,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor')
+            THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END                       AS EmployeeID,
+        t2.text5                  AS Text5,
+        t1.PartitionName2         AS PartitionName2,
+        t1.ObjectIdentity1        AS PersonGUID,
+        t3.Name                   AS PersonnelType,
+        t2.Text4                   AS CompanyName,   -- ✅ company
+        t2.Text5                   AS PrimaryLocation, -- ✅ location
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                         AS CardNumber,
+        t5a.value                 AS AdmitCode,
+        t5d.value                 AS Direction
+      FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
+        ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+        ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxml] AS t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        AND t1.PartitionName2 IN (${partitionsSql})
+       AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        >= DATEADD(DAY, DATEDIFF(DAY, 0, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE())), 0)
+        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
+        <  DATEADD(DAY, DATEDIFF(DAY, 0, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, GETUTCDATE())) + 1, 0)
+    )
+    SELECT
+      LocaleMessageTime,
+      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
+      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
+      EmployeeID,
+      PersonGUID,
+      ObjectName1,
+      Door,
+      PersonnelType,
+      CardNumber,
+      Text5,
+      PartitionName2,
+      AdmitCode,
+      Direction,
+      CompanyName,
+      PrimaryLocation
+    FROM CombinedQuery
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const result = await pool.request().query(query);
+  return result.recordset;
+};
+
+/**
+ * Core raw‐data fetch for the past N days, all or by location.
+ */
+exports.fetchHistoricalData = async ({ days = 7, location = null }) => {
+  const pool = await poolPromise;
+  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
+  const locationFilter = location
+    ? `AND t1.PartitionName2 = @location`
+    : `AND t1.PartitionName2 IN (${partitionsSql})`;
+
+  const query = `
+    WITH Hist AS (
+      SELECT
+        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
+        t1.ObjectName1,
+        t1.ObjectName2       AS Door,
+        CASE
+          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
+          ELSE CAST(t2.Int1 AS NVARCHAR)
+        END                   AS EmployeeID,
+        t2.text5             AS Text5,
+        t1.PartitionName2    AS PartitionName2,
+        t1.ObjectIdentity1   AS PersonGUID,
+        t3.Name              AS PersonnelType,
+        t2.Text4                   AS CompanyName,   -- ✅ company
+     t2.Text5                   AS PrimaryLocation, -- ✅ location
+        COALESCE(
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
+          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
+          sc.value
+        )                     AS CardNumber,
+        t5a.value            AS AdmitCode,
+        t5d.value            AS Direction,
+        CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) AS SwipeDate
+      FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
+      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
+        ON t1.ObjectIdentity1 = t2.GUID
+      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
+        ON t2.PersonnelTypeId = t3.ObjectID
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
+        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxml] AS t_xml
+        ON t1.XmlGUID = t_xml.GUID
+      LEFT JOIN (
+        SELECT GUID, value
+        FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred]
+        WHERE Name IN ('Card','CHUID')
+      ) AS sc
+        ON t1.XmlGUID = sc.GUID
+      WHERE
+        t1.MessageType = 'CardAdmitted'
+        ${locationFilter}
+        AND CONVERT(DATE, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC))
+            >= DATEADD(DAY, -${days}, CONVERT(DATE, GETDATE()))
+    )
+    SELECT *
+    FROM Hist
+    ORDER BY LocaleMessageTime ASC;
+  `;
+
+  const req = pool.request();
+  if (location) req.input('location', sql.NVarChar, location);
+  const result = await req.query(query);
+  return result.recordset;
+};
+
+/**
+ * Public wrapper: always last 7 days, all or by location.
+ */
+exports.fetchHistoricalOccupancy = async (location) => {
+  return exports.fetchHistoricalData({ days: 7, location: location || null });
+};
+
+module.exports.partitionList = partitionList;
+
+----------
+    C:\Users\W0024618\Desktop\emea-occupancy-backend\src\routes\occupancy.routes.js
+const express = require('express');
+const router  = express.Router();
+const controller = require('../controllers/occupancy.controller');
+
+// Live raw and summary
+router.get('/live',         controller.getLiveOccupancy);
+router.get('/live-summary', controller.getLiveSummary);
+
+// History: all partitions or a single one
+router.get('/history',           controller.getHistoricalOccupancy);
+router.get('/history/:location', controller.getHistoricalOccupancy);
+
+module.exports = router;
