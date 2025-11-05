@@ -1,319 +1,87 @@
-// Add these styles to your getStyles function
-const getStyles = (isDark) => ({
-    // ... your existing styles ...
+i want all with different name like see
+some region has two name ok 
+this is got in googl
+The list of Asia-Pacific (APAC) countries varies depending on the organization, but a core group consistently included is Australia, Bangladesh, China, India, Indonesia, Japan, Malaysia, New Zealand, Pakistan, the Philippines, Singapore, South Korea, and Thailand. 
 
-    // 🆕 Region Analysis Styles
-    regionsContainer: {
-        padding: "0",
-    },
+but in our othe dasbhoard like 
+Pune Quezon City Hyderabad Taguig City Tokyo Kuala Lumpur..
+ ---
+ for emea --
+Vilnius Vienna London Madrid Casablanca Abu Dhabi DublinMoscow Rome 
 
-    regionsHeader: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "24px",
-        background: isDark ? 
-            "linear-gradient(135deg, #1e293b, #0f172a)" : 
-            "linear-gradient(135deg, #f8fafc, #e2e8f0)",
-        borderRadius: "12px",
-        marginBottom: "24px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.05)",
-    },
+like all so in futeu we got thsi problm
+so i want all wiht any name ok 
+so this COUNTRY_TO_REGION desing like that 
+# (Insert into your FastAPI app file)
+COUNTRY_TO_REGION = {
+    # APAC (not exhaustive)
+    'india': 'APAC', 'philippines': 'APAC', 'china': 'APAC', 'japan': 'APAC', 'australia': 'APAC',
+    'singapore': 'APAC', 'malaysia': 'APAC', 'indonesia': 'APAC', 'thailand': 'APAC', 'vietnam': 'APAC',
+    'south korea': 'APAC', 'hong kong': 'APAC', 'taiwan': 'APAC', 'pakistan': 'APAC', 'bangladesh': 'APAC',
 
-    regionsTitle: {
-        fontSize: "24px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        margin: "0 0 4px 0",
-    },
+    # NAMER (North America)
+    'united states': 'NAMER', 'usa': 'NAMER', 'canada': 'NAMER', 'mexico': 'NAMER',
 
-    regionsSubtitle: {
-        fontSize: "14px",
-        color: isDark ? "#94a3b8" : "#64748b",
-        margin: "0",
-    },
+    # LACA (Latin America & Caribbean)
+    'brazil': 'LACA', 'argentina': 'LACA', 'chile': 'LACA', 'colombia': 'LACA', 'peru': 'LACA',
+    'venezuela': 'LACA', 'panama': 'LACA', 'costa rica': 'LACA',
 
-    regionsGrid: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-        gap: "20px",
-    },
+    # EMEA
+    'united kingdom': 'EMEA', 'uk': 'EMEA', 'germany': 'EMEA', 'france': 'EMEA', 'spain': 'EMEA',
+    'italy': 'EMEA', 'netherlands': 'EMEA', 'sweden': 'EMEA', 'norway': 'EMEA', 'denmark': 'EMEA',
+    'switzerland': 'EMEA', 'belgium': 'EMEA', 'austria': 'EMEA', 'poland': 'EMEA', 'greece': 'EMEA',
+    'turkey': 'EMEA', 'uae': 'EMEA', 'saudi arabia': 'EMEA', 'south africa': 'EMEA', 'egypt': 'EMEA'
+}
 
-    regionCard: {
-        background: isDark ? "#1e293b" : "white",
-        padding: "20px",
-        borderRadius: "12px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-        cursor: "pointer",
-        transition: "all 0.3s ease",
-        boxShadow: isDark ? 
-            "0 4px 6px -1px rgba(0, 0, 0, 0.3)" : 
-            "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        ':hover': {
-            transform: "translateY(-4px)",
-            boxShadow: isDark ? 
-                "0 8px 25px -3px rgba(0, 0, 0, 0.4)" : 
-                "0 8px 25px -3px rgba(0, 0, 0, 0.15)",
-        }
-    },
+DEFAULT_REGION = 'UNKNOWN'
 
-    regionHeader: {
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        marginBottom: "16px",
-    },
 
-    regionIcon: {
-        background: isDark ? 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)" : 
-            "linear-gradient(135deg, #8b5cf6, #3b82f6)",
-        color: "white",
-        padding: "8px",
-        borderRadius: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    regionName: {
-        fontSize: "18px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        margin: "0",
-        flex: 1,
-    },
-
-    regionStats: {
-        display: "flex",
-        gap: "12px",
-    },
-
-    regionStat: {
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "2px",
-    },
-
-    regionStatValue: {
-        fontSize: "18px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-    },
-
-    regionStatLabel: {
-        fontSize: "11px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-    },
-
-    citiesPreview: {
-        marginBottom: "12px",
-    },
-
-    citiesLabel: {
-        fontSize: "12px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-        fontWeight: "600",
-        marginBottom: "6px",
-        display: "block",
-    },
-
-    citiesList: {
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "6px",
-    },
-
-    cityTag: {
-        background: isDark ? "rgba(59, 130, 246, 0.2)" : "rgba(59, 130, 246, 0.1)",
-        color: isDark ? "#93c5fd" : "#1d4ed8",
-        padding: "4px 8px",
-        borderRadius: "6px",
-        fontSize: "11px",
-        fontWeight: "500",
-    },
-
-    moreCities: {
-        color: isDark ? "#94a3b8" : "#6b7280",
-        fontSize: "11px",
-        fontStyle: "italic",
-    },
-
-    viewDetails: {
-        fontSize: "12px",
-        color: isDark ? "#3b82f6" : "#2563eb",
-        fontWeight: "600",
-        textAlign: "center",
-        paddingTop: "8px",
-        borderTop: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #f1f5f9",
-    },
-
-    // Region Details Styles
-    regionDetailsContainer: {
-        background: isDark ? "#1e293b" : "white",
-        borderRadius: "12px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-        overflow: "hidden",
-    },
-
-    regionDetailsHeader: {
-        padding: "24px",
-        background: isDark ? 
-            "linear-gradient(135deg, #1e293b, #0f172a)" : 
-            "linear-gradient(135deg, #f8fafc, #e2e8f0)",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-    },
-
-    backButton: {
-        background: "none",
-        border: "none",
-        color: isDark ? "#3b82f6" : "#2563eb",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        marginBottom: "12px",
-        padding: "0",
-    },
-
-    regionDetailsTitle: {
-        fontSize: "20px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        margin: "0 0 16px 0",
-    },
-
-    citiesGrid: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: "16px",
-        padding: "24px",
-    },
-
-    cityCard: {
-        background: isDark ? "rgba(30, 41, 59, 0.5)" : "#f8fafc",
-        padding: "16px",
-        borderRadius: "8px",
-        border: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #e2e8f0",
-    },
-
-    cityHeader: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        marginBottom: "12px",
-    },
-
-    cityIcon: {
-        color: "#ef4444",
-    },
-
-    cityName: {
-        fontSize: "16px",
-        fontWeight: "600",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        margin: "0",
-        flex: 1,
-    },
-
-    cityStats: {
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-
-    cityCount: {
-        fontSize: "18px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-    },
-
-    cityLabel: {
-        fontSize: "10px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-        textTransform: "uppercase",
-    },
-
-    cityDetails: {
-        display: "flex",
-        gap: "12px",
-        marginBottom: "12px",
-    },
-
-    cityStat: {
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-        fontSize: "12px",
-        color: isDark ? "#cbd5e1" : "#6b7280",
-    },
-
-    sampleTravelers: {
-        borderTop: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid #e2e8f0",
-        paddingTop: "12px",
-    },
-
-    sampleTitle: {
-        fontSize: "12px",
-        fontWeight: "600",
-        color: isDark ? "#94a3b8" : "#6b7280",
-        margin: "0 0 8px 0",
-        textTransform: "uppercase",
-    },
-
-    travelerItem: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "6px 0",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.02)" : "1px solid #f8fafc",
-    },
-
-    travelerInfo: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "2px",
-    },
-
-    travelerName: {
-        fontSize: "12px",
-        fontWeight: "500",
-        color: isDark ? "#e2e8f0" : "#374151",
-    },
-
-    travelerId: {
-        fontSize: "10px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-    },
-
-    activeStatusSmall: {
-        fontSize: "10px",
-        color: "#16a34a",
-        fontWeight: "600",
-        padding: "2px 6px",
-        background: "rgba(22, 163, 74, 0.1)",
-        borderRadius: "4px",
-    },
-
-    inactiveStatusSmall: {
-        fontSize: "10px",
-        color: "#6b7280",
-        fontWeight: "600",
-        padding: "2px 6px",
-        background: "rgba(107, 114, 128, 0.1)",
-        borderRadius: "4px",
-    },
-
-    moreTravelers: {
-        fontSize: "11px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-        fontStyle: "italic",
-        textAlign: "center",
-        marginTop: "8px",
-    },
-});
+FROM LOCATION	FROM COUNTRY	TO LOCATION	TO COUNTRY
+Bahia Blanca, Buenos Aires	Argentina	Bahia Blanca, Buenos Aires	Argentina
+Buenos Aires, Ciudad de Buenos Aires	Argentina	Buenos Aires, Ciudad de Buenos Aires	Argentina
+Buenos Aires, Ciudad de Buenos Aires	Argentina	Buenos Aires, Ciudad de Buenos Aires	Argentina
+Buenos Aires, Ciudad de Buenos Aires	Argentina	Buenos Aires, Ciudad de Buenos Aires	Argentina
+Buenos Aires, Ciudad de Buenos Aires	Argentina	Buenos Aires, Ciudad de Buenos Aires	Argentina
+Buenos Aires, Ciudad de Buenos Aires	Argentina	Buenos Aires, Ciudad de Buenos Aires	Argentina
+Hobart, Tasmania	Australia	Hobart, Tasmania	Australia
+Melbourne, Victoria	Australia	Hobart, Tasmania	Australia
+Hobart, Tasmania	Australia	Hobart, Tasmania	Australia
+Hobart, Tasmania	Australia	Hobart, Tasmania	Australia
+New York City, New York	United States	New York City, New York	United States
+Palma de Mallorca, Balearic Islands	Spain	Palma de Mallorca, Balearic Islands	Spain
+Ibiza, Balearic Islands	Spain	Ibiza, Balearic Islands	Spain
+Los Angeles, California	United States	Los Angeles, California	United States
+Denver, Colorado	United States	Denver, Colorado	United States
+Regina, Saskatchewan	Canada	Regina, Saskatchewan	Canada
+Denver, Colorado	United States	Denver, Colorado	United States
+Newark, New Jersey	United States	Newark, New Jersey	United States
+Mumbai, Maharashtra	India	Mumbai, Maharashtra	India
+Pune, Maharashtra	India	Pune, Maharashtra	India
+New York City, New York	United States	Los Angeles, California	United States
+Cork	Ireland	Cork	Ireland
+Trieste	Italy	Trieste	Italy
+Athens	Greece	Athens	Greece
+San JosÃ©, San JosÃ©	Costa Rica	San JosÃ©, San JosÃ©	Costa Rica
+Indore, Madhya Pradesh	India	Indore, Madhya Pradesh	India
+Chennai, Tamil Nadu	India	Chennai, Tamil Nadu	India
+SÃ£o Paulo	Brazil	SÃ£o Paulo	Brazil
+Mexico City, Mexico	Mexico	SÃ£o Paulo	Brazil
+SÃ£o Paulo	Brazil	SÃ£o Paulo	Brazil
+Sydney, New South Wales	Australia	Sydney, New South Wales	Australia
+Singapore City	Singapore	Singapore City	Singapore
+Singapore City	Singapore	Manila	Philippines
+Singapore City	Singapore	Singapore City	Singapore
+Singapore City	Singapore	Manila	Philippines
+Shanghai, Shanghai	China	Shanghai, Shanghai	China
+Manila	Philippines	Manila	Philippines
+Singapore City	Singapore	Manila	Philippines
+Manila	Philippines	Manila	Philippines
+Valencia, Valencia	Spain	Valencia, Valencia	Spain
+Bilbao, Basque Country	Spain	Bilbao, Basque Country	Spain
+Newark, New Jersey	United States	Newark, New Jersey	United States
+Pune, Maharashtra	India	Pune, Maharashtra	India
+Hyderabad, Telangana	India	Hyderabad, Telangana	India
+Denver, Colorado	United States	New York City, New York	United States
+New York City, New York	United States	New York City, New York	United States
+New York City, New York	United States	New York City, New York	United States
+Houston, Texas	United States	Houston, Texas	United States
