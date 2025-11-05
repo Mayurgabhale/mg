@@ -1,3 +1,46 @@
+UNKNOWN Region Details
+8
+Total Travelers
+0
+Active Now
+Asunción
+4
+travelers
+Total: 4
+Active: 0
+Recent Travelers:
+ALDANA CROTTI
+Completed
+ALDANA CROTTI
+Completed
+MIRIAM GUARAGNA
+Completed
++1 more travelers
+Guatemala City
+2
+travelers
+Total: 2
+Active: 0
+Recent Travelers:
+MARIE-ANDREE LEGAULT
+Completed
+SHARI GALE
+Completed
+Oradea
+1
+travelers
+Total: 1
+Active: 0
+Recent Travelers:
+MIHAI IONESCU
+Completed
+Romania
+1
+travelers
+Total: 1
+Active: 0
+Recent Travelers:
+MIHAI IONESCU
 # ---------- START: REGION HELPERS & ENDPOINTS ----------
 
 # 🌍 Region mapping (includes common cities, states, and countries)
