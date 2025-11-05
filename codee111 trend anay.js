@@ -1,5 +1,5 @@
 in this i want ot add this region 
-ok inlcude global ok 
+ok inlcude global ok only count 
 <div style={styles.card}>
                         <div style={styles.uploadRow}>
                             <div style={styles.fileUploadWrapper}>
