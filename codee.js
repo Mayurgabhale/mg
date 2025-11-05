@@ -1,71 +1,29 @@
-exports.getTimeTravelOccupancy = async (req, res) => {
-  try {
-    const { date, time, location } = req.query;
-    if (!date || !time) {
-      return res.status(400).json({
-        success: false,
-        error: 'missing query params: expected ?date=YYYY-MM-DD&time=HH:MM[:SS][&location=<Partition>]'
-      });
-    }
-
-    // Default to all partitions (EMEA) if no specific location
-    const targetPartitions = location
-      ? [location]
-      : service.partitionList; // imported from service
-
-    // Pick timezone: if one location, use its local tz; otherwise default to London
-    const tz = location
-      ? partitionTimezones[location] || 'Europe/London'
-      : 'Europe/London';
-
-    const atDt = DateTime.fromISO(`${date}T${time}`, { zone: tz });
-    if (!atDt.isValid)
-      return res.status(400).json({ success: false, error: 'invalid date/time format' });
-
-    const untilUtc = atDt.setZone('utc').toJSDate();
-
-    let allEvents = [];
-    for (const loc of targetPartitions) {
-      const partEvents = await service.fetchOccupancyAtTime(loc, untilUtc);
-      allEvents.push(...partEvents);
-    }
-
-    // Build last swipe per person as of atDt
-    const lastByPerson = {};
-    allEvents.forEach(r => {
-      const localTs = DateTime.fromJSDate(r.MessageUTC, { zone: 'utc' }).setZone(tz);
-      if (localTs <= atDt) {
-        const prev = lastByPerson[r.PersonGUID];
-        if (!prev || localTs > DateTime.fromJSDate(prev.MessageUTC, { zone: 'utc' }).setZone(tz)) {
-          lastByPerson[r.PersonGUID] = { ...r, LocaleMessageTime: localTs.toISO() };
-        }
-      }
-    });
-
-    // Aggregate snapshot
-    const snapshot = { total: 0, Employee: 0, Contractor: 0, byPartition: {} };
-    Object.values(lastByPerson).forEach(r => {
-      if (r.PersonnelType === 'Employee') snapshot.Employee++;
-      else snapshot.Contractor++;
-      snapshot.total++;
-
-      const p = r.PartitionName2;
-      if (!snapshot.byPartition[p]) snapshot.byPartition[p] = { total: 0, Employee: 0, Contractor: 0 };
-      snapshot.byPartition[p].total++;
-      if (r.PersonnelType === 'Employee') snapshot.byPartition[p].Employee++;
-      else snapshot.byPartition[p].Contractor++;
-    });
-
-    res.json({
-      success: true,
-      scope: location ? location : 'EMEA',
-      asOfLocal: atDt.toISO(),
-      asOfUTC: atDt.setZone('utc').toISO(),
-      snapshot,
-      details: Object.values(lastByPerson)
-    });
-  } catch (err) {
-    console.error('getTimeTravelOccupancy error:', err);
-    res.status(500).json({ success: false, message: 'TimeTravel snapshot failed' });
-  }
+exports.fetchOccupancyAtTime = async (location, untilUtc) => {
+  const pool = await poolPromise;
+  const query = `
+    SELECT
+      t1.MessageUTC,
+      t1.ObjectName1,
+      t1.ObjectName2 AS Door,
+      t1.PartitionName2,
+      t1.ObjectIdentity1 AS PersonGUID,
+      t3.Name AS PersonnelType,
+      t5d.value AS Direction
+    FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
+    LEFT JOIN [ACVSCore].[Access].[Personnel] AS t2 ON t1.ObjectIdentity1 = t2.GUID
+    LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3 ON t2.PersonnelTypeId = t3.ObjectID
+    LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
+      ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
+    WHERE
+      t1.MessageType = 'CardAdmitted'
+      AND t1.PartitionName2 = @location
+      AND t1.MessageUTC <= @until
+      AND DATEADD(HOUR, -24, @until) < t1.MessageUTC
+    ORDER BY t1.MessageUTC ASC;
+  `;
+  const req = pool.request();
+  req.input('location', sql.NVarChar, location);
+  req.input('until', sql.DateTime2, untilUtc);
+  const result = await req.query(query);
+  return result.recordset;
 };
