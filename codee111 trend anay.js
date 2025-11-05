@@ -1,181 +1,232 @@
-<div style={styles.card}>
-    {/* Compact Upload Section */}
-    <div style={styles.compactUploadRow}>
-        <div style={styles.compactFileUpload}>
-            <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileChange}
-                style={styles.fileInput}
-                id="file-upload"
-            />
-            <label htmlFor="file-upload" style={styles.compactFileLabel}>
-                <FiUpload size={16} />
-                {file ? file.name : "Choose File"}
-            </label>
-        </div>
-        <div style={styles.compactButtonGroup}>
-            <button
-                onClick={uploadFile}
-                disabled={loading}
-                style={loading ? styles.disabledCompactBtn : styles.compactPrimaryBtn}
-            >
-                {loading ? (
-                    <div style={styles.smallSpinner}></div>
-                ) : (
-                    <FiUpload size={14} />
-                )}
-            </button>
-            <button
-                onClick={() => {
-                    setItems([]);
-                    setSummary({});
-                    setFile(null);
-                    toast.info("Data cleared successfully.");
-                }}
-                style={styles.compactSecondaryBtn}
-            >
-                <FiTrash2 size={14} />
-            </button>
-            <button onClick={exportCsv} style={styles.compactGhostBtn}>
-                <FiDownload size={14} />
-            </button>
-        </div>
-    </div>
+const getStyles = (isDark) => ({
+    // ... your existing styles ...
 
-    {/* 🆕 Region Count Cards */}
-    <div style={styles.regionCardsSection}>
-        <div style={styles.sectionHeader}>
-            <FiGlobe style={styles.sectionIcon} />
-            <h3 style={styles.sectionTitle}>Regions Overview</h3>
-        </div>
-        <div style={styles.regionCardsGrid}>
-            {/* Total Card */}
-            <div style={styles.regionCard}>
-                <div style={styles.regionCardHeader}>
-                    <div style={{...styles.regionIcon, background: '#3b82f6'}}>
-                        <FiGlobe size={16} />
-                    </div>
-                    <span style={styles.regionName}>ALL REGIONS</span>
-                </div>
-                <div style={styles.regionCardStats}>
-                    <span style={styles.regionCount}>{safeItems.length}</span>
-                    <span style={styles.regionLabel}>Total Travelers</span>
-                </div>
-                <div style={styles.regionCardActive}>
-                    <div style={styles.activeDot}></div>
-                    <span>{safeItems.filter(r => r.active_now).length} Active</span>
-                </div>
-            </div>
+    // 🆕 Compact Upload Styles
+    compactUploadRow: {
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        marginBottom: "20px",
+    },
 
-            {/* Region Cards */}
-            {Object.entries(regionsData)
-                .sort(([a], [b]) => {
-                    // Sort: GLOBAL first, then alphabetically
-                    if (a === 'GLOBAL') return -1;
-                    if (b === 'GLOBAL') return 1;
-                    return a.localeCompare(b);
-                })
-                .map(([regionCode, regionData]) => (
-                <div 
-                    key={regionCode} 
-                    style={{
-                        ...styles.regionCard,
-                        ...(filters.region === regionCode && styles.regionCardActive)
-                    }}
-                    onClick={() => setFilters({ ...filters, region: filters.region === regionCode ? '' : regionCode })}
-                >
-                    <div style={styles.regionCardHeader}>
-                        <div style={{
-                            ...styles.regionIcon,
-                            background: getRegionColor(regionCode)
-                        }}>
-                            {getRegionIcon(regionCode)}
-                        </div>
-                        <span style={styles.regionName}>{regionCode}</span>
-                    </div>
-                    <div style={styles.regionCardStats}>
-                        <span style={styles.regionCount}>{regionData.total_count}</span>
-                        <span style={styles.regionLabel}>Travelers</span>
-                    </div>
-                    <div style={styles.regionCardActive}>
-                        <div style={{
-                            ...styles.activeDot,
-                            background: regionData.active_count > 0 ? '#10b981' : '#6b7280'
-                        }}></div>
-                        <span>{regionData.active_count} Active</span>
-                    </div>
-                </div>
-            ))}
-        </div>
-    </div>
+    compactFileUpload: {
+        flex: 1,
+    },
 
-    {/* Filters Section */}
-    <div style={styles.filtersSection}>
-        <div style={styles.filtersHeader}>
-            <FiFilter style={{ marginRight: '8px', color: '#6b7280' }} />
-            <span style={styles.filtersTitle}>Filters & Search</span>
-        </div>
-        <div style={styles.filtersRow}>
-            <div style={styles.searchWrapper}>
-                <FiSearch style={styles.searchIcon} />
-                <input
-                    placeholder="Search travelers..."
-                    value={filters.search}
-                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                    style={styles.searchInput}
-                />
-            </div>
-            
-            {/* Region Filter Dropdown */}
-            <select
-                value={filters.region}
-                onChange={(e) => setFilters({ ...filters, region: e.target.value })}
-                style={styles.select}
-            >
-                <option value="">All Regions</option>
-                {Object.entries(regionsData)
-                    .sort(([a], [b]) => {
-                        if (a === 'GLOBAL') return -1;
-                        if (b === 'GLOBAL') return 1;
-                        return a.localeCompare(b);
-                    })
-                    .map(([region, data]) => (
-                    <option key={region} value={region}>
-                        {region} ({data.total_count})
-                    </option>
-                ))}
-            </select>
-            
-            <select
-                value={filters.country}
-                onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-                style={styles.select}
-            >
-                <option value="">All Countries</option>
-                {countries.map((c) => (
-                    <option key={c}>{c}</option>
-                ))}
-            </select>
-            <select
-                value={filters.legType}
-                onChange={(e) => setFilters({ ...filters, legType: e.target.value })}
-                style={styles.select}
-            >
-                <option value="">All Travel Types</option>
-                {legTypes.map((t) => (
-                    <option key={t}>{t}</option>
-                ))}
-            </select>
-            <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                style={styles.select}
-            >
-                <option value="">All Status</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-            </select>
-        </div>
-    </div>
-</div>
+    compactFileLabel: {
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 12px",
+        background: isDark ? "#374151" : "#f3f4f6",
+        border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "14px",
+        fontWeight: "500",
+        color: isDark ? "#d1d5db" : "#374151",
+        transition: "all 0.2s ease",
+        ':hover': {
+            background: isDark ? "#4b5563" : "#e5e7eb",
+        }
+    },
+
+    compactButtonGroup: {
+        display: "flex",
+        gap: "8px",
+    },
+
+    compactPrimaryBtn: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "8px",
+        background: "#3b82f6",
+        color: "white",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "14px",
+        fontWeight: "600",
+        transition: "all 0.2s ease",
+        minWidth: "36px",
+        ':hover': {
+            background: "#2563eb",
+        }
+    },
+
+    disabledCompactBtn: {
+        ...this.compactPrimaryBtn,
+        background: "#9ca3af",
+        cursor: "not-allowed",
+        ':hover': {
+            background: "#9ca3af",
+        }
+    },
+
+    compactSecondaryBtn: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "8px",
+        background: "transparent",
+        color: isDark ? "#d1d5db" : "#374151",
+        border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "14px",
+        fontWeight: "600",
+        transition: "all 0.2s ease",
+        minWidth: "36px",
+        ':hover': {
+            background: isDark ? "#4b5563" : "#f3f4f6",
+        }
+    },
+
+    compactGhostBtn: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "8px",
+        background: "transparent",
+        color: "#3b82f6",
+        border: "1px solid #3b82f6",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "14px",
+        fontWeight: "600",
+        transition: "all 0.2s ease",
+        minWidth: "36px",
+        ':hover': {
+            background: "rgba(59, 130, 246, 0.1)",
+        }
+    },
+
+    smallSpinner: {
+        width: "14px",
+        height: "14px",
+        border: "2px solid transparent",
+        borderTop: "2px solid currentColor",
+        borderRadius: "50%",
+        animation: "spin 1s linear infinite",
+    },
+
+    // 🆕 Region Cards Styles
+    regionCardsSection: {
+        marginBottom: "24px",
+        paddingBottom: "20px",
+        borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e5e7eb",
+    },
+
+    regionCardsGrid: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+        gap: "12px",
+    },
+
+    regionCard: {
+        background: isDark ? "rgba(30, 41, 59, 0.5)" : "#f8fafc",
+        padding: "16px",
+        borderRadius: "8px",
+        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
+        cursor: "pointer",
+        transition: "all 0.3s ease",
+        textAlign: "center",
+        ':hover': {
+            transform: "translateY(-2px)",
+            boxShadow: isDark ? 
+                "0 4px 12px rgba(0, 0, 0, 0.3)" : 
+                "0 4px 12px rgba(0, 0, 0, 0.1)",
+        }
+    },
+
+    regionCardActive: {
+        borderColor: isDark ? "rgba(59, 130, 246, 0.5)" : "rgba(37, 99, 235, 0.5)",
+        background: isDark ? "rgba(59, 130, 246, 0.1)" : "rgba(37, 99, 235, 0.05)",
+    },
+
+    regionCardHeader: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        marginBottom: "12px",
+    },
+
+    regionIcon: {
+        width: "32px",
+        height: "32px",
+        borderRadius: "8px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontSize: "14px",
+    },
+
+    regionName: {
+        fontSize: "12px",
+        fontWeight: "700",
+        color: isDark ? "#f1f5f9" : "#0f172a",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+    },
+
+    regionCardStats: {
+        marginBottom: "8px",
+    },
+
+    regionCount: {
+        fontSize: "20px",
+        fontWeight: "800",
+        color: isDark ? "#f1f5f9" : "#0f172a",
+        display: "block",
+        lineHeight: "1.2",
+    },
+
+    regionLabel: {
+        fontSize: "10px",
+        color: isDark ? "#94a3b8" : "#6b7280",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+    },
+
+    regionCardActive: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "4px",
+        fontSize: "10px",
+        color: isDark ? "#94a3b8" : "#6b7280",
+    },
+
+    activeDot: {
+        width: "6px",
+        height: "6px",
+        borderRadius: "50%",
+        background: "#10b981",
+    },
+});
+
+// 🆕 Helper functions for regions
+const getRegionColor = (regionCode) => {
+    const colors = {
+        'GLOBAL': '#6b7280',
+        'APAC': '#dc2626',
+        'EMEA': '#2563eb', 
+        'LACA': '#16a34a',
+        'NAMER': '#7c3aed'
+    };
+    return colors[regionCode] || '#6b7280';
+};
+
+const getRegionIcon = (regionCode) => {
+    const icons = {
+        'GLOBAL': '🌍',
+        'APAC': '🌏',
+        'EMEA': '🌍',
+        'LACA': '🌎',
+        'NAMER': '🌎'
+    };
+    return icons[regionCode] || '📍';
+};
