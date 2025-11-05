@@ -1,172 +1,149 @@
-
-exports.getTimeTravelOccupancy = async (req, res) => {
-  try {
-    const datetime = req.query.datetime;
-    const location = req.query.location || null;
-
-    if (!datetime) {
-      return res.status(400).json({ success: false, message: 'query param "datetime" required (ISO format like 2025-11-04T23:50:00)' });
-    }
-
-    // Validate format strictly: YYYY-MM-DDTHH:mm:ss (optional fractional seconds allowed)
-    const isoNoTZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?$/;
-    if (!isoNoTZ.test(datetime)) {
-      return res.status(400).json({
-        success: false,
-        message: 'invalid datetime. Use ISO format WITHOUT timezone offset, e.g. 2025-11-04T23:50:00'
-      });
-    }
-
-    // fetch the snapshot (last swipe per person <= the literal datetime string)
-    const swipes = await service.fetchTimeTravelOccupancy(datetime, location);
-
-    const summary = { total: 0, Employee: 0, Contractor: 0 };
-    const partitions = {};
-    const unmappedDoors = new Set();
-
-    swipes.forEach(r => {
-      const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
-      const floorNorm = rawFloor ? String(rawFloor).trim().toLowerCase() : '';
-
-      if (floorNorm === 'out of office') return;
-
-      summary.total++;
-      if (isEmployeeType(r.PersonnelType)) summary.Employee++;
-      else summary.Contractor++;
-
-      if (!location) {
-        const p = r.PartitionName2;
-        if (!partitions[p]) partitions[p] = { total: 0, Employee: 0, Contractor: 0, floors: {} };
-        partitions[p].total++;
-        if (isEmployeeType(r.PersonnelType)) partitions[p].Employee++;
-        else partitions[p].Contractor++;
-
-        const floorLabel = rawFloor ? String(rawFloor).trim() : 'Unmapped';
-        partitions[p].floors[floorLabel] = (partitions[p].floors[floorLabel] || 0) + 1;
+http://localhost:3005/api/occupancy/time-travel?datetime=2025-11-04T00:00:00
+on that time the occuapncy. can be show 0. but not show. 
+{
+  "success": true,
+  "datetime": "2025-11-04T00:00:00",
+  "summary": {
+    "total": 217,
+    "Employee": 189,
+    "Contractor": 28
+  },
+  "partitions": {
+    "AUT.Vienna": {
+      "total": 82,
+      "Employee": 73,
+      "Contractor": 9,
+      "floors": {
+        "11th Floor": 82
       }
-    });
-
-    if (unmappedDoors.size) {
-      console.warn('TimeTravel - Unmapped doors:\n' + Array.from(unmappedDoors).join('\n'));
+    },
+    "LT.Vilnius": {
+      "total": 54,
+      "Employee": 44,
+      "Contractor": 10,
+      "floors": {
+        "2nd Floor": 6,
+        "9th Floor": 8,
+        "1st Floor": 33,
+        "8th Floor": 2,
+        "10st Floor": 1,
+        "4th Floor": 2,
+        "7th Floor": 1,
+        "3rd Floor": 1
+      }
+    },
+    "ES.Madrid": {
+      "total": 3,
+      "Employee": 3,
+      "Contractor": 0,
+      "floors": {
+        "Madrid": 3
+      }
+    },
+    "MA.Casablanca": {
+      "total": 35,
+      "Employee": 34,
+      "Contractor": 1,
+      "floors": {
+        "7th Floor": 35
+      }
+    },
+    "RU.Moscow": {
+      "total": 18,
+      "Employee": 15,
+      "Contractor": 3,
+      "floors": {
+        "Moscow": 18
+      }
+    },
+    "IT.Rome": {
+      "total": 5,
+      "Employee": 4,
+      "Contractor": 1,
+      "floors": {
+        "Rome": 5
+      }
+    },
+    "IE.Dublin": {
+      "total": 12,
+      "Employee": 8,
+      "Contractor": 4,
+      "floors": {
+        "Dublin": 12
+      }
+    },
+    "UK.London": {
+      "total": 2,
+      "Employee": 2,
+      "Contractor": 0,
+      "floors": {
+        "London": 2
+      }
+    },
+    "DU.Abu Dhab": {
+      "total": 6,
+      "Employee": 6,
+      "Contractor": 0,
+      "floors": {
+        "Dubai": 6
+      }
     }
-
-    const details = swipes
-      .map(r => {
-        const rawFloor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmappedDoors);
-        const floor = rawFloor ? String(rawFloor).trim() : null;
-        return { ...r, Floor: floor };
-      })
-      .filter(d => {
-        const f = d.Floor;
-        return !(f && String(f).trim().toLowerCase() === 'out of office');
-      });
-
-    // IMPORTANT: return the exact datetime string the user sent — no toISOString() conversion
-    return res.json({
-      success: true,
-      datetime: datetime,        // <<-- exact literal sent by client
-      summary,
-      partitions: location ? undefined : partitions,
-      details
-    });
-  } catch (err) {
-    console.error('TimeTravel error', err);
-    return res.status(500).json({ success: false, message: 'TimeTravel occupancy failed' });
-  }
-};
-
-
-
-
-....
-
-exports.fetchTimeTravelOccupancy = async (datetimeISO, location = null) => {
-  const pool = await poolPromise;
-  const partitionsSql = partitionList.map(p => `'${p.replace("'", "''")}'`).join(',');
-
-  const locationFilter = location
-    ? `AND t1.PartitionName2 = @location`
-    : `AND t1.PartitionName2 IN (${partitionsSql})`;
-
-  const query = `
-    WITH AllSwipes AS (
-      SELECT
-        DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC) AS LocaleMessageTime,
-        t1.ObjectName1,
-        t1.ObjectName2       AS Door,
-        CASE
-          WHEN t3.Name IN ('Contractor','Terminated Contractor') THEN t2.Text12
-          ELSE CAST(t2.Int1 AS NVARCHAR)
-        END                   AS EmployeeID,
-        t2.text5             AS Text5,
-        t1.PartitionName2    AS PartitionName2,
-        t1.ObjectIdentity1   AS PersonGUID,
-        t3.Name              AS PersonnelType,
-        t2.Text4             AS CompanyName,
-        t2.Text5             AS PrimaryLocation,
-        COALESCE(
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID/Card)[1]','varchar(50)'),
-          TRY_CAST(t_xml.XmlMessage AS XML).value('(/LogMessage/CHUID)[1]','varchar(50)'),
-          sc.value
-        )                     AS CardNumber,
-        t5a.value            AS AdmitCode,
-        t5d.value            AS Direction,
-        CONVERT(DATETIME2, DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)) AS LT
-      FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLog] AS t1
-      LEFT JOIN [ACVSCore].[Access].[Personnel]     AS t2
-        ON t1.ObjectIdentity1 = t2.GUID
-      LEFT JOIN [ACVSCore].[Access].[PersonnelType] AS t3
-        ON t2.PersonnelTypeId = t3.ObjectID
-      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5a
-        ON t1.XmlGUID = t5a.GUID AND t5a.Name = 'AdmitCode'
-      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred] AS t5d
-        ON t1.XmlGUID = t5d.GUID AND t5d.Value IN ('InDirection','OutDirection')
-      LEFT JOIN [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxml] AS t_xml
-        ON t1.XmlGUID = t_xml.GUID
-      LEFT JOIN (
-        SELECT GUID, value
-        FROM [ACVSUJournal_00011029].[dbo].[ACVSUJournalLogxmlShred]
-        WHERE Name IN ('Card','CHUID')
-      ) AS sc
-        ON t1.XmlGUID = sc.GUID
-      WHERE
-        t1.MessageType = 'CardAdmitted'
-        ${locationFilter}
-        AND DATEADD(MINUTE, -1 * t1.MessageLocaleOffset, t1.MessageUTC)
-            <= TRY_CAST(@dt AS DATETIME2)
-    ),
-    LastPerPerson AS (
-      SELECT *,
-        ROW_NUMBER() OVER (PARTITION BY PersonGUID ORDER BY LT DESC) AS rn
-      FROM AllSwipes
-    )
-    SELECT
-      LocaleMessageTime,
-      CONVERT(VARCHAR(10), LocaleMessageTime, 23) AS Dateonly,
-      CONVERT(VARCHAR(8), LocaleMessageTime, 108) AS Swipe_Time,
-      EmployeeID,
-      PersonGUID,
-      ObjectName1,
-      Door,
-      PersonnelType,
-      CardNumber,
-      Text5,
-      PartitionName2,
-      AdmitCode,
-      Direction,
-      CompanyName,
-      PrimaryLocation
-    FROM LastPerPerson
-    WHERE rn = 1
-    ORDER BY LocaleMessageTime ASC;
-  `;
-
-  const req = pool.request();
-  // Bind as NVARCHAR so node/mssql doesn't convert the string to a JS Date
-  req.input('dt', sql.NVarChar(50), datetimeISO);
-
-  if (location) req.input('location', sql.NVarChar, location);
-
-  const result = await req.query(query);
-  return result.recordset;
-};
+  },
+  "details": [
+    {
+      "LocaleMessageTime": "2025-10-20T13:16:47.000Z",
+      "Dateonly": "2025-10-20",
+      "Swipe_Time": "13:16:47",
+      "EmployeeID": "319184",
+      "PersonGUID": "C0640632-D932-47A1-BF8E-30156252806A",
+      "ObjectName1": "Hussien, Eslam",
+      "Door": "EMEA_AUT_VIENNA_ICON_11FLR_WUIB Restricted Main Entrance 1 Door",
+      "PersonnelType": "Employee",
+      "CardNumber": "229899",
+      "Text5": "Vienna-Gertrude",
+      "PartitionName2": "AUT.Vienna",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "CompanyName": "WUI Bank GmbH",
+      "PrimaryLocation": "Vienna-Gertrude",
+      "Floor": "11th Floor"
+    },
+    {
+      "LocaleMessageTime": "2025-10-20T13:41:36.000Z",
+      "Dateonly": "2025-10-20",
+      "Swipe_Time": "13:41:36",
+      "EmployeeID": "322513",
+      "PersonGUID": "BFEFCB61-3F1B-4B0A-99A6-9091C8EBCF59",
+      "ObjectName1": "Vural, Turkan",
+      "Door": "EMEA_AUT_VIENNA_ICON_11FLR_RECEPTION Door",
+      "PersonnelType": "Employee",
+      "CardNumber": "608903",
+      "Text5": "Vienna-Gertrude",
+      "PartitionName2": "AUT.Vienna",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "CompanyName": "WUPSIL Office Austria",
+      "PrimaryLocation": "Vienna-Gertrude",
+      "Floor": "11th Floor"
+    },
+    {
+      "LocaleMessageTime": "2025-10-20T14:26:13.000Z",
+      "Dateonly": "2025-10-20",
+      "Swipe_Time": "14:26:13",
+      "EmployeeID": null,
+      "PersonGUID": "FE7B5E77-9A08-4B6A-A7A1-5EFFE98C7CB8",
+      "ObjectName1": "Temp Card No4, Casablanca",
+      "Door": "EMEA_LTU_VNO_GAMA_2nd floor_West Door",
+      "PersonnelType": null,
+      "CardNumber": "619337",
+      "Text5": null,
+      "PartitionName2": "LT.Vilnius",
+      "AdmitCode": "Admit",
+      "Direction": "InDirection",
+      "CompanyName": null,
+      "PrimaryLocation": null,
+      "Floor": "2nd Floor"
+    },
+    {
+      "LocaleMessageTime": "2025-10-20T15:00:49.000Z",
+      "Dateonly": "2025-10-20",
