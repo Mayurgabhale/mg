@@ -1,289 +1,140 @@
-http://localhost:3000/partition/SG.Singapore/details
-not disply antthig
-APAC Occupancy • SG.Singapore
-SG.Singapore
+how to remove red line in bar chart only line 
 
-Floor Details
-not show chekc also this code doorMap.js
+import React, { useMemo } from 'react';
+import isEqual from 'lodash.isequal';
 
-C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\utils\doorMap.js
+import { Card, CardContent, Typography, Box } from '@mui/material';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  LabelList,
+  Cell
+} from 'recharts';
 
+import buildingCapacities from '../data/buildingCapacities';
+import floorCapacities from '../data/floorCapacities';
 
+const DARK_TO_LIGHT = [
+  '#FFD666', '#FFE599', '#FFF2CC', '#FFE599', '#E0E1DD',
+  '#FFD666', '#FFEE8C', '#F8DE7E', '#FBEC5D', '#F0E68C',
+  '#FFEE8C', '#21325E', '#415A77', '#6A7F9A', '#B0C4DE',
+  '#1A1F36', '#2B3353', '#4C6482', '#7B90B2', '#CAD3E9'
+];
 
-  "APAC_IN_HYD_2NDFLR_AHU ROOM 1___InDirection": "HYD_2NDFLR",
+function CompositeChartCard({
+  title,
+  data,
+  lineColor = '#fff',
+  height = 350,
+  animationDuration,
+  animationEasing,
+  sx
+}) {
+  const enriched = useMemo(() => {
+    return data.map((d, i) => ({
+      ...d,
+      percentage: d.capacity ? Math.round(d.headcount / d.capacity * 100) : 0,
+      _color: DARK_TO_LIGHT[i % DARK_TO_LIGHT.length]
+    }));
+  }, [data]);
 
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <Card sx={{ border: `1px solid #fff`, bgcolor: 'rgba(0,0,0,0.4)', ...sx }}>
+        <CardContent>
+          <Typography variant="subtitle1" align="center" color="text.secondary">
+            {title}
+          </Typography>
+          <Typography variant="body2" align="center" sx={{ mt: 4 }}>
+            No realtime employee data
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  "APAC_IN_HYD_2NDFLR_F&A WING SIDE ENTRY 1___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_F&A WING SIDE ENTRY 1___OutDirection": "Out of Office",
+  const totalHeadcount = enriched.reduce((sum, d) => sum + (d.headcount || 0), 0);
+  const totalCapacity = enriched.reduce((sum, d) => sum + (d.capacity || 0), 0);
+  const avgUsage = totalCapacity ? Math.round((totalHeadcount / totalCapacity) * 100) : 0;
 
-  "APAC_IN_HYD_2NDFLR_MAIN LIFT LOBBY ENTRY 2___InDirection": "HYD_2NDFLR",
-  "APAC_IN_HYD_2NDFLR_MAIN LIFT LOBBY ENTRY 2___OutDirection": "Out of Office",
+  return (
+    <Card sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'rgba(0,0,0,0.4)', transition: 'transform 0.3s, box-shadow 0.3s', '&:hover': { transform: 'scale(1.02)', boxShadow: '0 4px 12px rgba(0,0,0,0.7)' }, ...sx }}>
+      <CardContent sx={{ p: 1 }}>
+        <Typography variant="subtitle1" align="center" gutterBottom sx={{ color: '#FFC107' }}>
+          {title}
+        </Typography>
+        <Box sx={{ width: '100%', height }}>
+          <ResponsiveContainer>
 
-  
-  //Singapore
+            <ComposedChart data={enriched} margin={{ top: 15, right: 20, left: 0, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)"
+                tickFormatter={label => {
+                  const str = String(label || '');
+                  const n = parseInt((str.match(/\d+/) || [])[0], 10);
+                  if (!isNaN(n)) {
+                    if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+                    switch (n % 10) {
+                      case 1: return `${n}st`;
+                      case 2: return `${n}nd`;
+                      case 3: return `${n}rd`;
+                      default: return `${n}th`;
+                    }
+                  }
+                  return str;
+                }}
+              />
+              <YAxis yAxisId="left" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)" />
+              <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} stroke="rgba(255,255,255,0.6)" domain={[0, 100]} tickFormatter={v => `${v}%`} />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#FFD666', borderColor: lineColor, padding: 8 }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div style={{ backgroundColor: '#FFD666', border: `1px solid ${lineColor}`, borderRadius: 4, padding: 8 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
+                      <div>Headcount: {d.headcount}</div>
+                      <div>Usage %: {d.percentage}%</div>
+                      <div>Seat Capacity: {d.capacity}</div>
+                    </div>
+                  );
+                }}
+              />
+              <Bar yAxisId="left" dataKey="headcount" name="Headcount" barSize={700} isAnimationActive={false} stroke="#fff"  strokeWidth={2}>
+                {enriched.map((e, i) => <Cell key={i} fill={e._color}   />)}
+                <LabelList dataKey="headcount" position="top" formatter={v => `${v}`} style={{ fill: '#fff', fontSize: 15, fontWeight: 700 }} />
 
-  "APAC_SG_11 FLR_BackDR___InDirection":"Singapore",
-  "APAC_SG_11 FLR_BackDR___OutDirection":"Out of Office",
+                <LabelList dataKey="percentage" position="inside" formatter={v => `${v}%`} style={{ fill: '#EE4B2B', fontSize: 14, fontWeight: 700 }} />
+              </Bar>
+              <Line yAxisId="right" type="monotone" dataKey="percentage" name="Usage %" stroke="#FF0000" strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line yAxisId="left" type="monotone"
 
-  "APAC_SG_11 FLR_Main Door___InDirection":"Singapore",
-  "APAC_SG_11 FLR_Main Door___OutDirection:":"Out of Office",
-
-  "APAC_SG_WU_11 FLR_Server Door___InDirection":"Singapore",
-  "APAC_SG_WU_11 FLR_Server Door___OutDirection":"Singapore",
-
-
-
-
-};
-
-
-// 2) zone → floor
-const zoneFloorMap = {
-  "Red Zone": "Podium Floor",
-  "Red Zone - Outer Area": "Podium Floor",
-  "Yellow Zone": "Podium Floor",
-  "Yellow Zone - Outer Area": "Podium Floor",
-  "Reception Area": "Podium Floor",
-  "Green Zone": "Podium Floor",
-  "Green Zone - Outer Area": "Podium Floor",
-  "Orange Zone": "Podium Floor",
-  "Orange Zone - Outer Area": "Podium Floor",
-  "Assembly Area": "Podium Floor",
-
-  "2nd Floor, Pune": "2nd Floor",
-  "2nd Floor, Pune - Outer Area": "2nd Floor",
-
-  "Tower B": "Tower B",
-  "Tower B - Outer Area": "Tower B",
-  "Tower B GYM": "Tower B",
-  "Tower B GYM - Outer Area": "Tower B",
-
-  "Kuala Lumpur": "Kuala Lumpur",
-
-  "6th Floor": "6th Floor",
-  "7th Floor": "7th Floor",
-
-  "Tokyo": "Tokyo",
-  "Taguig": "Taguig",
-
-  "Out of office": null,
-  "HYD_2NDFLR":"Hyderabad",
-
-  "APAC_SG":"Singapore"
-};
-
-// 3) URL segment → partitions[] key
-
-
-const partitionMap = {
-  Pune: "APAC_IN_PUN",
-  "Quezon City": "APAC_PH_Manila",    // must match your “/partition/Quezon City/details”
-  Taguig: "APAC_PI_Manila",
-  "Kuala Lumpur": "APAC_MY_KL",
-  "JP.Tokyo": "APAC_JPN_Tokyo",  // if your URL is /partition/JP.Tokyo/details
-  Tokyo: "APAC_JPN_Tokyo",  // you can even support both
-  Hyderabad:"APAC_IN_HYD",
-  Singapore:"APAC_SG"
-};
-
-
-
-// 1) same normalizer as on the backend
-function normalizeDoorName(name) {
-  return name
-    .replace(/[_/]/g, ' ')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\bRECPTION\b/gi, 'RECEPTION')
-    .replace(/\bENRTY\b|\bENTRTY\b/gi, 'ENTRY')
-    .replace(/\b[0-9A-F]{6}\b$/, '')
-    .replace(/[\s-]+/g, ' ')
-    .toUpperCase()
-    .trim();
+                name="Total Seats" stroke="#81C784" strokeDasharray="5 5" dot={false} isAnimationActive={false} />
+            </ComposedChart>
+            
+          </ResponsiveContainer>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, alignItems: 'center', mb: 1, fontWeight: 'bold', fontSize: 16 }}>
+          <Box sx={{ color: '#FFD700' }}>Total Headcount: {totalHeadcount}</Box>
+          <Box sx={{ color: '#4CAF50' }}>Total Seats: {totalCapacity}</Box>
+          <Box sx={{ color: '#FF4C4C' }}>Usage: {avgUsage}%</Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
 }
 
-// 2) build a normalized-key → zone lookup
-const normalizedDoorZoneMap = Object.entries(doorMap).reduce(
-  (acc, [rawKey, zone]) => {
-    const [rawDoor, dir] = rawKey.split('___');
-    const normKey = `${normalizeDoorName(rawDoor)}___${dir}`;
-    acc[normKey] = zone;
-    return acc;
-  },
-  {}
+export default React.memo(CompositeChartCard, (prev, next) =>
+  isEqual(prev.data, next.data) &&
+  prev.lineColor === next.lineColor &&
+  prev.height === next.height
 );
 
 
-export {
-  doorMap,
-  zoneFloorMap,
-  partitionMap,
-  normalizeDoorName,
-  normalizedDoorZoneMap
-};
-
-
-http://localhost:3007/api/occupancy/live-summary
-
-{
-  "success": true,
-  "today": {
-    "total": 1142,
-    "Employee": 960,
-    "Contractor": 182
-  },
-  "realtime": {
-    "Pune": {
-      "total": 590,
-      "Employee": 523,
-      "Contractor": 67,
-      "floors": {
-        "Tower B": 149,
-        "Podium Floor": 441
-      },
-      "zones": {
-        "Tower B": 147,
-        "Orange Zone": 81,
-        "Red Zone": 104,
-        "Yellow Zone - Outer Area": 24,
-        "Assembly Area": 10,
-        "Green Zone": 68,
-        "Yellow Zone": 121,
-        "Reception Area": 22,
-        "Orange Zone - Outer Area": 8,
-        "Red Zone - Outer Area": 3,
-        "Tower B GYM": 2
-      }
-    },
-    "Quezon City": {
-      "total": 120,
-      "Employee": 103,
-      "Contractor": 17,
-      "floors": {
-        "6th Floor": 31,
-        "7th Floor": 89
-      },
-      "zones": {
-        "6th Floor": 31,
-        "7th Floor": 89
-      }
-    },
-    "JP.Tokyo": {
-      "total": 11,
-      "Employee": 10,
-      "Contractor": 1,
-      "floors": {
-        "Tokyo": 11
-      },
-      "zones": {
-        "Tokyo": 11
-      }
-    },
-    "IN.HYD": {
-      "total": 53,
-      "Employee": 18,
-      "Contractor": 35,
-      "floors": {
-        "Hyderabad": 53
-      },
-      "zones": {
-        "HYD_2NDFLR": 53
-      }
-    },
-    "MY.Kuala Lumpur": {
-      "total": 10,
-      "Employee": 9,
-      "Contractor": 1,
-      "floors": {
-        "Kuala Lumpur": 10
-      },
-      "zones": {
-        "Kuala Lumpur": 10
-      }
-    },
-    "Taguig City": {
-      "total": 16,
-      "Employee": 13,
-      "Contractor": 3,
-      "floors": {
-        "Taguig": 16
-      },
-      "zones": {
-        "Taguig": 16
-      }
-    },
-    "SG.Singapore": {
-      "total": 17,
-      "Employee": 17,
-      "Contractor": 0,
-      "floors": {
-        "Singapore": 17
-      },
-      "zones": {
-        "Singapore": 17
-      }
-    }
-  },
-  "unmapped": [],
-  "details": [
-    {
-      "ObjectName1": "Tewari, Puja",
-      "Door": "APAC_IN_PUN_TOWER B_ST6_GYM SIDE DOOR",
-      "PersonnelType": "Employee",
-      "EmployeeID": "310108",
-      "CardNumber": "615581",
-      "PartitionName2": "Pune",
-      "LocaleMessageTime": "2025-11-06T13:38:31.000Z",
-      "Direction": "InDirection",
-      "PersonGUID": "49A9FFA2-8593-4AB8-AFEC-0113835A5BF4",
-      "CompanyName": "WU Srvcs India Private Ltd",
-      "PrimaryLocation": "Pune - Business Bay",
-      "Zone": "Tower B",
-      "Floor": "Tower B"
-    },
-     {
-      "ObjectName1": "Chu, Lie Onn Doris",
-      "Door": "APAC_SG_11 FLR_Main Door",
-      "PersonnelType": "Employee",
-      "EmployeeID": "312276",
-      "CardNumber": "621318",
-      "PartitionName2": "SG.Singapore",
-      "LocaleMessageTime": "2025-11-06T13:36:07.000Z",
-      "Direction": "OutDirection",
-      "PersonGUID": "BAF0DD23-2F0D-495A-901E-059590551F02",
-      "CompanyName": "Western Union Global Network",
-      "PrimaryLocation": "Singapore - WeWork 21 Collyer Quay",
-      "Zone": null,
-      "Floor": null
-    },
-    { },
-    {
-      "ObjectName1": "Ong, Chee Hao",
-      "Door": "APAC_SG_11 FLR_Main Door",
-      "PersonnelType": "Employee",
-      "EmployeeID": "313731",
-      "CardNumber": "413417",
-      "PartitionName2": "SG.Singapore",
-      "LocaleMessageTime": "2025-11-06T16:33:56.000Z",
-      "Direction": "InDirection",
-      "PersonGUID": "951606E9-0892-4C89-ACC1-41F7CE1BD044",
-      "CompanyName": "Western Union Svcs Singapore",
-      "PrimaryLocation": "Singapore - WeWork 21 Collyer Quay",
-      "Zone": "Singapore",
-      "Floor": "Singapore"
-    },
-    {
-      {
-      "ObjectName1": "Tandy, Marsheila",
-      "Door": "APAC_SG_11 FLR_Main Door",
-      "PersonnelType": "Employee",
-      "EmployeeID": "327158",
-      "CardNumber": "621297",
-      "PartitionName2": "SG.Singapore",
-      "LocaleMessageTime": "2025-11-06T16:37:44.000Z",
-      "Direction": "InDirection",
-      "PersonGUID": "F19739A2-5048-4441-86A2-4B8834433190",
-      "CompanyName": "Western Union Svcs Singapore",
-      "PrimaryLocation": "Singapore - WeWork 21 Collyer Quay",
-      "Zone": "Singapore",
-      "Floor": "Singapore"
-    },
