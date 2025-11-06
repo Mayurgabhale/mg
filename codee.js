@@ -1,3 +1,101 @@
+
+  "success": true,
+  "today": {
+    "total": 1106,
+    "Employee": 934,
+    "Contractor": 172
+  },
+  "realtime": {
+    "Pune": {
+      "total": 516,
+      "Employee": 456,
+      "Contractor": 60,
+      "floors": {
+        "Tower B": 123,
+        "Podium Floor": 393
+      },
+      "zones": {
+        "Tower B": 123,
+        "Red Zone - Outer Area": 8,
+        "Red Zone": 97,
+        "Green Zone": 64,
+        "Yellow Zone": 91,
+        "Orange Zone": 88,
+        "Reception Area": 17,
+        "Yellow Zone - Outer Area": 20,
+        "Orange Zone - Outer Area": 7,
+        "Assembly Area": 1
+      }
+    },
+    "Quezon City": {
+      "total": 129,
+      "Employee": 112,
+      "Contractor": 17,
+      "floors": {
+        "7th Floor": 95,
+        "6th Floor": 34
+      },
+      "zones": {
+        "7th Floor": 95,
+        "6th Floor": 34
+      }
+    },
+    "JP.Tokyo": {
+      "total": 11,
+      "Employee": 10,
+      "Contractor": 1,
+      "floors": {
+        "Tokyo": 11
+      },
+      "zones": {
+        "Tokyo": 11
+      }
+    },
+    "IN.HYD": {
+      "total": 55,
+      "Employee": 14,
+      "Contractor": 41,
+      "floors": {
+        "Hyderabad": 55
+      },
+      "zones": {
+        "HYD_2NDFLR": 55
+      }
+    },
+    "MY.Kuala Lumpur": {
+      "total": 10,
+      "Employee": 9,
+      "Contractor": 1,
+      "floors": {
+        "Kuala Lumpur": 10
+      },
+      "zones": {
+        "Kuala Lumpur": 10
+      }
+    },
+    "Taguig City": {
+      "total": 16,
+      "Employee": 13,
+      "Contractor": 3,
+      "floors": {
+        "Taguig": 16
+      },
+      "zones": {
+        "Taguig": 16
+      }
+    },
+    "SG.Singapore": {
+      "total": 20,
+      "Employee": 20,
+      "Contractor": 0,
+      "floors": {
+
+      },
+      "zones": {
+        "Singapore": 20
+      }
+    }
+  },
 see this code
 
 "APAC_PH_Manila_7th Floor_Directors Office-708___OutDirection": "7th Floor",
