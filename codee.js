@@ -15,7 +15,7 @@ only this count
                 "7th Floor": 72
             }
         },
-
+above is localhost
 "Quezon City": {
             "total": 119,
             "Employee": 102,
