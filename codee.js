@@ -1,90 +1,35 @@
-in localhost 
-this count is not correct, 
-i measn this Quezon City count is wrong
-only this count 
- "Quezon City": {
-            "total": 104,
-            "Employee": 88,
-            "Contractor": 16,
-            "floors": {
-                "6th Floor": 32,
-                "7th Floor": 72
-            },
-            "zones": {
-                "6th Floor": 32,
-                "7th Floor": 72
-            }
-        },
-above is localhost
-"Quezon City": {
-            "total": 119,
-            "Employee": 102,
-            "Contractor": 17,
-            "floors": {
-                "6th Floor": 42,
-                "7th Floor": 77
-            },
-            "zones": {
-                "6th Floor": 42,
-                "7th Floor": 77
-            }
-        },
+read all code carefullym 
 
-but in details is same in detais sectin is correct,
-  only only this count is wrong   "total": 119,
-            "Employee": 102,
-            "Contractor": 17,
-            "floors": {
-                "6th Floor": 42,
-                "7th Floor": 77
-            },
-            "zones": {
-                "6th Floor": 42,
-                "7th Floor": 77 
-
-only above this  "details": [ is correct ok               
 http://localhost:3007/api/occupancy/live-summary
-
+quzan not show 
 {
     "success": true,
     "today": {
-        "total": 1155,
-        "Employee": 966,
-        "Contractor": 189
+        "total": 813,
+        "Employee": 667,
+        "Contractor": 146
     },
     "realtime": {
         "Pune": {
-            "total": 592,
-            "Employee": 527,
-            "Contractor": 65,
+            "total": 573,
+            "Employee": 517,
+            "Contractor": 56,
             "floors": {
-                "Tower B": 142,
-                "Podium Floor": 450
+                "Tower B": 139,
+                "Podium Floor": 434
             },
             "zones": {
-                "Tower B": 141,
-                "Yellow Zone": 129,
-                "Red Zone": 107,
-                "Reception Area": 22,
-                "Orange Zone": 81,
-                "Green Zone": 69,
-                "Orange Zone - Outer Area": 5,
-                "Yellow Zone - Outer Area": 35,
-                "Tower B GYM": 1,
-                "Red Zone - Outer Area": 2
-            }
-        },
-        "Quezon City": {
-            "total": 104,
-            "Employee": 88,
-            "Contractor": 16,
-            "floors": {
-                "6th Floor": 32,
-                "7th Floor": 72
-            },
-            "zones": {
-                "6th Floor": 32,
-                "7th Floor": 72
+                "Tower B": 137,
+                "Yellow Zone": 113,
+                "Reception Area": 13,
+                "Orange Zone": 76,
+                "Green Zone": 49,
+                "Orange Zone - Outer Area": 9,
+                "Red Zone": 102,
+                "Yellow Zone - Outer Area": 63,
+                "Assembly Area": 4,
+                "Red Zone - Outer Area": 5,
+                "Tower B GYM": 2
             }
         },
         "JP.Tokyo": {
@@ -118,457 +63,278 @@ http://localhost:3007/api/occupancy/live-summary
             },
             "zones": {
                 "Kuala Lumpur": 10
-            }
-        },
-        "Taguig City": {
-            "total": 16,
-            "Employee": 13,
-            "Contractor": 3,
-            "floors": {
-                "Taguig": 16
-            },
-            "zones": {
-                "Taguig": 16
             }
         },
         "SG.Singapore": {
-            "total": 9,
-            "Employee": 9,
+            "total": 7,
+            "Employee": 7,
             "Contractor": 0,
             "floors": {
-                "Singapore": 9
+                "Singapore": 7
             },
             "zones": {
-                "Singapore": 9
-            }
-        }
-    },
-    "unmapped": [],
-http://10.199.22.57:3008/api/occupancy/live-summary
-{
-    "success": true,
-    "today": {
-        "total": 1131,
-        "Employee": 943,
-        "Contractor": 188
-    },
-    "realtime": {
-        "Pune": {
-            "total": 607,
-            "Employee": 536,
-            "Contractor": 71,
-            "floors": {
-                "Tower B": 157,
-                "Podium Floor": 450
-            },
-            "zones": {
-                "Tower B": 156,
-                "Yellow Zone": 129,
-                "Red Zone": 105,
-                "Reception Area": 23,
-                "Orange Zone": 81,
-                "Green Zone": 69,
-                "Orange Zone - Outer Area": 5,
-                "Yellow Zone - Outer Area": 35,
-                "Tower B GYM": 1,
-                "Red Zone - Outer Area": 3
-            }
-        },
-        "Quezon City": {
-            "total": 119,
-            "Employee": 102,
-            "Contractor": 17,
-            "floors": {
-                "6th Floor": 42,
-                "7th Floor": 77
-            },
-            "zones": {
-                "6th Floor": 42,
-                "7th Floor": 77
-            }
-        },
-        "JP.Tokyo": {
-            "total": 11,
-            "Employee": 10,
-            "Contractor": 1,
-            "floors": {
-                "Tokyo": 11
-            },
-            "zones": {
-                "Tokyo": 11
-            }
-        },
-        "IN.HYD": {
-            "total": 57,
-            "Employee": 15,
-            "Contractor": 42,
-            "floors": {
-                "Hyderabad": 57
-            },
-            "zones": {
-                "HYD_2NDFLR": 57
-            }
-        },
-        "MY.Kuala Lumpur": {
-            "total": 10,
-            "Employee": 9,
-            "Contractor": 1,
-            "floors": {
-                "Kuala Lumpur": 10
-            },
-            "zones": {
-                "Kuala Lumpur": 10
-            }
-        },
-        "Taguig City": {
-            "total": 16,
-            "Employee": 13,
-            "Contractor": 3,
-            "floors": {
-                "Taguig": 16
-            },
-            "zones": {
-                "Taguig": 16
+                "Singapore": 7
             }
         }
     },
     "unmapped": [],
     "details": [
-        {
-            "ObjectName1": "Tewari, Puja",
-            "Door": "APAC_IN_PUN_TOWER B_RECEPTION LEFT DOOR",
-            "PersonnelType": "Employee",
-            "EmployeeID": "310108",
-            "CardNumber": "615581",
-            "PartitionName2": "Pune",
-            "LocaleMessageTime": "2025-11-06T15:35:29.000Z",
-            "Direction": "InDirection",
-            "PersonGUID": "49A9FFA2-8593-4AB8-AFEC-0113835A5BF4",
-            "CompanyName": "WU Srvcs India Private Ltd",
-            "PrimaryLocation": "Pune - Business Bay",
-            "Zone": "Tower B",
-            "Floor": "Tower B"
-        },
 
 
-read this code carefullym
+     
+  // Tokyo
+  "APAC_JPN_Tokyo_7th FLRSide Entrance___InDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLRSide Entrance___OutDirection": "Out of office",
+  "APAC_JPN_Tokyo_7th FLR_IT Room___InDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLR_IT Room___OutDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLR_Main Entrance___InDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLR_Main Entrance___OutDirection": "Out of office",
+  "APAC_JPN_Tokyo_7th FLR_Office Entrance___InDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLR_Office Entrance___OutDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLR_Side Entrance to Back Office___InDirection": "Tokyo",
+  "APAC_JPN_Tokyo_7th FLR_Side Entrance to Back Office___OutDirection": "Out of office",
+
+  // Manila (6th & 7th Floor)
+  "APAC_PH_Manila_6th Floor Enrty Door 1___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor Enrty Door 1___OutDirection": "Out of office",
+  "APAC_PH_Manila_6th Floor Open Office 2___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor Open Office 2___OutDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Entry Door 2___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Entry Door 2___OutDirection": "Out of office",
+  "APAC_PH_Manila_6th Floor_Entry Door 3___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Entry Door 3___OutDirection": "Out of office",
+  "APAC_PH_Manila_6th Floor_Exit Corridor___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Exit Corridor___OutDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_IDF Restricted Door___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_IDF Restricted Door___OutDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Mothers Room___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Mothers Room___OutDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Print Area___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_Print Area___OutDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_UPS/Switch Restricted Door___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor_UPS/Switch Restricted Door___OutDirection": "6th Floor",
+
+  "APAC_PH_Manila_7th Floor_Directors Office-708___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Directors Office-708___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Exit Corridore-704___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Exit Corridore-704___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_IT Work Room  725___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_IT Work Room  725___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_MDF-726 Restricted Door___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_MDF-726 Restricted Door___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Open Office Door 1-721___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Open Office Door 1-721___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Open Office Door 2-721___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Open Office Door 2-721___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Pantry-720a___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Pantry-720a___OutDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Recption Door 1-701___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Recption Door 1-701___OutDirection": "Out of office",
+  "APAC_PH_Manila_7th Floor_Recption Door 2-701___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Recption Door 2-701___OutDirection": "Out of office",
+  "APAC_PH_Manila_7th Floor_Security Room-723___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor_Security Room-723___OutDirection": "7th Floor",
+
+  // PI Manila DR (Taguig)
+  "APAC_PI_Manila_DR_MainEntrance___InDirection": "Taguig",
+  "APAC_PI_Manila_DR_MainEntrance___OutDirection": "Out of office",
+  "APAC_PI_Manila_DR_OfficeLobby___InDirection": "Taguig",
+  "APAC_PI_Manila_DR_OfficeLobby___OutDirection": "Out of office",
+  "APAC_PI_Manila_DR_Server Restricted Door___InDirection": "Taguig",
+  "APAC_PI_Manila_DR_Server Restricted Door___OutDirection": "Taguig",
+  "APAC_PI_Manila_DR_StorageRm___InDirection": "Taguig",
+  "APAC_PI_Manila_DR_StorageRm___OutDirection": "Taguig",
+  "APAC_PI_Manila_Emerg Exit Dr- Lobby___InDirection": "Taguig",
+  "APAC_PI_Manila_Emerg Exit Dr- Lobby___OutDirection": "Taguig",
+  "APAC_PI_Manila_Emgerg DR_Storage RM___InDirection": "Taguig",
+  "APAC_PI_Manila_Emgerg DR_Storage RM___OutDirection": "Taguig",
+
+
+
+
+  // --- Manila 7th Floor Reception Doors ---
+  "APAC_PH_Manila_7th Floor Recption Door 1-701___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor Recption Door 1-701___OutDirection": "Out of office",
+
+  "APAC_PH_Manila_7th Floor Recption Door 2-701___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor Recption Door 2-701___OutDirection": "Out of office",
+
+  // --- Manila 7th Floor Open Office Door 2-721 ---
+  "APAC_PH_Manila_7th Floor Open Office Door 2-721___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor Open Office Door 2-721___OutDirection": "7th Floor",
+
+  // --- Manila 7th Floor IT Work Room  725 & Security Room 723 ---
+  "APAC_PH_Manila_7th Floor IT Work Room  725___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor IT Work Room  725___OutDirection": "7th Floor",
+
+  "APAC_PH_Manila_7th Floor Security Room-723___InDirection": "7th Floor",
+  "APAC_PH_Manila_7th Floor Security Room-723___OutDirection": "7th Floor",
+
+  // --- Manila 6th Floor variants ---
+  "APAC_PH_Manila_6th Floor Enrty Door 1___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor Enrty Door 1___OutDirection": "Out of office",
+
+  "APAC_PH_Manila_6th Floor Print Area___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor Print Area___OutDirection": "6th Floor",
+
+  "APAC_PH_Manila_6th Floor Entry Door 2___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor Entry Door 2___OutDirection": "Out of office",
+
+  "APAC_PH_Manila_6th Floor Entry Door 3___InDirection": "6th Floor",
+  "APAC_PH_Manila_6th Floor Entry Door 3___OutDirection": "6th Floor",
+
+  // --- Pune Tower B Lift Lobby Door (OutDirection) ---
+  "APAC_IN_PUN_TOWER B_LIFT LOBBY DOOR___OutDirection": "Out of office",
+
+  // --- Pune Turnstile 1 Exit Door (normalize the hyphen) ---
+  "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1 OUT DOOR___OutDirection": "Out of office",
+
+  // --- Taguig Main Entrance Door (InDirection) ---
+  "APAC_PI_Manila_DR_MainEntrance___InDirection": "Taguig",
+  "APAC_PI_Manila_DR_MainEntrance___OutDirection": "Out of office",
+
+  // --- Tokyo 7th Floor Office Entrance (OutDirection) ---
+  "APAC_JPN_Tokyo_7th FLR Office Entrance___OutDirection": "Out of office",
+
 
   
+// --- Hydrabad
+
+  "APAC_IN_HYD_2NDFLR_BMS ROOM___InDirection": "HYD_2NDFLR",
+  "APAC_IN_HYD_2NDFLR_BMS ROOM___OutDirection": "HYD_2NDFLR",
 
 
-//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\controllers\occupancy.controller.js
+     
 
-const service = require('../services/occupancy.service');
+};
 
-const {
-  doorMap,
-  normalizedDoorZoneMap,
+
+
+
+// 2) zone → floor
+const zoneFloorMap = {
+
+  "Red Zone": "Podium Floor",
+  "Yellow Zone": "Podium Floor",
+  "Reception Area": "Podium Floor",
+  "Green Zone": "Podium Floor",
+  "Orange Zone": "Podium Floor",
+  "Gsoc Zone": "Podium Floor",
+  "Assembly Area": "Podium Floor",
+  "Red": "Podium Floor",
+
+  // 2nd Floor
+  "2nd Floor, Pune": "2nd Floor",
+
+  // Tower B
+  "Tower B": "Tower B",
+  "Reception Area Tower B": "Tower B",
+  "Tower B GYM": "Tower B",
+
+  // Outer‐Area variants (same floors as their base zones)
+  "Red Zone - Outer Area": "Podium Floor",
+  "Yellow Zone - Outer Area": "Podium Floor",
+  "Reception Area - Outer Area": "Podium Floor",
+  "Green Zone - Outer Area": "Podium Floor",
+  "Orange Zone - Outer Area": "Podium Floor",
+  "Assembly Area - Outer Area": "Podium Floor",
+  "2nd Floor, Pune - Outer Area": "2nd Floor",
+  "Tower B - Outer Area": "Tower B",
+  "Reception Area Tower B - Outer Area": "Tower B",
+  "Tower B GYM - Outer Area": "Tower B",
+
+  // True “Out of office” eviction (we filter these out in the controller)
+
+
+  "Kuala Lumpur": "Kuala Lumpur",
+  "6th Floor": "6th Floor",
+  "7th Floor": "7th Floor",
+  "Tokyo": "Tokyo",
+  "Taguig": "Taguig",
+  // All true “Out of office” go to Unknown:
+  "Out of office": null,
+
+  "HYD_2NDFLR":"Hyderabad",
+  "Singapore":"Singapore"
+
+
+};
+
+
+// 3) How to derive partition for PartitionName2
+// 3) Partition → friendly name
+const partitionMap = {
+  'APAC_IN_PUN': 'Pune',
+  'APAC_PH_Manila': 'Quezon City',
+  'APAC_JPN_Tokyo': 'JP.Tokyo',
+  'APAC_MY_KL': 'MY.Kuala Lumpur',
+  'APAC_PI_Manila': 'Taguig City',
+  'APAC_IN_HYD_2NDFLR':'IN.HYD',
+  'APAC_SG_11 FLR':'SG.Singapore',
+  'APAC_SG_WU':'SG.Singapore'
+};
+
+
+
+function normalizeDoorName(name) {
+  return name
+    .replace(/[_/]/g, ' ')                      // underscores/slashes → spaces
+    .replace(/[^\w\s-]/g, '')                   // drop punctuation except hyphens
+    .replace(/\bRECPTION\b/gi, 'RECEPTION')     // typo fix
+    .replace(/\bENRTY\b|\bENTRTY\b/gi, 'ENTRY') // typo fix
+    // strip any trailing 6-digit hex string (e.g. "10054B")
+    .replace(/\b[0-9A-F]{6}\b$/, '')
+    .replace(/[\s-]+/g, ' ')                    // collapse spaces & hyphens
+    .toUpperCase()
+    .trim();
+}
+
+
+
+// 5) Build normalized door→zone lookup
+const normalizedDoorZoneMap = Object.entries(doorZoneMap).reduce((acc, [rawKey, zone]) => {
+  const [rawDoor, direction] = rawKey.split('___');
+  const normKey = `${normalizeDoorName(rawDoor)}___${direction}`;
+  acc[normKey] = zone;
+  return acc;
+}, {});
+
+// 6) Build per-partition doorMap entries
+const doorMap = Object.entries(doorZoneMap).reduce((acc, [rawKey, zone]) => {
+  const [rawDoor, direction] = rawKey.split('___');
+  const prefix = rawDoor.split('_').slice(0, 3).join('_');
+  const partition = partitionMap[prefix] || prefix;
+  const floor = zoneFloorMap[zone] || 'Unknown';
+
+  if (!acc[rawDoor]) {
+    acc[rawDoor] = {
+      partition,
+      door: rawDoor,
+      inDirectionFloor: null,
+      outDirectionFloor: null,
+      normalizedDoor: normalizeDoorName(rawDoor)
+    };
+  }
+  if (direction === 'InDirection') acc[rawDoor].inDirectionFloor = floor;
+  else acc[rawDoor].outDirectionFloor = floor;
+
+  return acc;
+}, {});
+
+// 7) Export
+module.exports = {
   doorZoneMap,
+  normalizedDoorZoneMap,
   zoneFloorMap,
+  doorMap: Object.values(doorMap),
   normalizeDoorName
-} = require('../utils/doorMap');
-
-
-function isEmployeeType(pt) {
-  return ['Employee', 'Terminated Employee', 'Terminated Personnel'].includes(pt);
-}
-
-
-function lookupFloor(partition, rawDoor, direction, unmapped) {
-  const norm = normalizeDoorName(rawDoor);
-  const key = `${norm}___${direction}`;
-
-  // 1) Try normalized lookup
-  const zone = normalizedDoorZoneMap[key];
-  if (zone) {
-    const f = zoneFloorMap[zone];
-    // if zone has a known floor -> return it
-    if (f) return f;
-    // zone exists but has no floor (e.g. "Out of office") -> treat as known but Unknown floor
-    // return immediately to avoid falling back to per-partition doorMap and marking as unmapped
-    return 'Unknown';
-  }
-
-
-
-
-  // 2) Fallback to per-partition doorMap
-  const entry = doorMap.find(d =>
-    d.normalizedDoor === norm && d.partition === partition
-  );
-  if (entry) {
-    const fl = direction === 'InDirection'
-      ? entry.inDirectionFloor
-      : entry.outDirectionFloor;
-    if (fl) return fl;
-  }
-
-  // 3) Nothing matched → record & return Unknown
-  unmapped.add(`${partition}|${rawDoor}`);
-  return 'Unknown';
-}
-
-
-
-function mapDoorToZone(rawDoor, rawDir) {
-  const key = normalizeDoorName(rawDoor) + '___' + (rawDir === 'InDirection' ? 'InDirection' : 'OutDirection');
-  const zone = normalizedDoorZoneMap[key];
-  if (!zone) return 'Unknown Zone';
-  // for OutDirection that aren’t true “Out of office”, strip trailing “ Zone”
-  if (rawDir === 'OutDirection' && zone !== 'Out of office') {
-    return zone.replace(/\s+Zone$/i, '');
-  }
-  return zone;
-}
-
-
-
-exports.getLiveOccupancy = async (req, res) => {
-  try {
-    const data = await service.fetchLiveOccupancy();
-    res.json({ success: true, count: data.length, data });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Live fetch failed' });
-  }
-};
-
-exports.getLiveSummary = async (req, res) => {
-  try {
-    const swipes = await service.fetchLiveOccupancy();
-
-    // first swipe per person = TODAY
-    const first = {};
-    swipes.forEach(r => {
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!first[r.PersonGUID] || t < new Date(first[r.PersonGUID].LocaleMessageTime).getTime()) {
-        first[r.PersonGUID] = r;
-      }
-    });
-    const today = { total: 0, Employee: 0, Contractor: 0 };
-    Object.values(first).forEach(r => {
-      today.total++;
-      if (isEmployeeType(r.PersonnelType)) today.Employee++;
-      else today.Contractor++;
-    });
-
-    // last swipe per person for realtime
-    const last = {};
-    swipes.forEach(r => {
-      const t = new Date(r.LocaleMessageTime).getTime();
-      if (!last[r.PersonGUID] || t > new Date(last[r.PersonGUID].LocaleMessageTime).getTime()) {
-        last[r.PersonGUID] = r;
-      }
-    });
-
-    const realtime = {};
-    const unmapped = new Set();
-
-
-    const enriched = Object.values(last).map(r => {
-      // determine zone (try normalized lookup + fallback)
-      const zone = mapDoorToZone(r.Door, r.Direction);
-
-      // lookupFloor returns 'Unknown' for unmapped (and adds to unmapped set)
-      const floor = lookupFloor(r.PartitionName2, r.Door, r.Direction, unmapped);
-
-      return {
-        ...r,
-        // keep Unknown Zone as null, keep actual zone strings (including "Out of office")
-        Zone: zone === 'Unknown Zone' ? null : zone,
-        Floor: floor === 'Unknown' ? null : floor
-
-      };
-    });
-
-    // Strictly remove "Out of office" records from details (and from counting below)
-    const details = enriched.filter(r => r.Zone !== 'Out of office');
-
-    // Counting loop (keeps Pune special logic but enforces strict drop on "Out of office")
-    Object.values(last).forEach(r => {
-      const p = r.PartitionName2;
-
-      // determine zone again for each record (use mapDoorToZone to be consistent)
-      const zoneRaw = mapDoorToZone(r.Door, r.Direction);
-
-      // STRICT RULE: if zone resolved to exact "Out of office" -> skip counting
-      if (zoneRaw === 'Out of office') return;
-
-      // Unknown keys → drop
-      if (zoneRaw === 'Unknown Zone') return;
-
-      // ensure bucket exists when we decide to count
-      const ensureBucket = (part) => {
-        if (!realtime[part]) realtime[part] = { total: 0, Employee: 0, Contractor: 0, floors: {}, zones: {} };
-      };
-
-
-      if (r.Direction === 'OutDirection') {
-        // allow certain valid OutDirection zones (Assembly Area, Reception Area, ...)
-        const allowedOutZones = new Set(['Assembly Area', 'Reception Area']);
-        if (!zoneRaw.endsWith('Outer Area') && !allowedOutZones.has(zoneRaw)) {
-          return;
-        }
-
-        // safe to count
-        ensureBucket(p);
-        realtime[p].total++;
-        if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
-        else realtime[p].Contractor++;
-
-        // floor bucket
-        const fl = lookupFloor(p, r.Door, r.Direction, unmapped);
-        if (fl !== 'Unknown') {
-          realtime[p].floors[fl] = (realtime[p].floors[fl] || 0) + 1;
-        }
-
-        // zone bucket (clean trailing " Zone" for OutDirection cases where appropriate)
-        const z = (r.Direction === 'OutDirection' && zoneRaw !== 'Out of office')
-          ? zoneRaw.replace(/\s+Zone$/i, '')
-          : zoneRaw;
-        if (z) realtime[p].zones[z] = (realtime[p].zones[z] || 0) + 1;
-
-        return;
-      }
-
-      // ── All other partitions (existing logic) ──
-      // fallback logic to determine zone (keeps previous behaviour if normalized lookup not present)
-      const normKey = normalizeDoorName(r.Door) + '___' + r.Direction;
-      let zone = normalizedDoorZoneMap[normKey];
-      if (!zone) {
-        const entry = doorMap.find(d =>
-          d.normalizedDoor === normalizeDoorName(r.Door) &&
-          d.partition === p
-        );
-        zone = entry
-          ? (r.Direction === 'InDirection'
-            ? normalizedDoorZoneMap[`${entry.normalizedDoor}___InDirection`]
-            : normalizedDoorZoneMap[`${entry.normalizedDoor}___OutDirection`])
-          : null;
-      }
-
-      // if resolved zone (via fallback) is "Out of office" → skip (strict)
-      if (zone === 'Out of office') return;
-      if (!zone && zone !== null) {
-        // keep going — zone could be null if no mapping found, but Unknown Zone was handled above
-      }
-
-      // ok to count
-      ensureBucket(p);
-      realtime[p].total++;
-      if (isEmployeeType(r.PersonnelType)) realtime[p].Employee++;
-      else realtime[p].Contractor++;
-
-      const fl = lookupFloor(p, r.Door, r.Direction, unmapped);
-      if (fl !== 'Unknown') {
-        realtime[p].floors[fl] = (realtime[p].floors[fl] || 0) + 1;
-      }
-
-      const z = zone ? (r.Direction === 'OutDirection' && zone !== 'Out of office' ? zone.replace(/\s+Zone$/i, '') : zone) : null;
-      if (z) realtime[p].zones[z] = (realtime[p].zones[z] || 0) + 1;
-    });
-
-    // Log to server console for quick dev feedback:
-    if (unmapped.size) console.warn('Unmapped doors:', Array.from(unmapped));
-
-    res.json({
-      success: true,
-      today,
-      realtime,
-      // expose the raw list of partition|door keys that had no mapping:
-      unmapped: Array.from(unmapped),
-      details    // enriched details with Zone & Floor, with "Out of office" removed
-    });
-
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Summary failed' });
-  }
 };
 
 
 
 
 
-//C:\Users\W0024618\Desktop\apac-occupancy-backend\src\controllers\occupancy.controller.js
 
-exports.getHistoricalOccupancy = async (req, res) => {
-  const location = req.params.location || null;
-  try {
-    // 1) Pull in rows — each now has non-null PartitionNameFriendly
-    const raw = await service.fetchHistoricalOccupancy(location);
-
-    // 2) Dedupe to first swipe per person per day
-    const byDate = raw.reduce((acc, r) => {
-      // force into a "YYYY-MM-DD" string
-      const date = new Date(r.LocaleMessageTime).toISOString().slice(0, 10);
-      acc[date] = acc[date] || {};
-      if (
-        !acc[date][r.PersonGUID] ||
-        new Date(r.LocaleMessageTime) < new Date(acc[date][r.PersonGUID].LocaleMessageTime)
-      ) {
-        acc[date][r.PersonGUID] = r;
-      }
-      return acc;
-    }, {});
-
-
-
-
-
-
-    const summaryByDate = [];
-    const details = [];
-
-    // 3) Build summaries
-    Object.keys(byDate).sort().forEach(date => {
-      const recs = Object.values(byDate[date]);
-      details.push(...recs);
-
-      // region totals
-      const region = { total: 0, Employee: 0, Contractor: 0 };
-      // per-partition buckets
-      const partitions = {};
-
-      recs.forEach(r => {
-        // increment region
-        region.total++;
-        if (isEmployeeType(r.PersonnelType)) region.Employee++;
-        else region.Contractor++;
-
-        // only build partitions if we're not filtering to a single location
-        if (!location) {
-          // use the friendly name (guaranteed non-null!), with fallback
-          const key = r.PartitionNameFriendly || 'APAC.Default';
-          if (!partitions[key]) {
-            partitions[key] = { total: 0, Employee: 0, Contractor: 0 };
-          }
-          partitions[key].total++;
-          if (isEmployeeType(r.PersonnelType)) partitions[key].Employee++;
-          else partitions[key].Contractor++;
-        }
-      });
-
-      summaryByDate.push({
-        date,
-        day: new Date(date).toLocaleDateString('en-US', { weekday: 'long' }),
-        region: location
-          ? { name: location, ...region }
-          : { name: 'APAC', ...region },
-        // if location is provided, you can still emit an empty object (`{}`) or skip:
-        partitions: location ? {} : partitions
-      });
-    });
-
-    // 4) Return
-    res.json({ success: true, summaryByDate, details });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false, message: 'Historical failed' });
-  }
-};
-
-  
 //C:\Users\W0024618\Desktop\apac-occupancy-backend\src\services\occupancy.service.js
 
 const { poolPromise, sql } = require('../config/db');
@@ -576,7 +342,8 @@ const { poolPromise, sql } = require('../config/db');
 const partitionList = [
   'APAC.Default',
   'JP.Tokyo',
-  'PH.Manila',
+  // 'PH.Manila',
+  'PH.Quezon',
   'MY.Kuala Lumpur',
   'IN.Pune',
   'IN.HYD',
@@ -781,5 +548,3 @@ exports.fetchHistoricalData = async ({ location = null }) => {
 // keep this for occupancy
 exports.fetchHistoricalOccupancy = async (location) =>
   exports.fetchHistoricalData({ location: location || null });
-
-
