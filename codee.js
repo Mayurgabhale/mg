@@ -1,29 +1,10 @@
 
 
-
-//C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\History.jsx
-import React, { useEffect, useState, useMemo,useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import {
-  Container,
-  Box,
-  Button,
-  Typography,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Paper,
-  TextField,
-  TableContainer
-} from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 in history page 
 Unknown	SG.Singapore	23	1	24
 why show unknown.. 
-    
 
+    
 
 Thursday, 6 November, 2025
 Country	City	Employees	Contractors	Total
