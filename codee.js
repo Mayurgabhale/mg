@@ -1,497 +1,720 @@
-how to remove this warning ... 
-    src\pages\Dashboard.jsx
-  Line 600:4:  React Hook useMemo has an unnecessary dependency: 'floors'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+how to remove this warning..
+    
+webpack compiled successfully
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src\pages\History.jsx
+  Line 1892:9:  The 'getCanonicalCompany' function makes the dependencies of useMemo Hook (at line 2008) change on every render. To fix this, wrap the definition of 'getCanonicalCompany' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  Line 1960:6:  React Hook useMemo has a missing dependency: 'getCanonicalCompany'. Either include it or remove the dependency array                                                                                      react-hooks/exhaustive-deps
 
 Search for the keywords to learn more about each warning.
 To ignore, add // eslint-disable-next-line to the line before.
 
 WARNING in [eslint] 
-src\pages\Dashboard.jsx
-  Line 600:4:  React Hook useMemo has an unnecessary dependency: 'floors'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+src\pages\History.jsx
+  Line 1892:9:  The 'getCanonicalCompany' function makes the dependencies of useMemo Hook (at line 2008) change on every render. To fix this, wrap the definition of 'getCanonicalCompany' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  Line 1960:6:  React Hook useMemo has a missing dependency: 'getCanonicalCompany'. Either include it or remove the dependency array                                                                                      react-hooks/exhaustive-deps
 
 webpack compiled with 1 warning
-
-
-
-//C:\Users\W0024618\Desktop\apac-occupancy-frontend\src\pages\Dashboard.jsx
-import React, { useMemo } from 'react';
-import { Container, Box, Typography, Skeleton, Paper } from '@mui/material';
-
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-
-import SummaryCard from '../components/SummaryCard';
-import CompositeChartCard from '../components/CompositeChartCard';
-import PieChartCard from '../components/PieChartCard';
-
-import { useLiveOccupancy } from '../hooks/useLiveOccupancy';
-import { partitionList } from '../services/occupancy.service';
-import buildingCapacities from '../data/buildingCapacities';
-import floorCapacities from '../data/floorCapacities';
-import LoadingSpinner from '../components/LoadingSpinner';
-
-
-import indiaFlag from '../assets/flags/india.png';
-import japanFlag from '../assets/flags/japan.png';
-import malaysiaFlag from '../assets/flags/malaysia.png';
-import philippinesFlag from '../assets/flags/philippines.png';
-import SingaporeFlag from '../assets/flags/Singapore.png';
-
-
-// const palette15 = [
-//   '#FFC107', '#E57373', '#4CAF50', '#FFEB3B', '#FFD666',
-//   '#8BC34A', '#3F51B5', '#9C27B0', '#00BCD4', '#8BC34A',
-//   '#FF9800', '#673AB7', '#009688', '#CDDC39', '#795548'];
-
-
-
-const palette15 = [
-  '#6dcd71ff'];
-
-const flagMap = {
-  'Pune': indiaFlag,
-  'Quezon City': philippinesFlag,
-  'JP.Tokyo': japanFlag,
-  'MY.Kuala Lumpur': malaysiaFlag,
-  'Taguig City': philippinesFlag,
-  'IN.HYD': indiaFlag,
-  'SG.Singapore': SingaporeFlag
-};
-
-
-const displayNameMap = {
-  'IN.HYD': 'Hyderabad',
-  'JP.Tokyo': 'Tokyo',
-  'MY.Kuala Lumpur': 'Kuala Lumpur',
-  'PH.Quezon': 'Quezon City',
-  'PH.Taguig': 'Taguig City',
-  'Pune': 'Pune',
-  'SG.Singapore': 'Singapore',
-};
-
-
-export default function Dashboard() {
-  // 1) Live data hook
-  const { data, loading, error } = useLiveOccupancy(1000);
-
-  // 2) Partitions
-  // const regions = data?.realtime || {};
-  const regions = useMemo(() => data?.realtime || {}, [data?.realtime]);
-
-  // 3) Totals
-
-
-  const partitions = useMemo(() => {
-    return partitionList
-      .map(name => {
-        // collect all region keys that belong to this partition (e.g. all "IN.Pune.*")
-        const matchingKeys = Object.keys(regions).filter(k => k.includes(name));
-
-        // merge totals and floors across all matching keys
-        let total = 0, Employee = 0, Contractor = 0;
-        const mergedFloors = {};
-
-        matchingKeys.forEach(k => {
-          const r = regions[k];
-          if (!r) return;
-          total += r.total || 0;
-          Employee += r.Employee || 0;
-          Contractor += r.Contractor || 0;
-          Object.entries(r.floors || {}).forEach(([f, c]) => {
-            mergedFloors[f] = (mergedFloors[f] || 0) + c;
-          });
-        });
-
-        return {
-          name,
-          total,
-          Employee,
-          Contractor,
-          floors: mergedFloors,
-          flag: flagMap[name] || null
-        };
-      })
-      .sort((a, b) => b.total - a.total);
-  }, [regions]);
-
-
-  const todayTot = data?.today?.total || 0;
-  const todayEmp = data?.today?.Employee || 0;
-  const todayCont = data?.today?.Contractor || 0;
-  const realtimeTot = partitions.reduce((sum, p) => sum + p.total, 0);
-  const realtimeEmp = partitions.reduce((sum, p) => sum + p.Employee, 0);
-  const realtimeCont = partitions.reduce((sum, p) => sum + p.Contractor, 0);
-
-  // 4) Regions of interest
-  const pune = partitions.find(p => p.name === 'Pune');
-  const quezonCity = partitions.find(p => p.name === 'Quezon City');
-  const TaguigCity = partitions.find(p => p.name === 'Taguig City');
-  const combinedRegions = partitions.filter(p =>
-    ['JP.Tokyo', 'MY.Kuala Lumpur', 'SG.Singapore'].includes(p.name)
-  );
-
-  // 5) Pie chart data
-  // const quezonData = useMemo(() => [
-  //   { name: 'Employees', value: quezonCity?.Employee || 0 },
-  //   { name: 'Contractors', value: quezonCity?.Contractor || 0 }
-  // ], [quezonCity?.Employee, quezonCity?.Contractor]);
-
-
-  const asiaPacData = useMemo(() =>
-    combinedRegions.map(r => ({
-      // name: r.name.replace(/^.*\./, ''),
-      name: displayNameMap[r.name] || r.name.replace(/^.*\./, ''),
-      value: r.total,
-      emp: r.Employee,
-      cont: r.Contractor
-    })),
-    [combinedRegions]
-  );
-
-
-  // 6) Prepare floors + chart configs _before_ any returns
-  // 6a) Get only real floors (drop any that came back Unmapped/"Out of office")
-  const floors = Object.entries(pune?.floors || {})
-    .filter(([floorName, _count]) => floorName !== 'Unmapped');
-
-  const puneChartData = useMemo(() => {
-    // Map only the filtered floors; no Unknown bucket needed
-    return floors.map(([f, headcount]) => {
-      // first try Pune-specific capacity, else global
-      const puneKey = `${f} (Pune)`;
-      const capacity =
-        floorCapacities[puneKey] != null
-          ? floorCapacities[puneKey]
-          : buildingCapacities[f] || 0;
-
-      return {
-        name: f,
-        headcount,
-        capacity
+  contractor: v.Contractor || v.ContractorCount || 0,
+        total: v.total || 0
       };
     });
-  }, [floors]);
+  }, [summaryEntry, backendFilterKey]);
 
+  const formatApiTime12 = iso => {
+    if (!iso) return "";
+    // get HH:MM:SS part from ISO like "2025-08-28T10:22:33.000Z"
+    const tp = (iso && iso.slice(11, 19)) || "";
+    if (!tp) return "";
+    const [hStr, mStr, sStr] = tp.split(':');   // ✅ now include seconds
+    const hh = parseInt(hStr, 10);
+    if (Number.isNaN(hh)) return tp;
+    let h12 = hh % 12;
+    if (h12 === 0) h12 = 12;
+    const ampm = hh >= 12 ? "PM" : "AM";
+    return `${String(h12).padStart(2, "0")}:${mStr}:${sStr} ${ampm}`;
+  };
 
+  // helper: compute canonical company for a single detail row (same logic used by companyRows)
+  const getCanonicalCompany = (r) => {
+    const rawCompany = (r.CompanyName || '').toString().trim();
+    const pt = (r.PersonnelType || '').toString().trim().toLowerCase();
+    const s = rawCompany.toLowerCase();
 
-  const chartConfigs = useMemo(() => {
-    return [
-      {
-        key: 'india',
-        title: 'India',
-        body: (pune?.total === 0 && !combinedRegions.find(r => r.name === 'IN.HYD'))
-          ? (
-            <Typography color="white" align="center" py={6}>
-              No India data
-            </Typography>
-          )
-          : (
-            <CompositeChartCard
-              title=""
-              data={[
-                // Pune floor breakdown
-                ...puneChartData,
-                // Add Hyderabad as single aggregate bar
-                {
-                  name: "Hyderabad",
-                  headcount: data?.realtime?.["IN.HYD"]?.total ?? 0,
-                  capacity: buildingCapacities?.["IN.HYD"] ?? 0
-                }
-              ]
-            .sort((a, b) => {
-    const order = ["Tower B", "Podium Floor", "Hyderabad"];
-    return order.indexOf(a.name) - order.indexOf(b.name);
-  })
-            }
-              
-              // lineColor={palette15[0]}
-              height={250}
-              sx={{ border: 'none' }}
-            />
-          )
-      },
+    if (s && /\bcbre\b/.test(s) && (/\bclr\b/.test(s) || /\bfacilit/i.test(s))) {
+      return 'CLR Facility Services Pvt.Ltd.';
+    }
 
-      {
-        key: 'philipines',
-        title: 'Philipines ',
-        body: (quezonCity?.total === 0 && TaguigCity?.total === 0)
-          ? (
-            <Typography color="white" align="center" py={6}>
-              No Philipines data
-            </Typography>
-          )
-          : (
-
-            <CompositeChartCard
-              title=""
-              data={[
-                {
-                  name: "Quezon City (6thFloor)",
-                  headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
-                  capacity: buildingCapacities?.["Quezon City (6thFloor)"] ?? 0,
-                },
-                {
-                  name: "Quezon City (7thFloor)",
-                  headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
-                  capacity: buildingCapacities?.["Quezon City (7thFloor)"] ?? 0,
-                },
-                {
-                  name: "Taguig City",
-                  headcount: TaguigCity?.total ?? 0,
-                  capacity: buildingCapacities?.["Taguig"] ?? 0,
-                },
-
-              ]}
-
-              lineColor={palette15[1]}
-              height={250}
-              sx={{ border: 'none' }}
-            />
-          )
-      },
-      {
-        key: 'combined',
-        title: 'Asia-Pacific',
-        body: combinedRegions.length === 0
-          ? (
-            <Typography color="white" align="center" py={6}>
-              No regional data
-            </Typography>
-          )
-          : (
-            <PieChartCard
-              data={asiaPacData}
-              colors={['#FFBF00', '#FFFAA0', '#B4C424']}
-              height={320}
-              showZeroSlice
-              sx={{ border: 'none' }}
-            />
-          )
+    if (s && (s === 'cbre' || normalizeCompany(rawCompany) === 'CBRE')) {
+      if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
+        return 'CLR Facility Services Pvt.Ltd.';
       }
-    ];
-  // }, [
-  //   floors,
-  //   pune?.total,
-  //   quezonCity?.floors?.["6th Floor"],
-  //   quezonCity?.floors?.["7th Floor"],
-  //   combinedRegions.length,
-  //   asiaPacData
-  // ]);
-}, [
-  floors,
-  pune?.total,
-  puneChartData,
-  TaguigCity?.total,
-  quezonCity?.total,
-  combinedRegions,
-  data?.realtime,
-  asiaPacData
-]);
-  // 7) Error state
-  if (error) {
-    return (
-      <Box width="100vw" py={4}>
-        <Typography color="error" align="center">
-          Error loading live data
-        </Typography>
-      </Box>
-    );
-  }
+      return 'CBRE';
+    }
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          bgcolor: 'rgba(0, 0, 0, 0.85)',
-          zIndex: 9999,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <LoadingSpinner />
-      </Box>
-    );
-  }
+    if (!rawCompany) {
+      if (pt.includes('contractor')) return 'CBRE';
+      if (pt.includes('property') || pt.includes('management') || pt === 'property management') {
+        return 'CLR Facility Services Pvt.Ltd.';
+      }
+      if (pt === 'employee') return 'Western Union';
+      if (pt.includes('visitor')) return 'Visitor';
+      if (pt.includes('temp')) return 'Temp Badge';
+      return 'Unknown';
+    }
+    return normalizeCompany(rawCompany);
+  };
 
 
-  // 8) Render
 
-  return (
-    <>
-      <Header title="APAC Live Occupancy" />
-      <Container
-        maxWidth={false}
-        disableGutters
-        sx={{
-          py: 0,
-          px: { xs: 1, sm: 2, md: 3, lg: 4 },
-          background: 'linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)',
-          color: '#f5f5f5',
-        }}
-      >
-        {/* Top Summary Cards */}
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          gap={1}
-          mb={1}
-          sx={{
-            // On xs: 1 column; sm: 2 columns-ish; md+: show 6 across if space
-            '& > div': {
-              flex: {
-                xs: '1 1 100%',
-                sm: '1 1 calc(50% - 8px)',
-                md: '1 1 calc(33.333% - 12px)',
-                lg: '1 1 calc(16.66% - 12px)'
-              },
-              minWidth: {
-                xs: '100%',
-                sm: '220px',
-                md: '220px',
-                lg: '180px'
-              }
-            }
-          }}
-        >
-          {[
-            { title: "Today's Total Headcount", value: todayTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
-            { title: "Today's Employees Count", value: todayEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#FFB300' },
-            { title: "Today's Contractors Count", value: todayCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#FFB300' },
-            { title: "Realtime Headcount", value: realtimeTot, icon: <i className="fa-solid fa-users" style={{ fontSize: 25, color: '#FFB300' }} />, border: '#FFB300' },
-            { title: "Realtime Employees Count", value: realtimeEmp, icon: <i className="bi bi-people" style={{ fontSize: 25, color: '#EF5350' }} />, border: '#FFB300' },
-            { title: "Realtime Contractors Count", value: realtimeCont, icon: <i className="fa-solid fa-circle-user" style={{ fontSize: 25, color: '#8BC34A' }} />, border: '#FFB300' },
-          ].map(c => (
-            <Box key={c.title} sx={{}}>
-              <SummaryCard
-                title={c.title}
-                total={c.value}
-                stats={[]}
-                icon={c.icon}
-                sx={{
-                  height: { xs: 130, sm: 130, md: 150 },
-                  border: `2px solid ${c.border}`,
-                  px: { xs: 1, sm: 1.5 },
-                  py: { xs: 1, sm: 1.5 }
-                }}
-                titleSx={{ fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}
-                numberSx={{ fontSize: { xs: '1.15rem', sm: '1.4rem', md: '1.6rem' } }}
-              />
-            </Box>
-          ))}
-        </Box>
+  // companyRows
+  const detailRows = useMemo(() => {
+    if (!indexByDate.detailMap || !pickedDate || !showDetails) return [];
+    const ds = format(pickedDate, 'yyyy-MM-dd');
+    const rows = indexByDate.detailMap.get(ds) || [];
+
+    return rows
+      .filter(r => {
+        if (backendFilterKey) {
+          const ok = r.PartitionNameFriendly === backendFilterKey ||
+            apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
+          if (!ok) return false;
+        }
+        if (selectedPersonnel) {
+          const pt = String(r.PersonnelType || '').toLowerCase();
+          if (selectedPersonnel === 'Employee') {
+            if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
+          } else {
+            if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
+          }
+        }
+        if (selectedSummaryPartition) {
+          const [selCountry, selCity] = (selectedSummaryPartition || '').split('||');
+          const city = formatPartition(r.PartitionNameFriendly || '');
+          const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
+          const country = disp?.country || 'Unknown';
+          if (country !== selCountry || city !== selCity) return false;
+        }
+        if (!selectedCompany) return true;
+        const city = formatPartition(r.PartitionNameFriendly || '');
+        const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
+        const country = disp?.country || 'Unknown';
+        const canonical = getCanonicalCompany(r);
+        const rowKey = makeCompanyKey(country, city, canonical);
+        return rowKey === selectedCompany;
+      })
+      .sort((a, b) => (a.LocaleMessageTime || '').localeCompare(b.LocaleMessageTime || ''));
+  }, [indexByDate.detailMap, pickedDate, showDetails, backendFilterKey, selectedCompany, selectedPersonnel, selectedSummaryPartition]);
+
+  const companyRows = useMemo(() => {
+    if (!indexByDate.detailMap || !pickedDate) return [];
+    const ds = format(pickedDate, 'yyyy-MM-dd');
+    const rows = indexByDate.detailMap.get(ds) || []; // only this date's rows
+
+    // apply partition and personnel filters on this smaller array
+    const filtered = rows.filter(r => {
+      if (backendFilterKey) {
+        const ok = r.PartitionNameFriendly === backendFilterKey ||
+          apacForwardKey[r.PartitionNameFriendly] === backendFilterKey;
+        if (!ok) return false;
+      }
+      if (selectedPersonnel) {
+        const pt = String(r.PersonnelType || '').toLowerCase();
+        if (selectedPersonnel === 'Employee') {
+          if (!(pt.includes('employee') || pt.includes('staff') || pt === 'employee')) return false;
+        } else {
+          if (!(pt.includes('contractor') || pt.includes('vendor') || pt.includes('subcontract') || pt.includes('cont'))) return false;
+        }
+      }
+      return true;
+    });
+
+    // aggregate
+    const map = new Map();
+    filtered.forEach(r => {
+      const city = formatPartition(r.PartitionNameFriendly || '');
+      const disp = Object.values(apacPartitionDisplay).find(d => d.city === city);
+      const country = disp?.country || 'Unknown';
+      if (selectedSummaryPartition) {
+        const [selCountry, selCity] = selectedSummaryPartition.split('||');
+        if (country !== selCountry || city !== selCity) return;
+      }
+      const company = getCanonicalCompany(r);
+      const key = `${country}||${city}||${company}`;
+      const existing = map.get(key);
+      if (existing) existing.total += 1;
+      else map.set(key, { country, city, company, total: 1 });
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.country !== b.country) return a.country.localeCompare(b.country);
+      if (a.city !== b.city) return a.city.localeCompare(b.city);
+      return a.company.localeCompare(b.company);
+    });
+  // }, [indexByDate.detailMap, pickedDate, backendFilterKey, selectedPersonnel, selectedSummaryPartition,getCanonicalCompany]); // trimmed deps
+  }, [indexByDate.detailMap, pickedDate, backendFilterKey, selectedPersonnel, selectedSummaryPartition, getCanonicalCompany]);
+
+  // helper: convert 1-based column number to Excel letter (works for up to Z)
+  const colLetter = (n) => String.fromCharCode(64 + n);
+  /* ------------------ handleExport (Details) ------------------ */
+  const handleExport = async () => {
+    if (!pickedDate) return;
+
+    try {
+      const excelModule = await import('exceljs');
+      const Excel = excelModule.default || excelModule;
+      let wb;
+
+      if (Excel && Excel.Workbook) wb = new Excel.Workbook();
+      else if (typeof Excel === 'function') wb = new Excel();
+      else throw new Error('ExcelJS Workbook constructor not found');
+
+      const wsDetails = wb.addWorksheet('WU Employee');
+
+      // layout offsets: skip one row and one column before/after data
+      const offsetRow = 2; // leave row 1 blank, put title in row 2
+      const offsetCol = 2; // leave column A blank, start data at column B
+
+      // Headers
+      const detailsHeaders = [
+        'Sr.No', 'Date', 'Time',
+        'Employee Name', 'Employee ID', 'Personal Type',
+        'Door Name', 'Location'
+      ];
+      const firstCol = offsetCol;
+      const lastCol = offsetCol + detailsHeaders.length - 1;
+
+      // Title row (at offsetRow)
+      const titleStart = colLetter(firstCol) + offsetRow;
+      const titleEnd = colLetter(lastCol) + offsetRow;
+      wsDetails.mergeCells(`${titleStart}:${titleEnd}`);
+      const detailsTitle = wsDetails.getCell(offsetRow, firstCol);
+      detailsTitle.value = `${format(pickedDate, 'EEEE, d MMMM, yyyy')}`;
+      // Colour & font for title (black bg, yellow text)
+      detailsTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+      detailsTitle.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFC107' } };
+      detailsTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Make title row height tighter (will be overridden to 22 below globally)
+      wsDetails.getRow(offsetRow).height = 22;
+
+      // Also apply same fill & border to each cell in merged range for consistent appearance
+      for (let c = firstCol; c <= lastCol; c++) {
+        const cell = wsDetails.getCell(offsetRow, c);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFC107' } };
+        // thick outside border for top header (we'll set medium around the title row cells)
+        cell.border = {
+          top: { style: 'medium' },
+          bottom: { style: 'medium' },
+          left: { style: 'medium' },
+          right: { style: 'medium' }
+        };
+      }
+
+      // Header row index
+      const headerRowIndex = offsetRow + 1; // e.g., 3
+      const headerRow = wsDetails.getRow(headerRowIndex);
+      headerRow.height = 22;
+
+      // Insert header values at correct columns
+      detailsHeaders.forEach((h, idx) => {
+        const colIndex = firstCol + idx;
+        const cell = wsDetails.getCell(headerRowIndex, colIndex);
+        cell.value = h;
+        // header style: yellow fill, bold, centered (except Door column data alignment)
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+        // medium border for header (thick)
+        cell.border = {
+          top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' }
+        };
+        // default header alignment center
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+
+      // Data rows start at headerRowIndex + 1
+      const dataStartRow = headerRowIndex + 1;
+      (detailRows || []).forEach((r, i) => {
+        const rowIndex = dataStartRow + i;
+        const row = wsDetails.getRow(rowIndex);
+        // set data row height to 22
+        row.height = 22;
+
+        const dateVal = (r.LocaleMessageTime?.slice(0, 10)) || (r.SwipeDate?.slice(0, 10)) || '';
+        const timeVal = formatApiTime12(r.LocaleMessageTime) || '';
+        const name = r.ObjectName1 || '';
+        const empId = r.EmployeeID || '';
+        const ptype = r.PersonnelType || '';
+        const door = r.Door || r.ObjectName2 || '';
+        const location = r.PartitionNameFriendly || '';
+
+        const values = [i + 1, dateVal, timeVal, name, empId, ptype, door, location];
+
+        values.forEach((val, idx) => {
+          const colIndex = firstCol + idx;
+          const cell = wsDetails.getCell(rowIndex, colIndex);
+          cell.value = val;
+          // default inner cell border thin
+          cell.border = {
+            top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+          };
+          // font + vertical center
+          cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF000000' } };
+          // Door Name column (7th header) -> index 6 (0-based), column number = firstCol + 6
+          const doorColIndex = firstCol + 6;
+          if (colIndex === doorColIndex) {
+            cell.alignment = { horizontal: 'left', vertical: 'middle' };
+          } else {
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          }
+        });
+
+        // optional alternating fill for readability (keeps gridlines hidden but visual rows)
+        if (i % 2 === 1) {
+          values.forEach((_, idx) => {
+            const colIndex = firstCol + idx;
+            const cell = wsDetails.getCell(rowIndex, colIndex);
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F7F7' } };
+          });
+        }
+      });
+
+      // After data: add one empty row (skip one row after)
+      const lastDataRow = (detailRows?.length ? dataStartRow + detailRows.length - 1 : headerRowIndex);
+      const blankRow = wsDetails.addRow([]); // blank row after data
+      blankRow.height = 22;
+
+      // Hide gridlines and freeze panes so header stays visible
+      wsDetails.views = [{ state: 'frozen', ySplit: headerRowIndex, showGridLines: false }];
+
+      // Autosize columns for the used area (firstCol..lastCol)
+      for (let c = firstCol; c <= lastCol; c++) {
+        let maxLen = 0;
+        for (let r = offsetRow; r <= lastDataRow; r++) {
+          const cell = wsDetails.getCell(r, c);
+          const v = cell.value === null || cell.value === undefined ? '' : String(cell.value);
+          maxLen = Math.max(maxLen, v.length);
+        }
+        // add padding
+        const width = Math.min(Math.max(maxLen + 2, 6), 50);
+        wsDetails.getColumn(c).width = width;
+      }
+
+      // Ensure there's a blank column after the last column (skip one column after data)
+      wsDetails.getColumn(lastCol + 1).width = 4;
+
+      // Outer border: medium border around the occupied data area (header..lastDataRow, firstCol..lastCol)
+      for (let r = headerRowIndex; r <= lastDataRow; r++) {
+        for (let c = firstCol; c <= lastCol; c++) {
+          const cell = wsDetails.getCell(r, c);
+          const border = { ...cell.border };
+          if (r === headerRowIndex) border.top = { style: 'medium' };
+          if (r === lastDataRow) border.bottom = { style: 'medium' };
+          if (c === firstCol) border.left = { style: 'medium' };
+          if (c === lastCol) border.right = { style: 'medium' };
+          cell.border = border;
+        }
+      }
+
+      // Page setup similar to before
+      wsDetails.pageSetup = {
+        horizontalCentered: true,
+        verticalCentered: false,
+        orientation: 'landscape',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        margins: { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
+      };
+
+      // ---------- SHEET 2: WU Summary ----------
+      const ws = wb.addWorksheet('WU Summary');
+      // reuse same offset logic for summary sheet
+      const sOffsetRow = 2;
+      const sOffsetCol = 2;
+      const sFirstCol = sOffsetCol;
+      // Header cols: Country, City, Employee, Contractors, Total
+      const sHeaders = ['Country', 'City', 'Employee', 'Contractors', 'Total'];
+      const sLastCol = sFirstCol + sHeaders.length - 1;
+
+      // Title at offsetRow (merged + coloured + thick border)
+      ws.mergeCells(`${colLetter(sFirstCol)}${sOffsetRow}:${colLetter(sLastCol)}${sOffsetRow}`);
+      const sDateCell = ws.getCell(sOffsetRow, sFirstCol);
+      sDateCell.value = format(pickedDate, 'EEEE, d MMMM, yyyy');
+      sDateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      // Colour & font for summary title (black bg, yellow text)
+      for (let c = sFirstCol; c <= sLastCol; c++) {
+        const cell = ws.getCell(sOffsetRow, c);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+        cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FFFFC107' } };
+        // thick border around title row
+        cell.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+      }
+      ws.getRow(sOffsetRow).height = 22;
+
+      const sHeaderRowIndex = sOffsetRow + 1;
+      // set header row height
+      ws.getRow(sHeaderRowIndex).height = 22;
+
+      // write header values
+      sHeaders.forEach((h, idx) => {
+        const c = sFirstCol + idx;
+        const cell = ws.getCell(sHeaderRowIndex, c);
+        cell.value = h;
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+        cell.font = { name: 'Calibri', size: 11, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        // medium border for header
+        cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+      });
+
+      // Data rows start
+      const sDataStartRow = sHeaderRowIndex + 1;
+      partitionRows.forEach((r, i) => {
+        const rowIndex = sDataStartRow + i;
+        ws.getRow(rowIndex).height = 22; // set data row height to 22
+        sHeaders.forEach((_, idx) => {
+          const c = sFirstCol + idx;
+          const cell = ws.getCell(rowIndex, c);
+          const val = idx === 0 ? (r.country || '') : idx === 1 ? (r.city || '') : idx === 2 ? (r.employee || 0) : idx === 3 ? (r.contractor || 0) : (r.total || 0);
+          cell.value = val;
+          // numeric columns center + number format
+          const isNumeric = idx >= 2;
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          if (isNumeric && typeof val === 'number') cell.numFmt = '#,##0';
+          // thin border
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          cell.font = { name: 'Calibri', size: 10 };
+        });
+      });
+
+      // totals row: add thick border + coloured background (dark gray with white text)
+      const sLastDataRow = (partitionRows?.length ? sDataStartRow + partitionRows.length - 1 : sHeaderRowIndex);
+      const totalsRowIndex = sLastDataRow + 1;
+      const totalEmployees = (partitionRows || []).reduce((s, r) => s + (r.employee || 0), 0);
+      const totalContractors = (partitionRows || []).reduce((s, r) => s + (r.contractor || 0), 0);
+      const totalTotals = (partitionRows || []).reduce((s, r) => s + (r.total || 0), 0);
+
+      const totalsFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF666666' } };
+      const totalsFont = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+
+      // write totals cells and style
+      for (let c = sFirstCol; c <= sLastCol; c++) {
+        const cell = ws.getCell(totalsRowIndex, c);
+        if (c === sFirstCol) cell.value = 'Total';
+        else if (c === sFirstCol + 2) cell.value = totalEmployees;
+        else if (c === sFirstCol + 3) cell.value = totalContractors;
+        else if (c === sFirstCol + 4) cell.value = totalTotals;
+        cell.fill = totalsFill;
+        cell.font = totalsFont;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        // medium border around totals row
+        cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+        if ((c === sFirstCol + 2 || c === sFirstCol + 3 || c === sFirstCol + 4) && typeof cell.value === 'number') {
+          cell.numFmt = '#,##0';
+        }
+      }
+      ws.getRow(totalsRowIndex).height = 22;
+
+      // --- NEW: Ensure full outside medium border around WU Summary occupied area (title..totals)
+      for (let r = sOffsetRow; r <= totalsRowIndex; r++) {
+        for (let c = sFirstCol; c <= sLastCol; c++) {
+          const cell = ws.getCell(r, c);
+          const border = { ...cell.border };
+          if (r === sOffsetRow) border.top = { style: 'medium' };
+          if (r === totalsRowIndex) border.bottom = { style: 'medium' };
+          if (c === sFirstCol) border.left = { style: 'medium' };
+          if (c === sLastCol) border.right = { style: 'medium' };
+          cell.border = border;
+        }
+      }
+
+      // add one blank row & blank column after data
+      const blank = ws.addRow([]);
+      blank.height = 22;
+      ws.getColumn(sLastCol + 1).width = 4;
+
+      // hide gridlines & freeze
+      ws.views = [{ state: 'frozen', ySplit: sHeaderRowIndex, showGridLines: false }];
+
+      // autosize for summary sheet (sFirstCol..sLastCol)
+      for (let c = sFirstCol; c <= sLastCol; c++) {
+        let maxLen = 0;
+        for (let r = sOffsetRow; r <= totalsRowIndex; r++) {
+          const v = ws.getCell(r, c).value === undefined || ws.getCell(r, c).value === null ? '' : String(ws.getCell(r, c).value);
+          maxLen = Math.max(maxLen, v.length);
+        }
+        ws.getColumn(c).width = Math.min(Math.max(maxLen + 2, 6), 40);
+      }
+
+      ws.pageSetup = {
+        orientation: 'landscape',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+        horizontalCentered: true,
+        verticalCentered: false,
+        margins: { left: 0.5, right: 0.5, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 }
+      };
+
+      // save file (filename logic preserved)
+      let cityName = '';
+      if (backendFilterKey) {
+        const fe = Object.keys(apacPartitionDisplay).find(
+          code => apacForwardKey[code] === backendFilterKey || code === backendFilterKey
+        );
+        cityName = fe ? apacPartitionDisplay[fe].city : backendFilterKey;
+      }
+      const filename = cityName
+        ? `Western Union APAC (${cityName}) Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`
+        : `Western Union APAC Headcount Report - ${format(pickedDate, 'd MMMM yyyy')}.xlsx`;
+
+      const buf = await wb.xlsx.writeBuffer();
+      saveAs(new Blob([buf]), filename);
+
+    } catch (err) {
+      console.error('handleExport error:', err);
+    }
+  };
+
+  /* ------------------ handleExportSummary ------------------ */
+  const handleExportSummary = async () => {
+    if (!pickedDate) return;
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Summary');
+
+    const offsetRow = 2;
+    const offsetCol = 2;
+    const firstCol = offsetCol;
+    const headers = ['Country', 'City', 'Employees', 'Contractors', 'Total'];
+    const lastCol = firstCol + headers.length - 1;
+
+    // Title (merged) with colour + thick border
+    ws.mergeCells(`${colLetter(firstCol)}${offsetRow}:${colLetter(lastCol)}${offsetRow}`);
+    for (let c = firstCol; c <= lastCol; c++) {
+      const cell = ws.getCell(offsetRow, c);
+      cell.value = c === firstCol ? format(pickedDate, 'EEEE, d MMMM, yyyy') : ''; // only set on first, merged will show
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } }; // black
+      cell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFC107' } }; // yellow text
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      // thick border around title row
+      cell.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+    }
+    ws.getRow(offsetRow).height = 22;
+
+    // Header row
+    const headerRowIndex = offsetRow + 1;
+    headers.forEach((h, idx) => {
+      const c = firstCol + idx;
+      const cell = ws.getCell(headerRowIndex, c);
+      cell.value = h;
+      cell.height = 22;
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.font = { name: 'Calibri', size: 12, bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      // medium border for header
+      cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+    });
+    ws.getRow(headerRowIndex).height = 22;
+
+    // Data rows
+    const dataStartRow = headerRowIndex + 1;
+    partitionRows.forEach((r, i) => {
+      const rowIndex = dataStartRow + i;
+      ws.getRow(rowIndex).height = 22; // set every data row to 22
+      headers.forEach((_, idx) => {
+        const c = firstCol + idx;
+        const cell = ws.getCell(rowIndex, c);
+        const val = idx === 0 ? (r.country || '') : idx === 1 ? (r.city || '') : idx === 2 ? (r.employee || 0) : idx === 3 ? (r.contractor || 0) : (r.total || 0);
+        cell.value = val;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (idx >= 2 && typeof val === 'number') cell.numFmt = '#,##0';
+        cell.font = { name: 'Calibri', size: 10 };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+    });
+
+    // Totals row: thick border + coloured background
+    const lastDataRow = (partitionRows?.length ? dataStartRow + partitionRows.length - 1 : headerRowIndex);
+    const totalsRowIndex = lastDataRow + 1;
+    const totalEmployees = partitionRows.reduce((s, r) => s + r.employee, 0);
+    const totalContractors = partitionRows.reduce((s, r) => s + r.contractor, 0);
+    const totalTotal = partitionRows.reduce((s, r) => s + r.total, 0);
+
+    const totalsFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF666666' } };
+    const totalsFont = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+
+    for (let c = firstCol; c <= lastCol; c++) {
+      const cell = ws.getCell(totalsRowIndex, c);
+      if (c === firstCol) cell.value = 'Total';
+      if (c === firstCol + 2) cell.value = totalEmployees;
+      if (c === firstCol + 3) cell.value = totalContractors;
+      if (c === firstCol + 4) cell.value = totalTotal;
+      cell.fill = totalsFill;
+      cell.font = totalsFont;
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+      if ((c === firstCol + 2 || c === firstCol + 3 || c === firstCol + 4) && typeof cell.value === 'number') {
+        cell.numFmt = '#,##0';
+      }
+    }
+    ws.getRow(totalsRowIndex).height = 22;
+
+    // --- NEW: Ensure full outside medium border around Summary area (title..totals)
+    for (let r = offsetRow; r <= totalsRowIndex; r++) {
+      for (let c = firstCol; c <= lastCol; c++) {
+        const cell = ws.getCell(r, c);
+        const border = { ...cell.border };
+        if (r === offsetRow) border.top = { style: 'medium' };
+        if (r === totalsRowIndex) border.bottom = { style: 'medium' };
+        if (c === firstCol) border.left = { style: 'medium' };
+        if (c === lastCol) border.right = { style: 'medium' };
+        cell.border = border;
+      }
+    }
+
+    // add blank row after and blank column after
+    const blankRow = ws.addRow([]);
+    blankRow.height = 22;
+    ws.getColumn(lastCol + 1).width = 4;
+
+    // hide gridlines & freeze header
+    ws.views = [{ state: 'frozen', ySplit: headerRowIndex, showGridLines: false }];
+
+    // autosize columns
+    for (let c = firstCol; c <= lastCol; c++) {
+      let maxLen = 0;
+      for (let r = offsetRow; r <= totalsRowIndex; r++) {
+        const v = ws.getCell(r, c).value === undefined || ws.getCell(r, c).value === null ? '' : String(ws.getCell(r, c).value);
+        maxLen = Math.max(maxLen, v.length);
+      }
+      ws.getColumn(c).width = Math.min(Math.max(maxLen + 2, 6), 40);
+    }
+
+    // export
+    const buf = await wb.xlsx.writeBuffer();
+    const safeDate = format(pickedDate, 'yyyyMMdd');
+    const filename = `apac_summary_${safeDate}.xlsx`;
+    saveAs(new Blob([buf]), filename);
+  };
+
+  /* ------------------ handleExportCompanies ------------------ */
+  const handleExportCompanies = async () => {
+    if (!pickedDate || !companyRows.length) return;
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Company Summary');
+
+    const offsetRow = 2;
+    const offsetCol = 2;
+    const firstCol = offsetCol;
+    const headers = ['Country', 'City', 'Company', 'Total'];
+    const lastCol = firstCol + headers.length - 1;
+
+    // Title (merged) with colour + thick border
+    ws.mergeCells(`${colLetter(firstCol)}${offsetRow}:${colLetter(lastCol)}${offsetRow}`);
+    for (let c = firstCol; c <= lastCol; c++) {
+      const cell = ws.getCell(offsetRow, c);
+      cell.value = c === firstCol ? format(pickedDate, 'EEEE, d MMMM, yyyy') : '';
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } };
+      cell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFC107' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'medium' }, right: { style: 'medium' } };
+    }
+    ws.getRow(offsetRow).height = 22;
+
+    // header row
+    const headerRowIndex = offsetRow + 1;
+    headers.forEach((h, idx) => {
+      const c = firstCol + idx;
+      const cell = ws.getCell(headerRowIndex, c);
+      cell.value = h;
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC107' } };
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF000000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+    });
+    ws.getRow(headerRowIndex).height = 22;
+
+    // data rows
+    const dataStartRow = headerRowIndex + 1;
+    companyRows.forEach((r, i) => {
+      const rowIndex = dataStartRow + i;
+      ws.getRow(rowIndex).height = 22;
+      const rowValues = [r.country, r.city, r.company, r.total];
+      rowValues.forEach((val, idx) => {
+        const c = firstCol + idx;
+        const cell = ws.getCell(rowIndex, c);
+        cell.value = val;
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (idx === 3 && typeof val === 'number') cell.numFmt = '#,##0';
+        cell.font = { name: 'Calibri', size: 10 };
+      });
+    });
+
+    // totals row: thick border + coloured background
+    const lastDataRow = dataStartRow + companyRows.length - 1;
+    const totalsRowIndex = lastDataRow + 1;
+    const total = companyRows.reduce((s, r) => s + r.total, 0);
+
+    const totalsFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF666666' } };
+    const totalsFont = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+
+    for (let c = firstCol; c <= lastCol; c++) {
+      const cell = ws.getCell(totalsRowIndex, c);
+      if (c === firstCol) cell.value = 'Total';
+      if (c === firstCol + 3) cell.value = total;
+      cell.fill = totalsFill;
+      cell.font = totalsFont;
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
+      if (c === firstCol + 3 && typeof cell.value === 'number') cell.numFmt = '#,##0';
+    }
+    ws.getRow(totalsRowIndex).height = 22;
+
+    // blank row/col after
+    const blank2 = ws.addRow([]);
+    blank2.height = 22;
+    ws.getColumn(lastCol + 1).width = 4;
+
+    // hide gridlines & freeze
+    ws.views = [{ state: 'frozen', ySplit: headerRowIndex, showGridLines: false }];
+
+    // autosize columns
+    for (let c = firstCol; c <= lastCol; c++) {
+      let maxLen = 0;
+      for (let r = offsetRow; r <= totalsRowIndex; r++) {
+        const v = ws.getCell(r, c).value === undefined || ws.getCell(r, c).value === null ? '' : String(ws.getCell(r, c).value);
+        maxLen = Math.max(maxLen, v.length);
+      }
+      ws.getColumn(c).width = Math.min(Math.max(maxLen + 2, 6), 50);
+    }
+
+    // save
+    const buf = await wb.xlsx.writeBuffer();
+    saveAs(new Blob([buf]), `apac_companies_${format(pickedDate, "yyyyMMdd")}.xlsx`);
+  };
 
 
-        {/* Region Cards */}
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          gap={1}
-          mb={3}
-          sx={{
-            '& > div': {
-              flex: {
-                // xs: '1 1 100%',
-                // sm: '1 1 calc(50% - 8px)',
-                // md: '1 1 calc(33.333% - 12px)',
-                // lg: '1 1 calc(16.66% - 12px)'
-                xs: '1 1 100%',
-                sm: '1 1 calc(50% - 8px)',
-                md: '1 1 calc(25.33% - 10px)',
-                lg: '1 1 calc(13.66% - 12px)'
-              },
-              minWidth: {
-                xs: '100%',
-                sm: '240px',
-                md: '240px',
-                lg: '180px'
-              }
-            }
-          }}
-        >
-          {loading ? (
-            <Skeleton variant="rectangular" width="90%" height={200} />
-          ) : (
-            partitions.map((p, i) => (
-              <Box key={p.name}>
-                <SummaryCard
-                  title={
-                    <Typography
-                      variant="subtitle1"
-                      sx={{
-                        fontWeight: 'bold',
-                        color: '#FFC107',
-                        fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' }
-                      }}
-                    >
-                      {displayNameMap[p.name] || p.name.replace(/^.*\./, '')}
-                    </Typography>
-                  }
-                  total={p.total}
-                  stats={[
-                    { label: 'Employees', value: p.Employee },
-                    { label: 'Contractors', value: p.Contractor }
-                  ]}
-                  sx={{
-                    width: '100%',
-                    border: `2px solid ${palette15[i % palette15.length]}`,
-                    // ✅ Increased heights and enabled content wrapping
-                    height: { xs: 170, sm: 188, md: 185, lg: 190 },
-                    px: { xs: 1, sm: 1.5 },
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    overflow: 'visible'
-                  }}
-                  icon={
-                    <Box
-                      component="img"
-                      src={p.flag}
-                      sx={{ width: { xs: 40, sm: 48 }, height: { xs: 26, sm: 32 } }}
-                    />
-                  }
-                />
-              </Box>
-            ))
-          )}
-        </Box>
-        {/* Main Charts */}
-        <Box
-          display="flex"
-          gap={2}
-          flexWrap="wrap"
-          mb={4}
-          sx={{
-            // prefer 3 across on large, 2 across on md, 1 across on small
-            '& > div': {
-              flex: {
-                xs: '1 1 100%',
-                sm: '1 1 calc(50% - 8px)',
-                md: '1 1 calc(50% - 12px)',
-                lg: '1 1 calc(33.333% - 12px)'
-              },
-              minWidth: { xs: '100%', sm: '320px', md: '360px', lg: '320px' },
-              height: { xs: 'auto', sm: 420, md: 405 }
-            }
-          }}
-        >
-          {chartConfigs.map(({ key, title, body }) => (
-            <Box key={key} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Paper sx={{ p: { xs: 1, sm: 2 }, height: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid #FFC107', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" align="center" sx={{ color: '#FFC107', mb: 1, fontSize: { xs: '1rem', sm: '1.05rem', md: '1.15rem' } }}>{title}</Typography>
-                <Box sx={{ flex: 1, overflow: 'hidden', minHeight: { xs: 220, sm: 260, md: 260 } }}>{body}</Box>
-              </Paper>
-            </Box>
-          ))}
-        </Box>
-      </Container>
-      <Footer />
-    </>
-  );
-}
+  if (loading) return <LoadingSpinner />;
+  if (!data) return null;
 
+  const datePickerSx = {
+    backgroundColor: '#000',
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#FFC107' },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#FFC107' },
+    '& .MuiInputBase-input': { color: '#FFC107' },
+    '& .MuiInputLabel-root': { color: '#FFC107' },
+    '& .MuiInputAdornment-root svg': { color: '#FFC107' },
+  };
+
+  // const companyColSpan = selectedSummaryPartition ? 3 : 4;
+
+
+  r
