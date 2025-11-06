@@ -1,104 +1,214 @@
-chekc also below this two file 
+how to add Singapore in 
+  this 
+ {
+        key: 'quezon',
+        title: 'Philipines - Singapore ',
+        body: quezonCity?.total === 0
+          ? (
+            <Typography color="white" align="center" py={6}>
+              No Quezon City data
+            </Typography>
+          )
+          : (
 
-// src/api/occupancy.service.js
+            <CompositeChartCard
+              title=""
+              data={[
+                {
+                  name: "Quezon City (6thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (6thFloor)"] ?? 0,
+                },
+                {
+                  name: "Quezon City (7thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (7thFloor)"] ?? 0,
+                },
+               
+              ]}
+bar chart
+  title: 'Philipines - Singapore ',
 
-const BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3007';
+const palette15 = [
+  '#4CAF50'];
 
-// In‐memory cache
-const cache = {
-  liveSummary: null,
-  history: new Map(),  // key: either 'global' or the partition name the backend expects
+const flagMap = {
+  'Pune': indiaFlag,
+  'Quezon City': philippinesFlag,
+  'JP.Tokyo': japanFlag,
+  'MY.Kuala Lumpur': malaysiaFlag,
+  'Taguig City': philippinesFlag,
+  'IN.HYD': indiaFlag,
+  'SG.Singapore':SingaporeFlag
 };
 
-/**
- * Fetch live summary (always fresh).
- */
-export async function fetchLiveSummary() {
-  const res = await fetch(`${BASE}/api/occupancy/live-summary`);
-  if (!res.ok) {
-    throw new Error(`Live summary fetch failed: ${res.status}`);
-  }
-  return res.json();
-}
 
-/**
- * Fetch history (global or per‐partition), with in‐memory caching.
- * @param {string} [location] — e.g. 'IN.Pune' from your front‐end router param
- */
-
-export async function fetchHistory(location) {
-  const codeMap = {
-    'IN.Pune': 'Pune',
-    'MY.Kuala Lumpur': 'MY.Kuala Lumpur',
-    'PH.Quezon': 'Quezon City',
-    'PH.Taguig': 'Taguig City',
-    'JP.Tokyo': 'JP.Tokyo',
-    'IN.HYD':'IN.HYD',
-    'SG.Singapore':'Singapore'
-
-  };
-  
-  const key = location ? codeMap[location] || location : 'global';
-  
-  if (cache.history.has(key)) {
-    return cache.history.get(key);
-  }
-
-  const url = key === 'global' 
-    ? `${BASE}/api/occupancy/history`
-    : `${BASE}/api/occupancy/history/${encodeURIComponent(key)}`;
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`History fetch failed: ${res.status}`);
-  
-  let json = await res.json();
-  
-  // Normalize single-city response to match global structure
-  if (key !== 'global') {
-    json.summaryByDate = json.summaryByDate.map(entry => ({
-      ...entry,
-      partitions: {
-        [key]: {
-          Employee: entry.region?.Employee,
-          Contractor: entry.region?.Contractor,
-          total: entry.region?.total
-        }
-      }
-    }));
-  }
-  
-  cache.history.set(key, json);
-  return json;
-}
-/** Clear in‐memory caches (for dev/testing) */
-export function clearCache() {
-  cache.liveSummary = null;
-  cache.history.clear();
-}
-
-// APAC partition list for any selector UI
-export const partitionList = [
-  'IN.Pune',
-  'MY.Kuala Lumpur',
-  'PH.Quezon',
-  'PH.Taguig',
-  'JP.Tokyo',
-  'IN.HYD',
-  'SG.Singapore'
-];
+const displayNameMap = {
+  'IN.HYD': 'Hyderabad',
+  'JP.Tokyo': 'Tokyo',
+  'MY.Kuala Lumpur': 'Kuala Lumpur',
+  'PH.Quezon': 'Quezon City',
+  'PH.Taguig': 'Taguig City',
+  'Pune': 'Pune',
+  'SG.Singapore': 'Singapore',
+};
 
 
+export default function Dashboard() {
+  // 1) Live data hook
+  const { data, loading, error } = useLiveOccupancy(1000);
 
-//src/services/occupancy.service.js
+  // 2) Partitions
+  const regions = data?.realtime || {};
 
-// APAC partition list
-export const partitionList = [
-  'Pune',
-  'Quezon City',
-  'JP.Tokyo',
-  'MY.Kuala Lumpur',
-  'Taguig City',
-  'IN.HYD',
-  'Singapore'
-];
+  // 3) Totals
 
+
+  const partitions = useMemo(() => {
+  return partitionList
+    .map(name => {
+      // collect all region keys that belong to this partition (e.g. all "IN.Pune.*")
+      const matchingKeys = Object.keys(regions).filter(k => k.includes(name));
+
+      // merge totals and floors across all matching keys
+      let total = 0, Employee = 0, Contractor = 0;
+      const mergedFloors = {};
+
+      matchingKeys.forEach(k => {
+        const r = regions[k];
+        if (!r) return;
+        total += r.total || 0;
+        Employee += r.Employee || 0;
+        Contractor += r.Contractor || 0;
+        Object.entries(r.floors || {}).forEach(([f, c]) => {
+          mergedFloors[f] = (mergedFloors[f] || 0) + c;
+        });
+      });
+
+      return {
+        name,
+        total,
+        Employee,
+        Contractor,
+        floors: mergedFloors,
+        flag: flagMap[name] || null
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+}, [regions]);
+
+
+  const todayTot = data?.today?.total || 0;
+  const todayEmp = data?.today?.Employee || 0;
+  const todayCont = data?.today?.Contractor || 0;
+  const realtimeTot = partitions.reduce((sum, p) => sum + p.total, 0);
+  const realtimeEmp = partitions.reduce((sum, p) => sum + p.Employee, 0);
+  const realtimeCont = partitions.reduce((sum, p) => sum + p.Contractor, 0);
+
+  // 4) Regions of interest
+  const pune = partitions.find(p => p.name === 'Pune');
+  const quezonCity = partitions.find(p => p.name === 'Quezon City');
+  const combinedRegions = partitions.filter(p =>
+    ['JP.Tokyo', 'MY.Kuala Lumpur', 'Taguig City','IN.HYD'].includes(p.name)
+  );
+
+  // 5) Pie chart data
+  // const quezonData = useMemo(() => [
+  //   { name: 'Employees', value: quezonCity?.Employee || 0 },
+  //   { name: 'Contractors', value: quezonCity?.Contractor || 0 }
+  // ], [quezonCity?.Employee, quezonCity?.Contractor]);
+
+
+  const asiaPacData = useMemo(() =>
+    combinedRegions.map(r => ({
+      // name: r.name.replace(/^.*\./, ''),
+      name: displayNameMap[r.name] || r.name.replace(/^.*\./, ''),
+      value: r.total,
+      emp: r.Employee,
+      cont: r.Contractor
+    })),
+    [combinedRegions]
+  );
+
+
+  // 6) Prepare floors + chart configs _before_ any returns
+  // 6a) Get only real floors (drop any that came back Unmapped/"Out of office")
+  const floors = Object.entries(pune?.floors || {})
+    .filter(([floorName, _count]) => floorName !== 'Unmapped');
+
+  const puneChartData = useMemo(() => {
+    // Map only the filtered floors; no Unknown bucket needed
+    return floors.map(([f, headcount]) => {
+      // first try Pune-specific capacity, else global
+      const puneKey = `${f} (Pune)`;
+      const capacity =
+        floorCapacities[puneKey] != null
+          ? floorCapacities[puneKey]
+          : buildingCapacities[f] || 0;
+
+      return {
+        name: f,
+        headcount,
+        capacity
+      };
+    });
+  }, [floors]);
+
+
+
+  const chartConfigs = useMemo(() => {
+    return [
+      {
+        key: 'pune',
+        title: 'Pune',
+        body: pune?.total === 0
+          ? (
+            <Typography color="white" align="center" py={6}>
+              No Pune data
+            </Typography>
+          )
+          : (
+            <CompositeChartCard
+
+              data={puneChartData}
+
+              lineColor={palette15[0]}
+              height={250}
+              sx={{ border: 'none' }}
+            />
+          )
+      },
+
+      {
+        key: 'quezon',
+        title: 'Philipines - Singapore ',
+        body: quezonCity?.total === 0
+          ? (
+            <Typography color="white" align="center" py={6}>
+              No Quezon City data
+            </Typography>
+          )
+          : (
+
+            <CompositeChartCard
+              title=""
+              data={[
+                {
+                  name: "Quezon City (6thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["6th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (6thFloor)"] ?? 0,
+                },
+                {
+                  name: "Quezon City (7thFloor)",
+                  headcount: data?.realtime?.["Quezon City"]?.floors?.["7th Floor"] ?? 0,
+                  capacity: buildingCapacities?.["Quezon City (7thFloor)"] ?? 0,
+                },
+               
+              ]}
+
+              lineColor={palette15[1]}
+              height={250}
+              sx={{ border: 'none' }}
+            />
+          )
+      },
