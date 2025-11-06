@@ -2,6 +2,20 @@ in localhost
 this count is not correct, 
 i measn this Quezon City count is wrong
 only this count 
+ "Quezon City": {
+            "total": 104,
+            "Employee": 88,
+            "Contractor": 16,
+            "floors": {
+                "6th Floor": 32,
+                "7th Floor": 72
+            },
+            "zones": {
+                "6th Floor": 32,
+                "7th Floor": 72
+            }
+        },
+
 "Quezon City": {
             "total": 119,
             "Employee": 102,
