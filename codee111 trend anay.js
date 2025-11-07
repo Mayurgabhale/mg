@@ -1,26 +1,21 @@
-const controllerData = JSON.parse(
-  fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
-);
+let fullStatus = [];
 
+function buildControllerStatus() {
+  fullStatus = controllerData.map(controller => {
+    const ip = controller.IP_address.trim();
+    const status = deviceStatus[ip] || "Unknown";
 
+    // If controller offline, mark all doors offline too
+    const doors = controller.Doors.map(d => ({
+      ...d,
+      status: status === "Online" ? "Online" : "Offline",
+    }));
 
-async function pingDevices() {
-  const limit = require("p-limit")(20);
-
-  await Promise.all(
-    devices.map(ip =>
-      limit(async () => {
-        const newStatus = await pingHost(ip);
-        if (deviceStatus[ip] !== newStatus) {
-          logDeviceChange(ip, newStatus);
-        }
-        deviceStatus[ip] = newStatus;
-      })
-    )
-  );
-
-  // ✅ Build Controller + Door Status
-  buildControllerStatus();
-
-  console.log("Updated device status:", deviceStatus);
+    return {
+      controllername: controller.controllername,
+      IP_address: ip,
+      controllerStatus: status,
+      Doors: doors,
+    };
+  });
 }
