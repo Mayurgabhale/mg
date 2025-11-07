@@ -1,7 +1,3 @@
-C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
-C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.json
-[]
-only this all file is empty 
 // npm install xlsx
 const XLSX = require("xlsx");
 const fs = require("fs");
@@ -19,49 +15,67 @@ function readExcel(filePath) {
 
 const rawData = readExcel(inputPath);
 
-// --- Step 2: Forward-fill controllername & IP ---
+console.log("✅ Total rows read:", rawData.length);
+console.log("✅ Sample keys:", Object.keys(rawData[0]));
+
+// --- Step 2: Fix and normalize keys ---
+function normalizeKey(key) {
+  return key.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+// Normalize rows (so even if headers are weird, we still get them)
+const normalizedData = rawData.map((row) => {
+  const obj = {};
+  for (const key in row) {
+    obj[normalizeKey(key)] = row[key];
+  }
+  return obj;
+});
+
+// --- Step 3: Forward-fill controllername & IP ---
 let lastController = "";
 let lastIP = "";
 
-const filledData = rawData.map((row) => {
+const filledData = normalizedData.map((row) => {
   if (row.controllername && row.controllername.trim()) {
     lastController = row.controllername.trim();
   }
-  if (row.IP_address && row.IP_address.toString().trim()) {
-    lastIP = row.IP_address.toString().trim();
+  if (row.ip_address && row.ip_address.toString().trim()) {
+    lastIP = row.ip_address.toString().trim();
   }
   return {
     controllername: lastController,
-    IP_address: lastIP,
-    Door: (row.Door || "").trim(),
-    reader: (row.reader || "").trim()
+    ip_address: lastIP,
+    door: (row.door || "").trim(),
+    reader: (row.reader || "").trim(),
   };
 });
 
-// --- Step 3: Group by controller ---
+// --- Step 4: Group by controller ---
 const grouped = {};
 
 filledData.forEach((row) => {
-  if (!row.controllername || !row.IP_address) return; // skip blanks
+  if (!row.controllername || !row.ip_address) return;
+
   if (!grouped[row.controllername]) {
     grouped[row.controllername] = {
       controllername: row.controllername,
-      IP_address: row.IP_address,
-      Doors: []
+      ip_address: row.ip_address,
+      doors: [],
     };
   }
-  if (row.Door || row.reader) {
-    grouped[row.controllername].Doors.push({
-      Door: row.Door,
-      Reader: row.reader
+
+  if (row.door || row.reader) {
+    grouped[row.controllername].doors.push({
+      Door: row.door,
+      Reader: row.reader,
     });
   }
 });
 
-// --- Step 4: Convert to array ---
+// --- Step 5: Convert and save ---
 const result = Object.values(grouped);
-
-// --- Step 5: Write JSON file ---
 fs.writeFileSync(outputPath, JSON.stringify(result, null, 4), "utf8");
-console.log("✅ Converted successfully to JSON:");
-console.log(outputPath);
+
+console.log("✅ JSON created successfully:", outputPath);
+console.log("Total controllers:", result.length);
