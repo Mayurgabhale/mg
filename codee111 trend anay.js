@@ -1,3 +1,6 @@
+can you redesing this page with more atractive and professal UI, wiht modern page..
+  can you desing this... 
+   i want this morea atractive and different section ok. and  more that you like
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,7 +44,6 @@
 
     main {
       padding: 30px;
-      max-width: 1200px;
       margin: auto;
     }
 
