@@ -1,154 +1,235 @@
-i dont like this and i want this in light theme..
-  wiht more atractive ok wiht different section inlcude visula ok 
-  and more atractive UI
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controllers | Doors & Readers Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Doors & Readers Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Page-specific overrides */
+    :root {
+      --primary: #4a90e2;
+      --accent: #ffb300;
+      --success: #4caf50;
+      --danger: #f44336;
+      --bg: #f9fafc;
+      --card-bg: #ffffff;
+      --border: #e0e0e0;
+      --text: #333;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+    }
+
+    header {
+      background: linear-gradient(90deg, #4a90e2, #66b3ff);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    main {
+      padding: 30px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    /* SUMMARY SECTION */
+    .summary-section {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .summary-card {
+      flex: 1;
+      min-width: 220px;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease;
+    }
+    .summary-card:hover {
+      transform: translateY(-5px);
+    }
+    .summary-card i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--primary);
+    }
+    .summary-card h3 {
+      margin: 5px 0;
+      color: var(--text);
+      font-size: 1rem;
+    }
+    .summary-card p {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    /* CONTROLLERS GRID */
     .controller-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 20px;
-      margin-top: 20px;
     }
 
     .controller-card {
-      background: linear-gradient(145deg, #1c1c1e, #2c2c2e);
-      border-radius: 20px;
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       padding: 20px;
-      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      transition: 0.3s;
     }
     .controller-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      transform: scale(1.02);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
     }
 
     .controller-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
     }
-
     .controller-header h3 {
       font-size: 1.1rem;
-      color: #fff;
-      margin: 0;
+      color: var(--text);
     }
 
     .status-badge {
-      padding: 4px 10px;
+      padding: 4px 12px;
       border-radius: 12px;
-      font-size: 0.8rem;
-      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: white;
       text-transform: uppercase;
     }
-
-    .status-online { background-color: #00e676; }
-    .status-offline { background-color: #ff3d00; }
-
-    .ip-text {
-      color: #aaa;
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-    }
-
-    .doors-container {
-      border-top: 1px solid #444;
-      margin-top: 10px;
-      padding-top: 10px;
-    }
+    .status-online { background: var(--success); }
+    .status-offline { background: var(--danger); }
 
     .door-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 10px;
       margin-top: 10px;
     }
-
     .door-card {
-      background: #212121;
-      border-radius: 12px;
-      padding: 10px;
-      text-align: left;
-      transition: 0.2s ease;
-    }
-    .door-card:hover {
-      background: #292929;
-      transform: scale(1.02);
-    }
-
-    .door-name {
-      font-weight: 600;
+      background: #f8f9fb;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 8px;
       font-size: 0.85rem;
-      color: #ffcc00;
+      text-align: left;
+      transition: background 0.2s;
     }
+    .door-card:hover { background: #f1f7ff; }
+    .door-name { font-weight: 600; color: var(--accent); }
+    .door-info { color: #555; font-size: 0.8rem; }
 
-    .door-info {
-      font-size: 0.75rem;
-      color: #bbb;
-    }
-
-    .door-status {
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
+    /* SEARCH BAR */
     .search-container {
-      margin: 20px 0;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .search-container input {
+      padding: 12px 20px;
+      width: 50%;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+    }
+    .search-container input:focus {
+      box-shadow: 0 0 0 3px rgba(74,144,226,0.2);
+      border-color: var(--primary);
+    }
+
+    /* CHART SECTION */
+    .chart-section {
+      margin-top: 50px;
       text-align: center;
     }
-
-    .search-container input {
-      width: 50%;
+    canvas {
       max-width: 400px;
-      padding: 10px 15px;
-      border-radius: 20px;
-      border: none;
-      background: #2b2b2b;
-      color: #fff;
-      outline: none;
+      margin: auto;
     }
 
-    .search-container input::placeholder {
-      color: #aaa;
+    footer {
+      margin-top: 50px;
+      background: #fafafa;
+      border-top: 1px solid #e0e0e0;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #555;
     }
   </style>
 </head>
 
 <body>
-  <div id="region-title" class="dashboard-header">
-    <div class="region-logo"></div>
-    <div class="header-controls">
-      <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
-    </div>
-  </div>
+  <header>
+    <h1><i class="fas fa-door-open"></i> Doors & Readers Dashboard</h1>
+  </header>
 
-  <div class="container">
-    <main id="content">
-      <h2><i class="fas fa-id-card"></i> Controllers - Doors & Readers</h2>
-
-      <div class="search-container">
-        <input type="text" id="controllerSearch" placeholder="🔍 Search by controller, door, or reader..." />
+  <main>
+    <section class="summary-section">
+      <div class="summary-card">
+        <i class="fas fa-server"></i>
+        <h3>Total Controllers</h3>
+        <p id="totalControllers">0</p>
       </div>
+      <div class="summary-card">
+        <i class="fas fa-plug-circle-bolt"></i>
+        <h3>Online Controllers</h3>
+        <p id="onlineControllers">0</p>
+      </div>
+      <div class="summary-card">
+        <i class="fas fa-door-closed"></i>
+        <h3>Total Doors</h3>
+        <p id="totalDoors">0</p>
+      </div>
+      <div class="summary-card">
+        <i class="fas fa-id-badge"></i>
+        <h3>Total Readers</h3>
+        <p id="totalReaders">0</p>
+      </div>
+    </section>
 
-      <div id="controller-list" class="controller-grid">Loading controllers...</div>
-    </main>
-  </div>
+    <div class="search-container">
+      <input type="text" id="controllerSearch" placeholder="🔍 Search by controller, door, or reader..." />
+    </div>
 
-  <footer class="footer">
-    <p>
-      <img src="images/new-header.png" alt="Company Logo" class="footer-logo" />
-    </p>
-    <p style="color: #fff;">© 2025 VisionWatch | Powered by 
-      <strong style="color: #ffcc00;">Western Union Services India Pvt Ltd.</strong></p>
+    <section id="controller-list" class="controller-grid">Loading controllers...</section>
+
+    <section class="chart-section">
+      <h3>Controller Status Overview</h3>
+      <canvas id="statusChart"></canvas>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 VisionWatch | <strong style="color:var(--primary)">Western Union Services India Pvt Ltd.</strong>
   </footer>
 
   <script>
@@ -156,7 +237,9 @@ i dont like this and i want this in light theme..
       try {
         const res = await fetch('http://localhost/api/controllers/status');
         const controllers = await res.json();
+        renderSummary(controllers);
         renderControllers(controllers);
+        renderChart(controllers);
 
         document.getElementById('controllerSearch').addEventListener('input', (e) => {
           const searchTerm = e.target.value.toLowerCase();
@@ -172,8 +255,19 @@ i dont like this and i want this in light theme..
         });
       } catch (err) {
         console.error(err);
-        document.getElementById('controller-list').textContent = 'Failed to load data.';
+        document.getElementById('controller-list').textContent = '⚠️ Failed to load data.';
       }
+    }
+
+    function renderSummary(data) {
+      const total = data.length;
+      const online = data.filter(c => c.controllerStatus.toLowerCase() === 'online').length;
+      const doors = data.reduce((sum, c) => sum + c.Doors.length, 0);
+      const readers = data.reduce((sum, c) => sum + c.Doors.filter(d => d.Reader).length, 0);
+      document.getElementById('totalControllers').textContent = total;
+      document.getElementById('onlineControllers').textContent = online;
+      document.getElementById('totalDoors').textContent = doors;
+      document.getElementById('totalReaders').textContent = readers;
     }
 
     function renderControllers(data) {
@@ -189,27 +283,23 @@ i dont like this and i want this in light theme..
         card.classList.add('controller-card');
 
         const statusClass = ctrl.controllerStatus.toLowerCase() === 'online' ? 'status-online' : 'status-offline';
-        const statusBadge = `<span class="status-badge ${statusClass}">${ctrl.controllerStatus}</span>`;
 
         card.innerHTML = `
           <div class="controller-header">
             <h3><i class="fas fa-server"></i> ${ctrl.controllername}</h3>
-            ${statusBadge}
+            <span class="status-badge ${statusClass}">${ctrl.controllerStatus}</span>
           </div>
-          <div class="ip-text"><i class="fas fa-network-wired"></i> ${ctrl.IP_address}</div>
-
-          <div class="doors-container">
-            <div class="door-grid">
-              ${ctrl.Doors.map(d => `
-                <div class="door-card">
-                  <div class="door-name">${d.Door}</div>
-                  <div class="door-info"><i class="fas fa-id-badge"></i> Reader: ${d.Reader || 'N/A'}</div>
-                  <div class="door-status ${d.status.toLowerCase()}">
-                    <i class="fas fa-signal"></i> ${d.status}
-                  </div>
+          <div><i class="fas fa-network-wired"></i> ${ctrl.IP_address}</div>
+          <div class="door-grid">
+            ${ctrl.Doors.map(d => `
+              <div class="door-card">
+                <div class="door-name">${d.Door}</div>
+                <div class="door-info"><i class="fas fa-id-badge"></i> ${d.Reader || 'N/A'}</div>
+                <div class="door-status" style="color:${d.status.toLowerCase()==='online'?'green':'red'};">
+                  <i class="fas fa-signal"></i> ${d.status}
                 </div>
-              `).join('')}
-            </div>
+              </div>
+            `).join('')}
           </div>
         `;
 
@@ -217,14 +307,25 @@ i dont like this and i want this in light theme..
       });
     }
 
-    loadControllers();
+    function renderChart(data) {
+      const online = data.filter(c => c.controllerStatus.toLowerCase() === 'online').length;
+      const offline = data.length - online;
+      new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Online', 'Offline'],
+          datasets: [{
+            data: [online, offline],
+            backgroundColor: ['#4caf50', '#f44336']
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('theme-light');
-      const icon = document.querySelector('#themeToggle i');
-      icon.classList.toggle('fa-sun');
-      icon.classList.toggle('fa-moon');
-    });
+    loadControllers();
   </script>
 </body>
 </html>
