@@ -1,3 +1,6 @@
+i dont like this and i want this in light theme..
+  wiht more atractive ok wiht different section inlcude visula ok 
+  and more atractive UI
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -129,13 +132,6 @@
   </div>
 
   <div class="container">
-    <aside id="sidebar">
-      <button class="nav-button" onclick="location.href='index.html'"><i class="fas fa-home"></i> Dashboard</button>
-      <button class="nav-button" onclick="location.href='trend.html'"><i class="fas fa-chart-line"></i> Trend</button>
-      <button class="nav-button" onclick="location.href='summary.html'"><i class="fas fa-table"></i> Summary</button>
-      <button class="nav-button active"><i class="fas fa-door-closed"></i> Doors & Readers</button>
-    </aside>
-
     <main id="content">
       <h2><i class="fas fa-id-card"></i> Controllers - Doors & Readers</h2>
 
