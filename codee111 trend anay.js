@@ -1,3 +1,30 @@
+not wokr getting empty
+[
+    {
+        "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+        "IP_address": "10.199.13.10",
+        "Location": "APAC",
+        "City": "Pune 2nd Floor",
+        "Doors": []
+    },
+    {
+        "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
+        "IP_address": "10.199.8.20",
+        "Location": "APAC",
+        "City": "Pune Podium",
+        "Doors": []
+    },
+    {
+        "controllername": "IN-PUN-PODIUM-ISTAR PRO-02",
+        "IP_address": "10.199.8.21",
+        "Location": "APAC",
+        "City": "Pune Podium",
+        "Doors": []
+    },
+    {
+
+      
+
 const XLSX = require("xlsx");
 const fs = require("fs");
 
