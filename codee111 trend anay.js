@@ -1,28 +1,37 @@
+C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
+we has this two excle file for this excle file we want to creat new json file
+name is ControllerDataWithDoorReader  ok
 
-now we create new senariou 
+in json file i want 
+controllername	IP_address	Location	City Door 	reader 
+ok in json 
+IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
+		APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
+		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
+		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	out:1
+		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74	in:1
+		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0
 
-for example if 
-this IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10 is goes to offline that agians 
-ther main door this 
-Door 	reader
-APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
-APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
-APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
-APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	out:1
-APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74	in:1
-APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0	                
+for this controllername IP_addresst this above door and reader wiht location and city
 
+so i want code for to generate json file for C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
+	two file ok this 
 
-door and reader this alos goes to offline ok..
-    so how to do this in excle file 
-this is main excle file strcute that alread is in project 
+C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
 controllername	IP_address	Location	City
 IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC	Pune 2nd Floor
 IN-PUN-PODIUM-ISTAR PRO-01	10.199.8.20	APAC	Pune Podium
+IN-PUN-PODIUM-ISTAR PRO-02	10.199.8.21	APAC	Pune Podium
+IN-PUN-PODIUM-ISTAR PRO-03	10.199.10.15	APAC	Pune Podium
+IN-PUN-PODIUM-ISTAR ULTRA-4	10.199.8.30	APAC	Pune Podium
 
 
-this is new:: 
-Controller _name	controller_ip 	Door 	reader
+
+
+C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
+controllername	IP_address	Door 	reader
 IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
 		APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
 		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
