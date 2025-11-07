@@ -1,3 +1,7 @@
+C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.json
+[]
+only this all file is empty 
 // npm install xlsx
 const XLSX = require("xlsx");
 const fs = require("fs");
