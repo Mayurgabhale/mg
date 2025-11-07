@@ -1,114 +1,452 @@
-// npm install xlsx
-const XLSX = require("xlsx");
+ok.. now how to do this..
+  for example  thus "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+        "IP_address": "10.199.13.10",
+goes to offline that again i want ot show  "Doors": [
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
+                "Reader": ""
+            }
+        ]
+  this door and read alos offline so how to do this   
+C:\Users\W0024618\Desktop\Backend\src\data\ControllerDataWithDoorReader.json
+[
+    {
+        "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+        "IP_address": "10.199.13.10",
+        "Location": "APAC",
+        "City": "Pune 2nd Floor",
+        "Doors": [
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
+                "Reader": ""
+            }
+        ]
+    },
+    {
+        "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
+        "IP_address": "10.199.8.20",
+        "Location": "APAC",
+        "City": "Pune Podium",
+        "Doors": [
+            {
+                "Door": "APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR",
+                "Reader": ""
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN-PUN-PODIUM-MAIN PODIUM LEFT ENTRY-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN-PUN-PODIUM-RED-RECEPTION TO WS ENTRY 1-DOOR",
+                "Reader": ""
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN-PUN-PODIUM-YELLOW- SERVICE PASSAGE 1 ENTRY-DOOR",
+                "Reader": ""
+            },
+            {
+                "Door": "APAC_IN-PUN-PODIUM-YELLOW-MAIN LIFT LOBBY-DOOR",
+                "Reader": ""
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2 -OUT DOOR",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-OUT DOOR",
+                "Reader": "out:1"
+            }
+        ]
+    },
+    {
+        "controllername": "IN-PUN-PODIUM-ISTAR PRO-02",
+        "IP_address": "10.199.8.21",
+
+
+      this is my privius code ;;; 
+
+read belwo all code carefully and how ot do this... 
+  
+C:\Users\W0024618\Desktop\Backend\src\app.js
+
+
+
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
 const fs = require("fs");
+//const ping = require("ping");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const { getDeviceInfo } = require("./services/excelService");
+const { sendTeamsAlert }    = require("./services/teamsService");
 
-// Paths
-const controllerDataPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\ControllerData.xlsx";
-const controllerWithDoorPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\controllerWithdoor.xlsx";
-const outputJsonPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\ControllerDataWithDoorReader.json";
+const app = express();
+const PORT = process.env.PORT || 80;
 
-/**
- * Read a specific sheet or auto-detect the right one
- */
-function readExcel(filePath) {
-  const workbook = XLSX.readFile(filePath);
-
-  // ✅ Use "NEW" sheet if it exists (this is where your data is)
-  const sheetName = workbook.SheetNames.includes("NEW")
-    ? "NEW"
-    : workbook.SheetNames[0];
-
-  console.log("📄 Reading sheet:", sheetName);
-
-  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+// Helpers
+function pruneOldEntries(entries, days = 30) {
+  const cutoff = DateTime.now().minus({ days }).toMillis();
+  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+}
+function getLogFileForDate(dt) {
+  return `./deviceLogs-${dt.toISODate()}.json`;
 }
 
-/**
- * Normalize Excel headers to consistent field names
- */
-function normalizeRowKeys(row) {
-  const normalized = {};
-  for (const k in row) {
-    const key = k.toString().trim().toLowerCase().replace(/\s+/g, "_");
-    const val = row[k];
-    if (/controller|controllername/.test(key)) normalized.controllername = val;
-    else if (/ip|ip_address|ipaddress/.test(key)) normalized.IP_address = val;
-    else if (/door/.test(key) && !/reader/.test(key)) normalized.Door = val;
-    else if (/reader/.test(key)) normalized.reader = val;
-    else if (/location/.test(key)) normalized.Location = val;
-    else if (/city/.test(key)) normalized.City = val;
-  }
-  return normalized;
+
+
+// Middleware
+app.use(cors({
+    origin: "http://127.0.0.1:5500",
+  //  origin: "http://localhost:3000",
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization",
+}));
+app.use(bodyParser.json());
+
+// Routes
+app.use("/api/regions", regionRoutes);
+
+// Device Status Tracking
+const devices = fetchAllIpAddress();
+let deviceStatus = {};
+
+// Load only today's logs
+const today = DateTime.now().setZone("Asia/Kolkata");
+const todayLogFile = getLogFileForDate(today);
+let todayLogs = fs.existsSync(todayLogFile)
+  ? JSON.parse(fs.readFileSync(todayLogFile, "utf8"))
+  : {};
+
+// Persist today's logs
+function saveTodayLogs() {
+  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
 }
 
-try {
-  // --- Step 1: Load controller data ---
-  const controllerRaw = readExcel(controllerDataPath);
-  const controllerData = controllerRaw.map(normalizeRowKeys);
-
-  // --- Step 2: Load door mapping data (from "NEW" sheet) ---
-  const doorRaw = readExcel(controllerWithDoorPath);
-  const doorNorm = doorRaw.map(normalizeRowKeys);
-
-  const sanitize = (v) => (v === null || v === undefined ? "" : String(v).trim());
-
-  const doorRows = doorNorm.map((r) => ({
-    controllername: sanitize(r.controllername),
-    IP_address: sanitize(r.IP_address),
-    Door: sanitize(r.Door),
-    reader: sanitize(r.reader),
-  }));
-
-  // --- Step 3: Forward & backward fill ---
-  let lastController = "", lastIP = "";
-  for (let i = 0; i < doorRows.length; i++) {
-    if (doorRows[i].controllername) lastController = doorRows[i].controllername;
-    if (doorRows[i].IP_address) lastIP = doorRows[i].IP_address;
-    if (!doorRows[i].controllername) doorRows[i].controllername = lastController;
-    if (!doorRows[i].IP_address) doorRows[i].IP_address = lastIP;
+// Log a status change
+function logDeviceChange(ip, status) {
+  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+  const arr = (todayLogs[ip] = todayLogs[ip] || []);
+  const last = arr[arr.length - 1];
+  if (!last || last.status !== status) {
+    arr.push({ status, timestamp });
+    todayLogs[ip] = pruneOldEntries(arr, 30);
+    saveTodayLogs();
   }
+}
 
-  let nextController = "", nextIP = "";
-  for (let i = doorRows.length - 1; i >= 0; i--) {
-    if (doorRows[i].controllername) nextController = doorRows[i].controllername;
-    if (doorRows[i].IP_address) nextIP = doorRows[i].IP_address;
-    if (!doorRows[i].controllername) doorRows[i].controllername = nextController;
-    if (!doorRows[i].IP_address) doorRows[i].IP_address = nextIP;
-  }
-
-  // --- Step 4: Filter clean rows ---
-  const doorRowsFiltered = doorRows.filter(
-    (r) => r.controllername && r.IP_address && (r.Door || r.reader)
+// Ping devices
+async function pingDevices() {
+const limit = require("p-limit")(20);
+  await Promise.all(
+    devices.map(ip =>
+    limit(async () => {
+        const newStatus = await pingHost(ip);
+        if (deviceStatus[ip] !== newStatus) {
+          logDeviceChange(ip, newStatus);
+        }
+        deviceStatus[ip] = newStatus;
+      })
+    )
   );
+  console.log("Updated device status:", deviceStatus);
+ }
 
-  // --- Step 5: Merge ---
-  const result = controllerData.map((ctrl) => {
-    const ctrlName = sanitize(ctrl.controllername);
-    const ctrlIP = sanitize(ctrl.IP_address);
 
-    const doorsForCtrl = doorRowsFiltered.filter(
-      (d) => d.controllername === ctrlName && d.IP_address === ctrlIP
-    );
 
-    const doorsList = doorsForCtrl.map((d) => ({
-      Door: d.Door,
-      Reader: d.reader,
-    }));
+const notifiedOffline=new Set();
 
-    return {
-      controllername: ctrlName,
-      IP_address: ctrlIP,
-      Location: sanitize(ctrl.Location),
-      City: sanitize(ctrl.City),
-      Doors: doorsList,
-    };
-  });
 
-  // --- Step 6: Save JSON ---
-  fs.writeFileSync(outputJsonPath, JSON.stringify(result, null, 4), "utf8");
+// Start ping loop
+// setInterval(pingDevices, 60_000);
+// pingDevices();
 
-  console.log("✅ JSON written to:", outputJsonPath);
-  console.log("✅ Total controllers:", result.length);
-} catch (err) {
-  console.error("❌ Error:", err.message);
+
+setInterval(async () => {
+   pingDevices();
+ // await checkNotifications();
+}, 60_000);
+
+// initial run
+(async () => {
+   pingDevices();
+  //await checkNotifications();
+})();
+
+
+
+
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+  res.json(deviceStatus);
+});
+
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const combined = {};
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const ip of Object.keys(dayLogs)) {
+      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+    }
+  }
+  // prune to last 30 days
+  for (const ip of Object.keys(combined)) {
+    combined[ip] = pruneOldEntries(combined[ip], 30);
+  }
+  res.json(combined);
+});
+
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+  const region = req.params.region.toLowerCase();
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const regionLogs = {};
+
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const ip of Object.keys(dayLogs)) {
+      if (ipRegionMap[ip] === region) {
+        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+      }
+    }
+  }
+
+  if (!Object.keys(regionLogs).length) {
+    return res.status(404).json({ message: `No device history found for region: ${region}` });
+  }
+  // prune per‑IP
+  for (const ip of Object.keys(regionLogs)) {
+    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+  }
+  res.json(regionLogs);
+});
+
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+  const ip = req.params.ip;
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  let history = [];
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
+  }
+  if (!history.length) {
+    return res.status(404).json({ message: "No history found for this device" });
+  }
+  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  res.json({ ip, history });
+});
+
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+
+-----------
+
+
+C:\Users\W0024618\Desktop\Backend\src\controllers\regionControllers.js
+const { fetchGlobalData, fetchRegionData} = require("../services/excelService");
+
+
+// Global Summary Controller
+const getGlobalSummary = async (req, res) => {
+    try {
+        const globalData = await fetchGlobalData();
+        res.status(200).json({ summary: globalData.summary });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+};
+
+// Global Details Controller
+const getGlobalDetails = async (req, res) => {
+    try {
+        const globalData = await fetchGlobalData();
+        res.status(200).json({ details: globalData.details });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+};
+
+// Region Summary Controller
+const getRegionSummary = async (req, res) => {
+    const { regionName } = req.params;
+    try {
+        const regionData = await fetchRegionData(regionName);
+        res.status(200).json({ summary: regionData.summary });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+};
+
+
+// Region Details Controller
+const getRegionDetails = async (req, res) => {
+    const { regionName } = req.params;
+    try {
+        const regionData = await fetchRegionData(regionName);
+        res.status(200).json({ details: regionData.details });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
+};
+
+module.exports = {
+    getGlobalSummary,
+    getGlobalDetails,
+    getRegionSummary,
+    getRegionDetails,
+};
+
+
+C:\Users\W0024618\Desktop\Backend\src\routes\regionRoutes.js
+//  my code working 
+ const express = require("express");
+ const {
+     getGlobalSummary,
+     getGlobalDetails,
+     getRegionSummary,
+     getRegionDetails,
+ } = require("../controllers/regionControllers");
+ 
+ const router = express.Router();
+ 
+ // Global Routes
+ router.get("/summary/global", getGlobalSummary);
+ router.get("/details/global", getGlobalDetails);
+ 
+ 
+ // Region Routes
+ router.get("/summary/:regionName", getRegionSummary);
+ router.get("/details/:regionName", getRegionDetails)
+ 
+ module.exports = router;
+
+
+C:\Users\W0024618\Desktop\Backend\src\services\pingService.js
+const ping = require("ping");
+const DEFAULT_TIMEOUT = 5; // seconds
+const ICMP_COUNT_FLAG = process.platform === "win32" ? "-n" : "-c";
+
+async function pingHost(ip) {
+  if(typeof ip =="string")ip=ip.trim();
+  try {
+    const res = await ping.promise.probe(ip, {
+      timeout: DEFAULT_TIMEOUT,
+      extra: [ICMP_COUNT_FLAG, "1"],
+    });
+    return res.alive ? "Online" : "Offline";
+  } catch {
+    return "Offline";
+  }
 }
+
+module.exports = { pingHost };
+
+
+
