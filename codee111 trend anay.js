@@ -1,30 +1,63 @@
-i want to only this file covertn into json so whow ot do this 
+// npm install xlsx
+const XLSX = require("xlsx");
+const fs = require("fs");
 
-C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
-controllername	IP_address	Door 	reader
-IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
-		APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
-		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
-		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	out:1
-		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74	in:1
-		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0	                
-IN-PUN-PODIUM-ISTAR PRO-01	10.199.8.20	APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR	                
-		APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door	in:1
-		APAC_IN-PUN-PODIUM-MAIN PODIUM LEFT ENTRY-DOOR	in:1
-		APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR	in:1
-		APAC_IN-PUN-PODIUM-RED-RECEPTION TO WS ENTRY 1-DOOR	                
-		APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)	in:1
-		APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR	in:1
-		APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR	out:1
-		APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)	in:1
-		APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)	out:1
-		APAC_IN-PUN-PODIUM-YELLOW- SERVICE PASSAGE 1 ENTRY-DOOR	                
-		APAC_IN-PUN-PODIUM-YELLOW-MAIN LIFT LOBBY-DOOR	                
-		APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2 -OUT DOOR	out:1
-		APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR	out:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-OUT DOOR	out:1
+// Input and output file paths
+const inputPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\controllerWithdoor.xlsx";
+const outputPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\controllerWithdoor.json";
+
+// --- Step 1: Read Excel ---
+function readExcel(filePath) {
+  const workbook = XLSX.readFile(filePath);
+  const sheet = workbook.SheetNames[0];
+  return XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { defval: "" });
+}
+
+const rawData = readExcel(inputPath);
+
+// --- Step 2: Forward-fill controllername & IP ---
+let lastController = "";
+let lastIP = "";
+
+const filledData = rawData.map((row) => {
+  if (row.controllername && row.controllername.trim()) {
+    lastController = row.controllername.trim();
+  }
+  if (row.IP_address && row.IP_address.toString().trim()) {
+    lastIP = row.IP_address.toString().trim();
+  }
+  return {
+    controllername: lastController,
+    IP_address: lastIP,
+    Door: (row.Door || "").trim(),
+    reader: (row.reader || "").trim()
+  };
+});
+
+// --- Step 3: Group by controller ---
+const grouped = {};
+
+filledData.forEach((row) => {
+  if (!row.controllername || !row.IP_address) return; // skip blanks
+  if (!grouped[row.controllername]) {
+    grouped[row.controllername] = {
+      controllername: row.controllername,
+      IP_address: row.IP_address,
+      Doors: []
+    };
+  }
+  if (row.Door || row.reader) {
+    grouped[row.controllername].Doors.push({
+      Door: row.Door,
+      Reader: row.reader
+    });
+  }
+});
+
+// --- Step 4: Convert to array ---
+const result = Object.values(grouped);
+
+// --- Step 5: Write JSON file ---
+fs.writeFileSync(outputPath, JSON.stringify(result, null, 4), "utf8");
+console.log("✅ Converted successfully to JSON:");
+console.log(outputPath);
