@@ -1,6 +1,3 @@
-can you redesing this page with more atractive and professal UI, wiht modern page..
-  can you desing this... 
-   i want this morea atractive and different section ok. and  more that you like
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,82 +7,127 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* ========== GLOBAL STYLES ========== */
     :root {
-      --primary: #4a90e2;
-      --accent: #ffb300;
+      --primary: #007bff;
+      --secondary: #00bcd4;
+      --accent: #ffc107;
       --success: #4caf50;
       --danger: #f44336;
-      --bg: #f9fafc;
-      --card-bg: #ffffff;
+      --bg: #f5f7fa;
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --text: #2d2d2d;
       --border: #e0e0e0;
-      --text: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--bg);
+      font-family: "Inter", "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #f3f6ff, #eef2f7);
       color: var(--text);
-      margin: 0;
     }
 
+    /* ========== HEADER ========== */
     header {
-      background: linear-gradient(90deg, #4a90e2, #66b3ff);
-      color: white;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: #fff;
+      padding: 16px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
     header h1 {
-      margin: 0;
-      font-size: 1.8rem;
-      letter-spacing: 0.5px;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
+    .search-bar {
+      position: relative;
+    }
+
+    .search-bar input {
+      padding: 10px 40px 10px 16px;
+      border-radius: 20px;
+      border: none;
+      font-size: 1rem;
+      width: 280px;
+      transition: 0.3s;
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+    }
+
+    .search-bar i {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #555;
+    }
+
+    /* ========== MAIN CONTENT ========== */
     main {
       padding: 30px;
+      max-width: 1200px;
       margin: auto;
     }
 
-    /* SUMMARY SECTION */
+    /* ========== SUMMARY CARDS ========== */
     .summary-section {
-      display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 20px;
       margin-bottom: 40px;
     }
 
     .summary-card {
-      flex: 1;
-      min-width: 220px;
       background: var(--card-bg);
-      padding: 20px;
+      backdrop-filter: blur(8px);
       border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 24px;
       text-align: center;
-      border: 1px solid var(--border);
-      transition: transform 0.2s ease;
-    }
-    .summary-card:hover {
-      transform: translateY(-5px);
-    }
-    .summary-card i {
-      font-size: 2rem;
-      margin-bottom: 10px;
-      color: var(--primary);
-    }
-    .summary-card h3 {
-      margin: 5px 0;
-      color: var(--text);
-      font-size: 1rem;
-    }
-    .summary-card p {
-      font-size: 1.4rem;
-      font-weight: bold;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    /* CONTROLLERS GRID */
+    .summary-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .summary-card i {
+      font-size: 2.2rem;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .summary-card h3 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: #444;
+    }
+
+    .summary-card p {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* ========== CONTROLLER GRID ========== */
     .controller-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -94,28 +136,25 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
 
     .controller-card {
       background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       padding: 20px;
+      border: 1px solid var(--border);
       transition: 0.3s;
     }
+
     .controller-card:hover {
       transform: scale(1.02);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     }
 
     .controller-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-      margin-bottom: 10px;
-    }
-    .controller-header h3 {
-      font-size: 1.1rem;
-      color: var(--text);
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .status-badge {
@@ -126,6 +165,7 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
       color: white;
       text-transform: uppercase;
     }
+
     .status-online { background: var(--success); }
     .status-offline { background: var(--danger); }
 
@@ -135,66 +175,60 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
       gap: 10px;
       margin-top: 10px;
     }
+
     .door-card {
-      background: #f8f9fb;
-      border: 1px solid #eee;
+      background: #f9fafe;
       border-radius: 10px;
-      padding: 8px;
-      font-size: 0.85rem;
-      text-align: left;
+      padding: 10px;
+      border: 1px solid #ececec;
       transition: background 0.2s;
     }
-    .door-card:hover { background: #f1f7ff; }
-    .door-name { font-weight: 600; color: var(--accent); }
-    .door-info { color: #555; font-size: 0.8rem; }
 
-    /* SEARCH BAR */
-    .search-container {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .search-container input {
-      padding: 12px 20px;
-      width: 50%;
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      font-size: 1rem;
-      outline: none;
-      transition: 0.3s;
-    }
-    .search-container input:focus {
-      box-shadow: 0 0 0 3px rgba(74,144,226,0.2);
-      border-color: var(--primary);
-    }
+    .door-card:hover { background: #eef5ff; }
+    .door-name { font-weight: 600; color: var(--primary); }
+    .door-info { font-size: 0.8rem; color: #666; }
 
-    /* CHART SECTION */
+    /* ========== CHART SECTION ========== */
     .chart-section {
-      margin-top: 50px;
+      margin-top: 60px;
       text-align: center;
     }
+
+    .chart-section h3 {
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #333;
+    }
+
     canvas {
       max-width: 400px;
       margin: auto;
     }
 
+    /* ========== FOOTER ========== */
     footer {
       margin-top: 50px;
-      background: #fafafa;
-      border-top: 1px solid #e0e0e0;
-      padding: 20px;
       text-align: center;
+      padding: 20px;
       font-size: 0.9rem;
-      color: #555;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
     }
+
+    footer strong { color: var(--primary); }
   </style>
 </head>
-
 <body>
   <header>
     <h1><i class="fas fa-door-open"></i> Doors & Readers Dashboard</h1>
+    <div class="search-bar">
+      <input type="text" id="controllerSearch" placeholder="Search controllers, doors, or readers..." />
+      <i class="fas fa-search"></i>
+    </div>
   </header>
 
   <main>
+    <!-- Summary Section -->
     <section class="summary-section">
       <div class="summary-card">
         <i class="fas fa-server"></i>
@@ -202,7 +236,7 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
         <p id="totalControllers">0</p>
       </div>
       <div class="summary-card">
-        <i class="fas fa-plug-circle-bolt"></i>
+        <i class="fas fa-signal"></i>
         <h3>Online Controllers</h3>
         <p id="onlineControllers">0</p>
       </div>
@@ -218,12 +252,10 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
       </div>
     </section>
 
-    <div class="search-container">
-      <input type="text" id="controllerSearch" placeholder="🔍 Search by controller, door, or reader..." />
-    </div>
-
+    <!-- Controller List -->
     <section id="controller-list" class="controller-grid">Loading controllers...</section>
 
+    <!-- Chart Section -->
     <section class="chart-section">
       <h3>Controller Status Overview</h3>
       <canvas id="statusChart"></canvas>
@@ -231,7 +263,7 @@ can you redesing this page with more atractive and professal UI, wiht modern pag
   </main>
 
   <footer>
-    © 2025 VisionWatch | <strong style="color:var(--primary)">Western Union Services India Pvt Ltd.</strong>
+    © 2025 VisionWatch | <strong>Western Union Services India Pvt Ltd.</strong>
   </footer>
 
   <script>
