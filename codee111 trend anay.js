@@ -1,60 +1,65 @@
-C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
-C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
-we has this two excle file for this excle file we want to creat new json file
-name is ControllerDataWithDoorReader  ok
+// Required packages
+// Run this first if not installed:
+// npm install xlsx fs path
 
-in json file i want 
-controllername	IP_address	Location	City Door 	reader 
-ok in json 
-IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
-		APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
-		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
-		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	out:1
-		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74	in:1
-		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0
+const XLSX = require("xlsx");
+const fs = require("fs");
+const path = require("path");
 
-for this controllername IP_addresst this above door and reader wiht location and city
+// File paths
+const controllerDataPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\ControllerData.xlsx";
+const controllerWithDoorPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\controllerWithdoor.xlsx";
+const outputJsonPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\ControllerDataWithDoorReader.json";
 
-so i want code for to generate json file for C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
-C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
-	two file ok this 
+// Helper function to read Excel file
+function readExcel(filePath) {
+  const workbook = XLSX.readFile(filePath);
+  const sheetName = workbook.SheetNames[0];
+  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+}
 
-C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
-controllername	IP_address	Location	City
-IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC	Pune 2nd Floor
-IN-PUN-PODIUM-ISTAR PRO-01	10.199.8.20	APAC	Pune Podium
-IN-PUN-PODIUM-ISTAR PRO-02	10.199.8.21	APAC	Pune Podium
-IN-PUN-PODIUM-ISTAR PRO-03	10.199.10.15	APAC	Pune Podium
-IN-PUN-PODIUM-ISTAR ULTRA-4	10.199.8.30	APAC	Pune Podium
+// Read both Excel files
+const controllerData = readExcel(controllerDataPath);
+const doorDataRaw = readExcel(controllerWithDoorPath);
 
+// Forward fill controllername and IP_address in doorData
+let lastController = "";
+let lastIP = "";
+const doorData = doorDataRaw.map(row => {
+  if (row.controllername) lastController = row.controllername;
+  if (row.IP_address) lastIP = row.IP_address;
+  return {
+    controllername: lastController,
+    IP_address: lastIP,
+    Door: row.Door || "",
+    reader: row.reader || ""
+  };
+});
 
+// Merge controller data and door mapping
+const result = [];
 
+controllerData.forEach(ctrl => {
+  const matchingDoors = doorData.filter(
+    d => d.controllername === ctrl.controllername && d.IP_address === ctrl.IP_address
+  );
 
-C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
-controllername	IP_address	Door 	reader
-IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
-		APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
-		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
-		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	out:1
-		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74	in:1
-		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0	                
-IN-PUN-PODIUM-ISTAR PRO-01	10.199.8.20	APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR	                
-		APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door	in:1
-		APAC_IN-PUN-PODIUM-MAIN PODIUM LEFT ENTRY-DOOR	in:1
-		APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR	in:1
-		APAC_IN-PUN-PODIUM-RED-RECEPTION TO WS ENTRY 1-DOOR	                
-		APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)	in:1
-		APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR	in:1
-		APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR	out:1
-		APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)	in:1
-		APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)	out:1
-		APAC_IN-PUN-PODIUM-YELLOW- SERVICE PASSAGE 1 ENTRY-DOOR	                
-		APAC_IN-PUN-PODIUM-YELLOW-MAIN LIFT LOBBY-DOOR	                
-		APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	in:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2 -OUT DOOR	out:1
-		APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR	out:1
-		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-OUT DOOR	out:1
+  const doorsList = matchingDoors.map(d => ({
+    Door: d.Door.trim(),
+    Reader: d.reader ? d.reader.trim() : ""
+  }));
+
+  result.push({
+    controllername: ctrl.controllername,
+    IP_address: ctrl.IP_address,
+    Location: ctrl.Location,
+    City: ctrl.City,
+    Doors: doorsList
+  });
+});
+
+// Write to JSON file
+fs.writeFileSync(outputJsonPath, JSON.stringify(result, null, 4), "utf8");
+
+console.log("✅ JSON file created successfully at:");
+console.log(outputJsonPath);
