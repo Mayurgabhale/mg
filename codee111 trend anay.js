@@ -1,3 +1,23 @@
+PS C:\Users\W0024618\Desktop\Backend> node mergeControllerData.js
+✅ Total rows read: 668
+✅ Sample keys: [
+  'Name',
+  'Controller',
+  'Mode Status',
+  'Clearance Filter Level Status',
+  'Partition Name'
+]
+✅ JSON created successfully: C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.json
+Total controllers: 0
+PS C:\Users\W0024618\Desktop\Backend> 
+
+  C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.json
+[]
+
+empty 
+
+
+C:\Users\W0024618\Desktop\Backend\mergeControllerData.js
 // npm install xlsx
 const XLSX = require("xlsx");
 const fs = require("fs");
