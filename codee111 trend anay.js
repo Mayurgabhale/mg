@@ -1,119 +1,30 @@
-// npm install xlsx
-const XLSX = require("xlsx");
-const fs = require("fs");
-const path = require("path");
+i want to only this file covertn into json so whow ot do this 
 
-// Paths (keep as you provided)
-const controllerDataPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\ControllerData.xlsx";
-const controllerWithDoorPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\controllerWithdoor.xlsx";
-const outputJsonPath = "C:\\Users\\W0024618\\Desktop\\Backend\\src\\data\\ControllerDataWithDoorReader.json";
-
-/**
- * Read first sheet and return array of rows (object). defval:"" makes empty cells = ""
- */
-function readExcel(filePath) {
-  const workbook = XLSX.readFile(filePath);
-  const sheetName = workbook.SheetNames[0];
-  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
-}
-
-/**
- * Normalize keys of a row object:
- * Map likely header variants to standard keys:
- *   controllername, IP_address, Door, reader, Location, City
- */
-function normalizeRowKeys(row) {
-  const normalized = {};
-  Object.keys(row).forEach((k) => {
-    const key = k.toString().trim().toLowerCase().replace(/\s+/g, "_");
-    const val = row[k];
-    if (/controller|controllername/.test(key)) normalized.controllername = val;
-    else if (/ip|ip_address|ipaddress/.test(key)) normalized.IP_address = val;
-    else if (/door/.test(key) && !/reader/.test(key)) normalized.Door = val;
-    else if (/reader/.test(key)) normalized.reader = val;
-    else if (/location/.test(key)) normalized.Location = val;
-    else if (/city/.test(key)) normalized.City = val;
-    else {
-      // keep any unexpected columns as-is (optional)
-      normalized[k] = val;
-    }
-  });
-  return normalized;
-}
-
-try {
-  // 1) Load controller master sheet (no blanks expected)
-  const controllerRaw = readExcel(controllerDataPath);
-  const controllerData = controllerRaw.map(normalizeRowKeys);
-
-  // 2) Load door mapping sheet (may have many blanks)
-  const doorRaw = readExcel(controllerWithDoorPath);
-  const doorNorm = doorRaw.map(normalizeRowKeys);
-
-  // 3) Convert all string values to trimmed string (and keep blank as "")
-  const sanitize = (v) => (v === null || v === undefined ? "" : String(v).trim());
-
-  // Apply sanitize to each normalized row
-  const doorRows = doorNorm.map((r) => ({
-    controllername: sanitize(r.controllername),
-    IP_address: sanitize(r.IP_address),
-    Door: sanitize(r.Door),
-    reader: sanitize(r.reader)
-  }));
-
-  // 4) Forward-fill (top -> bottom)
-  let lastController = "";
-  let lastIP = "";
-  for (let i = 0; i < doorRows.length; i++) {
-    if (doorRows[i].controllername) lastController = doorRows[i].controllername;
-    if (doorRows[i].IP_address) lastIP = doorRows[i].IP_address;
-    // if blank, fill with last known (may remain "" if none known)
-    if (!doorRows[i].controllername && lastController) doorRows[i].controllername = lastController;
-    if (!doorRows[i].IP_address && lastIP) doorRows[i].IP_address = lastIP;
-  }
-
-  // 5) Backward-fill (bottom -> top) to handle groups where controller appears below its doors
-  let nextController = "";
-  let nextIP = "";
-  for (let i = doorRows.length - 1; i >= 0; i--) {
-    if (doorRows[i].controllername) nextController = doorRows[i].controllername;
-    if (doorRows[i].IP_address) nextIP = doorRows[i].IP_address;
-    if (!doorRows[i].controllername && nextController) doorRows[i].controllername = nextController;
-    if (!doorRows[i].IP_address && nextIP) doorRows[i].IP_address = nextIP;
-  }
-
-  // (Optional) Remove rows that still have empty controllername or IP (they are orphan rows)
-  const doorRowsFiltered = doorRows.filter((r) => r.controllername && r.IP_address && (r.Door || r.reader));
-
-  // 6) Merge: for each controller from controllerData find all matching doorRowsFiltered
-  const result = controllerData.map((ctrl) => {
-    const ctrlName = sanitize(ctrl.controllername);
-    const ctrlIP = sanitize(ctrl.IP_address);
-    const ctrlLocation = sanitize(ctrl.Location);
-    const ctrlCity = sanitize(ctrl.City);
-
-    const doorsForCtrl = doorRowsFiltered.filter(
-      (d) => d.controllername === ctrlName && d.IP_address === ctrlIP
-    );
-
-    const doorsList = doorsForCtrl.map((d) => ({
-      Door: d.Door,
-      Reader: d.reader
-    }));
-
-    return {
-      controllername: ctrlName,
-      IP_address: ctrlIP,
-      Location: ctrlLocation,
-      City: ctrlCity,
-      Doors: doorsList
-    };
-  });
-
-  // 7) Write JSON
-  fs.writeFileSync(outputJsonPath, JSON.stringify(result, null, 4), "utf8");
-  console.log("✅ JSON written to:", outputJsonPath);
-} catch (err) {
-  console.error("❌ Error:", err.message);
-  console.error(err);
-}
+C:\Users\W0024618\Desktop\Backend\src\data\controllerWithdoor.xlsx
+controllername	IP_address	Door 	reader
+IN-PUN-2NDFLR-ISTAR PRO	10.199.13.10	APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door	in:1
+		APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE	in:1
+		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	in:1
+		APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B	out:1
+		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74	in:1
+		APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0	                
+IN-PUN-PODIUM-ISTAR PRO-01	10.199.8.20	APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR	                
+		APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door	in:1
+		APAC_IN-PUN-PODIUM-MAIN PODIUM LEFT ENTRY-DOOR	in:1
+		APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR	in:1
+		APAC_IN-PUN-PODIUM-RED-RECEPTION TO WS ENTRY 1-DOOR	                
+		APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)	in:1
+		APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR	in:1
+		APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR	out:1
+		APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)	in:1
+		APAC_IN_PUN_PODIUM_ST 1-DOOR 1 (RED)	out:1
+		APAC_IN-PUN-PODIUM-YELLOW- SERVICE PASSAGE 1 ENTRY-DOOR	                
+		APAC_IN-PUN-PODIUM-YELLOW-MAIN LIFT LOBBY-DOOR	                
+		APAC_IN_PUN_PODIUM_ST2 DOOR 2 (YELLOW)	in:1
+		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-DOOR	in:1
+		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2-DOOR	in:1
+		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 3-DOOR	in:1
+		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 4-DOOR	in:1
+		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 2 -OUT DOOR	out:1
+		APAC_IN_PUN-PODIUM_P-1 TURNSTILE 3 -OUT DOOR	out:1
+		APAC_IN_PUN_PODIUM_P-1 TURNSTILE 1-OUT DOOR	out:1
