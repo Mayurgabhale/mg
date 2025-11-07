@@ -1,232 +1,67 @@
-const getStyles = (isDark) => ({
-    // ... your existing styles ...
+other device is work correcty..
+    but server is not work correclt.
+    i measn in this history.
+    store server hisotry only serve downtime is greater thatn 5 minites. 
+    ok only >5 ok
 
-    // 🆕 Compact Upload Styles
-    compactUploadRow: {
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        marginBottom: "20px",
-    },
-
-    compactFileUpload: {
-        flex: 1,
-    },
-
-    compactFileLabel: {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "8px 12px",
-        background: isDark ? "#374151" : "#f3f4f6",
-        border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "500",
-        color: isDark ? "#d1d5db" : "#374151",
-        transition: "all 0.2s ease",
-        ':hover': {
-            background: isDark ? "#4b5563" : "#e5e7eb",
-        }
-    },
-
-    compactButtonGroup: {
-        display: "flex",
-        gap: "8px",
-    },
-
-    compactPrimaryBtn: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "8px",
-        background: "#3b82f6",
-        color: "white",
-        border: "none",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        transition: "all 0.2s ease",
-        minWidth: "36px",
-        ':hover': {
-            background: "#2563eb",
-        }
-    },
-
-    disabledCompactBtn: {
-        ...this.compactPrimaryBtn,
-        background: "#9ca3af",
-        cursor: "not-allowed",
-        ':hover': {
-            background: "#9ca3af",
-        }
-    },
-
-    compactSecondaryBtn: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "8px",
-        background: "transparent",
-        color: isDark ? "#d1d5db" : "#374151",
-        border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        transition: "all 0.2s ease",
-        minWidth: "36px",
-        ':hover': {
-            background: isDark ? "#4b5563" : "#f3f4f6",
-        }
-    },
-
-    compactGhostBtn: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "8px",
-        background: "transparent",
-        color: "#3b82f6",
-        border: "1px solid #3b82f6",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        transition: "all 0.2s ease",
-        minWidth: "36px",
-        ':hover': {
-            background: "rgba(59, 130, 246, 0.1)",
-        }
-    },
-
-    smallSpinner: {
-        width: "14px",
-        height: "14px",
-        border: "2px solid transparent",
-        borderTop: "2px solid currentColor",
-        borderRadius: "50%",
-        animation: "spin 1s linear infinite",
-    },
-
-    // 🆕 Region Cards Styles
-    regionCardsSection: {
-        marginBottom: "24px",
-        paddingBottom: "20px",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e5e7eb",
-    },
-
-    regionCardsGrid: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-        gap: "12px",
-    },
-
-    regionCard: {
-        background: isDark ? "rgba(30, 41, 59, 0.5)" : "#f8fafc",
-        padding: "16px",
-        borderRadius: "8px",
-        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e2e8f0",
-        cursor: "pointer",
-        transition: "all 0.3s ease",
-        textAlign: "center",
-        ':hover': {
-            transform: "translateY(-2px)",
-            boxShadow: isDark ? 
-                "0 4px 12px rgba(0, 0, 0, 0.3)" : 
-                "0 4px 12px rgba(0, 0, 0, 0.1)",
-        }
-    },
-
-    regionCardActive: {
-        borderColor: isDark ? "rgba(59, 130, 246, 0.5)" : "rgba(37, 99, 235, 0.5)",
-        background: isDark ? "rgba(59, 130, 246, 0.1)" : "rgba(37, 99, 235, 0.05)",
-    },
-
-    regionCardHeader: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        marginBottom: "12px",
-    },
-
-    regionIcon: {
-        width: "32px",
-        height: "32px",
-        borderRadius: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "white",
-        fontSize: "14px",
-    },
-
-    regionName: {
-        fontSize: "12px",
-        fontWeight: "700",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-    },
-
-    regionCardStats: {
-        marginBottom: "8px",
-    },
-
-    regionCount: {
-        fontSize: "20px",
-        fontWeight: "800",
-        color: isDark ? "#f1f5f9" : "#0f172a",
-        display: "block",
-        lineHeight: "1.2",
-    },
-
-    regionLabel: {
-        fontSize: "10px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-    },
-
-    regionCardActive: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "4px",
-        fontSize: "10px",
-        color: isDark ? "#94a3b8" : "#6b7280",
-    },
-
-    activeDot: {
-        width: "6px",
-        height: "6px",
-        borderRadius: "50%",
-        background: "#10b981",
-    },
-});
-
-// 🆕 Helper functions for regions
-const getRegionColor = (regionCode) => {
-    const colors = {
-        'GLOBAL': '#6b7280',
-        'APAC': '#dc2626',
-        'EMEA': '#2563eb', 
-        'LACA': '#16a34a',
-        'NAMER': '#7c3aed'
-    };
-    return colors[regionCode] || '#6b7280';
-};
-
-const getRegionIcon = (regionCode) => {
-    const icons = {
-        'GLOBAL': '🌍',
-        'APAC': '🌏',
-        'EMEA': '🌍',
-        'LACA': '🌎',
-        'NAMER': '🌎'
-    };
-    return icons[regionCode] || '📍';
-};
+2	10.64.10.50	LACA Server	Server	LACA	Costa Rica	2d/15h/42m/41s	29	0h/0m/0s	View History	Device is Online, needs repair.
+    Sr. No	Date	Day	Time	Status	Downtime Duration
+1	10/9/2025	Thursday	12:24:25 PM	Offline	-
+2	10/9/2025	Thursday	12:25:04 PM	Online	39s
+3	10/9/2025	Thursday	1:47:25 PM	Offline	-
+4	10/9/2025	Thursday	1:48:04 PM	Online	39s
+5	10/9/2025	Thursday	9:40:26 PM	Offline	-
+6	10/9/2025	Thursday	9:41:04 PM	Online	38s
+7	10/10/2025	Friday	2:41:26 AM	Offline	-
+8	10/10/2025	Friday	2:42:04 AM	Online	38s
+9	10/10/2025	Friday	8:05:09 PM	Offline	-
+10	10/10/2025	Friday	8:05:26 PM	Online	17s
+11	10/13/2025	Monday	7:28:29 PM	Offline	-
+12	10/13/2025	Monday	7:29:06 PM	Online	37s
+13	10/14/2025	Tuesday	10:35:29 PM	Offline	-
+14	10/14/2025	Tuesday	10:36:07 PM	Online	38s
+15	10/16/2025	Thursday	7:16:12 AM	Offline	-
+16	10/16/2025	Thursday	7:16:24 AM	Online	13s
+17	10/17/2025	Friday	2:10:30 AM	Offline	-
+18	10/17/2025	Friday	2:11:08 AM	Online	38s
+19	10/17/2025	Friday	11:05:13 PM	Offline	-
+20	10/17/2025	Friday	11:05:26 PM	Online	13s
+21	10/19/2025	Sunday	4:37:14 PM	Offline	-
+22	10/19/2025	Sunday	4:38:09 PM	Online	55s
+23	10/19/2025	Sunday	5:33:31 PM	Offline	-
+24	10/19/2025	Sunday	5:34:09 PM	Online	38s
+25	10/20/2025	Monday	8:23:36 PM	Offline	-
+26	10/20/2025	Monday	8:24:09 PM	Online	34s
+27	10/20/2025	Monday	8:24:32 PM	Offline	-
+28	10/20/2025	Monday	8:25:09 PM	Online	38s
+29	10/21/2025	Tuesday	8:19:32 PM	Offline	-
+30	10/21/2025	Tuesday	8:20:10 PM	Online	38s
+31	10/22/2025	Wednesday	9:43:39 PM	Offline	-
+32	10/22/2025	Wednesday	9:44:11 PM	Online	32s
+33	10/23/2025	Thursday	12:06:39 AM	Offline	-
+34	10/23/2025	Thursday	12:07:11 AM	Online	32s
+35	10/24/2025	Friday	1:20:17 AM	Offline	-
+36	10/24/2025	Friday	1:20:35 AM	Online	19s
+37	10/25/2025	Saturday	9:55:41 AM	Offline	-
+38	10/25/2025	Saturday	9:56:12 AM	Online	31s
+39	10/26/2025	Sunday	1:40:22 AM	Offline	-
+40	10/26/2025	Sunday	1:40:54 AM	Online	33s
+41	10/26/2025	Sunday	5:44:32 PM	Offline	-
+42	10/27/2025	Monday	10:24:26 AM	Online	16h/39m/54s
+43	10/29/2025	Wednesday	3:35:51 AM	Offline	-
+44	10/29/2025	Wednesday	3:36:26 AM	Online	35s
+45	10/29/2025	Wednesday	4:21:52 AM	Offline	-
+46	10/29/2025	Wednesday	4:22:27 AM	Online	34s
+47	10/29/2025	Wednesday	7:30:31 PM	Offline	-
+48	10/29/2025	Wednesday	7:30:48 PM	Online	17s
+49	10/30/2025	Thursday	10:49:32 PM	Offline	-
+50	10/30/2025	Thursday	10:49:51 PM	Online	19s
+51	11/3/2025	Monday	11:13:24 AM	Online	-
+52	11/3/2025	Monday	8:41:28 PM	Offline	-
+53	11/3/2025	Monday	8:41:44 PM	Online	16s
+54	11/3/2025	Monday	10:48:50 PM	Offline	-
+55	11/3/2025	Monday	10:49:23 PM	Online	34s
+56	11/4/2025	Tuesday	6:42:49 PM	Offline	-
+57	11/4/2025	Tuesday	6:43:24 PM	Online	35s
+58	11/4/2025	Tuesday	8:52:49 PM	Offline	-
+59	11/4/2025	Tuesday	8:53:24 PM	Online	35s
