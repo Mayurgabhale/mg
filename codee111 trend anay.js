@@ -1,4 +1,32 @@
-function renderSummary(data) {
+this is a dyanamic code ok not static ok 
+<script>
+    async function loadControllers() {
+      try {
+        const res = await fetch('http://localhost/api/controllers/status');
+        const controllers = await res.json();
+        renderSummary(controllers);
+        renderControllers(controllers);
+        renderChart(controllers);
+
+        document.getElementById('controllerSearch').addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const filtered = controllers.filter(c =>
+            c.controllername.toLowerCase().includes(searchTerm) ||
+            c.IP_address.toLowerCase().includes(searchTerm) ||
+            c.Doors.some(d =>
+              d.Door.toLowerCase().includes(searchTerm) ||
+              (d.Reader && d.Reader.toLowerCase().includes(searchTerm))
+            )
+          );
+          renderControllers(filtered);
+        });
+      } catch (err) {
+        console.error(err);
+        document.getElementById('controller-list').textContent = '⚠️ Failed to load data.';
+      }
+    }
+
+    function renderSummary(data) {
       const total = data.length;
       const online = data.filter(c => c.controllerStatus.toLowerCase() === 'online').length;
       const doors = data.reduce((sum, c) => sum + c.Doors.length, 0);
@@ -12,49 +40,30 @@ function renderSummary(data) {
     function renderControllers(data) {
       const container = document.getElementById('controller-list');
       container.innerHTML = '';
-      
       if (data.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-light);">
-            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px;"></i>
-            <h3>No matching controllers found</h3>
-            <p>Try adjusting your search terms</p>
-          </div>
-        `;
+        container.innerHTML = '<p>No matching controllers found.</p>';
         return;
       }
 
       data.forEach(ctrl => {
         const card = document.createElement('div');
-        const isOnline = ctrl.controllerStatus.toLowerCase() === 'online';
         card.classList.add('controller-card');
-        if (!isOnline) card.classList.add('offline');
-        
-        const statusClass = isOnline ? 'status-online' : 'status-offline';
+
+        const statusClass = ctrl.controllerStatus.toLowerCase() === 'online' ? 'status-online' : 'status-offline';
 
         card.innerHTML = `
           <div class="controller-header">
-            <div class="controller-title">
-              <i class="fas fa-server"></i>
-              <h3>${ctrl.controllername}</h3>
-            </div>
+            <h3><i class="fas fa-server"></i> ${ctrl.controllername}</h3>
             <span class="status-badge ${statusClass}">${ctrl.controllerStatus}</span>
           </div>
-          <div class="controller-info">
-            <i class="fas fa-network-wired"></i>
-            <span>${ctrl.IP_address}</span>
-          </div>
+          <div><i class="fas fa-network-wired"></i> ${ctrl.IP_address}</div>
           <div class="door-grid">
             ${ctrl.Doors.map(d => `
               <div class="door-card">
                 <div class="door-name">${d.Door}</div>
-                <div class="door-info">
-                  <i class="fas fa-id-badge"></i> 
-                  <span>${d.Reader || 'N/A'}</span>
-                </div>
-                <div class="door-status ${d.status.toLowerCase() === 'online' ? 'status-on' : 'status-off'}">
-                  <i class="fas fa-signal"></i> 
-                  <span>${d.status}</span>
+                <div class="door-info"><i class="fas fa-id-badge"></i> ${d.Reader || 'N/A'}</div>
+                <div class="door-status" style="color:${d.status.toLowerCase()==='online'?'green':'red'};">
+                  <i class="fas fa-signal"></i> ${d.status}
                 </div>
               </div>
             `).join('')}
@@ -68,46 +77,20 @@ function renderSummary(data) {
     function renderChart(data) {
       const online = data.filter(c => c.controllerStatus.toLowerCase() === 'online').length;
       const offline = data.length - online;
-      
-      const ctx = document.getElementById('statusChart').getContext('2d');
-      new Chart(ctx, {
+      new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
         data: {
           labels: ['Online', 'Offline'],
           datasets: [{
             data: [online, offline],
-            backgroundColor: ['#2dce89', '#f5385c'],
-            borderWidth: 0,
-            hoverOffset: 10
+            backgroundColor: ['#4caf50', '#f44336']
           }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: { 
-            legend: { 
-              position: 'bottom',
-              labels: {
-                padding: 20,
-                usePointStyle: true,
-                font: {
-                  size: 13
-                }
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              padding: 12,
-              cornerRadius: 8
-            }
-          },
-          cutout: '70%'
+          plugins: { legend: { position: 'bottom' } }
         }
       });
     }
 
-    // Initialize the dashboard
     loadControllers();
   </script>
-</body>
-</html>
