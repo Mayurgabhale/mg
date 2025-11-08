@@ -161,3 +161,350 @@
 
 
 
+...
+
+
+
+function loadControllersInDetails() {
+  const detailsContainer = document.getElementById("device-details");
+  const extraContainer = document.getElementById("details-container");
+
+  detailsContainer.innerHTML = `
+    <div style="text-align:center; padding:40px 20px;">
+      <div class="loading-spinner" style="margin:0 auto 15px;"></div>
+      <p style="color:#64748b; font-size:16px;">Loading controllers...</p>
+    </div>
+  `;  
+  extraContainer.innerHTML = "";  
+
+  fetch("http://localhost/api/controllers/status")  
+    .then(res => res.json())  
+    .then(data => {  
+      detailsContainer.innerHTML = "";  
+      if (!Array.isArray(data) || data.length === 0) {  
+        detailsContainer.innerHTML = `
+          <div style="text-align:center; padding:40px 20px;">
+            <div style="font-size:48px; margin-bottom:15px;">🔍</div>
+            <h3 style="color:#475569; margin-bottom:8px;">No Controllers Found</h3>
+            <p style="color:#64748b;">There are no controllers available at the moment.</p>
+          </div>
+        `;  
+        return;  
+      }  
+
+      data.forEach(ctrl => {  
+        const card = document.createElement("div");  
+        card.className = "device-card";  
+
+        const statusClass = ctrl.controllerStatus === "Online" ? "status-online" : "status-offline";
+        
+        card.innerHTML = `  
+          <div style="display:flex; justify-content:between; align-items:flex-start; margin-bottom:12px;">
+            <h3 style="font-size:20px; font-weight:600; margin:0; color:#1e293b; flex:1;">
+              ${ctrl.controllername || "Unknown Controller"}  
+            </h3>
+            <span class="status-badge ${statusClass}">
+              ${ctrl.controllerStatus}
+            </span>
+          </div>  
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:15px;">
+            <div style="display:flex; align-items:center; gap:8px; color:#475569;">
+              <span style="font-size:18px;">🌐</span>
+              <div>
+                <div style="font-size:12px; color:#64748b;">IP Address</div>
+                <div style="font-weight:500;">${ctrl.IP_address || "N/A"}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:#475569;">
+              <span style="font-size:18px;">🏙️</span>
+              <div>
+                <div style="font-size:12px; color:#64748b;">City</div>
+                <div style="font-weight:500;">${ctrl.City || "Unknown"}</div>
+              </div>
+            </div>
+          </div>
+        `;  
+
+        card.addEventListener("click", () => showDoorsReaders(ctrl));  
+        detailsContainer.appendChild(card);  
+      });  
+    })  
+    .catch(err => {  
+      console.error("Error loading controllers:", err);  
+      detailsContainer.innerHTML = `
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:48px; margin-bottom:15px;">❌</div>
+          <h3 style="color:#dc2626; margin-bottom:8px;">Failed to Load</h3>
+          <p style="color:#64748b;">Unable to load controllers. Please try again.</p>
+        </div>
+      `;  
+    });
+}
+
+function showDoorsReaders(controller) {
+  if (!controller) return;
+
+  let html = `
+    <div style="margin-bottom:25px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:15px;">
+        <div style="
+          width:50px;
+          height:50px;
+          border-radius:12px;
+          background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:white;
+          font-size:20px;
+        ">🔒</div>
+        <div>
+          <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
+          <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin:25px 0 15px 0; display:flex; align-items:center; justify-content:space-between;">
+      <h4 style="margin:0; color:#374151; font-size:1.1rem;">Doors & Readers</h4>
+      <span class="status-badge ${controller.controllerStatus === "Online" ? "status-online" : "status-offline"}">
+        ${controller.controllerStatus}
+      </span>
+    </div>
+  `;
+
+  if (!controller.Doors || controller.Doors.length === 0) {
+    html += `
+      <div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:12px;">
+        <div style="font-size:48px; margin-bottom:15px;">🚪</div>
+        <h4 style="color:#475569; margin-bottom:8px;">No Doors Found</h4>
+        <p style="color:#64748b; margin:0;">This controller doesn't have any doors configured.</p>
+      </div>
+    `;
+  } else {
+    html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
+    
+    controller.Doors.forEach((door, index) => {
+      const doorStatusClass = door.status === "Online" ? "status-online" : "status-offline";
+      
+      html += `
+        <div class="door-item" style="animation-delay: ${index * 0.1}s;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="
+                width:36px;
+                height:36px;
+                border-radius:8px;
+                background:#f1f5f9;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#475569;
+                font-size:16px;
+              ">🚪</div>
+              <div>
+                <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
+                <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
+              </div>
+            </div>
+            <span class="status-badge ${doorStatusClass}" style="font-size:0.8rem;">
+              ${door.status}
+            </span>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+
+  // Add modal close button interaction
+  const closeBtn = document.getElementById("close-door-modal");
+  if (closeBtn) {
+    closeBtn.addEventListener("mouseenter", function() {
+      this.style.transform = "scale(1.1)";
+    });
+    closeBtn.addEventListener("mouseleave", function() {
+      this.style.transform = "scale(1)";
+    });
+  }
+
+  openDoorModal(html);
+}
+
+
+
+
+
+
+...
+function loadControllersInDetails() {
+  const detailsContainer = document.getElementById("device-details");
+  const extraContainer = document.getElementById("details-container");
+
+  detailsContainer.innerHTML = `
+    <div style="text-align:center; padding:40px 20px;">
+      <div class="loading-spinner" style="margin:0 auto 15px;"></div>
+      <p style="color:#64748b; font-size:16px;">Loading controllers...</p>
+    </div>
+  `;  
+  extraContainer.innerHTML = "";  
+
+  fetch("http://localhost/api/controllers/status")  
+    .then(res => res.json())  
+    .then(data => {  
+      detailsContainer.innerHTML = "";  
+      if (!Array.isArray(data) || data.length === 0) {  
+        detailsContainer.innerHTML = `
+          <div style="text-align:center; padding:40px 20px;">
+            <div style="font-size:48px; margin-bottom:15px;">🔍</div>
+            <h3 style="color:#475569; margin-bottom:8px;">No Controllers Found</h3>
+            <p style="color:#64748b;">There are no controllers available at the moment.</p>
+          </div>
+        `;  
+        return;  
+      }  
+
+      data.forEach(ctrl => {  
+        const card = document.createElement("div");  
+        card.className = "device-card";  
+
+        const statusClass = ctrl.controllerStatus === "Online" ? "status-online" : "status-offline";
+        
+        card.innerHTML = `  
+          <div style="display:flex; justify-content:between; align-items:flex-start; margin-bottom:12px;">
+            <h3 style="font-size:20px; font-weight:600; margin:0; color:#1e293b; flex:1;">
+              ${ctrl.controllername || "Unknown Controller"}  
+            </h3>
+            <span class="status-badge ${statusClass}">
+              ${ctrl.controllerStatus}
+            </span>
+          </div>  
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:15px;">
+            <div style="display:flex; align-items:center; gap:8px; color:#475569;">
+              <span style="font-size:18px;">🌐</span>
+              <div>
+                <div style="font-size:12px; color:#64748b;">IP Address</div>
+                <div style="font-weight:500;">${ctrl.IP_address || "N/A"}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; color:#475569;">
+              <span style="font-size:18px;">🏙️</span>
+              <div>
+                <div style="font-size:12px; color:#64748b;">City</div>
+                <div style="font-weight:500;">${ctrl.City || "Unknown"}</div>
+              </div>
+            </div>
+          </div>
+        `;  
+
+        card.addEventListener("click", () => showDoorsReaders(ctrl));  
+        detailsContainer.appendChild(card);  
+      });  
+    })  
+    .catch(err => {  
+      console.error("Error loading controllers:", err);  
+      detailsContainer.innerHTML = `
+        <div style="text-align:center; padding:40px 20px;">
+          <div style="font-size:48px; margin-bottom:15px;">❌</div>
+          <h3 style="color:#dc2626; margin-bottom:8px;">Failed to Load</h3>
+          <p style="color:#64748b;">Unable to load controllers. Please try again.</p>
+        </div>
+      `;  
+    });
+}
+
+function showDoorsReaders(controller) {
+  if (!controller) return;
+
+  let html = `
+    <div style="margin-bottom:25px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:15px;">
+        <div style="
+          width:50px;
+          height:50px;
+          border-radius:12px;
+          background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:white;
+          font-size:20px;
+        ">🔒</div>
+        <div>
+          <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
+          <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin:25px 0 15px 0; display:flex; align-items:center; justify-content:space-between;">
+      <h4 style="margin:0; color:#374151; font-size:1.1rem;">Doors & Readers</h4>
+      <span class="status-badge ${controller.controllerStatus === "Online" ? "status-online" : "status-offline"}">
+        ${controller.controllerStatus}
+      </span>
+    </div>
+  `;
+
+  if (!controller.Doors || controller.Doors.length === 0) {
+    html += `
+      <div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:12px;">
+        <div style="font-size:48px; margin-bottom:15px;">🚪</div>
+        <h4 style="color:#475569; margin-bottom:8px;">No Doors Found</h4>
+        <p style="color:#64748b; margin:0;">This controller doesn't have any doors configured.</p>
+      </div>
+    `;
+  } else {
+    html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
+    
+    controller.Doors.forEach((door, index) => {
+      const doorStatusClass = door.status === "Online" ? "status-online" : "status-offline";
+      
+      html += `
+        <div class="door-item" style="animation-delay: ${index * 0.1}s;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="
+                width:36px;
+                height:36px;
+                border-radius:8px;
+                background:#f1f5f9;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#475569;
+                font-size:16px;
+              ">🚪</div>
+              <div>
+                <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
+                <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
+              </div>
+            </div>
+            <span class="status-badge ${doorStatusClass}" style="font-size:0.8rem;">
+              ${door.status}
+            </span>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+
+  // Add modal close button interaction
+  const closeBtn = document.getElementById("close-door-modal");
+  if (closeBtn) {
+    closeBtn.addEventListener("mouseenter", function() {
+      this.style.transform = "scale(1.1)";
+    });
+    closeBtn.addEventListener("mouseleave", function() {
+      this.style.transform = "scale(1)";
+    });
+  }
+
+  openDoorModal(html);
+}
+
+
+
+
