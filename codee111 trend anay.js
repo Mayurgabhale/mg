@@ -1,103 +1,14 @@
-know i want to use or add location and city alos.
-  to segricate... 
-  and i want to create propar dashboard wiht side bar working ok.   
-can you desing this  
-[
-  {
-    "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
-    "IP_address": "10.199.13.10",
-    "Location": "APAC",
-    "City": "Pune 2nd Floor",
-    "controllerStatus": "Online",
-    "Doors": [
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
-        "Reader": "out:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
-        "Reader": "",
-        "status": "Online"
-      }
-    ]
-  },
-  {
-    "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
-    "IP_address": "10.199.8.20",
-    "Location": "APAC",
-    "City": "Pune Podium",
-    "controllerStatus": "Online",
-    "Doors": [
-      {
-        "Door": "APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR",
-        "Reader": "",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN-PUN-PODIUM-MAIN PODIUM LEFT ENTRY-DOOR",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN-PUN-PODIUM-RED-RECEPTION TO WS ENTRY 1-DOOR",
-        "Reader": "",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR",
-        "Reader": "out:1",
-        "status": "Online"
-      },
-      {
+Access Control Dashboard with Location and City Segregation
 
-      
+I'll design a comprehensive dashboard with sidebar navigation, location/city segregation, and proper controller/door management based on your data structure.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Doors & Readers Dashboard</title>
+  <title>Access Control Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -320,6 +231,30 @@ can you desing this
       background: var(--bg);
     }
 
+    /* Filters */
+    .filters-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      padding: 10px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 0.9rem;
+      min-width: 180px;
+      outline: none;
+    }
+
+    .filter-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+
     /* SUMMARY SECTION */
     .summary-section {
       display: grid;
@@ -494,11 +429,17 @@ can you desing this
 
     .controller-info {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      flex-direction: column;
+      gap: 8px;
       margin-bottom: 20px;
       color: var(--text-light);
       font-size: 0.9rem;
+    }
+
+    .controller-info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .door-grid {
@@ -526,6 +467,10 @@ can you desing this
       font-weight: 600; 
       color: var(--text);
       margin-bottom: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     
     .door-info { 
@@ -630,6 +575,14 @@ can you desing this
         width: 100%;
         justify-content: space-between;
       }
+      
+      .filters-container {
+        flex-direction: column;
+      }
+      
+      .filter-select {
+        width: 100%;
+      }
     }
 
     @media (max-width: 576px) {
@@ -675,18 +628,10 @@ can you desing this
         <i class="fas fa-id-card"></i>
         <span class="menu-text">Readers</span>
       </li>
-      <!-- <li class="menu-item">
-        <i class="fas fa-users"></i>
-        <span class="menu-text">Users</span>
-      </li> -->
-      <!-- <li class="menu-item">
-        <i class="fas fa-history"></i>
-        <span class="menu-text">Access Logs</span>
-      </li>
       <li class="menu-item">
-        <i class="fas fa-cog"></i>
-        <span class="menu-text">Settings</span>
-      </li> -->
+        <i class="fas fa-map-marker-alt"></i>
+        <span class="menu-text">Locations</span>
+      </li>
     </ul>
     
     <div class="sidebar-footer">
@@ -704,10 +649,10 @@ can you desing this
       </button>
       
       <div class="user-info">
-        <!-- <div class="user-avatar">AD</div> -->
+        <div class="user-avatar">AD</div>
         <div>
-          <!-- <div>Admin User</div>
-          <div style="font-size: 0.8rem; color: var(--text-light);">System Administrator</div> -->
+          <div>Admin User</div>
+          <div style="font-size: 0.8rem; color: var(--text-light);">System Administrator</div>
         </div>
       </div>
     </div>
@@ -717,19 +662,18 @@ can you desing this
       <!-- Page Header -->
       <div class="page-header">
         <div class="page-title">
-          <h1>Doors & Readers Dashboard</h1>
+          <h1>Access Control Dashboard</h1>
           <p>Monitor and manage access control systems</p>
         </div>
         
-        <!-- <div class="page-actions">
-          <button class="btn btn-outline">
+        <div class="page-actions">
+          <button class="btn btn-outline" id="refreshBtn">
             <i class="fas fa-sync-alt"></i> Refresh
           </button>
           <button class="btn btn-primary">
             <i class="fas fa-plus"></i> Add Controller
           </button>
-        </div> -->
-
+        </div>
       </div>
       
       <!-- Summary Cards -->
@@ -775,6 +719,23 @@ can you desing this
         </div>
       </section>
       
+      <!-- Filters -->
+      <div class="filters-container">
+        <select class="filter-select" id="locationFilter">
+          <option value="">All Locations</option>
+        </select>
+        
+        <select class="filter-select" id="cityFilter">
+          <option value="">All Cities</option>
+        </select>
+        
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Status</option>
+          <option value="Online">Online</option>
+          <option value="Offline">Offline</option>
+        </select>
+      </div>
+      
       <!-- Search Bar -->
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
@@ -801,177 +762,91 @@ can you desing this
     </div>
   </div>
 
-
-<script>
-  // Sidebar toggle functionality
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-  const toggleSidebar = document.getElementById('toggleSidebar');
-
-  toggleSidebar.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('expanded');
-  });
-
-  // Mobile sidebar toggle
-  function handleResize() {
-    if (window.innerWidth <= 768) {
-      sidebar.classList.add('collapsed');
-      mainContent.classList.add('expanded');
-    } else {
-      sidebar.classList.remove('collapsed');
-      mainContent.classList.remove('expanded');
-    }
-  }
-
-  window.addEventListener('resize', handleResize);
-  handleResize(); // Initial check
-
-  // ✅ Dynamic API fetch (no mock data)
-  async function loadControllers() {
-    try {
-      // Fetch live data from your API
-      const res = await fetch('http://localhost/api/controllers/status');
-      const controllers = await res.json();
-
-      renderSummary(controllers);
-      renderControllers(controllers);
-      renderChart(controllers);
-
-      // Add live search functionality
-      document.getElementById('controllerSearch').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = controllers.filter(c =>
-          c.controllername.toLowerCase().includes(searchTerm) ||
-          c.IP_address.toLowerCase().includes(searchTerm) ||
-          c.Doors.some(d =>
-            d.Door.toLowerCase().includes(searchTerm) ||
-            (d.Reader && d.Reader.toLowerCase().includes(searchTerm))
-          )
-        );
-        renderControllers(filtered);
-      });
-    } catch (err) {
-      console.error(err);
-      document.getElementById('controller-list').innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--danger);">
-          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
-          <h3>Failed to load data</h3>
-          <p>Please check your API connection and try again.</p>
-        </div>
-      `;
-    }
-  }
-
-  function renderSummary(data) {
-    const total = data.length;
-    const online = data.filter(c => c.controllerStatus.toLowerCase() === 'online').length;
-    const doors = data.reduce((sum, c) => sum + c.Doors.length, 0);
-    const readers = data.reduce((sum, c) => sum + c.Doors.filter(d => d.Reader).length, 0);
-    document.getElementById('totalControllers').textContent = total;
-    document.getElementById('onlineControllers').textContent = online;
-    document.getElementById('totalDoors').textContent = doors;
-    document.getElementById('totalReaders').textContent = readers;
-  }
-
-  function renderControllers(data) {
-    const container = document.getElementById('controller-list');
-    container.innerHTML = '';
-
-    if (data.length === 0) {
-      container.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-light);">
-          <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px;"></i>
-          <h3>No matching controllers found</h3>
-          <p>Try adjusting your search terms</p>
-        </div>
-      `;
-      return;
-    }
-
-    data.forEach(ctrl => {
-      const card = document.createElement('div');
-      const isOnline = ctrl.controllerStatus.toLowerCase() === 'online';
-      card.classList.add('controller-card');
-      if (!isOnline) card.classList.add('offline');
-
-      const statusClass = isOnline ? 'status-online' : 'status-offline';
-
-      card.innerHTML = `
-        <div class="controller-header">
-          <div class="controller-title">
-            <i class="fas fa-server"></i>
-            <h3>${ctrl.controllername}</h3>
-          </div>
-          <span class="status-badge ${statusClass}">${ctrl.controllerStatus}</span>
-        </div>
-        <div class="controller-info">
-          <i class="fas fa-network-wired"></i>
-          <span>${ctrl.IP_address}</span>
-        </div>
-        <div class="door-grid">
-          ${ctrl.Doors.map(d => `
-            <div class="door-card">
-              <div class="door-name">${d.Door}</div>
-              <div class="door-info">
-                <i class="fas fa-id-badge"></i> 
-                <span>${d.Reader || 'N/A'}</span>
-              </div>
-              <div class="door-status ${d.status.toLowerCase() === 'online' ? 'status-on' : 'status-off'}">
-                <i class="fas fa-signal"></i> 
-                <span>${d.status}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-
-      container.appendChild(card);
-    });
-  }
-
-  function renderChart(data) {
-    const online = data.filter(c => c.controllerStatus.toLowerCase() === 'online').length;
-    const offline = data.length - online;
-
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Online', 'Offline'],
-        datasets: [{
-          data: [online, offline],
-          backgroundColor: ['#2dce89', '#f5385c'],
-          borderWidth: 0,
-          hoverOffset: 10
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: { 
-          legend: { 
-            position: 'bottom',
-            labels: {
-              padding: 20,
-              usePointStyle: true,
-              font: { size: 13 }
-            }
+  <script>
+    // Sample data (replace with your actual data)
+    const controllersData = [
+      {
+        "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+        "IP_address": "10.199.13.10",
+        "Location": "APAC",
+        "City": "Pune 2nd Floor",
+        "controllerStatus": "Online",
+        "Doors": [
+          {
+            "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
+            "Reader": "in:1",
+            "status": "Online"
           },
-          tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            padding: 12,
-            cornerRadius: 8
+          {
+            "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+            "Reader": "out:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
+            "Reader": "",
+            "status": "Online"
           }
-        },
-        cutout: '70%'
-      }
-    });
-  }
-
-  // ✅ Initialize the dashboard with live API data
-  loadControllers();
-</script>
-
-</body>
-</html>
+        ]
+      },
+      {
+        "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
+        "IP_address": "10.199.8.20",
+        "Location": "APAC",
+        "City": "Pune Podium",
+        "controllerStatus": "Online",
+        "Doors": [
+          {
+            "Door": "APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR",
+            "Reader": "",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN-PUN-PODIUM-MAIN PODIUM LEFT ENTRY-DOOR",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_PODIUM_MAIN PODIUM RIGHT ENTRY-DOOR",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN-PUN-PODIUM-RED-RECEPTION TO WS ENTRY 1-DOOR",
+            "Reader": "",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_PODIUM_ST2 DOOR 1 (RED)",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR",
+            "Reader": "in:1",
+            "status": "Online"
+          },
+          {
+            "Door": "APAC_IN_PUN_PODIUM_RED_MAIN LIFT LOBBY ENTRY 1-DOOR",
+            "Reader": "out:1",
+            "status": "Online"
