@@ -1,31 +1,42 @@
-// **Fetch summary, details and controllers together**
-function fetchData(regionName) {
-    Promise.all([
-        fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
-        fetch(`${baseUrl}/details/${regionName}`).then(res => res.json()),
-        fetch(`http://localhost/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
-    ])
-    .then(([summary, details, controllerData]) => {
-        console.log("Summary Data:", summary);
-        console.log("Details Data:", details);
-        console.log("Controller Data:", controllerData);
+// Process controllers API to compute doors & readers totals
+function processDoorAndReaderData(controllerData) {
+    // controllerData is expected to be an array of controller objects (per your example)
+    if (!Array.isArray(controllerData)) {
+        return {
+            doors: { total: 0, online: 0, offline: 0 },
+            readers: { total: 0, online: 0, offline: 0 }
+        };
+    }
 
-        // Compute door + reader summary from controllers API
-        const controllerExtras = processDoorAndReaderData(controllerData);
+    let doorsTotal = 0, doorsOnline = 0;
+    let readersTotal = 0, readersOnline = 0;
 
-        // Attach extras into the same structure updateSummary expects:
-        // updateSummary expects an object with a .summary property, so keep that shape.
-        if (!summary.summary) summary.summary = {};
-        summary.summary.controllerExtras = controllerExtras;
+    controllerData.forEach(ctrl => {
+        if (!Array.isArray(ctrl.Doors)) return;
 
-        // Update UI and details
-        updateSummary(summary);
+        ctrl.Doors.forEach(door => {
+            // Count door
+            doorsTotal++;
+            if ((door.status || "").toLowerCase() === "online") doorsOnline++;
 
-        if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
-            updateDetails(details);
-            deviceDetailsCache = details; // Update cache
+            // Count reader only if Reader field is present & non-empty
+            if (door.Reader && door.Reader.toString().trim() !== "") {
+                readersTotal++;
+                if ((door.status || "").toLowerCase() === "online") readersOnline++;
+            }
+        });
+    });
+
+    return {
+        doors: {
+            total: doorsTotal,
+            online: doorsOnline,
+            offline: doorsTotal - doorsOnline
+        },
+        readers: {
+            total: readersTotal,
+            online: readersOnline,
+            offline: readersTotal - readersOnline
         }
-        latestDetails = details;
-    })
-    .catch((error) => console.error("Error fetching data:", error));
+    };
 }
