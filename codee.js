@@ -1,526 +1,365 @@
-in this stored the history only Downtime or Duration is greter thatn 5 miniteu 
-
-history show only wontime is greate thatn 5 minite that time only store the history in this table or ro show  
-show... 
-  only for the server... 
-  other debice is wokr correct for this rule only server is not wokr for this rule ok (downtime is greatet than 5 minites ok ) 
-read below all code caefully,
-  and tell use to where is need to update the logic of the code ok... 
-can you do this.... 
-2	10.64.10.50	LACA Server	Server	LACA	Costa Rica	2d/15h/31m/16s	29	0h/0m/0s	View History	Device is Online, needs repair.
-
-  Device History
-Device Name: LACA Server
-
-Device IP: 10.64.10.50
-  Sr. No	Date	Day	Time	Status	Downtime Duration
-1	10/9/2025	Thursday	12:24:25 PM	Offline	-
-2	10/9/2025	Thursday	12:25:04 PM	Online	39s
-3	10/9/2025	Thursday	1:47:25 PM	Offline	-
-4	10/9/2025	Thursday	1:48:04 PM	Online	39s
-5	10/9/2025	Thursday	9:40:26 PM	Offline	-
-6	10/9/2025	Thursday	9:41:04 PM	Online	38s
-7	10/10/2025	Friday	2:41:26 AM	Offline	-
-8	10/10/2025	Friday	2:42:04 AM	Online	38s
-9	10/10/2025	Friday	8:05:09 PM	Offline	-
-10	10/10/2025	Friday	8:05:26 PM	Online	17s
-11	10/13/2025	Monday	7:28:29 PM	Offline	-
-12	10/13/2025	Monday	7:29:06 PM	Online	37s
-13	10/14/2025	Tuesday	10:35:29 PM	Offline	-
-14	10/14/2025	Tuesday	10:36:07 PM	Online	38s
-15	10/16/2025	Thursday	7:16:12 AM	Offline	-
-16	10/16/2025	Thursday	7:16:24 AM	Online	13s
-17	10/17/2025	Friday	2:10:30 AM	Offline	-
-18	10/17/2025	Friday	2:11:08 AM	Online	38s
-19	10/17/2025	Friday	11:05:13 PM	Offline	-
-20	10/17/2025	Friday	11:05:26 PM	Online	13s
-21	10/19/2025	Sunday	4:37:14 PM	Offline	-
-22	10/19/2025	Sunday	4:38:09 PM	Online	55s
-23	10/19/2025	Sunday	5:33:31 PM	Offline	-
-24	10/19/2025	Sunday	5:34:09 PM	Online	38s
-25	10/20/2025	Monday	8:23:36 PM	Offline	-
-26	10/20/2025	Monday	8:24:09 PM	Online	34s
-27	10/20/2025	Monday	8:24:32 PM	Offline	-
-28	10/20/2025	Monday	8:25:09 PM	Online	38s
-29	10/21/2025	Tuesday	8:19:32 PM	Offline	-
-30	10/21/2025	Tuesday	8:20:10 PM	Online	38s
-31	10/22/2025	Wednesday	9:43:39 PM	Offline	-
-32	10/22/2025	Wednesday	9:44:11 PM	Online	32s
-33	10/23/2025	Thursday	12:06:39 AM	Offline	-
-34	10/23/2025	Thursday	12:07:11 AM	Online	32s
-35	10/24/2025	Friday	1:20:17 AM	Offline	-
-36	10/24/2025	Friday	1:20:35 AM	Online	19s
-37	10/25/2025	Saturday	9:55:41 AM	Offline	-
-38	10/25/2025	Saturday	9:56:12 AM	Online	31s
-39	10/26/2025	Sunday	1:40:22 AM	Offline	-
-40	10/26/2025	Sunday	1:40:54 AM	Online	33s
-41	10/26/2025	Sunday	5:44:32 PM	Offline	-
-42	10/27/2025	Monday	10:24:26 AM	Online	16h/39m/54s
-43	10/29/2025	Wednesday	3:35:51 AM	Offline	-
-44	10/29/2025	Wednesday	3:36:26 AM	Online	35s
-45	10/29/2025	Wednesday	4:21:52 AM	Offline	-
-46	10/29/2025	Wednesday	4:22:27 AM	Online	34s
-47	10/29/2025	Wednesday	7:30:31 PM	Offline	-
-48	10/29/2025	Wednesday	7:30:48 PM	Online	17s
-49	10/30/2025	Thursday	10:49:32 PM	Offline	-
-50	10/30/2025	Thursday	10:49:51 PM	Online	19s
-51	11/3/2025	Monday	11:13:24 AM	Online	-
-52	11/3/2025	Monday	8:41:28 PM	Offline	-
-53	11/3/2025	Monday	8:41:44 PM	Online	16s
-54	11/3/2025	Monday	10:48:50 PM	Offline	-
-55	11/3/2025	Monday	10:49:23 PM	Online	34s
-56	11/4/2025	Tuesday	6:42:49 PM	Offline	-
-57	11/4/2025	Tuesday	6:43:24 PM	Online	35s
-58	11/4/2025	Tuesday	8:52:49 PM	Offline	-
-59	11/4/2025	Tuesday	8:53:24 PM	Online	35s
 
 
+            <div class="summary">
+                <div class="card">
 
+i want to summary card get full widh 
+              then belwo summary card sidebard came ok s
+    so how to do this 
+.container {
+  display: flex;
+  height: auto;
+}
 
-function populateDeviceTable(details, historyData) {
-    const tbody = document.getElementById('device-table').getElementsByTagName('tbody')[0];
-    tbody.innerHTML = '';
-    let list = [];
+/* ===== Sidebar ===== */
 
-    // include PC and DB types alongside existing ones — keep previous logic unchanged otherwise
-    ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'].forEach(type => {
-        details[type]?.forEach(dev => {
-            const ip = dev.ip_address;
-            const safe = sanitizeId(ip);
-            const name = getDeviceName(dev, type);
-            const category = deviceTypeMap[type] || (type.slice(0, -1).toUpperCase());
-            const region = dev.location || 'Unknown';
-            const city = dev.city || 'Unknown';
-            const hist = filterHistoryForDisplay(historyData[ip] || [], category.toUpperCase());
-            const current = dev.status || (hist.length ? hist[hist.length - 1].status : 'Unknown');
-            const downCount = hist.filter(e => e.status === 'Offline').length;
+/* ===== Enhanced Sidebar ===== */
+#sidebar {
+  margin-top: -25px;
+  width: 240px;
+  background: #ffdd00;
+  border-right: 1px solid #e1e1e1;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.03);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #000000;
+  gap: 5px;
+}
 
-            if (current === 'Offline' || downCount > 15) {
-                list.push({ ip, safe, name, category, region, city, current, hist, downCount, remark: dev.remark || '' });
-            }
-        });
-    });
+#sidebar h2 {
+  font-size: 18px;
+  color: #000000;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-    // ✅ Populate the City Filter using the list
-    const cityFilter = document.getElementById('cityFilter');
-    if (cityFilter) {
-        const uniqueCities = [...new Set(list.map(dev => dev.city).filter(Boolean))].sort();
-        cityFilter.innerHTML = '<option value="all">All Cities</option>';
-        uniqueCities.forEach(city => {
-            const option = document.createElement('option');
-            option.value = city;
-            option.textContent = city;
-            cityFilter.appendChild(option);
-        });
+#sidebar label {
+  color: #000000;
+}
 
-        // Ensure listener is only added once
-        if (!cityFilter.dataset.listenerAdded) {
-            cityFilter.addEventListener('change', filterData);
-            cityFilter.dataset.listenerAdded = 'true';
-        }
-    }
+.region-button,
+.nav-button,
+.status-filter {
+  color: #000000;
+  background-color: #f1f3f5;
+  border: 1px solid #dee2e6;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  text-align: left;
+  border-radius: 5px;  
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #000000;
+  outline: none;
 
-    // Sort and count
-    list.sort((a, b) => b.downCount - a.downCount);
-    const downtimeOver15Count = list.filter(d => d.downCount > 15).length;
-    const currentlyOfflineCount = list.filter(d => d.current === 'Offline').length;
-    const setIf = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
-    setIf('count-downtime-over-15', `Devices with >15 downtimes: ${downtimeOver15Count}`);
-    setIf('count-currently-offline', `Devices currently Offline: ${currentlyOfflineCount}`);
+}
 
-    if (!list.length) {
-        const row = tbody.insertRow();
-        const cell = row.insertCell();
-        cell.colSpan = 10;
-        cell.textContent = "No devices found";
-        cell.style.textAlign = "center";
-        cell.style.fontWeight = "bold";
-        updateDisplayedDeviceCount(0);
-        return;
-    }
+.region-button:hover,
+.nav-button:hover,
+.status-filter:hover {
+  background-color: #e9ecef;
+  transform: scale(1.03);
+}
 
-    list.forEach((dev, idx) => {
-        const row = tbody.insertRow();
-        row.classList.add(dev.current === 'Offline' ? 'row-offline' : dev.current === 'Online' ? 'row-online' : 'row-repair');
-        row.style.border = "1px solid black";
-        row.innerHTML = `
-            <td>${idx + 1}</td>
-            <td><span onclick="copyText('${dev.ip}')" style="cursor:pointer;">${dev.ip}</span></td>
-            <td><span onclick="copyText('${dev.name}')" style="cursor:pointer;">${dev.name}</span></td>
-            <td>${dev.category}</td>
-            <td>${dev.region}</td>
-            <td>${dev.city}</td>
-            <td id="uptime-${dev.safe}">0h/0m/0s</td>
-            <td id="downtime-count-${dev.safe}">${dev.downCount}</td>
-            <td id="downtime-${dev.safe}">0h/0m/0s</td>
-            <td><button class="history-btn" onclick="openDeviceHistory('${dev.ip}','${dev.name}','${dev.category}')">View History</button></td>
-            <td id="remark-${dev.safe}">Device working properly</td>
-        `;
+.status-filter.active {
+  background-color: #0d6efd;
+  color: #fff;
+}
 
-        if (dev.current === "Online") {
-            startUptime(dev.ip, dev.hist);
-        } else {
-            startDowntime(dev.ip, dev.hist, dev.category);
-        }
-
-        updateRemarks(dev.ip, dev.hist, dev.category);
-
-        // show modern tooltip for devices marked "Not accessible"
-        const remarkText = (dev.remark || '').toString().trim();
-        if (remarkText && /not\s+access/i.test(remarkText)) {
-            row.classList.add('row-not-accessible');
-
-            // ensure row can position absolute children
-            if (getComputedStyle(row).position === 'static') {
-                row.style.position = 'relative';
-            }
-
-            const tooltip = document.createElement('div');
-            tooltip.className = 'device-access-tooltip';
-            tooltip.textContent = 'Due to Network policy, this camera is Not accessible';
-
-            // inline styles so no external CSS edit required
-            tooltip.style.position = 'absolute';
-            tooltip.style.bottom = '65%';
-            tooltip.style.left = '200px';
-            tooltip.style.padding = '8px 10px';
-            tooltip.style.background = '#313030'; // modern red
-            tooltip.style.color = '#fff';
-            tooltip.style.borderRadius = '6px';
-            tooltip.style.fontSize = '13px';
-            tooltip.style.fontWeight = '600';
-            tooltip.style.whiteSpace = 'nowrap';
-            tooltip.style.pointerEvents = 'none';
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'translateY(6px)';
-            tooltip.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
-            tooltip.style.zIndex = '9999';
-            tooltip.style.boxShadow = '0 6px 14px rgba(0,0,0,0.18)';
-
-            row.appendChild(tooltip);
-
-            row.addEventListener('mouseenter', () => {
-                tooltip.style.opacity = '1';
-                tooltip.style.transform = 'translateY(0)';
-            });
-            row.addEventListener('mouseleave', () => {
-                tooltip.style.opacity = '0';
-                tooltip.style.transform = 'translateY(6px)';
-            });
-
-            // accessible fallback
-            row.title = tooltip.textContent;
-        }
-    });
-
-    filterData();
+select {
+  background-color: #f1f3f5;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  color: #000000;
+  margin-bottom: 14px;
+  font-size: 16px;
+  border: 1px solid #000000;
 }
 
 
 
+/* ===== Main Content ===== */
+#content {
+  flex: 1;
+  /* padding: 20px 30px; */
+  overflow-y: auto;
+}
 
-function filterHistoryForDisplay(hist, category) {
-    const cat = (category || '').toString().toUpperCase();
-    if (cat === 'SERVER') return hist.slice(); // show all for servers
+/* ===== Layout ===== */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.50rem;
+}
 
-    // remove any offline entries that resolve within 5 minutes
-    const filtered = [];
-    let lastOff = null;
-    hist.forEach(e => {
-        if (e.status === 'Offline') {
-            lastOff = e;
-        } else if (e.status === 'Online' && lastOff) {
-            const diff = (new Date(e.timestamp) - new Date(lastOff.timestamp)) / 1000;
-            if (diff >= 300) {
-                filtered.push(lastOff, e);
-            }
-            lastOff = null;
-        } else {
-            filtered.push(e);
-        }
-    });
-    if (lastOff) {
-        const diff = (Date.now() - new Date(lastOff.timestamp)) / 1000;
-        if (diff >= 300) filtered.push(lastOff);
-    }
-    return filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+/* ===== Card Design ===== */
+.card {
+  background: #f0f8fc;
+  border: 1px solid #131313;
+  border-radius: 16px;
+  padding: 18px;
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--card-border));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+  border: 1px solid #000000;
+}
+
+/* ===== Card Title ===== */
+.card h3 {
+  font-size: 20px;
+  font-weight: 500;
+  color: #000000;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: "PP Right Grotesk"
+}
+
+.card h3 i {
+  color: #000000bd;
+}
+
+/*  */
+
+/* ===== Status Boxes ===== */
+.card-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 11px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  font-size: 18px;
+  color: black;
+}
+
+/* Specific Status Styling */
+.card-status.total {
+  border: 1px solid #0a0b0b;
+  font-size: 18px;
+  border-left: 4px solid;
+  border-left-color: #121212;
+  background-color: #ffdd00 !important;
+  color: black;
+  font-weight: 500;
+}
+
+.card-status.online {
+  border: 1px solid black;
+  border-left: 2px solid;
+  font-size: 18px;
+  background-color: #32CD32 !important;
+  font-weight: 500;
+}
+
+.card-status.offline {
+  border: 1px solid black;
+  border-left: 2px solid;
+  font-size: 18px;
+  background-color: #FF0000 !important;
+  font-weight: 500;
 }
 
 
 
-
-function startUptime(ip, hist) {
-    const safe = sanitizeId(ip);
-    clearInterval(deviceDowntimeTimers[safe]);
-    const lastOn = hist.filter(e => e.status === 'Online').pop();
-    if (!lastOn) return;
-    const start = new Date(lastOn.timestamp).getTime();
-    deviceUptimeTimers[safe] = setInterval(() => {
-        const secs = Math.floor((Date.now() - start) / 1000);
-        const el = document.getElementById(`uptime-${safe}`);
-        if (el) el.innerText = formatDuration(secs);
-    }, 1000);
+/* ===== Badge/Text inside card-status ===== */
+.card-status span {
+  font-size: 18px;
 }
 
-function startDowntime(ip, hist, category) {
-    const safe = sanitizeId(ip);
-    clearInterval(deviceUptimeTimers[safe]);
-    const lastOff = hist.filter(e => e.status === 'Offline').pop();
-    if (!lastOff) return;
-    const start = new Date(lastOff.timestamp).getTime();
-    deviceDowntimeTimers[safe] = setInterval(() => {
-        const secs = Math.floor((Date.now() - start) / 1000);
-        const el = document.getElementById(`downtime-${safe}`);
-        if (el) el.innerText = formatDuration(secs);
-        updateDowntimeCount(ip, hist, category);
-    }, 1000);
+/* ===== Divider ===== */
+.section-divider {
+  border: none;
+  height: 2px;
+  background: gray;
+  border-radius: 4px;
+  opacity: 0.8;
 }
 
-function updateDowntimeCount(ip, hist, category) {
-    const safe = sanitizeId(ip);
-    const offs = filterHistoryForDisplay(hist, category).filter(e => e.status === 'Offline');
-    const count = offs.length;
-    const el = document.getElementById(`downtime-count-${safe}`);
-    if (el) el.innerText = count;
-    updateRemarks(ip, hist, category);
+/* ===== Responsive Adjustments ===== */
+@media screen and (max-width: 600px) {
+  .summary {
+    padding: 1rem;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+  }
+
+  .card-status {
+    font-size: 0.9rem;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
 }
 
-function updateRemarks(ip, hist, category) {
-    const safe = sanitizeId(ip);
-    const filteredOffs = filterHistoryForDisplay(hist, category).filter(e => e.status === 'Offline');
-    const count = filteredOffs.length;
-    const lastStatus = hist.length ? hist[hist.length - 1].status : 'Unknown';
-    const el = document.getElementById(`remark-${safe}`);
-    if (!el) return;
+    <div class="container">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <!-- <h2><i class="fas fa-globe"></i></h2> -->
+            <button class="region-button" data-region="global"><i class="fas fa-globe"></i> Global</button>
+            <button class="region-button" data-region="apac"><i class="fas fa-map-marker-alt"></i> APAC</button>
+            <button class="region-button" data-region="emea"><i class="fas fa-map-marker-alt"></i> EMEA</button>
+            <button class="region-button" data-region="laca"><i class="fas fa-map-marker-alt"></i> LACA</button>
+            <button class="region-button" data-region="namer"><i class="fas fa-map-marker-alt"></i> NAMER</button>
 
-    if (lastStatus === 'Offline') {
-        el.innerText = count >= 10 ? "Device is Offline, needs repair." : "Device is Offline.";
-    }
-    else if (lastStatus === 'Online') {
-        if (count >= 10) el.innerText = "Device is Online, needs repair.";
-        else if (count > 0) el.innerText = `Device is Online, it had ${count} downtime occurrences.`;
-        else el.innerText = "Device is Online.";
-    }
-    else {
-        el.innerText = "Device status unknown.";
-    }
-    const dc = document.getElementById(`downtime-count-${safe}`);
-    if (dc) dc.innerText = count;
-}
+            <button class="nav-button" onclick="location.href='trend.html'"><i class="fas fa-chart-line"></i> View Trend
+                Analysis</button>
+            <button class="nav-button" onclick="location.href='summary.html'"><i class="fas fa-table"></i> View Devices
+                Summary</button>
+            <button class="nav-button" onclick="location.href='controllers.html'"><i class="fas fa-table"></i> View Devices
+                Door</button>
 
-function formatDuration(seconds) {
-    const d = Math.floor(seconds / 86400);
-    const h = Math.floor((seconds % 86400) / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.round(seconds % 60);
-    const parts = [];
-    if (d) parts.push(`${d}d`);
-    if (h) parts.push(`${h}h`);
-    if (m) parts.push(`${m}m`);
-    if (s || !parts.length) parts.push(`${s}s`);
-    return parts.join('/');
-}
+            <div id="countdown" class="countdown-timer">Loading Timer...</div>
 
+            <div class="filter-buttons">
+                <button id="filter-all" class="status-filter active" data-status="all"><i
+                        class="fas fa-layer-group"></i> All Devices</button>
+                <button id="filter-online" class="status-filter" data-status="online"><i class="fas fa-wifi"></i> Online
+                    Devices</button>
+                <button id="filter-offline" class="status-filter" data-status="offline"><i
+                        class="fas fa-plug-circle-xmark"></i> Offline Devices</button>
+            </div>
 
-function openDeviceHistory(ip, name, category) {
-    if (!window.deviceHistoryData) {
-        console.error("No history loaded");
-        showToast("History still loading — please try again in a moment.");
-        return;
-    }
-    const raw = window.deviceHistoryData[ip] || [];
-    const hist = filterHistoryForDisplay(raw, (category || '').toUpperCase());
-    displayDeviceHistory(ip, name, category, hist);
-    const modal = document.getElementById('device-history-modal');
-    if (modal) modal.style.display = 'block';
-}
-
-function calculateDowntimeDuration(ts, hist) {
-    const start = new Date(ts).getTime();
-    const nextUp = hist.find(e => e.status === 'Online' && new Date(e.timestamp).getTime() > start);
-    if (nextUp) return formatDuration((new Date(nextUp.timestamp).getTime() - start) / 1000);
-    return formatDuration((Date.now() - start) / 1000);
-}
-
-function displayDeviceHistory(ip, name, category, hist) {
-    const header = document.getElementById('device-history-header');
-    const container = document.getElementById('device-history');
-
-    if (header) {
-        header.innerHTML = `
-            <h2 style="color: var(--yellow); font-size: 24px; margin-bottom: 10px;">Device History</h2>
-            <p><strong>Device Name:</strong> ${name}</p>
-            <p><strong>Device IP:</strong> ${ip}</p>
-            <hr style="margin: 15px 0; border-color: var(--gray);">`;
-    }
-
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    if (!hist.length) {
-        container.innerHTML = `<p style="font-style: italic; color: #555;">No significant history (all brief outages &lt; 5 min).</p>`;
-        return;
-    }
-
-    let html = `
-        <div class="history-table-wrapper" >
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>Sr. No</th>
-                <th>Date</th>
-                <th>Day</th>
-                <th>Time</th>
-                <th>Status</th>
-                <th>Downtime Duration</th>
-              </tr>
-            </thead>
-            <tbody>
-    `;
-
-    let lastOff = null;
-    hist.forEach((e, i) => {
-        const d = new Date(e.timestamp);
-        const date = d.toLocaleDateString();
-        const day = d.toLocaleString('en-US', { weekday: 'long' });
-        const time = d.toLocaleTimeString();
-        let dur = '-';
-        if (e.status === 'Offline') lastOff = e.timestamp;
-        else if (e.status === 'Online' && lastOff) {
-            dur = calculateDowntimeDuration(lastOff, hist);
-            lastOff = null;
-        }
-
-        html += `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${date}</td>
-            <td>${day}</td>
-            <td>${time}</td>
-            <td class="${e.status === 'Offline' ? 'status-offline' : 'status-online'}">${e.status}</td>
-            <td>${dur}</td>
-          </tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-    container.innerHTML = html;
-}
-
-function closeHistoryModal() {
-    const modal = document.getElementById('device-history-modal');
-    if (modal) modal.style.display = 'none';
-}
+            <label for="device-filter">Filter by Device Type:</label>
+            <select id="device-filter">
+                <option value="all">All</option>
+                <option value="cameras">Cameras</option>
+                <option value="archivers">Archivers</option>
+                <option value="controllers">Controllers</option>
+                <option value="servers">CCURE</option>
+                <option value="pcdetails">Desktop Details</option>
+                <option value="dbdetails">DB Server</option>
+            </select>
 
 
 
 
-function filterData() {
-    const searchValue = (document.getElementById('searchBox')?.value || "").toLowerCase();
-    const selectedCity = (document.getElementById('cityFilter')?.value || "").toLowerCase().trim(); // note id: cityFilter
-    const selectedDeviceType = (document.getElementById('device-type')?.value || "all").toLowerCase().trim();
-    const selectedRemark = (document.getElementById('remark-filter')?.value || "all").toLowerCase().trim();
 
-    const rows = document.querySelectorAll('#device-table tbody tr');
-    let visibleCount = 0;
 
-    let totalDevices = 0;
-    let totalOnline = 0;
-    let totalCameras = 0;
-    let totalControllers = 0;
-    let totalArchivers = 0;
-    let totalServers = 0;
-    let totalPCs = 0;
-    let totalDBs = 0;
-    let currentlyOffline = 0;
-    let downtimeOver15 = 0;
+            <label for="vendorFilter" id="vendorFilterLabel">Filter by Camera:</label>
+            <select id="vendorFilter">
+                <option value="all">All camera</option>
+            </select>
 
-    rows.forEach(row => {
-        // skip header / placeholder rows if any
-        if (!row.cells || row.cells.length < 8) return;
+            <label for="city-filter">Filter by Location:</label>
+            <select id="city-filter">
+                <option value="all">All Cities</option>
+            </select>
 
-        const ip = row.cells[1].textContent.trim();
-        const name = (row.cells[2].textContent || "").toLowerCase();
-        const category = (row.cells[3].textContent || "").toLowerCase().trim();
-        const region = (row.cells[4].textContent || "").toLowerCase().trim();
-        const city = (row.cells[5].textContent || "").toLowerCase().trim();
-        const remark = (document.getElementById(`remark-${sanitizeId(ip)}`)?.innerText || "").toLowerCase().trim();
-        const currentStatus = row.classList.contains("row-offline") ? "offline" : "online";
-        const downtimeCount = parseInt(row.cells[7].textContent.trim()) || 0;
+        </aside>
 
-        const matchesSearch = [ip.toLowerCase(), name, category, region, city].some(text =>
-            text.includes(searchValue)
-        );
 
-        const matchesCity = !selectedCity || selectedCity === "all" || city === selectedCity;
-        const matchesType = selectedDeviceType === "all" || category === selectedDeviceType;
-        const matchesRemark = selectedRemark === "all" || remark.includes(selectedRemark);
+        <!-- Main Content -->
+        <main id="content">
 
-        const shouldDisplay = matchesSearch && matchesCity && matchesType && matchesRemark;
-        row.style.display = shouldDisplay ? "" : "none";
 
-        if (shouldDisplay) {
-            visibleCount++;
-            totalDevices++;
-            if (currentStatus === "online") totalOnline++;
-            if (currentStatus === "offline") currentlyOffline++;
-            if (downtimeCount > 15) downtimeOver15++;
+            <div class="summary">
+                <div class="card">
 
-            if (category === "camera") totalCameras++;
-            else if (category === "controller") totalControllers++;
-            else if (category === "archiver") totalArchivers++;
-            else if (category === "server") totalServers++;
-            else if (category === "desktop") totalPCs++;
-            else if (category === "db server") totalDBs++;
-        }
-    });
+                    <h3><i class="fas fa-microchip icon-3d"></i> Total Devices</h3>
+                    <div class="card-status total">Total <span id="total-devices">0</span></div>
+                    <div class="card-status online">Online <span id="online-devices">0</span></div>
+                    <div class="card-status offline">Offline <span id="offline-devices">0</span></div>
+                </div>
 
-    updateDisplayedDeviceCount(visibleCount);
-
-    // Update summary cards based on filtered data
-    const setSummary = (id, iconClass, label, value) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.innerHTML = `<i class="${iconClass}"></i> ${label}: <span style="font-weight:700;">${value}</span>`;
-        }
-    };
-
-    // use the correct variables (not undefined ones)
-    setSummary("total-devices", "fas fa-network-wired", "Total Devices", totalDevices);
-    setSummary("total-online", "fas fa-signal", "Online Devices", totalOnline);
-    setSummary("total-cameras", "fas fa-video", "Total Cameras", totalCameras);
-    setSummary("total-controllers", "fas fa-microchip", "Total Controllers", totalControllers);
-    setSummary("total-archivers", "fas fa-database", "Total Archivers", totalArchivers);
-    setSummary("total-servers", "fas fa-server", "Total Servers", totalServers);
-    setSummary("total-pcs", "fas fa-desktop", "Total Desktop", totalPCs);
-    setSummary("total-dbs", "fas fa-database", "Total DB Server", totalDBs);
-
-    const setText = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = value;
-    };
-
-    setText("count-downtime-over-15", `Devices with >15 downtimes: ${downtimeOver15}`);
-    setText("count-currently-offline", `Devices currently Offline: ${currentlyOffline}`);
-}
+                <div class="card">
+                    <h3><i class="fas fa-video icon-3d"></i> Cameras</h3>
+                    <div class="card-status total">Total <span id="camera-total">0</span></div>
+                    <div class="card-status online">Online <span id="camera-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="camera-offline">0</span></div>
+                </div>
 
 
 
-function updateDisplayedDeviceCount(count) {
-    const el = document.getElementById('device-count');
-    if (el) el.innerText = `Displayed Devices: ${count}`;
-}
+                <div class="card">
+                    <h3><i class="fas fa-database icon-3d"></i> Archivers</h3>
 
-document.addEventListener("DOMContentLoaded", () => {
-    ['region', 'device-type', 'remark-filter'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
-    });
+                    <div class="card-status total">Total <span id="archiver-total">0</span></div>
+                    <div class="card-status online">Online <span id="archiver-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="archiver-offline">0</span></div>
+                </div>
 
-    const cityFilter = document.getElementById('city-filter');
-    if (cityFilter) {
-        cityFilter.addEventListener('change', filterData);
-    }
+                <div class="card">
+                    <h3><i class="fas fa-id-card icon-3d"></i> Controllers</h3>
+                    <div class="card-status total">Total <span id="controller-total">0</span></div>
+                    <div class="card-status online">Online <span id="controller-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="controller-offline">0</span></div>
+                </div>
 
-    fetchDeviceData();
-});
+                <div class="card">
+                    <h3><i class="fas fa-server icon-3d"></i>CCURE</h3>
+                    <div class="card-status total">Total <span id="server-total">0</span></div>
+                    <div class="card-status online">Online <span id="server-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="server-offline">0</span></div>
+                </div>
+
+
+
+
+                <div class="card">
+                    <h3><i class="fas fa-desktop icon-3d"></i>Desktop</h3>
+                    <div class="card-status total">Total <span id="pc-total">0</span></div>
+                    <div class="card-status online">Online <span id="pc-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="pc-offline">0</span></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fa-etch fa-solid fa-database icon-3d"></i>DB Server</h3>
+                    <div class="card-status total">Total <span id="db-total">0</span></div>
+                    <div class="card-status online">Online <span id="db-online">0</span></div>
+                    <div class="card-status offline">Offline <span id="db-offline">0</span></div>
+                </div>
+
+
+
+            </div>
+
+            <!-- <hr class="section-divider"> -->
+
+
+            <!-- Device Details -->
+            <section id="details-section" class="details-section">
+                <div class="details-header">
+                    <h2><i class="fas fa-microchip"></i> Device Details</h2>
+                    <input type="text" id="device-search" placeholder="🔍 Search by IP, Location, City..." />
+                </div>
+
+                <div id="device-details" class="device-grid">Loading...</div>
+                <div id="details-container" class="device-grid"></div>
+            </section>
+
+        </main>
+    </div>
