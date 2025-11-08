@@ -1,167 +1,113 @@
-/* Controller Grid - Specific for controllers only */
-.controller-grid-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  padding: 20px;
+function loadControllersInDetails() {
+    const detailsContainer = document.getElementById("device-details");
+    const extraContainer = document.getElementById("details-container");
+
+    // Clean loading state
+    detailsContainer.innerHTML = `
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading controllers...</p>
+        </div>
+    `;
+    
+    extraContainer.innerHTML = "";
+
+    fetch("http://localhost/api/controllers/status")
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            detailsContainer.innerHTML = "";
+
+            if (!Array.isArray(data) || data.length === 0) {
+                detailsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🏢</div>
+                        <h3>No Controllers</h3>
+                        <p>No access controllers found in the system</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Create SPECIFIC controller grid container
+            const grid = document.createElement("div");
+            grid.className = "controller-grid-container"; // Changed from "controllers-grid"
+            
+            data.forEach(controller => {
+                const card = createControllerCard(controller);
+                grid.appendChild(card);
+            });
+            
+            detailsContainer.appendChild(grid);
+        })
+        .catch(err => {
+            console.error("Error loading controllers:", err);
+            detailsContainer.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Connection Error</h3>
+                    <p>Failed to load controllers from server</p>
+                    <button onclick="loadControllersInDetails()" class="retry-btn">Try Again</button>
+                </div>
+            `;
+        });
 }
 
-/* For smaller screens */
-@media (max-width: 1400px) {
-  .controller-grid-container {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+function createControllerCard(controller) {
+    const card = document.createElement("div");
+    card.className = "controller-card";
+    
+    const isOnline = controller.controllerStatus === "Online";
+    const statusIcon = isOnline ? "🟢" : "🔴";
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="controller-icon">🔒</div>
+            <div class="status-indicator ${isOnline ? 'online' : 'offline'}"></div>
+        </div>
+        
+        <div class="card-body">
+            <h3 class="controller-name">${controller.controllername || "Unnamed Controller"}</h3>
+            
+            <div class="controller-info">
+                <div class="info-item">
+                    <span class="info-label">IP Address</span>
+                    <span class="info-value">${controller.IP_address || "—"}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Location</span>
+                    <span class="info-value">${controller.City || "Unknown"}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status</span>
+                    <span class="status ${isOnline ? 'online' : 'offline'}">
+                        ${statusIcon} ${controller.controllerStatus}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-footer">
+            <button class="view-doors-btn">
+                View Doors
+                <span class="arrow">→</span>
+            </button>
+        </div>
+    `;
 
-@media (max-width: 1024px) {
-  .controller-grid-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
+    // Add click event to the entire card and button
+    const viewBtn = card.querySelector('.view-doors-btn');
+    const handleClick = () => showDoorsReaders(controller);
+    
+    card.addEventListener('click', (e) => {
+        if (!e.target.closest('.view-doors-btn')) {
+            handleClick();
+        }
+    });
+    
+    viewBtn.addEventListener('click', handleClick);
 
-@media (max-width: 768px) {
-  .controller-grid-container {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Controller Card - Specific styling */
-.controller-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-}
-
-.controller-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-  border-color: #3b82f6;
-}
-
-/* Keep all your existing controller card styles below */
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
-}
-
-.controller-icon {
-    font-size: 24px;
-    background: #eff6ff;
-    padding: 12px;
-    border-radius: 8px;
-    color: #3b82f6;
-}
-
-.status-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.status-indicator.online {
-    background: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
-
-.status-indicator.offline {
-    background: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
-}
-
-.controller-name {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 16px 0;
-    line-height: 1.3;
-}
-
-.controller-info {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-grow: 1;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-}
-
-.info-label {
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.info-value {
-    color: #374151;
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.status {
-    font-size: 14px;
-    font-weight: 500;
-    padding: 4px 8px;
-    border-radius: 6px;
-}
-
-.status.online {
-    color: #065f46;
-    background: #d1fae5;
-}
-
-.status.offline {
-    color: #991b1b;
-    background: #fee2e2;
-}
-
-.card-footer {
-    border-top: 1px solid #f3f4f6;
-    padding-top: 16px;
-    margin-top: auto;
-}
-
-.view-doors-btn {
-    width: 100%;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #374151;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s;
-}
-
-.view-doors-btn:hover {
-    background: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-}
-
-.arrow {
-    transition: transform 0.2s;
-}
-
-.view-doors-btn:hover .arrow {
-    transform: translateX(3px);
+    return card;
 }
