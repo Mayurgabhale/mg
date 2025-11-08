@@ -1,123 +1,46 @@
-function loadControllersInDetails() {
-    const detailsContainer = document.getElementById("device-details");
-    const extraContainer = document.getElementById("details-container");
 
-    // Clean loading state
-    detailsContainer.innerHTML = `
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading controllers...</p>
-        </div>
-    `;
+🔒
+IN-PUN-2NDFLR-ISTAR PRO
+IP Address
+10.199.13.10
+Location
+Pune 2nd Floor
+Status
+🟢 Online
+View Doors
+N-PUN-PODIUM-ISTAR PRO-01
+IP Address
+10.199.8.20
+Location
+Pune Podium
+Status
+🟢 Online
+View Doors
+→
+
+now card is disply in one column but i want to disply in... 
+
+    onw row 4 cards 
+
+    IN-PUN-2NDFLR-ISTAR PRO                            🔒
+    IP Address                                         IN-PUN-PODIUM-ISTAR PRO-01
+    10.199.13.10                                        IP Address
+    Location                                            10.199.8.20
+     Pune 2nd Floor                                     Location
+    🟢 Online                                           Pune Podium
+     View Doors                                          Status
+                                                        🟢 Online
+                                                        View Doors
+
+IP Address
+10.199.13.10
+Location
+Pune 2nd Floor
+Status
+🟢 Online
+View Doors   
+
     
-    extraContainer.innerHTML = "";
-
-    fetch("http://localhost/api/controllers/status")
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-        })
-        .then(data => {
-            detailsContainer.innerHTML = "";
-
-            if (!Array.isArray(data) || data.length === 0) {
-                detailsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🏢</div>
-                        <h3>No Controllers</h3>
-                        <p>No access controllers found in the system</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Create controller grid
-            const grid = document.createElement("div");
-            grid.className = "controllers-grid";
-            
-            data.forEach(controller => {
-                const card = createControllerCard(controller);
-                grid.appendChild(card);
-            });
-            
-            detailsContainer.appendChild(grid);
-        })
-        .catch(err => {
-            console.error("Error loading controllers:", err);
-            detailsContainer.innerHTML = `
-                <div class="error-state">
-                    <div class="error-icon">⚠️</div>
-                    <h3>Connection Error</h3>
-                    <p>Failed to load controllers from server</p>
-                    <button onclick="loadControllersInDetails()" class="retry-btn">Try Again</button>
-                </div>
-            `;
-        });
-}
-
-function createControllerCard(controller) {
-    const card = document.createElement("div");
-    card.className = "controller-card";
-    
-    const isOnline = controller.controllerStatus === "Online";
-    const statusIcon = isOnline ? "🟢" : "🔴";
-    
-    card.innerHTML = `
-        <div class="card-header">
-            <div class="controller-icon">🔒</div>
-            <div class="status-indicator ${isOnline ? 'online' : 'offline'}"></div>
-        </div>
-        
-        <div class="card-body">
-            <h3 class="controller-name">${controller.controllername || "Unnamed Controller"}</h3>
-            
-            <div class="controller-info">
-                <div class="info-item">
-                    <span class="info-label">IP Address</span>
-                    <span class="info-value">${controller.IP_address || "—"}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Location</span>
-                    <span class="info-value">${controller.City || "Unknown"}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Status</span>
-                    <span class="status ${isOnline ? 'online' : 'offline'}">
-                        ${statusIcon} ${controller.controllerStatus}
-                    </span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card-footer">
-            <button class="view-doors-btn">
-                View Doors
-                <span class="arrow">→</span>
-            </button>
-        </div>
-    `;
-
-    // Add click event to the entire card and button
-    const viewBtn = card.querySelector('.view-doors-btn');
-    const handleClick = () => showDoorsReaders(controller);
-    
-    card.addEventListener('click', (e) => {
-        if (!e.target.closest('.view-doors-btn')) {
-            handleClick();
-        }
-    });
-    
-    viewBtn.addEventListener('click', handleClick);
-
-    return card;
-}
-
-
-
-
-
-
-
 /* Loading States */
 .loading-state {
     text-align: center;
@@ -184,6 +107,7 @@ function createControllerCard(controller) {
 .controllers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+ 
     gap: 20px;
     padding: 10px 0;
 }
@@ -321,4 +245,130 @@ function createControllerCard(controller) {
 
 .view-doors-btn:hover .arrow {
     transform: translateX(3px);
+}
+
+/* ///////// */
+
+
+
+
+
+
+
+
+
+function loadControllersInDetails() {
+    const detailsContainer = document.getElementById("device-details");
+    const extraContainer = document.getElementById("details-container");
+
+    // Clean loading state
+    detailsContainer.innerHTML = `
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading controllers...</p>
+        </div>
+    `;
+    
+    extraContainer.innerHTML = "";
+
+    fetch("http://localhost/api/controllers/status")
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            detailsContainer.innerHTML = "";
+
+            if (!Array.isArray(data) || data.length === 0) {
+                detailsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🏢</div>
+                        <h3>No Controllers</h3>
+                        <p>No access controllers found in the system</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Create controller grid
+            const grid = document.createElement("div");
+            grid.className = "controllers-grid";
+            
+            data.forEach(controller => {
+                const card = createControllerCard(controller);
+                grid.appendChild(card);
+            });
+            
+            detailsContainer.appendChild(grid);
+        })
+        .catch(err => {
+            console.error("Error loading controllers:", err);
+            detailsContainer.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Connection Error</h3>
+                    <p>Failed to load controllers from server</p>
+                    <button onclick="loadControllersInDetails()" class="retry-btn">Try Again</button>
+                </div>
+            `;
+        });
+}
+
+
+
+function createControllerCard(controller) {
+    const card = document.createElement("div");
+    card.className = "controller-card";
+    
+    const isOnline = controller.controllerStatus === "Online";
+    const statusIcon = isOnline ? "🟢" : "🔴";
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="controller-icon">🔒</div>
+            <div class="status-indicator ${isOnline ? 'online' : 'offline'}"></div>
+        </div>
+        
+        <div class="card-body">
+            <h3 class="controller-name">${controller.controllername || "Unnamed Controller"}</h3>
+            
+            <div class="controller-info">
+                <div class="info-item">
+                    <span class="info-label">IP Address</span>
+                    <span class="info-value">${controller.IP_address || "—"}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Location</span>
+                    <span class="info-value">${controller.City || "Unknown"}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status</span>
+                    <span class="status ${isOnline ? 'online' : 'offline'}">
+                        ${statusIcon} ${controller.controllerStatus}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-footer">
+            <button class="view-doors-btn">
+                View Doors
+                <span class="arrow">→</span>
+            </button>
+        </div>
+    `;
+
+    // Add click event to the entire card and button
+    const viewBtn = card.querySelector('.view-doors-btn');
+    const handleClick = () => showDoorsReaders(controller);
+    
+    card.addEventListener('click', (e) => {
+        if (!e.target.closest('.view-doors-btn')) {
+            handleClick();
+        }
+    });
+    
+    viewBtn.addEventListener('click', handleClick);
+
+    return card;
 }
