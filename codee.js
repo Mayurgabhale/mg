@@ -1,48 +1,34 @@
-function loadControllersInDetails() {
-  const detailsContainer = document.getElementById("device-details");
+function showDoorsReaders(controller) {
   const extraContainer = document.getElementById("details-container");
+  extraContainer.innerHTML = `
+    <h3 style="margin-bottom:10px; font-weight:600;">
+      ${controller.controllername} — Doors & Readers
+    </h3>
+  `;
 
-  detailsContainer.innerHTML = "<p>Loading controllers...</p>";
-  extraContainer.innerHTML = "";
+  if (!controller.Doors || controller.Doors.length === 0) {
+    extraContainer.innerHTML += "<p>No door data available for this controller.</p>";
+    return;
+  }
 
-  fetch("http://localhost/api/controllers/status")
-    .then(res => res.json())
-    .then(data => {
-      detailsContainer.innerHTML = "";
-      if (!Array.isArray(data) || data.length === 0) {
-        detailsContainer.innerHTML = "<p>No controllers found.</p>";
-        return;
-      }
+  controller.Doors.forEach(door => {
+    const doorCard = document.createElement("div");
+    doorCard.className = "device-card";
+    doorCard.style.border = "1px solid #aaa";
+    doorCard.style.padding = "8px";
+    doorCard.style.marginBottom = "8px";
+    doorCard.style.borderRadius = "8px";
 
-      data.forEach(ctrl => {
-        const card = document.createElement("div");
-        card.className = "device-card";
-        card.style.border = "1px solid #ddd";
-        card.style.borderRadius = "10px";
-        card.style.padding = "10px";
-        card.style.marginBottom = "10px";
-        card.style.cursor = "pointer";
+    doorCard.innerHTML = `
+      <p><strong>Door:</strong> ${door.Door}</p>
+      <p><strong>Reader:</strong> ${door.Reader || "N/A"}</p>
+      <p>Status:
+        <span style="color:${door.status === "Online" ? "green" : "red"};">
+          ${door.status}
+        </span>
+      </p>
+    `;
 
-        card.innerHTML = `
-          <h3 style="font-size:18px; font-weight:600; margin-bottom:8px;">
-            ${ctrl.controllername || "Unknown Controller"}
-          </h3>
-          <p><strong>IP:</strong> ${ctrl.IP_address || "N/A"}</p>
-          <p><strong>City:</strong> ${ctrl.City || "Unknown"}</p>
-          <p>Status:
-            <span style="color:${ctrl.controllerStatus === "Online" ? "green" : "red"};">
-              ${ctrl.controllerStatus}
-            </span>
-          </p>
-        `;
-
-        // When a controller is clicked, show its doors + readers
-        card.addEventListener("click", () => showDoorsReaders(ctrl));
-        detailsContainer.appendChild(card);
-      });
-    })
-    .catch(err => {
-      console.error("Error loading controllers:", err);
-      detailsContainer.innerHTML = "<p style='color:red;'>Failed to load controllers.</p>";
-    });
+    extraContainer.appendChild(doorCard);
+  });
 }
