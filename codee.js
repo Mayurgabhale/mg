@@ -1,26 +1,7 @@
-http://127.0.0.1:8000/docs#/monthly_sheet/get_all_employees_monthly_sheet_employees_get
-thus page only loading 
-😱 Could not render responses_Responses, see the console.
+Employee ID	Last Name	First Name	Preferred First Name	Middle Name	Full Name	Worker has Photo	Current Status	Employee Type	Hire Date	Original Hire Date	Continuous Service Date	End Employment Date	Job Code	Position ID	Business Title	Job Family Group Code	Job Family Group	Job Family Code	Job Family	FLA Y/N	Department Code	Department Name	Oracle Account	WUIB Cost Center	Company Code	Company Name	Work Country	Location Code	Location Description	Location City	Location State / Province	Region Code	Talent Center Region Code	Business Region	People Manager (Y/N)	Management Level	Manager ID	Manager Name	Manager Country	Reporting Level 6 Name	Reporting Level 5 Name	Reporting Level 4 Name	Reporting Level 3 Name	EVP / Business Leader	Employee's Email	Manager's Email	Work Phone	Standard Hours	Scheduled Hours	FTE	Time Type	Reporting Level from CEO (N-level)	WUPSIL Cost Center	Time in Position	Tenure	Tenure Category	Supervisory Organization	ET Supervisory Org	Years of Service	Length of Service in Months	Time in Position (Days)	Time in Position (Months)
+072072	Galligan	Michelle	Michelle	L	Galligan, Michelle L	Yes		Regular	12/30/1996	12/30/1996	12/30/1996		1262	P100027	Vice President, Executive Finance	CFO	Finance	FMA	Finance Management	No	00273190	CFO Exec/Admin	2020-9000-4098-9999		312	Western Union, LLC	United States of America	7001	Denver - WU HQ	Denver	Colorado	NAMER	Denver	NAMER	N	Vice President	328913	Oberoi, Aditya	United States of America				Oberoi, Aditya	Cagwin, Matthew L	Michelle.Galligan@westernunion.com	Aditya.Oberoi@westernunion.com	+1 (720) 3325428	40	40	1.000	Full time	3	No		28 year(s), 9 month(s), 7 day(s)	9. 10 years or more	Financial Planning and Analysis (Aditya Oberoi (328913))	Global Finance (Matt Cagwin (322360))	28	345	0	0
 
-swagger-ui-bundle.js:2 RangeError: Maximum call stack size exceeded
-    at processLines (swagger-ui-bundle.js:2:1139642)
-    at SyntaxHighlighter (swagger-ui-bundle.js:2:1142333)
-    INFO:     127.0.0.1:57769 - "GET / HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:57769 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57769 - "GET /openapi.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52026 - "GET /monthly_sheet/employees HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55408 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:49189 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:49189 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:53620 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:53620 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:63496 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:53620 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:55181 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:63466 - "GET /data HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:63461 - "GET /data HTTP/1.1" 404 Not Found
-
-
+in this alos add uploade time 
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from sqlalchemy import create_engine, Column, String, Integer, Float
