@@ -1,3 +1,70 @@
+check is correct 
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from sqlalchemy import create_engine, Column, String, Integer, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from io import BytesIO
+import pandas as pd
+from datetime import datetime
+
+# =======================
+#   ROUTER CONFIG
+# =======================
+router = APIRouter(prefix="/monthly_sheet", tags=["monthly_sheet"])
+
+# =======================
+#   DATABASE CONFIG
+# =======================
+DATABASE_URL = "sqlite:///./database.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base = declarative_base()
+
+
+# =======================
+#   EMPLOYEE MODEL
+# =======================
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    employee_id = Column(String, index=True)
+    last_name = Column(String)
+    first_name = Column(String)
+    preferred_first_name = Column(String)
+    middle_name = Column(String)
+    full_name = Column(String)
+    current_status = Column(String)
+    employee_type = Column(String)
+    hire_date = Column(String)
+    job_code = Column(String)
+    position_id = Column(String)
+    business_title = Column(String)
+    department_name = Column(String)
+    company_name = Column(String)
+    work_country = Column(String)
+    location_description = Column(String)
+    location_city = Column(String)
+    management_level = Column(String)
+    manager_name = Column(String)
+    employee_email = Column(String)
+    manager_email = Column(String)
+    fte = Column(Float)
+    tenure = Column(String)
+    years_of_service = Column(Float)
+    length_of_service_months = Column(Float)
+    time_in_position_months = Column(Float)
+
+# Create table if not exists
+Base.metadata.create_all(bind=engine)
+
+
+# =======================
+#   API ENDPOINTS
+# =======================
+
+
+
 @router.post("/upload_monthly")
 async def upload_monthly(file: UploadFile = File(...)):
     """Upload the monthly employee Excel or CSV sheet and store data into SQLite."""
@@ -54,3 +121,54 @@ async def upload_monthly(file: UploadFile = File(...)):
         "message": f"{len(df)} employee records saved successfully to SQLite database.",
         "uploaded_at": upload_time
     }
+
+
+
+
+
+@router.get("/employees")
+def get_all_employees():
+    session = SessionLocal()
+    employees = session.query(Employee).all()
+    session.close()
+    return [
+        {k: v for k, v in e.__dict__.items() if k != "_sa_instance_state"}
+        for e in employees
+    ]
+
+
+@router.get("/employee/{emp_id}")
+def get_employee(emp_id: str):
+    session = SessionLocal()
+    emp = session.query(Employee).filter(Employee.employee_id == emp_id).first()
+    session.close()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return {k: v for k, v in emp.__dict__.items() if k != "_sa_instance_state"}
+
+
+
+
+@router.delete("/clear_data")
+def clear_employee_data():
+    """Clear all employee data from the database."""
+    session = SessionLocal()
+    try:
+        # Count records before deletion
+        count_before = session.query(Employee).count()
+        
+        # Delete all records
+        session.query(Employee).delete()
+        session.commit()
+        
+        return {"message": f"Successfully cleared {count_before} employee records from database."}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error clearing data: {e}")
+    finally:
+        session.close()
+
+
+
+
+
