@@ -1,3 +1,9 @@
+
+uvicorn employee_db:app --reload
+
+
+
+
 # C:\Users\W0024618\Desktop\swipeData\Travel-Backend\employee_db.py
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
