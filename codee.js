@@ -1,18 +1,3 @@
-know i want to do the employee is VIP 
-
-so who to chekc this 
-Management Level
-Chief Exec Officer
-Executive Vice President
-Middle Mgmt / Sr. Professional
-Senior Vice President
-Supervisory / Professional
-Upper Mid Mgmt / Director
-Vice President
-
-
-
-
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
@@ -77,6 +62,19 @@ class Employee(Base):
 Base.metadata.create_all(bind=engine)
 
 # =======================
+#   VIP MANAGEMENT LEVELS
+# =======================
+VIP_LEVELS = {
+    "Chief Exec Officer",
+    "Executive Vice President",
+    "Senior Vice President",
+    "Vice President",
+    "Upper Mid Mgmt / Director",
+    "Middle Mgmt / Sr. Professional",
+    "Supervisory / Professional",
+}
+
+# =======================
 #   API ENDPOINTS
 # =======================
 
@@ -139,29 +137,39 @@ async def upload_monthly(file: UploadFile = File(...)):
 
 @router.get("/employees")
 def get_all_employees():
-    """Return all employees with last upload info."""
+    """Return all employees with last upload info and VIP status."""
     session = SessionLocal()
     employees = session.query(Employee).all()
     session.close()
 
+    def is_vip(level: str) -> bool:
+        return level in VIP_LEVELS if level else False
+
+    employee_list = []
+    for e in employees:
+        emp_dict = {k: v for k, v in e.__dict__.items() if k != "_sa_instance_state"}
+        emp_dict["is_vip"] = is_vip(e.management_level)
+        employee_list.append(emp_dict)
+
     return {
         "message": last_upload_info["message"],
         "uploaded_at": last_upload_info["uploaded_at"],
-        "employees": [
-            {k: v for k, v in e.__dict__.items() if k != "_sa_instance_state"}
-            for e in employees
-        ]
+        "employees": employee_list,
     }
 
 
 @router.get("/employee/{emp_id}")
 def get_employee(emp_id: str):
+    """Return single employee with VIP status."""
     session = SessionLocal()
     emp = session.query(Employee).filter(Employee.employee_id == emp_id).first()
     session.close()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
-    return {k: v for k, v in emp.__dict__.items() if k != "_sa_instance_state"}
+
+    emp_dict = {k: v for k, v in emp.__dict__.items() if k != "_sa_instance_state"}
+    emp_dict["is_vip"] = emp.management_level in VIP_LEVELS if emp.management_level else False
+    return emp_dict
 
 
 @router.delete("/clear_data")
