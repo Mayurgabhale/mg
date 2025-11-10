@@ -1,66 +1,72 @@
-import React, { useRef, useState } from "react";
-import { FiUpload } from "react-icons/fi";
+  {activeTab === "uploadMonthly" && (
+                        <div style={styles.uploadContainer}>
+                            {/* Header */}
+                            <div style={styles.uploadHeader}>
+                                <div style={styles.headerLeft}>
+                                    <FiUpload size={32} style={{ color: '#3b82f6', marginRight: 10 }} />
+                                    <div>
+                                        <h2 style={styles.uploadTitle}>Upload Monthly Active Sheet</h2>
+                                        <p style={styles.uploadSubtitle}>
+                                            Upload the latest monthly employee file to update active staff records.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
 
-const FileUploader = () => {
-  const fileInputRef = useRef(null);
-  const [monthlyFile, setMonthlyFile] = useState(null);
+                            {/* Upload Form */}
+                            <div style={styles.uploadForm}>
+                                <input
+                                    type="file"
+                                    accept=".xlsx,.xls,.csv"
+                                    onChange={(e) => setMonthlyFile(e.target.files[0])}
+                                    style={styles.fileInput}
+                                />
+                                <button
+                                    onClick={uploadMonthlySheet}
+                                    style={styles.uploadButton}
+                                    disabled={!monthlyFile}
+                                >
+                                    <FiUpload style={{ marginRight: 8 }} /> Upload File
+                                </button>
+                            </div>
 
-  const handleFileChange = (e) => {
-    setMonthlyFile(e.target.files[0]);
-  };
+                            {/* Upload Status */}
+                            {uploadStatus && (
+                                <div style={styles.uploadStatus}>
+                                    <p>{uploadStatus}</p>
+                                </div>
+                            )}
 
-  const handleButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const uploadMonthlySheet = () => {
-    if (!monthlyFile) return;
-    // Your upload logic here (e.g., API call or processing)
-    console.log("Uploading:", monthlyFile.name);
-  };
-
-  return (
-    <div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
-
-      <button
-        onClick={handleButtonClick}
-        style={{
-          background: "#2563eb",
-          color: "white",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-      >
-        Select File
-      </button>
-
-      <button
-        onClick={uploadMonthlySheet}
-        disabled={!monthlyFile}
-        style={{
-          marginLeft: "10px",
-          background: "#10b981",
-          color: "white",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "8px",
-          cursor: monthlyFile ? "pointer" : "not-allowed",
-          opacity: monthlyFile ? 1 : 0.6,
-        }}
-      >
-        <FiUpload style={{ marginRight: 8 }} /> Upload File
-      </button>
-    </div>
-  );
-};
-
-export default FileUploader;
+                            {/* Uploaded Data Table */}
+                            {employeeData.length > 0 && (
+                                <div style={styles.tableContainer}>
+                                    <h3 style={styles.tableTitle}>Uploaded Employee Data</h3>
+                                    <table style={styles.table}>
+                                        <thead>
+                                            <tr>
+                                                <th>Employee ID</th>
+                                                <th>Full Name</th>
+                                                <th>Department</th>
+                                                <th>Company</th>
+                                                <th>Location</th>
+                                                <th>Years of Service</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {employeeData.map((emp, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{emp.employee_id}</td>
+                                                    <td>{emp.full_name}</td>
+                                                    <td>{emp.department_name}</td>
+                                                    <td>{emp.company_name}</td>
+                                                    <td>{emp.location_city}</td>
+                                                    <td>{emp.years_of_service}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {/* 
