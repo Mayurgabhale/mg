@@ -1,3 +1,13 @@
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from monthly_sheet import router as monthly_router
+
+
+app.include_router(monthly_router)
+
+
+
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
