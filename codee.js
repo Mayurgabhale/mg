@@ -1,33 +1,38 @@
-const deleteEmployeeData = async () => {
-    try {
-        // Clear backend data first
-        try {
-            const clearRes = await fetch("http://localhost:8000/monthly_sheet/clear_data", { 
-                method: "DELETE" 
-            });
-            const result = await clearRes.json();
-            console.log("Backend clear result:", result);
-        } catch (backendErr) {
-            console.warn("Backend clear failed, continuing with frontend clear:", backendErr);
-        }
+http://127.0.0.1:8000/monthly_sheet/employees
+"uploaded_at": null,
 
-        // Clear local state
-        setEmployeeData([]);
-        setUploadStatus("");
-        setUploadTime(null);
-        setShowUploadCard(true);
-        setMonthlyFile(null);
-        setHasUploadedData(false);
-
-        // Clear localStorage
-        localStorage.removeItem('uploadStatus');
-        localStorage.removeItem('uploadTime');
-        localStorage.removeItem('monthlyFile');
-        localStorage.removeItem('hasUploadedData');
-
-        toast.success("Employee data cleared successfully.");
-    } catch (err) {
-        console.error(err);
-        toast.error("Failed to clear data.");
-    }
-};
+{
+  "message": null,
+  "uploaded_at": null,
+  "employees": [
+    {
+      "first_name": null,
+      "position_id": null,
+      "manager_name": null,
+      "time_in_position_months": null,
+      "preferred_first_name": null,
+      "business_title": null,
+      "employee_email": null,
+      "middle_name": null,
+      "department_name": null,
+      "manager_email": null,
+      "id": 1,
+      "full_name": null,
+      "company_name": null,
+      "fte": null,
+      "current_status": null,
+      "work_country": null,
+      "tenure": null,
+      "employee_id": "",
+      "employee_type": null,
+      "location_description": null,
+      "years_of_service": null,
+      "last_name": null,
+      "hire_date": null,
+      "location_city": null,
+      "job_code": null,
+      "management_level": null,
+      "length_of_service_months": null,
+      "is_vip": false
+    },
+    {
