@@ -1,3 +1,18 @@
+know i want to do the employee is VIP 
+
+so who to chekc this 
+Management Level
+Chief Exec Officer
+Executive Vice President
+Middle Mgmt / Sr. Professional
+Senior Vice President
+Supervisory / Professional
+Upper Mid Mgmt / Director
+Vice President
+
+
+
+
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
