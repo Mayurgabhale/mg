@@ -161,5 +161,33 @@ def clear_employee_data():
 
 
 
-
+{
+  "job_code": null,
+  "management_level": "Supervisory / Professional",
+  "length_of_service_months": 313,
+  "first_name": "Kelly",
+  "position_id": null,
+  "manager_name": null,
+  "time_in_position_months": 0,
+  "preferred_first_name": "Kelly",
+  "business_title": "Manager, Agent Victim Fraud",
+  "employee_email": null,
+  "middle_name": null,
+  "department_name": "Field Operations",
+  "manager_email": null,
+  "id": 48,
+  "full_name": "Johnson, Kelly J",
+  "company_name": "Western Union, LLC",
+  "fte": 1,
+  "current_status": null,
+  "work_country": "United States of America",
+  "tenure": "26 year(s), 1 month(s), 23 day(s)",
+  "employee_id": "142954",
+  "employee_type": null,
+  "location_description": "Work From Home - USA  MO",
+  "years_of_service": 26,
+  "last_name": "Johnson",
+  "hire_date": null,
+  "location_city": "St. Louis"
+}
 
