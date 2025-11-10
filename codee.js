@@ -1,32 +1,18 @@
-Employee ID	Last Name	First Name	Preferred First Name	Middle Name	Full Name	Worker has Photo	Current Status	Employee Type	Hire Date	Original Hire Date	Continuous Service Date	End Employment Date	Job Code	Position ID	Business Title	Job Family Group Code	Job Family Group	Job Family Code	Job Family	FLA Y/N	Department Code	Department Name	Oracle Account	WUIB Cost Center	Company Code	Company Name	Work Country	Location Code	Location Description	Location City	Location State / Province	Region Code	Talent Center Region Code	Business Region	People Manager (Y/N)	Management Level	Manager ID	Manager Name	Manager Country	Reporting Level 6 Name	Reporting Level 5 Name	Reporting Level 4 Name	Reporting Level 3 Name	EVP / Business Leader	Employee's Email	Manager's Email	Work Phone	Standard Hours	Scheduled Hours	FTE	Time Type	Reporting Level from CEO (N-level)	WUPSIL Cost Center	Time in Position	Tenure	Tenure Category	Supervisory Organization	ET Supervisory Org	Years of Service	Length of Service in Months	Time in Position (Days)	Time in Position (Months)
-072072	Galligan	Michelle	Michelle	L	Galligan, Michelle L	Yes		Regular	12/30/1996	12/30/1996	12/30/1996		1262	P100027	Vice President, Executive Finance	CFO	Finance	FMA	Finance Management	No	00273190	CFO Exec/Admin	2020-9000-4098-9999		312	Western Union, LLC	United States of America	7001	Denver - WU HQ	Denver	Colorado	NAMER	Denver	NAMER	N	Vice President	328913	Oberoi, Aditya	United States of America				Oberoi, Aditya	Cagwin, Matthew L	Michelle.Galligan@westernunion.com	Aditya.Oberoi@westernunion.com	+1 (720) 3325428	40	40	1.000	Full time	3	No		28 year(s), 9 month(s), 7 day(s)	9. 10 years or more	Financial Planning and Analysis (Aditya Oberoi (328913))	Global Finance (Matt Cagwin (322360))	28	345	0	0
+from datetime import datetime
+from sqlalchemy import ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 
-in this alos add uploade time 
+class MonthlyUpload(Base):
+    __tablename__ = "monthly_uploads"
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from sqlalchemy import create_engine, Column, String, Integer, Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from io import BytesIO
-import pandas as pd
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    file_name = Column(String)
+    upload_time = Column(DateTime, default=datetime.utcnow)
 
-# =======================
-#   ROUTER CONFIG
-# =======================
-router = APIRouter(prefix="/monthly_sheet", tags=["monthly_sheet"])
-
-# =======================
-#   DATABASE CONFIG
-# =======================
-DATABASE_URL = "sqlite:///./database.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base = declarative_base()
+    # Relationship (optional, for ORM joins)
+    employees = relationship("Employee", back_populates="upload")
 
 
-# =======================
-#   EMPLOYEE MODEL
-# =======================
 class Employee(Base):
     __tablename__ = "employees"
 
@@ -58,136 +44,6 @@ class Employee(Base):
     length_of_service_months = Column(Float)
     time_in_position_months = Column(Float)
 
-# Create table if not exists
-Base.metadata.create_all(bind=engine)
-
-
-# =======================
-#   API ENDPOINTS
-# =======================
-@router.post("/upload_monthly")
-async def upload_monthly(file: UploadFile = File(...)):
-    """Upload the monthly employee Excel or CSV sheet and store data into SQLite."""
-    if not file.filename.lower().endswith((".xlsx", ".xls", ".csv")):
-        raise HTTPException(status_code=400, detail="Please upload a valid Excel or CSV file.")
-
-    content = await file.read()
-
-    try:
-        if file.filename.lower().endswith(".csv"):
-            df = pd.read_csv(BytesIO(content))
-        else:
-            df = pd.read_excel(BytesIO(content))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error reading file: {e}")
-
-    # Normalize column names
-    df.columns = [c.strip().replace(" ", "_").replace("/", "_").replace("-", "_") for c in df.columns]
-
-    session = SessionLocal()
-    session.query(Employee).delete()  # optional: clear old data
-
-    for _, row in df.iterrows():
-        emp = Employee(
-            employee_id=str(row.get("Employee_ID", "")),
-            last_name=row.get("Last_Name"),
-            first_name=row.get("First_Name"),
-            preferred_first_name=row.get("Preferred_First_Name"),
-            full_name=row.get("Full_Name"),
-            business_title=row.get("Business_Title"),
-            management_level=row.get("Management_Level"),
-            employee_email=row.get("Employee_s_Email"),
-            manager_email=row.get("Manager_s_Email"),
-            department_name=row.get("Department_Name"),
-            company_name=row.get("Company_Name"),
-            work_country=row.get("Work_Country"),
-            location_description=row.get("Location_Description"),
-            location_city=row.get("Location_City"),
-            fte=float(row.get("FTE", 0)) if pd.notna(row.get("FTE")) else None,
-            tenure=row.get("Tenure"),
-            years_of_service=float(row.get("Years_of_Service", 0)) if pd.notna(row.get("Years_of_Service")) else None,
-            length_of_service_months=float(row.get("Length_of_Service_in_Months", 0)) if pd.notna(row.get("Length_of_Service_in_Months")) else None,
-            time_in_position_months=float(row.get("Time_in_Position_(Months)", 0)) if pd.notna(row.get("Time_in_Position_(Months)")) else None,
-        )
-        session.add(emp)
-
-    session.commit()
-    session.close()
-
-    return {"message": f"{len(df)} employee records saved successfully to SQLite database."}
-
-
-@router.get("/employees")
-def get_all_employees():
-    session = SessionLocal()
-    employees = session.query(Employee).all()
-    session.close()
-    return [
-        {k: v for k, v in e.__dict__.items() if k != "_sa_instance_state"}
-        for e in employees
-    ]
-
-
-@router.get("/employee/{emp_id}")
-def get_employee(emp_id: str):
-    session = SessionLocal()
-    emp = session.query(Employee).filter(Employee.employee_id == emp_id).first()
-    session.close()
-    if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return {k: v for k, v in emp.__dict__.items() if k != "_sa_instance_state"}
-
-
-
-
-@router.delete("/clear_data")
-def clear_employee_data():
-    """Clear all employee data from the database."""
-    session = SessionLocal()
-    try:
-        # Count records before deletion
-        count_before = session.query(Employee).count()
-        
-        # Delete all records
-        session.query(Employee).delete()
-        session.commit()
-        
-        return {"message": f"Successfully cleared {count_before} employee records from database."}
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail=f"Error clearing data: {e}")
-    finally:
-        session.close()
-
-
-
-{
-  "job_code": null,
-  "management_level": "Supervisory / Professional",
-  "length_of_service_months": 313,
-  "first_name": "Kelly",
-  "position_id": null,
-  "manager_name": null,
-  "time_in_position_months": 0,
-  "preferred_first_name": "Kelly",
-  "business_title": "Manager, Agent Victim Fraud",
-  "employee_email": null,
-  "middle_name": null,
-  "department_name": "Field Operations",
-  "manager_email": null,
-  "id": 48,
-  "full_name": "Johnson, Kelly J",
-  "company_name": "Western Union, LLC",
-  "fte": 1,
-  "current_status": null,
-  "work_country": "United States of America",
-  "tenure": "26 year(s), 1 month(s), 23 day(s)",
-  "employee_id": "142954",
-  "employee_type": null,
-  "location_description": "Work From Home - USA  MO",
-  "years_of_service": 26,
-  "last_name": "Johnson",
-  "hire_date": null,
-  "location_city": "St. Louis"
-}
-
+    # New foreign key
+    upload_id = Column(Integer, ForeignKey("monthly_uploads.id"))
+    upload = relationship("MonthlyUpload", back_populates="employees")
