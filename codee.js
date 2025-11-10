@@ -1,18 +1,28 @@
-from datetime import datetime
-from sqlalchemy import ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+in this dont change anyhnkitnkg jsut add the time when the file si update ok 
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from sqlalchemy import create_engine, Column, String, Integer, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from io import BytesIO
+import pandas as pd
 
-class MonthlyUpload(Base):
-    __tablename__ = "monthly_uploads"
+# =======================
+#   ROUTER CONFIG
+# =======================
+router = APIRouter(prefix="/monthly_sheet", tags=["monthly_sheet"])
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    file_name = Column(String)
-    upload_time = Column(DateTime, default=datetime.utcnow)
+# =======================
+#   DATABASE CONFIG
+# =======================
+DATABASE_URL = "sqlite:///./database.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base = declarative_base()
 
-    # Relationship (optional, for ORM joins)
-    employees = relationship("Employee", back_populates="upload")
 
-
+# =======================
+#   EMPLOYEE MODEL
+# =======================
 class Employee(Base):
     __tablename__ = "employees"
 
@@ -44,6 +54,108 @@ class Employee(Base):
     length_of_service_months = Column(Float)
     time_in_position_months = Column(Float)
 
-    # New foreign key
-    upload_id = Column(Integer, ForeignKey("monthly_uploads.id"))
-    upload = relationship("MonthlyUpload", back_populates="employees")
+# Create table if not exists
+Base.metadata.create_all(bind=engine)
+
+
+# =======================
+#   API ENDPOINTS
+# =======================
+@router.post("/upload_monthly")
+async def upload_monthly(file: UploadFile = File(...)):
+    """Upload the monthly employee Excel or CSV sheet and store data into SQLite."""
+    if not file.filename.lower().endswith((".xlsx", ".xls", ".csv")):
+        raise HTTPException(status_code=400, detail="Please upload a valid Excel or CSV file.")
+
+    content = await file.read()
+
+    try:
+        if file.filename.lower().endswith(".csv"):
+            df = pd.read_csv(BytesIO(content))
+        else:
+            df = pd.read_excel(BytesIO(content))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error reading file: {e}")
+
+    # Normalize column names
+    df.columns = [c.strip().replace(" ", "_").replace("/", "_").replace("-", "_") for c in df.columns]
+
+    session = SessionLocal()
+    session.query(Employee).delete()  # optional: clear old data
+
+    for _, row in df.iterrows():
+        emp = Employee(
+            employee_id=str(row.get("Employee_ID", "")),
+            last_name=row.get("Last_Name"),
+            first_name=row.get("First_Name"),
+            preferred_first_name=row.get("Preferred_First_Name"),
+            full_name=row.get("Full_Name"),
+            business_title=row.get("Business_Title"),
+            management_level=row.get("Management_Level"),
+            employee_email=row.get("Employee_s_Email"),
+            manager_email=row.get("Manager_s_Email"),
+            department_name=row.get("Department_Name"),
+            company_name=row.get("Company_Name"),
+            work_country=row.get("Work_Country"),
+            location_description=row.get("Location_Description"),
+            location_city=row.get("Location_City"),
+            fte=float(row.get("FTE", 0)) if pd.notna(row.get("FTE")) else None,
+            tenure=row.get("Tenure"),
+            years_of_service=float(row.get("Years_of_Service", 0)) if pd.notna(row.get("Years_of_Service")) else None,
+            length_of_service_months=float(row.get("Length_of_Service_in_Months", 0)) if pd.notna(row.get("Length_of_Service_in_Months")) else None,
+            time_in_position_months=float(row.get("Time_in_Position_(Months)", 0)) if pd.notna(row.get("Time_in_Position_(Months)")) else None,
+        )
+        session.add(emp)
+
+    session.commit()
+    session.close()
+
+    return {"message": f"{len(df)} employee records saved successfully to SQLite database."}
+
+
+@router.get("/employees")
+def get_all_employees():
+    session = SessionLocal()
+    employees = session.query(Employee).all()
+    session.close()
+    return [
+        {k: v for k, v in e.__dict__.items() if k != "_sa_instance_state"}
+        for e in employees
+    ]
+
+
+@router.get("/employee/{emp_id}")
+def get_employee(emp_id: str):
+    session = SessionLocal()
+    emp = session.query(Employee).filter(Employee.employee_id == emp_id).first()
+    session.close()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return {k: v for k, v in emp.__dict__.items() if k != "_sa_instance_state"}
+
+
+
+
+@router.delete("/clear_data")
+def clear_employee_data():
+    """Clear all employee data from the database."""
+    session = SessionLocal()
+    try:
+        # Count records before deletion
+        count_before = session.query(Employee).count()
+        
+        # Delete all records
+        session.query(Employee).delete()
+        session.commit()
+        
+        return {"message": f"Successfully cleared {count_before} employee records from database."}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error clearing data: {e}")
+    finally:
+        session.close()
+
+
+
+
+
