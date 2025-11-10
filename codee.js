@@ -63,7 +63,7 @@
                     )}
 
 this part i want to make more future..
-all like when uplod the file  date how is upload this file all details i want,, one better format ok 
+all like when uplod the file  date upload this file all details i want,, one better format ok 
 
 const styles = {
     // Upload Container
