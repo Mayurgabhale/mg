@@ -1,3 +1,27 @@
+@router.delete("/clear_data")
+def clear_employee_data():
+    """Clear all employee data from the database."""
+    session = SessionLocal()
+    try:
+        # Count records before deletion
+        count_before = session.query(Employee).count()
+        
+        # Delete all records
+        session.query(Employee).delete()
+        session.commit()
+        
+        return {"message": f"Successfully cleared {count_before} employee records from database."}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error clearing data: {e}")
+    finally:
+        session.close()
+
+
+
+
+
+
 const [employeeData, setEmployeeData] = useState([]);
 const [monthlyFile, setMonthlyFile] = useState(null);
 const [uploadStatus, setUploadStatus] = useState("");
