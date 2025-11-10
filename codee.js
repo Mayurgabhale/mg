@@ -1,4 +1,7 @@
-INFO:     127.0.0.1:57769 - "GET / HTTP/1.1" 404 Not Found
+http://127.0.0.1:8000/docs#/monthly_sheet/get_all_employees_monthly_sheet_employees_get
+thus page only loading 
+
+    INFO:     127.0.0.1:57769 - "GET / HTTP/1.1" 404 Not Found
 INFO:     127.0.0.1:57769 - "GET /docs HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57769 - "GET /openapi.json HTTP/1.1" 200 OK
 INFO:     127.0.0.1:52026 - "GET /monthly_sheet/employees HTTP/1.1" 200 OK
