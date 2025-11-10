@@ -1,40 +1,8 @@
-<Box display="flex" alignItems="center" gap={1.5}>
-  {/* 🏠 Dashboard Hub button (custom HTML icon) */}
-  <Tooltip
-    title={
-      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
-        Dashboard Hub
-      </Typography>
-    }
-    arrow
-    placement="bottom"
-  >
-    <IconButton
-      color="inherit"
-      component="a"
-      href="http://10.199.22.57:3014/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <i className="fa-solid fa-house" style={{ fontSize: '20px' }}></i>
-    </IconButton>
-  </Tooltip>
+ <OverlayTrigger placement="bottom" overlay={<Tooltip id="tooltip-dashboard">Dashboard Hub</Tooltip>}>
+                <Nav.Link href="http://10.199.22.57:3014/" className="nav-item-infographic  mr-3">
+                  <i className="fa-solid fa-house"></i>
+                </Nav.Link> 
+              </OverlayTrigger>
 
-  {/* Existing navigation items */}
-  {navItems.map((item, idx) => (
-    <Tooltip
-      key={idx}
-      title={
-        <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
-          {item.label}
-        </Typography>
-      }
-      arrow
-      placement="bottom"
-    >
-      <IconButton color="inherit" onClick={item.action}>
-        {React.cloneElement(item.icon, { fontSize: 'medium' })}
-      </IconButton>
-    </Tooltip>
-  ))}
-</Box>
+
+how to add color for and margin from right side
