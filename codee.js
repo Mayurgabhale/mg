@@ -1,3 +1,76 @@
+// Add these to your styles object
+
+deleteButton: {
+    background: 'none',
+    border: 'none',
+    color: '#ef4444',
+    cursor: 'pointer',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    marginLeft: 'auto',
+    ':hover': {
+        background: 'rgba(239, 68, 68, 0.1)',
+    }
+},
+
+deleteDataButton: {
+    display: 'flex',
+    alignItems: 'center',
+    background: 'none',
+    border: '1px solid #ef4444',
+    color: '#ef4444',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    ':hover': {
+        background: '#ef4444',
+        color: 'white',
+    }
+},
+
+// Update metadata grid for better layout
+metadataGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '16px',
+    marginTop: '20px',
+    paddingTop: '20px',
+    borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e5e7eb',
+},
+
+metadataItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    padding: '12px',
+    background: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
+    borderRadius: '8px',
+},
+
+metadataLabel: {
+    fontSize: '12px',
+    color: isDark ? '#94a3b8' : '#6b7280',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+},
+
+metadataValue: {
+    fontSize: '14px',
+    color: isDark ? '#f1f5f9' : '#0f172a',
+    fontWeight: '500',
+    wordBreak: 'break-word',
+},
+
+
+
+
+
+
+
+
 {activeTab === "uploadMonthly" && (
     <div style={styles.uploadContainer}>
         {/* Header - Left aligned only */}
