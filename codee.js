@@ -1,143 +1,288 @@
+now inthis i want to add new tab :: upload monhlty active sheet ok,. 
+    this after uplod i wnat to disply uploadwer data alos and more in this ta ok,, that you like 
+{ id: "regions", label: "Global", icon: FiGlobe }, // 🆕 New tab
+                            { id: "AddNewTraveler", label: "Add New Traveler", icon: IoIosAddCircle },
+                            { id: "overview", label: "Overview", icon: FiActivity },
+                            { id: "analytics", label: "Analytics", icon: FiBarChart2 },
+                            { id: "recent", label: "Recent Travels", icon: FiClock },
+                            { id: "countries", label: "Country Analysis", icon: FiMapPin },
+                            { id: "types", label: "Travel Types", icon: FiAward }
+{/* LEFT PANEL - Navigation */}
+                <aside style={styles.sidebar}>
+                    <nav style={styles.nav}>
+                        {[
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from monthly_sheet import router as monthly_router
+                            { id: "regions", label: "Global", icon: FiGlobe }, // 🆕 New tab
+                            { id: "AddNewTraveler", label: "Add New Traveler", icon: IoIosAddCircle },
+                            { id: "overview", label: "Overview", icon: FiActivity },
+                            { id: "analytics", label: "Analytics", icon: FiBarChart2 },
+                            { id: "recent", label: "Recent Travels", icon: FiClock },
+                            { id: "countries", label: "Country Analysis", icon: FiMapPin },
+                            { id: "types", label: "Travel Types", icon: FiAward }
+                        ].map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                style={{
+                                    ...styles.navItem,
+                                    ...(activeTab === item.id ? styles.navItemActive : {})
+                                }}
+                            >
+                                <item.icon style={styles.navIcon} />
+                                {item.label}
+                            </button>
+                        ))}
+                    </nav>
 
+                    {/* Quick Stats */}
+                    <div style={styles.sideCard}>
+                        <div style={styles.cardHeader}>
+                            <FiTrendingUp style={styles.cardIcon} />
+                            <h3 style={styles.sideTitle}>Quick Stats</h3>
+                        </div>
+                        <div style={styles.statsGrid}>
+                            <div style={styles.statItem}>
+                                <div style={styles.statIconWrapper}>
+                                    <FiUsers style={styles.statIcon} />
+                                </div>
+                                <div style={styles.statContent}>
+                                    <span style={styles.statLabel}>Total Travelers</span>
+                                    <strong style={styles.statValue}>{analytics.totalTravelers}</strong>
+                                </div>
+                            </div>
+                            <div style={styles.statItem}>
+                                <div style={{ ...styles.statIconWrapper, background: '#dcfce7' }}>
+                                    <FiCheckCircle style={{ ...styles.statIcon, color: '#16a34a' }} />
+                                </div>
+                                <div style={statContent}>
+                                    <span style={styles.statLabel}>Active Now</span>
+                                    <strong style={styles.statValue}>{analytics.active}</strong>
+                                </div>
+                            </div>
 
-app.include_router(monthly_router)
+                        </div>
+                    </div>
 
+                    {/* Today's Travelers */}
+                    <div style={styles.sideCard}>
+                        <div style={styles.cardHeader}>
+                            <FiCalendar style={styles.cardIcon} />
+                            <h3 style={styles.sideTitle}>Today's Travelers</h3>
+                        </div>
+                        {todayTravelers.length === 0 ? (
+                            <div style={styles.emptyState}>
+                                <FiFileText size={24} style={{ color: '#9ca3af', marginBottom: '8px' }} />
+                                <p style={styles.sideEmpty}>No travels today</p>
+                            </div>
+                        ) : (
+                            <ul style={styles.countryList}>
+                                {todayTravelers.slice(0, 5).map((t, i) => (
+                                    <li key={i} style={styles.countryItem}>
+                                        <div style={styles.countryInfo}>
+                                            <span style={styles.countryRank}>{i + 1}</span>
+                                            <span style={styles.countryName}>
+                                                {t.first_name} {t.last_name}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                            {t.from_country} → {t.to_country}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </aside>
 
+ {/* Add New Traveler Tab */}
+                    {activeTab === "AddNewTraveler" && (
+                        <div style={styles.addTravelContainer}>
+                            {/* Header Section */}
+                            <div style={styles.addTravelHeader}>
+                                <div style={styles.headerLeft}>
+                                    <div style={styles.headerIconLarge}>
+                                        <FiUserPlus size={32} />
+                                    </div>
+                                    <div>
+                                        <h2 style={styles.addTravelTitle}>Add New Traveler</h2>
+                                        <p style={styles.addTravelSubtitle}>Enter details for the new travel record</p>
+                                    </div>
+                                </div>
+                                <div style={styles.headerStats}>
+                                    <div style={styles.statCard}>
+                                        <FiUsers size={20} style={{ color: '#3b82f6' }} />
+                                        <div>
+                                            <span style={styles.statNumber}>{analytics.totalTravelers}</span>
+                                            <span style={styles.statLabel}>Total Travelers</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from sqlalchemy import create_engine, Column, String, Integer, Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from io import BytesIO
-import pandas as pd
+                            {/* Form Container */}
+                            <div style={styles.formMainContainer}>
+                                <div style={styles.formCard}>
+                                    {/* Form Header */}
+                                    <div style={styles.formHeader}>
+                                        <div style={styles.formIcon}>
+                                            <FiUserPlus size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 style={styles.formTitle}>Traveler Information</h3>
+                                            <p style={styles.formSubtitle}>Fill in all required details</p>
+                                        </div>
+                                    </div>
 
-# =======================
-#   ROUTER CONFIG
-# =======================
-router = APIRouter(prefix="/monthly_sheet", tags=["monthly_sheet"])
+                                    {/* Form Sections */}
+                                    <div style={styles.formSections}>
+                                        {/* Personal Information */}
+                                        <div style={styles.formSection}>
+                                            <h4 style={styles.sectionTitle}>
+                                                <FiUser style={styles.sectionIcon} />
+                                                Personal Information
+                                            </h4>
+                                            <div style={styles.sectionGrid}>
+                                                {[
+                                                    { key: 'first_name', label: 'First Name', type: 'text', icon: FiUser, required: true },
+                                                    { key: 'last_name', label: 'Last Name', type: 'text', icon: FiUser, required: true },
+                                                    { key: 'emp_id', label: 'Employee ID', type: 'text', icon: FiAward, required: true },
+                                                    { key: 'email', label: 'Email Address', type: 'email', icon: FiMail, required: true },
+                                                ].map(({ key, label, type, icon: Icon, required }) => (
+                                                    <div key={key} style={styles.inputGroup}>
+                                                        <label style={styles.inputLabel}>
+                                                            <Icon size={16} style={styles.labelIcon} />
+                                                            {label}
+                                                            {required && <span style={styles.required}>*</span>}
+                                                        </label>
+                                                        <input
+                                                            type={type}
+                                                            value={newTraveler[key] || ''}
+                                                            onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                                            style={styles.formInput}
+                                                            placeholder={`Enter ${label.toLowerCase()}`}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
 
-# =======================
-#   DATABASE CONFIG
-# =======================
-DATABASE_URL = "sqlite:///./database.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base = declarative_base()
+                                        {/* Travel Details */}
+                                        <div style={styles.formSection}>
+                                            <h4 style={styles.sectionTitle}>
+                                                <FiGlobe style={styles.sectionIcon} />
+                                                Travel Details
+                                            </h4>
+                                            <div style={styles.sectionGrid}>
+                                                {[
+                                                    { key: 'leg_type', label: 'Travel Type', type: 'text', icon: FiNavigation, required: true },
+                                                    { key: 'from_location', label: 'From Location', type: 'text', icon: FiMapPin, required: true },
+                                                    { key: 'from_country', label: 'From Country', type: 'text', icon: FiGlobe, required: true },
+                                                    { key: 'to_location', label: 'To Location', type: 'text', icon: FiMapPin, required: true },
+                                                    { key: 'to_country', label: 'To Country', type: 'text', icon: FiGlobe, required: true },
+                                                ].map(({ key, label, type, icon: Icon, required }) => (
+                                                    <div key={key} style={styles.inputGroup}>
+                                                        <label style={styles.inputLabel}>
+                                                            <Icon size={16} style={styles.labelIcon} />
+                                                            {label}
+                                                            {required && <span style={styles.required}>*</span>}
+                                                        </label>
+                                                        <input
+                                                            type={type}
+                                                            value={newTraveler[key] || ''}
+                                                            onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                                            style={styles.formInput}
+                                                            placeholder={`Enter ${label.toLowerCase()}`}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
 
+                                        {/* Timeline */}
+                                        <div style={styles.formSection}>
+                                            <h4 style={styles.sectionTitle}>
+                                                <FiCalendar style={styles.sectionIcon} />
+                                                Travel Timeline
+                                            </h4>
+                                            <div style={styles.sectionGrid}>
+                                                {[
+                                                    { key: 'begin_dt', label: 'Start Date & Time', type: 'datetime-local', icon: FiCalendar, required: true },
+                                                    { key: 'end_dt', label: 'End Date & Time', type: 'datetime-local', icon: FiCalendar, required: true },
+                                                ].map(({ key, label, type, icon: Icon, required }) => (
+                                                    <div key={key} style={styles.inputGroup}>
+                                                        <label style={styles.inputLabel}>
+                                                            <Icon size={16} style={styles.labelIcon} />
+                                                            {label}
+                                                            {required && <span style={styles.required}>*</span>}
+                                                        </label>
+                                                        <input
+                                                            type={type}
+                                                            value={newTraveler[key] || ''}
+                                                            onChange={(e) => setNewTraveler({ ...newTraveler, [key]: e.target.value })}
+                                                            style={styles.formInput}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
 
-# =======================
-#   EMPLOYEE MODEL
-# =======================
-class Employee(Base):
-    __tablename__ = "employees"
+                                    {/* Form Actions */}
+                                    <div style={styles.formActions}>
+                                        <button
+                                            onClick={() => setActiveTab('overview')}
+                                            style={styles.secondaryButton}
+                                        >
+                                            <FiArrowLeft size={16} />
+                                            Back to Overview
+                                        </button>
+                                        <div style={styles.primaryActions}>
+                                            <button
+                                                onClick={() => setNewTraveler({})}
+                                                style={styles.clearButton}
+                                            >
+                                                <FiRefreshCw size={16} />
+                                                Clear Form
+                                            </button>
+                                            <button
+                                                onClick={addTraveler}
+                                                style={styles.saveButton}
+                                            >
+                                                <FiSave size={16} />
+                                                Save Traveler
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    employee_id = Column(String, index=True)
-    last_name = Column(String)
-    first_name = Column(String)
-    preferred_first_name = Column(String)
-    middle_name = Column(String)
-    full_name = Column(String)
-    current_status = Column(String)
-    employee_type = Column(String)
-    hire_date = Column(String)
-    job_code = Column(String)
-    position_id = Column(String)
-    business_title = Column(String)
-    department_name = Column(String)
-    company_name = Column(String)
-    work_country = Column(String)
-    location_description = Column(String)
-    location_city = Column(String)
-    management_level = Column(String)
-    manager_name = Column(String)
-    employee_email = Column(String)
-    manager_email = Column(String)
-    fte = Column(Float)
-    tenure = Column(String)
-    years_of_service = Column(Float)
-    length_of_service_months = Column(Float)
-    time_in_position_months = Column(Float)
+                                {/* Quick Tips Sidebar */}
+                                <div style={styles.tipsCard}>
+                                    <h4 style={styles.tipsTitle}>
+                                        <FiInfo size={18} />
+                                        Quick Tips
+                                    </h4>
+                                    <div style={styles.tipsList}>
+                                        <div style={styles.tipItem}>
+                                            <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                                            <span>Fill all required fields marked with *</span>
+                                        </div>
+                                        <div style={styles.tipItem}>
+                                            <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                                            <span>Use proper date and time format</span>
+                                        </div>
+                                        <div style={styles.tipItem}>
+                                            <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                                            <span>Double-check email addresses</span>
+                                        </div>
+                                        <div style={styles.tipItem}>
+                                            <FiCheckCircle size={14} style={{ color: '#10b981' }} />
+                                            <span>Ensure employee ID is unique</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/* //////// */}
 
-# Create table if not exists
-Base.metadata.create_all(bind=engine)
-
-
-# =======================
-#   API ENDPOINTS
-# =======================
-@router.post("/upload_monthly")
-async def upload_monthly(file: UploadFile = File(...)):
-    """Upload the monthly employee Excel or CSV sheet and store data into SQLite."""
-    if not file.filename.lower().endswith((".xlsx", ".xls", ".csv")):
-        raise HTTPException(status_code=400, detail="Please upload a valid Excel or CSV file.")
-
-    content = await file.read()
-
-    try:
-        if file.filename.lower().endswith(".csv"):
-            df = pd.read_csv(BytesIO(content))
-        else:
-            df = pd.read_excel(BytesIO(content))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error reading file: {e}")
-
-    # Normalize column names
-    df.columns = [c.strip().replace(" ", "_").replace("/", "_").replace("-", "_") for c in df.columns]
-
-    session = SessionLocal()
-    session.query(Employee).delete()  # optional: clear old data
-
-    for _, row in df.iterrows():
-        emp = Employee(
-            employee_id=str(row.get("Employee_ID", "")),
-            last_name=row.get("Last_Name"),
-            first_name=row.get("First_Name"),
-            preferred_first_name=row.get("Preferred_First_Name"),
-            full_name=row.get("Full_Name"),
-            business_title=row.get("Business_Title"),
-            management_level=row.get("Management_Level"),
-            employee_email=row.get("Employee_s_Email"),
-            manager_email=row.get("Manager_s_Email"),
-            department_name=row.get("Department_Name"),
-            company_name=row.get("Company_Name"),
-            work_country=row.get("Work_Country"),
-            location_description=row.get("Location_Description"),
-            location_city=row.get("Location_City"),
-            fte=float(row.get("FTE", 0)) if pd.notna(row.get("FTE")) else None,
-            tenure=row.get("Tenure"),
-            years_of_service=float(row.get("Years_of_Service", 0)) if pd.notna(row.get("Years_of_Service")) else None,
-            length_of_service_months=float(row.get("Length_of_Service_in_Months", 0)) if pd.notna(row.get("Length_of_Service_in_Months")) else None,
-            time_in_position_months=float(row.get("Time_in_Position_(Months)", 0)) if pd.notna(row.get("Time_in_Position_(Months)")) else None,
-        )
-        session.add(emp)
-
-    session.commit()
-    session.close()
-
-    return {"message": f"{len(df)} employee records saved successfully to SQLite database."}
-
-
-@router.get("/employees")
-def get_all_employees():
-    session = SessionLocal()
-    employees = session.query(Employee).all()
-    session.close()
-    return [
-        {k: v for k, v in e.__dict__.items() if k != "_sa_instance_state"}
-        for e in employees
-    ]
-
-
-@router.get("/employee/{emp_id}")
-def get_employee(emp_id: str):
-    session = SessionLocal()
-    emp = session.query(Employee).filter(Employee.employee_id == emp_id).first()
-    session.close()
-    if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return {k: v for k, v in emp.__dict__.items() if k != "_sa_instance_state"}
+                    {activeTab === "overview" && (
