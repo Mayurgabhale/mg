@@ -1,121 +1,293 @@
-// State variables
-const [employeeData, setEmployeeData] = useState([]);
-const [monthlyFile, setMonthlyFile] = useState(null);
-const [uploadStatus, setUploadStatus] = useState("");
-const [uploadTime, setUploadTime] = useState(null);
-const [showUploadPopup, setShowUploadPopup] = useState(false);
-const [hasUploadedData, setHasUploadedData] = useState(false);
-
-// Load data on component mount
-useEffect(() => {
-  const savedUploadStatus = localStorage.getItem('uploadStatus');
-  const savedUploadTime = localStorage.getItem('uploadTime');
-  const savedMonthlyFile = localStorage.getItem('monthlyFile');
-  const savedHasUploadedData = localStorage.getItem('hasUploadedData');
-
-  if (savedUploadStatus) setUploadStatus(savedUploadStatus);
-  if (savedUploadTime) setUploadTime(new Date(savedUploadTime));
-  if (savedMonthlyFile) setMonthlyFile(JSON.parse(savedMonthlyFile));
-  if (savedHasUploadedData === 'true') {
-    setHasUploadedData(true);
-    fetchEmployeeData();
-  }
-}, []);
-
-// Fetch employee data
-const fetchEmployeeData = async () => {
-  try {
-    const employeesRes = await fetch("http://localhost:8000/monthly_sheet/employees");
-    const employeesData = await employeesRes.json();
-    setEmployeeData(employeesData);
-  } catch (err) {
-    console.error("Failed to fetch employee data:", err);
-  }
-};
-
-// Handle file selection
-const handleMonthlyFileChange = (e) => {
-  const selected = e.target.files?.[0];
-  setMonthlyFile(selected);
-};
-
-// Handle upload submission
-const handleUploadSubmit = async () => {
-  if (!monthlyFile) return;
-
-  const formData = new FormData();
-  formData.append("file", monthlyFile);
-  
-  try {
-    setUploadStatus("Uploading...");
-    const res = await fetch("http://localhost:8000/monthly_sheet/upload_monthly", {
-      method: "POST",
-      body: formData,
-    });
-    
-    const result = await res.json();
-    
-    if (res.ok) {
-      setUploadStatus("Upload successful!");
-      setUploadTime(new Date());
-      setHasUploadedData(true);
-      setShowUploadPopup(false);
-      
-      // Save to localStorage
-      localStorage.setItem('uploadStatus', "Upload successful!");
-      localStorage.setItem('uploadTime', new Date().toISOString());
-      localStorage.setItem('monthlyFile', JSON.stringify({
-        name: monthlyFile.name,
-        size: monthlyFile.size,
-        type: monthlyFile.type,
-        lastModified: monthlyFile.lastModified
-      }));
-      localStorage.setItem('hasUploadedData', 'true');
-      
-      // Fetch the uploaded data
-      await fetchEmployeeData();
-      toast.success("File uploaded successfully!");
-    } else {
-      throw new Error(result.detail || "Upload failed");
-    }
-  } catch (err) {
-    console.error(err);
-    setUploadStatus("Upload failed: " + err.message);
-    toast.error("Upload failed!");
-  }
-};
-
-// Delete confirmation
-const confirmDeleteData = () => {
-  if (window.confirm("Are you sure you want to delete all employee data? This action cannot be undone.")) {
-    deleteEmployeeData();
-  }
-};
-
-// Delete employee data
-const deleteEmployeeData = async () => {
-  try {
-    // Clear backend data
-    await fetch("http://localhost:8000/monthly_sheet/clear_data", {
-      method: "DELETE"
-    });
-
-    // Clear frontend state
-    setEmployeeData([]);
-    setUploadStatus("");
-    setUploadTime(null);
-    setMonthlyFile(null);
-    setHasUploadedData(false);
-
-    // Clear localStorage
-    localStorage.removeItem('uploadStatus');
-    localStorage.removeItem('uploadTime');
-    localStorage.removeItem('monthlyFile');
-    localStorage.removeItem('hasUploadedData');
-
-    toast.success("Employee data cleared successfully.");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to clear data.");
-  }
+const styles = {
+  uploadMonthlyContainer: {
+    display: 'flex',
+    minHeight: '600px',
+    gap: '40px',
+  },
+  leftPanel: {
+    flex: 1,
+    padding: '20px',
+  },
+  headerSection: {
+    marginBottom: '30px',
+  },
+  mainTitle: {
+    fontSize: '28px',
+    fontWeight: '600',
+    color: '#1a202c',
+    marginBottom: '8px',
+  },
+  subtitle: {
+    fontSize: '16px',
+    color: '#718096',
+    margin: 0,
+  },
+  uploadButtonSection: {
+    textAlign: 'center',
+    padding: '60px 20px',
+  },
+  uploadTriggerButton: {
+    backgroundColor: '#3182ce',
+    color: 'white',
+    border: 'none',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    transition: 'background-color 0.2s',
+  },
+  successContainer: {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    padding: '24px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  successHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+  },
+  successTitleSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  successIcon: {
+    color: '#38a169',
+  },
+  successTitle: {
+    fontSize: '20px',
+    fontWeight: '600',
+    color: '#1a202c',
+    margin: 0,
+  },
+  successSubtitle: {
+    color: '#718096',
+    margin: 0,
+  },
+  deleteDataButton: {
+    backgroundColor: '#e53e3e',
+    color: 'white',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  metadataGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '16px',
+    marginBottom: '24px',
+  },
+  metadataItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  metadataLabel: {
+    fontSize: '12px',
+    color: '#718096',
+    fontWeight: '500',
+  },
+  metadataValue: {
+    fontSize: '14px',
+    color: '#1a202c',
+    fontWeight: '500',
+  },
+  summaryCard: {
+    backgroundColor: '#f7fafc',
+    borderRadius: '8px',
+    padding: '20px',
+  },
+  summaryTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    marginBottom: '16px',
+    color: '#2d3748',
+  },
+  summaryStats: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '16px',
+  },
+  summaryStat: {
+    textAlign: 'center',
+    padding: '16px',
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+  },
+  summaryIcon: {
+    fontSize: '24px',
+    color: '#3182ce',
+    marginBottom: '8px',
+  },
+  summaryNumber: {
+    display: 'block',
+    fontSize: '24px',
+    fontWeight: '600',
+    color: '#1a202c',
+  },
+  summaryLabel: {
+    fontSize: '12px',
+    color: '#718096',
+  },
+  // Modal Styles
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    width: '90%',
+    maxWidth: '500px',
+    maxHeight: '90vh',
+    overflow: 'auto',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px 24px',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  modalTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#1a202c',
+    margin: 0,
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#718096',
+    padding: '4px',
+  },
+  uploadCard: {
+    padding: '24px',
+  },
+  uploadArea: {
+    border: '2px dashed #cbd5e0',
+    borderRadius: '8px',
+    padding: '40px 20px',
+    textAlign: 'center',
+    marginBottom: '20px',
+  },
+  uploadCloudIcon: {
+    color: '#a0aec0',
+    marginBottom: '16px',
+  },
+  uploadAreaTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#2d3748',
+    marginBottom: '8px',
+  },
+  uploadAreaSubtitle: {
+    color: '#718096',
+    marginBottom: '20px',
+  },
+  fileInputLabel: {
+    backgroundColor: '#3182ce',
+    color: 'white',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontSize: '14px',
+    fontWeight: '500',
+  },
+  hiddenFileInput: {
+    display: 'none',
+  },
+  filePreview: {
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: '#f7fafc',
+    padding: '12px',
+    borderRadius: '6px',
+    marginTop: '16px',
+  },
+  fileIcon: {
+    color: '#718096',
+    marginRight: '12px',
+  },
+  fileInfo: {
+    flex: 1,
+  },
+  fileName: {
+    display: 'block',
+    fontWeight: '500',
+    color: '#2d3748',
+  },
+  fileSize: {
+    fontSize: '12px',
+    color: '#718096',
+  },
+  removeFileButton: {
+    background: 'none',
+    border: 'none',
+    color: '#718096',
+    cursor: 'pointer',
+    padding: '4px',
+  },
+  modalActions: {
+    display: 'flex',
+    gap: '12px',
+    justifyContent: 'flex-end',
+  },
+  cancelButton: {
+    backgroundColor: '#e2e8f0',
+    color: '#4a5568',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+  },
+  uploadButton: {
+    backgroundColor: '#3182ce',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  uploadButtonDisabled: {
+    backgroundColor: '#a0aec0',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '6px',
+    cursor: 'not-allowed',
+    fontSize: '14px',
+    fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center',
+  },
 };
