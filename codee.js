@@ -1,3 +1,35 @@
+http://127.0.0.1:8000/daily_sheet/regions
+i want alos total vip and active vip ok 
+
+Global
+100
+Total Travelers
+5 Active
+67 VIP
+🌏
+APAC
+13
+Travelers
+1 Active
+12 VIP
+🌍
+EMEA
+11
+Travelers
+0 Active
+3 VIP
+🌎
+LACA
+17
+Travelers
+1 Active
+6 VIP
+🌎
+NAMER
+59
+Travelers
+3 Active
+46 VIP
 {/* Total Card */}
 <div style={styles.regionCard}>
     <div style={styles.regionCardHeader}>
