@@ -4,6 +4,8 @@ AGENCY ID	AGENCY NAME	LAST NAME	FIRST NAME	TRAVELER 	EMP ID	EMAIL	PNR	LEG TYPE	B
 728775	Western Union - Argentina	ALGANARAS	ALEJANDRO	TRAVELER	308497	alejandro.alganaraz@westernunion.com	MTTAPB	HOTEL	10/27/2025 0:00	Buenos Aires, Ciudad de Buenos Aires	Argentina	10/29/2025 0:00	Buenos Aires, Ciudad de Buenos Aires	Argentina
 728775	Western Union - Argentina	ARIZTEGUI	IGNACIO	TRAVELER	190871	ignacio.ariztegui@westernunion.com	KSBVUV	HOTEL	10/27/2025 0:00	Bahia Blanca, Buenos Aires	Argentina	10/29/2025 0:00	Bahia Blanca, Buenos Aires	Argentina
 
+and "emp_id": "308497.0", wihtou .0
+i mesn like this "emp_id": "308497", ok 
 
 {
   "summary": {
