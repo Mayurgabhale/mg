@@ -1,21 +1,17 @@
-http://127.0.0.1:8000/daily_sheet/data
+http://127.0.0.1:8000/daily_sheet/upload
+erver response
+Code	Details
+500
+Undocumented
+Error: Internal Server Error
+
+Response body
+Download
 Internal Server Error
 
-Traceback (most recent call last):
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlite3.OperationalError: no such column: daily_travel.from_country
-
-The above exception was the direct cause of the following exception:
-
+INFO:     Application startup complete.
+INFO:     127.0.0.1:61000 - "POST /daily_sheet/upload HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
 Traceback (most recent call last):
   File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
     result = await app(  # type: ignore[func-returns-value]
@@ -35,7 +31,9 @@ Traceback (most recent call last):
     raise exc
   File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
     await self.app(scope, receive, _send)
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 93, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\cors.py", line 144, in simple_response
     await self.app(scope, receive, send)
   File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
@@ -66,113 +64,14 @@ Traceback (most recent call last):
     ...<3 lines>...
     )
     ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\routing.py", line 291, in run_endpoint_function
-    return await run_in_threadpool(dependant.call, **values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\starlette\concurrency.py", line 38, in run_in_threadpool
-    return await anyio.to_thread.run_sync(func)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\anyio\to_thread.py", line 56, in run_sync
-    return await get_async_backend().run_sync_in_worker_thread(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2485, in run_sync_in_worker_thread
-    return await future
-           ^^^^^^^^^^^^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 976, in run
-    result = context.run(func, *args)
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\daily_sheet.py", line 478, in get_previous_data
-    rows = db.query(DailyTravel).order_by(DailyTravel.id.asc()).all()
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
-    return self._iter().all()  # type: ignore
-           ~~~~~~~~~~^^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
-    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
-                                                  ~~~~~~~~~~~~~~~~~~~~^
-        statement,
-        ^^^^^^^^^^
-        params,
-        ^^^^^^^
-        execution_options={"_sa_orm_load_options": self.load_options},
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
-    return self._execute_internal(
-           ~~~~~~~~~~~~~~~~~~~~~~^
-        statement,
-        ^^^^^^^^^^
-    ...<4 lines>...
-        _add_event=_add_event,
-        ^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
-    result: Result[Any] = compile_state_cls.orm_execute_statement(
-                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self,
-        ^^^^^
-    ...<4 lines>...
-        conn,
-        ^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
-    result = conn.execute(
-        statement, params or {}, execution_options=execution_options
-    )
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
-    return meth(
-        self,
-        distilled_parameters,
-        execution_options or NO_OPTIONS,
-    )
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self, distilled_params, execution_options
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-        dialect,
-    ...<8 lines>...
-        cache_hit=cache_hit,
-    )
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~^
-        dialect, context, statement, parameters
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        e, str_statement, effective_parameters, cursor, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: daily_travel.from_country
-[SQL: SELECT daily_travel.id AS daily_travel_id, daily_travel.emp_id AS daily_travel_emp_id, daily_travel.first_name AS daily_travel_first_name, daily_travel.last_name AS daily_travel_last_name, daily_travel.email AS daily_travel_email, daily_travel.from_location AS daily_travel_from_location, daily_travel.from_country AS daily_travel_from_country, daily_travel.to_location AS daily_travel_to_location, daily_travel.to_country AS daily_travel_to_country, daily_travel.begin_date AS daily_travel_begin_date, daily_travel.end_date AS daily_travel_end_date, daily_travel.leg_type AS daily_travel_leg_type, daily_travel.active_now AS daily_travel_active_now, daily_travel.is_vip AS daily_travel_is_vip, daily_travel.matched_employee_id AS daily_travel_matched_employee_id, daily_travel.matched_employee_name AS daily_travel_matched_employee_name, daily_travel.match_reason AS daily_travel_match_reason, daily_travel.uploaded_at AS daily_travel_uploaded_at
-FROM daily_travel ORDER BY daily_travel.id ASC]
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\fastapi\routing.py", line 289, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\daily_sheet.py", line 349, in upload
+    from_country=from_country,
+                 ^^^^^^^^^^^^
+NameError: name 'from_country' is not defined
+
 
 # daily_sheet.py
 from fastapi import APIRouter, File, UploadFile, HTTPException
@@ -197,6 +96,10 @@ router = APIRouter(prefix="/daily_sheet", tags=["daily_sheet"])
 
 # Use same server timezone as main.py
 SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
+
+
+
+
 
 
 
@@ -226,6 +129,12 @@ class DailyTravel(Base):
 
 # Ensure tables exist
 Base.metadata.create_all(bind=engine)
+
+
+
+
+
+
 
 
 
@@ -540,6 +449,9 @@ async def upload(file: UploadFile = File(...)):
         'items': items,
         'message': f'{rows_added} daily travel records saved and cached'
     })
+
+
+
 
 
 
