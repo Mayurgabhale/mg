@@ -1,4 +1,6 @@
+ "is_vip" is not work,, 
 
+     chekc why not show 
 # daily_sheet.py
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
