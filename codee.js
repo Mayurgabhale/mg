@@ -1,6 +1,91 @@
- "is_vip" is not work,, 
+"is_vip": 0, 
+ "vip_count": 0,
+      "active_vip_count": 0,  this s not show read below all code who to fixt thsi 
 
-     chekc why not show 
+http://127.0.0.1:8000/daily_sheet/regions
+
+  "regions": {
+    "LACA": {
+      "region_code": "LACA",
+      "total_count": 17,
+      "active_count": 1,
+      "vip_count": 0,
+      "active_vip_count": 0,
+      "cities": {
+        "Asunción": {
+          "city_name": "Asunción",
+          "total_count": 4,
+          "active_count": 0,
+          "vip_count": 0,
+          "active_vip_count": 0,
+          "sample_items": [
+            {
+              "first_name": "ALDANA",
+              "last_name": "CROTTI",
+              "email": "aldana.crotti@westernunion.com",
+              "pnr": null,
+              "active_now": 0,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "ALDANA",
+              "last_name": "CROTTI",
+              "email": "aldana.crotti@westernunion.com",
+              "pnr": null,
+              "active_now": 0,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+             http://127.0.0.1:8000/daily_sheet/data
+
+         {
+  "summary": {
+    "rows_received": 100,
+    "rows_removed_as_footer_or_empty": 0,
+    "rows_with_parse_errors": 0,
+    "active_now_count": 5
+  },
+  "items": [
+    {
+      "email": "alejandro.alganaraz@westernunion.com",
+      "emp_id": "308497.0",
+      "first_name": "ALEJANDRO",
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "end_date": "2025-10-29T00:00:00+05:30",
+      "active_now": 0,
+      "matched_employee_id": null,
+      "matched_employee_name": null,
+      "uploaded_at": "2025-11-11 17:37:07",
+      "id": 1,
+      "last_name": "ALGANARAS",
+      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "begin_date": "2025-10-27T00:00:00+05:30",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
+      "match_reason": null
+    },
+    {
+      "email": "ignacio.ariztegui@westernunion.com",
+      "emp_id": "190871.0",
+      "first_name": "IGNACIO",
+      "to_location": "Bahia Blanca, Buenos Aires",
+      "end_date": "2025-10-29T00:00:00+05:30",
+      "active_now": 0,
+      "matched_employee_id": null,
+      "matched_employee_name": null,
+      "uploaded_at": "2025-11-11 17:37:07",
+      "id": 2,
+      "last_name": "ARIZTEGUI",
+      "from_location": "Bahia Blanca, Buenos Aires",
+      "begin_date": "2025-10-27T00:00:00+05:30",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
+      "match_reason": null
+    },
+
+   
 # daily_sheet.py
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
@@ -310,6 +395,8 @@ async def upload(file: UploadFile = File(...)):
         email = (str(row.get('EMAIL') or "").strip().lower()) if 'EMAIL' in df.columns else None
         from_location = row.get('FROM LOCATION') if 'FROM LOCATION' in df.columns else None
         to_location = row.get('TO LOCATION') if 'TO LOCATION' in df.columns else None
+        from_country = row.get('FROM COUNTRY') if 'FROM COUNTRY' in df.columns else None  # ✅ new
+        to_country = row.get('TO COUNTRY') if 'TO COUNTRY' in df.columns else None        # ✅ new
         begin_dt_obj = row.get('BEGIN_DT') if 'BEGIN_DT' in df.columns else None
         end_dt_obj = row.get('END_DT') if 'END_DT' in df.columns else None
         begin_date_iso = begin_dt_obj.isoformat() if begin_dt_obj is not None else None
