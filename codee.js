@@ -30,7 +30,30 @@ Get Daily Record
 DELETE
 /daily_sheet/clear
 Clear Daily Data
-
+wiht VIPi gobla and regin wise ok 
+http://127.0.0.1:8000/daily_sheet/records
+{
+  "count": 100,
+  "items": [
+    {
+      "email": "alejandro.alganaraz@westernunion.com",
+      "emp_id": "308497.0",
+      "first_name": "ALEJANDRO",
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "end_date": "2025-10-28T18:30:00+00:00",
+      "active_now": 0,
+      "matched_employee_id": null,
+      "matched_employee_name": null,
+      "uploaded_at": "2025-11-11 12:31:25",
+      "id": 1,
+      "last_name": "ALGANARAS",
+      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "begin_date": "2025-10-26T18:30:00+00:00",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
+      "match_reason": null
+    },
+      i
 this ok  wiht correct ok    
 do carefullym 
 const EmployeeTravelDashboard = () => {
