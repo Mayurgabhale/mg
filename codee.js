@@ -1,16 +1,19 @@
-<button
-  onClick={() => setFilters({ ...filters, showVIPOnly: !filters.showVIPOnly })}
-  style={{
-    ...styles.vipButton,
-    backgroundColor: filters.showVIPOnly ? "#facc15" : "#e5e7eb",
-    color: filters.showVIPOnly ? "#000" : "#374151",
-    border: "1px solid #d1d5db",
-    borderRadius: "6px",
-    padding: "6px 12px",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  }}
->
-  {filters.showVIPOnly ? "Showing VIP Only" : "View VIP Only"}
-</button>
+   const filtered = safeItems
+        .filter((r) => {
+            const s = filters.search.toLowerCase();
+            if (s) {
+                const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""} ${r.from_location ?? ""} ${r.to_location ?? ""}`.toLowerCase();
+                if (!hay.includes(s)) return false;
+            }
+            if (filters.country && r.from_country !== filters.country) return false;
+            if (filters.location) {
+                const fromLocationMatch = r.from_location && r.from_location.toLowerCase().includes(filters.location.toLowerCase());
+                const toLocationMatch = r.to_location && r.to_location.toLowerCase().includes(filters.location.toLowerCase());
+                if (!fromLocationMatch && !toLocationMatch) return false;
+            }
+            if (filters.legType && r.leg_type !== filters.legType) return false;
+            if (filters.status === "active" && !r.active_now) return false;
+            if (filters.status === "inactive" && r.active_now) return false;
+            return true;
+        })
+        .sort((a, b) => (b.active_now === true) - (a.active_now === true));
