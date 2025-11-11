@@ -1,44 +1,3 @@
-http://127.0.0.1:8000/monthly_sheet/employees
-"uploaded_at": null,   this i want to store in data base ok 
-{
-  "message": null,
-  "uploaded_at": null,
-  "employees": [
-    {
-      "first_name": "Michelle",
-      "position_id": null,
-      "manager_name": null,
-      "time_in_position_months": 0,
-      "preferred_first_name": "Michelle",
-      "business_title": "Vice President, Executive Finance",
-      "employee_email": null,
-      "middle_name": null,
-      "department_name": "CFO Exec/Admin",
-      "manager_email": null,
-      "id": 1,
-      "full_name": "Galligan, Michelle L",
-      "company_name": "Western Union, LLC",
-      "fte": 1,
-      "current_status": null,
-      "work_country": "United States of America",
-      "tenure": "28 year(s), 9 month(s), 9 day(s)",
-      "employee_id": "72072",
-      "employee_type": null,
-      "location_description": "Denver - WU HQ",
-      "years_of_service": 28,
-      "last_name": "Galligan",
-      "hire_date": null,
-      "location_city": "Denver",
-      "job_code": null,
-      "management_level": "Vice President",
-      "length_of_service_months": 345,
-      "is_vip": true
-    },
-    {
-      "first_name": "William",
-      "position_id": null,
-      "manager_name": null,
-
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
@@ -98,6 +57,7 @@ class Employee(Base):
     years_of_service = Column(Float)
     length_of_service_months = Column(Float)
     time_in_position_months = Column(Float)
+    uploaded_at = Column(String, nullable=True)  # ✅ shared upload timestamp
 
 # Create table if not exists
 Base.metadata.create_all(bind=engine)
@@ -127,6 +87,7 @@ async def upload_monthly(file: UploadFile = File(...)):
 
     content = await file.read()
 
+    # Read file content into DataFrame
     try:
         if file.filename.lower().endswith(".csv"):
             df = pd.read_csv(BytesIO(content))
@@ -140,6 +101,9 @@ async def upload_monthly(file: UploadFile = File(...)):
 
     session = SessionLocal()
     session.query(Employee).delete()  # optional: clear old data
+
+    # ✅ one shared timestamp for all records
+    upload_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     for _, row in df.iterrows():
         emp = Employee(
@@ -162,15 +126,15 @@ async def upload_monthly(file: UploadFile = File(...)):
             years_of_service=float(row.get("Years_of_Service", 0)) if pd.notna(row.get("Years_of_Service")) else None,
             length_of_service_months=float(row.get("Length_of_Service_in_Months", 0)) if pd.notna(row.get("Length_of_Service_in_Months")) else None,
             time_in_position_months=float(row.get("Time_in_Position_(Months)", 0)) if pd.notna(row.get("Time_in_Position_(Months)")) else None,
+            uploaded_at=upload_time,  # ✅ shared timestamp for all records
         )
         session.add(emp)
 
     session.commit()
     session.close()
 
-    # ✅ Add timestamp and save to global variable
-    upload_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    last_upload_info["message"] = f"{len(df)} employee records saved successfully to SQLite database."
+    # ✅ store in global info
+    last_upload_info["message"] = f"{len(df)} employee records saved successfully."
     last_upload_info["uploaded_at"] = upload_time
 
     return last_upload_info
@@ -183,6 +147,8 @@ def get_all_employees():
     employees = session.query(Employee).all()
     session.close()
 
+    uploaded_at = employees[0].uploaded_at if employees else None
+
     def is_vip(level: str) -> bool:
         return level in VIP_LEVELS if level else False
 
@@ -194,7 +160,7 @@ def get_all_employees():
 
     return {
         "message": last_upload_info["message"],
-        "uploaded_at": last_upload_info["uploaded_at"],
+        "uploaded_at": uploaded_at,
         "employees": employee_list,
     }
 
@@ -205,6 +171,7 @@ def get_employee(emp_id: str):
     session = SessionLocal()
     emp = session.query(Employee).filter(Employee.employee_id == emp_id).first()
     session.close()
+
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
