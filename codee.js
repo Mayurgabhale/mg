@@ -1,516 +1,93 @@
-# daily_sheet.py
-from fastapi import APIRouter, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
-from sqlalchemy import Column, Integer, String
-from io import BytesIO, StringIO
-import pandas as pd
-import numpy as np
-from datetime import datetime
-from dateutil import parser as date_parser
-import re, zoneinfo, logging
-from typing import Optional, Dict, Any
+import React, { useState, useEffect, useMemo } from 'react'; import axios from 'axios'; import { toast } from 'react-toastify'; import 'react-toastify/dist/ReactToastify.css'; import { FiUpload, FiTrash2, FiDownload, FiGlobe, FiFilter, FiSearch, FiFileText, FiCheckCircle, FiXCircle, FiUser, FiMail, FiMapPin, FiCalendar, FiEye } from 'react-icons/fi'; import { FaPlane, FaCar, FaTrain, FaTruck, FaShip, FaBicycle, FaHotel, FaLocationArrow } from 'react-icons/fa'; import { BsPersonWalking } from 'react-icons/bs';
 
-# Import DB Base/engine/SessionLocal and Employee model + VIP_LEVELS from monthly_sheet
-# Make sure monthly_sheet exports: Base, engine, SessionLocal, Employee, VIP_LEVELS
-from monthly_sheet import Base, engine, SessionLocal, Employee, VIP_LEVELS
+// initialize toast once toast.configure();
 
-logger = logging.getLogger("uvicorn.error")
+// Simple date formatting helper const fmt = (iso) => { if (!iso) return '—'; try { const d = new Date(iso); return d.toLocaleString(); } catch (e) { return iso; } };
 
-router = APIRouter(prefix="/daily_sheet", tags=["daily_sheet"])
+// Basic inline styles generator (keeps component self-contained) const getStyles = (dark) => { const bg = dark ? '#0f172a' : '#ffffff'; const card = dark ? '#0b1220' : '#f8fafc'; const text = dark ? '#e6eef8' : '#0f172a'; return { page: { padding: 20, background: bg, minHeight: '100vh', color: text, fontFamily: 'Inter, sans-serif' }, card: { background: card, borderRadius: 10, padding: 16, boxShadow: '0 4px 10px rgba(0,0,0,0.03)', marginBottom: 16 }, compactUploadRow: { display: 'flex', gap: 8, alignItems: 'center' }, compactFileUpload: { display: 'flex', alignItems: 'center', gap: 8 }, fileInput: { display: 'none' }, compactFileLabel: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, cursor: 'pointer', background: dark ? '#0b1220' : '#fff', border: '1px solid #e6eef8' }, compactPrimaryBtn: { padding: '8px 12px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#2563eb', color: '#fff' }, compactSecondaryBtn: { padding: '8px', borderRadius: 8, cursor: 'pointer', border: 'none', background: '#ef4444', color: '#fff' }, compactGhostBtn: { padding: '8px', borderRadius: 8, cursor: 'pointer', border: '1px solid #e6eef8', background: 'transparent' }, regionCardsSection: { marginTop: 12 }, regionCardsGrid: { display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }, regionCard: { width: 200, padding: 12, borderRadius: 8, background: dark ? '#071029' : '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }, regionCardHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }, regionIcon: { width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }, regionName: { fontWeight: 700 }, regionCount: { fontSize: 20, fontWeight: 700 }, regionLabel: { fontSize: 12, color: '#6b7280' }, activeDot: { width: 10, height: 10, borderRadius: 10, background: '#10b981', marginRight: 6 }, filtersSection: { marginTop: 12 }, filtersRow: { display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }, searchWrapper: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid #e6eef8', background: dark ? '#071029' : '#fff' }, searchInput: { border: 'none', outline: 'none', background: 'transparent' }, select: { padding: '8px 10px', borderRadius: 8, border: '1px solid #e6eef8', background: 'transparent' }, tableWrap: { overflowX: 'auto', marginTop: 12 }, table: { width: '100%', borderCollapse: 'collapse' }, th: { textAlign: 'left', padding: 8, fontSize: 13, color: '#6b7280' }, td: { padding: 10, fontSize: 13, borderTop: '1px solid #e6eef8' }, rowEven: { background: 'transparent' }, rowOdd: { background: dark ? '#071829' : '#fcfeff' }, activeBadge: { display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ecfdf5', color: '#065f46', padding: '6px 8px', borderRadius: 6 }, inactiveBadge: { display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff1f2', color: '#991b1b', padding: '6px 8px', borderRadius: 6 }, viewButton: { padding: '8px 10px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#2563eb', color: '#fff' }, popupOverlay: { position: 'fixed', left: 0, top: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }, popupContent: { width: 720, maxHeight: '80vh', overflowY: 'auto', background: card, borderRadius: 10, padding: 16 }, popupHeader: { display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }, avatarLarge: { width: 48, height: 48, borderRadius: 10, background: '#e6eef8', display: 'flex', alignItems: 'center', justifyContent: 'center' }, popupTitle: { margin: 0, fontSize: 18 }, dateCell: { display: 'flex', alignItems: 'center', gap: 8 } }; };
 
-# Use same server timezone as main.py
-SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
+export default function EmployeeTravelDashboard() { // core states const [file, setFile] = useState(null); const [items, setItems] = useState([]); const [summary, setSummary] = useState({}); const [loading, setLoading] = useState(false); const [filters, setFilters] = useState({ country: '', location: '', legType: '', search: '', status: '' }); const [selectedTraveler, setSelectedTraveler] = useState(null); const [activeTab, setActiveTab] = useState('overview');
 
-# ---------------------------
-# Model
-# ---------------------------
-class DailyTravel(Base):
-    __tablename__ = "daily_travel"
+const [isDarkTheme, setIsDarkTheme] = useState(false); const toggleTheme = () => setIsDarkTheme(v => !v);
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    emp_id = Column(String, index=True, nullable=True)
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
-    email = Column(String, nullable=True)
-    from_location = Column(String, nullable=True)
-    to_location = Column(String, nullable=True)
-    begin_date = Column(String, nullable=True)  # ISO string in UTC
-    end_date = Column(String, nullable=True)    # ISO string in UTC
-    leg_type = Column(String, nullable=True)
-    active_now = Column(Integer, default=0)  # 0/1
-    is_vip = Column(Integer, default=0)      # 0/1
-    matched_employee_id = Column(String, nullable=True)
-    matched_employee_name = Column(String, nullable=True)
-    match_reason = Column(String, nullable=True)  # 'emp_id', 'email', 'name' or None
-    uploaded_at = Column(String, nullable=True)
-    # Optional: store from_country/to_country to simplify region grouping if desired
-    # but we keep original schema simple — regions derived at runtime
+// monthly-related states const [employeeData, setEmployeeData] = useState([]); const [monthlyFile, setMonthlyFile] = useState(null); const [showUploadPopup, setShowUploadPopup] = useState(false); const [hasUploadedData, setHasUploadedData] = useState(false); const [uploadTime, setUploadTime] = useState(null); const [uploadStatus, setUploadStatus] = useState('');
 
-# Ensure tables exist
-Base.metadata.create_all(bind=engine)
+// regions const [regionsData, setRegionsData] = useState({}); const [selectedRegion, setSelectedRegion] = useState(null); const [regionDetails, setRegionDetails] = useState(null);
 
+useEffect(() => { const savedHasUploadedData = localStorage.getItem('hasUploadedData'); const savedUploadTime = localStorage.getItem('uploadTime'); const savedMonthlyFile = localStorage.getItem('monthlyFile');
 
-# ---------------------------
-# Helpers: parsing, reading, header detection
-# ---------------------------
-def normalize_and_parse(dt_val):
-    """Parse a variety of date strings into timezone-aware UTC datetimes (pandas-friendly)."""
-    if pd.isna(dt_val) or dt_val is None:
-        return None
-    s = str(dt_val).strip()
-    # common CSV time format like 08.30 -> 08:30
-    s = re.sub(r"(\d{1,2})\.(\d{1,2})(?!\d)", r"\1:\2", s)
-    try:
-        dt = date_parser.parse(s, dayfirst=False)
-        if dt.tzinfo is None:
-            # attach server tz
-            dt = dt.replace(tzinfo=SERVER_TZ)
-        # convert to UTC
-        return dt.astimezone(zoneinfo.ZoneInfo("UTC"))
-    except Exception:
-        return None
-
-
-def read_any_format(content: bytes, filename: str) -> pd.DataFrame:
-    """
-    Robust reader: detects header row (CSV/Excel), normalizes to canonical columns.
-    Returns DataFrame with columns:
-      "AGENCY ID","AGENCY NAME","LAST NAME","FIRST NAME","TRAVELER",
-      "EMP ID","EMAIL","PNR","LEG TYPE","BEGIN DATE","FROM LOCATION",
-      "FROM COUNTRY","END DATE","TO LOCATION","TO COUNTRY"
-    """
-    EXPECTED_COLS = [
-        "AGENCY ID","AGENCY NAME","LAST NAME","FIRST NAME","TRAVELER",
-        "EMP ID","EMAIL","PNR","LEG TYPE","BEGIN DATE","FROM LOCATION",
-        "FROM COUNTRY","END DATE","TO LOCATION","TO COUNTRY"
-    ]
-
-    # CSV path
-    if filename.lower().endswith(".csv"):
-        text = content.decode(errors="ignore").splitlines()
-        header_row = None
-        for i, line in enumerate(text[:50]):
-            if any(h.lower() in line.lower() for h in EXPECTED_COLS):
-                header_row = i
-                break
-        if header_row is None:
-            raise ValueError("Header row not found in CSV file")
-        df = pd.read_csv(StringIO("\n".join(text)), skiprows=header_row)
-    else:
-        # Excel path: scan first 50 rows to find header row
-        bio = BytesIO(content)
-        preview = pd.read_excel(bio, header=None, nrows=50)
-        header_row = None
-        for i in range(len(preview)):
-            joined = " ".join(str(v).strip().lower() for v in preview.iloc[i].values if pd.notna(v))
-            if any(h.lower() in joined for h in EXPECTED_COLS):
-                header_row = i
-                break
-        if header_row is None:
-            raise ValueError("Header row not found in Excel file")
-        bio.seek(0)
-        df = pd.read_excel(bio, header=header_row)
-
-    # normalize headers
-    df.columns = [str(c).strip().upper() for c in df.columns]
-
-    # ensure expected columns exist
-    for col in EXPECTED_COLS:
-        if col not in df.columns:
-            df[col] = None
-
-    # keep canonical order
-    df = df[EXPECTED_COLS]
-
-    # drop blank rows and known footers
-    def looks_like_footer(row):
-        s = " ".join(str(v).lower() for v in row if pd.notna(v))
-        return bool(re.search(r"copyright|all rights reserved|gardaworld|utc", s))
-
-    df = df.dropna(how="all")
-    df = df[~df.apply(looks_like_footer, axis=1)]
-
-    return df
-
-
-# ---------------------------
-# In-memory cache (parity with main.py)
-# ---------------------------
-previous_data = {
-    "summary": None,
-    "items": None,
-    "last_updated": None,
-    "regions_summary": None
+if (savedHasUploadedData === 'true') {
+  setHasUploadedData(true);
+  if (savedUploadTime) setUploadTime(new Date(savedUploadTime));
+  if (savedMonthlyFile) setMonthlyFile(JSON.parse(savedMonthlyFile));
+  fetchEmployeeData();
 }
 
+}, []);
 
-# ---------------------------
-# Region mapping helper (simple, common-country mapping)
-# ---------------------------
-# This is intentionally conservative — just common countries. Unknown -> GLOBAL
-REGION_MAP = {
-    # NAMER
-    "united states": "NAMER", "usa": "NAMER", "us": "NAMER", "canada": "NAMER", "mexico": "LACA",
-    # LACA (Latin America & Caribbean)
-    "brazil": "LACA", "argentina": "LACA", "chile": "LACA", "colombia": "LACA", "peru": "LACA", "venezuela": "LACA", "mexico": "LACA",
-    # EMEA
-    "united kingdom": "EMEA", "uk": "EMEA", "germany": "EMEA", "france": "EMEA", "spain": "EMEA", "italy": "EMEA", "netherlands": "EMEA",
-    "switzerland": "EMEA", "sweden": "EMEA", "norway": "EMEA", "poland": "EMEA", "belgium": "EMEA",
-    # APAC
-    "india": "APAC", "china": "APAC", "japan": "APAC", "australia": "APAC", "new zealand": "APAC", "singapore": "APAC",
-    "hong kong": "APAC", "south korea": "APAC", "korea": "APAC",
-    # Add a few more common ones
-    "united arab emirates": "EMEA", "uae": "EMEA", "saudi arabia": "EMEA", "south africa": "EMEA",
-}
+const fetchEmployeeData = async () => { try { const res = await axios.get('http://localhost:8000/monthly_sheet/employees'); const data = res.data || {}; setEmployeeData(data.employees || []); setUploadTime(data.uploaded_at ? new Date(data.uploaded_at) : null); setUploadStatus(data.message || ''); } catch (err) { console.error('Failed to fetch employee data:', err); } };
 
-def get_region_for_country(country: Optional[str]) -> str:
-    if not country:
-        return "GLOBAL"
-    c = str(country).strip().lower()
-    # if value contains comma, take last token (e.g., "City, Country")
-    if "," in c:
-        # try to extract country portion
-        parts = [p.strip() for p in c.split(",")]
-        if parts:
-            c = parts[-1]
-    # remove common words
-    c = c.replace("province", "").replace("state", "").strip()
-    return REGION_MAP.get(c, "GLOBAL")
+const handleMonthlyFileChange = (e) => { const selected = e.target.files?.[0]; setMonthlyFile(selected); };
 
+const handleUploadSubmit = async () => { if (!monthlyFile) return toast.warn('Please choose a monthly employees file'); const formData = new FormData(); formData.append('file', monthlyFile); try { setUploadStatus('Uploading...'); const res = await axios.post('http://localhost:8000/monthly_sheet/upload_monthly', formData); if (res.status === 200) { setUploadStatus('Upload successful!'); setUploadTime(new Date()); setHasUploadedData(true); setShowUploadPopup(false); localStorage.setItem('hasUploadedData', 'true'); localStorage.setItem('uploadTime', new Date().toISOString()); localStorage.setItem('monthlyFile', JSON.stringify({ name: monthlyFile.name, size: monthlyFile.size })); await fetchEmployeeData(); toast.success('Monthly employee file uploaded'); } else { throw new Error('Upload failed'); } } catch (err) { console.error(err); setUploadStatus('Upload failed'); toast.error('Upload failed'); } };
 
-def build_regions_summary_from_items(items: list) -> Dict[str, dict]:
-    """
-    Build a regions summary structure:
-    { "GLOBAL": {"total_count": int, "active_count": int, "countries": {country:count}}, ... }
-    """
-    regions: Dict[str, Dict[str, Any]] = {}
-    for it in items:
-        country = (it.get("from_country") or it.get("to_country") or "") or ""
-        region = get_region_for_country(country)
-        if region not in regions:
-            regions[region] = {"total_count": 0, "active_count": 0, "countries": {}}
-        regions[region]["total_count"] += 1
-        if it.get("active_now"):
-            regions[region]["active_count"] += 1
-        ckey = (country or "Unknown").strip()
-        regions[region]["countries"].setdefault(ckey, 0)
-        regions[region]["countries"][ckey] += 1
+const confirmDeleteData = () => { if (window.confirm('Are you sure you want to delete all employee data? This action cannot be undone.')) deleteEmployeeData(); };
 
-    # Convert countries map to list and keep most useful fields
-    summary = {}
-    for rc, v in regions.items():
-        countries_list = [{"country": k, "count": cnt} for k, cnt in v["countries"].items()]
-        countries_list = sorted(countries_list, key=lambda x: x["count"], reverse=True)
-        summary[rc] = {
-            "total_count": v["total_count"],
-            "active_count": v["active_count"],
-            "top_countries": countries_list[:10],
-        }
-    return summary
+const deleteEmployeeData = async () => { try { await axios.delete('http://localhost:8000/monthly_sheet/clear_data'); setEmployeeData([]); setMonthlyFile(null); setHasUploadedData(false); setUploadTime(null); setUploadStatus(''); localStorage.removeItem('hasUploadedData'); localStorage.removeItem('uploadTime'); localStorage.removeItem('monthlyFile'); toast.success('Employee data cleared successfully.'); } catch (err) { console.error(err); toast.error('Failed to clear data.'); } };
 
+// add traveler form const [showAddForm, setShowAddForm] = useState(false); const [newTraveler, setNewTraveler] = useState({ first_name: '', last_name: '', emp_id: '', email: '', begin_dt: '', end_dt: '', from_location: '', from_country: '', to_location: '', to_country: '', leg_type: '' });
 
-# ---------------------------
-# Upload endpoint (stores DB and previous_data)
-# ---------------------------
-@router.post("/upload")
-async def upload(file: UploadFile = File(...)):
-    """
-    Upload daily travel Excel/CSV.
-    - Detects header row robustly
-    - Parses/normalizes dates
-    - Saves records into `daily_travel` (replacing previous daily_travel rows)
-    - Attempts to match each row to monthly employees (emp_id -> email -> name)
-    - Updates previous_data cache (including region summaries and vip counts)
-    """
-    if not file.filename.lower().endswith((".xlsx", ".xls", ".csv")):
-        raise HTTPException(status_code=400, detail="Please upload a valid Excel or CSV file.")
+const addTraveler = async () => { try { await axios.post('http://localhost:8000/daily_sheet/add_traveler', newTraveler); toast.success('Traveler added successfully!'); setShowAddForm(false); setNewTraveler({ first_name: '', last_name: '', emp_id: '', email: '', begin_dt: '', end_dt: '', from_location: '', from_country: '', to_location: '', to_country: '', leg_type: '' }); const res = await axios.get('http://localhost:8000/daily_sheet/data'); const payload = res.data || {}; setItems(payload.items || []); setSummary(payload.summary || {}); } catch (err) { console.error(err); toast.error('Failed to add traveler. Check backend.'); } };
 
-    content = await file.read()
+const styles = getStyles(isDarkTheme); const [lastUpdated, setLastUpdated] = useState(null);
 
-    try:
-        df = read_any_format(content, file.filename)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error reading file: {e}")
+// load previous data & auto-refresh useEffect(() => { const fetchLatest = async (showToast = false) => { try { const res = await axios.get('http://localhost:8000/daily_sheet/data'); const payload = res.data || {}; const rows = payload.items || []; if (rows.length > 0) { setItems(rows); setSummary(payload.summary || {}); if (showToast) toast.info(Loaded ${rows.length} saved records from previous session.); if (payload.last_updated) setLastUpdated(payload.last_updated); } } catch (err) { // no data yet // console.warn('No saved data yet — upload a file to start.'); } };
 
-    # normalize columns to uppercase (already done in read_any_format)
-    # Parse dates
-    df['BEGIN_DT'] = df['BEGIN DATE'].apply(normalize_and_parse)
-    df['END_DT'] = df['END DATE'].apply(normalize_and_parse)
+fetchLatest(true);
+const interval = setInterval(() => fetchLatest(false), 10000);
+return () => clearInterval(interval);
 
-    now_local = datetime.now(tz=SERVER_TZ)
-    now_utc = now_local.astimezone(zoneinfo.ZoneInfo('UTC'))
+}, []);
 
-    def is_active_row(row):
-        b, e = row['BEGIN_DT'], row['END_DT']
-        return bool(b and e and b <= now_utc <= e)
+const handleFileChange = (e) => setFile(e.target.files[0]);
 
-    df['active_now'] = df.apply(is_active_row, axis=1)
+const uploadFile = async () => { if (!file) return toast.warn('Please select an Excel or CSV file first.'); setLoading(true); try { const formData = new FormData(); formData.append('file', file); const res = await axios.post('http://localhost:8000/daily_sheet/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }); const payload = res.data || {}; const rows = payload.items || []; setItems(rows); setSummary(payload.summary || {}); toast.success(Uploaded successfully. ${rows.length} records found.); } catch (err) { console.error(err); toast.error('Upload failed. Please check the backend or file format.'); } finally { setLoading(false); } };
 
-    # Remove blank/footer rows (again) and keep rows with some identifying info
-    original_count = len(df)
-    def is_footer_row(row):
-        combined = " ".join(str(v) for v in row.values if v is not None).lower()
-        patterns = [r"copyright", r"all rights reserved", r"gardaworld", r"utc", r"\b\d{1,2}-[a-z]{3}-\d{4}\b"]
-        return any(re.search(p, combined) for p in patterns)
+const safeItems = Array.isArray(items) ? items : [];
 
-    df = df.dropna(how="all")
-    df = df[~df.apply(is_footer_row, axis=1)]
-    df = df[
-        df["FIRST NAME"].notna() |
-        df["LAST NAME"].notna() |
-        df["EMAIL"].notna()
-    ]
-    removed_rows = original_count - len(df)
+const analytics = useMemo(() => { const active = safeItems.filter(r => r.active_now).length; const countries = [...new Set(safeItems.map(r => r.from_country).filter(Boolean))]; const legTypes = [...new Set(safeItems.map(r => r.leg_type).filter(Boolean))]; const durations = safeItems.map(r => { if (!r.begin_dt || !r.end_dt) return 0; const start = new Date(r.begin_dt); const end = new Date(r.end_dt); return Math.max(0, (end - start) / (1000 * 60 * 60 * 24)); }).filter(d => d > 0); const avgDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0; return { active, totalCountries: countries.length, totalTypes: legTypes.length, avgDuration: avgDuration.toFixed(1), totalTravelers: safeItems.length }; }, [safeItems]);
 
-    # Build employee lookup maps from monthly_sheet DB
-    db = SessionLocal()
-    try:
-        employees = db.query(Employee).all()
-    except Exception as e:
-        logger.exception("Failed to load monthly employees: %s", e)
-        employees = []
-    by_empid = {}
-    by_email = {}
-    by_name = {}
-    for emp in employees:
-        eid = (getattr(emp, "employee_id", "") or "").strip()
-        em = (getattr(emp, "employee_email", "") or "").strip().lower()
-        fn = (getattr(emp, "first_name", "") or "").strip().lower()
-        ln = (getattr(emp, "last_name", "") or "").strip().lower()
-        if eid:
-            by_empid[eid] = emp
-        if em:
-            by_email[em] = emp
-        if fn or ln:
-            k = f"{fn} {ln}".strip()
-            if k:
-                if k not in by_name:
-                    by_name[k] = emp
+const countryStats = useMemo(() => { const map = {}; safeItems.forEach(r => { const c = r.from_country || 'Unknown'; if (!map[c]) map[c] = { count: 0, active: 0, travelers: new Set() }; map[c].count++; if (r.active_now) map[c].active++; map[c].travelers.add(${r.first_name} ${r.last_name}); }); return Object.entries(map).map(([country, data]) => ({ country, count: data.count, active: data.active, travelerCount: data.travelers.size })).sort((a, b) => b.count - a.count); }, [safeItems]);
 
-    # Replace existing daily_travel rows
-    try:
-        db.query(DailyTravel).delete()
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        logger.exception("Failed to clear previous daily_travel: %s", e)
+const travelTypeStats = useMemo(() => { const map = {}; safeItems.forEach(r => { const type = r.leg_type || 'Unknown'; if (!map[type]) map[type] = { count: 0, active: 0, countries: new Set() }; map[type].count++; if (r.active_now) map[type].active++; if (r.from_country) map[type].countries.add(r.from_country); }); return Object.entries(map).map(([type, data]) => ({ type, count: data.count, active: data.active, countryCount: data.countries.size })).sort((a, b) => b.count - a.count); }, [safeItems]);
 
-    rows_added = 0
-    upload_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+const recentTravelers = useMemo(() => { const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); return safeItems.filter(r => r.begin_dt && new Date(r.begin_dt) >= sevenDaysAgo).sort((a, b) => new Date(b.begin_dt) - new Date(a.begin_dt)).slice(0, 10); }, [safeItems]);
 
-    # Iterate rows and add to DB
-    for idx, row in df.iterrows():
-        emp_id = str(row.get('EMP ID') or "").strip()
-        first_name = (str(row.get('FIRST NAME') or "").strip()) if 'FIRST NAME' in df.columns else ""
-        last_name = (str(row.get('LAST NAME') or "").strip()) if 'LAST NAME' in df.columns else ""
-        email = (str(row.get('EMAIL') or "").strip().lower()) if 'EMAIL' in df.columns else None
-        from_location = row.get('FROM LOCATION') if 'FROM LOCATION' in df.columns else None
-        to_location = row.get('TO LOCATION') if 'TO LOCATION' in df.columns else None
-        from_country = row.get('FROM COUNTRY') if 'FROM COUNTRY' in df.columns else None
-        to_country = row.get('TO COUNTRY') if 'TO COUNTRY' in df.columns else None
-        begin_dt_obj = row.get('BEGIN_DT') if 'BEGIN_DT' in df.columns else None
-        end_dt_obj = row.get('END_DT') if 'END_DT' in df.columns else None
-        begin_date_iso = begin_dt_obj.isoformat() if begin_dt_obj is not None else None
-        end_date_iso = end_dt_obj.isoformat() if end_dt_obj is not None else None
-        leg_type = row.get('LEG TYPE') if 'LEG TYPE' in df.columns else None
-        active_flag = 1 if bool(row.get('active_now')) else 0
+const countries = useMemo(() => [...new Set(safeItems.map(r => r.from_country).filter(Boolean))], [safeItems]); const locations = useMemo(() => [...new Set([...safeItems.map(r => r.from_location).filter(Boolean), ...safeItems.map(r => r.to_location).filter(Boolean)])].sort(), [safeItems]); const legTypes = useMemo(() => [...new Set(safeItems.map(r => r.leg_type).filter(Boolean))], [safeItems]);
 
-        # matching priority
-        matched_emp = None
-        match_reason = None
-        if emp_id and emp_id in by_empid:
-            matched_emp = by_empid[emp_id]
-            match_reason = "emp_id"
-        elif email and email in by_email:
-            matched_emp = by_email[email]
-            match_reason = "email"
-        else:
-            name_key = f"{(first_name or '').strip().lower()} {(last_name or '').strip().lower()}".strip()
-            if name_key and name_key in by_name:
-                matched_emp = by_name[name_key]
-                match_reason = "name"
+const getTravelTypeIcon = (type) => { if (!type) return FiGlobe; const typeLower = type.toLowerCase(); if (typeLower.includes('car') || typeLower.includes('vehicle')) return FaCar; if (typeLower.includes('truck') || typeLower.includes('bus')) return FaTruck; if (typeLower.includes('train') || typeLower.includes('rail')) return FaTrain; if (typeLower.includes('plane') || typeLower.includes('air') || typeLower.includes('flight')) return FaPlane; if (typeLower.includes('ship') || typeLower.includes('boat') || typeLower.includes('sea')) return FaShip; if (typeLower.includes('bike') || typeLower.includes('cycle')) return FaBicycle; if (typeLower.includes('hotel')) return FaHotel; if (typeLower.includes('stop')) return BsPersonWalking; return FaLocationArrow; };
 
-        is_vip = 0
-        matched_employee_id = None
-        matched_employee_name = None
-        if matched_emp:
-            matched_employee_id = getattr(matched_emp, "employee_id", None)
-            matched_employee_name = getattr(matched_emp, "full_name", None) or f"{getattr(matched_emp,'first_name','')} {getattr(matched_emp,'last_name','')}".strip()
-            mgmt_level = getattr(matched_emp, "management_level", None)
-            if mgmt_level and mgmt_level in VIP_LEVELS:
-                is_vip = 1
+const getTravelTypeColor = (type) => { if (!type) return '#6b7280'; const typeLower = type.toLowerCase(); if (typeLower.includes('car') || typeLower.includes('vehicle')) return '#dc2626'; if (typeLower.includes('truck') || typeLower.includes('bus')) return '#ea580c'; if (typeLower.includes('train') || typeLower.includes('rail')) return '#16a34a'; if (typeLower.includes('plane') || typeLower.includes('air') || typeLower.includes('flight')) return '#2563eb'; if (typeLower.includes('ship') || typeLower.includes('boat') || typeLower.includes('sea')) return '#7c3aed'; if (typeLower.includes('bike') || typeLower.includes('cycle')) return '#ca8a04'; return '#2465c1ff'; };
 
-        dt = DailyTravel(
-            emp_id = emp_id or None,
-            first_name = first_name or None,
-            last_name = last_name or None,
-            email = email or None,
-            from_location = from_location,
-            to_location = to_location,
-            begin_date = begin_date_iso,
-            end_date = end_date_iso,
-            leg_type = str(leg_type) if leg_type is not None else None,
-            active_now = active_flag,
-            is_vip = is_vip,
-            matched_employee_id = matched_employee_id,
-            matched_employee_name = matched_employee_name,
-            match_reason = match_reason,
-            uploaded_at = upload_time
-        )
+const today = new Date(); today.setHours(0, 0, 0, 0); const todayTravelers = safeItems.filter(r => { if (!r.begin_dt) return false; const start = new Date(r.begin_dt); start.setHours(0, 0, 0, 0); return start.getTime() === today.getTime(); });
 
-        try:
-            db.add(dt)
-            rows_added += 1
-        except Exception as e:
-            logger.exception("Failed to add DailyTravel row: %s", e)
-            db.rollback()
+const filtered = safeItems.filter(r => { const s = (filters.search || '').toLowerCase(); if (s) { const hay = ${r.first_name ?? ''} ${r.last_name ?? ''} ${r.email ?? ''} ${r.from_location ?? ''} ${r.to_location ?? ''}.toLowerCase(); if (!hay.includes(s)) return false; } if (filters.country && r.from_country !== filters.country) return false; if (filters.location) { const fromLocationMatch = r.from_location && r.from_location.toLowerCase().includes(filters.location.toLowerCase()); const toLocationMatch = r.to_location && r.to_location.toLowerCase().includes(filters.location.toLowerCase()); if (!fromLocationMatch && !toLocationMatch) return false; } if (filters.legType && r.leg_type !== filters.legType) return false; if (filters.status === 'active' && !r.active_now) return false; if (filters.status === 'inactive' && r.active_now) return false; return true; }).sort((a, b) => (b.active_now === true) - (a.active_now === true));
 
-    try:
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        logger.exception("Commit failed for daily_travel: %s", e)
-    finally:
-        db.close()
+const exportCsv = () => { if (!filtered.length) return toast.info('No data to export.'); const keys = Object.keys(filtered[0]); const csv = [keys.join(',')]; filtered.forEach(r => csv.push(keys.map(k => "${String(r[k] ?? '').replace(/"/g, '""')}").join(','))); const blob = new Blob([csv.join('\n')], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'EmployeeTravelData.csv'; a.click(); URL.revokeObjectURL(url); toast.success('CSV exported successfully.'); };
 
-    # Build previous_data cache (items & summary & regions) like main.py
-    items = []
-    for i, row in df.iterrows():
-        items.append({
-            'index': int(i),
-            'agency_id': row.get('AGENCY ID'),
-            'agency_name': row.get('AGENCY NAME'),
-            'first_name': row.get('FIRST NAME'),
-            'last_name': row.get('LAST NAME'),
-            'emp_id': row.get('EMP ID'),
-            'email': row.get('EMAIL'),
-            'pnr': row.get('PNR'),
-            'leg_type': row.get('LEG TYPE'),
-            'begin_dt': row.get('BEGIN_DT').isoformat() if row.get('BEGIN_DT') else None,
-            'end_dt': row.get('END_DT').isoformat() if row.get('END_DT') else None,
-            'from_location': row.get('FROM LOCATION'),
-            'from_country': row.get('FROM COUNTRY'),
-            'to_location': row.get('TO LOCATION'),
-            'to_country': row.get('TO COUNTRY'),
-            'active_now': bool(row.get('active_now')),
-        })
+useEffect(() => { const fetchRegionsData = async () => { if (safeItems.length > 0) { try { const response = await axios.get('http://localhost:8000/daily_sheet/regions'); setRegionsData(response.data.regions || {}); } catch (error) { console.error('Error fetching regions data:', error); } } }; fetchRegionsData(); }, [safeItems]);
 
-    # summary
-    vip_count = 0
-    for it in items:
-        # attempt to find matching employee using DB lookups we already created
-        email = (it.get('email') or "").strip().lower()
-        empid = (it.get('emp_id') or "")
-        mp = None
-        if empid and empid in by_empid:
-            mp = by_empid[empid]
-        elif email and email in by_email:
-            mp = by_email[email]
-        if mp:
-            if getattr(mp, "management_level", None) in VIP_LEVELS:
-                vip_count += 1
+const fetchRegionDetails = async (regionCode) => { try { const response = await axios.get(http://localhost:8000/daily_sheet/regions/${regionCode}); setRegionDetails(response.data.region || null); setSelectedRegion(regionCode); } catch (error) { console.error('Error fetching region details:', error); toast.error('Failed to load region details'); } };
 
-    summary = {
-        'rows_received': len(df),
-        'rows_removed_as_footer_or_empty': removed_rows,
-        'rows_with_parse_errors': int(df['BEGIN_DT'].isna().sum() + df['END_DT'].isna().sum()),
-        'active_now_count': int(df['active_now'].sum()),
-        'vip_count': int(vip_count)
-    }
+// Traveler detail popup const TravelerDetailPopup = ({ traveler, onClose }) => { if (!traveler) return null; const TravelTypeIcon = getTravelTypeIcon(traveler.leg_type); const travelTypeColor = getTravelTypeColor(traveler.leg_type); const getDuration = () => { if (!traveler.begin_dt || !traveler.end_dt) return 'Unknown'; const start = new Date(traveler.begin_dt); const end = new Date(traveler.end_dt); const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)); return ${days} day${days !== 1 ? 's' : ''}; }; return ( <div style={styles.popupOverlay} onClick={onClose}> <div style={styles.popupContent} onClick={e => e.stopPropagation()}> <div style={styles.popupHeader}> <div style={styles.avatarLarge}><FiUser size={24} /></div> <div> <h3 style={styles.popupTitle}>{traveler.first_name} {traveler.last_name}</h3> <div style={{ color: '#6b7280' }}>Employee ID: {traveler.emp_id || 'N/A'}</div> </div> </div> <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}> <div> <strong>Trip</strong> <div style={{ marginTop: 8 }}>{traveler.from_location || 'N/A'} → {traveler.to_location || 'N/A'}</div> <div style={{ marginTop: 8 }}><strong>From Country:</strong> {traveler.from_country || 'Unknown'}</div> <div style={{ marginTop: 8 }}><strong>To Country:</strong> {traveler.to_country || 'Unknown'}</div> </div> <div> <strong>Timing</strong> <div style={{ marginTop: 8 }}><FiCalendar /> {fmt(traveler.begin_dt)}</div> <div style={{ marginTop: 8 }}><FiCalendar /> {fmt(traveler.end_dt)}</div> <div style={{ marginTop: 8 }}><strong>Duration:</strong> {getDuration()}</div> </div> </div> <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', gap: 8 }}> <button onClick={onClose} style={{ padding: '8px 12px', borderRadius: 8 }}>Close</button> </div> </div> </div> ); };
 
-    regions_summary = build_regions_summary_from_items(items)
+return ( <div style={styles.page}> <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}> <h2>Employee Travel Dashboard</h2> <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}> <button onClick={toggleTheme} style={{ padding: 8, borderRadius: 8 }}>{isDarkTheme ? 'Light' : 'Dark'}</button> <button onClick={() => { if (window.confirm('Clear all daily travel records?')) axios.delete('http://localhost:8000/daily_sheet/clear').then(() => { setItems([]); setSummary({}); toast.success('Daily travel cleared'); }).catch(() => toast.error('Failed')); }} style={{ padding: 8, borderRadius: 8 }}>Clear Daily</button> </div> </div>
 
-    previous_data["summary"] = summary
-    previous_data["items"] = items
-    previous_data["last_updated"] = datetime.now().isoformat()
-    previous_data["regions_summary"] = regions_summary
-
-    return JSONResponse(content={
-        'summary': summary,
-        'items': items,
-        'regions': regions_summary,
-        'message': f'{rows_added} daily travel records saved and cached'
-    })
-
-
-# ---------------------------
-# data endpoint (return cached previous_data)
-# ---------------------------
-@router.get("/data")
-def get_previous_data():
-    if previous_data["items"] is not None:
-        return JSONResponse(content={
-            "summary": previous_data["summary"],
-            "items": previous_data["items"],
-            "regions": previous_data.get("regions_summary"),
-            "last_updated": previous_data.get("last_updated"),
-            "message": "Loaded saved data from memory"
-        })
-    else:
-        raise HTTPException(status_code=404, detail="No previously uploaded data found.")
-
-
-# ---------------------------
-# add_traveler endpoint (append to previous_data)
-# ---------------------------
-from pydantic import BaseModel
-class TravelerInput(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    emp_id: Optional[str] = None
-    email: Optional[str] = None
-    begin_dt: Optional[str] = None
-    end_dt: Optional[str] = None
-    from_location: Optional[str] = None
-    from_country: Optional[str] = None
-    to_location: Optional[str] = None
-    to_country: Optional[str] = None
-    leg_type: Optional[str] = None
-    agency_id: Optional[str] = None
-    agency_name: Optional[str] = None
-    pnr: Optional[str] = None
-
-@router.post("/add_traveler")
-def add_traveler(traveler: TravelerInput):
-    now_utc = datetime.now(tz=zoneinfo.ZoneInfo('UTC'))
-    begin_dt = normalize_and_parse(traveler.begin_dt) if traveler.begin_dt else None
-    end_dt = normalize_and_parse(traveler.end_dt) if traveler.end_dt else None
-    active_now = bool(begin_dt and end_dt and begin_dt <= now_utc <= end_dt)
-
-    # Attempt to match against monthly employees to determine VIP (same logic as upload)
-    db = SessionLocal()
-    try:
-        employees = db.query(Employee).all()
-    except Exception:
-        employees = []
-    finally:
-        db.close()
-
-    by_empid = {}
-    by_email = {}
-    by_name = {}
-    for emp in employees:
-        eid = (getattr(emp, "employee_id", "") or "").strip()
-        em = (getattr(emp, "employee_email", "") or "").strip().lower()
-        fn = (getattr(emp, "first_name", "") or "").strip().lower()
-        ln = (getattr(emp, "last_name", "") or "").strip().lower()
-        if eid:
-            by_empid[eid] = emp
-        if em:
-            by_email[em] = emp
-        if fn or ln:
-            k = f"{fn} {ln}".strip()
-            if k:
-                if k not in by_name:
-                    by_name[k] = emp
-
-    matched_emp = None
-    match_reason = None
-    if traveler.emp_id and traveler.emp_id in by_empid:
-        matched_emp = by_empid[traveler.emp_id]
-        match_reason = "emp_id"
-    elif traveler.email and traveler.email.strip().lower() in by_email:
-        matched_emp = by_email[traveler.email.strip().lower()]
-        match_reason = "email"
-    else:
-        name_key = f"{(traveler.first_name or '').strip().lower()} {(traveler.last_name or '').strip().lower()}".str
+<div style={styles.card}>
+    <div style={styles.compactUploadRow}>
+      <div style={styles.compactFileUpload}>
+        <input id="file-upload" type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} style={styles.fileInput} />
+        <label htmlFor="file-upload" style={styles.compactFileLabel}><FiUpload /> {file ? file.name : 'Choose File'}</label>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={uploadFile} disabled={loading} style={loading ? { ...styles.compactPrimaryBtn, opacity: 0.6 }
