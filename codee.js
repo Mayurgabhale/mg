@@ -1,139 +1,572 @@
-C:\Users\W0024618\Desktop\swipeData\Travel-Backend\main.py
+Failed to load data
+Failed to load data
+
+All Travel Records
+0 records
+Status	Traveler	Emp ID	Email	Type	From	To	Start Date	End Date	Actions
+No matching results found
+
+why data is not displyt,, 
+http://127.0.0.1:8000/daily_sheet/records
+
+  "count": 100,
+  "items": [
+    {
+      "email": "alejandro.alganaraz@westernunion.com",
+      "emp_id": "308497.0",
+      "first_name": "ALEJANDRO",
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "end_date": "2025-10-28T18:30:00+00:00",
+      "active_now": 0,
+      "matched_employee_id": null,
+      "matched_employee_name": null,
+      "uploaded_at": "2025-11-11 12:52:27",
+      "last_name": "ALGANARAS",
+      "id": 1,
+      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "begin_date": "2025-10-26T18:30:00+00:00",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
+      "match_reason": null
+    },
+    {
+      "email": "ignacio.ariztegui@westernunion.com",
+      "emp_id": "190871.0",
+      "first_name": "IGNACIO",
+      "to_location": "Bahia Blanca, Buenos Aires",
+      "end_date": "2025-10-28T18:30:00+00:00",
+      "active_now": 0,
+      "matched_employee_id": "190871",
+      "matched_employee_name": "Ariztegui, Ignacio",
+      "uploaded_at": "2025-11-11 12:52:27",
+      "last_name": "ARIZTEGUI",
+      "id": 2,
+      "from_location": "Bahia Blanca, Buenos Aires",
+      "begin_date": "2025-10-26T18:30:00+00:00",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
+      "match_reason": "name"
+    },
+
+      
+    // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [newTraveler, setNewTraveler] = useState({
+        first_name: "",
+        last_name: "",
+        emp_id: "",
+        email: "",
+        begin_date: "",   // changed from begin_dt -> begin_date
+        end_date: "",     // changed from end_dt   -> end_date
+        from_location: "",
+        from_country: "",
+        to_location: "",
+        to_country: "",
+        leg_type: "",
+    });
+
+
+    // --- addTraveler: use correct daily_sheet endpoint and payload keys ---
+
+    const addTraveler = async () => {
+        try {
+            // Ensure payload field names match backend (begin_date / end_date)
+            const payload = {
+                ...newTraveler,
+                // optional: you can map/normalize here if your UI uses different names
+                // begin_date: newTraveler.begin_date,
+                // end_date: newTraveler.end_date,
+            };
+
+            await axios.post("http://localhost:8000/daily_sheet/add_traveler", payload);
+            toast.success("Traveler added successfully!");
+            setShowAddForm(false);
+            setNewTraveler({
+                first_name: "",
+                last_name: "",
+                emp_id: "",
+                email: "",
+                begin_date: "",
+                end_date: "",
+                from_location: "",
+                from_country: "",
+                to_location: "",
+                to_country: "",
+                leg_type: "",
+            });
+
+            // Refresh data after adding (use the daily_sheet data endpoint)
+            const res = await axios.get("http://localhost:8000/daily_sheet/data");
+            const respPayload = res.data || {};
+            setItems(respPayload.items || []);
+            setSummary(respPayload.summary || {});
+            if (respPayload.last_updated) setLastUpdated(respPayload.last_updated);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to add traveler. Check backend.");
+        }
+    };
+    // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
 
 
 
 
-from datetime import datetime
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import pandas as pd
-import numpy as np
-from io import BytesIO, StringIO
-from dateutil import parser
-from datetime import datetime
-import re, zoneinfo
-from pydantic import BaseModel
-from typing import Optional
+    const styles = getStyles(isDarkTheme);
 
+    const [lastUpdated, setLastUpdated] = useState(null);
 
-# #################
+    // ✅ Load saved data immediately on refresh + auto-refresh every 10 seconds
+    // --- useEffect: fetchLatest should hit /daily_sheet/data ---
+    useEffect(() => {
+        const fetchLatest = async (showToast = false) => {
+            try {
+                const res = await axios.get("http://localhost:8000/daily_sheet/data");
+                const payload = res.data || {};
+                setItems(payload.items || []);
+                setSummary(payload.summary || {});
+                if (payload.last_updated) setLastUpdated(payload.last_updated);
+                if (showToast) toast.success("Data loaded");
+            } catch (err) {
+                console.error(err);
+                if (showToast) toast.error("Failed to load data");
+            }
+        };
 
+        // initial load
+        fetchLatest(true);
 
-from fastapi.middleware.cors import CORSMiddleware
-from monthly_sheet import router as monthly_router
-
-
-# add this in main.py (near the monthly_router inclusion)
-from daily_sheet import router as daily_router
-# app.include_router(daily_router)
-
-app = FastAPI(title="Employee Travel Dashboard — Parser")
-app.include_router(monthly_router)
-app.include_router(daily_router)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
-
-# ✅ Global variable to store previous data
-previous_data = {
-    "summary": None,
-    "items": None
-}
+        // keep refreshing every 10s
+        const interval = setInterval(() => fetchLatest(false), 10000);
+        return () => clearInterval(interval);
+    }, []);
 
 
 
+    const handleFileChange = (e) => setFile(e.target.files[0]);
+
+    const uploadFile = async () => {
+        if (!file) return toast.warn("Please select an Excel or CSV file first.");
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            // NOTE: endpoint changed to /daily_sheet/upload
+            const res = await axios.post("http://localhost:8000/daily_sheet/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            const payload = res.data || {};
+            const rows = payload.items || [];
+            setItems(rows);
+            setSummary(payload.summary || {});
+            if (payload.last_updated) setLastUpdated(payload.last_updated);
+            toast.success(`Uploaded successfully. ${rows.length} records found.`);
+        } catch (err) {
+            console.error(err);
+            toast.error("Upload failed. Please check the backend or file format.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
-# Travel-Backend\monthly_sheet.py
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from sqlalchemy import create_engine, Column, String, Integer, Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from io import BytesIO
-import pandas as pd
-from datetime import datetime
+    const safeItems = Array.isArray(items) ? items : [];
 
-# =======================
-#   ROUTER CONFIG
-# =======================
-router = APIRouter(prefix="/monthly_sheet", tags=["monthly_sheet"])
+    const analytics = useMemo(() => {
+        const active = safeItems.filter(r => r.active_now).length;
 
-# =======================
-#   DATABASE CONFIG
-# =======================
-DATABASE_URL = "sqlite:///./database.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-Base = declarative_base()
+        const countries = [...new Set(safeItems.map(r => r.from_country).filter(Boolean))];
+        const legTypes = [...new Set(safeItems.map(r => r.leg_type).filter(Boolean))];
 
-# =======================
-#   GLOBAL VARIABLE TO STORE UPLOAD INFO
-# =======================
-last_upload_info = {"message": None, "uploaded_at": None}
+        // Travel duration analysis
+        const durations = safeItems.map(r => {
+            if (!r.begin_dt || !r.end_dt) return 0;
+            const start = new Date(r.begin_dt);
+            const end = new Date(r.end_dt);
+            return Math.max(0, (end - start) / (1000 * 60 * 60 * 24)); // days
+        }).filter(d => d > 0);
 
-# =======================
-#   EMPLOYEE MODEL
-# =======================
-class Employee(Base):
-    __tablename__ = "employees"
+        const avgDuration = durations.length > 0 ?
+            durations.reduce((a, b) => a + b, 0) / durations.length : 0;
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    employee_id = Column(String, index=True)
-    last_name = Column(String)
-    first_name = Column(String)
+        return {
+            active,
+            totalCountries: countries.length,
+            totalTypes: legTypes.length,
+            avgDuration: avgDuration.toFixed(1),
+            totalTravelers: safeItems.length
+        };
+    }, [safeItems]);
+
+    // 🆕 Country Statistics with enhanced data
+    const countryStats = useMemo(() => {
+        const map = {};
+        safeItems.forEach(r => {
+            const c = r.from_country || "Unknown";
+            if (!map[c]) {
+                map[c] = { count: 0, active: 0, travelers: new Set() };
+            }
+            map[c].count++;
+            if (r.active_now) map[c].active++;
+            map[c].travelers.add(`${r.first_name} ${r.last_name}`);
+        });
+
+        return Object.entries(map)
+            .map(([country, data]) => ({
+                country,
+                count: data.count,
+                active: data.active,
+                travelerCount: data.travelers.size
+            }))
+            .sort((a, b) => b.count - a.count);
+    }, [safeItems]);
+
+    // 🆕 Travel Type Analysis
+    const travelTypeStats = useMemo(() => {
+        const map = {};
+        safeItems.forEach(r => {
+            const type = r.leg_type || "Unknown";
+            if (!map[type]) {
+                map[type] = { count: 0, active: 0, countries: new Set() };
+            }
+            map[type].count++;
+            if (r.active_now) map[type].active++;
+            if (r.from_country) map[type].countries.add(r.from_country);
+        });
+
+        return Object.entries(map)
+            .map(([type, data]) => ({
+                type,
+                count: data.count,
+                active: data.active,
+                countryCount: data.countries.size
+            }))
+            .sort((a, b) => b.count - a.count);
+    }, [safeItems]);
+
+    // 🆕 Recent Travelers (last 7 days)
+    const recentTravelers = useMemo(() => {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        return safeItems
+            .filter(r => r.begin_dt && new Date(r.begin_dt) >= sevenDaysAgo)
+            .sort((a, b) => new Date(b.begin_dt) - new Date(a.begin_dt))
+            .slice(0, 10);
+    }, [safeItems]);
+
+    const countries = useMemo(
+        () => [...new Set(safeItems.map((r) => r.from_country).filter(Boolean))],
+        [safeItems]
+    );
+    const locations = useMemo(() => {
+        const allLocations = [
+            ...new Set([
+                ...safeItems.map((r) => r.from_location).filter(Boolean),
+                ...safeItems.map((r) => r.to_location).filter(Boolean)
+            ])
+        ];
+        return allLocations.sort();
+    }, [safeItems]);
+    const legTypes = useMemo(
+        () => [...new Set(safeItems.map((r) => r.leg_type).filter(Boolean))],
+        [safeItems]
+    );
 
 
-# daily_sheet.py
-from fastapi import APIRouter, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
-from sqlalchemy import Column, Integer, String
-from io import BytesIO, StringIO
-import pandas as pd
-import numpy as np
-from datetime import datetime
-from dateutil import parser as date_parser
-import re, zoneinfo, logging
-from typing import Optional
 
-# Import DB Base/engine/SessionLocal and Employee model + VIP_LEVELS from monthly_sheet
-# Make sure monthly_sheet exports: Base, engine, SessionLocal, Employee, VIP_LEVELS
-from monthly_sheet import Base, engine, SessionLocal, Employee, VIP_LEVELS
+    // --- Regions / record fetch: backend exposes records endpoints; example fetchRecord ---
+    // The original code requested a /regions endpoint which doesn't exist in your daily_sheet router.
+    // Use /daily_sheet/records to list records or /daily_sheet/records/{id} to get a specific record.
+    const fetchDailyRecords = async () => {
+        try {
+            const res = await axios.get("http://localhost:8000/daily_sheet/records");
+            // expected: res.data could be an array or an object depending on your backend implementation
+            // adapt handling below to match your backend's response shape
+            const records = res.data || [];
+            // you can store them in state if needed: setDailyRecords(records);
+            return records;
+        } catch (err) {
+            console.error("Error fetching daily records:", err);
+            toast.error("Failed to fetch daily records");
+            return [];
+        }
+    };
+
+    const fetchRecordDetails = async (recordId) => {
+        try {
+            const res = await axios.get(`http://localhost:8000/daily_sheet/records/${recordId}`);
+            const record = res.data || null;
+            // set state or return record
+            // setRegionDetails(record)  // only if you have state for it
+            return record;
+        } catch (err) {
+            console.error("Error fetching record details:", err);
+            toast.error("Failed to load record details");
+            return null;
+        }
+    };
 
 
+    // 🆕 Travel Type Icons Mapping
+    const getTravelTypeIcon = (type) => {
+        if (!type) return FiGlobe;
+
+        const typeLower = type.toLowerCase();
+        if (typeLower.includes('car') || typeLower.includes('vehicle')) return FaCar;
+        if (typeLower.includes('truck') || typeLower.includes('bus')) return FaTruck;
+        if (typeLower.includes('train') || typeLower.includes('rail')) return FaTrain;
+        if (typeLower.includes('plane') || typeLower.includes('air') || typeLower.includes('flight')) return FaPlane;
+        if (typeLower.includes('ship') || typeLower.includes('boat') || typeLower.includes('sea')) return FaShip;
+        if (typeLower.includes('bike') || typeLower.includes('cycle')) return FaBicycle;
+        if (typeLower.includes('hotel') || typeLower.includes('HOTEL')) return FaHotel;
+        if (typeLower.includes('stop') || typeLower.includes('stop')) return BsPersonWalking;
+        return FaLocationArrow;
+    };
+
+    // 🆕 Travel Type Color Mapping
+    const getTravelTypeColor = (type) => {
+        if (!type) return '#6b7280';
+
+        const typeLower = type.toLowerCase();
+        if (typeLower.includes('car') || typeLower.includes('vehicle')) return '#dc2626';
+        if (typeLower.includes('truck') || typeLower.includes('bus')) return '#ea580c';
+        if (typeLower.includes('train') || typeLower.includes('rail')) return '#16a34a';
+        if (typeLower.includes('plane') || typeLower.includes('air') || typeLower.includes('flight')) return '#2563eb';
+        if (typeLower.includes('ship') || typeLower.includes('boat') || typeLower.includes('sea')) return '#7c3aed';
+        if (typeLower.includes('bike') || typeLower.includes('cycle')) return '#ca8a04';
+        return '#2465c1ff';
+    };
+
+    // 🆕 Today's Travelers
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTravelers = safeItems.filter((r) => {
+        if (!r.begin_dt) return false;
+        const start = new Date(r.begin_dt);
+        start.setHours(0, 0, 0, 0);
+        return start.getTime() === today.getTime();
+    });
+
+    const filtered = safeItems
+        .filter((r) => {
+            const s = filters.search.toLowerCase();
+            if (s) {
+                const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""} ${r.from_location ?? ""} ${r.to_location ?? ""}`.toLowerCase();
+                if (!hay.includes(s)) return false;
+            }
+            if (filters.country && r.from_country !== filters.country) return false;
+            if (filters.location) {
+                const fromLocationMatch = r.from_location && r.from_location.toLowerCase().includes(filters.location.toLowerCase());
+                const toLocationMatch = r.to_location && r.to_location.toLowerCase().includes(filters.location.toLowerCase());
+                if (!fromLocationMatch && !toLocationMatch) return false;
+            }
+            if (filters.legType && r.leg_type !== filters.legType) return false;
+            if (filters.status === "active" && !r.active_now) return false;
+            if (filters.status === "inactive" && r.active_now) return false;
+            return true;
+        })
+        .sort((a, b) => (b.active_now === true) - (a.active_now === true));
+
+    const exportCsv = () => {
+        if (!filtered.length) return toast.info("No data to export.");
+        const keys = Object.keys(filtered[0]);
+        const csv = [keys.join(",")];
+        filtered.forEach((r) =>
+            csv.push(keys.map((k) => `"${String(r[k] ?? "").replace(/"/g, '""')}"`).join(","))
+        );
+        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "EmployeeTravelData.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("CSV exported successfully.");
+    };
 
 
-logger = logging.getLogger("uvicorn.error")
+    // /////////////////////
+    // Add this useEffect to fetch regions data
+    useEffect(() => {
+        const fetchRegionsData = async () => {
+            if (safeItems.length > 0) {
+                try {
+                    const response = await axios.get('http://localhost:8000/regions');
+                    setRegionsData(response.data.regions || {});
+                } catch (error) {
+                    console.error('Error fetching regions data:', error);
+                }
+            }
+        };
 
-router = APIRouter(prefix="/daily_sheet", tags=["daily_sheet"])
+        fetchRegionsData();
+    }, [safeItems]); // Refresh when items change
 
-# Use same server timezone as main.py
-SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
+    // Function to fetch specific region details
+    const fetchRegionDetails = async (regionCode) => {
+        try {
+            const response = await axios.get(`http://localhost:8000/regions/${regionCode}`);
+            setRegionDetails(response.data.region);
+            setSelectedRegion(regionCode);
+        } catch (error) {
+            console.error('Error fetching region details:', error);
+            toast.error('Failed to load region details');
+        }
+    };
 
-# ---------------------------
-# Model
-# ---------------------------
-class DailyTravel(Base):
-    __tablename__ = "daily_travel"
+    // /////////////////////
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    emp_id = Column(String, index=True, nullable=True)
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
-    email = Column(String, nullable=True)
-    from_location = Column(String, nullable=True)
-    to_location = Column(String, nullable=True)
-    begin_date = Column(String, nullable=True)
+    // Enhanced Traveler Detail Popup Component
+    const TravelerDetailPopup = ({ traveler, onClose }) => {
+        if (!traveler) return null;
+
+        const TravelTypeIcon = getTravelTypeIcon(traveler.leg_type);
+        const travelTypeColor = getTravelTypeColor(traveler.leg_type);
+
+        // Calculate duration
+        const getDuration = () => {
+            if (!traveler.begin_dt || !traveler.end_dt) return 'Unknown';
+            const start = new Date(traveler.begin_dt);
+            const end = new Date(traveler.end_dt);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            return `${days} day${days !== 1 ? 's' : ''}`;
+        };
+
+Upload a file or adjust your filters  
+
+                    {activeTab === "overview" && (
+                        <div style={styles.card}>
+                            <div style={styles.tableHeader}>
+                                <h3 style={styles.tableTitle}>All Travel Records</h3>
+                                <span style={styles.tableBadge}>{filtered.length} records</span>
+                            </div>
+                            <div style={styles.tableWrap}>
+                                <table style={styles.table}>
+                                    <thead style={styles.thead}>
+                                        <tr>
+                                            <th style={styles.th}>Status</th>
+                                            <th style={styles.th}>Traveler</th>
+                                            <th style={styles.th}>Emp ID</th>
+                                            <th style={styles.th}>Email</th>
+                                            <th style={styles.th}>Type</th>
+                                            <th style={styles.th}>From</th>
+                                            <th style={styles.th}>To</th>
+                                            <th style={styles.th}>Start Date</th>
+                                            <th style={styles.th}>End Date</th>
+                                            <th style={styles.th}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filtered.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="9" style={styles.emptyRow}>
+                                                    <div style={styles.emptyState}>
+                                                        <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
+                                                        <p>No matching results found</p>
+                                                        <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filtered.map((r, i) => (
+                                                <tr key={i} style={i % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                                                    <td style={styles.td}>
+                                                        {r.active_now ? (
+                                                            <div style={styles.activeBadge}>
+                                                                <FiCheckCircle size={14} />
+                                                                Active
+                                                            </div>
+                                                        ) : (
+                                                            <div style={styles.inactiveBadge}>
+                                                                <FiXCircle size={14} />
+                                                                Inactive
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.userCell}>
+                                                            <div style={styles.avatar}>
+                                                                <FiUser size={14} />
+                                                            </div>
+                                                            <span>
+                                                                {r.first_name} {r.last_name}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.userCell}>
+                                                            <span style={styles.empId}>
+                                                                {r.emp_id || 'N/A'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.emailCell}>
+                                                            <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {r.email}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <span style={styles.typeBadge}>{r.leg_type}</span>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.combinedLocationCell}>
+                                                            <div style={styles.locationRow}>
+                                                                <FiMapPin size={12} style={{ marginRight: '4px', color: '#ef4444' }} />
+                                                                <span style={styles.locationText}>
+                                                                    {r.from_location || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div style={styles.countryRow}>
+                                                                <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                <span style={styles.countryText}>
+                                                                    {r.from_country || 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.combinedLocationCell}>
+                                                            <div style={styles.locationRow}>
+                                                                <FiMapPin size={12} style={{ marginRight: '4px', color: '#10b981' }} />
+                                                                <span style={styles.locationText}>
+                                                                    {r.to_location || 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div style={styles.countryRow}>
+                                                                <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                <span style={styles.countryText}>
+                                                                    {r.to_country || 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.dateCell}>
+                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {fmt(r.begin_dt)}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <div style={styles.dateCell}>
+                                                            <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                            {fmt(r.end_dt)}
+                                                        </div>
+                                                    </td>
+                                                    <td style={styles.td}>
+                                                        <button
+                                                            onClick={() => setSelectedTraveler(r)}
+                                                            style={styles.viewButton}
+                                                        >
+                                                            <FiEye size={14} />
+                                                            View
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
