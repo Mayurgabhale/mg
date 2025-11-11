@@ -1,3 +1,13 @@
+ERROR
+[eslint] 
+src\pages\EmployeeTravelDashboard.jsx
+  Line 1859:57:  'uploadTime' is not defined    no-undef
+  Line 1874:58:  'uploadTime' is not defined    no-undef
+  Line 1874:95:  'uploadTime' is not defined    no-undef
+  Line 1981:79:  'uploadStatus' is not defined  no-undef
+  Line 1984:54:  'uploadStatus' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
 // State variables - SIMPLIFIED
 const [employeeData, setEmployeeData] = useState([]);
 const [monthlyFile, setMonthlyFile] = useState(null);
