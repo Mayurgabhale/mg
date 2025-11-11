@@ -1,3 +1,24 @@
+
+dt = DailyTravel(
+    emp_id=emp_id or None,
+    first_name=first_name or None,
+    last_name=last_name or None,
+    email=email or None,
+    from_location=from_location,
+    from_country=from_country,
+    to_location=to_location,
+    to_country=to_country,
+    ...
+)
+
+
+from_country = row.get('FROM COUNTRY')
+to_country = row.get('TO COUNTRY')
+
+
+
+
+
 class DailyTravel(Base):
     __tablename__ = "daily_travel"
 
