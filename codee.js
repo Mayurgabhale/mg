@@ -1,5 +1,3 @@
-eturn region summary (APAC / EMEA / NAMER / LACA).
-
 Parameters
 Cancel
 No parameters
@@ -10,10 +8,10 @@ Responses
 Curl
 
 curl -X 'GET' \
-  'http://127.0.0.1:8000/daily_sheet/regions' \
+  'http://127.0.0.1:8000/daily_sheet/data' \
   -H 'accept: application/json'
 Request URL
-http://127.0.0.1:8000/daily_sheet/regions
+http://127.0.0.1:8000/daily_sheet/data
 Server response
 Code	Details
 404
@@ -23,12 +21,12 @@ Error: Not Found
 Response body
 Download
 {
-  "detail": "No travel data available"
+  "detail": "No previously uploaded data found."
 }
 Response headers
- content-length: 37 
+ content-length: 47 
  content-type: application/json 
- date: Tue,11 Nov 2025 09:34:51 GMT 
+ date: Tue,11 Nov 2025 09:37:33 GMT 
  server: uvicorn 
 Responses
 Code	Description	Links
@@ -41,15 +39,78 @@ application/json
 Controls Accept header.
 Example Value
 Schema
+"string"
+above is not work but below are work
+Parameters
+Cancel
+Name	Description
+limit
+integer
+(query)
+1000
+offset
+integer
+(query)
+0
+only_active
+integer | (integer | null)
+(query)
+only_active
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'GET' \
+  'http://127.0.0.1:8000/daily_sheet/records?limit=1000&offset=0' \
+  -H 'accept: application/json'
+Request URL
+http://127.0.0.1:8000/daily_sheet/records?limit=1000&offset=0
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "count": 100,
+  "items": [
+    {
+      "last_name": "ALGANARAS",
+      "id": 1,
+      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "begin_date": "2025-10-26T18:30:00+00:00",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
+      "matched_employee_id": null,
+      "match_reason": null,
+      "email": "alejandro.alganaraz@westernunion.com",
+      "emp_id": "308497.0",
+      "first_name": "ALEJANDRO",
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "end_date": "2025-10-28T18:30:00+00:00",
+      "active_now": 0,
+      "matched_employee_name": null,
+      "uploaded_at": "2025-11-11 14:51:34"
+    },
+    {
+      "last_name": "ARIZTEGUI",
+      "id": 2,
+      "from_location": "Bahia Blanca, Buenos Aires",
+      "begin_date": "2025-10-26T18:30:00+00:00",
+      "leg_type": "HOTEL",
+      "is_vip": 0,
 
 
+      INFO:     127.0.0.1:55369 - "GET /daily_sheet/data HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61000 - "GET /daily_sheet/data HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:55050 - "GET /daily_sheet/data HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61000 - "GET /data HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:63786 - "GET /daily_sheet/records HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63786 - "GET /regions HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62690 - "GET /daily_sheet/records?limit=1000&offset=0 HTTP/1.1" 200 OK
 
-INFO:     127.0.0.1:62000 - "GET /regions HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:50600 - "GET /daily_sheet/regions HTTP/1.1" 404 Not Found
-
-
-read belwo all code and how to fix this above error 
-
+read all code each lilne carefully,,,
+  
 # daily_sheet.py
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
