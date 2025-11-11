@@ -1,4 +1,16 @@
 
+const payload = res.data || {};
+- setItems(payload.items || []);
+- setSummary(payload.summary || {});
+- if (payload.last_updated) setLastUpdated(payload.last_updated);
++ setItems(payload.items || []);
+
+
+
+
+
+
+
 # 🌍 Region mapping (includes common cities, states, and countries)
 COUNTRY_TO_REGION = {
     # ---------------- APAC ----------------
