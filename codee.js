@@ -1,3 +1,13 @@
+# add this in main.py (near the monthly_router inclusion)
+from daily_sheet import router as daily_router
+app.include_router(daily_router)
+
+
+
+
+
+
+
 # daily_sheet.py
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
