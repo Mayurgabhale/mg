@@ -1,59 +1,64 @@
-def build_regions_summary(items: list) -> dict:
-    """Group all items by region -> city, with counts, active_count and vip_count."""
-    regions = {}
-    for it in items:
-        country = (it.get('to_country') or it.get('from_country') or "").strip()
-        location = (it.get('to_location') or it.get('from_location') or "").strip()
-        region = guess_region(country, location)
-        city = normalize_city(location) or "Unknown"
+{/* Total Card */}
+<div style={styles.regionCard}>
+    <div style={styles.regionCardHeader}>
+        <div style={{ ...styles.regionIcon, background: '#3b82f6' }}>
+            <FiGlobe size={16} />
+        </div>
+        <span style={styles.regionName}>Global</span>
+    </div>
+    <div style={styles.regionCardStats}>
+        <span style={styles.regionCount}>{safeItems.length}</span>
+        <span style={styles.regionLabel}>Total Travelers</span>
+    </div>
+    <div style={styles.regionCardActive}>
+        <div style={styles.activeDot}></div>
+        <span>{safeItems.filter(r => r.active_now).length} Active</span>
+        <span style={{ marginLeft: 12, fontWeight: 600 }}>{safeItems.filter(r => r.is_vip).length} VIP</span>
+    </div>
+</div>
 
-        if region not in regions:
-            regions[region] = {
-                "region_code": region,
-                "total_count": 0,
-                "active_count": 0,
-                "vip_count": 0,             # <- vip tracker per region
-                "cities": {}
-            }
-
-        regions[region]["total_count"] += 1
-        if it.get("active_now"):
-            regions[region]["active_count"] += 1
-        if it.get("is_vip"):
-            regions[region]["vip_count"] += 1
-
-        cities = regions[region]["cities"]
-        if city not in cities:
-            cities[city] = {
-                "city_name": city,
-                "total_count": 0,
-                "active_count": 0,
-                "vip_count": 0,           # <- vip tracker per city
-                "sample_items": []
-            }
-
-        cities[city]["total_count"] += 1
-        if it.get("active_now"):
-            cities[city]["active_count"] += 1
-        if it.get("is_vip"):
-            cities[city]["vip_count"] += 1
-
-        if len(cities[city]["sample_items"]) < 10:
-            cities[city]["sample_items"].append({
-                "first_name": it.get("first_name"),
-                "last_name": it.get("last_name"),
-                "email": it.get("email"),
-                "pnr": it.get("pnr"),
-                "active_now": it.get("active_now"),
-                "is_vip": bool(it.get("is_vip")),
-                "begin_dt": it.get("begin_dt"),
-                "end_dt": it.get("end_dt")
-            })
-
-    # Sort cities by descending counts for nicer output
-    for reg_data in regions.values():
-        reg_data["cities"] = dict(
-            sorted(reg_data["cities"].items(), key=lambda kv: -kv[1]["total_count"])
-        )
-
-    return regions
+{/* Region Cards */}
+{Object.entries(regionsData || {})
+    .sort(([a], [b]) => {
+        if (a === 'GLOBAL') return -1;
+        if (b === 'GLOBAL') return 1;
+        return a.localeCompare(b);
+    })
+    .map(([regionCode, regionData]) => (
+        <div
+            key={regionCode}
+            style={{
+                ...styles.regionCard,
+                ...(filters.region === regionCode && styles.regionCardActive),
+            }}
+        >
+            <div style={styles.regionCardHeader}>
+                <div
+                    style={{
+                        ...styles.regionIcon,
+                        background: getRegionColor(regionCode),
+                    }}
+                >
+                    {getRegionIcon(regionCode)}
+                </div>
+                <span style={styles.regionName}>{regionCode}</span>
+            </div>
+            <div style={styles.regionCardStats}>
+                <span style={styles.regionCount}>{regionData.total_count ?? 0}</span>
+                <span style={styles.regionLabel}>Travelers</span>
+            </div>
+            <div style={styles.regionCardActive}>
+                <div
+                    style={{
+                        ...styles.activeDot,
+                        background:
+                            (regionData.active_count ?? 0) > 0 ? '#10b981' : '#6b7280',
+                    }}
+                ></div>
+                <span>{regionData.active_count ?? 0} Active</span>
+                <span style={{ marginLeft: 12, fontWeight: 600 }}>
+                    {regionData.vip_count ?? 0} VIP
+                </span>
+            </div>
+        </div>
+    ))}
