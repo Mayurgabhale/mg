@@ -1,3 +1,43 @@
+Global
+100
+Total Travelers
+5 Active
+67 VIP
+🌏
+APAC
+13
+Travelers
+1 Active
+12 VIP
+0 Active VIP
+🌍
+EMEA
+11
+Travelers
+0 Active
+3 VIP
+0 Active VIP
+🌎
+LACA
+17
+Travelers
+1 Active
+6 VIP
+0 Active VIP
+🌎
+NAMER
+59
+Travelers
+3 Active
+46 VIP
+3 Active VIP
+
+ok,, but in Global
+100
+Total Travelers
+5 Active
+67 VIP
+alos active vip 
 {/* Region Cards */}
 {Object.entries(regionsData || {})
     .sort(([a], [b]) => {
