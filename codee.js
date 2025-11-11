@@ -1,24 +1,21 @@
-ERROR
-[eslint] 
-src\pages\EmployeeTravelDashboard.jsx
-  Line 1859:57:  'uploadTime' is not defined    no-undef
-  Line 1874:58:  'uploadTime' is not defined    no-undef
-  Line 1874:95:  'uploadTime' is not defined    no-undef
-  Line 1981:79:  'uploadStatus' is not defined  no-undef
-  Line 1984:54:  'uploadStatus' is not defined  no-undef
-
-Search for the keywords to learn more about each error.
-// State variables - SIMPLIFIED
+// State variables - FIXED
 const [employeeData, setEmployeeData] = useState([]);
 const [monthlyFile, setMonthlyFile] = useState(null);
 const [showUploadPopup, setShowUploadPopup] = useState(false);
 const [hasUploadedData, setHasUploadedData] = useState(false);
+const [uploadTime, setUploadTime] = useState(null); // ADD THIS
+const [uploadStatus, setUploadStatus] = useState(""); // ADD THIS
 
 // Load only essential data on component mount
 useEffect(() => {
   const savedHasUploadedData = localStorage.getItem('hasUploadedData');
+  const savedUploadTime = localStorage.getItem('uploadTime'); // ADD THIS
+  
   if (savedHasUploadedData === 'true') {
     setHasUploadedData(true);
+    if (savedUploadTime) {
+      setUploadTime(new Date(savedUploadTime)); // ADD THIS
+    }
     fetchEmployeeData();
   }
 }, []);
@@ -40,7 +37,7 @@ const handleMonthlyFileChange = (e) => {
   setMonthlyFile(selected);
 };
 
-// Handle upload submission
+// Handle upload submission - UPDATED
 const handleUploadSubmit = async () => {
   if (!monthlyFile) return;
 
@@ -48,6 +45,8 @@ const handleUploadSubmit = async () => {
   formData.append("file", monthlyFile);
   
   try {
+    setUploadStatus("Uploading..."); // ADD THIS
+    
     const res = await fetch("http://localhost:8000/monthly_sheet/upload_monthly", {
       method: "POST",
       body: formData,
@@ -56,11 +55,14 @@ const handleUploadSubmit = async () => {
     const result = await res.json();
     
     if (res.ok) {
+      setUploadStatus("Upload successful!"); // ADD THIS
+      setUploadTime(new Date()); // ADD THIS
       setHasUploadedData(true);
       setShowUploadPopup(false);
       
-      // Save only essential flag to localStorage
+      // Save to localStorage
       localStorage.setItem('hasUploadedData', 'true');
+      localStorage.setItem('uploadTime', new Date().toISOString()); // ADD THIS
       
       // Fetch the uploaded data
       await fetchEmployeeData();
@@ -70,6 +72,7 @@ const handleUploadSubmit = async () => {
     }
   } catch (err) {
     console.error(err);
+    setUploadStatus("Upload failed!"); // ADD THIS
     toast.error("Upload failed!");
   }
 };
@@ -81,7 +84,7 @@ const confirmDeleteData = () => {
   }
 };
 
-// Delete employee data
+// Delete employee data - UPDATED
 const deleteEmployeeData = async () => {
   try {
     // Clear backend data
@@ -93,9 +96,12 @@ const deleteEmployeeData = async () => {
     setEmployeeData([]);
     setMonthlyFile(null);
     setHasUploadedData(false);
+    setUploadTime(null); // ADD THIS
+    setUploadStatus(""); // ADD THIS
 
     // Clear localStorage
     localStorage.removeItem('hasUploadedData');
+    localStorage.removeItem('uploadTime'); // ADD THIS
 
     toast.success("Employee data cleared successfully.");
   } catch (err) {
