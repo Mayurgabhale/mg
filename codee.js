@@ -1,61 +1,4 @@
-read above code and do this wiht correct 
-daily_sheet
-
-
-POST
-/daily_sheet/upload
-Upload
-
-
-GET
-/daily_sheet/data
-Get Previous Data
-
-
-POST
-/daily_sheet/add_traveler
-Add Traveler
-
-
-GET
-/daily_sheet/records
-Get Daily Records
-
-
-GET
-/daily_sheet/records/{record_id}
-Get Daily Record
-
-
-DELETE
-/daily_sheet/clear
-Clear Daily Data
-wiht VIPi gobla and regin wise ok 
-http://127.0.0.1:8000/daily_sheet/records
-{
-  "count": 100,
-  "items": [
-    {
-      "email": "alejandro.alganaraz@westernunion.com",
-      "emp_id": "308497.0",
-      "first_name": "ALEJANDRO",
-      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
-      "end_date": "2025-10-28T18:30:00+00:00",
-      "active_now": 0,
-      "matched_employee_id": null,
-      "matched_employee_name": null,
-      "uploaded_at": "2025-11-11 12:31:25",
-      "id": 1,
-      "last_name": "ALGANARAS",
-      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
-      "begin_date": "2025-10-26T18:30:00+00:00",
-      "leg_type": "HOTEL",
-      "is_vip": 0,
-      "match_reason": null
-    },
-      i
-this ok  wiht correct ok    
-do carefullym 
+this first 
 const EmployeeTravelDashboard = () => {
     const [file, setFile] = useState(null);
     const [items, setItems] = useState([]);
@@ -562,8 +505,67 @@ const EmployeeTravelDashboard = () => {
             console.error('Error fetching region details:', error);
             toast.error('Failed to load region details');
         }
+    };
 
-          {/* File Upload Section */}
+    // /////////////////////
+
+    // Enhanced Traveler Detail Popup Component
+    const TravelerDetailPopup = ({ traveler, onClose }) => {
+        if (!traveler) return null;
+
+        const TravelTypeIcon = getTravelTypeIcon(traveler.leg_type);
+        const travelTypeColor = getTravelTypeColor(traveler.leg_type);
+
+        // Calculate duration
+        const getDuration = () => {
+            if (!traveler.begin_dt || !traveler.end_dt) return 'Unknown';
+            const start = new Date(traveler.begin_dt);
+            const end = new Date(traveler.end_dt);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            return `${days} day${days !== 1 ? 's' : ''}`;
+        };
+
+        return (
+            <div style={styles.popupOverlay}>
+                <div style={styles.popupContent}>
+                    {/* Header */}
+                    <div style={styles.popupHeader}>
+                        <div style={styles.headerContent}>
+                            <div style={styles.avatarSection}>
+                                <div style={styles.avatarLarge}>
+                                    <FiUser size={24} />
+                                </div>
+                            </div>
+                            <div style={styles.headerInfo}>
+                                <h3 style={styles.popupTitle}>
+                                    {traveler.first_name} {traveler.last_name}
+                                </h3>
+                                <p style={styles.employeeId}>Employee ID: {traveler.emp_id || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <button onClick={onClose} style={styles.popupCloseBtn}>
+                            <FiX size={20} />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div style={styles.popupBody}>
+                        {/* Status Banner */}
+                        <div style={styles.statusBanner}>
+                            <div style={{
+                                ...styles.statusBadge,
+                                ...(traveler.active_now ? styles.activeStatus : styles.inactiveStatus)
+                            }}>
+                                <div style={{
+                                    ...styles.statusDot,
+                                    ...(traveler.active_now ? styles.activeDot : styles.inactiveDot)
+                                }}></div>
+                                {traveler.active_now ? "Currently Traveling" : "Travel Completed"}
+                            </div>
+
+                            <div style={{
+
+                                {/* File Upload Section */}
                     <div style={styles.card}>
                         {/* Compact Upload Section */}
                         <div style={styles.compactUploadRow}>
@@ -738,7 +740,7 @@ const EmployeeTravelDashboard = () => {
                         </div>
                     </div>
 
-     {activeTab === "overview" && (
+                    {activeTab === "overview" && (
                         <div style={styles.card}>
                             <div style={styles.tableHeader}>
                                 <h3 style={styles.tableTitle}>All Travel Records</h3>
@@ -874,4 +876,3 @@ const EmployeeTravelDashboard = () => {
                             </div>
                         </div>
                     )}
-    };
