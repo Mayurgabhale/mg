@@ -1,94 +1,269 @@
-def build_regions_summary(items: list) -> dict:
-    """Group items by region → city with consistent active_now calculation.
+{/* 🆕 Region Count Cards */} this card i want clickbale  means 
+clikc on APAC than in All Travel Records in this  {activeTab === "overview" && ( ok so how to do this 
+ table i want to disply only apac ok 
+Global
+123
+Total Travelers
+81 Active
+83 VIP
+54 Active VIP
+🌏
+APAC
+8
+Travelers
+8 Active
+6 VIP
+6 Active VIP
+🌍
+EMEA
+15
+Travelers
+8 Active
+11 VIP
+6 Active VIP
+🌎
+LACA
+7
+Travelers
+4 Active
+2 VIP
+2 Active VIP
+🌎
+NAMER
+93
+Travelers
+61 Active
+64 VIP
+40 Active VIP
+{/* 🆕 Region Count Cards */}
+                        <div style={styles.regionCardsSection}>
 
-    Rules:
-      - Parse begin/end via _to_utc_dt_for_active (returns UTC-aware datetime or None)
-      - Only mark active when BOTH begin and end successfully parsed and now_utc falls between them
-      - If either date is missing/unparseable => NOT active (False)
-    """
-    regions = {}
-    now_utc = datetime.now(timezone.utc)
+                            <div style={styles.regionCardsGrid}>
 
-    for it in items:
-        country = (it.get('to_country') or it.get('from_country') or "").strip()
-        location = (it.get('to_location') or it.get('from_location') or "").strip()
-        region = resolve_region(country, location)
-        city = normalize_city(location) or "Unknown"
+                                {/* Total Card */}
+                                <div style={styles.regionCard}>
+                                    <div style={styles.regionCardHeader}>
+                                        <div style={{ ...styles.regionIcon, background: '#3b82f6' }}>
+                                            <FiGlobe size={16} />
+                                        </div>
+                                        <span style={styles.regionName}>Global</span>
+                                    </div>
 
-        # support multiple field names
-        b_raw = it.get("begin_date") or it.get("begin_dt") or it.get("BEGIN_DT")
-        e_raw = it.get("end_date")   or it.get("end_dt")   or it.get("END_DT")
+                                    <div style={styles.regionCardStats}>
+                                        <span style={styles.regionCount}>{safeItems.length}</span>
+                                        <span style={styles.regionLabel}>Total Travelers</span>
+                                    </div>
 
-        # parse to UTC-aware datetimes (or None)
-        b_utc = _to_utc_dt_for_active(b_raw)
-        e_utc = _to_utc_dt_for_active(e_raw)
+                                    <div style={styles.regionCardActive}>
+                                        <div style={styles.activeDot}></div>
+                                        <span>{safeItems.filter(r => r.active_now).length} Active</span>
+                                        <span style={{ marginLeft: 12, fontWeight: 600 }}>
+                                            {safeItems.filter(r => r.is_vip).length} VIP
+                                        </span>
 
-        # active only if both parsed and now is between them
-        active_now = False
-        try:
-            if b_utc is not None and e_utc is not None:
-                active_now = (b_utc <= now_utc <= e_utc)
-            else:
-                # IMPORTANT: DO NOT assume active if dates are missing/unparseable
-                active_now = False
-        except Exception:
-            active_now = False
+                                        {/* ✅ Add this new line for Active VIP count */}
+                                        <span style={{ marginLeft: 12, color: '#10b981', fontWeight: 600 }}>
+                                            {safeItems.filter(r => r.active_now && r.is_vip).length} Active VIP
+                                        </span>
+                                    </div>
+                                </div>
 
-        # --- build region/city containers if missing ---
-        if region not in regions:
-            regions[region] = {
-                "region_code": region,
-                "total_count": 0,
-                "active_count": 0,
-                "vip_count": 0,
-                "active_vip_count": 0,
-                "cities": {}
-            }
-        reg = regions[region]
+                                {/* Region Cards */}
 
-        reg["total_count"] += 1
-        if active_now:
-            reg["active_count"] += 1
-        if it.get("is_vip"):
-            reg["vip_count"] += 1
-        if active_now and it.get("is_vip"):
-            reg["active_vip_count"] += 1
+                                {/* Region Cards */}
+                                {Object.entries(regionsData || {})
+                                    .sort(([a], [b]) => {
+                                        if (a === 'GLOBAL') return -1;
+                                        if (b === 'GLOBAL') return 1;
+                                        return a.localeCompare(b);
+                                    })
+                                    .map(([regionCode, regionData]) => (
+                                        <div
+                                            key={regionCode}
+                                            style={{
+                                                ...styles.regionCard,
+                                                ...(filters.region === regionCode && styles.regionCardActive),
+                                            }}
+                                        >
+                                            <div style={styles.regionCardHeader}>
+                                                <div
+                                                    style={{
+                                                        ...styles.regionIcon,
+                                                        background: getRegionColor(regionCode),
+                                                    }}
+                                                >
+                                                    {getRegionIcon(regionCode)}
+                                                </div>
+                                                <span style={styles.regionName}>{regionCode}</span>
+                                            </div>
 
-        # city
-        if city not in reg["cities"]:
-            reg["cities"][city] = {
-                "city_name": city,
-                "total_count": 0,
-                "active_count": 0,
-                "vip_count": 0,
-                "active_vip_count": 0,
-                "sample_items": []
-            }
-        cty = reg["cities"][city]
+                                            <div style={styles.regionCardStats}>
+                                                <span style={styles.regionCount}>{regionData.total_count ?? 0}</span>
+                                                <span style={styles.regionLabel}>Travelers</span>
+                                            </div>
 
-        cty["total_count"] += 1
-        if active_now:
-            cty["active_count"] += 1
-        if it.get("is_vip"):
-            cty["vip_count"] += 1
-        if active_now and it.get("is_vip"):
-            cty["active_vip_count"] += 1
+                                            <div style={styles.regionCardActive}>
+                                                <div
+                                                    style={{
+                                                        ...styles.activeDot,
+                                                        background:
+                                                            (regionData.active_count ?? 0) > 0 ? '#10b981' : '#6b7280',
+                                                    }}
+                                                ></div>
 
-        cty["sample_items"].append({
-            "first_name": it.get("first_name"),
-            "last_name": it.get("last_name"),
-            "email": it.get("email"),
-            "pnr": it.get("pnr"),
-            "active_now": bool(active_now),
-            "is_vip": bool(it.get("is_vip")),
-            "begin_dt": it.get("begin_dt") or it.get("begin_date"),
-            "end_dt": it.get("end_dt") or it.get("end_date"),
-        })
+                                                <span>{regionData.active_count ?? 0} Active</span>
 
-    # sort cities by traveller count
-    for reg_data in regions.values():
-        reg_data["cities"] = dict(
-            sorted(reg_data["cities"].items(), key=lambda kv: -kv[1]["total_count"])
-        )
+                                                <span style={{ marginLeft: 12, fontWeight: 600 }}>
+                                                    {regionData.vip_count ?? 0} VIP
+                                                </span>
 
-    return regions
+                                                {/* ✅ New Active VIP count */}
+                                                <span style={{ marginLeft: 12, color: '#10b981', fontWeight: 600 }}>
+                                                    {regionData.active_vip_count ?? 0} Active VIP
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+
+
+
+     
+                            {activeTab === "overview" && (
+                                <div style={styles.card}>
+                                    <div style={styles.tableHeader}>
+                                        <h3 style={styles.tableTitle}>All Travel Records</h3>
+                                        <span style={styles.tableBadge}>{filtered.length} records</span>
+                                    </div>
+                                    <div style={styles.tableWrap}>
+                                        <table style={styles.table}>
+                                            <thead style={styles.thead}>
+                                                <tr>
+                                                    <th style={styles.th}>Status</th>
+                                                    <th style={styles.th}>Traveler</th>
+                                                    <th style={styles.th}>Emp ID</th>
+                                                    <th style={styles.th}>Email</th>
+                                                    <th style={styles.th}>Type</th>
+                                                    <th style={styles.th}>From</th>
+                                                    <th style={styles.th}>To</th>
+                                                    <th style={styles.th}>Start Date</th>
+                                                    <th style={styles.th}>End Date</th>
+                                                    <th style={styles.th}>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filtered.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="9" style={styles.emptyRow}>
+                                                            <div style={styles.emptyState}>
+                                                                <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
+                                                                <p>No matching results found</p>
+                                                                <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    filtered.map((r, i) => (
+                                                        <tr key={i} style={i % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                                                            <td style={styles.td}>
+                                                                {r.active_now ? (
+                                                                    <div style={styles.activeBadge}>
+                                                                        <FiCheckCircle size={14} />
+                                                                        Active
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={styles.inactiveBadge}>
+                                                                        <FiXCircle size={14} />
+                                                                        Inactive
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.userCell}>
+                                                                    <div style={styles.avatar}>
+                                                                        <FiUser size={14} />
+                                                                    </div>
+                                                                    <span>
+                                                                        {r.first_name} {r.last_name}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.userCell}>
+                                                                    <span style={styles.empId}>
+                                                                        {r.emp_id || 'N/A'}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.emailCell}>
+                                                                    <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                                    {r.email}
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <span style={styles.typeBadge}>{r.leg_type}</span>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.combinedLocationCell}>
+                                                                    <div style={styles.locationRow}>
+                                                                        <FiMapPin size={12} style={{ marginRight: '4px', color: '#ef4444' }} />
+                                                                        <span style={styles.locationText}>
+                                                                            {r.from_location || 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div style={styles.countryRow}>
+                                                                        <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                        <span style={styles.countryText}>
+                                                                            {r.from_country || 'Unknown'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.combinedLocationCell}>
+                                                                    <div style={styles.locationRow}>
+                                                                        <FiMapPin size={12} style={{ marginRight: '4px', color: '#10b981' }} />
+                                                                        <span style={styles.locationText}>
+                                                                            {r.to_location || 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div style={styles.countryRow}>
+                                                                        <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                        <span style={styles.countryText}>
+                                                                            {r.to_country || 'Unknown'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.dateCell}>
+                                                                    <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                                    {fmt(r.begin_dt)}
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.dateCell}>
+                                                                    <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                                    {fmt(r.end_dt)}
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <button
+                                                                    onClick={() => setSelectedTraveler(r)}
+                                                                    style={styles.viewButton}
+                                                                >
+                                                                    <FiEye size={14} />
+                                                                    View
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}                                   
+
+                            </div>
+                        </div>
