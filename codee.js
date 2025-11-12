@@ -1,3 +1,30 @@
+from datetime import datetime, timezone
+
+def _parse_dt_for_compare(val):
+    """Parse datetime-like value for comparison.
+    Returns (dt, aware) where dt is either:
+      - timezone-aware in UTC (if original had tzinfo)
+      - naive UTC-based datetime (if original was naive)
+    """
+    if val is None:
+        return None, None
+    if isinstance(val, datetime):
+        dt = val
+    else:
+        try:
+            dt = date_parser.parse(str(val))
+        except Exception:
+            return None, None
+
+    if dt.tzinfo is not None:
+        # convert to UTC-aware
+        return dt.astimezone(timezone.utc), True
+    else:
+        # naive — interpret as UTC-equivalent naive for comparison
+        # use datetime.utcnow() (naive) for comparison
+        return dt, False
+
+
 def build_regions_summary(items: list) -> dict:
     """Group all items by region → city, with live active_now calculation."""
     regions = {}
@@ -13,12 +40,14 @@ def build_regions_summary(items: list) -> dict:
         b_dt, b_aware = _parse_dt_for_compare(b_raw)
         e_dt, e_aware = _parse_dt_for_compare(e_raw)
 
-        # --- Active_now logic ---
+        # Decide comparison mode:
+        # - if either side is timezone-aware, compare in UTC-aware mode
+        # - otherwise compare naive with datetime.utcnow()
         active_now = False
         try:
-            # If we have valid begin/end → compute normally
             if b_dt and e_dt:
                 if b_aware or e_aware:
+                    # make both aware UTC datetimes (if one side naive, treat it as UTC)
                     if not b_aware:
                         b_dt = b_dt.replace(tzinfo=timezone.utc)
                     if not e_aware:
@@ -26,13 +55,11 @@ def build_regions_summary(items: list) -> dict:
                     now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
                     active_now = (b_dt <= now_utc <= e_dt)
                 else:
+                    # naive comparison using UTC-equivalent naive
                     now_naive = datetime.utcnow()
                     active_now = (b_dt <= now_naive <= e_dt)
-            else:
-                # ✅ No valid begin/end — assume currently active
-                active_now = True
         except Exception:
-            active_now = True  # fallback safe: assume active
+            active_now = False
 
         # --- Initialize region if missing ---
         if region not in regions:
@@ -78,7 +105,7 @@ def build_regions_summary(items: list) -> dict:
         if active_now and it.get("is_vip"):
             cty["active_vip_count"] += 1
 
-        # --- Append all travelers ---
+        # --- Append all travelers (no limit) ---
         cty["sample_items"].append({
             "first_name": it.get("first_name"),
             "last_name": it.get("last_name"),
@@ -97,3 +124,31 @@ def build_regions_summary(items: list) -> dict:
         )
 
     return regions
+
+
+
+@router.get("/regions/{region_code}")
+def get_region(region_code: str):
+    """Get details for a specific region. Rebuilds region summary to ensure active counts are fresh."""
+    # Ensure we have items (either cache or db)
+    if previous_data.get("items"):
+        items = previous_data["items"]
+    else:
+        db = SessionLocal()
+        rows = db.query(DailyTravel).order_by(DailyTravel.id.asc()).all()
+        db.close()
+        if not rows:
+            raise HTTPException(status_code=404, detail="No travel data available.")
+        items = [{k: v for k, v in r.__dict__.items() if k != "_sa_instance_state"} for r in rows]
+        previous_data["items"] = items
+
+    # rebuild the regions summary fresh (so active_now is recomputed)
+    regions = build_regions_summary(items)
+    previous_data["regions_summary"] = regions
+    previous_data["last_updated"] = datetime.now().isoformat()
+
+    rc = region_code.upper()
+    region_data = regions.get(rc)
+    if not region_data:
+        raise HTTPException(status_code=404, detail=f"Region {region_code} not found.")
+    return JSONResponse(content=region_data)
