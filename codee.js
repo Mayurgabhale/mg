@@ -1,58 +1,5 @@
-http://127.0.0.1:8000/daily_sheet/regions
- "active_vip_count": 0,  
-       "active_count": 0, not disply 
-{
-  "regions": {
-    "LACA": {
-      "region_code": "LACA",
-      "total_count": 7,
-      "active_count": 0,
-      "vip_count": 2,
-      "active_vip_count": 0,
-      "cities": {
-        "Buenos Aires": {
-          "city_name": "Buenos Aires",
-          "total_count": 3,
-          "active_count": 0,
-          "vip_count": 2,
-          "active_vip_count": 0,
-          "sample_items": [
-            {
-              "first_name": "SANTIAGO",
-              "last_name": "CASTRO",
-              "email": "santiago.castrofeijoo@wu.com",
-              "pnr": null,
-              "active_now": false,
-              "is_vip": true,
-              "begin_dt": null,
-              "end_dt": null
-            },
-            {
-              "first_name": "ESTEBAN",
-              "last_name": "CRESPO",
-              "email": "esteban.crespo@westernunion.com",
-              "pnr": null,
-              "active_now": false,
-              "is_vip": true,
-              "begin_dt": null,
-              "end_dt": null
-            },
-            {
-              "first_name": "DIEGO",
-              "last_name": "LONGO",
-              "email": "diego.longo@westernunion.com",
-              "pnr": null,
-              "active_now": false,
-              "is_vip": false,
-              "begin_dt": null,
-              "end_dt": null
-            }
-          ]
-        },
-        "Asunción": {
-          "city_name": "Asunción",
-          "total_count": 3,
 from datetime import datetime, timezone
+from dateutil import parser as date_parser
 
 def _parse_dt_for_compare(val):
     """Parse datetime-like value for comparison.
@@ -75,7 +22,6 @@ def _parse_dt_for_compare(val):
         return dt.astimezone(timezone.utc), True
     else:
         # naive — interpret as UTC-equivalent naive for comparison
-        # use datetime.utcnow() (naive) for comparison
         return dt, False
 
 
@@ -94,14 +40,12 @@ def build_regions_summary(items: list) -> dict:
         b_dt, b_aware = _parse_dt_for_compare(b_raw)
         e_dt, e_aware = _parse_dt_for_compare(e_raw)
 
-        # Decide comparison mode:
-        # - if either side is timezone-aware, compare in UTC-aware mode
-        # - otherwise compare naive with datetime.utcnow()
+        # --- active_now computation ---
         active_now = False
         try:
             if b_dt and e_dt:
+                # if either side is tz-aware, normalize to UTC
                 if b_aware or e_aware:
-                    # make both aware UTC datetimes (if one side naive, treat it as UTC)
                     if not b_aware:
                         b_dt = b_dt.replace(tzinfo=timezone.utc)
                     if not e_aware:
@@ -109,11 +53,14 @@ def build_regions_summary(items: list) -> dict:
                     now_utc = datetime.utcnow().replace(tzinfo=timezone.utc)
                     active_now = (b_dt <= now_utc <= e_dt)
                 else:
-                    # naive comparison using UTC-equivalent naive
                     now_naive = datetime.utcnow()
                     active_now = (b_dt <= now_naive <= e_dt)
+            else:
+                # ✅ Missing or invalid dates → assume active
+                active_now = True
         except Exception:
-            active_now = False
+            # ✅ Parsing/comparison error → assume active
+            active_now = True
 
         # --- Initialize region if missing ---
         if region not in regions:
@@ -178,31 +125,3 @@ def build_regions_summary(items: list) -> dict:
         )
 
     return regions
-
-
-
-@router.get("/regions/{region_code}")
-def get_region(region_code: str):
-    """Get details for a specific region. Rebuilds region summary to ensure active counts are fresh."""
-    # Ensure we have items (either cache or db)
-    if previous_data.get("items"):
-        items = previous_data["items"]
-    else:
-        db = SessionLocal()
-        rows = db.query(DailyTravel).order_by(DailyTravel.id.asc()).all()
-        db.close()
-        if not rows:
-            raise HTTPException(status_code=404, detail="No travel data available.")
-        items = [{k: v for k, v in r.__dict__.items() if k != "_sa_instance_state"} for r in rows]
-        previous_data["items"] = items
-
-    # rebuild the regions summary fresh (so active_now is recomputed)
-    regions = build_regions_summary(items)
-    previous_data["regions_summary"] = regions
-    previous_data["last_updated"] = datetime.now().isoformat()
-
-    rc = region_code.upper()
-    region_data = regions.get(rc)
-    if not region_data:
-        raise HTTPException(status_code=404, detail=f"Region {region_code} not found.")
-    return JSONResponse(content=region_data)
