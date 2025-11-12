@@ -1,3 +1,8 @@
+we are gatting null 
+http://127.0.0.1:8000/daily_sheet/data
+null
+
+
 # Travel-Backend/daily_sheet.py (UPDATED)
 from fastapi import APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
