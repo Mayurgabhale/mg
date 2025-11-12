@@ -1,5 +1,8 @@
-
-daily_sheet
+file is uploded in databse but not getting successage message,,
+  gettng below error.. how to fix this error permenatly ok  
+read the below error and code carefully, and how to fix this tell me ok carefully, 
+  
+daily_shee
 POST
 /daily_sheet/upload
 Upload
@@ -44,22 +47,7 @@ Response body
 Download
 Internal Server Error
 Response headers
- content-length: 21 
- content-type: text/plain; charset=utf-8 
- date: Wed,12 Nov 2025 06:57:37 GMT 
- server: uvicorn 
-
-
-
-    
-(.venv) PS C:\Users\W0024618\Desktop\swipeData\Travel-Backend> uvicorn main:app --reload --port 8000
-INFO:     Will watch for changes in these directories: ['C:\\Users\\W0024618\\Desktop\\swipeData\\Travel-Backend']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [36328] using StatReload
-INFO:     Started server process [34396]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     127.0.0.1:57223 - "POST /daily_sheet/upload HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49667 - "POST /daily_sheet/upload HTTP/1.1" 500 Internal Server Error
 ERROR:    Exception in ASGI application
 Traceback (most recent call last):
   File "C:\Users\W0024618\Desktop\swipeData\Travel-Backend\.venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 403, in run_asgi
