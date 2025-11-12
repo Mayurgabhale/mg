@@ -1,3 +1,15 @@
+// load regions when user opens Regions tab
+useEffect(() => {
+  if (activeTab === "regions") {
+    fetchRegionsData();
+  }
+}, [activeTab]);
+
+
+
+
+...
+
 // ------------------------
 // Regions: fetch + details
 // ------------------------
