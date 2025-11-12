@@ -1,3 +1,5 @@
+
+              
 click is not work 
 
 LACA
@@ -240,3 +242,56 @@ Click to view details →
         )}
     </div>
 )}
+see this also
+http://127.0.0.1:8000/daily_sheet/regions
+
+  "regions": {
+    "LACA": {
+      "region_code": "LACA",
+      "total_count": 7,
+      "active_count": 4,
+      "vip_count": 2,
+      "active_vip_count": 2,
+      "cities": {
+        "Buenos Aires": {
+          "city_name": "Buenos Aires",
+          "total_count": 3,
+          "active_count": 3,
+          "vip_count": 2,
+          "active_vip_count": 2,
+          "sample_items": [
+            {
+              "first_name": "SANTIAGO",
+              "last_name": "CASTRO",
+              "email": "santiago.castrofeijoo@wu.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "ESTEBAN",
+              "last_name": "CRESPO",
+              "email": "esteban.crespo@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "DIEGO",
+              "last_name": "LONGO",
+              "email": "diego.longo@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            }
+          ]
+        },
+        "Asunción": {
+          "city_name": "Asunción",
+          "total_count": 3,
