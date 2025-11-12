@@ -1,33 +1,18 @@
-{/* Main Content Area */}
-<div style={styles.mainContent}>
-    {/* Other tabs content... */}
-    
-    {/* Upload Monthly Tab Content */}
-    {activeTab === "uploadMonthly" && (
-        <div>
-            {/* Show this button initially */}
-            {!showUploadFileSection && (
-                <div style={styles.showUploadButtonContainer}>
-                    <button
-                        onClick={() => setShowUploadFileSection(true)}
-                        style={styles.showUploadButton}
-                    >
-                        <FiUpload style={{ marginRight: 8 }} />
-                        Upload File
-                    </button>
-                    <p style={styles.showUploadHint}>
-                        Click to upload monthly employee data and access analytics
-                    </p>
-                </div>
-            )}
-
-            {/* Show the entire upload section when button is clicked */}
-            {showUploadFileSection && (
-                <div style={styles.uploadMonthlyContainer}>
-                    {/* Your full upload section content here */}
-                    {/* ... */}
-                </div>
-            )}
-        </div>
-    )}
+{/* Temporary test button */}
+<div style={{ padding: '20px', textAlign: 'center' }}>
+    <button 
+        onClick={() => setShowUploadFileSection(true)}
+        style={{
+            backgroundColor: '#3182ce',
+            color: 'white',
+            padding: '12px 24px',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            cursor: 'pointer'
+        }}
+    >
+        <FiUpload style={{ marginRight: 8 }} />
+        Test Upload Button
+    </button>
 </div>
