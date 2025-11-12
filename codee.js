@@ -1,4 +1,12 @@
-{activeTab === "uploadMonthly" && (
+first i want one buttion afte clikc on this buttin then afte opne this section 
+     <div style={styles.uploadMonthlyContainer}>
+        {/* Left Side - Main Content */}
+     this secitn ok 
+</div>
+
+{/* file upload sectin ⬇️⬇️ */}
+                    {/* Compact File Upload Section */}
+                   
     <div style={styles.uploadMonthlyContainer}>
         {/* Left Side - Main Content */}
         <div style={styles.leftPanel}>
@@ -274,4 +282,7 @@
             </div>
         )}
     </div>
-)}
+
+
+{/* file upload sectin ⬇️⬇️ end*/}
+                </aside>
