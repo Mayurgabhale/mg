@@ -1,3 +1,57 @@
+http://127.0.0.1:8000/daily_sheet/regions
+ "active_vip_count": 0,  
+       "active_count": 0, not disply 
+{
+  "regions": {
+    "LACA": {
+      "region_code": "LACA",
+      "total_count": 7,
+      "active_count": 0,
+      "vip_count": 2,
+      "active_vip_count": 0,
+      "cities": {
+        "Buenos Aires": {
+          "city_name": "Buenos Aires",
+          "total_count": 3,
+          "active_count": 0,
+          "vip_count": 2,
+          "active_vip_count": 0,
+          "sample_items": [
+            {
+              "first_name": "SANTIAGO",
+              "last_name": "CASTRO",
+              "email": "santiago.castrofeijoo@wu.com",
+              "pnr": null,
+              "active_now": false,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "ESTEBAN",
+              "last_name": "CRESPO",
+              "email": "esteban.crespo@westernunion.com",
+              "pnr": null,
+              "active_now": false,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "DIEGO",
+              "last_name": "LONGO",
+              "email": "diego.longo@westernunion.com",
+              "pnr": null,
+              "active_now": false,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            }
+          ]
+        },
+        "Asunción": {
+          "city_name": "Asunción",
+          "total_count": 3,
 from datetime import datetime, timezone
 
 def _parse_dt_for_compare(val):
