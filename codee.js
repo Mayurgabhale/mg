@@ -1,7 +1,5 @@
-# sanitize before storing / returning
-items = clean_nans(items)
-summary = clean_nans(summary)
-
-previous_data["summary"] = summary
-previous_data["items"] = items
-previous_data["last_updated"] = datetime.now().isoformat()
+return JSONResponse(content=jsonable_encoder({
+    'summary': summary,
+    'items': items,
+    'message': f'{rows_added} daily travel records saved and cached'
+}))
