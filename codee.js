@@ -1,258 +1,254 @@
-Total: 33  is this but show only this i want to sho all ok 
-Denver
-33
-travelers
-Total: 33
-Active: 28
-Recent Travelers:
-KAROLIS KEVALAS
-Active
-KAROLIS KEVALAS
-Active
-KAROLIS KEVALAS
-Active
-KAROLIS KEVALAS
-Active
-FRANCISCO JAVIER PEREZ ROMERO
-Active
-TYLER BROWN
-Active
-SHARI GALE
-Active
-CARL PIERCE
-Active
-GIOVANNI NAJERA
-Active
-GIOVANNI NAJERA
-Active
-Show less ▲  {/* Region Analysis Tab */}
-                            {/* 🌍 REGION ANALYSIS TAB */}
-                            {activeTab === "regions" && (
-                                <div style={styles.regionsContainer}>
-                                    {/* Header */}
-                                    <div style={styles.regionsHeader}>
-                                        <div style={styles.headerLeft}>
-                                            <div style={styles.headerIconLarge}>
-                                                <FiGlobe size={32} />
-                                            </div>
-                                            <div>
-                                                <h2 style={styles.regionsTitle}>Region Analysis</h2>
-                                                <p style={styles.regionsSubtitle}>Travel distribution across global regions</p>
-                                            </div>
-                                        </div>
-                                        <div style={styles.headerStats}>
-                                            <div style={styles.statCard}>
-                                                <FiMap size={20} style={{ color: "#3b82f6" }} />
-                                                <div>
-                                                    <span style={styles.statNumber}>
-                                                        {Object.keys(regionsData || {}).length}
-                                                    </span>
-                                                    <span style={styles.statLabel}>Regions</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+http://127.0.0.1:8000/daily_sheet/regions
 
-                                    {/* ✅ Conditional: Region Details or Region Overview */}
-                                    {selectedRegion && regionDetails ? (
-                                        /* 🗺️ Region Details View */
-                                        <div style={styles.regionDetailsContainer}>
-                                            <div style={styles.regionDetailsHeader}>
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedRegion(null);
-                                                        setRegionDetails(null);
-                                                    }}
-                                                    style={styles.backButton}
-                                                >
-                                                    <FiArrowLeft size={16} />
-                                                    Back to Regions
-                                                </button>
-                                                <h3 style={styles.regionDetailsTitle}>
-                                                    {selectedRegion} Region Details
-                                                </h3>
-
-                                                <div style={styles.regionStats}>
-                                                    <div style={styles.regionStat}>
-                                                        <span style={styles.regionStatValue}>
-                                                            {regionDetails.total_count || 0}
-                                                        </span>
-                                                        <span style={styles.regionStatLabel}>Total Travelers</span>
-                                                    </div>
-                                                    <div style={styles.regionStat}>
-                                                        <span style={styles.regionStatValue}>
-                                                            {regionDetails.active_count || 0}
-                                                        </span>
-                                                        <span style={styles.regionStatLabel}>Active Now</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* 🏙️ Cities Breakdown */}
-                                            <div style={styles.citiesGrid}>
-                                                {Object.entries(regionDetails.cities || {}).map(([cityName, cityData]) => (
-                                                    <div key={cityName} style={styles.cityCard}>
-                                                        <div style={styles.cityHeader}>
-                                                            <FiMapPin style={styles.cityIcon} />
-                                                            <h4 style={styles.cityName}>{cityName}</h4>
-                                                            <div style={styles.cityStats}>
-                                                                <span style={styles.cityCount}>{cityData.total_count}</span>
-                                                                <span style={styles.cityLabel}>travelers</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div style={styles.cityDetails}>
-                                                            <div style={styles.cityStat}>
-                                                                <FiUsers size={14} />
-                                                                <span>Total: {cityData.total_count}</span>
-                                                            </div>
-                                                            <div style={styles.cityStat}>
-                                                                <FiActivity size={14} />
-                                                                <span>Active: {cityData.active_count}</span>
-                                                            </div>
-                                                        </div>
-
-
-                                                        {/* 👥 Sample Travelers */}
-                                                        <div style={styles.sampleTravelers}>
-                                                            <h5 style={styles.sampleTitle}>Recent Travelers:</h5>
-
-                                                            {(() => {
-                                                                const isExpanded = expandedCities?.[cityName] || false;
-                                                                const displayedTravelers = isExpanded
-                                                                    ? cityData.sample_items
-                                                                    : cityData.sample_items?.slice(0, 3);
-
-                                                                return (
-                                                                    <>
-                                                                        {displayedTravelers?.map((traveler, index) => (
-                                                                            <div key={index} style={styles.travelerItem}>
-                                                                                <div style={styles.travelerInfo}>
-                                                                                    <span style={styles.travelerName}>
-                                                                                        {traveler.first_name} {traveler.last_name}
-                                                                                    </span>
-                                                                                    <span style={styles.travelerId}>{traveler.emp_id}</span>
-                                                                                </div>
-                                                                                <div
-                                                                                    style={
-                                                                                        traveler.active_now
-                                                                                            ? styles.activeStatusSmall
-                                                                                            : styles.inactiveStatusSmall
-                                                                                    }
-                                                                                >
-                                                                                    {traveler.active_now ? "Active" : "Completed"}
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-
-                                                                        {cityData.sample_items?.length > 3 && (
-                                                                            <div
-                                                                                style={{
-                                                                                    ...styles.moreTravelers,
-                                                                                    cursor: "pointer",
-                                                                                    color: isExpanded ? "#2563eb" : "#3b82f6",
-                                                                                    textDecoration: "underline",
-                                                                                    transition: "all 0.2s ease-in-out",
-                                                                                }}
-                                                                                onMouseEnter={(e) => {
-                                                                                    e.currentTarget.style.color = "#1d4ed8";
-                                                                                }}
-                                                                                onMouseLeave={(e) => {
-                                                                                    e.currentTarget.style.color = isExpanded ? "#2563eb" : "#3b82f6";
-                                                                                }}
-                                                                                onClick={() =>
-                                                                                    setExpandedCities((prev) => ({
-                                                                                        ...prev,
-                                                                                        [cityName]: !prev?.[cityName],
-                                                                                    }))
-                                                                                }
-                                                                            >
-                                                                                {isExpanded
-                                                                                    ? "Show less ▲"
-                                                                                    : `+${cityData.sample_items.length - 3} more travelers ▼`}
-                                                                            </div>
-                                                                        )}
-                                                                    </>
-                                                                );
-                                                            })()}
-                                                        </div>
+in denver "total_count": 33, but show only this i wan to sho all 
+ "NAMER": {
+      "region_code": "NAMER",
+      "total_count": 93,
+      "active_count": 65,
+      "vip_count": 64,
+      "active_vip_count": 42,
+      "cities": {
+        "Denver": {
+          "city_name": "Denver",
+          "total_count": 33,
+          "active_count": 28,
+          "vip_count": 27,
+          "active_vip_count": 23,
+          "sample_items": [
+            {
+              "first_name": "KAROLIS",
+              "last_name": "KEVALAS",
+              "email": "308257@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "KAROLIS",
+              "last_name": "KEVALAS",
+              "email": "308257@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "KAROLIS",
+              "last_name": "KEVALAS",
+              "email": "nan",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "KAROLIS",
+              "last_name": "KEVALAS",
+              "email": "nan",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "FRANCISCO JAVIER",
+              "last_name": "PEREZ ROMERO",
+              "email": "javier.perez@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": false,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "TYLER",
+              "last_name": "BROWN",
+              "email": "tyler.brown@wu.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "SHARI",
+              "last_name": "GALE",
+              "email": "shari.gale@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "CARL",
+              "last_name": "PIERCE",
+              "email": "carl.pierce@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "GIOVANNI",
+              "last_name": "NAJERA",
+              "email": "giovanni.najera@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            },
+            {
+              "first_name": "GIOVANNI",
+              "last_name": "NAJERA",
+              "email": "giovanni.najera@westernunion.com",
+              "pnr": null,
+              "active_now": 1,
+              "is_vip": true,
+              "begin_dt": null,
+              "end_dt": null
+            }
+          ]
+        },
+        "Newark": {
+          "city_name": "Newark",
+          "total_count": 13,
+          "active_count": 5,
+          "vip_count": 13,
+          "active_vip_count": 5,
+          "sample_items": [
+            {
+              "first_name": "CONNER",
+              "last_name": "DANIEL",
+              "email": "conner.daniel@westernunion.com",
+              "pnr": null,
+              "active_now": 0,
+              "is_vip": true,
 
 
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        /* 🌎 Regions Overview Grid */
-                                        <div style={styles.regionsGrid}>
-                                            {Object.entries(regionsData || {}).map(([regionCode, regionData]) => (
-                                                <div
-                                                    key={regionCode}
-                                                    style={{
-                                                        ...styles.regionCard,
-                                                        borderLeft: `4px solid ${getRegionColor(regionCode)}`
-                                                    }}
-                                                    onClick={() => fetchRegionDetails(regionCode)}
-                                                >
-                                                    <div style={styles.regionHeader}>
-                                                        <div style={styles.regionIcon}>
-                                                            <span style={{ fontSize: 20 }}>
-                                                                {getRegionIcon(regionCode)}
-                                                            </span>
-                                                        </div>
-                                                        <h3 style={styles.regionName}>{regionCode}</h3>
+              
 
-                                                        <div style={styles.regionStats}>
-                                                            <div style={styles.regionStat}>
-                                                                <span style={styles.regionStatValue}>
-                                                                    {regionData.total_count}
-                                                                </span>
-                                                                <span style={styles.regionStatLabel}>Total</span>
-                                                            </div>
-                                                            <div style={styles.regionStat}>
-                                                                <span
-                                                                    style={{
-                                                                        ...styles.regionStatValue,
-                                                                        color:
-                                                                            regionData.active_count > 0
-                                                                                ? "#16a34a"
-                                                                                : "#6b7280"
-                                                                    }}
-                                                                >
-                                                                    {regionData.active_count}
-                                                                </span>
-                                                                <span style={styles.regionStatLabel}>Active</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+def build_regions_summary(items: list) -> dict:
+    """Group all items by region → city, with totals."""
+    regions = {}
+    for it in items:
+        country = (it.get('to_country') or it.get('from_country') or "").strip()
+        location = (it.get('to_location') or it.get('from_location') or "").strip()
+        region = resolve_region(country, location)
+        city = normalize_city(location) or "Unknown"
 
-                                                    {/* 🏙️ Top Cities */}
-                                                    <div style={styles.citiesPreview}>
-                                                        <span style={styles.citiesLabel}>Top Cities:</span>
-                                                        <div style={styles.citiesList}>
-                                                            {Object.keys(regionData.cities || {})
-                                                                .slice(0, 3)
-                                                                .map((city) => (
-                                                                    <span key={city} style={styles.cityTag}>
-                                                                        {city}
-                                                                    </span>
-                                                                ))}
-                                                            {Object.keys(regionData.cities || {}).length > 3 && (
-                                                                <span style={styles.moreCities}>
-                                                                    +
-                                                                    {Object.keys(regionData.cities || {}).length -
-                                                                        3}{" "}
-                                                                    more
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
+        if region not in regions:
+            regions[region] = {
+                "region_code": region,
+                "total_count": 0,
+                "active_count": 0,
+                "vip_count": 0,
+                "active_vip_count": 0,
+                "cities": {}
+            }
 
-                                                    <div style={styles.viewDetails}>Click to view details →</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+        # --- Region-level totals ---
+        reg = regions[region]
+        reg["total_count"] += 1
+        if it.get("active_now"):
+            reg["active_count"] += 1
+        if it.get("is_vip"):
+            reg["vip_count"] += 1
+        if it.get("active_now") and it.get("is_vip"):
+            reg["active_vip_count"] += 1
 
+        # --- City-level totals ---
+        if city not in reg["cities"]:
+            reg["cities"][city] = {
+                "city_name": city,
+                "total_count": 0,
+                "active_count": 0,
+                "vip_count": 0,
+                "active_vip_count": 0,
+                "sample_items": []
+            }
+
+        cty = reg["cities"][city]
+        cty["total_count"] += 1
+        if it.get("active_now"):
+            cty["active_count"] += 1
+        if it.get("is_vip"):
+            cty["vip_count"] += 1
+        if it.get("active_now") and it.get("is_vip"):
+            cty["active_vip_count"] += 1
+
+        if len(cty["sample_items"]) < 10:
+            cty["sample_items"].append({
+                "first_name": it.get("first_name"),
+                "last_name": it.get("last_name"),
+                "email": it.get("email"),
+                "pnr": it.get("pnr"),
+                "active_now": it.get("active_now"),
+                "is_vip": bool(it.get("is_vip")),
+                "begin_dt": it.get("begin_dt"),
+                "end_dt": it.get("end_dt"),
+            })
+
+    # sort cities by count
+    for reg_data in regions.values():
+        reg_data["cities"] = dict(sorted(reg_data["cities"].items(),
+                                         key=lambda kv: -kv[1]["total_count"]))
+    return regions
+
+
+# ----------------------------------------------------------
+# 🚀 FastAPI endpoints
+# ----------------------------------------------------------
+
+@router.get("/regions")
+def get_regions():
+    """
+    Return regional travel summary grouped by region (APAC, EMEA, NAMER, LACA, UNKNOWN).
+    Uses memory cache if available, else loads from DB.
+    """
+    # 1️⃣ From memory
+    if previous_data.get("items"):
+        items = previous_data["items"]
+    else:
+        # 2️⃣ Fallback to DB
+        db = SessionLocal()
+        rows = db.query(DailyTravel).all()
+        db.close()
+        if not rows:
+            raise HTTPException(status_code=404, detail="No travel data available in memory or database.")
+        items = [{k: v for k, v in r.__dict__.items() if k != "_sa_instance_state"} for r in rows]
+        previous_data["items"] = items
+
+    # 3️⃣ Use new resolver-based region builder
+    regions = build_regions_summary(items)
+
+    # 4️⃣ Cache + timestamp
+    previous_data["regions_summary"] = regions
+    previous_data["last_updated"] = datetime.now().isoformat()
+
+    # 5️⃣ Response
+    return JSONResponse(content={
+        "regions": regions,
+        "last_updated": previous_data["last_updated"],
+        "message": "Loaded region summary from memory or database"
+    })
+
+
+@router.get("/regions/{region_code}")
+async def get_region(region_code: str):
+    """Get details for a specific region."""
+    regions = previous_data.get("regions_summary")
+    if not regions:
+        raise HTTPException(status_code=404, detail="Region summary not yet generated.")
+    region_code = region_code.upper()
+    region_data = regions.get(region_code)
+    if not region_data:
+        raise HTTPException(status_code=404, detail=f"Region {region_code} not found.")
+    return JSONResponse(content=region_data)
