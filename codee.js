@@ -1,43 +1,9 @@
-Total: 33
-Active: 28
-this is count 
-but show only this 
-Denver
-33
-travelers
-Total: 33
-Active: 28
-Recent Travelers:
-only this i  want to show all ok 
-KAROLIS KEVALAS
-Active
-KAROLIS KEVALAS
-Active
-KAROLIS KEVALAS
-Active
-KAROLIS KEVALAS
-Active
-FRANCISCO JAVIER PEREZ ROMERO
-Active
-TYLER BROWN
-Active
-SHARI GALE
-Active
-CARL PIERCE
-Active
-GIOVANNI NAJERA
-Active
-GIOVANNI NAJERA
-Active
-Show less ▲
-
-
 {/* 👥 Sample Travelers */}
 <div style={styles.sampleTravelers}>
   <h5 style={styles.sampleTitle}>Recent Travelers:</h5>
 
   {(() => {
-    const isExpanded = expandedCities?.[cityName] || false;
+    const isExpanded = expandedCities?.[cityName] ?? true; // 👈 default expanded
     const displayedTravelers = isExpanded
       ? cityData.sample_items
       : cityData.sample_items?.slice(0, 3);
@@ -86,9 +52,7 @@ Show less ▲
               }))
             }
           >
-            {isExpanded
-              ? "Show less ▲"
-              : `+${cityData.sample_items.length - 3} more travelers ▼`}
+            {isExpanded ? "Show less ▲" : "Show all ▼"}
           </div>
         )}
       </>
