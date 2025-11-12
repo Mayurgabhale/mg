@@ -1,3 +1,6 @@
+
+pip uninstall timezonefinder pytz -y
+
   running build_ext
       generating cffi module 'build\\temp.win-amd64-cpython-313\\Release\\timezonefinder.inside_polygon_ext.c'
       creating build\temp.win-amd64-cpython-313\Release
