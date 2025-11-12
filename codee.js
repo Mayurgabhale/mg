@@ -1,3 +1,52 @@
+click is not work 
+
+LACA
+7
+Total
+4
+Active
+Top Cities:
+Buenos Aires
+Asunción
+Bahia Blanca
+Click to view details →
+🌍
+EMEA
+15
+Total
+7
+Active
+Top Cities:
+Milan
+Valletta
+Frankfurt
++6 more
+Click to view details →
+🌎
+NAMER
+93
+Total
+65
+Active
+Top Cities:
+Denver
+Newark
+San Jose
++21 more
+Click to view details →
+🌏
+APAC
+8
+Total
+8
+Active
+Top Cities:
+Hyderabad
+Pune
+Sydney
++2 more
+Click to view details →
+
 {/* 🌍 REGION ANALYSIS TAB */}
 {activeTab === "regions" && (
     <div style={styles.regionsContainer}>
