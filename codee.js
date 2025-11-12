@@ -1,17 +1,8 @@
-// track which city cards are expanded
-const [expandedCities, setExpandedCities] = useState({});
-
-
-
-
-
 {/* 👥 Sample Travelers */}
 <div style={styles.sampleTravelers}>
   <h5 style={styles.sampleTitle}>Recent Travelers:</h5>
 
-  {/* keep track of whether we expanded this city */}
   {(() => {
-    // create a per-city key to store toggle state
     const isExpanded = expandedCities?.[cityName] || false;
     const displayedTravelers = isExpanded
       ? cityData.sample_items
@@ -41,7 +32,19 @@ const [expandedCities, setExpandedCities] = useState({});
 
         {cityData.sample_items?.length > 3 && (
           <div
-            style={styles.moreTravelers}
+            style={{
+              ...styles.moreTravelers,
+              cursor: "pointer",
+              color: isExpanded ? "#2563eb" : "#3b82f6",
+              textDecoration: "underline",
+              transition: "all 0.2s ease-in-out",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#1d4ed8";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = isExpanded ? "#2563eb" : "#3b82f6";
+            }}
             onClick={() =>
               setExpandedCities((prev) => ({
                 ...prev,
