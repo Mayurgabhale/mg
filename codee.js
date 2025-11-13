@@ -1,3 +1,329 @@
+APAC
+8
+Travelers
+6 Active
+6 VIP
+4 Active VIP
+🌍
+EMEA
+15
+Travelers
+6 Active
+11 VIP
+4 Active VIP
+🌎
+LACA
+7
+Travelers
+5 Active
+2 VIP
+2 Active VIP
+🌎
+NAMER
+93
+Travelers
+43 Active
+64 VIP
+26 Active VIP
+this is our regin cards, after i am clikc on this reion card i want to diplsy records in 
+    this tablea
+  {activeTab === "overview" && (
+                                <div style={styles.card}>
+                                    <div style={styles.tableHeader}>
+                                        <h3 style={styles.tableTitle}>All Travel Records</h3>
+                                        <span style={styles.tableBadge}>{filtered.length} records</span>
+for example i clikc on apac card then after in this table disply   <h3 style={styles.tableTitle}>All Travel Records</h3> only apac records ok 
+i hove you understand better..   what i want ok 
+{/* 🆕 Region Count Cards */}
+                        <div style={styles.regionCardsSection}>
+
+                            <div style={styles.regionCardsGrid}>
+
+                                {/* Total Card */}
+                                <div style={styles.regionCard}>
+                                    <div style={styles.regionCardHeader}>
+                                        <div style={{ ...styles.regionIcon, background: '#3b82f6' }}>
+                                            <FiGlobe size={16} />
+                                        </div>
+                                        <span style={styles.regionName}>Global</span>
+                                    </div>
+
+                                    <div style={styles.regionCardStats}>
+                                        <span style={styles.regionCount}>{safeItems.length}</span>
+                                        <span style={styles.regionLabel}>Total Travelers</span>
+                                    </div>
+
+                                    <div style={styles.regionCardActive}>
+                                        <div style={styles.activeDot}></div>
+                                        <span>{safeItems.filter(r => r.active_now).length} Active</span>
+                                        <span style={{ marginLeft: 12, fontWeight: 600 }}>
+                                            {safeItems.filter(r => r.is_vip).length} VIP
+                                        </span>
+
+                                        {/* ✅ Add this new line for Active VIP count */}
+                                        <span style={{ marginLeft: 12, color: '#10b981', fontWeight: 600 }}>
+                                            {safeItems.filter(r => r.active_now && r.is_vip).length} Active VIP
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Region Cards */}
+
+                                {/* Region Cards */}
+                                {Object.entries(regionsData || {})
+                                    .sort(([a], [b]) => {
+                                        if (a === 'GLOBAL') return -1;
+                                        if (b === 'GLOBAL') return 1;
+                                        return a.localeCompare(b);
+                                    })
+                                    .map(([regionCode, regionData]) => (
+                                        <div
+                                            key={regionCode}
+                                            onClick={() => setSelectedRegion(regionCode)}  // ✅ make clickable
+                                            style={{
+                                                ...styles.regionCard,
+                                                ...(filters.region === regionCode && styles.regionCardActive),
+                                            }}
+                                        >
+                                            <div style={styles.regionCardHeader}>
+                                                <div
+                                                    style={{
+                                                        ...styles.regionIcon,
+                                                        background: getRegionColor(regionCode),
+                                                    }}
+                                                >
+                                                    {getRegionIcon(regionCode)}
+                                                </div>
+                                                <span style={styles.regionName}>{regionCode}</span>
+                                            </div>
+
+                                            <div style={styles.regionCardStats}>
+                                                <span style={styles.regionCount}>{regionData.total_count ?? 0}</span>
+                                                <span style={styles.regionLabel}>Travelers</span>
+                                            </div>
+
+                                            <div style={styles.regionCardActive}>
+                                                <div
+                                                    style={{
+                                                        ...styles.activeDot,
+                                                        background:
+                                                            (regionData.active_count ?? 0) > 0 ? '#10b981' : '#6b7280',
+                                                    }}
+                                                ></div>
+
+                                                <span>{regionData.active_count ?? 0} Active</span>
+
+                                                <span style={{ marginLeft: 12, fontWeight: 600 }}>
+                                                    {regionData.vip_count ?? 0} VIP
+                                                </span>
+
+                                                {/* ✅ New Active VIP count */}
+                                                <span style={{ marginLeft: 12, color: '#10b981', fontWeight: 600 }}>
+                                                    {regionData.active_vip_count ?? 0} Active VIP
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                            </div>
+                        </div>
+
+-------------
+     {activeTab === "overview" && (
+                                <div style={styles.card}>
+                                    <div style={styles.tableHeader}>
+                                        <h3 style={styles.tableTitle}>All Travel Records</h3>
+                                        <span style={styles.tableBadge}>{filtered.length} records</span>
+                                    </div>
+                                    <div style={styles.tableWrap}>
+                                        <table style={styles.table}>
+                                            <thead style={styles.thead}>
+                                                <tr>
+                                                    <th style={styles.th}>Status</th>
+                                                    <th style={styles.th}>Traveler</th>
+                                                    <th style={styles.th}>Emp ID</th>
+                                                    <th style={styles.th}>Email</th>
+                                                    <th style={styles.th}>Type</th>
+                                                    <th style={styles.th}>From</th>
+                                                    <th style={styles.th}>To</th>
+                                                    <th style={styles.th}>Start Date</th>
+                                                    <th style={styles.th}>End Date</th>
+                                                    <th style={styles.th}>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filtered.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="9" style={styles.emptyRow}>
+                                                            <div style={styles.emptyState}>
+                                                                <FiFileText size={32} style={{ color: '#9ca3af', marginBottom: '12px' }} />
+                                                                <p>No matching results found</p>
+                                                                <p style={styles.emptySubtext}>Upload a file or adjust your filters</p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    filtered.map((r, i) => (
+                                                        <tr key={i} style={i % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                                                            <td style={styles.td}>
+                                                                {r.active_now ? (
+                                                                    <div style={styles.activeBadge}>
+                                                                        <FiCheckCircle size={14} />
+                                                                        Active
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={styles.inactiveBadge}>
+                                                                        <FiXCircle size={14} />
+                                                                        Inactive
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.userCell}>
+                                                                    <div style={styles.avatar}>
+                                                                        <FiUser size={14} />
+                                                                    </div>
+                                                                    <span>
+                                                                        {r.first_name} {r.last_name}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.userCell}>
+                                                                    <span style={styles.empId}>
+                                                                        {r.emp_id || 'N/A'}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.emailCell}>
+                                                                    <FiMail size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                                    {r.email}
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <span style={styles.typeBadge}>{r.leg_type}</span>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.combinedLocationCell}>
+                                                                    <div style={styles.locationRow}>
+                                                                        <FiMapPin size={12} style={{ marginRight: '4px', color: '#ef4444' }} />
+                                                                        <span style={styles.locationText}>
+                                                                            {r.from_location || 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div style={styles.countryRow}>
+                                                                        <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                        <span style={styles.countryText}>
+                                                                            {r.from_country || 'Unknown'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.combinedLocationCell}>
+                                                                    <div style={styles.locationRow}>
+                                                                        <FiMapPin size={12} style={{ marginRight: '4px', color: '#10b981' }} />
+                                                                        <span style={styles.locationText}>
+                                                                            {r.to_location || 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div style={styles.countryRow}>
+                                                                        <FiGlobe size={10} style={{ marginRight: '4px', color: '#3b82f6' }} />
+                                                                        <span style={styles.countryText}>
+                                                                            {r.to_country || 'Unknown'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.dateCell}>
+                                                                    <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                                    {fmt(r.begin_dt)}
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <div style={styles.dateCell}>
+                                                                    <FiCalendar size={14} style={{ marginRight: '6px', color: '#6b7280' }} />
+                                                                    {fmt(r.end_dt)}
+                                                                </div>
+                                                            </td>
+                                                            <td style={styles.td}>
+                                                                <button
+                                                                    onClick={() => setSelectedTraveler(r)}
+                                                                    style={styles.viewButton}
+                                                                >
+                                                                    <FiEye size={14} />
+                                                                    View
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+
+read alos this below code carefully..
+    const EmployeeTravelDashboard = () => {
+    const [file, setFile] = useState(null);
+    const [items, setItems] = useState([]);
+    const [summary, setSummary] = useState({});
+    const [loading, setLoading] = useState(false);
+
+    const [filters, setFilters] = useState({
+        country: "",
+        location: "",
+        legType: "",
+        search: "",
+        status: "",
+        showVIPOnly: false,
+    });
+    const [selectedTraveler, setSelectedTraveler] = useState(null);
+    const [activeTab, setActiveTab] = useState("overview");
+
+    const [showUploadFileSection, setShowUploadFileSection] = useState(false);
+    // track which city cards are expanded
+    const [expandedCities, setExpandedCities] = useState({});
+
+
+    // 🆕 Add theme state
+    const [isDarkTheme, setIsDarkTheme] = useState(false);
+    // 🆕 Toggle theme function
+    const toggleTheme = () => {
+        setIsDarkTheme(!isDarkTheme);
+    };
+
+    // Add to your existing state variables
+    const [regionsData, setRegionsData] = useState({});
+    const [selectedRegion, setSelectedRegion] = useState(null);
+    const [regionDetails, setRegionDetails] = useState(null);
+    // 🆕 Helper functions for regions
+    const getRegionColor = (regionCode) => {
+        const colors = {
+            'GLOBAL': '#6b7280',
+            'APAC': '#7c3aed',
+            'EMEA': '#7c3aed',
+            'LACA': '#7c3aed',
+            'NAMER': '#7c3aed'
+        };
+        return colors[regionCode] || '#6b7280';
+    };
+
+    const getRegionIcon = (regionCode) => {
+        const icons = {
+            'GLOBAL': '🌍',
+            'APAC': '🌏',
+            'EMEA': '🌍',
+            'LACA': '🌎',
+            'NAMER': '🌎'
+        };
+        return icons[regionCode] || '📍';
+    };
+
 
     // 📝📝📝📝📝📝📝
 
@@ -452,16 +778,7 @@
     // /////////////////////
     // Add this useEffect to fetch regions data
     useEffect(() => {
-        // const fetchRegionsData = async () => {
-        //     if (safeItems.length > 0) {
-        //         try {
-        //             const response = await axios.get('http://localhost:8000/daily_sheet/regions');
-        //             setRegionsData(response.data.regions || {});
-        //         } catch (error) {
-        //             console.error('Error fetching regions data:', error);
-        //         }
-        //     }
-        // };
+       
         const fetchRegionsData = async () => {
             try {
                 const res = await fetch("http://127.0.0.1:8000/daily_sheet/regions");
@@ -480,22 +797,7 @@
     }, [safeItems]); // Refresh when items change
 
 
-    // Function to fetch specific region details
-    // const fetchRegionDetails = async (regionCode) => {
-    //     try {
-    //         const response = await axios.get(`http://localhost:8000/daily_sheet/regions/${regionCode}`);
-    //         setRegionDetails(response.data.region);
-    //         setSelectedRegion(regionCode);
-    //     } catch (error) {
-    //         console.error('Error fetching region details:', error);
-    //         toast.error('Failed to load region details');
-    //     }
-    // };
-
-
-
-
-
+  
     // Fetch detail for a single region and show details view
     const fetchRegionDetails = async (regionCode) => {
         try {
