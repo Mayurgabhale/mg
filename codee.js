@@ -1,61 +1,51 @@
-onClick={() => handleRegionSelect(regionCode)}
-
-... 
-
-const handleRegionSelect = (regionCode) => {
-    setSelectedRegion(regionCode);
-
-    // Optional: Fetch region details if needed
-    fetchRegionDetails(regionCode);
-
-    // ✅ Update filters to only show that region's records
-    setFilters(prev => ({
-        ...prev,
-        region: regionCode
-    }));
-};
-
-
-
-
-....
-const filtered = safeItems.filter((r) => {
-    const s = filters.search.toLowerCase();
-    if (s) {
-        const hay = `${r.first_name ?? ""} ${r.last_name ?? ""} ${r.email ?? ""} ${r.from_location ?? ""} ${r.to_location ?? ""}`.toLowerCase();
-        if (!hay.includes(s)) return false;
-    }
-
-    if (filters.region && r.region !== filters.region) return false; // ✅ new line
-    if (filters.country && r.from_country !== filters.country) return false;
-    if (filters.location) {
-        const fromMatch = r.from_location?.toLowerCase().includes(filters.location.toLowerCase());
-        const toMatch = r.to_location?.toLowerCase().includes(filters.location.toLowerCase());
-        if (!fromMatch && !toMatch) return false;
-    }
-    if (filters.legType && r.leg_type !== filters.legType) return false;
-    if (filters.status === "active" && !r.active_now) return false;
-    if (filters.status === "inactive" && r.active_now) return false;
-    if (filters.showVIPOnly && !r.is_vip) return false;
-    return true;
-});
-
-
-
-....
-<h3 style={styles.tableTitle}>
-  {filters.region ? `${filters.region} Travel Records` : "All Travel Records"}
-</h3>
-
-
-
-...
-
-{filters.region && (
-  <button 
-    onClick={() => setFilters(prev => ({ ...prev, region: "" }))}
-    style={{ marginLeft: "10px", color: "#3b82f6", cursor: "pointer" }}
-  >
-    Clear Region
-  </button>
-)}
+http://127.0.0.1:8000/daily_sheet/data
+{
+  "summary": {
+    "rows_received": 123,
+    "rows_removed_as_footer_or_empty": 0,
+    "rows_with_parse_errors": 0,
+    "active_now_count": 60,
+    "data_upload_time": "2025-11-13T08:31:09.258703"
+  },
+  "items": [
+    {
+      "index": 0,
+      "agency_id": "728775",
+      "agency_name": "Western Union - Argentina",
+      "first_name": "SANTIAGO",
+      "last_name": "CASTRO",
+      "emp_id": "311107",
+      "email": "santiago.castrofeijoo@wu.com",
+      "pnr": "QDYNNA",
+      "leg_type": "HOTEL",
+      "begin_dt": "2025-11-12T00:00:00+05:30",
+      "end_dt": "2025-11-14T00:00:00+05:30",
+      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "from_country": "Argentina",
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "to_country": "Argentina",
+      "active_now": 1,
+      "is_vip": true,
+      "active_now_bool": true
+    },
+    {
+      "index": 1,
+      "agency_id": "728775",
+      "agency_name": "Western Union - Argentina",
+      "first_name": "ESTEBAN",
+      "last_name": "CRESPO",
+      "emp_id": "237072",
+      "email": "esteban.crespo@westernunion.com",
+      "pnr": "DICYVI",
+      "leg_type": "HOTEL",
+      "begin_dt": "2025-11-12T00:00:00+05:30",
+      "end_dt": "2025-11-14T00:00:00+05:30",
+      "from_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "from_country": "Argentina",
+      "to_location": "Buenos Aires, Ciudad de Buenos Aires",
+      "to_country": "Argentina",
+      "active_now": 1,
+      "is_vip": true,
+      "active_now_bool": true
+    },
+    {
