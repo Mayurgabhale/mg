@@ -79,3 +79,70 @@ const [isAuthenticated, setIsAuthenticated] = useState(false);
     </div>
   </div>
 )}
+
+
+
+
+
+...
+const styles = {
+  loginOverlay: {
+    position: "fixed",
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: "rgba(0,0,0,0.6)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  loginCard: {
+    background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+    padding: "40px",
+    borderRadius: "20px",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+    width: "350px",
+    textAlign: "center",
+    color: "white",
+    animation: "fadeIn 0.4s ease-in-out",
+  },
+  loginTitle: {
+    fontSize: "24px",
+    marginBottom: "8px",
+    fontWeight: "700",
+  },
+  loginSubtitle: {
+    fontSize: "14px",
+    marginBottom: "24px",
+    opacity: 0.9,
+  },
+  input: {
+    width: "100%",
+    padding: "10px 14px",
+    marginBottom: "16px",
+    borderRadius: "8px",
+    border: "none",
+    outline: "none",
+    fontSize: "14px",
+  },
+  loginButton: {
+    width: "100%",
+    background: "#fff",
+    color: "#2563eb",
+    fontWeight: "600",
+    border: "none",
+    borderRadius: "8px",
+    padding: "10px",
+    cursor: "pointer",
+    marginBottom: "10px",
+    transition: "0.3s",
+  },
+  cancelButton: {
+    width: "100%",
+    background: "transparent",
+    color: "#fff",
+    border: "1px solid #fff",
+    borderRadius: "8px",
+    padding: "10px",
+    cursor: "pointer",
+  },
+};
