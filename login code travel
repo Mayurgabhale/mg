@@ -1,0 +1,49 @@
+
+                    {/* login page start */}
+                    {showLogin && (
+                        <div style={styles.loginOverlay}>
+                            <div style={styles.loginCard}>
+                                <h2 style={styles.loginTitle}>🌍 Travel Portal Login</h2>
+                                <p style={styles.loginSubtitle}>Access secure upload section</p>
+
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    style={styles.input}
+                                    id="username"
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    style={styles.input}
+                                    id="password"
+                                />
+
+                                <button
+                                    onClick={() => {
+                                        const username = document.getElementById('username').value;
+                                        const password = document.getElementById('password').value;
+
+                                        if (username === 'test' && password === 'test@098') {
+                                            setIsAuthenticated(true);
+                                            setShowLogin(false);
+                                            setShowUploadFileSection(true);
+                                        } else {
+                                            alert('Invalid credentials. Try again!');
+                                        }
+                                    }}
+                                    style={styles.loginButton}
+                                >
+                                    Login
+                                </button>
+
+                                <button
+                                    onClick={() => setShowLogin(false)}
+                                    style={styles.cancelButton}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {/* login page start end */}
