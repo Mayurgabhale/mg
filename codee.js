@@ -1,3 +1,12 @@
+python -m venv .venv
+# activate
+.\.venv\Scripts\Activate.ps1
+
+
+pip install folium flask
+
+
+...
 PS C:\Users\W0024618\Desktop\NewFrontend> dir
 
 
