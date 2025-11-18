@@ -1,3 +1,14 @@
+
+{
+  key: 'cameras',
+  canvasId: 'gauge-cameras',
+  totalId: 'g-camera-total',
+  activeId: 'g-camera-active',
+  inactiveId: 'g-camera-inactive',
+  label: 'Cameras'
+},
+
+
 All Graph
 Cameras
 Total: 0
