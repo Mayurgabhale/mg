@@ -1,3 +1,17 @@
+
+.gcanvas-wrap {
+    width: 100%;
+    height: 180px;      /* container height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gcanvas-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;   /* let Chart.js scale correctly */
+}
+
 ok,
 but half circle is not disply,
   we need to dipsly half circle ok 
