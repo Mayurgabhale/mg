@@ -1,3 +1,21 @@
+
+
+document.getElementById("toggle-main-btn").addEventListener("click", function () {
+    const details = document.getElementById("details-section");
+    const graph = document.getElementById("main-graph");
+
+    if (details.style.display === "none") {
+        details.style.display = "block";   // Show details
+        graph.style.display = "none";      // Hide graph
+    } else {
+        details.style.display = "none";    // Hide details
+        graph.style.display = "block";     // Show graph
+    }
+});
+
+
+
+...
 document.getElementById("toggle-main-btn").addEventListener("click", function () {
     const details = document.getElementById("details-section");
     const graph = document.getElementById("main-graph");
