@@ -1,4 +1,19 @@
+All Graph
+Cameras
+Total: 0
+Active: 0 | Inactive: 0
+Archivers
+Total: 0
+Active: 0 | Inactive: 0
+Controllers
+Total: 0
+Active: 0 | Inactive: 0
+CCURE
+Total: 5
+Active: 5 | Inactive: 0
 
+    not disply  i want to disply half cirlc if 
+        device an any numbe ok 
 .gcanvas-wrap {
     width: 100%;
     height: 180px;      /* container height */
