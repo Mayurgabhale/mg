@@ -1,365 +1,210 @@
-/* Graphs section styling (dark/professional) */
-.graphs-section {
-  background: linear-gradient(180deg, #07080a 0%, #0b0b0b 100%);
-  color: #e6eef7;
-  padding: 22px;
-  border-radius: 12px;
-  margin: 12px 0;
-  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
-  font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-}
-.graphs-inner { max-width: 1200px; margin: 0 auto; }
-.graphs-title {
-  color: #8ef6b8;
-  margin: 0 0 14px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  font-size: 18px;
-}
+read this code this is half circle desin ok 
+  use this in our code ok 
+<div class="semi-donut margin" 
+     style="--percentage : 80; --fill: #FF3D00 ;">
+  HTML5
+</div>
 
-.graphs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
-  gap: 18px;
-}
 
-/* Individual card */
-.gcard {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 14px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  min-height: 160px;
-  justify-content: space-between;
-}
+<div class="semi-donut-model-2 margin"
+     style="--percentage : 90; --fill: #039BE5 ;">
+  CSS3
+</div>
 
-.gcard-title {
-  color: #cfeeed;
-  font-size: 13px;
-  margin: 0 0 8px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
 
-/* canvas container ensures predictable height for half donut */
-.gcanvas-wrap {
-  width: 100%;
-  height: 140px;
+<div class="multi-graph margin">
+  JavaScript
+  <div class="graph" data-name="jQuery" 
+       style="--percentage : 80; --fill: #0669AD ;">
+  </div>
+  <div class="graph" data-name="Angular" 
+       style="--percentage : 60; --fill: #E62A39 ;">
+  </div>
+  <div class="graph" data-name="React" 
+       style="--percentage : 30; --fill: #FEDA3E ;">
+  </div>
+</div>
+// ===============Not Required=============================
+body{
+  background: #1F2428;
+  text-align: center;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
+  margin: auto;
+  flex-wrap: wrap;
+  box-sizing : border-box;
+  height: 100vh;
+  padding: 30px;
 }
 
-.gcanvas-wrap canvas {
-  width: 100% !important;
-  height: 100% !important;   /* Chart.js scales to container */
-  max-height: 160px;
-  display: block;
-}
-
-/* Footer row */
-.gcard-foot {
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  font-size: 13px;
-  color: #98a3a8;
-}
-.gcounts b { color: #fff; }
-
-/* small responsive tweak */
-@media (max-width: 880px) {
-  .graphs-grid { grid-template-columns: 1fr; }
+.margin{
+    margin: 25px;
 }
 
 
+// ===================Semi Donut Chart model-1========================
 
-
-// graph.js (include this after Chart.js)
-(function () {
-  // --- Colors ---
-  const ACTIVE_COLOR = '#12b76a';
-  const INACTIVE_COLOR = '#f6b43a';
-  const EMPTY_BG = '#1f2937';    // subtle background arc color
-  const TEXT_PRIMARY = '#e6eef7';
-  const TEXT_SECONDARY = '#98a3a8';
-
-  // --- helper to find first existing DOM id among variants and return its int value ---
-  function readFirstInt(...ids) {
-    for (const id of ids) {
-      if (!id) continue;
-      const el = document.getElementById(id);
-      if (!el) continue;
-      const raw = el.textContent ?? el.innerText ?? el.value ?? '0';
-      const v = parseInt(String(raw).trim().replace(/[^0-9-]/g, '') || '0', 10);
-      if (!isNaN(v)) return v;
-    }
-    return 0;
+.semi-donut{
+  --percentage: 0;
+  --fill: #ff0;
+  width: 300px;
+  height: 150px;
+  position: relative;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  overflow: hidden;
+  color: var(--fill);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing : border-box;
+  &:after{
+    content: '';
+    width: 300px;
+    height: 300px;
+    border:50px solid;
+    border-color : rgba(0,0,0,0.15) rgba(0,0,0,0.15) var(--fill) var(--fill);
+    position: absolute;
+    border-radius: 50%;
+    left: 0;
+    top: 0;
+    box-sizing : border-box;
+    transform: rotate( calc( 1deg * ( -45 + var(--percentage) * 1.8 ) ) );
+    animation : fillAnimation 1s ease-in;
   }
+}
 
-  // --- plugin to draw center text ---
-  const centerPlugin = {
-    id: 'centerText',
-    beforeDraw(chart) {
-      const opts = chart.config.options;
-      if (!opts.plugins || !opts.plugins.centerText) return;
-      const ctx = chart.ctx;
-      const center = opts.plugins.centerText;
-      const width = chart.width;
-      const height = chart.height;
 
-      ctx.save();
-      // main font relative to canvas size
-      const mainFont = Math.round(Math.min(width, height) / 7);
-      ctx.font = `${center.fontWeight || '700'} ${mainFont}px Poppins, sans-serif`;
-      ctx.fillStyle = center.color || TEXT_PRIMARY;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+// ===================Semi Donut Chart model-2========================
 
-      ctx.fillText(center.mainText || '', width / 2, height / 2 - (center.offset || 8));
-
-      if (center.subText) {
-        ctx.font = `${center.subWeight || '600'} ${Math.max(10, Math.round(mainFont * 0.45))}px Poppins, sans-serif`;
-        ctx.fillStyle = center.subColor || TEXT_SECONDARY;
-        ctx.fillText(center.subText, width / 2, height / 2 + (center.offset || 18));
-      }
-      ctx.restore();
-    }
-  };
-
-  if (window.Chart && Chart.register) Chart.register(centerPlugin);
-
-  // --- create a gauge (half doughnut) ---
-  function makeGauge(ctx, opts) {
-    // opts: { active, inactive, label }
-    const total = (opts.active || 0) + (opts.inactive || 0);
-    let data, bgColors;
-
-    if (total === 0) {
-      // fallback: draw a subtle background arc so half-circle always visible
-      data = [1, 0];
-      bgColors = [EMPTY_BG, 'rgba(0,0,0,0)'];
-    } else {
-      data = [opts.active, opts.inactive];
-      bgColors = [ACTIVE_COLOR, INACTIVE_COLOR];
-    }
-
-    const config = {
-      type: 'doughnut',
-      data: {
-        labels: ['Active', 'Inactive'],
-        datasets: [{
-          data: data,
-          backgroundColor: bgColors,
-          borderWidth: 0,
-          hoverOffset: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '70%',
-        rotation: -Math.PI,
-        circumference: Math.PI,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: true },
-          centerText: {
-            mainText: String(total),
-            subText: opts.label || '',
-            fontSize: 20,
-            offset: -8,
-            color: TEXT_PRIMARY,
-            subColor: TEXT_SECONDARY
-          }
-        },
-        elements: {
-          arc: { borderRadius: 6 }
-        }
-      }
-    };
-
-    return new Chart(ctx, config);
+.semi-donut-model-2{
+  width: 300px;
+  height: 150px;
+  position: relative;
+  text-align: center;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  border-radius: 150px 150px 0 0;
+  overflow: hidden;
+  color: var(--fill);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing : border-box;
+  &:before, &:after{
+    content: '';
+    width: 300px;
+    height: 150px;
+    border:50px solid var(--fill);
+    border-top: none;
+    position: absolute;
+    transform-origin :50%  0% 0;
+    border-radius: 0 0 300px 300px ;
+    box-sizing : border-box;
+    left: 0;
+    top: 100%;
   }
-
-  // --- mapping and fallback ids (robust) ---
-  // Each mapping provides multiple possible ID names (in order) for reading values.
-  const mapping = [
-    {
-      key: 'cameras',
-      canvasId: 'gauge-cameras',
-      totalIds: ['camera-total', 'g-camera-total', 'camera_total'],
-      activeIds: ['camera-online', 'g-camera-active', 'camera-active'],
-      inactiveIds: ['camera-offline', 'g-camera-inactive', 'camera-offline']
-    },
-    {
-      key: 'archivers',
-      canvasId: 'gauge-archivers',
-      totalIds: ['archiver-total', 'g-archiver-total'],
-      activeIds: ['archiver-online', 'g-archiver-active'],
-      inactiveIds: ['archiver-offline', 'g-archiver-inactive']
-    },
-    {
-      key: 'controllers',
-      canvasId: 'gauge-controllers',
-      totalIds: ['controller-total', 'g-controller-total'],
-      activeIds: ['controller-online', 'g-controller-active'],
-      inactiveIds: ['controller-offline', 'g-controller-inactive']
-    },
-    {
-      key: 'ccure',
-      canvasId: 'gauge-ccure',
-      totalIds: ['server-total', 'g-ccure-total', 'ccure-total'],
-      activeIds: ['server-online', 'g-ccure-active', 'ccure-online'],
-      inactiveIds: ['server-offline', 'g-ccure-inactive', 'ccure-offline']
-    }
-  ];
-
-  const charts = {};
-
-  function initCharts() {
-    if (!window.Chart) {
-      console.error('Chart.js is required for graph.js. Include Chart.js before graph.js.');
-      return;
-    }
-
-    mapping.forEach(m => {
-      const canvas = document.getElementById(m.canvasId);
-      if (!canvas) {
-        console.warn('Missing canvas for', m.canvasId);
-        return;
-      }
-      const ctx = canvas.getContext('2d');
-      const initialActive = readFirstInt(...(m.activeIds || []));
-      const initialInactive = readFirstInt(...(m.inactiveIds || []));
-
-      const chart = makeGauge(ctx, {
-        active: initialActive,
-        inactive: initialInactive,
-        label: (m.key || '').toUpperCase()
-      });
-
-      charts[m.key] = { chart, mapping: m };
-    });
+  &:before {
+    border-color:rgba(0,0,0,.15);
+    transform: rotate(180deg);
   }
-
-  // update function — reads DOM values and updates charts + footer display
-  function renderGraphs() {
-    if (Object.keys(charts).length === 0) initCharts();
-
-    Object.values(charts).forEach(({ chart, mapping }) => {
-      const active = readFirstInt(...(mapping.activeIds || []));
-      const inactive = readFirstInt(...(mapping.inactiveIds || []));
-      const totalFromIds = readFirstInt(...(mapping.totalIds || []));
-
-      const total = totalFromIds || (active + inactive);
-
-      // if total = 0 -> set fallback data so the half arc displays
-      if ((active + inactive) === 0) {
-        chart.data.datasets[0].data = [1, 0];
-        chart.data.datasets[0].backgroundColor = [EMPTY_BG, 'rgba(0,0,0,0)'];
-      } else {
-        chart.data.datasets[0].data = [active, inactive];
-        chart.data.datasets[0].backgroundColor = [ACTIVE_COLOR, INACTIVE_COLOR];
-      }
-
-      // update center text
-      const center = chart.options.plugins.centerText || {};
-      center.mainText = String(total);
-      center.subText = (mapping.key || '').replace(/^\w/, c => c.toUpperCase());
-      chart.options.plugins.centerText = center;
-
-      // update card foot elements if they exist (try multiple id variants)
-      // total
-      (mapping.totalIds || []).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = total;
-      });
-      // active
-      (mapping.activeIds || []).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = active;
-      });
-      // inactive
-      (mapping.inactiveIds || []).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = inactive;
-      });
-
-      chart.update();
-    });
+  &:after{
+      z-index: 3;
+     animation : 1s fillGraphAnimation ease-in;
+    transform: rotate( calc( 1deg * ( var(--percentage) * 1.8 ) ) );
   }
+  &:hover{
+     &:after{
+        opacity: .8;
+        cursor: pointer;
+      }
+  }
+}
 
-  // expose small API
-  window.renderGraphs = renderGraphs;
-  window.initGaugeCharts = initCharts;
+// ===================Multi Semi Donut Chart ========================
 
-  // auto-init & periodic refresh
-  document.addEventListener('DOMContentLoaded', function () {
-    initCharts();
-    renderGraphs();
-    // keep in sync with your fetch polling - every 6s is safe
-    setInterval(renderGraphs, 6000);
-  });
+.multi-graph{
+  width: 300px;
+  height: 150px;
+  position: relative;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing : border-box;
+   &:before{
+    content: '';
+    width: 300px;
+    height: 150px;
+    border:50px solid rgba(0,0,0,.15);
+    border-bottom: none;
+    position: absolute;
+    box-sizing : border-box;
+    transform-origin: 50%  0%;
+    border-radius: 300px 300px 0 0 ;
+    left: 0;
+    top: 0;
+  }
+  .graph{
+    width: 300px;
+    height: 150px;
+    border:50px solid var(--fill);
+    border-top: none;
+    position: absolute;
+    transform-origin :50%  0% 0;
+    border-radius: 0 0 300px 300px ;
+    left: 0;
+    top: 100%;
+    z-index: 5;
+    animation : 1s fillGraphAnimation ease-in;
+    transform: rotate( calc( 1deg * ( var(--percentage) * 1.8 ) ) );
+    box-sizing : border-box;
+    cursor: pointer;
+    &:after{
+      // content: attr(data-name) ;
+      content: attr(data-name) ' ' counter(varible) '%';
+      counter-reset: varible var(--percentage);
+      background: var(--fill) ;
+      box-sizing : border-box;
+      border-radius : 2px;
+      color: #fff;
+      font-weight: 200;
+      font-size: 12px;
+      height: 20px;
+      padding: 3px 5px;
+      top: 0px;
+      position: absolute;
+      left: 0;
+      transform: rotate(calc( -1deg * var(--percentage) * 1.8 ))  translate(-30px , 0px);
+      transition:0.2s ease-in;
+      transform-origin: 0 50% 0;
+      opacity: 0;
+    }
+    &:hover{
+        opacity: 0.8;
+      &:after{
+        opacity: 1;
+        left: 30px;
+      }
+    }
+  }
+}
 
-})();
-...
 
-<section id="main-graph" class="graphs-section">
-  <div class="graphs-inner">
-    <h2 class="graphs-title">All Graph</h2>
 
-    <div class="graphs-grid">
+@keyframes fillAnimation{
+  0%{transform : rotate(-45deg);}
+  50%{transform: rotate(135deg);}
+}
 
-      <div class="gcard">
-        <h4 class="gcard-title">Cameras</h4>
-        <div class="gcanvas-wrap">
-          <canvas id="gauge-cameras" aria-label="Cameras status gauge"></canvas>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="camera-total">0</b></span>
-          <span class="gcounts">Active: <b id="camera-online">0</b> | Inactive: <b id="camera-offline">0</b></span>
-        </div>
-      </div>
-
-      <div class="gcard">
-        <h4 class="gcard-title">Archivers</h4>
-        <div class="gcanvas-wrap">
-          <canvas id="gauge-archivers" aria-label="Archivers status gauge"></canvas>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="archiver-total">0</b></span>
-          <span class="gcounts">Active: <b id="archiver-online">0</b> | Inactive: <b id="archiver-offline">0</b></span>
-        </div>
-      </div>
-
-      <div class="gcard">
-        <h4 class="gcard-title">Controllers</h4>
-        <div class="gcanvas-wrap">
-          <canvas id="gauge-controllers" aria-label="Controllers status gauge"></canvas>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="controller-total">0</b></span>
-          <span class="gcounts">Active: <b id="controller-online">0</b> | Inactive: <b id="controller-offline">0</b></span>
-        </div>
-      </div>
-
-      <div class="gcard">
-        <h4 class="gcard-title">CCURE</h4>
-        <div class="gcanvas-wrap">
-          <canvas id="gauge-ccure" aria-label="CCURE status gauge"></canvas>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="server-total">0</b></span>
-          <span class="gcounts">Active: <b id="server-online">0</b> | Inactive: <b id="server-offline">0</b></span>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
+@keyframes fillGraphAnimation{
+  0%{transform: rotate(0deg);}
+  50%{transform: rotate(180deg);}
+}
