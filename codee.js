@@ -1,6 +1,8 @@
-i want to increas high only for map 
-not <div class="left-grid"> 
-  ok this 
+read this code,
+  i want to increa hight only for the map  not for <div class="left-grid"> this ok 
+so howt ot do this.. 
+  read below all code and how to do this tell me 
+
 /* Graph Section - Dark/Light Theme */
 :root {
   /* Dark Theme Colors */
@@ -164,7 +166,7 @@ not <div class="left-grid">
   background: var(--graph-map-bg-dark);
   border-radius: 8px;
   height: 100%;
-  min-height: 300px;
+  min-height: 600px !important;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -341,7 +343,7 @@ not <div class="left-grid">
   }
 }
 
-  <section id="main-graph" class="graphs-section">
+ <section id="main-graph" class="graphs-section">
         <div class="graphs-inner">
 
           <div class="graphs-grid dashboard-layout">
@@ -396,7 +398,7 @@ not <div class="left-grid">
             </div>
 
             <!-- Right SIDE MAP PANEL -->
-            <div class="map-right-panel">
+            <div class="right-panel">
               <div class="gcard tall">
                 <h4 class="gcard-title">World Device Map</h4>
 
