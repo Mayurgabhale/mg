@@ -1,5 +1,6 @@
-half circle is not disply, i want to disply half circle ok.. 
-  
+
+read below all code and chekc why half circl is not diplsy.
+  i want half circle ok 
 <section id="main-graph" class="graphs-section">
   <div class="graphs-inner">
     <h2 class="graphs-title">All Graph</h2>
@@ -7,7 +8,7 @@ half circle is not disply, i want to disply half circle ok..
     <div class="graphs-grid">
       <div class="gcard">
         <h4 class="gcard-title">Cameras</h4>
-        <div class="gcanvas-wrap"><canvas id="gauge-cameras"></canvas></div>
+        <div class="gcanvas-wrap"><canvas id="gauge-cameras" width="300" height="200"></canvas></div>
         <div class="gcard-foot">
           <span>Total: <b id="g-camera-total">0</b></span>
           <span class="gcounts">Active: <b id="g-camera-active">0</b> | Inactive: <b id="g-camera-inactive">0</b></span>
@@ -43,10 +44,76 @@ half circle is not disply, i want to disply half circle ok..
     </div>
   </div>
 </section>
-  /* graph.js
-   Requires Chart.js (loaded before this file)
-   Exposes window.renderGraphs() — call this after updateSummary()
-*/
+
+
+/* Graphs section styling (dark/professional) */
+.graphs-section {
+  background: #0b0b0b;
+  color: #e6eef7;
+  padding: 22px;
+  border-radius: 10px;
+  margin: 12px 0;
+}
+.graphs-inner { max-width: 1200px; margin: 0 auto; }
+.graphs-title {
+  font-family: 'Poppins', sans-serif;
+  color: #0ee08f;
+  letter-spacing: 2px;
+  margin: 6px 0 18px;
+  font-weight: 700;
+}
+
+.graphs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+/* Individual card */
+.gcard {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 180px;
+}
+.gcard-title {
+  color: #cfeeed;
+  font-size: 14px;
+  margin: 0 0 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.gcanvas-wrap {
+  height: 180px;
+  width: 100%;           /* keep height for half-donut */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gcanvas-wrap canvas{
+    max-height: 100%;
+    max-width: 100%;
+}
+.gcard-foot {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #98a3a8;
+}
+.gcounts b { color: #fff; }
+@media (max-width: 800px) {
+  .graphs-grid { grid-template-columns: 1fr; }
+}
+
+
 (function () {
   // Colors
   const ACTIVE_COLOR = '#12b76a';   // green
@@ -224,65 +291,3 @@ half circle is not disply, i want to disply half circle ok..
     setInterval(renderGraphs, 6000);
   });
 })();
-
-/* Graphs section styling (dark/professional) */
-.graphs-section {
-  background: #0b0b0b;
-  color: #e6eef7;
-  padding: 22px;
-  border-radius: 10px;
-  margin: 12px 0;
-}
-.graphs-inner { max-width: 1200px; margin: 0 auto; }
-.graphs-title {
-  font-family: 'Poppins', sans-serif;
-  color: #0ee08f;
-  letter-spacing: 2px;
-  margin: 6px 0 18px;
-  font-weight: 700;
-}
-
-.graphs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
-  gap: 18px;
-}
-
-/* Individual card */
-.gcard {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 14px;
-  border-radius: 12px;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 180px;
-}
-.gcard-title {
-  color: #cfeeed;
-  font-size: 14px;
-  margin: 0 0 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.gcanvas-wrap {
-  height: 120px;           /* keep height for half-donut */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.gcard-foot {
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  font-size: 13px;
-  color: #98a3a8;
-}
-.gcounts b { color: #fff; }
-@media (max-width: 800px) {
-  .graphs-grid { grid-template-columns: 1fr; }
-}
