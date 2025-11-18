@@ -1,291 +1,75 @@
-      graph is not disply 
-<section id="main-graph" class="graphs-section">
-  <div class="graphs-inner">
-    <h2 class="graphs-title">All Graph</h2>
+<!-- Sidebar Button -->
+<button class="nav-button" id="toggle-main-btn">
+  <i class="fas fa-window-maximize"></i> Device Details
+</button>
 
-    <div class="graphs-grid">
-      <div class="gcard">
-        <h4 class="gcard-title">Cameras</h4>
-        <div class="gcanvas-wrap"><canvas id="gauge-cameras" width="300" height="200"></canvas></div>
-        <div class="gcard-foot">
-          <span>Total: <b id="g-camera-total">0</b></span>
-          <span class="gcounts">Active: <b id="g-camera-active">0</b> | Inactive: <b id="g-camera-inactive">0</b></span>
-        </div>
-      </div>
+<!-- Main Content -->
+<main id="content">
 
-      <div class="gcard">
-        <h4 class="gcard-title">Archivers</h4>
-        <div class="gcanvas-wrap"><canvas id="gauge-archivers"></canvas></div>
-        <div class="gcard-foot">
-          <span>Total: <b id="g-archiver-total">0</b></span>
-          <span class="gcounts">Active: <b id="g-archiver-active">0</b> | Inactive: <b id="g-archiver-inactive">0</b></span>
-        </div>
-      </div>
+  <!-- DEVICE DETAILS SECTION -->
+  <section id="details-section" class="details-section" style="display:none;">
+    <div class="details-header">
+      <h2><i class="fas fa-microchip"></i> Device Details</h2>
+      <input type="text" id="device-search" placeholder="🔍 Search by IP, Location, City..." />
+    </div>
 
-      <div class="gcard">
-        <h4 class="gcard-title">Controllers</h4>
-        <div class="gcanvas-wrap"><canvas id="gauge-controllers"></canvas></div>
-        <div class="gcard-foot">
-          <span>Total: <b id="g-controller-total">0</b></span>
-          <span class="gcounts">Active: <b id="g-controller-active">0</b> | Inactive: <b id="g-controller-inactive">0</b></span>
-        </div>
-      </div>
+    <div id="device-details" class="device-grid">Loading...</div>
+    <div id="details-container" class="device-grid"></div>
+  </section>
 
-      <div class="gcard">
-        <h4 class="gcard-title">CCURE</h4>
-        <div class="gcanvas-wrap"><canvas id="gauge-ccure"></canvas></div>
-        <div class="gcard-foot">
-          <span>Total: <b id="g-ccure-total">0</b></span>
-          <span class="gcounts">Active: <b id="g-ccure-active">0</b> | Inactive: <b id="g-ccure-inactive">0</b></span>
+  <!-- GRAPHS SECTION (visible by default) -->
+  <section id="main-graph" class="graphs-section">
+    <div class="graphs-inner">
+      <h2 class="graphs-title">All Graph</h2>
+
+      <div class="graphs-grid">
+
+        <div class="gcard">
+          <h4 class="gcard-title">Cameras</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-cameras"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-camera-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-camera-active">0</b> | Inactive: <b id="g-camera-inactive">0</b></span>
+          </div>
         </div>
+
+        <div class="gcard">
+          <h4 class="gcard-title">Archivers</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-archivers"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-archiver-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-archiver-active">0</b> | Inactive: <b id="g-archiver-inactive">0</b></span>
+          </div>
+        </div>
+
+        <div class="gcard">
+          <h4 class="gcard-title">Controllers</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-controllers"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-controller-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-controller-active">0</b> | Inactive: <b id="g-controller-inactive">0</b></span>
+          </div>
+        </div>
+
+        <div class="gcard">
+          <h4 class="gcard-title">CCURE</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-ccure"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-ccure-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-ccure-active">0</b> | Inactive: <b id="g-ccure-inactive">0</b></span>
+          </div>
+        </div>
+
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-(function () {
-    // Colors
-    const ACTIVE_COLOR = '#12b76a';   // green
-    const INACTIVE_COLOR = '#f6b43a'; // orange
-    const BG_COLOR = '#111827';       // for small background segment
-
-    // Helper: read integer from an element id, fallback to 0
-    function readInt(id) {
-        const el = document.getElementById(id);
-        if (!el) return 0;
-        const val = parseInt(el.textContent || el.innerText || el.value || '0', 10);
-        return isNaN(val) ? 0 : val;
-    }
-
-    // Setup chart plugin to draw center text (value + label)
-    const centerPlugin = {
-        id: 'centerText',
-        beforeDraw(chart) {
-            const opts = chart.config.options;
-            if (!opts.plugins || !opts.plugins.centerText) return;
-            const ctx = chart.ctx;
-            const center = opts.plugins.centerText;
-            const width = chart.width;
-            const height = chart.height;
-
-            ctx.save();
-
-            const fontSize = center.fontSize || Math.round(Math.min(width, height) / 8);
-            ctx.font = `${center.fontWeight || '700'} ${fontSize}px Poppins, sans-serif`;
-            ctx.fillStyle = center.color || '#e6eef7';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            // Primary text (count)
-            ctx.fillText(center.mainText || '', width / 2, height / 2 - (center.offset || 6));
-
-            // Secondary text (label)
-            if (center.subText) {
-                ctx.font = `${center.subWeight || '500'} ${Math.max(10, Math.round(fontSize * 0.45))}px Poppins, sans-serif`;
-                ctx.fillStyle = center.subColor || '#98a3a8';
-                ctx.fillText(center.subText, width / 2, height / 2 + (center.offset || 18));
-            }
-
-            ctx.restore();
-        }
-    };
-
-    // Register plugin
-    if (window.Chart && Chart.register) {
-        Chart.register(centerPlugin);
-    }
-
-    // Create gauge chart factory
-    function makeGauge(ctx, initial, label) {
-        const config = {
-            type: 'doughnut',
-            data: {
-                labels: ['Active', 'Inactive'],
-                datasets: [{
-                    data: [initial.active, initial.inactive],
-                    backgroundColor: [ACTIVE_COLOR, INACTIVE_COLOR],
-                    borderWidth: 0,
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                rotation: -Math.PI,       // start at left (makes it top half)
-                circumference: Math.PI,   // half circle
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                const label = ctx.label || '';
-                                const value = ctx.raw || 0;
-                                return `${label}: ${value}`;
-                            }
-                        }
-                    },
-                    centerText: {
-                        mainText: String(initial.active + initial.inactive),
-                        subText: label,
-                        fontSize: 22,
-                        offset: -6
-                    }
-                },
-                elements: {
-                    arc: { borderRadius: 6 }
-                }
-            }
-        };
-
-        return new Chart(ctx, config);
-    }
-
-    // Create all charts (once)
-    const charts = {};
-    function initCharts() {
-        // guard
-        if (!window.Chart) {
-            console.error('Chart.js not found. Please include Chart.js before graph.js');
-            return;
-        }
-
-
-        const mapping = [
-            { key: 'cameras', canvasId: 'gauge-cameras', totalId: 'g-camera-total', activeId: 'g-camera-active', inactiveId: 'g-camera-inactive', label: 'Cameras' },
-            { key: 'archivers', canvasId: 'gauge-archivers', totalId: 'g-archiver-total', activeId: 'g-archiver-active', inactiveId: 'g-archiver-inactive', label: 'Archivers' },
-            { key: 'controllers', canvasId: 'gauge-controllers', totalId: 'g-controller-total', activeId: 'g-controller-active', inactiveId: 'g-controller-inactive', label: 'Controllers' },
-            { key: 'ccure', canvasId: 'gauge-ccure', totalId: 'g-ccure-total', activeId: 'g-ccure-active', inactiveId: 'g-ccure-inactive', label: 'CCURE' }
-        ];
-
-        mapping.forEach(m => {
-            const canvas = document.getElementById(m.canvasId);
-            if (!canvas) {
-                console.warn('Missing canvas', m.canvasId);
-                return;
-            }
-            const ctx = canvas.getContext('2d');
-            const initial = {
-                active: readInt(m.activeId),
-                inactive: readInt(m.inactiveId)
-            };
-            charts[m.key] = {
-                chart: makeGauge(ctx, initial, m.label),
-                mapping: m
-            };
-        });
-    }
-
-    // Update function reads numbers and updates charts + small labels on card
-    function renderGraphs() {
-        // lazy init charts if not created
-        if (Object.keys(charts).length === 0) initCharts();
-
-        Object.values(charts).forEach(({ chart, mapping }) => {
-            const active = readInt(mapping.activeId);
-            const inactive = readInt(mapping.inactiveId);
-
-            // If totals are not present but individual values are zero, try compute from "totalId"
-            let total = readInt(mapping.totalId);
-            if (total === 0 && (active || inactive)) total = active + inactive;
-
-            // update dataset
-            chart.data.datasets[0].data = [active, inactive];
-            // update center plugin text
-            const center = chart.options.plugins.centerText || {};
-            center.mainText = String(total || (active + inactive));
-            center.subText = mapping.label;
-            chart.options.plugins.centerText = center;
-
-            // update canvas footers if present
-            const footTotal = document.getElementById('g-' + mapping.key + '-total');
-            const footActive = document.getElementById('g-' + mapping.key + '-active');
-            const footInactive = document.getElementById('g-' + mapping.key + '-inactive');
-            if (footTotal) footTotal.textContent = total;
-            if (footActive) footActive.textContent = active;
-            if (footInactive) footInactive.textContent = inactive;
-
-            chart.update();
-        });
-    }
-
-    // Expose for external use
-    window.renderGraphs = renderGraphs;
-
-    // Auto-render on DOM load
-    document.addEventListener('DOMContentLoaded', function () {
-        initCharts();
-        renderGraphs();
-
-        // Optional: keep charts fresh by polling the summary DOM every 6s (safe fallback)
-        setInterval(renderGraphs, 6000);
-    });
-})();
-
-
-/* Graphs section styling (dark/professional) */
-.graphs-section {
-  background: #0b0b0b;
-  color: #e6eef7;
-  padding: 22px;
-  border-radius: 10px;
-  margin: 12px 0;
-}
-.graphs-inner { max-width: 1200px; margin: 0 auto; }
-.graphs-title {
-  font-family: 'Poppins', sans-serif;
-  color: #0ee08f;
-  letter-spacing: 2px;
-  margin: 6px 0 18px;
-  font-weight: 700;
-}
-
-.graphs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
-  gap: 18px;
-}
-
-/* Individual card */
-.gcard {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 14px;
-  border-radius: 12px;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 180px;
-}
-.gcard-title {
-  color: #cfeeed;
-  font-size: 14px;
-  margin: 0 0 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.gcanvas-wrap {
-  height: 180px;
-  width: 100%;           /* keep height for half-donut */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.gcanvas-wrap canvas{
-    max-height: 100%;
-    max-width: 100%;
-}
-.gcard-foot {
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  font-size: 13px;
-  color: #98a3a8;
-}
-.gcounts b { color: #fff; }
-@media (max-width: 800px) {
-  .graphs-grid { grid-template-columns: 1fr; }
-}
+</main>
