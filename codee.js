@@ -1,4 +1,59 @@
 
+.semi-donut {
+  --percentage: 0;
+  --fill: #12b76a;
+  width: 100%;
+  height: 150px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.semi-donut::after {
+  content: "";
+  width: 200%;
+  height: 200%;
+  border-style: solid;
+  border-width: 40px;
+  border-top-color: rgba(255,255,255,0.1);
+  border-right-color: rgba(255,255,255,0.1);
+  border-bottom-color: var(--fill);
+  border-left-color: var(--fill);
+
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: -50%;
+
+  /* IMPORTANT: rotate around bottom center */
+  transform-origin: center bottom;
+
+  transform: rotate(calc(-45deg + var(--percentage) * 1.8deg));
+  transition: transform 0.6s ease-out;
+}
+
+.gtext {
+  position: absolute;
+  bottom: 20px;
+  text-align: center;
+  color: white;
+}
+
+.gtext b {
+  font-size: 20px;
+  color: #0ee08f;
+}
+
+.gtext small {
+  display: block;
+  font-size: 12px;
+  color: #98a3a8;
+}
+
+
+
 but half circle is not disply, chekc why 
 function updateGauge(id, activeId, inactiveId, totalId) {
     const active = parseInt(document.getElementById(activeId).textContent) || 0;
