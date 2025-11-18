@@ -1,3 +1,4 @@
+
 this section desin i want like above image show ok same as above image ok 
 <section id="main-graph" class="graphs-section">
   <div class="graphs-inner">
