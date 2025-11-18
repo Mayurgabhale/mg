@@ -1,323 +1,626 @@
-Graphs is disply but not in half cirlc desing,
-  i want to disply Graphs is half cirlc if count any thing ok,
-  All Graph
-Cameras
-Total: 0
-Active: 16 | Inactive: 5
-Archivers
-Total: 0
-Active: 21 | Inactive: 0
-Controllers
-Total: 0
-Active: 70 | Inactive: 1
-CCURE
-Total: 5
-Active: 5 | Inactive: 0
-/* Graphs section styling (dark/professional) */
-.graphs-section {
-  background: #0b0b0b;
-  color: #e6eef7;
-  padding: 22px;
-  border-radius: 10px;
-  margin: 12px 0;
-}
-.graphs-inner { max-width: 1200px; margin: 0 auto; }
-.graphs-title {
-  font-family: 'Poppins', sans-serif;
-  color: #0ee08f;
-  letter-spacing: 2px;
-  margin: 6px 0 18px;
-  font-weight: 700;
-}
 
-.graphs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
-  gap: 18px;
-}
+Cameras Archivers Controllers CCURE 
+    now in graph sectin i want to desing the all graphh 
+         <section id="main-graph" style="background: black; color: white;">
+        <h2>all graph</h2>
 
-/* Individual card */
-.gcard {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 14px;
-  border-radius: 12px;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 180px;
-}
-.gcard-title {
-  color: #cfeeed;
-  font-size: 14px;
-  margin: 0 0 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+        
+      </section>
+        in this 
+        i want half circle graph like above image i show this ok... 
+ total cameras and and offline camares like all 
+            Cameras Archivers Controllers CCURE  all for this ok 
+                sam as like above image i want ok 
 
-.gcanvas-wrap {
-    width: 100%;
-    height: 160px;      /* container height */
-    /* display: flex;
-    justify-content: center;
-    align-items: center; */
-}
+for this script i want differnt file name is graph.js ok  
+    read below all code and how to do this ok
+        can you do this more better and professal UI 
+<!-- Main Content -->
+    <main id="content">
+      <section id="details-section" class="details-section">
+        <div class="details-header">
+          <h2><i class="fas fa-microchip"></i> Device Details</h2>
+          <input type="text" id="device-search" placeholder="🔍 Search by IP, Location, City..." />
+        </div>
 
-.gcanvas-wrap canvas {
-    width: 100% !important;
-    height: 100% !important;   /* let Chart.js scale correctly */
-    /* aspect-ratio: 2/1; */
-}
-.gcard-foot {
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  font-size: 13px;
-  color: #98a3a8;
-}
-.gcounts b { color: #fff; }
-@media (max-width: 800px) {
-  .graphs-grid { grid-template-columns: 1fr; }
-}
+        <div id="device-details" class="device-grid">Loading...</div>
+        <div id="details-container" class="device-grid"></div>
+      </section>
+
+      <section id="main-graph" style="background: black; color: white;">
+        <h2>all graph</h2>
+
+        
+      </section>
+    </main>
+
+
+// C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
+const baseUrl = "http://localhost:80/api/regions";
+let refreshInterval = 300000; // 5 minutes
+let pingInterval = 60000; // 30 seconds
+let countdownTime = refreshInterval / 1000; // Convert to seconds
+let currentRegion = "global";
+let deviceDetailsCache = {}; // Store previous details to prevent redundant updates
+let latestDetails = null; // Cache the latest fetched details
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchData("global"); // Load initial data
+    startAutoRefresh("global");
 
 
 
-(function () {
-    // Colors
-    const ACTIVE_COLOR = '#12b76a';   // green
-    const INACTIVE_COLOR = '#f6b43a'; // orange
-    const BG_COLOR = '#111827';       // for small background segment
-
-    // Helper: read integer from an element id, fallback to 0
-    function readInt(id) {
-        const el = document.getElementById(id);
-        if (!el) return 0;
-        const val = parseInt(el.textContent || el.innerText || el.value || '0', 10);
-        return isNaN(val) ? 0 : val;
+    // Attach Door click
+    const doorCard = document.getElementById("door-card");
+    if (doorCard) {
+        doorCard.style.cursor = "pointer";
+        doorCard.title = "Click to view Controllers";
+        doorCard.addEventListener("click", loadControllersInDetails);
     }
 
-    // Setup chart plugin to draw center text (value + label)
-    const centerPlugin = {
-        id: 'centerText',
-        beforeDraw(chart) {
-            const opts = chart.config.options;
-            if (!opts.plugins || !opts.plugins.centerText) return;
-            const ctx = chart.ctx;
-            const center = opts.plugins.centerText;
-            const width = chart.width;
-            const height = chart.height;
 
-            ctx.save();
+    document.querySelectorAll(".region-button").forEach((button) => {
+        button.addEventListener("click", () => {
+            const region = button.getAttribute("data-region");
+            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
+            switchRegion(region);
+        });
+    });
 
-            const fontSize = center.fontSize || Math.round(Math.min(width, height) / 8);
-            ctx.font = `${center.fontWeight || '700'} ${fontSize}px Poppins, sans-serif`;
-            ctx.fillStyle = center.color || '#e6eef7';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+    document.getElementById("close-modal").addEventListener("click", () => {
+        document.getElementById("modal").style.display = "none";
+    });
 
-            // Primary text (count)
-            ctx.fillText(center.mainText || '', width / 2, height / 2 - (center.offset || 6));
+    (function attachSummaryCardFilterHandlers() {
+        const summaryCards = document.querySelectorAll(".summary .card");
+        if (!summaryCards || summaryCards.length === 0) return;
 
-            // Secondary text (label)
-            if (center.subText) {
-                ctx.font = `${center.subWeight || '500'} ${Math.max(10, Math.round(fontSize * 0.45))}px Poppins, sans-serif`;
-                ctx.fillStyle = center.subColor || '#98a3a8';
-                ctx.fillText(center.subText, width / 2, height / 2 + (center.offset || 18));
+        // helper: derive deviceFilter value from card title text
+        function mapCardTitleToFilterValue(title) {
+            if (!title) return "all";
+            const t = title.toLowerCase();
+
+            if (t.includes("camera")) return "cameras";
+            if (t.includes("archiver")) return "archivers";
+            if (t.includes("controller")) return "controllers";
+            if (t.includes("ccure")) return "servers";       // CCURE servers
+            if (t.includes("db")) return "dbdetails";        // DB servers
+            if (t.includes("desktop")) return "pcdetails";
+            if (t.includes("total")) return "all";
+
+            return "all";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const doorCard = document.getElementById("door-card");
+            if (doorCard) {
+                doorCard.style.cursor = "pointer";
+                doorCard.title = "Click to view Controllers";
+                doorCard.addEventListener("click", loadControllersInDetails);
+            }
+        });
+
+
+
+        summaryCards.forEach((card) => {
+            // make interactive
+            card.style.cursor = "pointer";
+
+            let clickTimer = null;
+            const clickDelay = 100; // ms
+
+
+            card.addEventListener("click", (ev) => {
+                if (clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => {
+                    const h3 = card.querySelector("h3");
+                    const titleText = h3 ? h3.innerText.trim() : card.innerText.trim();
+                    const filterValue = mapCardTitleToFilterValue(titleText);
+
+                    const deviceFilterElem = document.getElementById("device-filter");
+                    if (!deviceFilterElem) return;
+
+                    deviceFilterElem.value = filterValue;
+                    deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
+
+                    // 🔥 Highlight clicked card, remove from others
+                    document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
+                    if (filterValue !== "all") {
+                        card.classList.add("active");
+                    }
+                }, clickDelay);
+            });
+
+            card.addEventListener("dblclick", (ev) => {
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                const deviceFilterElem = document.getElementById("device-filter");
+                if (!deviceFilterElem) return;
+
+                deviceFilterElem.value = "all";
+                deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
+
+                // 🔥 Remove all highlights on double-click (reset)
+                document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
+            });
+
+
+
+        });
+    })();
+
+
+
+});
+
+// // --- Camera URL auto-detect helpers ---
+
+function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
+    ip = (ip || "").trim();
+    hyperlink = (hyperlink || "").trim();
+
+    // 🔑 Always prefer Excel's hyperlink if present
+    if (hyperlink && /^https?:\/\//.test(hyperlink)) {
+        return hyperlink;
+    }
+
+    // Direct IP
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+        return `http://${ip}`;
+    }
+
+    // Brand-based fallback
+    const name = (cameraname || "").toLowerCase();
+    if (/\bverkada\b/.test(name)) return `https://${ip}/#/login`;
+    if (/\bflir\b/.test(name)) return `http://${ip}/control/userimage.html`;
+    if (/\bhoneywell\b/.test(name)) return `http://${ip}/www/index.html`;
+    if (/axis/.test(name)) return `http://${ip}/view/view.shtml`;
+
+    return `http://${ip}`;
+}
+
+function openCamera(ip, name, hyperlink = "") {
+    const url = buildUrlFromHints(ip, name, hyperlink);
+    console.log("Opening URL:", url);  // Debug
+    window.open(url, "_blank", "noopener");
+}
+
+
+
+
+
+function switchRegion(region) {
+    clearExistingIntervals(); // Avoid interval duplication
+    currentRegion = region;
+    deviceDetailsCache = {};
+    fetchData(region);
+    startAutoRefresh(region);
+}
+
+// **Auto-refresh mechanism**
+function startAutoRefresh(regionName) {
+    fetchData(regionName); // Fetch initial data
+
+    clearExistingIntervals();
+
+    // Start countdown timer
+    window.countdownTimer = setInterval(() => {
+        document.getElementById("countdown").innerText = `Refreshing in ${countdownTime} seconds`;
+        countdownTime--;
+        if (countdownTime < 0) countdownTime = refreshInterval / 1000;
+    }, 1000);
+
+    // Refresh summary & details every 5 minutes
+    window.refreshTimer = setInterval(() => {
+        fetchData(regionName);
+        countdownTime = refreshInterval / 1000;
+    }, refreshInterval);
+
+    // Ping devices every 30 seconds using history API
+    window.pingTimer = setInterval(() => {
+        pingAllDevices(regionName);
+    }, pingInterval);
+}
+
+function clearExistingIntervals() {
+    clearInterval(window.countdownTimer);
+    clearInterval(window.refreshTimer);
+    clearInterval(window.pingTimer);
+}
+
+
+
+
+// **Fetch summary, details and controllers together**
+function fetchData(regionName) {
+    Promise.all([
+        fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
+        fetch(`${baseUrl}/details/${regionName}`).then(res => res.json()),
+        fetch(`http://localhost/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
+    ])
+        .then(([summary, details, controllerData]) => {
+            console.log("Summary Data:", summary);
+            console.log("Details Data:", details);
+            console.log("Controller Data:", controllerData);
+
+            // Compute door + reader summary from controllers API
+            const controllerExtras = processDoorAndReaderData(controllerData);
+
+            // Attach extras into the same structure updateSummary expects:
+            // updateSummary expects an object with a .summary property, so keep that shape.
+            if (!summary.summary) summary.summary = {};
+            summary.summary.controllerExtras = controllerExtras;
+
+            // Update UI and details
+            updateSummary(summary);
+
+            if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
+                updateDetails(details);
+                deviceDetailsCache = details; // Update cache
+            }
+            latestDetails = details;
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                alert("IP copied: " + text);
+            })
+            .catch(err => {
+                console.error("Clipboard API failed", err);
+                fallbackCopyTextToClipboard(text);
+            });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    // Create a temporary textarea
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    // Prevent scrolling to bottom
+    textArea.style.position = "fixed";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.opacity = "0";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        const successful = document.execCommand("copy");
+        if (successful) {
+            alert("IP copied (fallback): " + text);
+        } else {
+            alert("Fallback copy failed");
+        }
+    } catch (err) {
+        console.error("Fallback copy failed", err);
+        alert("Unable to copy");
+    }
+
+    document.body.removeChild(textArea);
+}
+
+function pingAllDevices(regionName) {
+    let details = latestDetails;
+    if (!details || !details.details) return;
+
+    fetch("http://localhost/api/devices/history")
+        .then(response => response.json())
+        .then(historyData => {
+            let statusChanged = false;
+
+            for (const [key, devices] of Object.entries(details.details)) {
+                if (!Array.isArray(devices) || devices.length === 0) continue;
+
+                devices.forEach((device) => {
+                    const ip = device.ip_address || "N/A";
+                    const card = document.querySelector(`[data-ip="${ip}"]`);
+                    if (!card) return;
+
+                    // Determine new status from history API if available.
+                    const historyArray = historyData[ip];
+                    let newStatus = (device.status || "offline").toLowerCase();
+                    if (Array.isArray(historyArray) && historyArray.length > 0) {
+                        const latestEntry = historyArray[historyArray.length - 1];
+                        newStatus = (latestEntry.status || "offline").toLowerCase();
+                    }
+                    const currentStatus = card.dataset.status;
+
+                    // Update UI: update the dot and the text.
+                    const statusDot = card.querySelector(".status-dot");
+                    const statusText = card.querySelector(".status-text");
+                    if (statusDot) {
+                        statusDot.style.backgroundColor = newStatus === "online" ? "green" : "red";
+                        statusDot.classList.remove("online-dot", "offline-dot");
+                        statusDot.classList.add(newStatus === "online" ? "online-dot" : "offline-dot");
+                    }
+                    else {
+                        console.warn(`Status dot element not found for IP: ${ip}`);
+                    }
+                    if (statusText) {
+                        const textColor = newStatus === "online" ? "green" : "red";
+
+                        statusText.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                        statusText.style.color = textColor;
+                        statusText.style.backgroundColor = "transparent";
+                        statusText.style.padding = "0";
+                        statusText.style.borderRadius = "0";
+                    } else {
+                        console.warn(`Status text element not found for IP: ${ip}`);
+                    }
+
+                    if (newStatus !== currentStatus) {
+                        statusChanged = true;
+                        card.dataset.status = newStatus;
+                    }
+                });
             }
 
-            ctx.restore();
+            setTimeout(() => {
+                if (statusChanged) {
+                    fetchData(regionName);
+                }
+            }, 5000);
+        })
+        .catch(error => {
+            console.error("Error fetching device history:", error);
+        });
+}
+
+
+
+
+
+// Process controllers API to compute doors & readers totals
+function processDoorAndReaderData(controllerData) {
+    // controllerData is expected to be an array of controller objects (per your example)
+    if (!Array.isArray(controllerData)) {
+        return {
+            doors: { total: 0, online: 0, offline: 0 },
+            readers: { total: 0, online: 0, offline: 0 }
+        };
+    }
+
+    let doorsTotal = 0, doorsOnline = 0;
+    let readersTotal = 0, readersOnline = 0;
+
+    controllerData.forEach(ctrl => {
+        if (!Array.isArray(ctrl.Doors)) return;
+
+        ctrl.Doors.forEach(door => {
+            // Count door
+            doorsTotal++;
+            if ((door.status || "").toLowerCase() === "online") doorsOnline++;
+
+            // Count reader only if Reader field is present & non-empty
+            if (door.Reader && door.Reader.toString().trim() !== "") {
+                readersTotal++;
+                if ((door.status || "").toLowerCase() === "online") readersOnline++;
+            }
+        });
+    });
+
+    return {
+        doors: {
+            total: doorsTotal,
+            online: doorsOnline,
+            offline: doorsTotal - doorsOnline
+        },
+        readers: {
+            total: readersTotal,
+            online: readersOnline,
+            offline: readersTotal - readersOnline
         }
     };
+}
 
-    // Register plugin
-    if (window.Chart && Chart.register) {
-        Chart.register(centerPlugin);
+
+function updateSummary(data) {
+    const summary = data.summary || {};
+
+    // ✅ Always keep last known values if new data doesn’t have them
+    window.lastSummary = window.lastSummary || {};
+    const merged = {
+        totalDevices: summary.totalDevices ?? window.lastSummary.totalDevices ?? 0,
+        totalOnlineDevices: summary.totalOnlineDevices ?? window.lastSummary.totalOnlineDevices ?? 0,
+        totalOfflineDevices: summary.totalOfflineDevices ?? window.lastSummary.totalOfflineDevices ?? 0,
+
+        cameras: { ...window.lastSummary.cameras, ...summary.cameras },
+        archivers: { ...window.lastSummary.archivers, ...summary.archivers },
+        controllers: { ...window.lastSummary.controllers, ...summary.controllers },
+        servers: { ...window.lastSummary.servers, ...summary.servers },
+        pcdetails: { ...window.lastSummary.pcdetails, ...summary.pcdetails },
+        dbdetails: { ...window.lastSummary.dbdetails, ...summary.dbdetails },
+
+        // 🆕 door/reader extras merged (summary.controllerExtras is created in fetchData)
+        controllerExtras: { ...window.lastSummary.controllerExtras, ...summary.controllerExtras }
+    };
+
+
+    // 🆕 Recalculate totals to include Door counts (but not Readers)
+    const doors = merged.controllerExtras?.doors || { total: 0, online: 0, offline: 0 };
+
+    // Recompute totals including doors
+    merged.totalDevices =
+        (merged.cameras?.total || 0) +
+        (merged.archivers?.total || 0) +
+        (merged.controllers?.total || 0) +
+        (merged.servers?.total || 0) +
+        (merged.pcdetails?.total || 0) +
+        (merged.dbdetails?.total || 0) +
+        doors.total; // ✅ include doors only
+
+    merged.totalOnlineDevices =
+        (merged.cameras?.online || 0) +
+        (merged.archivers?.online || 0) +
+        (merged.controllers?.online || 0) +
+        (merged.servers?.online || 0) +
+        (merged.pcdetails?.online || 0) +
+        (merged.dbdetails?.online || 0) +
+        doors.online; // ✅ include doors only
+
+    merged.totalOfflineDevices =
+        merged.totalDevices - merged.totalOnlineDevices;
+
+
+
+
+    // ✅ Save merged result for next refresh
+    window.lastSummary = merged;
+
+    // Update UI safely
+    document.getElementById("total-devices").textContent = merged.totalDevices;
+    document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
+    document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
+
+    document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
+    document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
+    document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
+
+    document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
+    document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
+    document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
+
+    document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
+    document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
+    document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
+
+    document.getElementById("server-total").textContent = merged.servers?.total || 0;
+    document.getElementById("server-online").textContent = merged.servers?.online || 0;
+    document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
+
+    // ✅ Fix for Desktop and DB Server
+    document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
+    document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
+    document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
+
+    document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
+    document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
+    document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
+
+    // ✅  new for Door and Reader 
+    // ====== Door / Reader card updates (from controllers API) ======
+    const extras = merged.controllerExtras || {};
+    // If you used a single Door/Reader card with ids: doorReader-total, doorReader-online, doorReader-offline
+    if (extras.doors) {
+        const doorTotalEl = document.getElementById("doorReader-total");
+        const doorOnlineEl = document.getElementById("doorReader-online");
+        const doorOfflineEl = document.getElementById("doorReader-offline");
+        if (doorTotalEl) doorTotalEl.textContent = extras.doors.total || 0;
+        if (doorOnlineEl) doorOnlineEl.textContent = extras.doors.online || 0;
+        if (doorOfflineEl) doorOfflineEl.textContent = extras.doors.offline || 0;
+    } else {
+        // fallback -> clear
+        if (document.getElementById("doorReader-total")) document.getElementById("doorReader-total").textContent = 0;
+        if (document.getElementById("doorReader-online")) document.getElementById("doorReader-online").textContent = 0;
+        if (document.getElementById("doorReader-offline")) document.getElementById("doorReader-offline").textContent = 0;
     }
 
-    // Create gauge chart factory
-    function makeGauge(ctx, initial, label) {
-        const config = {
-            type: 'doughnut',
-            data: {
-                labels: ['Active', 'Inactive'],
-                datasets: [{
-                    data: [initial.active, initial.inactive],
-                    backgroundColor: [ACTIVE_COLOR, INACTIVE_COLOR],
-                    borderWidth: 0,
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                rotation: -Math.PI,       // start at left (makes it top half)
-                circumference: Math.PI,   // half circle
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                const label = ctx.label || '';
-                                const value = ctx.raw || 0;
-                                return `${label}: ${value}`;
-                            }
-                        }
-                    },
-                    centerText: {
-                        mainText: String(initial.active + initial.inactive),
-                        subText: label,
-                        fontSize: 22,
-                        offset: -6
-                    }
-                },
-                elements: {
-                    arc: { borderRadius: 6 }
-                }
-            }
-        };
-
-        return new Chart(ctx, config);
+    if (extras.readers) {
+        const rTotalEl = document.getElementById("reader-total-inline");
+        const rOnlineEl = document.getElementById("reader-online-inline");
+        const rOfflineEl = document.getElementById("reader-offline-inline");
+        // NOTE: your HTML currently has the Door/Reader card as a single combined card.
+        // If you want to surface readers separately on the same card, you can add spans with these IDs
+        // inside the card or reuse the same doorReader-* elements. For now we only populate doorReader-*.
+        // Keep these lines if you create these spans, otherwise they're safe (will be null).
+        if (rTotalEl) rTotalEl.textContent = extras.readers.total || 0;
+        if (rOnlineEl) rOnlineEl.textContent = extras.readers.online || 0;
+        if (rOfflineEl) rOfflineEl.textContent = extras.readers.offline || 0;
     }
+}
 
-    // Create all charts (once)
-    const charts = {};
-    function initCharts() {
-        // guard
-        if (!window.Chart) {
-            console.error('Chart.js not found. Please include Chart.js before graph.js');
-            return;
-        }
+function loadControllersInDetails() {
+    const detailsContainer = document.getElementById("device-details");
+    const extraContainer = document.getElementById("details-container");
 
+    detailsContainer.innerHTML = "<p>Loading controllers...</p>";
+    extraContainer.innerHTML = "";
 
-
-        const mapping = [
-
-            { key: 'cameras', canvasId: 'gauge-cameras', totalId: 'camera-total', activeId: 'camera-online', inactiveId: 'camera-offline', label: 'Cameras' },
-            { key: 'archivers', canvasId: 'gauge-archivers', totalId: 'archiver-total', activeId: 'archiver-online', inactiveId: 'archiver-offline', label: 'Archivers' },
-            { key: 'controllers', canvasId: 'gauge-controllers', totalId: 'controller-total', activeId: 'controller-online', inactiveId: 'controller-offline', label: 'Controllers' },
-            { key: 'ccure', canvasId: 'gauge-ccure', totalId: 'server-total', activeId: 'server-online', inactiveId: 'server-offline', label: 'CCURE' }
-        ];
-
-
-
-        mapping.forEach(m => {
-            const canvas = document.getElementById(m.canvasId);
-            if (!canvas) {
-                console.warn('Missing canvas', m.canvasId);
+    fetch("http://localhost/api/controllers/status")
+        .then(res => res.json())
+        .then(data => {
+            detailsContainer.innerHTML = "";
+            if (!Array.isArray(data) || data.length === 0) {
+                detailsContainer.innerHTML = "<p>No controllers found.</p>";
                 return;
             }
-            const ctx = canvas.getContext('2d');
-            const initial = {
-                active: readInt(m.activeId),
-                inactive: readInt(m.inactiveId)
-            };
-            charts[m.key] = {
-                chart: makeGauge(ctx, initial, m.label),
-                mapping: m
-            };
+
+            data.forEach(ctrl => {
+                const card = document.createElement("div");
+                card.className = "door-device-card";
+                card.style.cssText = `
+                    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 16px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                `;
+
+                card.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: #1f2937;">
+                            ${ctrl.controllername || "Unknown Controller"}
+                        </h3>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${ctrl.controllerStatus === "Online" ? "#10b981" : "#ef4444"};"></div>
+                            <span style="font-size: 14px; color: ${ctrl.controllerStatus === "Online" ? "#059669" : "#dc2626"}; font-weight: 600;">
+                                ${ctrl.controllerStatus}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 14px; color: #6b7280;">🌐</span>
+                            <div>
+                                <div style="font-size: 12px; color: #6b7280;">IP Address</div>
+                                <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.IP_address || "N/A"}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 14px; color: #6b7280;">🏢</span>
+                            <div>
+                                <div style="font-size: 12px; color: #6b7280;">Location</div>
+                                <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.City || "Unknown"}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Hover effects
+                card.addEventListener('mouseenter', function () {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                    this.style.borderColor = '#3b82f6';
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                    this.style.borderColor = '#e5e7eb';
+                });
+
+                // When a controller is clicked, show its doors + readers
+                card.addEventListener("click", () => showDoorsReaders(ctrl));
+                detailsContainer.appendChild(card);
+            });
+        })
+        .catch(err => {
+            console.error("Error loading controllers:", err);
+            detailsContainer.innerHTML = "<p style='color:red;'>Failed to load controllers.</p>";
         });
-    }
-
-    // Update function reads numbers and updates charts + small labels on card
-    function renderGraphs() {
-        // lazy init charts if not created
-        if (Object.keys(charts).length === 0) initCharts();
-
-        Object.values(charts).forEach(({ chart, mapping }) => {
-            const active = readInt(mapping.activeId);
-            const inactive = readInt(mapping.inactiveId);
-
-            // If totals are not present but individual values are zero, try compute from "totalId"
-            let total = readInt(mapping.totalId);
-            if (total === 0 && (active || inactive)) total = active + inactive;
-
-            // update dataset
-            chart.data.datasets[0].data = [active, inactive];
-            // update center plugin text
-            const center = chart.options.plugins.centerText || {};
-            center.mainText = String(total || (active + inactive));
-            center.subText = mapping.label;
-            chart.options.plugins.centerText = center;
-
-            // update canvas footers if present
-            const footTotal = document.getElementById('g-' + mapping.key + '-total');
-            const footActive = document.getElementById('g-' + mapping.key + '-active');
-            const footInactive = document.getElementById('g-' + mapping.key + '-inactive');
-            if (footTotal) footTotal.textContent = total;
-            if (footActive) footActive.textContent = active;
-            if (footInactive) footInactive.textContent = inactive;
-
-            chart.update();
-        });
-    }
-
-    // Expose for external use
-    window.renderGraphs = renderGraphs;
-
-    // Auto-render on DOM load
-    document.addEventListener('DOMContentLoaded', function () {
-        initCharts();
-        renderGraphs();
-
-        // Optional: keep charts fresh by polling the summary DOM every 6s (safe fallback)
-        setInterval(renderGraphs, 6000);
-    });
-})();
-
- <section id="main-graph" class="graphs-section">
-    <div class="graphs-inner">
-      <h2 class="graphs-title">All Graph</h2>
-
-      <div class="graphs-grid">
-
-        <div class="gcard">
-          <h4 class="gcard-title">Cameras</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-cameras"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-camera-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-camera-active">0</b> | Inactive: <b id="g-camera-inactive">0</b></span>
-          </div>
-        </div>
-
-        <div class="gcard">
-          <h4 class="gcard-title">Archivers</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-archivers"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-archiver-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-archiver-active">0</b> | Inactive: <b id="g-archiver-inactive">0</b></span>
-          </div>
-        </div>
-
-        <div class="gcard">
-          <h4 class="gcard-title">Controllers</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-controllers"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-controller-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-controller-active">0</b> | Inactive: <b id="g-controller-inactive">0</b></span>
-          </div>
-        </div>
-
-        <div class="gcard">
-          <h4 class="gcard-title">CCURE</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-ccure"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-ccure-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-ccure-active">0</b> | Inactive: <b id="g-ccure-inactive">0</b></span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
+}
