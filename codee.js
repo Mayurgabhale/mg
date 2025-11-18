@@ -1,3 +1,84 @@
+/* Graphs section styling (dark/professional) */
+.graphs-section {
+  background: linear-gradient(180deg, #07080a 0%, #0b0b0b 100%);
+  color: #e6eef7;
+  padding: 22px;
+  border-radius: 12px;
+  margin: 12px 0;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+  font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+.graphs-inner { max-width: 1200px; margin: 0 auto; }
+.graphs-title {
+  color: #8ef6b8;
+  margin: 0 0 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  font-size: 18px;
+}
+
+.graphs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+/* Individual card */
+.gcard {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  min-height: 160px;
+  justify-content: space-between;
+}
+
+.gcard-title {
+  color: #cfeeed;
+  font-size: 13px;
+  margin: 0 0 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* canvas container ensures predictable height for half donut */
+.gcanvas-wrap {
+  width: 100%;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.gcanvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;   /* Chart.js scales to container */
+  max-height: 160px;
+  display: block;
+}
+
+/* Footer row */
+.gcard-foot {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #98a3a8;
+}
+.gcounts b { color: #fff; }
+
+/* small responsive tweak */
+@media (max-width: 880px) {
+  .graphs-grid { grid-template-columns: 1fr; }
+}
+
+
+
 
 // graph.js (include this after Chart.js)
 (function () {
