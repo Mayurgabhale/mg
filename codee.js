@@ -1,99 +1,89 @@
-
-{
-  key: 'cameras',
-  canvasId: 'gauge-cameras',
-  totalId: 'g-camera-total',
-  activeId: 'g-camera-active',
-  inactiveId: 'g-camera-inactive',
-  label: 'Cameras'
-},
-
-
-All Graph
+Graphs is disply but not in half cirlc desing,
+  i want to disply Graphs is half cirlc if count any thing ok,
+  All Graph
 Cameras
 Total: 0
-Active: 0 | Inactive: 0
+Active: 16 | Inactive: 5
 Archivers
 Total: 0
-Active: 0 | Inactive: 0
+Active: 21 | Inactive: 0
 Controllers
 Total: 0
-Active: 0 | Inactive: 0
+Active: 70 | Inactive: 1
 CCURE
 Total: 5
 Active: 5 | Inactive: 0
+/* Graphs section styling (dark/professional) */
+.graphs-section {
+  background: #0b0b0b;
+  color: #e6eef7;
+  padding: 22px;
+  border-radius: 10px;
+  margin: 12px 0;
+}
+.graphs-inner { max-width: 1200px; margin: 0 auto; }
+.graphs-title {
+  font-family: 'Poppins', sans-serif;
+  color: #0ee08f;
+  letter-spacing: 2px;
+  margin: 6px 0 18px;
+  font-weight: 700;
+}
 
-    not disply  i want to disply half cirlc if 
-        device an any numbe ok 
+.graphs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+/* Individual card */
+.gcard {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 180px;
+}
+.gcard-title {
+  color: #cfeeed;
+  font-size: 14px;
+  margin: 0 0 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .gcanvas-wrap {
     width: 100%;
-    height: 180px;      /* container height */
-    display: flex;
+    height: 160px;      /* container height */
+    /* display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; */
 }
 
 .gcanvas-wrap canvas {
     width: 100% !important;
     height: 100% !important;   /* let Chart.js scale correctly */
+    /* aspect-ratio: 2/1; */
+}
+.gcard-foot {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #98a3a8;
+}
+.gcounts b { color: #fff; }
+@media (max-width: 800px) {
+  .graphs-grid { grid-template-columns: 1fr; }
 }
 
-ok,
-but half circle is not disply,
-  we need to dipsly half circle ok 
-  <section id="main-graph" class="graphs-section">
-    <div class="graphs-inner">
-      <h2 class="graphs-title">All Graph</h2>
 
-      <div class="graphs-grid">
-
-        <div class="gcard">
-          <h4 class="gcard-title">Cameras</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-cameras"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-camera-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-camera-active">0</b> | Inactive: <b id="g-camera-inactive">0</b></span>
-          </div>
-        </div>
-
-        <div class="gcard">
-          <h4 class="gcard-title">Archivers</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-archivers"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-archiver-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-archiver-active">0</b> | Inactive: <b id="g-archiver-inactive">0</b></span>
-          </div>
-        </div>
-
-        <div class="gcard">
-          <h4 class="gcard-title">Controllers</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-controllers"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-controller-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-controller-active">0</b> | Inactive: <b id="g-controller-inactive">0</b></span>
-          </div>
-        </div>
-
-        <div class="gcard">
-          <h4 class="gcard-title">CCURE</h4>
-          <div class="gcanvas-wrap">
-            <canvas id="gauge-ccure"></canvas>
-          </div>
-          <div class="gcard-foot">
-            <span>Total: <b id="g-ccure-total">0</b></span>
-            <span class="gcounts">Active: <b id="g-ccure-active">0</b> | Inactive: <b id="g-ccure-inactive">0</b></span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
 
 (function () {
     // Colors
@@ -205,6 +195,7 @@ but half circle is not disply,
 
 
         const mapping = [
+
             { key: 'cameras', canvasId: 'gauge-cameras', totalId: 'camera-total', activeId: 'camera-online', inactiveId: 'camera-offline', label: 'Cameras' },
             { key: 'archivers', canvasId: 'gauge-archivers', totalId: 'archiver-total', activeId: 'archiver-online', inactiveId: 'archiver-offline', label: 'Archivers' },
             { key: 'controllers', canvasId: 'gauge-controllers', totalId: 'controller-total', activeId: 'controller-online', inactiveId: 'controller-offline', label: 'Controllers' },
@@ -277,72 +268,56 @@ but half circle is not disply,
     });
 })();
 
-/* Graphs section styling (dark/professional) */
-.graphs-section {
-  background: #0b0b0b;
-  color: #e6eef7;
-  padding: 22px;
-  border-radius: 10px;
-  margin: 12px 0;
-}
-.graphs-inner { max-width: 1200px; margin: 0 auto; }
-.graphs-title {
-  font-family: 'Poppins', sans-serif;
-  color: #0ee08f;
-  letter-spacing: 2px;
-  margin: 6px 0 18px;
-  font-weight: 700;
-}
+ <section id="main-graph" class="graphs-section">
+    <div class="graphs-inner">
+      <h2 class="graphs-title">All Graph</h2>
 
-.graphs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(260px, 1fr));
-  gap: 18px;
-}
+      <div class="graphs-grid">
 
-/* Individual card */
-.gcard {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.04);
-  padding: 14px;
-  border-radius: 12px;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 180px;
-}
-.gcard-title {
-  color: #cfeeed;
-  font-size: 14px;
-  margin: 0 0 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+        <div class="gcard">
+          <h4 class="gcard-title">Cameras</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-cameras"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-camera-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-camera-active">0</b> | Inactive: <b id="g-camera-inactive">0</b></span>
+          </div>
+        </div>
 
-.gcanvas-wrap {
-    width: 100%;
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        <div class="gcard">
+          <h4 class="gcard-title">Archivers</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-archivers"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-archiver-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-archiver-active">0</b> | Inactive: <b id="g-archiver-inactive">0</b></span>
+          </div>
+        </div>
 
+        <div class="gcard">
+          <h4 class="gcard-title">Controllers</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-controllers"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-controller-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-controller-active">0</b> | Inactive: <b id="g-controller-inactive">0</b></span>
+          </div>
+        </div>
 
-.gcanvas-wrap canvas {
-    width: 100% !important;
-    height: 180px !important;   /* ★ Without this the graph will NOT appear */
-}
-.gcard-foot {
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  font-size: 13px;
-  color: #98a3a8;
-}
-.gcounts b { color: #fff; }
-@media (max-width: 800px) {
-  .graphs-grid { grid-template-columns: 1fr; }
-}
+        <div class="gcard">
+          <h4 class="gcard-title">CCURE</h4>
+          <div class="gcanvas-wrap">
+            <canvas id="gauge-ccure"></canvas>
+          </div>
+          <div class="gcard-foot">
+            <span>Total: <b id="g-ccure-total">0</b></span>
+            <span class="gcounts">Active: <b id="g-ccure-active">0</b> | Inactive: <b id="g-ccure-inactive">0</b></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
