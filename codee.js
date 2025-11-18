@@ -1,3 +1,14 @@
+<!-- inside <head> or before body end, add Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Include graph.js after your script.js -->
+<script src="script.js"></script>
+<script src="graph.js"></script>
+
+
+
+
+
 <section id="main-graph" class="graphs-section">
   <div class="graphs-inner">
     <h2 class="graphs-title">All Graph</h2>
