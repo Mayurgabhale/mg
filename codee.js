@@ -1,209 +1,209 @@
-
-.semi-donut {
-  --percentage: 0;
-  --fill: #12b76a;
-  width: 100%;
-  height: 150px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.semi-donut::after {
-  content: "";
-  width: 200%;
-  height: 200%;
-  border-style: solid;
-  border-width: 40px;
-  border-top-color: rgba(255,255,255,0.1);
-  border-right-color: rgba(255,255,255,0.1);
-  border-bottom-color: var(--fill);
-  border-left-color: var(--fill);
-
-  border-radius: 50%;
-  position: absolute;
-  top: 0;
-  left: -50%;
-
-  /* IMPORTANT: rotate around bottom center */
-  transform-origin: center bottom;
-
-  transform: rotate(calc(-45deg + var(--percentage) * 1.8deg));
-  transition: transform 0.6s ease-out;
-}
-
-.gtext {
-  position: absolute;
-  bottom: 20px;
-  text-align: center;
-  color: white;
-}
-
-.gtext b {
-  font-size: 20px;
-  color: #0ee08f;
-}
-
-.gtext small {
-  display: block;
-  font-size: 12px;
-  color: #98a3a8;
-}
+<div class="semi-donut margin" 
+     style="--percentage : 80; --fill: #FF3D00 ;">
+  HTML5
+</div>
 
 
+<div class="semi-donut-model-2 margin"
+     style="--percentage : 90; --fill: #039BE5 ;">
+  CSS3
+</div>
 
-but half circle is not disply, chekc why 
-function updateGauge(id, activeId, inactiveId, totalId) {
-    const active = parseInt(document.getElementById(activeId).textContent) || 0;
-    const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
-    const total = active + inactive;
 
-    // element
-    const gauge = document.getElementById(id);
-    if (!gauge) return;
-
-    // % calculation
-    let percentage = total === 0 ? 0 : Math.round((active / total) * 100);
-
-    // set values
-    gauge.style.setProperty("--percentage", percentage);
-
-    // update text inside semicircle
-    gauge.querySelector(".total").textContent = total;
-    gauge.querySelector(".active").textContent = active;
-    gauge.querySelector(".inactive").textContent = inactive;
-
-    // card footer also updates
-    document.getElementById(totalId).textContent = total;
-}
-
-function renderGauges() {
-    updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
-    updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
-    updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
-    updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    renderGauges();
-    setInterval(renderGauges, 6000);
-});
-
-<section id="main-graph" class="graphs-section">
-  <div class="graphs-inner">
-    <h2 class="graphs-title">All Graph</h2>
-
-    <div class="graphs-grid">
-
-      <!-- Cameras -->
-      <div class="gcard">
-        <h4 class="gcard-title">Cameras</h4>
-        <div class="semi-donut gauge" id="gauge-cameras" style="--percentage:0; --fill:#12b76a;">
-          <div class="gtext">
-            <b class="total">0</b>
-            <small><span class="active">0</span> / <span class="inactive">0</span></small>
-          </div>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="camera-total">0</b></span>
-          <span class="gcounts">Active: <b id="camera-online">0</b> | Inactive: <b id="camera-offline">0</b></span>
-        </div>
-      </div>
-
-      <!-- Archivers -->
-      <div class="gcard">
-        <h4 class="gcard-title">Archivers</h4>
-        <div class="semi-donut gauge" id="gauge-archivers" style="--percentage:0; --fill:#12b76a;">
-          <div class="gtext">
-            <b class="total">0</b>
-            <small><span class="active">0</span> / <span class="inactive">0</span></small>
-          </div>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="archiver-total">0</b></span>
-          <span class="gcounts">Active: <b id="archiver-online">0</b> | Inactive: <b id="archiver-offline">0</b></span>
-        </div>
-      </div>
-
-      <!-- Controllers -->
-      <div class="gcard">
-        <h4 class="gcard-title">Controllers</h4>
-        <div class="semi-donut gauge" id="gauge-controllers" style="--percentage:0; --fill:#12b76a;">
-          <div class="gtext">
-            <b class="total">0</b>
-            <small><span class="active">0</span> / <span class="inactive">0</span></small>
-          </div>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="controller-total">0</b></span>
-          <span class="gcounts">Active: <b id="controller-online">0</b> | Inactive: <b id="controller-offline">0</b></span>
-        </div>
-      </div>
-
-      <!-- CCURE -->
-      <div class="gcard">
-        <h4 class="gcard-title">CCURE</h4>
-        <div class="semi-donut gauge" id="gauge-ccure" style="--percentage:0; --fill:#12b76a;">
-          <div class="gtext">
-            <b class="total">0</b>
-            <small><span class="active">0</span> / <span class="inactive">0</span></small>
-          </div>
-        </div>
-        <div class="gcard-foot">
-          <span>Total: <b id="server-total">0</b></span>
-          <span class="gcounts">Active: <b id="server-online">0</b> | Inactive: <b id="server-offline">0</b></span>
-        </div>
-      </div>
-
-    </div>
+<div class="multi-graph margin">
+  JavaScript
+  <div class="graph" data-name="jQuery" 
+       style="--percentage : 80; --fill: #0669AD ;">
   </div>
-</section>
+  <div class="graph" data-name="Angular" 
+       style="--percentage : 60; --fill: #E62A39 ;">
+  </div>
+  <div class="graph" data-name="React" 
+       style="--percentage : 30; --fill: #FEDA3E ;">
+  </div>
+</div>
+
+// ===============Not Required=============================
+body{
+  background: #1F2428;
+  text-align: center;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  flex-wrap: wrap;
+  box-sizing : border-box;
+  height: 100vh;
+  padding: 30px;
+}
+
+.margin{
+    margin: 25px;
+}
 
 
+// ===================Semi Donut Chart model-1========================
 
-/* Semi Donut Gauge */
-.semi-donut {
+.semi-donut{
   --percentage: 0;
-  --fill: #12b76a;
-  width: 100%;
+  --fill: #ff0;
+  width: 300px;
   height: 150px;
   position: relative;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
   overflow: hidden;
+  color: var(--fill);
   display: flex;
-  justify-content: center;
   align-items: flex-end;
+  justify-content: center;
+  box-sizing : border-box;
+  &:after{
+    content: '';
+    width: 300px;
+    height: 300px;
+    border:50px solid;
+    border-color : rgba(0,0,0,0.15) rgba(0,0,0,0.15) var(--fill) var(--fill);
+    position: absolute;
+    border-radius: 50%;
+    left: 0;
+    top: 0;
+    box-sizing : border-box;
+    transform: rotate( calc( 1deg * ( -45 + var(--percentage) * 1.8 ) ) );
+    animation : fillAnimation 1s ease-in;
+  }
 }
 
-.semi-donut::after {
-  content: "";
-  width: 200%;
-  height: 200%;
-  border: 40px solid;
-  border-color: rgba(255,255,255,0.1) rgba(255,255,255,0.1) var(--fill) var(--fill);
-  border-radius: 50%;
-  position: absolute;
-  top: 0;
-  left: -50%;
-  transform: rotate(calc(-45deg + var(--percentage) * 1.8deg));
-  transition: transform 0.6s ease-out;
-}
 
-.gtext {
-  position: absolute;
-  bottom: 20px;
+// ===================Semi Donut Chart model-2========================
+
+.semi-donut-model-2{
+  width: 300px;
+  height: 150px;
+  position: relative;
   text-align: center;
-  color: white;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  border-radius: 150px 150px 0 0;
+  overflow: hidden;
+  color: var(--fill);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing : border-box;
+  &:before, &:after{
+    content: '';
+    width: 300px;
+    height: 150px;
+    border:50px solid var(--fill);
+    border-top: none;
+    position: absolute;
+    transform-origin :50%  0% 0;
+    border-radius: 0 0 300px 300px ;
+    box-sizing : border-box;
+    left: 0;
+    top: 100%;
+  }
+  &:before {
+    border-color:rgba(0,0,0,.15);
+    transform: rotate(180deg);
+  }
+  &:after{
+      z-index: 3;
+     animation : 1s fillGraphAnimation ease-in;
+    transform: rotate( calc( 1deg * ( var(--percentage) * 1.8 ) ) );
+  }
+  &:hover{
+     &:after{
+        opacity: .8;
+        cursor: pointer;
+      }
+  }
 }
 
-.gtext b {
-  font-size: 20px;
-  color: #0ee08f;
+// ===================Multi Semi Donut Chart ========================
+
+.multi-graph{
+  width: 300px;
+  height: 150px;
+  position: relative;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing : border-box;
+   &:before{
+    content: '';
+    width: 300px;
+    height: 150px;
+    border:50px solid rgba(0,0,0,.15);
+    border-bottom: none;
+    position: absolute;
+    box-sizing : border-box;
+    transform-origin: 50%  0%;
+    border-radius: 300px 300px 0 0 ;
+    left: 0;
+    top: 0;
+  }
+  .graph{
+    width: 300px;
+    height: 150px;
+    border:50px solid var(--fill);
+    border-top: none;
+    position: absolute;
+    transform-origin :50%  0% 0;
+    border-radius: 0 0 300px 300px ;
+    left: 0;
+    top: 100%;
+    z-index: 5;
+    animation : 1s fillGraphAnimation ease-in;
+    transform: rotate( calc( 1deg * ( var(--percentage) * 1.8 ) ) );
+    box-sizing : border-box;
+    cursor: pointer;
+    &:after{
+      // content: attr(data-name) ;
+      content: attr(data-name) ' ' counter(varible) '%';
+      counter-reset: varible var(--percentage);
+      background: var(--fill) ;
+      box-sizing : border-box;
+      border-radius : 2px;
+      color: #fff;
+      font-weight: 200;
+      font-size: 12px;
+      height: 20px;
+      padding: 3px 5px;
+      top: 0px;
+      position: absolute;
+      left: 0;
+      transform: rotate(calc( -1deg * var(--percentage) * 1.8 ))  translate(-30px , 0px);
+      transition:0.2s ease-in;
+      transform-origin: 0 50% 0;
+      opacity: 0;
+    }
+    &:hover{
+        opacity: 0.8;
+      &:after{
+        opacity: 1;
+        left: 30px;
+      }
+    }
+  }
 }
 
-.gtext small {
-  display: block;
-  font-size: 12px;
-  color: #98a3a8;
+
+
+@keyframes fillAnimation{
+  0%{transform : rotate(-45deg);}
+  50%{transform: rotate(135deg);}
+}
+
+@keyframes fillGraphAnimation{
+  0%{transform: rotate(0deg);}
+  50%{transform: rotate(180deg);}
 }
