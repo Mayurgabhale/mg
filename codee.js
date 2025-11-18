@@ -2,6 +2,7 @@ this is my side bar ok i want desin this more atractivbe and balck and ligh them
     dont chagne any in this just i wan this and wiht button 
         i measn clikc buttin when i clik con ths side buttin that time opne the side bar ok.. 
 with more atractive ok and primun desin 
+            right now give me ony the sidebar code ok 
             
 <!-- Sidebar -->
     <aside id="sidebar">
