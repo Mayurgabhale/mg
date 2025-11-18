@@ -1,5 +1,5 @@
 now i want ot add world map in 
-  Archivers and CCURE 
+ right side for this ok <div class="left-grid"> 
   like show i above image ok so how to add this map 
 <section id="main-graph" class="graphs-section">
         <div class="graphs-inner">
