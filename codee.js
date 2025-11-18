@@ -1,3 +1,23 @@
+
+function openSidebar() {
+  sidebar.classList.add('active');
+  sidebarOverlay.classList.add('active');
+  sidebarToggle.style.display = 'none';   // HIDE TOGGLE BUTTON
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidebarFunc() {
+  sidebar.classList.remove('active');
+  sidebarOverlay.classList.remove('active');
+  sidebarToggle.style.display = 'block';  // SHOW TOGGLE BUTTON
+  document.body.style.overflow = 'auto';
+}
+
+
+
+
+
+....
 side bar is opne that time i want to hide 
    <button class="sidebar-toggle" id="sidebarToggle">
       <i class="fas fa-bars"></i>
