@@ -34,3 +34,17 @@ document.getElementById("toggle-main-btn").addEventListener("click",function(){
         mainContent.style.display = "none";    // Hide
     }
 })
+
+
+/* ===== Main Content ===== */
+#content {
+  
+  flex: 1;
+  /* padding: 20px 30px; */
+  padding: 10px 10px;
+  overflow-y: auto;
+}
+#details-section{
+  display: none;
+}
+
