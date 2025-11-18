@@ -1,3 +1,5 @@
+
+but half circle is not disply, chekc why 
 function updateGauge(id, activeId, inactiveId, totalId) {
     const active = parseInt(document.getElementById(activeId).textContent) || 0;
     const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
@@ -33,9 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderGauges();
     setInterval(renderGauges, 6000);
 });
-
-
-
 
 <section id="main-graph" class="graphs-section">
   <div class="graphs-inner">
@@ -153,9 +152,3 @@ document.addEventListener("DOMContentLoaded", () => {
   font-size: 12px;
   color: #98a3a8;
 }
-
-
-
-
-
-
