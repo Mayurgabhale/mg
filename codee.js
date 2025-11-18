@@ -1,3 +1,18 @@
+document.getElementById("toggle-main-btn").addEventListener("click", function () {
+    const details = document.getElementById("details-section");
+    const graph = document.getElementById("main-graph");
+
+    // Show details
+    details.style.display = "block";
+
+    // Hide graph
+    graph.style.display = "none";
+});
+
+
+
+
+
  <section id="main-graph" style="background: black; color: white;">
         <h2>all graph</h2>
       </section>  
