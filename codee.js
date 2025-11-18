@@ -1,184 +1,577 @@
-render worlnd in python and high light coardinate as per location this is woir code  
-  
-<!-- Right SIDE MAP PANEL -->
-            <div class="right-panel">
-              <div class="gcard tall">
-                <h4 class="gcard-title">World Device Map</h4>
+use below api 
 
-                <div class="map-placeholder">
+function updateDetails(data) {
+    const detailsContainer = document.getElementById("device-details");
+    const deviceFilter = document.getElementById("device-filter");
+    const onlineFilterButton = document.getElementById("filter-online");
+    const offlineFilterButton = document.getElementById("filter-offline");
+    const allFilterButton = document.getElementById("filter-all");
+    const cityFilter = document.getElementById("city-filter");
 
-                  <!-- SVG World Map (simple placeholder) -->
-                  <svg viewBox="0 0 800 400" width="100%" height="100%">
-                    <image href="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg"
-                      width="800" height="400" />
-                  </svg>
+    detailsContainer.innerHTML = "";
+    cityFilter.innerHTML = '<option value="all">All Cities</option>';
 
-                  <!-- Region labels example -->
-                  <div class="map-annot" style="position:absolute; top:40px; left:120px;">
-                    USA<br>Total: 120<br>Active: 110
-                  </div>
+    let combinedDevices = [];
+    let citySet = new Set();
+    let vendorSet = new Set(); // collect normalized vendor values
+    let typeCityMap = {}; // <-- NEW: map deviceType -> Set of cities
 
-                  <div class="map-annot" style="position:absolute; top:120px; left:620px;">
-                    INDIA<br>Total: 350<br>Active: 340
-                  </div>
+    // Icon utility based on device type
+    function getDeviceIcon(type = "") {
+        type = type.toLowerCase();
+        if (type.includes("camera")) return "fas fa-video";
+        if (type.includes("controller")) return "fas fa-cogs";
+        if (type.includes("archiver")) return "fas fa-database";
+        if (type.includes("server")) return "fas fa-server";
+        if (type.includes("pc")) return "fas fa-desktop";
+        if (type.includes("dbdetails")) return "fa-solid fa-life-ring";
+        return "fas fa-microchip"; // fallback
+    }
 
-                  <div class="map-annot" style="position:absolute; top:200px; left:480px;">
-                    EMEA<br>Total: 160<br>Active: 150
-                  </div>
+    // Fetch real-time status if available.
+    fetch("http://localhost:80/api/region/devices/status")
+        .then((response) => response.json())
+        .then((realTimeStatus) => {
+            console.log("Live Status Data:", realTimeStatus);
 
-                </div>
-              </div>
-            </div>
+            for (const [key, devices] of Object.entries(data.details)) {
+                if (!Array.isArray(devices) || devices.length === 0) continue;
+                const deviceType = key.toLowerCase();
 
+                // ensure map entry exists
+                if (!typeCityMap[deviceType]) typeCityMap[deviceType] = new Set();
 
+                devices.forEach((device) => {
+                    const deviceIP = device.ip_address || "N/A";
+                    let currentStatus = (realTimeStatus[deviceIP] || device.status || "offline").toLowerCase();
+                    const city = device.city || "Unknown";
 
-read alos this code, this detiasl i wnat ot add  in wokr map ok regin or locaitn wise in world map 
-// **Fetch summary, details and controllers together**
-function fetchData(regionName) {
-    Promise.all([
-        fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
-        fetch(`${baseUrl}/details/${regionName}`).then(res => res.json()),
-        fetch(`http://localhost/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
-    ])
-        .then(([summary, details, controllerData]) => {
-            console.log("Summary Data:", summary);
-            console.log("Details Data:", details);
-            console.log("Controller Data:", controllerData);
+                    // collect city globally and per device type
+                    citySet.add(city);
+                    typeCityMap[deviceType].add(city);
 
-            // Compute door + reader summary from controllers API
-            const controllerExtras = processDoorAndReaderData(controllerData);
+                    // --- VENDOR: read possible fields, normalize, skip empty/unknown ---
+                    // NOTE: your JSON uses the key "deviec_details" (typo) — we read that first.
+                    let rawVendor = device.deviec_details || device.device_details || (device.device_details && device.device_details.vendor) || device.vendor || device.vendor_name || device.manufacturer || "";
+                    rawVendor = (rawVendor || "").toString().trim();
 
-            // Attach extras into the same structure updateSummary expects:
-            // updateSummary expects an object with a .summary property, so keep that shape.
-            if (!summary.summary) summary.summary = {};
-            summary.summary.controllerExtras = controllerExtras;
+                    // Normalize: empty -> null, otherwise uppercase for consistent set values
+                    let vendorNormalized = rawVendor ? rawVendor.toUpperCase() : null;
 
-            // Update UI and details
-            updateSummary(summary);
+                    // Only add real vendors (skip "UNKNOWN", "", null)
+                    if (vendorNormalized && vendorNormalized !== "UNKNOWN") {
+                        vendorSet.add(vendorNormalized);
+                    }
 
-            if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
-                updateDetails(details);
-                deviceDetailsCache = details; // Update cache
+                    const datasetVendorValue = vendorNormalized || "";
+
+                    // Create card element.
+                    const card = document.createElement("div");
+                    card.className = "device-card";
+                    card.dataset.type = deviceType;
+                    card.dataset.status = currentStatus;
+                    card.dataset.city = city;
+                    if (datasetVendorValue) card.dataset.vendor = datasetVendorValue; // only set if valid
+                    card.setAttribute("data-ip", deviceIP);
+
+                    // Apply background color based on online/offline status (kept your placeholders)
+                    card.style.backgroundColor = currentStatus === "online" ? "" : "";
+                    card.style.borderColor = currentStatus === "online" ? "" : "";
+
+                    // Create a container for status
+                    const statusContainer = document.createElement("p");
+                    statusContainer.className = "device-status";
+
+                    // Status text
+                    const statusText = document.createElement("span");
+                    statusText.className = "status-text";
+                    statusText.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+                    statusText.style.color = currentStatus === "online" ? "green" : "red";
+
+                    // Status dot
+                    const statusDot = document.createElement("span");
+                    statusDot.classList.add(currentStatus === "online" ? "online-dot" : "offline-dot");
+                    statusDot.style.backgroundColor = (currentStatus === "online") ? "green" : "red";
+                    statusDot.style.display = "inline-block";
+                    statusDot.style.width = "10px";
+                    statusDot.style.height = "10px";
+                    statusDot.style.marginLeft = "5px";
+                    statusDot.style.marginRight = "5px";
+                    statusDot.style.borderRadius = "50%";
+
+                    // Combine status parts
+                    statusContainer.appendChild(statusDot);
+                    statusContainer.appendChild(statusText);
+
+                    // compute a nicer label for the device-type area
+                    let deviceLabel;
+
+                    if (deviceType === "dbdetails") {
+                        // For DB Details: show the application if available, else fallback
+                        deviceLabel = device.application || deviceType.toUpperCase();
+                    } else if (deviceType.includes("pc")) {
+                        deviceLabel = device.pc_name || device.hostname || "PC";
+                    } else {
+                        deviceLabel = deviceType.toUpperCase();
+                    }
+
+                    card.insertAdjacentHTML("beforeend", `
+  <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
+      ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
+  </h3>
+
+  <div class="card-content">
+      <p class="device-type-label ${deviceType}" 
+         style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+          
+          <strong>
+            <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
+            ${deviceLabel}
+          </strong>
+          
+          ${deviceType.includes("camera")
+                            ? `<button class="open-camera-btn"
+        onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
+        title="Open Camera"
+        style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+</button>`
+                            : ""
+                        }
+      </p>
+
+      <p style="font-size: ;  font-family: Roboto; margin-bottom: 8px;">
+          <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
+          <span 
+              class="device-ip" 
+              style="font-weight:100; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3);  font-family: Roboto;"
+              onclick="copyToClipboard('${deviceIP}')"
+              title="Click to copy IP"
+          >
+              ${deviceIP}
+          </span>
+      </p>
+
+      <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
+          <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
+          <span style="font-size:; font-weight:100; color: rgb(8, 9, 9); margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
+      </p>
+
+      <p style="font-size:;  font-family: Roboto;>
+          <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
+          <span style="font-weight:100; color: rgb(7, 7, 7); margin-left: 4px;  font-family: Roboto; font-size:;">${city}</span>
+      </p>
+  </div>
+`);
+                    card.appendChild(statusContainer);
+
+                    // --- show policy tooltip for devices marked "Not accessible" ---
+                    const remarkText = (device.remark || "").toString().trim();
+                    if (remarkText && /not\s+access/i.test(remarkText)) {
+                        if (!card.style.position) card.style.position = "relative";
+
+                        const tooltip = document.createElement("div");
+                        tooltip.className = "device-access-tooltip";
+                        tooltip.textContent = "Due to Network policy, this camera is Not accessible";
+
+                        tooltip.style.position = "absolute";
+                        tooltip.style.bottom = "100%";
+                        tooltip.style.left = "8px";
+                        tooltip.style.padding = "6px 8px";
+                        tooltip.style.background = "rgba(0,0,0,0.85)";
+                        tooltip.style.color = "#fff";
+                        tooltip.style.borderRadius = "4px";
+                        tooltip.style.fontSize = "12px";
+                        tooltip.style.whiteSpace = "nowrap";
+                        tooltip.style.pointerEvents = "none";
+                        tooltip.style.opacity = "0";
+                        tooltip.style.transform = "translateY(-6px)";
+                        tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
+                        tooltip.style.zIndex = "999";
+
+                        card.appendChild(tooltip);
+
+                        card.addEventListener("mouseenter", () => {
+                            tooltip.style.opacity = "1";
+                            tooltip.style.transform = "translateY(-10px)";
+                        });
+                        card.addEventListener("mouseleave", () => {
+                            tooltip.style.opacity = "0";
+                            tooltip.style.transform = "translateY(-6px)";
+                        });
+
+                        card.title = tooltip.textContent;
+                    }
+
+                    // push device with normalized vendor (may be empty string if unknown)
+                    combinedDevices.push({
+                        card: card,
+                        device: {
+                            type: deviceType,
+                            status: currentStatus,
+                            city: city,
+                            vendor: datasetVendorValue // already normalized (uppercase) or ""
+                        }
+                    });
+                });
             }
-            latestDetails = details;
+
+            combinedDevices.sort((a, b) => {
+                const statusA = (a.device.status === "offline") ? 0 : 1;
+                const statusB = (b.device.status === "offline") ? 0 : 1;
+                return statusA - statusB;
+            });
+
+            const allDevices = combinedDevices.map(item => item.card);
+            const deviceObjects = combinedDevices.map(item => item.device);
+
+            // --- NEW: function to populate city select based on selected device type ---
+            function populateCityOptions(selectedType = "all") {
+                // preserve current selected city if possible
+                const prevSelected = cityFilter.value;
+
+                cityFilter.innerHTML = '<option value="all">All Cities</option>';
+
+                let citiesToShow = new Set();
+
+                if (!selectedType || selectedType === "all") {
+                    citiesToShow = citySet;
+                } else {
+                    const setForType = typeCityMap[selectedType];
+                    if (setForType && setForType.size > 0) {
+                        citiesToShow = setForType;
+                    } else {
+                        // no cities for selected type -> keep empty (except "All Cities")
+                        citiesToShow = new Set();
+                    }
+                }
+
+                // Add cities in sorted order for stable UI
+                Array.from(citiesToShow).sort().forEach((city) => {
+                    const option = document.createElement("option");
+                    option.value = city;
+                    option.textContent = city;
+                    cityFilter.appendChild(option);
+                });
+
+                // restore previous if still valid, otherwise set to 'all'
+                if (prevSelected && Array.from(citiesToShow).includes(prevSelected)) {
+                    cityFilter.value = prevSelected;
+                } else {
+                    cityFilter.value = "all";
+                }
+            }
+
+            // populate vendor options
+            let vendorFilter = document.getElementById("vendorFilter");
+            if (!vendorFilter) {
+                vendorFilter = document.createElement("select");
+                vendorFilter.id = "vendorFilter";
+                vendorFilter.style.marginTop = "8px";
+                deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
+            }
+
+            vendorFilter.innerHTML = `<option value="all">All camera</option>`;
+            [...vendorSet].sort().forEach(v => {
+                if (!v) return;
+                const opt = document.createElement("option");
+                opt.value = v;
+                opt.textContent = v;
+                vendorFilter.appendChild(opt);
+            });
+
+            // hide vendor filter by default unless cameras selected
+            vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+
+            vendorFilter.onchange = filterDevices; // uses filterDevices defined below
+
+            // Build initial city options for the current deviceFilter selection
+            populateCityOptions(deviceFilter.value || "all");
+
+            // avoid duplicate listeners on repeated updates
+            deviceFilter.value = "all";
+            cityFilter.value = "all";
+            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+            allFilterButton.classList.add("active");
+
+            function filterDevices() {
+                const selectedType = deviceFilter.value;
+                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
+                const selectedCity = cityFilter.value;
+                const vendorFilterLabel = document.getElementById("vendorFilterLabel");
+
+                // toggle vendor UI
+                vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+                if (vendorFilterLabel) {
+                    vendorFilterLabel.style.display = vendorFilter.style.display;
+                }
+
+                // get vendor selection (if filter exists)
+                const vendorFilterElem = document.getElementById("vendorFilter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
+                // Search bar input
+                const searchTerm = document.getElementById("device-search").value.toLowerCase();
+
+                // Show/hide vendor filter based on type
+                if (vendorFilterElem) {
+                    vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
+                }
+
+                detailsContainer.innerHTML = "";
+
+                const filteredDevices = allDevices.filter((device) =>
+                    (selectedType === "all" || device.dataset.type === selectedType) &&
+                    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
+                    (selectedCity === "all" || device.dataset.city === selectedCity) &&
+                    (selectedVendor === "all" || (device.dataset.vendor || "") === selectedVendor) &&
+                    (
+                        !searchTerm ||
+                        device.innerText.toLowerCase().includes(searchTerm)
+                    )
+                );
+
+                filteredDevices.forEach((deviceCard) => {
+                    detailsContainer.appendChild(deviceCard);
+                });
+
+                const region = currentRegion?.toUpperCase() || "GLOBAL";
+                const titleElement = document.getElementById("region-title");
+
+                const logoHTML = `
+                    <span class="region-logo">
+                        <a href="http://10.199.22.57:3014/" class="tooltip">
+                            <i class="fa-solid fa-house"></i>
+                            <span class="tooltiptext">Dashboard Hub</span>
+                        </a>
+                    </span>
+                    `;
+                if (selectedCity !== "all") {
+                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
+                } else {
+                    titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
+                }
+
+
+                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
+                    const correspondingCard = allDevices[index];
+                    return (
+                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
+                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
+                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
+                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
+                    );
+                });
+
+                const summary = calculateCitySummary(filteredSummaryDevices);
+                updateSummary(summary);
+            }
+
+            function calculateCitySummary(devices) {
+                const summary = {
+                    summary: {
+                        totalDevices: devices.length,
+                        totalOnlineDevices: devices.filter(d => d.status === "online").length,
+                        totalOfflineDevices: devices.filter(d => d.status === "offline").length,
+                        cameras: { total: 0, online: 0, offline: 0 },
+                        archivers: { total: 0, online: 0, offline: 0 },
+                        controllers: { total: 0, online: 0, offline: 0 },
+                        servers: { total: 0, online: 0, offline: 0 },
+                        pcdetails: { total: 0, online: 0, offline: 0 },
+                        dbdetails: { total: 0, online: 0, offline: 0 }
+                    }
+                };
+
+                devices.forEach((device) => {
+                    if (!summary.summary[device.type]) return;
+                    summary.summary[device.type].total += 1;
+                    if (device.status === "online") summary.summary[device.type].online += 1;
+                    else summary.summary[device.type].offline += 1;
+                });
+
+                return summary;
+            }
+
+            // initial filter run
+            filterDevices();
+
+            setTimeout(() => {
+                const selectedCity = cityFilter.value;
+                const selectedType = deviceFilter.value;
+                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
+                const vendorFilterElem = document.getElementById("vendorFilter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
+                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
+                    const correspondingCard = allDevices[index];
+                    return (
+                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
+                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
+                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
+                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
+                    );
+                });
+
+                const summary = calculateCitySummary(filteredSummaryDevices);
+                updateSummary(summary);
+            }, 100);
+
+            // ---- EVENTS ----
+            // When device type changes, rebuild city options first then apply filters.
+            deviceFilter.addEventListener("change", () => {
+                populateCityOptions(deviceFilter.value || "all");
+                filterDevices();
+            });
+
+            // Search bar input
+            document.getElementById("device-search").addEventListener("input", filterDevices);
+            cityFilter.addEventListener("change", filterDevices);
+            allFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                allFilterButton.classList.add("active");
+                filterDevices();
+            });
+            onlineFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                onlineFilterButton.classList.add("active");
+                filterDevices();
+            });
+            offlineFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                offlineFilterButton.classList.add("active");
+                filterDevices();
+            });
         })
-        .catch((error) => console.error("Error fetching data:", error));
+        .catch((error) => {
+            console.error("Error fetching real-time device status:", error);
+            detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
+        });
 }
 
 
-function updateSummary(data) {
-    const summary = data.summary || {};
+// C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
+const baseUrl = "http://localhost:80/api/regions";
+let refreshInterval = 300000; // 5 minutes
+let pingInterval = 60000; // 30 seconds
+let countdownTime = refreshInterval / 1000; // Convert to seconds
+let currentRegion = "global";
+let deviceDetailsCache = {}; // Store previous details to prevent redundant updates
+let latestDetails = null; // Cache the latest fetched details
 
-    // ✅ Always keep last known values if new data doesn’t have them
-    window.lastSummary = window.lastSummary || {};
-    const merged = {
-        totalDevices: summary.totalDevices ?? window.lastSummary.totalDevices ?? 0,
-        totalOnlineDevices: summary.totalOnlineDevices ?? window.lastSummary.totalOnlineDevices ?? 0,
-        totalOfflineDevices: summary.totalOfflineDevices ?? window.lastSummary.totalOfflineDevices ?? 0,
-
-        cameras: { ...window.lastSummary.cameras, ...summary.cameras },
-        archivers: { ...window.lastSummary.archivers, ...summary.archivers },
-        controllers: { ...window.lastSummary.controllers, ...summary.controllers },
-        servers: { ...window.lastSummary.servers, ...summary.servers },
-        pcdetails: { ...window.lastSummary.pcdetails, ...summary.pcdetails },
-        dbdetails: { ...window.lastSummary.dbdetails, ...summary.dbdetails },
-
-        // 🆕 door/reader extras merged (summary.controllerExtras is created in fetchData)
-        controllerExtras: { ...window.lastSummary.controllerExtras, ...summary.controllerExtras }
-    };
-
-
-    // 🆕 Recalculate totals to include Door counts (but not Readers)
-    const doors = merged.controllerExtras?.doors || { total: 0, online: 0, offline: 0 };
-
-    // Recompute totals including doors
-    merged.totalDevices =
-        (merged.cameras?.total || 0) +
-        (merged.archivers?.total || 0) +
-        (merged.controllers?.total || 0) +
-        (merged.servers?.total || 0) +
-        (merged.pcdetails?.total || 0) +
-        (merged.dbdetails?.total || 0) +
-        doors.total; // ✅ include doors only
-
-    merged.totalOnlineDevices =
-        (merged.cameras?.online || 0) +
-        (merged.archivers?.online || 0) +
-        (merged.controllers?.online || 0) +
-        (merged.servers?.online || 0) +
-        (merged.pcdetails?.online || 0) +
-        (merged.dbdetails?.online || 0) +
-        doors.online; // ✅ include doors only
-
-    merged.totalOfflineDevices =
-        merged.totalDevices - merged.totalOnlineDevices;
+document.addEventListener("DOMContentLoaded", () => {
+    fetchData("global"); // Load initial data
+    startAutoRefresh("global");
 
 
 
-
-    // ✅ Save merged result for next refresh
-    window.lastSummary = merged;
-
-    // Update UI safely
-    document.getElementById("total-devices").textContent = merged.totalDevices;
-    document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
-    document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
-
-    document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
-    document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
-    document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
-
-    document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
-    document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
-    document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
-
-    document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
-    document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
-    document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
-
-    document.getElementById("server-total").textContent = merged.servers?.total || 0;
-    document.getElementById("server-online").textContent = merged.servers?.online || 0;
-    document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
-
-    // ✅ Fix for Desktop and DB Server
-    document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
-    document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
-    document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
-
-    document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
-    document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
-    document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
-
-    // ✅  new for Door and Reader 
-    // ====== Door / Reader card updates (from controllers API) ======
-    const extras = merged.controllerExtras || {};
-    // If you used a single Door/Reader card with ids: doorReader-total, doorReader-online, doorReader-offline
-    if (extras.doors) {
-        const doorTotalEl = document.getElementById("doorReader-total");
-        const doorOnlineEl = document.getElementById("doorReader-online");
-        const doorOfflineEl = document.getElementById("doorReader-offline");
-        if (doorTotalEl) doorTotalEl.textContent = extras.doors.total || 0;
-        if (doorOnlineEl) doorOnlineEl.textContent = extras.doors.online || 0;
-        if (doorOfflineEl) doorOfflineEl.textContent = extras.doors.offline || 0;
-    } else {
-        // fallback -> clear
-        if (document.getElementById("doorReader-total")) document.getElementById("doorReader-total").textContent = 0;
-        if (document.getElementById("doorReader-online")) document.getElementById("doorReader-online").textContent = 0;
-        if (document.getElementById("doorReader-offline")) document.getElementById("doorReader-offline").textContent = 0;
+    // Attach Door click
+    const doorCard = document.getElementById("door-card");
+    if (doorCard) {
+        doorCard.style.cursor = "pointer";
+        doorCard.title = "Click to view Controllers";
+        doorCard.addEventListener("click", loadControllersInDetails);
     }
 
-    if (extras.readers) {
-        const rTotalEl = document.getElementById("reader-total-inline");
-        const rOnlineEl = document.getElementById("reader-online-inline");
-        const rOfflineEl = document.getElementById("reader-offline-inline");
-        // NOTE: your HTML currently has the Door/Reader card as a single combined card.
-        // If you want to surface readers separately on the same card, you can add spans with these IDs
-        // inside the card or reuse the same doorReader-* elements. For now we only populate doorReader-*.
-        // Keep these lines if you create these spans, otherwise they're safe (will be null).
-        if (rTotalEl) rTotalEl.textContent = extras.readers.total || 0;
-        if (rOnlineEl) rOnlineEl.textContent = extras.readers.online || 0;
-        if (rOfflineEl) rOfflineEl.textContent = extras.readers.offline || 0;
-    }
-}
 
-give me python code step by step ok 
+    document.querySelectorAll(".region-button").forEach((button) => {
+        button.addEventListener("click", () => {
+            const region = button.getAttribute("data-region");
+            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
+            switchRegion(region);
+        });
+    });
+
+    document.getElementById("close-modal").addEventListener("click", () => {
+        document.getElementById("modal").style.display = "none";
+    });
+
+
+    // ---------------------------
+    // NEW: Summary card click/dblclick filter behavior
+    // Single click: set device-filter to that type and trigger change (show only that type)
+    // Double click: set device-filter to 'all' and trigger change (show all)
+    // ---------------------------
+
+    (function attachSummaryCardFilterHandlers() {
+        const summaryCards = document.querySelectorAll(".summary .card");
+        if (!summaryCards || summaryCards.length === 0) return;
+
+        // helper: derive deviceFilter value from card title text
+        function mapCardTitleToFilterValue(title) {
+            if (!title) return "all";
+            const t = title.toLowerCase();
+
+            if (t.includes("camera")) return "cameras";
+            if (t.includes("archiver")) return "archivers";
+            if (t.includes("controller")) return "controllers";
+            if (t.includes("ccure")) return "servers";       // CCURE servers
+            if (t.includes("db")) return "dbdetails";        // DB servers
+            if (t.includes("desktop")) return "pcdetails";
+            if (t.includes("total")) return "all";
+
+            return "all";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const doorCard = document.getElementById("door-card");
+            if (doorCard) {
+                doorCard.style.cursor = "pointer";
+                doorCard.title = "Click to view Controllers";
+                doorCard.addEventListener("click", loadControllersInDetails);
+            }
+        });
+
+
+
+        summaryCards.forEach((card) => {
+            // make interactive
+            card.style.cursor = "pointer";
+
+            let clickTimer = null;
+            const clickDelay = 100; // ms
+
+
+            card.addEventListener("click", (ev) => {
+                if (clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => {
+                    const h3 = card.querySelector("h3");
+                    const titleText = h3 ? h3.innerText.trim() : card.innerText.trim();
+                    const filterValue = mapCardTitleToFilterValue(titleText);
+
+                    const deviceFilterElem = document.getElementById("device-filter");
+                    if (!deviceFilterElem) return;
+
+                    deviceFilterElem.value = filterValue;
+                    deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
+
+                    // 🔥 Highlight clicked card, remove from others
+                    document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
+                    if (filterValue !== "all") {
+                        card.classList.add("active");
+                    }
+                }, clickDelay);
+            });
+
+            card.addEventListener("dblclick", (ev) => {
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                const deviceFilterElem = document.getElementById("device-filter");
+                if (!deviceFilterElem) return;
+
+                deviceFilterElem.value = "all";
+                deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
+
+                // 🔥 Remove all highlights on double-click (reset)
+                document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
+            });
+
+
+
+        });
+    })();
+
+
+
+});
