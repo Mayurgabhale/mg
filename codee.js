@@ -1,6 +1,6 @@
 now i want to desn this main content ok.. 
   right now we desin only   <main id="content"> and  <section id="main-graph" class="graphs-section" this two ok 
-  when i onpne side bar this alos adjuct auto ok 
+  when i onpne side bar this alos adjuct auto ok wiht responive for eacg abd evert devuce abd screen ok 
     this alos i want in dakr and light theme ok 
       
 <!-- Main Content -->
