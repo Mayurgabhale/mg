@@ -1,3 +1,42 @@
+function updateGauge(id, activeId, inactiveId, totalId) {
+    const active = parseInt(document.getElementById(activeId).textContent) || 0;
+    const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
+    const total = active + inactive;
+
+    // element
+    const gauge = document.getElementById(id);
+    if (!gauge) return;
+
+    // % calculation
+    let percentage = total === 0 ? 0 : Math.round((active / total) * 100);
+
+    // set values
+    gauge.style.setProperty("--percentage", percentage);
+
+    // update text inside semicircle
+    gauge.querySelector(".total").textContent = total;
+    gauge.querySelector(".active").textContent = active;
+    gauge.querySelector(".inactive").textContent = inactive;
+
+    // card footer also updates
+    document.getElementById(totalId).textContent = total;
+}
+
+function renderGauges() {
+    updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
+    updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
+    updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
+    updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderGauges();
+    setInterval(renderGauges, 6000);
+});
+
+
+
+
 <section id="main-graph" class="graphs-section">
   <div class="graphs-inner">
     <h2 class="graphs-title">All Graph</h2>
