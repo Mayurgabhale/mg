@@ -1,17 +1,14 @@
-in map locatin are not disply.. 
-   chekc below code and why in map locatin is not disply ok .. 
-   
 /* ============================================================
-   map.js — Fully dynamic version (no static CITY_LIST)
+   map.js — Fully dynamic version (with geocoding)
    ============================================================ */
 
 let realMap;
 let CITY_LIST = []; // dynamically populated from API
-let cityLayers = {}; // cityName -> { summaryMarker, deviceLayer: L.LayerGroup, labelMarker }
+let cityLayers = {}; // cityName -> { summaryMarker, deviceLayer }
 let heatLayer = null;
 const regionColors = { APAC: "#0ea5e9", EMEA: "#34d399", NAMER: "#fb923c", LACA: "#a78bfa" };
 const regionCenter = { APAC: [20, 100], EMEA: [30, 10], NAMER: [40, -100], LACA: [-10, -60] };
-window._mapRegionMarkers = []; // track region badges
+window._mapRegionMarkers = [];
 
 /* ============================================================
    1. INIT MAP
@@ -25,23 +22,12 @@ function initRealMap() {
   }).addTo(realMap);
 
   // groups
-  markerCluster = L.markerClusterGroup({ chunkedLoading:true, showCoverageOnHover:false });
-  countryLayerGroup = L.layerGroup().addTo(realMap);
+  window.markerCluster = L.markerClusterGroup({ chunkedLoading:true, showCoverageOnHover:false });
+  window.countryLayerGroup = L.layerGroup().addTo(realMap);
   realMap.addLayer(markerCluster);
-
-  // draw countries (optional) then show everything
-  drawCountryBorders()
-    .catch(err => { console.warn("Country geojson failed:", err); })
-    .finally(() => {
-      renderDevices();            // show ALL markers
-      populateGlobalCityList();   // default panel: grouped city-wise
-      drawRegionBadges();         // region badges with counts
-      toggleHeatOn();             // heat on by default
-    });
 
   L.control.scale().addTo(realMap);
 }
-
 
 /* ============================================================
    2. DEVICE ICON HELPERS
@@ -206,16 +192,29 @@ function populateRegionPanel(region) {
 }
 
 /* ============================================================
-   8. UPDATE MAP DYNAMICALLY
+   8. GEOCODE MISSING CITIES
    ============================================================ */
-function updateMapData(summary, details) {
+async function getCityCoordinates(cityName) {
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`);
+        const data = await res.json();
+        if(data && data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    } catch(err) {
+        console.warn("Geocode failed for", cityName, err);
+    }
+    return [0,0];
+}
+
+/* ============================================================
+   9. UPDATE MAP DYNAMICALLY
+   ============================================================ */
+async function updateMapData(summary, details) {
     if (!realMap || !details) return;
 
     const deviceBuckets = details.details || details;
     if (!deviceBuckets) return;
 
-    // Build CITY_LIST dynamically
-    const cityMap = {}; // cityName -> cityObj
+    const cityMap = {};
     Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
         if (!Array.isArray(arr)) return;
         arr.forEach(dev => {
@@ -237,18 +236,23 @@ function updateMapData(summary, details) {
 
     CITY_LIST = Object.values(cityMap);
 
-    // Ensure cityLayers exists
-    CITY_LIST.forEach(c => {
-        if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-        const counts = c.devices;
-        _placeDeviceIconsForCity(c, counts, c.devicesList);
+    await Promise.all(CITY_LIST.map(async c => {
+        if(c.lat === 0 && c.lon === 0) {
+            const coords = await getCityCoordinates(c.city);
+            c.lat = coords[0];
+            c.lon = coords[1];
+        }
 
-        // Update summary marker
-        const icon = _renderCitySummary(c, counts);
-        if (cityLayers[c.city].summaryMarker) cityLayers[c.city].summaryMarker.setIcon(icon);
-        else cityLayers[c.city].summaryMarker = L.marker([c.lat, c.lon], { icon }).addTo(realMap)
-            .on("click", () => { realMap.flyTo([c.lat, c.lon], 7); populateCityPanel(c.city); });
-    });
+        if(!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
+        _placeDeviceIconsForCity(c, c.devices, c.devicesList);
+
+        const icon = _renderCitySummary(c, c.devices);
+        if(cityLayers[c.city].summaryMarker)
+            cityLayers[c.city].summaryMarker.setIcon(icon);
+        else
+            cityLayers[c.city].summaryMarker = L.marker([c.lat, c.lon], { icon }).addTo(realMap)
+                .on("click", () => { realMap.flyTo([c.lat, c.lon], 7); populateCityPanel(c.city); });
+    }));
 
     drawHeatmap();
     drawRegionBadges();
@@ -256,85 +260,10 @@ function updateMapData(summary, details) {
 }
 
 /* ============================================================
-   9. EXPORTS / BUTTON HOOKS
+   10. EXPORTS / BUTTON HOOKS
    ============================================================ */
+document.addEventListener("DOMContentLoaded", initRealMap);
 document.getElementById("toggle-heat").onclick = toggleHeat;
 document.getElementById("fit-all").onclick = fitAllCities;
 document.getElementById("show-global").onclick = populateGlobalCityList;
 window.updateMapData = updateMapData;
-document.addEventListener("DOMContentLoaded", initRealMap);
-
-
- <div class="right-panel">
-              <div class="gcard tall">
-                <div class="worldmap-wrapper">
-
-                  <!-- MAP CARD -->
-                  <div class="worldmap-card">
-
-                    <div id="realmap"></div>
-
-                    <!-- Legend + Controls Row -->
-                    <div class="map-bottom-bar">
-
-                      <!-- Legend -->
-                      <div class="legend">
-                        <div class="legend-item">
-                          <div class="legend-box" style="background:#10b981"></div> Camera
-                        </div>
-                        <div class="legend-item">
-                          <div class="legend-box" style="background:#f97316"></div> Controller
-                        </div>
-                        <div class="legend-item">
-                          <div class="legend-box" style="background:#7c3aed"></div> Server
-                        </div>
-                        <div class="legend-item">
-                          <div class="legend-box" style="background:#2563eb"></div> Archiver
-                        </div>
-                      </div>
-
-                      <!-- Controls -->
-                      <div class="map-controls">
-                        <button id="toggle-heat" class="btn-ghost">Heat</button>
-                        <button id="fit-all" class="btn-ghost">Fit All</button>
-                        <button id="show-global" class="btn">Global View</button>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  <!-- SIDE PANEL -->
-                  <div class="region-panel" id="region-panel">
-                    <h4 class="panel-title">Global (City Overview)</h4>
-
-                    <div id="region-panel-content" class="panel-content"></div>
-
-                    <!-- Filters -->
-                    <div class="filter-block">
-                      <h5>Filters</h5>
-
-                      <select id="filter-type" class="filter-select">
-                        <option value="all">All device types</option>
-                        <option value="camera">Camera</option>
-                        <option value="controller">Controller</option>
-                        <option value="server">Server</option>
-                        <option value="archiver">Archiver</option>
-                      </select>
-
-                      <select id="filter-status" class="filter-select">
-                        <option value="all">All Status</option>
-                        <option value="online">Online</option>
-                        <option value="offline">Offline</option>
-                      </select>
-
-                      <div class="filter-actions">
-                        <button id="apply-filters" class="btn">Apply</button>
-                        <button id="reset-filters" class="btn-ghost">Reset</button>
-                      </div>
-
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
