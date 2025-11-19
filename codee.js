@@ -1,3 +1,68 @@
+
+async function updateMapData(summary, details) {
+    if (!realMap || !details) return;
+
+    const deviceBuckets = details.details || details;
+    if (!deviceBuckets) return;
+
+    const cityMap = {};
+    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
+        if (!Array.isArray(arr)) return;
+        arr.forEach(dev => {
+            const cityName = (dev.city || dev.location || dev.site || "Unknown").trim();
+            let lat = dev.lat || 0;
+            let lon = dev.lon || 0;
+
+            const type = (rawKey || "").toLowerCase().includes("camera") ? "camera" :
+                         (rawKey || "").toLowerCase().includes("controller") ? "controller" :
+                         (rawKey || "").toLowerCase().includes("server") ? "server" :
+                         (rawKey || "").toLowerCase().includes("archiver") ? "archiver" : null;
+
+            if (!cityMap[cityName]) cityMap[cityName] = {
+                city: cityName,
+                lat,
+                lon,
+                devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
+                total: 0,
+                devicesList: []
+            };
+
+            if (type) cityMap[cityName].devices[type] += 1;
+            cityMap[cityName].total += 1;
+            cityMap[cityName].devicesList.push(dev);
+        });
+    });
+
+    CITY_LIST = Object.values(cityMap);
+
+    // Geocode cities with missing coordinates
+    for (let c of CITY_LIST) {
+        if (c.lat === 0 && c.lon === 0) {
+            const coords = await getCityCoordinates(c.city);
+            c.lat = coords[0];
+            c.lon = coords[1];
+        }
+    }
+
+    // Avoid overlapping city coordinates
+    ensureUniqueCityCoordinates(CITY_LIST);
+
+    // Place device markers
+    CITY_LIST.forEach(c => {
+        if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
+        cityLayers[c.city].deviceLayer.clearLayers();
+        _placeDeviceIconsForCity(c, c.devices, c.devicesList);
+    });
+
+    drawHeatmap();
+    populateGlobalCityList();
+}
+
+
+
+
+
+
 function ensureUniqueCityCoordinates(cityArray) {
     const map = {};
     cityArray.forEach(c => {
