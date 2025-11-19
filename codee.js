@@ -1,3 +1,18 @@
+
+.city-marker div {
+  background: #2563eb;
+  color: #fff;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+
+
+
+..
 function placeCityMarkers() {
   // Clear previous markers
   if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
