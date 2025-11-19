@@ -1,3 +1,7 @@
+i want my first map not dark map ok,
+   i dont want dark map 
+
+
 /* ============================================================
    map.js — Fully dynamic version (no static CITY_LIST)
    ============================================================ */
