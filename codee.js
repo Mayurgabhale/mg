@@ -1,77 +1,122 @@
-<!-- RIGHT PANEL — WORLD MAP -->
-<div class="right-panel">
-  <div class="gcard tall">
+/* WRAPPER - Map + Side Panel */
+.worldmap-wrapper {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    align-items: flex-start;
+}
 
-      <h4 class="gcard-title">World Device Map</h4>
+/* MAIN MAP CARD */
+.worldmap-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+}
 
-      <div class="worldmap-wrapper">
+/* MAP CANVAS */
+#realmap {
+    height: 650px;
+    width: 100%;
+    border-radius: 10px;
+}
 
-          <!-- MAP CARD -->
-          <div class="worldmap-card">
+/* BOTTOM ROW UNDER MAP */
+.map-bottom-bar {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-              <div id="realmap"></div>
+/* LEGEND */
+.legend {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 
-              <!-- Legend + Controls Row -->
-              <div class="map-bottom-bar">
-                  
-                  <!-- Legend -->
-                  <div class="legend">
-                      <div class="legend-item">
-                          <div class="legend-box" style="background:#10b981"></div> Camera
-                      </div>
-                      <div class="legend-item">
-                          <div class="legend-box" style="background:#f97316"></div> Controller
-                      </div>
-                      <div class="legend-item">
-                          <div class="legend-box" style="background:#7c3aed"></div> Server
-                      </div>
-                      <div class="legend-item">
-                          <div class="legend-box" style="background:#2563eb"></div> Archiver
-                      </div>
-                  </div>
+.legend-item {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 5px 8px;
+    border-radius: 6px;
+}
 
-                  <!-- Controls -->
-                  <div class="map-controls">
-                      <button id="toggle-heat" class="btn-ghost">Heat</button>
-                      <button id="fit-all" class="btn-ghost">Fit All</button>
-                      <button id="show-global" class="btn">Global View</button>
-                  </div>
+.legend-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
 
-              </div>
-          </div>
+/* CONTROL BUTTONS */
+.map-controls {
+    display: flex;
+    gap: 8px;
+}
 
-          <!-- SIDE PANEL -->
-          <div class="region-panel" id="region-panel">
-              <h4 class="panel-title">Global (City Overview)</h4>
+.btn {
+    padding: 7px 12px;
+    background: #111827;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
 
-              <div id="region-panel-content" class="panel-content"></div>
+.btn-ghost {
+    padding: 7px 12px;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
 
-              <!-- Filters -->
-              <div class="filter-block">
-                  <h5>Filters</h5>
+/* SIDE PANEL */
+.region-panel {
+    width: 330px;
+    height: 100%;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
 
-                  <select id="filter-type" class="filter-select">
-                      <option value="all">All device types</option>
-                      <option value="camera">Camera</option>
-                      <option value="controller">Controller</option>
-                      <option value="server">Server</option>
-                      <option value="archiver">Archiver</option>
-                  </select>
+.panel-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
 
-                  <select id="filter-status" class="filter-select">
-                      <option value="all">All Status</option>
-                      <option value="online">Online</option>
-                      <option value="offline">Offline</option>
-                  </select>
+.panel-content {
+    max-height: 340px;
+    overflow-y: auto;
+    margin-bottom: 18px;
+}
 
-                  <div class="filter-actions">
-                      <button id="apply-filters" class="btn">Apply</button>
-                      <button id="reset-filters" class="btn-ghost">Reset</button>
-                  </div>
+/* FILTER SECTION */
+.filter-block {
+    border-top: 1px solid rgba(0,0,0,0.08);
+    padding-top: 14px;
+}
 
-              </div>
-          </div>
+.filter-select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.15);
+    margin-bottom: 10px;
+}
 
-      </div>
-  </div>
-</div>
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
