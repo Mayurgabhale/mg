@@ -1,3 +1,19 @@
+
+
+function initRealMap() {
+    realMap = L.map("realmap", { preferCanvas: true }).setView([20, 0], 2);
+
+    // Light basemap (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(realMap);
+
+    L.control.scale().addTo(realMap);
+}
+
+
+
 i want my first map not dark map ok,
    i dont want dark map 
 
