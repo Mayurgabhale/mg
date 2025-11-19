@@ -1,10 +1,13 @@
+in map locatin are not disply.. 
+   chekc below code and why in map locatin is not disply ok .. 
+   
 /* ============================================================
-   map.js — Fully dynamic with geocoding
+   map.js — Fully dynamic version (no static CITY_LIST)
    ============================================================ */
 
 let realMap;
-let CITY_LIST = []; // dynamically populated
-let cityLayers = {}; // cityName -> { summaryMarker, deviceLayer }
+let CITY_LIST = []; // dynamically populated from API
+let cityLayers = {}; // cityName -> { summaryMarker, deviceLayer: L.LayerGroup, labelMarker }
 let heatLayer = null;
 const regionColors = { APAC: "#0ea5e9", EMEA: "#34d399", NAMER: "#fb923c", LACA: "#a78bfa" };
 const regionCenter = { APAC: [20, 100], EMEA: [30, 10], NAMER: [40, -100], LACA: [-10, -60] };
@@ -14,23 +17,31 @@ window._mapRegionMarkers = []; // track region badges
    1. INIT MAP
    ============================================================ */
 function initRealMap() {
-    realMap = L.map('realmap', { preferCanvas:true }).setView([20,0],2);
+  realMap = L.map('realmap', { preferCanvas:true }).setView([20,0],2);
 
-    // ESRI World Imagery
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom:20, attribution:'Tiles © Esri'
-    }).addTo(realMap);
+  // ESRI World Imagery (satellite)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom:20, attribution:'Tiles © Esri'
+  }).addTo(realMap);
 
-    markerCluster = L.markerClusterGroup({ chunkedLoading:true, showCoverageOnHover:false });
-    realMap.addLayer(markerCluster);
+  // groups
+  markerCluster = L.markerClusterGroup({ chunkedLoading:true, showCoverageOnHover:false });
+  countryLayerGroup = L.layerGroup().addTo(realMap);
+  realMap.addLayer(markerCluster);
 
-    // optional: draw country borders
-    if (typeof drawCountryBorders === "function") {
-        drawCountryBorders().catch(err => console.warn("Country geojson failed:", err));
-    }
+  // draw countries (optional) then show everything
+  drawCountryBorders()
+    .catch(err => { console.warn("Country geojson failed:", err); })
+    .finally(() => {
+      renderDevices();            // show ALL markers
+      populateGlobalCityList();   // default panel: grouped city-wise
+      drawRegionBadges();         // region badges with counts
+      toggleHeatOn();             // heat on by default
+    });
 
-    L.control.scale().addTo(realMap);
+  L.control.scale().addTo(realMap);
 }
+
 
 /* ============================================================
    2. DEVICE ICON HELPERS
@@ -103,21 +114,26 @@ function _renderCitySummary(cityObj, counts) {
 function drawHeatmap() {
     if (!CITY_LIST.length) return;
     const totals = CITY_LIST.map(c => {
-        const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0;
+        const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
         return { lat: c.lat, lon: c.lon, total };
     });
-    let maxTotal = Math.max(...totals.map(t=>t.total), 1);
-    const heatPoints = totals.map(t => [t.lat, t.lon, Math.min(1.5, (t.total/maxTotal)+0.2)]);
+    let maxTotal = Math.max(...totals.map(t => t.total), 1);
+    const heatPoints = totals.map(t => [t.lat, t.lon, Math.min(1.5, (t.total / maxTotal) + 0.2)]);
     if (heatLayer) realMap.removeLayer(heatLayer);
-    heatLayer = L.heatLayer(heatPoints, { radius: 40, blur: 25, gradient: { 0.2:'#34d399',0.5:'#fbbf24',0.8:'#f97316' } }).addTo(realMap);
+    heatLayer = L.heatLayer(heatPoints, { radius: 40, blur: 25, gradient: { 0.2: '#34d399', 0.5: '#fbbf24', 0.8: '#f97316' } }).addTo(realMap);
 }
-function toggleHeat() { if(!heatLayer) return; if(realMap.hasLayer(heatLayer)) realMap.removeLayer(heatLayer); else realMap.addLayer(heatLayer); }
+
+function toggleHeat() {
+    if (!heatLayer) return;
+    if (realMap.hasLayer(heatLayer)) realMap.removeLayer(heatLayer);
+    else realMap.addLayer(heatLayer);
+}
 
 /* ============================================================
    5. FIT ALL CITIES
    ============================================================ */
 function fitAllCities() {
-    if(!CITY_LIST.length) return;
+    if (!CITY_LIST.length) return;
     const bounds = L.latLngBounds(CITY_LIST.map(c => [c.lat, c.lon]));
     realMap.fitBounds(bounds.pad(0.25));
 }
@@ -127,10 +143,10 @@ function fitAllCities() {
    ============================================================ */
 function populateGlobalCityList() {
     const panel = document.getElementById("region-panel-content");
-    if(!panel) return;
+    if (!panel) return;
     let html = `<h4>Global Devices</h4><hr>`;
     CITY_LIST.forEach(c => {
-        const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0;
+        const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
         html += `<div class="city-item" onclick="onCityItemClick('${c.city}')">
                     <div style="font-weight:700">${c.city}</div>
                     <div class="small-muted">${c.region} • ${total} devices</div>
@@ -138,16 +154,18 @@ function populateGlobalCityList() {
     });
     panel.innerHTML = html;
 }
+
 function onCityItemClick(cityName) {
     const c = CITY_LIST.find(x => x.city === cityName);
-    if(c) realMap.flyTo([c.lat, c.lon], 7, { duration:1.0 });
+    if (c) realMap.flyTo([c.lat, c.lon], 7, { duration: 1.0 });
     populateCityPanel(cityName);
 }
+
 function populateCityPanel(cityName) {
     const panel = document.getElementById("region-panel-content");
-    const c = CITY_LIST.find(x=>x.city===cityName);
-    if(!panel || !c) return;
-    const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0;
+    const c = CITY_LIST.find(x => x.city === cityName);
+    if (!panel || !c) return;
+    const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
     panel.innerHTML = `
       <h4>${cityName} — ${total} devices</h4><hr>
       <div><b>Camera:</b> ${c.devices.camera || 0}</div>
@@ -161,90 +179,76 @@ function populateCityPanel(cityName) {
    7. REGION BADGES
    ============================================================ */
 function drawRegionBadges() {
-    window._mapRegionMarkers.forEach(m=>realMap.removeLayer(m));
+    window._mapRegionMarkers.forEach(m => realMap.removeLayer(m));
     window._mapRegionMarkers = [];
 
     Object.keys(regionCenter).forEach(region => {
-        const devices = CITY_LIST.filter(c=>c.region===region)
-            .reduce((sum,c)=>sum+Object.values(c.devices||{}).reduce((a,b)=>a+b,0),0);
+        const devices = CITY_LIST.filter(c => c.region === region)
+            .reduce((sum, c) => sum + Object.values(c.devices || {}).reduce((a, b) => a + b, 0), 0);
         const html = `<div class="region-badge" style="background:${regionColors[region]};">${region}<br>${devices} devices</div>`;
         const marker = L.marker(regionCenter[region], {
-            icon:L.divIcon({html,className:"",iconSize:[120,60],iconAnchor:[60,30]})
-        }).addTo(realMap).on("click",()=>populateRegionPanel(region));
+            icon: L.divIcon({ html, className: "", iconSize: [120, 60], iconAnchor: [60, 30] })
+        }).addTo(realMap).on("click", () => populateRegionPanel(region));
         window._mapRegionMarkers.push(marker);
     });
 }
+
 function populateRegionPanel(region) {
     const panel = document.getElementById("region-panel-content");
-    if(!panel) return;
-    const cities = CITY_LIST.filter(c=>c.region===region);
+    if (!panel) return;
+    const cities = CITY_LIST.filter(c => c.region === region);
     let html = `<h4>${region} Region</h4><hr>`;
-    cities.forEach(c=>{
-        const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0;
+    cities.forEach(c => {
+        const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
         html += `<div class="city-item" onclick="onCityItemClick('${c.city}')"><b>${c.city}</b> — ${total} devices</div>`;
     });
     panel.innerHTML = html;
 }
 
 /* ============================================================
-   8. DYNAMIC GEOCODING HELPER
+   8. UPDATE MAP DYNAMICALLY
    ============================================================ */
-async function getCityCoordinates(cityName) {
-    try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`);
-        const data = await response.json();
-        if(data && data.length>0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-    } catch(err) { console.warn("Geocode failed for", cityName, err); }
-    return null;
-}
-
-/* ============================================================
-   9. UPDATE MAP DYNAMICALLY
-   ============================================================ */
-async function updateMapData(summary, details) {
-    if(!realMap || !details) return;
+function updateMapData(summary, details) {
+    if (!realMap || !details) return;
 
     const deviceBuckets = details.details || details;
-    if(!deviceBuckets) return;
+    if (!deviceBuckets) return;
 
-    const cityMap = {};
-
-    for(const [rawKey, arr] of Object.entries(deviceBuckets)){
-        if(!Array.isArray(arr)) continue;
-        for(const dev of arr){
+    // Build CITY_LIST dynamically
+    const cityMap = {}; // cityName -> cityObj
+    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
+        if (!Array.isArray(arr)) return;
+        arr.forEach(dev => {
             const cityName = (dev.city || dev.location || dev.site || "Unknown").trim();
             const region = dev.region || "Unknown";
-            const type = (rawKey||"").toLowerCase().includes("camera") ? "camera" :
-                         (rawKey||"").toLowerCase().includes("controller") ? "controller" :
-                         (rawKey||"").toLowerCase().includes("server") ? "server" :
-                         (rawKey||"").toLowerCase().includes("archiver") ? "archiver" : null;
+            const lat = dev.lat || 0;
+            const lon = dev.lon || 0;
+            const type = (rawKey || "").toLowerCase().includes("camera") ? "camera" :
+                         (rawKey || "").toLowerCase().includes("controller") ? "controller" :
+                         (rawKey || "").toLowerCase().includes("server") ? "server" :
+                         (rawKey || "").toLowerCase().includes("archiver") ? "archiver" : null;
 
-            if(!cityMap[cityName]) cityMap[cityName]={city:cityName, region, lat:null, lon:null, devices:{camera:0,controller:0,server:0,archiver:0}, total:0, devicesList:[]};
-            if(type) cityMap[cityName].devices[type]+=1;
-            cityMap[cityName].total+=1;
+            if (!cityMap[cityName]) cityMap[cityName] = { city: cityName, region, lat, lon, devices: { camera:0, controller:0, server:0, archiver:0 }, total:0, devicesList: [] };
+            if (type) cityMap[cityName].devices[type] += 1;
+            cityMap[cityName].total += 1;
             cityMap[cityName].devicesList.push(dev);
-        }
-    }
+        });
+    });
 
     CITY_LIST = Object.values(cityMap);
 
-    // Assign coordinates dynamically
-    await Promise.all(CITY_LIST.map(async c=>{
-        if(c.lat==null||c.lon==null){
-            const coords = await getCityCoordinates(c.city);
-            if(coords){ c.lat=coords[0]; c.lon=coords[1]; }
-            else { console.warn("No coordinates found for:",c.city); return; }
-        }
+    // Ensure cityLayers exists
+    CITY_LIST.forEach(c => {
+        if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
+        const counts = c.devices;
+        _placeDeviceIconsForCity(c, counts, c.devicesList);
 
-        if(!cityLayers[c.city]) cityLayers[c.city]={deviceLayer:L.layerGroup().addTo(realMap), summaryMarker:null};
-
-        _placeDeviceIconsForCity(c, c.devices, c.devicesList);
-
-        const icon = _renderCitySummary(c, c.devices);
-        if(cityLayers[c.city].summaryMarker) cityLayers[c.city].summaryMarker.setIcon(icon);
-        else cityLayers[c.city].summaryMarker = L.marker([c.lat,c.lon],{icon}).addTo(realMap)
-            .on("click",()=>{realMap.flyTo([c.lat,c.lon],7); populateCityPanel(c.city);});
-    }));
+        // Update summary marker
+        const icon = _renderCitySummary(c, counts);
+        if (cityLayers[c.city].summaryMarker) cityLayers[c.city].summaryMarker.setIcon(icon);
+        else cityLayers[c.city].summaryMarker = L.marker([c.lat, c.lon], { icon }).addTo(realMap)
+            .on("click", () => { realMap.flyTo([c.lat, c.lon], 7); populateCityPanel(c.city); });
+    });
 
     drawHeatmap();
     drawRegionBadges();
@@ -252,10 +256,10 @@ async function updateMapData(summary, details) {
 }
 
 /* ============================================================
-   10. EXPORTS / BUTTON HOOKS
+   9. EXPORTS / BUTTON HOOKS
    ============================================================ */
-document.addEventListener("DOMContentLoaded", initRealMap);
-document.getElementById("toggle-heat")?.addEventListener("click", toggleHeat);
-document.getElementById("fit-all")?.addEventListener("click", fitAllCities);
-document.getElementById("show-global")?.addEventListener("click", populateGlobalCityList);
+document.getElementById("toggle-heat").onclick = toggleHeat;
+document.getElementById("fit-all").onclick = fitAllCities;
+document.getElementById("show-global").onclick = populateGlobalCityList;
 window.updateMapData = updateMapData;
+document.addEventListener("DOMContentLoaded", initRealMap);
