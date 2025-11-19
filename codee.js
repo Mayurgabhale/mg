@@ -1,3 +1,7 @@
+
+dont change map i want my privviuse map ont in black ok, 
+   and why add const CITY_LIST =  this alos daynamic section ok getting throug the api ok remove const CITY_LIST and correct it 
+
 /* map.js — upgraded to accept live counts from script.js (fetchData)
    Replaces previous map.js. Assumes script.js calls window.updateMapData(summary, details)
    after fetching and processing data.
@@ -34,10 +38,15 @@ function initRealMap() {
     realMap = L.map("realmap", { preferCanvas: true }).setView([20, 0], 2);
 
     // Premium dark basemap (Carto dark)
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        maxZoom: 19,
-        attribution: &copy; OpenStreetMap contributors
-    }).addTo(realMap);
+    // L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    //     maxZoom: 19,
+    //     attribution: & copy; OpenStreetMap contributors
+    // }).addTo(realMap);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(realMap);
 
     // prepare per-city layer containers
     CITY_LIST.forEach(c => {
@@ -295,7 +304,7 @@ function updateMapData(summary, details) {
         if (k.includes("server") || k.includes("ccure")) return "server";
         if (k.includes("archiver")) return "archiver";
         // fallback: return normalized version of key
-        return k.replace(/s$/,'');
+        return k.replace(/s$/, '');
     };
 
     Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
@@ -307,7 +316,7 @@ function updateMapData(summary, details) {
                 cityCounts[city] = { camera: 0, controller: 0, server: 0, archiver: 0, total: 0, online: 0, offline: 0, devices: [] };
             }
             // increment type if matches recognized types
-            if (["camera","controller","server","archiver"].includes(type)) {
+            if (["camera", "controller", "server", "archiver"].includes(type)) {
                 cityCounts[city][type] += 1;
             } else {
                 // ignore unknown types for per-type counts but still count total
@@ -382,7 +391,7 @@ function updateMapData(summary, details) {
 
     // remove any previously added region markers stored on map (we'll store them locally)
     if (window._mapRegionMarkers && Array.isArray(window._mapRegionMarkers)) {
-        window._mapRegionMarkers.forEach(m => { try { realMap.removeLayer(m); } catch(e) {} });
+        window._mapRegionMarkers.forEach(m => { try { realMap.removeLayer(m); } catch (e) { } });
     }
     window._mapRegionMarkers = [];
 
