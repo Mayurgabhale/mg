@@ -1,7 +1,5 @@
-locatin or city is ovrlap. all locatin/city is disply  one place ok
-so i want to place the location wiht correct Coordinates ok 
 /* ============================================================
-   map.js — Fully dynamic version (with geocoding)
+   map.js — Improved version with better coordinate handling
    ============================================================ */
 
 let realMap;
@@ -11,6 +9,9 @@ let heatLayer = null;
 const regionColors = { APAC: "#0ea5e9", EMEA: "#34d399", NAMER: "#fb923c", LACA: "#a78bfa" };
 const regionCenter = { APAC: [20, 100], EMEA: [30, 10], NAMER: [40, -100], LACA: [-10, -60] };
 window._mapRegionMarkers = [];
+
+// Store original coordinates to prevent duplicate geocoding
+const coordinateCache = {};
 
 /* ============================================================
    1. INIT MAP
@@ -32,7 +33,70 @@ function initRealMap() {
 }
 
 /* ============================================================
-   2. DEVICE ICON HELPERS
+   2. IMPROVED GEOCODING WITH BETTER LOCATION HANDLING
+   ============================================================ */
+async function getCityCoordinates(cityName, region = "Unknown") {
+    // Check cache first
+    const cacheKey = `${cityName}_${region}`;
+    if (coordinateCache[cacheKey]) {
+        return coordinateCache[cacheKey];
+    }
+
+    try {
+        // Add region to search query for better accuracy
+        const query = region !== "Unknown" ? `${cityName}, ${region}` : cityName;
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+            // Prefer results that match the city name closely
+            const exactMatch = data.find(item => 
+                item.display_name.toLowerCase().includes(cityName.toLowerCase())
+            );
+            
+            const result = exactMatch || data[0];
+            const coords = [parseFloat(result.lat), parseFloat(result.lon)];
+            
+            // Cache the result
+            coordinateCache[cacheKey] = coords;
+            return coords;
+        }
+    } catch(err) {
+        console.warn("Geocode failed for", cityName, err);
+    }
+    
+    // Fallback: generate coordinates based on region to avoid overlap
+    const fallbackCoords = getFallbackCoordinates(cityName, region);
+    coordinateCache[cacheKey] = fallbackCoords;
+    return fallbackCoords;
+}
+
+function getFallbackCoordinates(cityName, region) {
+    // Create consistent but spread out coordinates based on city name hash
+    let hash = 0;
+    for (let i = 0; i < cityName.length; i++) {
+        hash = cityName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Base coordinates by region
+    const regionBases = {
+        APAC: [20, 100],
+        EMEA: [30, 10], 
+        NAMER: [40, -100],
+        LACA: [-10, -60]
+    };
+    
+    const base = regionBases[region] || [0, 0];
+    
+    // Add some variation based on hash to prevent overlap
+    const latVariation = (hash % 100) / 1000; // ±0.05 degrees
+    const lonVariation = ((hash >> 8) % 100) / 1000; // ±0.05 degrees
+    
+    return [base[0] + latVariation, base[1] + lonVariation];
+}
+
+/* ============================================================
+   3. IMPROVED DEVICE PLACEMENT WITH BETTER SPACING
    ============================================================ */
 function _deviceIconDiv(type) {
     const cls = `device-icon device-${type}`;
@@ -40,37 +104,165 @@ function _deviceIconDiv(type) {
 }
 
 function _placeDeviceIconsForCity(cityObj, deviceCounts, devicesListForCity = []) {
-    if (!cityLayers[cityObj.city]) cityLayers[cityObj.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
+    if (!cityLayers[cityObj.city]) cityLayers[cityObj.city] = { 
+        deviceLayer: L.layerGroup().addTo(realMap), 
+        summaryMarker: null 
+    };
+    
     const layer = cityLayers[cityObj.city].deviceLayer;
     layer.clearLayers();
 
     const deviceTypes = ['camera', 'controller', 'server', 'archiver'];
-    deviceTypes.forEach(type => {
+    const maxDevicesPerType = 20; // Reduced for better visibility
+    
+    deviceTypes.forEach((type, typeIndex) => {
         const cnt = deviceCounts[type] || 0;
-        const displayCount = Math.min(cnt, 30);
+        const displayCount = Math.min(cnt, maxDevicesPerType);
+        
+        // Calculate positions in a spiral pattern to avoid overlap
         for (let i = 0; i < displayCount; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const radiusDeg = 0.02 + Math.random() * 0.035;
-            const lat = cityObj.lat + Math.cos(angle) * radiusDeg;
-            const lon = cityObj.lon + Math.sin(angle) * radiusDeg;
+            const angle = (i * 2 * Math.PI) / Math.max(displayCount, 1);
+            const radius = 0.02 + (typeIndex * 0.015); // Different radius per device type
+            const lat = cityObj.lat + Math.cos(angle) * radius;
+            const lon = cityObj.lon + Math.sin(angle) * radius;
+            
             const marker = L.marker([lat, lon], { icon: _deviceIconDiv(type) });
-            marker.bindTooltip(`${type.toUpperCase()} ${i + 1}`, { direction: 'top', offset: [0, -8], opacity: 0.95 });
+            marker.bindTooltip(`${type.toUpperCase()} ${i + 1}`, { 
+                direction: 'top', 
+                offset: [0, -8], 
+                opacity: 0.95 
+            });
             layer.addLayer(marker);
         }
 
+        // Show count label if there are more devices
         if (cnt > displayCount) {
-            const moreHtml = `<div class="city-label-box" style="padding:6px 8px; font-size:12px;">${type}: ${cnt}</div>`;
-            const labelLat = cityObj.lat + 0.045;
-            const labelLon = cityObj.lon + (type === 'camera' ? 0.03 : (type === 'controller' ? -0.03 : 0));
-            const labelMarker = L.marker([labelLat, labelLon], { icon: L.divIcon({ html: moreHtml, className: "" }) });
+            const moreHtml = `<div class="city-label-box" style="padding:4px 6px; font-size:11px; background:rgba(0,0,0,0.7); color:white; border-radius:4px;">
+                ${type}: ${cnt}</div>`;
+            
+            // Position labels in different quadrants
+            const labelAngle = (typeIndex * Math.PI / 2) + Math.PI / 4;
+            const labelRadius = 0.045;
+            const labelLat = cityObj.lat + Math.cos(labelAngle) * labelRadius;
+            const labelLon = cityObj.lon + Math.sin(labelAngle) * labelRadius;
+            
+            const labelMarker = L.marker([labelLat, labelLon], { 
+                icon: L.divIcon({ 
+                    html: moreHtml, 
+                    className: "count-label",
+                    iconSize: [60, 25],
+                    iconAnchor: [30, 12]
+                }) 
+            });
             layer.addLayer(labelMarker);
         }
     });
 }
 
 /* ============================================================
-   3. CITY SUMMARY POPUP
+   4. IMPROVED CITY PROCESSING WITH UNIQUE LOCATIONS
    ============================================================ */
+async function updateMapData(summary, details) {
+    if (!realMap || !details) return;
+
+    const deviceBuckets = details.details || details;
+    if (!deviceBuckets) return;
+
+    const cityMap = {};
+    
+    // First pass: collect all cities and their devices
+    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
+        if (!Array.isArray(arr)) return;
+        
+        arr.forEach(dev => {
+            const cityName = (dev.city || dev.location || dev.site || "Unknown").trim();
+            const region = dev.region || "Unknown";
+            let lat = dev.lat || 0;
+            let lon = dev.lon || 0;
+
+            const type = (rawKey || "").toLowerCase().includes("camera") ? "camera" :
+                         (rawKey || "").toLowerCase().includes("controller") ? "controller" :
+                         (rawKey || "").toLowerCase().includes("server") ? "server" :
+                         (rawKey || "").toLowerCase().includes("archiver") ? "archiver" : null;
+
+            if (!cityMap[cityName]) {
+                cityMap[cityName] = {
+                    city: cityName,
+                    region,
+                    lat,
+                    lon,
+                    devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
+                    total: 0,
+                    devicesList: [],
+                    hasExactCoords: (lat !== 0 && lon !== 0) // Track if we have exact coordinates
+                };
+            }
+
+            if (type) cityMap[cityName].devices[type] += 1;
+            cityMap[cityName].total += 1;
+            cityMap[cityName].devicesList.push(dev);
+            
+            // If any device has exact coordinates, use them
+            if (lat !== 0 && lon !== 0) {
+                cityMap[cityName].lat = lat;
+                cityMap[cityName].lon = lon;
+                cityMap[cityName].hasExactCoords = true;
+            }
+        });
+    });
+
+    // Second pass: geocode cities that need coordinates
+    const geocodePromises = Object.values(cityMap).map(async (city) => {
+        if (!city.hasExactCoords || (city.lat === 0 && city.lon === 0)) {
+            const coords = await getCityCoordinates(city.city, city.region);
+            city.lat = coords[0];
+            city.lon = coords[1];
+        }
+        return city;
+    });
+
+    CITY_LIST = await Promise.all(geocodePromises);
+
+    // Third pass: create map markers
+    CITY_LIST.forEach(city => {
+        if (!cityLayers[city.city]) {
+            cityLayers[city.city] = { 
+                deviceLayer: L.layerGroup().addTo(realMap), 
+                summaryMarker: null 
+            };
+        }
+        
+        _placeDeviceIconsForCity(city, city.devices, city.devicesList);
+
+        const icon = _renderCitySummary(city, city.devices);
+        if (cityLayers[city.city].summaryMarker) {
+            cityLayers[city.city].summaryMarker.setIcon(icon);
+            cityLayers[city.city].summaryMarker.setLatLng([city.lat, city.lon]);
+        } else {
+            cityLayers[city.city].summaryMarker = L.marker([city.lat, city.lon], { icon })
+                .addTo(realMap)
+                .on("click", () => { 
+                    realMap.flyTo([city.lat, city.lon], 8, { duration: 1.0 }); 
+                    populateCityPanel(city.city); 
+                });
+        }
+    });
+
+    drawHeatmap();
+    drawRegionBadges();
+    populateGlobalCityList();
+    
+    // Auto-fit to show all cities
+    setTimeout(fitAllCities, 500);
+}
+
+// Keep all other functions the same as your original code...
+// [Rest of your functions remain unchanged - _renderCitySummary, drawHeatmap, fitAllCities, etc.]
+
+/* ============================================================
+   EXISTING FUNCTIONS (UNCHANGED)
+   ============================================================ */
+
 function _renderCitySummary(cityObj, counts) {
     const total = counts.total || 0;
     const html = `
@@ -96,9 +288,6 @@ function _renderCitySummary(cityObj, counts) {
     return L.divIcon({ html, className: "", iconSize: [180, 130], iconAnchor: [90, 65] });
 }
 
-/* ============================================================
-   4. HEATMAP
-   ============================================================ */
 function drawHeatmap() {
     if (!CITY_LIST.length) return;
     const totals = CITY_LIST.map(c => {
@@ -117,18 +306,12 @@ function toggleHeat() {
     else realMap.addLayer(heatLayer);
 }
 
-/* ============================================================
-   5. FIT ALL CITIES
-   ============================================================ */
 function fitAllCities() {
     if (!CITY_LIST.length) return;
     const bounds = L.latLngBounds(CITY_LIST.map(c => [c.lat, c.lon]));
     realMap.fitBounds(bounds.pad(0.25));
 }
 
-/* ============================================================
-   6. SIDE PANEL
-   ============================================================ */
 function populateGlobalCityList() {
     const panel = document.getElementById("region-panel-content");
     if (!panel) return;
@@ -145,7 +328,7 @@ function populateGlobalCityList() {
 
 function onCityItemClick(cityName) {
     const c = CITY_LIST.find(x => x.city === cityName);
-    if (c) realMap.flyTo([c.lat, c.lon], 7, { duration: 1.0 });
+    if (c) realMap.flyTo([c.lat, c.lon], 8, { duration: 1.0 });
     populateCityPanel(cityName);
 }
 
@@ -163,9 +346,6 @@ function populateCityPanel(cityName) {
     `;
 }
 
-/* ============================================================
-   7. REGION BADGES
-   ============================================================ */
 function drawRegionBadges() {
     window._mapRegionMarkers.forEach(m => realMap.removeLayer(m));
     window._mapRegionMarkers = [];
@@ -194,98 +374,7 @@ function populateRegionPanel(region) {
 }
 
 /* ============================================================
-   8. GEOCODE MISSING CITIES
-   ============================================================ */
-// async function getCityCoordinates(cityName) {
-//     try {
-//         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`);
-//         const data = await res.json();
-//         if(data && data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-//     } catch(err) {
-//         console.warn("Geocode failed for", cityName, err);
-//     }
-//     return [0,0];
-// }
-
-
-async function getCityCoordinates(cityName) {
-    try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`);
-        const data = await res.json();
-        if (data && data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-    } catch(err) {
-        console.warn("Geocode failed for", cityName, err);
-    }
-    return [0, 0]; // fallback
-}
-
-/* ============================================================
-   9. UPDATE MAP DYNAMICALLY
-   ============================================================ */
-async function updateMapData(summary, details) {
-    if (!realMap || !details) return;
-
-    const deviceBuckets = details.details || details;
-    if (!deviceBuckets) return;
-
-    const cityMap = {};
-    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
-        if (!Array.isArray(arr)) return;
-        arr.forEach(dev => {
-            const cityName = (dev.city || dev.location || dev.site || "Unknown").trim();
-            const region = dev.region || "Unknown";
-            let lat = dev.lat || 0;
-            let lon = dev.lon || 0;
-
-            const type = (rawKey || "").toLowerCase().includes("camera") ? "camera" :
-                         (rawKey || "").toLowerCase().includes("controller") ? "controller" :
-                         (rawKey || "").toLowerCase().includes("server") ? "server" :
-                         (rawKey || "").toLowerCase().includes("archiver") ? "archiver" : null;
-
-            if (!cityMap[cityName]) cityMap[cityName] = {
-                city: cityName,
-                region,
-                lat,
-                lon,
-                devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
-                total: 0,
-                devicesList: []
-            };
-
-            if (type) cityMap[cityName].devices[type] += 1;
-            cityMap[cityName].total += 1;
-            cityMap[cityName].devicesList.push(dev);
-        });
-    });
-
-    CITY_LIST = Object.values(cityMap);
-
-    // Geocode cities that have lat/lon = 0
-    for (let c of CITY_LIST) {
-        if (c.lat === 0 && c.lon === 0) {
-            const coords = await getCityCoordinates(c.city); // Use Nominatim
-            c.lat = coords[0];
-            c.lon = coords[1];
-        }
-
-        if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-        _placeDeviceIconsForCity(c, c.devices, c.devicesList);
-
-        const icon = _renderCitySummary(c, c.devices);
-        if (cityLayers[c.city].summaryMarker)
-            cityLayers[c.city].summaryMarker.setIcon(icon);
-        else
-            cityLayers[c.city].summaryMarker = L.marker([c.lat, c.lon], { icon }).addTo(realMap)
-                .on("click", () => { realMap.flyTo([c.lat, c.lon], 7); populateCityPanel(c.city); });
-    }
-
-    drawHeatmap();
-    drawRegionBadges();
-    populateGlobalCityList();
-}
-
-/* ============================================================
-   10. EXPORTS / BUTTON HOOKS
+   EXPORTS / BUTTON HOOKS
    ============================================================ */
 document.addEventListener("DOMContentLoaded", initRealMap);
 document.getElementById("toggle-heat").onclick = toggleHeat;
