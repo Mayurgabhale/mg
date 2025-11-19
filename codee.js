@@ -1,4 +1,21 @@
+updateSummary(summary);
 
+// Tell the map about new live counts
+if (typeof window.updateMapData === 'function') {
+    window.updateMapData(summary, details);
+}
+
+if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
+    updateDetails(details);
+    deviceDetailsCache = details;
+}
+latestDetails = details;
+
+
+
+
+
+....
 dont change map i want my privviuse map ont in black ok, 
    and why add const CITY_LIST =  this alos daynamic section ok getting throug the api ok remove const CITY_LIST and correct it 
 
