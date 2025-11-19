@@ -1,3 +1,14 @@
+map.js:820 
+ GET https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Taguig%20City net::ERR_CONNECTION_CLOSED
+getCityCoordinates	@	map.js:820
+updateMapData	@	map.js:890
+(anonymous)	@	script.js:253
+Promise.then		
+fetchData	@	script.js:234
+(anonymous)	@	script.js:12
+
+map.js:820 
+ GET https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Taguig%20City net::ERR_CONNECTION_CLOSED
 Global (City Overview)
 city is disply but in map cities are not disply 
 whye why in map cities are not disoly..
