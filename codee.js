@@ -1,23 +1,17 @@
-function onCityItemClick(cityName) {
-  const c = CITY_LIST.find(x => x.city === cityName);
-  if (c && toNum(c.lat) !== null && toNum(c.lon) !== null) {
-    realMap.setView([c.lat, c.lon], 5, { animate: true });
-  }
-  populateCityPanel(cityName);
-}
-
-
-
-
-
-
-
-
-....realMap = L.map('realmap', { 
+function initRealMap() {
+  realMap = L.map('realmap', { 
     preferCanvas: true,
+
+    // 🔥 THIS CUTS THE TOP OF THE MAP
     maxBounds: [
-        [85, -180],  
-        [-60, 180]
+      [80, -180],   // TOP limit — cut above latitude 80
+      [-60, 180]    // BOTTOM limit
     ],
     maxBoundsViscosity: 1.0
-}).setView([60, -30], 3); // Greenland / Europe centered
+  })
+  .setView([40, -20], 3); // Start view (adjust as you want)
+
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 20,
+    attribution: 'Tiles © Esri'
+  }).addTo(realMap);
