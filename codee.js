@@ -1,3 +1,50 @@
+pie chart not dipsly in 
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
+in this
+ <div class="gcard wide">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+function updateGauge(id, activeId, inactiveId, totalId) {
+    const active = parseInt(document.getElementById(activeId).textContent) || 0;
+    const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
+    const total = active + inactive;
+
+    // element
+    const gauge = document.getElementById(id);
+    if (!gauge) return;
+
+    // % calculation
+    let percentage = total === 0 ? 0 : Math.round((active / total) * 100);
+
+    // set values
+    gauge.style.setProperty("--percentage", percentage);
+
+    // update text inside semicircle
+    gauge.querySelector(".total").textContent = total;
+    gauge.querySelector(".active").textContent = active;
+    gauge.querySelector(".inactive").textContent = inactive;
+
+    // card footer also updates
+    document.getElementById(totalId).textContent = total;
+}
+
+function renderGauges() {
+    updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
+    updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
+    updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
+    updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderGauges();
+    setInterval(renderGauges, 6000);
+});
+
+
+// ⬇️⬇️⬇️⬇️⬇️⬇️ PIE chart
+
 
 
 
@@ -175,37 +222,9 @@ function renderGauges() {
 }
 
 
-
-
-
-...
-
-
-
-/* Total Count pie sizing — reuse same look as Weekly Failures */
-.gcard.wide .chart-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  box-sizing: border-box;
-  min-height: 160px; /* adjusts by breakpoints already in your CSS */
-  width: 100%;
-}
-
-/* canvas should fill placeholder responsively */
-.gcard.wide .chart-placeholder canvas {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 420px;    /* keeps it from growing too large on desktops */
-  max-height: 360px;
-}
-
-
-
-
-
-
-
-..
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\index.html
+ <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <div class="gcard wide">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div>
