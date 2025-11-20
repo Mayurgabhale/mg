@@ -1,31 +1,89 @@
+i dont want ot use name for device type i want ot use icons that i assing in below ok 
 
-.city-summary-tooltip {
-  background: rgba(0,0,0,0.75) !important;
-  color: #fff !important;
-  border: none !important;
-  padding: 8px 10px !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
-  font-size: 13px !important;
-  line-height: 1.2 !important;
-}
-.leaflet-popup-content-wrapper {
-  background: var(--bg-card, #fff);
-  color: var(--text-primary, #111);
-  border-radius: 8px;
-  padding: 8px 10px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-}
+and city-summary-tooltip i want alos ciyt name in top, and offline count color is red 
 
 
+  
+ <i class="bi bi-camera legend-box"></i> Camera
+<i class="bi bi-hdd"></i> Controller
+ <i class="fa-duotone fa-solid fa-server"></i> Server
+ <i class="fas fa-database "></i> Archiver
 
 
+ <div class="right-panel">
+              <!-- <div class="gcard tall"> -->
+              <div class="">
+                <div class="worldmap-wrapper">
 
+                  <!-- MAP CARD -->
+                  <div class="worldmap-card">
 
+                    <div id="realmap"></div>
 
+                    <!-- Legend + Controls Row -->
+                    <div class="map-bottom-bar">
 
+                      <!-- Legend -->
+                      <div class="legend">
+                        <div class="legend-item">
+                          <i class="bi bi-camera legend-box"></i>
+                         Camera
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-hdd"></i> Controller
+                        </div>
+                        <div class="legend-item">
+                          <i class="fa-duotone fa-solid fa-server"></i> Server
+                        </div>
+                        <div class="legend-item">
+                          <i class="fas fa-database "></i> Archiver
+                        </div>
+                      </div>
 
+                      <!-- Controls -->
+                      <div class="map-controls">
+                        <button id="fit-all" class="btn-ghost">Fit All</button>
+                        <button id="show-global" class="btn-gv">Global View</button>
+                      </div>
 
+                    </div>
+                  </div>
+
+                  <!-- SIDE PANEL -->
+                  <div class="region-panel" id="region-panel">
+                    <h4 class="panel-title">Global (City Overview)</h4>
+
+                    <div id="region-panel-content" class="panel-content"></div>
+
+                    <!-- <div class="filter-block">
+                      <h5>Filters</h5>
+
+                      <select id="filter-type" class="filter-select">
+                        <option value="all">All device types</option>
+                        <option value="camera">Camera</option>
+                        <option value="controller">Controller</option>
+                        <option value="server">Server</option>
+                        <option value="archiver">Archiver</option>
+                      </select>
+
+                      <select id="filter-status" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                      </select>
+
+                      <div class="filter-actions">
+                        <button id="apply-filters" class="btn">Apply</button>
+                        <button id="reset-filters" class="btn-ghost">Reset</button>
+                      </div>
+
+                    </div> -->
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
 
 /**
  * Helper: build a compact summary HTML for a city
@@ -143,4 +201,24 @@ function placeCityMarkers() {
   });
 
   window.cityMarkerLayer.bringToFront();
+}
+
+
+
+.city-summary-tooltip {
+  background: rgba(0,0,0,0.75) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 10px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card, #fff);
+  color: var(--text-primary, #111);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
