@@ -1,112 +1,298 @@
-boht is using get image ok  
+ <div class="gcard wide">
+                <h4 class="gcard-title">Total Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+    now i want to add in this pie chart om this disaply all device count 
 
-candidate=312458
-http://localhost:8002/employee/312458/image
- ObjectID=2097186314
-http://localhost:8002/employee/2097186314/image
-INFO:root:get_personnel_info: found ObjectID=2097186314 Email=Lejemp.Abrea@wu.com for candidate=312458
-INFO:root:Connected to ACVSCore on SRVWUPNQ0986V using SQL auth (region apac).
-INFO:root:get_personnel_info: found ObjectID=2097186314 Email=Lejemp.Abrea@wu.com for candidate=312458
-INFO:root:Connected to ACVSCore on SRVWUPNQ0986V using SQL auth (region apac).
-INFO:root:get_personnel_info: found ObjectID=2097186314 Email=Lejemp.Abrea@wu.com for candidate=312458
-INFO:root:Connected to ACVSCore on SRVWUPNQ0986V using SQL auth (region apac).
+<div class="bottom-row">
 
-  read the belwo code carefully. dont make oher chagne i want only diplsy the image
-  (() => {
-  // prefer aggregated row but fall back to raw_swipes first row
-  const md = (modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0])
-            || (modalDetails && modalDetails.raw_swipes && modalDetails.raw_swipes[0])
-            || {};
-  // candidate image key names (common variants)
-  const candidateImageKeys = ['imageUrl','image_url','ImageUrl','image','Image','img','imgUrl','ImagePath','Photo','PhotoUrl','EmployeePhoto','photo','photoUrl'];
-  let imgPath = candidateImageKeys.map(k => (md && md[k]) ? md[k] : null).find(Boolean) || null;
+              <div class="gcard wide">
+                <h4 class="gcard-title">Total Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
 
-  // build a prioritized list of identifier tokens to try (prefer ObjectID / GUID)
-  const idCandidates = [];
-  if (md && md.ObjectID) idCandidates.push(String(md.ObjectID));
-  if (md && md.ObjectId) idCandidates.push(String(md.ObjectId));
-  if (md && md.GUID) idCandidates.push(String(md.GUID));
-  if (md && md.GUID0) idCandidates.push(String(md.GUID0));
-  if (md && md.EmployeeID) idCandidates.push(String(md.EmployeeID));
-  if (md && md.person_uid) idCandidates.push(String(md.person_uid));
-  if (modalRow && modalRow.EmployeeID) idCandidates.push(String(modalRow.EmployeeID));
-  if (modalRow && modalRow.person_uid) idCandidates.push(String(modalRow.person_uid));
+              <div class="gcard wide">
+                <h4 class="gcard-title">Failure Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
 
-  // Deduplicate preserving order
-  const uniqIds = idCandidates.filter((v, i) => v && idCandidates.indexOf(v) === i);
+              <div class="gcard wide">
+                <h4 class="gcard-title">LOC Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
 
-  // If we didn't get an explicit image path, build one from the top id candidate
-  if (!imgPath && uniqIds.length) {
-    imgPath = `/employee/${encodeURIComponent(uniqIds[0])}/image`;
-  }
-
-  if (imgPath) {
-    const imgSrc = resolveApiImageUrl(imgPath) || imgPath;
-      console.log("Final Image URL:", imgSrc);
-    return (
-      <img
-        className="modal-image"
-        src={imgSrc}
-        alt={sanitizeName(modalRow) || "Employee image"}
-        onLoad={(e) => { try { console.info("employee image loaded:", e.target.src); } catch (err) {} }}
-        onError={async (e) => {
-          try {
-            e.target.onerror = null;
-            console.warn("image load failed for:", e.target.src);
-
-            // Try a single cache-busted retry for the same URL, then try the API variants once each.
-            const tryUrls = [];
-            const original = e.target.src;
-            tryUrls.push(original + (original.indexOf('?') === -1 ? '?cb=' + Date.now() : '&cb=' + Date.now()));
-
-            // try both API variants for the top id candidates (constructed earlier as uniqIds)
-            uniqIds.forEach(id => {
-              if (!id) return;
-              const a = resolveApiImageUrl(`/api/employees/${encodeURIComponent(id)}/image`);
-              const b = resolveApiImageUrl(`/employee/${encodeURIComponent(id)}/image`);
-              if (a && tryUrls.indexOf(a) === -1) tryUrls.push(a);
-              if (b && tryUrls.indexOf(b) === -1) tryUrls.push(b);
-            });
-
-            // Try each URL (GET) until one returns image content-type and ok
-            let found = null;
-            for (const url of tryUrls) {
-              try {
-                // some servers block fetch for cross-origin images — guard with try/catch
-                const getr = await fetch(url, { method: 'GET', cache: 'no-store' });
-                if (getr && getr.ok) {
-                  const ct = (getr.headers.get('content-type') || '').toLowerCase();
-                  if (ct.startsWith('image')) { found = url; break; }
-                }
-              } catch (err) {
-                // ignore fetch/CORS errors and continue to next candidate
-              }
-            }
-
-            if (found) {
-              e.target.src = found + (found.indexOf('?') === -1 ? ('?cb=' + Date.now()) : ('&cb=' + Date.now()));
-              return;
-            }
-
-            // Final fallback: inline SVG placeholder
-            const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect fill="#eef2f7" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-size="18">No image</text></svg>';
-            e.target.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-          } catch (err) {
-            try { e.target.style.display = 'none'; } catch (err2) {}
-            console.error("image fallback error", err);
-          }
-        }}
-      />
-    );
-  } else {
-    return <div className="modal-image-placeholder">No image</div>;
-  }
-})()
+            </div>
 
 
-) : (
-  <div className="-image-placeholder">
-    <i className="bi bi-person-square"></i>
-    <span>No image</span>
-  </div>
-)}
+
+  <section class="summary-section">
+
+    <div class="summary">
+      <div class="card">
+
+        <h3><i class="fas fa-microchip icon-3d"></i> Total Devices</h3>
+        <div class="card-status total">Total <span id="total-devices">0</span></div>
+        <div class="card-status online">Online <span id="online-devices">0</span></div>
+        <div class="card-status offline">Offline <span id="offline-devices">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-video icon-3d"></i> Cameras</h3>
+        <div class="card-status total">Total <span id="camera-total">0</span></div>
+        <div class="card-status online">Online <span id="camera-online">0</span></div>
+        <div class="card-status offline">Offline <span id="camera-offline">0</span></div>
+      </div>
+
+
+
+      <div class="card">
+        <h3><i class="fas fa-database icon-3d"></i> Archivers</h3>
+
+        <div class="card-status total">Total <span id="archiver-total">0</span></div>
+        <div class="card-status online">Online <span id="archiver-online">0</span></div>
+        <div class="card-status offline">Offline <span id="archiver-offline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-id-card icon-3d"></i> Controllers</h3>
+        <div class="card-status total">Total <span id="controller-total">0</span></div>
+        <div class="card-status online">Online <span id="controller-online">0</span></div>
+        <div class="card-status offline">Offline <span id="controller-offline">0</span></div>
+      </div>
+
+      <div class="card" id="door-card">
+        <h3><i class="fa-solid fa-door-closed icon-3d"></i>Door</h3>
+        <div class="card-status total">Total <span id="doorReader-total">0</span></div>
+        <div class="card-status online">Online <span id="doorReader-online">0</span></div>
+        <div class="card-status offline">Offline <span id="doorReader-offline">0</span></div>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-id-badge icon-3d"></i>Reader</h3>
+        <div class="card-status total">Total <span id="reader-total-inline">0</span></div>
+        <div class="card-status online">Online <span id="reader-online-inline">0</span></div>
+        <div class="card-status offline">Offline <span id="reader-offline-inline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-server icon-3d"></i>CCURE</h3>
+        <div class="card-status total">Total <span id="server-total">0</span></div>
+        <div class="card-status online">Online <span id="server-online">0</span></div>
+        <div class="card-status offline">Offline <span id="server-offline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-desktop icon-3d"></i>Desktop</h3>
+        <div class="card-status total">Total <span id="pc-total">0</span></div>
+        <div class="card-status online">Online <span id="pc-online">0</span></div>
+        <div class="card-status offline">Offline <span id="pc-offline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fa-etch fa-solid fa-database icon-3d"></i>DB Server</h3>
+        <div class="card-status total">Total <span id="db-total">0</span></div>
+        <div class="card-status online">Online <span id="db-online">0</span></div>
+        <div class="card-status offline">Offline <span id="db-offline">0</span></div>
+      </div>
+
+
+    </div>
+
+  </section>
+
+
+ <section id="main-graph" class="graphs-section">
+        <div class="graphs-inner">
+
+          <div class="graphs-grid dashboard-layout">
+
+            <!-- Left 2x2 cards -->
+            <div class="left-grid">
+
+              <div class="gcard">
+                <h4 class="gcard-title">Total No. of Cameras</h4>
+                <div class="semi-donut gauge" id="gauge-cameras" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard">
+                <h4 class="gcard-title">Total No. of Archivers</h4>
+                <div class="semi-donut gauge" id="gauge-archivers" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard">
+                <h4 class="gcard-title">Total No. of Controllers</h4>
+                <div class="semi-donut gauge" id="gauge-controllers" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard">
+                <h4 class="gcard-title">TOTAL No. of CCURE</h4>
+                <div class="semi-donut gauge" id="gauge-ccure" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+
+            <!-- RIGHT PANEL — WORLD MAP -->
+            <div class="right-panel">
+              <!-- <div class="gcard tall"> -->
+              <div class="">
+                <div class="worldmap-wrapper">
+
+                  <!-- MAP CARD -->
+                  <div class="worldmap-card">
+
+                    <div id="realmap"></div>
+
+                    <!-- Legend + Controls Row -->
+                    <div class="map-bottom-bar">
+
+                      <!-- Legend -->
+                      <div class="legend">
+                        <div class="legend-item">
+                          <i class="bi bi-camera"></i>
+                          Camera
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-hdd"></i> Controller
+                        </div>
+                        <div class="legend-item">
+                          <i class="fa-duotone fa-solid fa-server"></i> Server
+                        </div>
+                        <div class="legend-item">
+                          <i class="fas fa-database "></i> Archiver
+                        </div>
+                      </div>
+
+                      <!-- Controls -->
+                      <div class="map-controls">
+                        <button id="fit-all" class="btn-ghost">Fit All</button>
+                        <button id="show-global" class="btn-gv">Global View</button>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- SIDE PANEL -->
+                  <div class="region-panel" id="region-panel">
+                    <h4 class="panel-title">Global (City Overview)</h4>
+
+                    <div id="region-panel-content" class="panel-content"></div>
+
+                    <!-- <div class="filter-block">
+                      <h5>Filters</h5>
+
+                      <select id="filter-type" class="filter-select">
+                        <option value="all">All device types</option>
+                        <option value="camera">Camera</option>
+                        <option value="controller">Controller</option>
+                        <option value="server">Server</option>
+                        <option value="archiver">Archiver</option>
+                      </select>
+
+                      <select id="filter-status" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                      </select>
+
+                      <div class="filter-actions">
+                        <button id="apply-filters" class="btn">Apply</button>
+                        <button id="reset-filters" class="btn-ghost">Reset</button>
+                      </div>
+
+                    </div> -->
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <div class="bottom-row">
+
+              <div class="gcard wide">
+                <h4 class="gcard-title">Weekly Failures</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+              <div class="gcard wide">
+                <h4 class="gcard-title">Failure Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+              <div class="gcard wide">
+                <h4 class="gcard-title">LOC Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+            </div>
+
+
+          </div>
+        </div>
+      </section>
+
+
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
+
+function updateGauge(id, activeId, inactiveId, totalId) {
+    const active = parseInt(document.getElementById(activeId).textContent) || 0;
+    const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
+    const total = active + inactive;
+
+    // element
+    const gauge = document.getElementById(id);
+    if (!gauge) return;
+
+    // % calculation
+    let percentage = total === 0 ? 0 : Math.round((active / total) * 100);
+
+    // set values
+    gauge.style.setProperty("--percentage", percentage);
+
+    // update text inside semicircle
+    gauge.querySelector(".total").textContent = total;
+    gauge.querySelector(".active").textContent = active;
+    gauge.querySelector(".inactive").textContent = inactive;
+
+    // card footer also updates
+    document.getElementById(totalId).textContent = total;
+}
+
+function renderGauges() {
+    updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
+    updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
+    updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
+    updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderGauges();
+    setInterval(renderGauges, 6000);
+});
+
+
