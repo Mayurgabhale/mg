@@ -1,3 +1,4 @@
+http://localhost:8002/employee/327182/image in backend show image 
 chekc this code why image is not diplsy  
 
    No image
