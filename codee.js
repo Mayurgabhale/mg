@@ -1,4 +1,19 @@
-realMap = L.map('realmap', { 
+function onCityItemClick(cityName) {
+  const c = CITY_LIST.find(x => x.city === cityName);
+  if (c && toNum(c.lat) !== null && toNum(c.lon) !== null) {
+    realMap.setView([c.lat, c.lon], 5, { animate: true });
+  }
+  populateCityPanel(cityName);
+}
+
+
+
+
+
+
+
+
+....realMap = L.map('realmap', { 
     preferCanvas: true,
     maxBounds: [
         [85, -180],  
