@@ -1,224 +1,86 @@
-i dont want ot use name for device type i want ot use icons that i assing in below ok 
-
-and city-summary-tooltip i want alos ciyt name in top, and offline count color is red 
-
-
-  
- <i class="bi bi-camera legend-box"></i> Camera
-<i class="bi bi-hdd"></i> Controller
- <i class="fa-duotone fa-solid fa-server"></i> Server
- <i class="fas fa-database "></i> Archiver
-
-
- <div class="right-panel">
-              <!-- <div class="gcard tall"> -->
-              <div class="">
-                <div class="worldmap-wrapper">
-
-                  <!-- MAP CARD -->
-                  <div class="worldmap-card">
-
-                    <div id="realmap"></div>
-
-                    <!-- Legend + Controls Row -->
-                    <div class="map-bottom-bar">
-
-                      <!-- Legend -->
-                      <div class="legend">
-                        <div class="legend-item">
-                          <i class="bi bi-camera legend-box"></i>
-                         Camera
-                        </div>
-                        <div class="legend-item">
-                          <i class="bi bi-hdd"></i> Controller
-                        </div>
-                        <div class="legend-item">
-                          <i class="fa-duotone fa-solid fa-server"></i> Server
-                        </div>
-                        <div class="legend-item">
-                          <i class="fas fa-database "></i> Archiver
-                        </div>
-                      </div>
-
-                      <!-- Controls -->
-                      <div class="map-controls">
-                        <button id="fit-all" class="btn-ghost">Fit All</button>
-                        <button id="show-global" class="btn-gv">Global View</button>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  <!-- SIDE PANEL -->
-                  <div class="region-panel" id="region-panel">
-                    <h4 class="panel-title">Global (City Overview)</h4>
-
-                    <div id="region-panel-content" class="panel-content"></div>
-
-                    <!-- <div class="filter-block">
-                      <h5>Filters</h5>
-
-                      <select id="filter-type" class="filter-select">
-                        <option value="all">All device types</option>
-                        <option value="camera">Camera</option>
-                        <option value="controller">Controller</option>
-                        <option value="server">Server</option>
-                        <option value="archiver">Archiver</option>
-                      </select>
-
-                      <select id="filter-status" class="filter-select">
-                        <option value="all">All Status</option>
-                        <option value="online">Online</option>
-                        <option value="offline">Offline</option>
-                      </select>
-
-                      <div class="filter-actions">
-                        <button id="apply-filters" class="btn">Apply</button>
-                        <button id="reset-filters" class="btn-ghost">Reset</button>
-                      </div>
-
-                    </div> -->
-
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-/**
- * Helper: build a compact summary HTML for a city
- * - first line: total/offline (e.g. "5/2")
- * - following lines: only present device types (Cameras, Controllers, Servers, Archivers, etc.)
- * - also detects any other device-type strings from device objects (e.g. "CCURE")
- */
 function buildCitySummaryHTML(city) {
   const total = city.total || 0;
-  // compute offline count from common fields (status/state/online)
+
+  // compute offline count
   const offline = (city.devicesList || []).reduce((acc, d) => {
-    const s = ((d.status || d.state || '') + '').toString().toLowerCase();
+    const s = ((d.status || d.state || '') + '').toLowerCase();
     if (s === 'offline' || s === 'down') return acc + 1;
-    if (typeof d.online === 'boolean' && d.online === false) return acc + 1;
+    if (d.online === false) return acc + 1;
     return acc;
   }, 0);
 
-  // Start HTML (no 'total' text, just numbers)
-  let html = `<div style="font-family: Inter, Roboto, Arial, sans-serif; font-size:13px; line-height:1.25; min-width:140px;">`;
-  html += `<div style="font-weight:700; margin-bottom:6px;">${total}/${offline}</div>`;
+  // ICONS (your icons)
+  const ICONS = {
+    camera: `<i class="bi bi-camera legend-box"></i>`,
+    controller: `<i class="bi bi-hdd"></i>`,
+    server: `<i class="fa-duotone fa-solid fa-server"></i>`,
+    archiver: `<i class="fas fa-database"></i>`
+  };
 
-  // Known device type labels
-  const mapLabels = { camera: 'Cameras', controller: 'Controllers', server: 'Servers', archiver: 'Archivers' };
-  Object.keys(mapLabels).forEach(key => {
-    const cnt = (city.devices && city.devices[key]) || 0;
-    if (cnt > 0) {
-      html += `<div style="margin-bottom:4px;">${mapLabels[key]} ${cnt}</div>`;
+  let html = `
+    <div style="font-family: Inter, Roboto, Arial, sans-serif; font-size:13px; min-width:150px;">
+      <div style="font-weight:700; margin-bottom:6px; font-size:14px;">
+        ${city.city}
+      </div>
+
+      <div style="font-weight:600; margin-bottom:8px;">
+        ${total}/<span style="color:#ff4d4d;">${offline}</span>
+      </div>
+  `;
+
+  // Known device types (with icons)
+  const mapList = ["camera", "controller", "server", "archiver"];
+
+  mapList.forEach(type => {
+    const count = city.devices?.[type] || 0;
+    if (count > 0) {
+      html += `
+        <div style="margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+          ${ICONS[type]} <span>${count}</span>
+        </div>
+      `;
     }
   });
 
-  // Detect additional device-type strings from devicesList (e.g. CCURE, other products)
-  // We'll look for common keys that might contain product/type names
+  // Detect extra types (e.g. CCURE)
   const extraCounts = {};
   (city.devicesList || []).forEach(d => {
-    // try a few candidate properties
-    const candidates = [d.type, d.deviceType, d.product, d.model, d.name, d.vendor, d.system];
-    for (let val of candidates) {
-      if (!val) continue;
-      const s = ('' + val).trim();
-      if (!s) continue;
-      const low = s.toLowerCase();
-      // ignore generic words that are already counted
-      if (low.includes('camera') || low.includes('controller') || low.includes('archiver') || low.includes('server')) {
+    const candidates = [d.type, d.product, d.deviceType, d.model];
+    for (let v of candidates) {
+      if (!v) continue;
+      const name = String(v).trim();
+      if (!name) continue;
+
+      const low = name.toLowerCase();
+      if (low.includes("camera") || low.includes("server") || low.includes("controller") || low.includes("archiver"))
         continue;
-      }
-      // count it
-      extraCounts[s] = (extraCounts[s] || 0) + 1;
+
+      extraCounts[name] = (extraCounts[name] || 0) + 1;
       break;
     }
   });
 
-  // append extras (only if present)
-  Object.keys(extraCounts).forEach(name => {
-    const cnt = extraCounts[name];
-    if (cnt > 0) {
-      // Show label as-is (e.g. "CCURE 1")
-      html += `<div style="margin-bottom:4px;">${name} ${cnt}</div>`;
-    }
+  Object.keys(extraCounts).forEach(key => {
+    html += `
+      <div style="margin-bottom:4px;">
+        ${key} ${extraCounts[key]}
+      </div>
+    `;
   });
-
-  // If nothing else was shown (no devices), show "—" to indicate empty
-  if (total === 0) {
-    html += `<div style="color:var(--text-secondary, #666);">—</div>`;
-  }
 
   html += `</div>`;
   return html;
 }
 
-/**
- * placeCityMarkers: creates city markers and attaches hover + click summary
- * Replaces your previous placeCityMarkers implementation.
- */
-function placeCityMarkers() {
-  if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
-  window.cityMarkerLayer.clearLayers();
-
-  CITY_LIST.forEach(c => {
-    if (toNum(c.lat) === null || toNum(c.lon) === null) return;
-
-    // City icon with pin only (keeps your existing class)
-    const cityIcon = L.divIcon({
-      className: 'city-marker',
-      html: `<div><span class="pin"><i class="bi bi-geo-alt-fill"></i></span></div>`,
-      iconAnchor: [10, 10],
-    });
-
-    const marker = L.marker([c.lat, c.lon], { icon: cityIcon });
-
-    // Build summary HTML on demand (keeps memory light)
-    const getSummary = () => buildCitySummaryHTML(c);
-
-    // Hover: show compact tooltip (summary only)
-    marker.on('mouseover', function () {
-      // open a tooltip with summary (no permanent name, plain text)
-      marker.bindTooltip(getSummary(), {
-        direction: 'top',
-        offset: [0, -12],
-        opacity: 1,
-        permanent: false,
-        className: 'city-summary-tooltip' // optional for custom CSS
-      }).openTooltip();
-    });
-    marker.on('mouseout', function () {
-      try { marker.closeTooltip(); } catch (e) {}
-    });
-
-    // Click: open a popup with same content (keeps it visible)
-    marker.on('click', function () {
-      marker.bindPopup(getSummary(), { maxWidth: 260 }).openPopup();
-    });
-
-    // Add marker to layer
-    marker.addTo(window.cityMarkerLayer);
-  });
-
-  window.cityMarkerLayer.bringToFront();
-}
-
 
 
 .city-summary-tooltip {
-  background: rgba(0,0,0,0.75) !important;
+  background: rgba(0,0,0,0.85) !important;
   color: #fff !important;
   border: none !important;
-  padding: 8px 10px !important;
+  padding: 10px 12px !important;
   border-radius: 6px !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
   font-size: 13px !important;
-  line-height: 1.2 !important;
-}
-.leaflet-popup-content-wrapper {
-  background: var(--bg-card, #fff);
-  color: var(--text-primary, #111);
-  border-radius: 8px;
-  padding: 8px 10px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  line-height: 1.25 !important;
 }
