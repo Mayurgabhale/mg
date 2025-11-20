@@ -1,3 +1,8 @@
+i want widht adjust atuo fit 
+Pune is small name then fune i want small tooltip
+Denver Colorado is big name then big tooltip ok 
+i want small tooltip box ok 
+
 function buildCitySummaryHTML(city) {
   const total = city.total || 0;
 
@@ -18,7 +23,7 @@ function buildCitySummaryHTML(city) {
   };
 
   let html = `
-    <div style="font-family: Inter, Roboto, Arial, sans-serif; font-size:13px; min-width:150px;">
+    <div style="font-family: Inter, Roboto, Arial, sans-serif; font-size:13px; min-width:100px;">
       <div style="font-weight:700; margin-bottom:6px; font-size:14px;">
         ${city.city}
       </div>
@@ -42,35 +47,7 @@ function buildCitySummaryHTML(city) {
     }
   });
 
-  // Detect extra types (e.g. CCURE)
-  const extraCounts = {};
-  (city.devicesList || []).forEach(d => {
-    const candidates = [d.type, d.product, d.deviceType, d.model];
-    for (let v of candidates) {
-      if (!v) continue;
-      const name = String(v).trim();
-      if (!name) continue;
 
-      const low = name.toLowerCase();
-      if (low.includes("camera") || low.includes("server") || low.includes("controller") || low.includes("archiver"))
-        continue;
-
-      extraCounts[name] = (extraCounts[name] || 0) + 1;
-      break;
-    }
-  });
-
-  Object.keys(extraCounts).forEach(key => {
-    html += `
-      <div style="margin-bottom:4px;">
-        ${key} ${extraCounts[key]}
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-  return html;
-}
 
 
 
