@@ -3,7 +3,7 @@
                 <div class="chart-placeholder"></div>
               </div>
     now i want to add in this pie chart om this disaply all device count 
-
+see above image frist pie chart Weekly Failures, they show this but we want Total Count is same desing ok 
 <div class="bottom-row">
 
               <div class="gcard wide">
