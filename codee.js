@@ -1,166 +1,135 @@
-/* ===========================
-   Responsive-only overrides
-   (append to the end of graph.css)
-   =========================== */
+chekc this code why image is not diplsy  
 
-/* Make graphs-section use auto height on small screens */
-@media (max-width: 1200px) {
-  .graphs-section {
-    height: auto !important;      /* don't force full viewport height on smaller screens */
-    padding: 18px 12px;
+   No image
+Acosta Alvarez, Maria Jose
+Medium High
+ID: 317743
+Card Number
+416016
+EmployeeEmail
+Maria.Acosta2@westernunion.com
+Date
+18/11/2025, 05:30:00
+Duration
+13:14
+Violation days (90d)
+
+
+
+   disply no image i  want to show image ok 
+      so read the below code and how to dilsy image ok 
+<div className="modal-top" role="region" aria-label="evidence summary">
+                      <div className="image-section">
+                        <div className="image-container">
+                          <div className="multi-color-border">
+                            <div className="color-ring color-1"></div>
+                            <div className="color-ring color-2"></div>
+                            <div className="color-ring color-3"></div>
+                            <div className="color-ring color-4"></div>
+                            <div className="image-content">
+
+
+
+
+                              {/* Improved modal image block — prefer ObjectID/GUID and try more fallbacks */}
+
+{(modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows.length > 0) ? (
+
+
+  (() => {
+  // prefer aggregated row but fall back to raw_swipes first row
+  const md = (modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0])
+            || (modalDetails && modalDetails.raw_swipes && modalDetails.raw_swipes[0])
+            || {};
+  // candidate image key names (common variants)
+  const candidateImageKeys = ['imageUrl','image_url','ImageUrl','image','Image','img','imgUrl','ImagePath','Photo','PhotoUrl','EmployeePhoto','photo','photoUrl'];
+  let imgPath = candidateImageKeys.map(k => (md && md[k]) ? md[k] : null).find(Boolean) || null;
+
+  // build a prioritized list of identifier tokens to try (prefer ObjectID / GUID)
+  const idCandidates = [];
+  if (md && md.ObjectID) idCandidates.push(String(md.ObjectID));
+  if (md && md.ObjectId) idCandidates.push(String(md.ObjectId));
+  if (md && md.GUID) idCandidates.push(String(md.GUID));
+  if (md && md.GUID0) idCandidates.push(String(md.GUID0));
+  if (md && md.EmployeeID) idCandidates.push(String(md.EmployeeID));
+  if (md && md.person_uid) idCandidates.push(String(md.person_uid));
+  if (modalRow && modalRow.EmployeeID) idCandidates.push(String(modalRow.EmployeeID));
+  if (modalRow && modalRow.person_uid) idCandidates.push(String(modalRow.person_uid));
+
+  // Deduplicate preserving order
+  const uniqIds = idCandidates.filter((v, i) => v && idCandidates.indexOf(v) === i);
+
+  // If we didn't get an explicit image path, build one from the top id candidate
+  if (!imgPath && uniqIds.length) {
+    imgPath = `/employee/${encodeURIComponent(uniqIds[0])}/image`;
   }
 
-  /* Stack layout: single column for main grid */
-  .graphs-grid.dashboard-layout {
-    grid-template-columns: 1fr !important;
-    gap: 12px;
-  }
+  if (imgPath) {
+    const imgSrc = resolveApiImageUrl(imgPath) || imgPath;
+    return (
+      <img
+        className="modal-image"
+        src={imgSrc}
+        alt={sanitizeName(modalRow) || "Employee image"}
+        onLoad={(e) => { try { console.info("employee image loaded:", e.target.src); } catch (err) {} }}
+        onError={async (e) => {
+          try {
+            e.target.onerror = null;
+            console.warn("image load failed for:", e.target.src);
 
-  /* Right panel & map become full-width stacked block */
-  .right-panel {
-    width: 100%;
-    flex: none;
-    order: 2;
-  }
+            // Try a single cache-busted retry for the same URL, then try the API variants once each.
+            const tryUrls = [];
+            const original = e.target.src;
+            tryUrls.push(original + (original.indexOf('?') === -1 ? '?cb=' + Date.now() : '&cb=' + Date.now()));
 
-  .worldmap-wrapper {
-    flex-direction: column;
-    gap: 12px;
-  }
+            // try both API variants for the top id candidates (constructed earlier as uniqIds)
+            uniqIds.forEach(id => {
+              if (!id) return;
+              const a = resolveApiImageUrl(`/api/employees/${encodeURIComponent(id)}/image`);
+              const b = resolveApiImageUrl(`/employee/${encodeURIComponent(id)}/image`);
+              if (a && tryUrls.indexOf(a) === -1) tryUrls.push(a);
+              if (b && tryUrls.indexOf(b) === -1) tryUrls.push(b);
+            });
 
-  /* Make map card use full available width */
-  .worldmap-card {
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-  }
+            // Try each URL (GET) until one returns image content-type and ok
+            let found = null;
+            for (const url of tryUrls) {
+              try {
+                // some servers block fetch for cross-origin images — guard with try/catch
+                const getr = await fetch(url, { method: 'GET', cache: 'no-store' });
+                if (getr && getr.ok) {
+                  const ct = (getr.headers.get('content-type') || '').toLowerCase();
+                  if (ct.startsWith('image')) { found = url; break; }
+                }
+              } catch (err) {
+                // ignore fetch/CORS errors and continue to next candidate
+              }
+            }
 
-  /* Responsive map height using viewport fraction */
-  #realmap {
-    /* prefer aspect-ratio in modern browsers */
-    aspect-ratio: 16 / 9;
-    height: auto;
-    min-height: 220px;
-  }
+            if (found) {
+              e.target.src = found + (found.indexOf('?') === -1 ? ('?cb=' + Date.now()) : ('&cb=' + Date.now()));
+              return;
+            }
 
-  /* chart placeholders smaller on medium screens */
-  .chart-placeholder {
-    min-height: 220px;
+            // Final fallback: inline SVG placeholder
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><rect fill="#eef2f7" width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#64748b" font-size="18">No image</text></svg>';
+            e.target.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+          } catch (err) {
+            try { e.target.style.display = 'none'; } catch (err2) {}
+            console.error("image fallback error", err);
+          }
+        }}
+      />
+    );
+  } else {
+    return <div className="modal-image-placeholder">No image</div>;
   }
+})()
 
-  /* bottom row stacks */
-  .bottom-row {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
 
-  /* make cards more compact */
-  .gcard {
-    padding: 10px;
-  }
-}
-
-/* Smaller tablets / large phones */
-@media (max-width: 900px) {
-  .graphs-section {
-    padding: 14px 10px;
-  }
-
-  /* Left grid becomes single column */
-  .left-grid {
-    grid-template-columns: 1fr !important;
-    gap: 10px;
-  }
-
-  /* Semi-donut scales down */
-  .semi-donut {
-    width: min(90%, 260px);
-    height: calc(var(--semi-donut-height, 150px) * 0.85);
-  }
-  .semi-donut::after {
-    width: calc(min(90%, 260px) * 1);
-    height: calc(min(90%, 260px) * 1);
-    border-width: calc(40px * 0.85);
-  }
-
-  /* map height a bit taller for readability on narrow screens */
-  #realmap {
-    min-height: 260px;
-  }
-}
-
-/* Phones and very small screens */
-@media (max-width: 480px) {
-  .graphs-section {
-    padding: 10px 8px;
-  }
-
-  /* tighten gaps and text sizes */
-  .graphs-grid.dashboard-layout {
-    gap: 8px;
-  }
-
-  .gcard {
-    padding: 8px;
-  }
-
-  .gcard-title {
-    font-size: 12px;
-  }
-
-  .chart-placeholder {
-    min-height: 160px;
-  }
-
-  /* Make the map easier to interact with on phones */
-  #realmap {
-    aspect-ratio: 16 / 9;
-    min-height: 200px;
-    height: auto;
-  }
-
-  /* Make the panel content scrollable but not too tall */
-  .region-panel {
-    max-height: 36vh;
-    overflow-y: auto;
-  }
-
-  /* Semi-donut smaller */
-  .semi-donut {
-    width: min(88%, 200px);
-    height: calc(var(--semi-donut-height, 150px) * 0.7);
-  }
-  .semi-donut::after {
-    width: calc(min(88%, 200px) * 1);
-    height: calc(min(88%, 200px) * 1);
-    border-width: calc(30px * 0.7);
-  }
-
-  .gtext .total { font-size: 16px; }
-  .gtext small { font-size: 11px; }
-}
-
-/* Extra small devices (very narrow) */
-@media (max-width: 360px) {
-  .chart-placeholder { min-height: 140px; }
-  #realmap { min-height: 180px; }
-  .panel-title { font-size: 11px; }
-}
-
-/* Make sure the map renders properly when container size changes:
-   keeps style-only, no JS modifications. If your JS calls invalidateSize()
-   already, this is just defensive. */
-@media (max-width: 1100px) {
-  #realmap, .map-placeholder {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* Accessibility: increase tap targets slightly on small screens */
-@media (max-width: 768px) {
-  .map-controls button, .legend-item {
-    padding: 8px 6px;
-    font-size: 12px;
-  }
-}
+) : (
+  <div className="-image-placeholder">
+    <i className="bi bi-person-square"></i>
+    <span>No image</span>
+  </div>
+)}
