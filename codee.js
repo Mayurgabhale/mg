@@ -1,53 +1,45 @@
-pie chart not dipsly in 
-C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
-in this
- <div class="gcard wide">
-                <h4 class="gcard-title">Total Count </h4>
-                <div class="chart-placeholder"></div>
-              </div>
+i also show count 
 
-function updateGauge(id, activeId, inactiveId, totalId) {
-    const active = parseInt(document.getElementById(activeId).textContent) || 0;
-    const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
-    const total = active + inactive;
+in right side show doughnut
+cameras - 21
+Archivers - 21 
+Controllers - 71 
+like all ok 
+and in pie chart center totla ok 
 
-    // element
-    const gauge = document.getElementById(id);
-    if (!gauge) return;
-
-    // % calculation
-    let percentage = total === 0 ? 0 : Math.round((active / total) * 100);
-
-    // set values
-    gauge.style.setProperty("--percentage", percentage);
-
-    // update text inside semicircle
-    gauge.querySelector(".total").textContent = total;
-    gauge.querySelector(".active").textContent = active;
-    gauge.querySelector(".inactive").textContent = inactive;
-
-    // card footer also updates
-    document.getElementById(totalId).textContent = total;
-}
-
-function renderGauges() {
-    updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
-    updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
-    updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
-    updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    renderGauges();
-    setInterval(renderGauges, 6000);
-});
-
-
-// ⬇️⬇️⬇️⬇️⬇️⬇️ PIE chart
-
-
-
-
+  // Create doughnut
+  _totalCountChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: palette.slice(0, data.values.length),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '55%', // donut thickness
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            usePointStyle: true,
+            padding: 12,
+            boxWidth: 10
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const label = ctx.label || '';
+              const value = ctx.parsed || 0;
+              return label + ': ' + value;
+            }
+          }
+        }
 // --- Total Count doughnut chart (uses Chart.js) ---
 
 let _totalCountChart = null;
@@ -134,10 +126,12 @@ function renderTotalCountChart() {
   }
 
   // color palette (adjust as you like)
+
   const palette = [
     '#10b981', '#f97316', '#2563eb', '#7c3aed',
-    '#f59e0b', '#ef4444', '#06b6d4', '#94a3b8'
+    '#06b6d4', '#ef4444', '#f59e0b', '#94a3b8'
   ];
+
 
   // Create doughnut
   _totalCountChart = new Chart(ctx, {
@@ -189,7 +183,8 @@ function updateTotalCountChart() {
   _totalCountChart.data.labels = data.labels;
   _totalCountChart.data.datasets[0].data = data.values;
   _totalCountChart.data.datasets[0].backgroundColor = [
-    '#10b981','#f97316','#2563eb','#7c3aed','#f59e0b','#ef4444','#06b6d4','#94a3b8'
+    
+    '#10b981','#f97316','#2563eb','#7c3aed','#06b6d4','#ef4444','#f59e0b','#94a3b8'
   ].slice(0, data.values.length);
   _totalCountChart.update();
 }
@@ -221,10 +216,3 @@ function renderGauges() {
     updateTotalCountChart();
 }
 
-
-C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\index.html
- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
- <div class="gcard wide">
-                <h4 class="gcard-title">Total Count </h4>
-                <div class="chart-placeholder"></div>
-              </div>
