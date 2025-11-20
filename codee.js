@@ -1,3 +1,13 @@
+
+
+const totalValue = data.labels[0] === 'No devices'
+  ? 0
+  : data.values.reduce((a, b) => a + b, 0);
+
+
+
+
+....
 function renderTotalCountChart() {
   if (typeof Chart === 'undefined') {
     console.warn('Chart.js not loaded — add https://cdn.jsdelivr.net/npm/chart.js');
