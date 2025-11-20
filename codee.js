@@ -1,4 +1,17 @@
+boht is using get image ok  
 
+candidate=312458
+http://localhost:8002/employee/312458/image
+ ObjectID=2097186314
+http://localhost:8002/employee/2097186314/image
+INFO:root:get_personnel_info: found ObjectID=2097186314 Email=Lejemp.Abrea@wu.com for candidate=312458
+INFO:root:Connected to ACVSCore on SRVWUPNQ0986V using SQL auth (region apac).
+INFO:root:get_personnel_info: found ObjectID=2097186314 Email=Lejemp.Abrea@wu.com for candidate=312458
+INFO:root:Connected to ACVSCore on SRVWUPNQ0986V using SQL auth (region apac).
+INFO:root:get_personnel_info: found ObjectID=2097186314 Email=Lejemp.Abrea@wu.com for candidate=312458
+INFO:root:Connected to ACVSCore on SRVWUPNQ0986V using SQL auth (region apac).
+
+  read the belwo code carefully. dont make oher chagne i want only diplsy the image
   (() => {
   // prefer aggregated row but fall back to raw_swipes first row
   const md = (modalDetails && modalDetails.aggregated_rows && modalDetails.aggregated_rows[0])
