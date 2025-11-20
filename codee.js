@@ -1,3 +1,11 @@
+
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+
+
+
 this is show by dafault in map but i dont want to diplsy this in my mpa so how to remove this 
 </svg> Leaflet</a> <span aria-hidden="true">|</span> Tiles © Esri</div>  this 
   
