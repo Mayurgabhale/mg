@@ -1,3 +1,32 @@
+
+.city-summary-tooltip {
+  background: rgba(0,0,0,0.75) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 10px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card, #fff);
+  color: var(--text-primary, #111);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Helper: build a compact summary HTML for a city
  * - first line: total/offline (e.g. "5/2")
