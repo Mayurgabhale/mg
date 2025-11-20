@@ -1,5 +1,3 @@
-Hyderabad and singapur i wnat 
-
 const CITY_COORDS = {
   "Casablanca": [33.5731, -7.5898],
   "Dubai": [25.276987, 55.296249],
@@ -7,12 +5,12 @@ const CITY_COORDS = {
   "Austin TX": [30.2672, -97.7431],
   "Austria, Vienna": [48.2082, 16.3738],
   "Costa Rica": [9.7489, -83.7534],
-  "Delta Building": [37.7749, -122.4194],  // Example, replace with real coords
+  "Delta Building": [37.7749, -122.4194],
   "Denver": [39.7392, -104.9903],
   "Denver Colorado": [39.7392, -104.9903],
   "Florida, Miami": [25.7617, -80.1918],
   "Frankfurt": [50.1109, 8.6821],
-  "Gama Building": [37.7749, -122.4194],  // Example, replace
+  "Gama Building": [37.7749, -122.4194],
   "Ireland, Dublin": [53.3331, -6.2489],
   "Italy, Rome": [41.9028, 12.4964],
   "Japan Tokyo": [35.6762, 139.6503],
@@ -30,5 +28,9 @@ const CITY_COORDS = {
   "Pune Tower B": [18.5204, 73.8567],
   "Quezon": [14.6760, 121.0437],
   "Sao Paulo, Brazil": [-23.5505, -46.6333],
-  "Taguig City": [14.5176, 121.0509]
+  "Taguig City": [14.5176, 121.0509],
+
+  // ⭐ NEW
+  "Hyderabad": [17.3850, 78.4867],
+  "Singapore": [1.3521, 103.8198]
 };
