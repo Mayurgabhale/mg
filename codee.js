@@ -1,3 +1,175 @@
+now ok, but this i want dyanamic ok 
+we get our all location from api backend throut ok 
+
+  <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title"><i class="fas fa-sliders-h"></i> </h2>
+        <div class="header-controls">
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+        <button class="close-sidebar" id="closeSidebar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <button class="nav-button" id="toggle-main-btn"><i class="fas fa-window-maximize"></i>Device Details</button>
+
+      <div class="region-buttons">
+        <button class="region-button" data-region="global"><i class="fas fa-globe"></i> Global</button>
+        <button class="region-button" data-region="apac"><i class="fas fa-map-marker-alt"></i> APAC</button>
+        <button class="region-button" data-region="emea"><i class="fas fa-map-marker-alt"></i> EMEA</button>
+        <button class="region-button" data-region="laca"><i class="fas fa-map-marker-alt"></i> LACA</button>
+        <button class="region-button" data-region="namer"><i class="fas fa-map-marker-alt"></i> NAMER</button>
+      </div>
+
+      <button class="nav-button" onclick="location.href='trend.html'"><i class="fas fa-chart-line"></i> View Trend
+        Analysis</button>
+      <button class="nav-button" onclick="location.href='summary.html'"><i class="fas fa-table"></i> View Devices
+        Summary</button>
+      <button class="nav-button" onclick="location.href='controllers.html'"><i class="fas fa-table"></i> View Devices
+        Door</button>
+
+      <div id="countdown" class="countdown-timer">Loading Timer...</div>
+
+      <div class="filter-buttons">
+        <button id="filter-all" class="status-filter active" data-status="all"><i class="fas fa-layer-group"></i> All
+          Devices</button>
+        <button id="filter-online" class="status-filter" data-status="online"><i class="fas fa-wifi"></i> Online
+          Devices</button>
+        <button id="filter-offline" class="status-filter" data-status="offline"><i class="fas fa-plug-circle-xmark"></i>
+          Offline Devices</button>
+      </div>
+
+      <label for="device-filter">Filter by Device Type:</label>
+      <select id="device-filter">
+        <option value="all">All</option>
+        <option value="cameras">Cameras</option>
+        <option value="archivers">Archivers</option>
+        <option value="controllers">Controllers</option>
+        <option value="servers">CCURE</option>
+        <option value="pcdetails">Desktop Details</option>
+        <option value="dbdetails">DB Server</option>
+      </select>
+
+      <label for="vendorFilter" id="vendorFilterLabel">Filter by Camera:</label>
+      <select id="vendorFilter">
+        <option value="all">All camera</option>
+      </select>
+
+      <label for="city-filter">Filter by Location:</label>
+      <select id="city-filter">
+        <option value="all">All Cities</option>
+      </select>
+    </aside>
+
+
+
+            <!-- RIGHT PANEL — WORLD MAP -->
+            <div class="right-panel">
+              <!-- <div class="gcard tall"> -->
+              <div class="">
+                <div class="worldmap-wrapper">
+
+                  <!-- MAP CARD -->
+                  <div class="worldmap-card">
+
+                    <div id="realmap"></div>
+
+                    <!-- Legend + Controls Row -->
+                    <div class="map-bottom-bar">
+
+                      <!-- Legend -->
+                      <div class="legend">
+                        <div class="legend-item">
+                          <i class="bi bi-camera"></i>
+                          Camera
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-hdd"></i> Controller
+                        </div>
+                        <div class="legend-item">
+                          <i class="fa-duotone fa-solid fa-server"></i> Server
+                        </div>
+                        <div class="legend-item">
+                          <i class="fas fa-database "></i> Archiver
+                        </div>
+                      </div>
+
+                      <!-- Controls -->
+                      <div class="map-controls">
+                        <button id="fit-all" class="btn-ghost">Fit All</button>
+                        <button id="show-global" class="btn-gv">Global View</button>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- SIDE PANEL -->
+                  <div class="region-panel" id="region-panel">
+                    <h4 class="panel-title">Global (City Overview)</h4>
+
+                    <div id="region-panel-content" class="panel-content"></div>
+
+                    <!-- <div class="filter-block">
+                      <h5>Filters</h5>
+
+                      <select id="filter-type" class="filter-select">
+                        <option value="all">All device types</option>
+                        <option value="camera">Camera</option>
+                        <option value="controller">Controller</option>
+                        <option value="server">Server</option>
+                        <option value="archiver">Archiver</option>
+                      </select>
+
+                      <select id="filter-status" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                      </select>
+
+                      <div class="filter-actions">
+                        <button id="apply-filters" class="btn">Apply</button>
+                        <button id="reset-filters" class="btn-ghost">Reset</button>
+                      </div>
+
+                    </div> -->
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <div class="bottom-row">
+
+              <!-- <div class="gcard wide gcard-pie">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div> -->
+              <div class="gcard wide">
+                <h4 class="gcard-title">LOC Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+              <div class="gcard wide">
+                <h4 class="gcard-title">Failure Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+              
+
+               <div class="gcard wide gcard-pie">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+            </div>
+
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
 // --- LOC Count: Grouped bar chart (Chart.js) ----------------------
 
 let locChart = null;
