@@ -1,3 +1,19 @@
+not disply full map
+i want like pop up full screen ook 
+when  i click on  ⛶ View Full this button 
+leaflet-heat.js:6 Uncaught IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.
+draw	@	leaflet-heat.js:6
+_redraw	@	leaflet-heat.js:11
+_reset	@	leaflet-heat.js:11
+fire	@	Events.js:195
+invalidateSize	@	Map.js:590
+(anonymous)	@	map.js:1136
+setTimeout		
+(anonymous)	@	map.js:1135
+
+﻿
+
+
 <!-- Fullscreen Button -->
 <button id="mapFullscreenBtn" class="map-fullscreen-btn">
   ⛶ View Full
