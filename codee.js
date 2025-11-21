@@ -1,16 +1,154 @@
-// Total label
-ctx.fillStyle = getComputedStyle(document.body)
-  .getPropertyValue('--graph-card-footer-dark');
+i want to desin this this.
+  this location wise bar chart ok 
 
-// Total value
-ctx.fillStyle = getComputedStyle(document.body)
-  .getPropertyValue('--graph-card-title-dark');
+  can create a locaton wise bar chart. 
+  this is help to understand and visiwlise and analyse ok  the th data more easly...
+  
+<div class="gcard wide">
+                <h4 class="gcard-title">LOC Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
 
 
+  
+      <section id="main-graph" class="graphs-section">
+        <div class="graphs-inner">
+
+          <div class="graphs-grid dashboard-layout">
+
+            <!-- Left 2x2 cards -->
+            <div class="left-grid">
+
+              <div class="gcard">
+                <h4 class="gcard-title">Total No. of Cameras</h4>
+                <div class="semi-donut gauge" id="gauge-cameras" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard">
+                <h4 class="gcard-title">Total No. of Archivers</h4>
+                <div class="semi-donut gauge" id="gauge-archivers" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard">
+                <h4 class="gcard-title">Total No. of Controllers</h4>
+                <div class="semi-donut gauge" id="gauge-controllers" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gcard">
+                <h4 class="gcard-title">TOTAL No. of CCURE</h4>
+                <div class="semi-donut gauge" id="gauge-ccure" data-fill="#12b76a"
+                  style="--percentage:0; --fill:#12b76a">
+                  <div class="gtext">
+                    <b class="total">0</b>
+                    <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                  </div>
+                </div>
+              </div>
+
+               <!-- <div class="gcard wide gcard-pie">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div> -->
+
+            </div>
 
 
+            <!-- RIGHT PANEL — WORLD MAP -->
+            <div class="right-panel">
+              <!-- <div class="gcard tall"> -->
+              <div class="">
+                <div class="worldmap-wrapper">
 
-<div class="bottom-row">
+                  <!-- MAP CARD -->
+                  <div class="worldmap-card">
+
+                    <div id="realmap"></div>
+
+                    <!-- Legend + Controls Row -->
+                    <div class="map-bottom-bar">
+
+                      <!-- Legend -->
+                      <div class="legend">
+                        <div class="legend-item">
+                          <i class="bi bi-camera"></i>
+                          Camera
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-hdd"></i> Controller
+                        </div>
+                        <div class="legend-item">
+                          <i class="fa-duotone fa-solid fa-server"></i> Server
+                        </div>
+                        <div class="legend-item">
+                          <i class="fas fa-database "></i> Archiver
+                        </div>
+                      </div>
+
+                      <!-- Controls -->
+                      <div class="map-controls">
+                        <button id="fit-all" class="btn-ghost">Fit All</button>
+                        <button id="show-global" class="btn-gv">Global View</button>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- SIDE PANEL -->
+                  <div class="region-panel" id="region-panel">
+                    <h4 class="panel-title">Global (City Overview)</h4>
+
+                    <div id="region-panel-content" class="panel-content"></div>
+
+                    <!-- <div class="filter-block">
+                      <h5>Filters</h5>
+
+                      <select id="filter-type" class="filter-select">
+                        <option value="all">All device types</option>
+                        <option value="camera">Camera</option>
+                        <option value="controller">Controller</option>
+                        <option value="server">Server</option>
+                        <option value="archiver">Archiver</option>
+                      </select>
+
+                      <select id="filter-status" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                      </select>
+
+                      <div class="filter-actions">
+                        <button id="apply-filters" class="btn">Apply</button>
+                        <button id="reset-filters" class="btn-ghost">Reset</button>
+                      </div>
+
+                    </div> -->
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <div class="bottom-row">
 
               <!-- <div class="gcard wide gcard-pie">
                 <h4 class="gcard-title">Total Count </h4>
@@ -36,330 +174,186 @@ ctx.fillStyle = getComputedStyle(document.body)
             </div>
 
 
-  this above code css i want in dark and lihgt theme ok
-    carefeully, wihtou changing anythinkg i want this light and dark theme 
+          </div>
+        </div>
+      </section>
+                            
+.....
+  
+  <section class="summary-section">
 
-....
-<div class="bottom-row">
+    <div class="summary">
+      <div class="card">
 
-              <!-- <div class="gcard wide gcard-pie">
-                <h4 class="gcard-title">Total Count </h4>
-                <div class="chart-placeholder"></div>
-              </div> -->
-              <div class="gcard wide">
-                <h4 class="gcard-title">LOC Count</h4>
-                <div class="chart-placeholder"></div>
-              </div>
+        <h3><i class="fas fa-microchip icon-3d"></i> Total Devices</h3>
+        <div class="card-status total">Total <span id="total-devices">0</span></div>
+        <div class="card-status online">Online <span id="online-devices">0</span></div>
+        <div class="card-status offline">Offline <span id="offline-devices">0</span></div>
+      </div>
 
-              <div class="gcard wide">
-                <h4 class="gcard-title">Failure Count</h4>
-                <div class="chart-placeholder"></div>
-              </div>
-
-              
-
-               <div class="gcard wide gcard-pie">
-                <h4 class="gcard-title">Total Count </h4>
-                <div class="chart-placeholder"></div>
-              </div>
-
-            </div>
+      <div class="card">
+        <h3><i class="fas fa-video icon-3d"></i> Cameras</h3>
+        <div class="card-status total">Total <span id="camera-total">0</span></div>
+        <div class="card-status online">Online <span id="camera-online">0</span></div>
+        <div class="card-status offline">Offline <span id="camera-offline">0</span></div>
+      </div>
 
 
 
-/* Bottom row (spans full width below left + right) */
-.bottom-row {
-    grid-column: 1 / -1;
-   
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 12px;
+      <div class="card">
+        <h3><i class="fas fa-database icon-3d"></i> Archivers</h3>
+
+        <div class="card-status total">Total <span id="archiver-total">0</span></div>
+        <div class="card-status online">Online <span id="archiver-online">0</span></div>
+        <div class="card-status offline">Offline <span id="archiver-offline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-id-card icon-3d"></i> Controllers</h3>
+        <div class="card-status total">Total <span id="controller-total">0</span></div>
+        <div class="card-status online">Online <span id="controller-online">0</span></div>
+        <div class="card-status offline">Offline <span id="controller-offline">0</span></div>
+      </div>
+
+      <div class="card" id="door-card">
+        <h3><i class="fa-solid fa-door-closed icon-3d"></i>Door</h3>
+        <div class="card-status total">Total <span id="doorReader-total">0</span></div>
+        <div class="card-status online">Online <span id="doorReader-online">0</span></div>
+        <div class="card-status offline">Offline <span id="doorReader-offline">0</span></div>
+      </div>
+      <div class="card">
+        <h3><i class="fas fa-id-badge icon-3d"></i>Reader</h3>
+        <div class="card-status total">Total <span id="reader-total-inline">0</span></div>
+        <div class="card-status online">Online <span id="reader-online-inline">0</span></div>
+        <div class="card-status offline">Offline <span id="reader-offline-inline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-server icon-3d"></i>CCURE</h3>
+        <div class="card-status total">Total <span id="server-total">0</span></div>
+        <div class="card-status online">Online <span id="server-online">0</span></div>
+        <div class="card-status offline">Offline <span id="server-offline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-desktop icon-3d"></i>Desktop</h3>
+        <div class="card-status total">Total <span id="pc-total">0</span></div>
+        <div class="card-status online">Online <span id="pc-online">0</span></div>
+        <div class="card-status offline">Offline <span id="pc-offline">0</span></div>
+      </div>
+
+      <div class="card">
+        <h3><i class="fa-etch fa-solid fa-database icon-3d"></i>DB Server</h3>
+        <div class="card-status total">Total <span id="db-total">0</span></div>
+        <div class="card-status online">Online <span id="db-online">0</span></div>
+        <div class="card-status offline">Offline <span id="db-offline">0</span></div>
+      </div>
+
+
+    </div>
+
+  </section>
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title"><i class="fas fa-sliders-h"></i> </h2>
+        <div class="header-controls">
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+        <button class="close-sidebar" id="closeSidebar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <button class="nav-button" id="toggle-main-btn"><i class="fas fa-window-maximize"></i>Device Details</button>
+
+      <div class="region-buttons">
+        <button class="region-button" data-region="global"><i class="fas fa-globe"></i> Global</button>
+        <button class="region-button" data-region="apac"><i class="fas fa-map-marker-alt"></i> APAC</button>
+        <button class="region-button" data-region="emea"><i class="fas fa-map-marker-alt"></i> EMEA</button>
+        <button class="region-button" data-region="laca"><i class="fas fa-map-marker-alt"></i> LACA</button>
+        <button class="region-button" data-region="namer"><i class="fas fa-map-marker-alt"></i> NAMER</button>
+      </div>
+
+      <button class="nav-button" onclick="location.href='trend.html'"><i class="fas fa-chart-line"></i> View Trend
+        Analysis</button>
+      <button class="nav-button" onclick="location.href='summary.html'"><i class="fas fa-table"></i> View Devices
+        Summary</button>
+      <button class="nav-button" onclick="location.href='controllers.html'"><i class="fas fa-table"></i> View Devices
+        Door</button>
+
+      <div id="countdown" class="countdown-timer">Loading Timer...</div>
+
+      <div class="filter-buttons">
+        <button id="filter-all" class="status-filter active" data-status="all"><i class="fas fa-layer-group"></i> All
+          Devices</button>
+        <button id="filter-online" class="status-filter" data-status="online"><i class="fas fa-wifi"></i> Online
+          Devices</button>
+        <button id="filter-offline" class="status-filter" data-status="offline"><i class="fas fa-plug-circle-xmark"></i>
+          Offline Devices</button>
+      </div>
+
+      <label for="device-filter">Filter by Device Type:</label>
+      <select id="device-filter">
+        <option value="all">All</option>
+        <option value="cameras">Cameras</option>
+        <option value="archivers">Archivers</option>
+        <option value="controllers">Controllers</option>
+        <option value="servers">CCURE</option>
+        <option value="pcdetails">Desktop Details</option>
+        <option value="dbdetails">DB Server</option>
+      </select>
+
+      <label for="vendorFilter" id="vendorFilterLabel">Filter by Camera:</label>
+      <select id="vendorFilter">
+        <option value="all">All camera</option>
+      </select>
+
+      <label for="city-filter">Filter by Location:</label>
+      <select id="city-filter">
+        <option value="all">All Cities</option>
+      </select>
+
+            
+function updateGauge(id, activeId, inactiveId, totalId) {
+    const active = parseInt(document.getElementById(activeId).textContent) || 0;
+    const inactive = parseInt(document.getElementById(inactiveId).textContent) || 0;
+    const total = active + inactive;
+
+    // element
+    const gauge = document.getElementById(id);
+    if (!gauge) return;
+
+    // % calculation
+    let percentage = total === 0 ? 0 : Math.round((active / total) * 100);
+
+    // set values
+    gauge.style.setProperty("--percentage", percentage);
+
+    // update text inside semicircle
+    gauge.querySelector(".total").textContent = total;
+    gauge.querySelector(".active").textContent = active;
+    gauge.querySelector(".inactive").textContent = inactive;
+
+    // card footer also updates
+    document.getElementById(totalId).textContent = total;
 }
 
-/* General card */
-.gcard {
-    background: var(--graph-card-bg-dark);
-    border: 1px solid black;
-    padding: 5px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
+function renderGauges() {
+    updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
+    updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
+    updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
+    updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
 }
 
-.theme-light .gcard {
-    background: var(--graph-card-bg-light);
-    border: 1px solid var(--graph-card-border-light);
-}
-
-.gcard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px var(--graph-shadow-dark);
-}
-
-.theme-light .gcard:hover {
-    box-shadow: 0 8px 25px var(--graph-shadow-light);
-}
-
-/* Card title */
-.gcard-title {
-    font-size: 13px;
-    color: var(--graph-card-title-dark);
-    margin: 0 0 8px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.theme-light .gcard-title {
-    color: var(--graph-card-title-light);
-}
-
-/* Small footer row in the card */
-.gcard-foot.small {
-    display: flex;
-    justify-content: space-between;
-    margin-top: auto;
-    color: var(--graph-card-footer-dark);
-    font-size: 12px;
-}
-
-.theme-light .gcard-foot.small {
-    color: var(--graph-card-footer-light);
-}
-
-/* Placeholders for charts & map */
-.map-placeholder {
-    background: var(--graph-map-bg-dark);
-    border-radius: 8px;
-    height: 100%;
-    min-height: 500px !important;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    position: relative;
-    color: var(--graph-map-text-dark);
-    font-weight: 600;
-}
-
-.theme-light .map-placeholder {
-    background: var(--graph-map-bg-light);
-    color: var(--graph-map-text-light);
-}
-
-/* Simple annotation boxes for map example */
-.map-annot {
-    background: var(--graph-map-annot-bg-dark);
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--graph-map-annot-border-dark);
-    font-size: 12px;
-    text-align: center;
-}
-
-.theme-light .map-annot {
-    background: var(--graph-map-annot-bg-light);
-    border: 1px solid var(--graph-map-annot-border-light);
-}
-
-/* Chart placeholders */
-.chart-placeholder {
-    /* height: 120px; */
-    max-height: 280px;
-    border-radius: 8px;
-    margin-top: 8px;
-    background: var(--graph-map-bg-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--graph-map-text-dark);
-    font-weight: 600;
-}
-
-.theme-light .chart-placeholder {
-    background: var(--graph-map-bg-light);
-    color: var(--graph-map-text-light);
-}
-
-/* ================= Semi Donut (dashboard smaller sizing) =============== */
-.semi-donut {
-    --percentage: 0;
-    --active: var(--graph-gauge-active);
-    --inactive: var(--graph-gauge-inactive);
-    width: 300px;
-    height: 150px;
-    position: relative;
-    font-size: 22px;
-    font-weight: 600;
-    overflow: hidden;
-    color: var(--active);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    box-sizing: border-box;
-}
-
-/* Half circle background + fill */
-.semi-donut::after {
-    content: '';
-    width: 300px;
-    height: 300px;
-    border: 50px solid;
-    border-color: var(--inactive) var(--inactive) var(--active) var(--active);
-    position: absolute;
-    border-radius: 50%;
-    left: 0;
-    top: 0;
-    transform: rotate(calc(-45deg + var(--percentage) * 1.8deg));
-    animation: fillAnimation 1s ease-in;
-    box-sizing: border-box;
-}
-
-@keyframes fillAnimation {
-    from {
-        transform: rotate(-45deg);
-    }
-
-    to {
-        transform: rotate(calc(-45deg + var(--percentage) * 1.8deg));
-    }
-}
-
-/* Inside text */
-.gtext {
-    position: absolute;
-    bottom: 8px;
-    text-align: center;
-    color: var(--graph-gauge-text);
-}
-
-.gtext .total {
-    font-size: 20px;
-    color: var(--graph-gauge-total);
-    display: block;
-}
-
-.gtext small {
-    font-size: 12px;
-    color: var(--graph-card-footer-dark);
-    display: block;
-}
-
-.theme-light .gtext small {
-    color: var(--graph-card-footer-light);
-}
-
-/* ⬇️⬇️⬇️⬇️⬇️⬇️ */
+document.addEventListener("DOMContentLoaded", () => {
+    renderGauges();
+    setInterval(renderGauges, 6000);
+});
 
 
-
-
-
-
-/* Responsive */
-@media (max-width: 1100px) {
-    .graphs-grid.dashboard-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .left-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .bottom-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .graphs-section {
-        padding: 16px;
-    }
-
-    .left-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .semi-donut {
-        width: 250px;
-        height: 125px;
-    }
-
-    .semi-donut::after {
-        width: 250px;
-        height: 250px;
-        border-width: 40px;
-    }
-}
-
-@media (max-width: 480px) {
-    .graphs-section {
-        padding: 12px;
-    }
-
-    .graphs-title {
-        font-size: 18px;
-    }
-
-    .semi-donut {
-        width: 200px;
-        height: 100px;
-    }
-
-    .semi-donut::after {
-        width: 200px;
-        height: 200px;
-        border-width: 30px;
-    }
-
-    .gtext .total {
-        font-size: 18px;
-    }
-
-    .gtext small {
-        font-size: 10px;
-    }
-}
-
-
-/* ⬇️⬇️⬇️⬇️⬇️⬇️ */
-.gcard.wide .chart-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  box-sizing: border-box;
-  min-height: 160px; /* adjusts by breakpoints already in your CSS */
-  width: 100%;
-}
-
-/* canvas should fill placeholder responsively */
-.gcard.wide .chart-placeholder canvas {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 420px;    /* keeps it from growing too large on desktops */
-  max-height: 360px;
-}
-
-
-.gcard-pie{
-    /* width: 700px; */
-     background: var(--graph-map-bg-light);
-    border: 1px solid black;
-    padding: 5px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
-    
-}
+// ⬇️⬇️⬇️⬇️⬇️⬇️ PIE chart
 
 
 
@@ -479,12 +473,19 @@ const totalValue = data.labels[0] === 'No devices'
 
       // Total label
       ctx.font = '14px Inter, Arial';
-      ctx.fillStyle = '#aaa';
+      // ctx.fillStyle = '#aaa';
+      // Total label
+ctx.fillStyle = getComputedStyle(document.body)
+  .getPropertyValue('--graph-card-footer-dark');
+
       ctx.fillText('TOTAL', centerX, centerY - 12);
 
       // Total value
       ctx.font = 'bold 20px Inter, Arial';
-      ctx.fillStyle = '#fff';
+      // ctx.fillStyle = '#fff';
+      // Total value
+ctx.fillStyle = getComputedStyle(document.body)
+  .getPropertyValue('--graph-card-title-dark');
       ctx.fillText(totalValue, centerX, centerY + 12);
 
       ctx.restore();
@@ -596,3 +597,4 @@ function renderGauges() {
 }
 
 
+    </aside>
