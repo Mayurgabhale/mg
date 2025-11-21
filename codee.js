@@ -1,3 +1,5 @@
+
+    ok disply but it is goin left side, i want perfect is center
 /* Fullscreen mode */
 .worldmap-card.fullscreen {
   position: fixed;
@@ -22,6 +24,33 @@
   z-index: 99999;
 }
 
+
+    
+/* Fullscreen button (top right) */
+.map-fullscreen-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 9999;
+  padding: 6px 10px;
+  font-size: 11px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: 0.3s ease;
+}
+
+.map-fullscreen-btn:hover {
+  background: #1f2937;
+}
+
+/* Make map card a reference for button */
+.worldmap-card {
+  position: relative;
+  overflow: hidden;
+}
 
 
 
