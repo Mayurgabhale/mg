@@ -1,35 +1,23 @@
-/* Parent */
-.worldmap-card {
-  position: relative;
-}
+const fullscreenBtn = document.getElementById("mapFullscreenBtn");
+const mapCard = document.querySelector(".worldmap-card");
 
-/* Fullscreen mode */
-.worldmap-card.fullscreen {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 99999;
-  background: #0f172a;
-}
+let isFullscreen = false;
 
-/* Resize map */
-.worldmap-card.fullscreen #realmap {
-  width: 100% !important;
-  height: calc(100vh - 60px) !important;
-}
+fullscreenBtn.addEventListener("click", () => {
+  isFullscreen = !isFullscreen;
 
-/* Keep bottom bar always visible */
-.worldmap-card.fullscreen .map-bottom-bar {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  z-index: 999999;
-}
+  if (isFullscreen) {
+    mapCard.classList.add("fullscreen");
+    document.body.classList.add("map-fullscreen-active");
+    fullscreenBtn.innerText = "✖ Exit Full";
+  } else {
+    mapCard.classList.remove("fullscreen");
+    document.body.classList.remove("map-fullscreen-active");
+    fullscreenBtn.innerText = "⛶ View Full";
+  }
 
-/* Hide other UI when fullscreen */
-body.map-fullscreen-active .region-panel,
-body.map-fullscreen-active .panel,
-body.map-fullscreen-active .right-panel {
-  display: none;
-}
+  // VERY IMPORTANT for Leaflet + heatmap
+  setTimeout(() => {
+    realMap.invalidateSize(true);
+  }, 350);
+});
