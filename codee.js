@@ -1,7 +1,8 @@
-our pie chart is diplsy but
-  locatin/ loc count chart is not disply
-read below all code carefully. and chekc why loc count is not diplsy ...
+now dont add amy bar chart code in ohte js file 
+  read pie chart code how i create the use same logic to create
+    locaton bar chart 
 
+ok 
 
 <div class="bottom-row">
 
@@ -28,142 +29,8 @@ read below all code carefully. and chekc why loc count is not diplsy ...
 
             </div>
 
-
-
-C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\map.js
-
-async function updateMapData(summary, details) {
-  try {
-    if (!realMap || !details) return;
-
-    const deviceBuckets = details.details || details;
-    if (!deviceBuckets) return;
-
-    const cityMap = {};
-    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
-      if (!Array.isArray(arr)) return;
-      arr.forEach(dev => {
-        const cityNameRaw = dev.city || dev.location || dev.site || "Unknown";
-        const cityName = (typeof cityNameRaw === 'string') ? cityNameRaw.trim() : String(cityNameRaw);
-        let lat = toNum(dev.lat);
-        let lon = toNum(dev.lon);
-
-        const keyLower = (rawKey || "").toLowerCase();
-        const type = keyLower.includes("camera") ? "camera" :
-          keyLower.includes("controller") ? "controller" :
-            keyLower.includes("server") ? "server" :
-              keyLower.includes("archiver") ? "archiver" : null;
-
-        if (!cityMap[cityName]) cityMap[cityName] = {
-          city: cityName,
-          lat: (lat !== null ? lat : null),
-          lon: (lon !== null ? lon : null),
-          devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
-          total: 0,
-          devicesList: [],
-          region: dev.region || dev.zone || null
-        };
-
-        if (type) cityMap[cityName].devices[type] += 1;
-        cityMap[cityName].total += 1;
-        cityMap[cityName].devicesList.push(dev);
-
-        // If we have coordinates on the device, prefer them (last wins)
-        if (lat !== null && lon !== null) {
-          cityMap[cityName].lat = lat;
-          cityMap[cityName].lon = lon;
-        }
-      });
-    });
-
-    CITY_LIST = Object.values(cityMap);
-
-    // Geocode cities with missing coordinates (sequentially to avoid hammering service).
-    for (let c of CITY_LIST) {
-      if (toNum(c.lat) === null || toNum(c.lon) === null) {
-        const coords = await getCityCoordinates(c.city);
-        if (coords && coords.length === 2) {
-          c.lat = coords[0];
-          c.lon = coords[1];
-        } else {
-          // keep as null to avoid placing at 0,0
-          c.lat = null;
-          c.lon = null;
-        }
-      }
-    }
-
-    // Avoid overlapping city coordinates (only on valid coords)
-    ensureUniqueCityCoordinates(CITY_LIST);
-
-    // Place device markers
-    CITY_LIST.forEach(c => {
-      if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-      cityLayers[c.city].deviceLayer.clearLayers();
-      _placeDeviceIconsForCity(c, c.devices, c.devicesList);
-    });
-
-    // optional: create simple summary markers for cities with coordinates
-    Object.values(cityLayers).forEach(l => { /* left as-is, marker layering handled in _placeDeviceIconsForCity */ });
-
-    drawHeatmap();
-    populateGlobalCityList();
-    drawRegionBadges();
-  } catch (err) {
-    console.error("updateMapData error", err);
-  }
-  placeCityMarkers();
-  fitAllCities()
-  updateLocCountChart()
-}
-
-/* ============================================================
-   10. EXPORTS / BUTTON HOOKS
-   - hookup all event listeners after DOM ready to avoid null refs
-   ============================================================ */
-document.addEventListener("DOMContentLoaded", () => {
-  initRealMap();
-
-  // safe hookup helper
-  function setOnClick(id, fn) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('click', fn);
-  }
-
-  setOnClick("toggle-heat", toggleHeat);
-  setOnClick("fit-all", fitAllCities);
-  setOnClick("show-global", populateGlobalCityList);
-
-  // expose updateMapData for external calls
-  window.updateMapData = updateMapData;
-});
-
-
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  initRealMap();
-
-  placeCityMarkers(); // ← Add this line to show all cities
-
-  // safe hookup helper
-  function setOnClick(id, fn) {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('click', fn);
-  }
-
-  setOnClick("toggle-heat", toggleHeat);
-  setOnClick("fit-all", fitAllCities);
-  setOnClick("show-global", populateGlobalCityList);
-
-  // expose updateMapData for external calls
-  window.updateMapData = updateMapData;
-});
-
-
-
-
 C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
+
 
 function updateGauge(id, activeId, inactiveId, totalId) {
   const active = parseInt(document.getElementById(activeId).textContent) || 0;
@@ -643,3 +510,66 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
+ <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title"><i class="fas fa-sliders-h"></i> </h2>
+        <div class="header-controls">
+          <button class="theme-toggle" id="themeToggle">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+        <button class="close-sidebar" id="closeSidebar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <button class="nav-button" id="toggle-main-btn"><i class="fas fa-window-maximize"></i>Device Details</button>
+
+      <div class="region-buttons">
+        <button class="region-button" data-region="global"><i class="fas fa-globe"></i> Global</button>
+        <button class="region-button" data-region="apac"><i class="fas fa-map-marker-alt"></i> APAC</button>
+        <button class="region-button" data-region="emea"><i class="fas fa-map-marker-alt"></i> EMEA</button>
+        <button class="region-button" data-region="laca"><i class="fas fa-map-marker-alt"></i> LACA</button>
+        <button class="region-button" data-region="namer"><i class="fas fa-map-marker-alt"></i> NAMER</button>
+      </div>
+
+      <button class="nav-button" onclick="location.href='trend.html'"><i class="fas fa-chart-line"></i> View Trend
+        Analysis</button>
+      <button class="nav-button" onclick="location.href='summary.html'"><i class="fas fa-table"></i> View Devices
+        Summary</button>
+      <button class="nav-button" onclick="location.href='controllers.html'"><i class="fas fa-table"></i> View Devices
+        Door</button>
+
+      <div id="countdown" class="countdown-timer">Loading Timer...</div>
+
+      <div class="filter-buttons">
+        <button id="filter-all" class="status-filter active" data-status="all"><i class="fas fa-layer-group"></i> All
+          Devices</button>
+        <button id="filter-online" class="status-filter" data-status="online"><i class="fas fa-wifi"></i> Online
+          Devices</button>
+        <button id="filter-offline" class="status-filter" data-status="offline"><i class="fas fa-plug-circle-xmark"></i>
+          Offline Devices</button>
+      </div>
+
+      <label for="device-filter">Filter by Device Type:</label>
+      <select id="device-filter">
+        <option value="all">All</option>
+        <option value="cameras">Cameras</option>
+        <option value="archivers">Archivers</option>
+        <option value="controllers">Controllers</option>
+        <option value="servers">CCURE</option>
+        <option value="pcdetails">Desktop Details</option>
+        <option value="dbdetails">DB Server</option>
+      </select>
+
+      <label for="vendorFilter" id="vendorFilterLabel">Filter by Camera:</label>
+      <select id="vendorFilter">
+        <option value="all">All camera</option>
+      </select>
+
+      <label for="city-filter">Filter by Location:</label>
+      <select id="city-filter">
+        <option value="all">All Cities</option>
+      </select>
+    </aside>
