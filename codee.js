@@ -1,78 +1,68 @@
-not disply full map
-i want like pop up full screen ook 
-when  i click on  ⛶ View Full this button 
-leaflet-heat.js:6 Uncaught IndexSizeError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The source width is 0.
-draw	@	leaflet-heat.js:6
-_redraw	@	leaflet-heat.js:11
-_reset	@	leaflet-heat.js:11
-fire	@	Events.js:195
-invalidateSize	@	Map.js:590
-(anonymous)	@	map.js:1136
-setTimeout		
-(anonymous)	@	map.js:1135
+<!-- FULLSCREEN MAP POPUP -->
+<div id="mapFullscreenOverlay" class="map-overlay">
+  <div class="map-popup">
 
-﻿
+    <button id="closeFullscreenMap" class="close-map-btn">
+      ✖ Close
+    </button>
 
+    <div id="fullscreenMapContainer"></div>
 
-<!-- Fullscreen Button -->
-<button id="mapFullscreenBtn" class="map-fullscreen-btn">
-  ⛶ View Full
-</button>
-
-<div id="realmap"></div>
+  </div>
+</div>
 
 
 
 
 
-/* Fullscreen button (top right) */
-.map-fullscreen-btn {
+/* Overlay background */
+.map-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
+}
+
+/* Popup container */
+.map-popup {
+  width: 96vw;
+  height: 94vh;
+  background: #0f172a;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,0,0,0.6);
+  animation: zoomIn 0.35s ease;
+}
+
+/* Actual fullscreen map */
+#fullscreenMapContainer {
+  width: 100%;
+  height: 100%;
+}
+
+/* Close button */
+.close-map-btn {
   position: absolute;
-  top: 10px;
+  top: 12px;
   right: 12px;
-  z-index: 9999;
+  z-index: 10000;
   padding: 6px 10px;
-  font-size: 11px;
   border: 1px solid var(--border-color);
   background: var(--bg-primary);
   color: var(--text-primary);
   cursor: pointer;
   border-radius: 4px;
-  transition: 0.3s ease;
 }
 
-.map-fullscreen-btn:hover {
-  background: #1f2937;
-}
-
-/* Make map card a reference for button */
-.worldmap-card {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Fullscreen animation */
-.worldmap-card.fullscreen {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  max-width: unset;
-  z-index: 99999;
-  border-radius: 0;
-  animation: expandMap 0.4s ease forwards;
-}
-
-/* Resize map container */
-.worldmap-card.fullscreen #realmap {
-  height: 100vh !important;
-}
-
-/* Smooth animation */
-@keyframes expandMap {
+/* Animation */
+@keyframes zoomIn {
   from {
-    transform: scale(0.9);
-    opacity: 0.8;
+    transform: scale(0.8);
+    opacity: 0;
   }
   to {
     transform: scale(1);
@@ -80,41 +70,58 @@ setTimeout
   }
 }
 
-/* Fade rest UI */
-body.map-fullscreen-active .region-panel,
-body.map-fullscreen-active .panel,
-body.map-fullscreen-active .right-panel {
-  display: none !important;
-}
 
 
-
-
+.....
 
 
 const fullscreenBtn = document.getElementById("mapFullscreenBtn");
-const mapCard = document.querySelector(".worldmap-card");
+const overlay = document.getElementById("mapFullscreenOverlay");
+const closeBtn = document.getElementById("closeFullscreenMap");
 
-let isFullscreen = false;
+let fullscreenMap = null;
 
 fullscreenBtn.addEventListener("click", () => {
-  isFullscreen = !isFullscreen;
 
-  if (isFullscreen) {
-    mapCard.classList.add("fullscreen");
-    document.body.classList.add("map-fullscreen-active");
-    fullscreenBtn.innerText = "✖ Exit Full";
+  overlay.style.display = "flex";
 
-    setTimeout(() => {
-      realMap.invalidateSize();   // Refresh Leaflet size
-    }, 400);
-  } else {
-    mapCard.classList.remove("fullscreen");
-    document.body.classList.remove("map-fullscreen-active");
-    fullscreenBtn.innerText = "⛶ View Full";
+  setTimeout(() => {
 
-    setTimeout(() => {
-      realMap.invalidateSize();
-    }, 400);
-  }
+    // Create new map only once
+    if (!fullscreenMap) {
+
+      fullscreenMap = L.map('fullscreenMapContainer', {
+        preferCanvas: true,
+        center: realMap.getCenter(),
+        zoom: realMap.getZoom()
+      });
+
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 20
+      }).addTo(fullscreenMap);
+
+      // copy markers
+      window.cityMarkerLayer?.eachLayer(m => m.addTo(fullscreenMap));
+
+      // copy heatmap
+      if (heatLayer) {
+        heatLayer.addTo(fullscreenMap);
+      }
+    } else {
+      fullscreenMap.setView(realMap.getCenter(), realMap.getZoom());
+    }
+
+    fullscreenMap.invalidateSize(true);
+
+  }, 200);   // VERY IMPORTANT delay fixes your error
+
+});
+
+
+
+
+
+
+closeBtn.addEventListener("click", () => {
+  overlay.style.display = "none";
 });
