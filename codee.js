@@ -1,82 +1,107 @@
-give me this code wiht correct 
 // ⬇️⬇️⬇️⬇️⬇️⬇️----- LOC Count Bar Chart -----
 let _locCountChart = null;
 
-function collectLocCounts(options = { topN: 12 }) {
-  // Use global CITY_LIST created by updateMapData()
-  if (!Array.isArray(window.CITY_LIST)) return { labels: [], values: [] };
+// ✅ Safe title matcher
+function findChartPlaceholderByTitle(titleText) {
+  const cards = document.querySelectorAll('.gcard.wide');
 
-  // Build array: { city, total } (total computed if missing)
+  for (let card of cards) {
+    const title = card.querySelector('.gcard-title');
+    if (title && title.textContent.toLowerCase().includes(titleText.toLowerCase())) {
+      return card.querySelector('.chart-placeholder');
+    }
+  }
+  return null;
+}
+
+// ✅ Collect LOC device counts
+function collectLocCounts(options = { topN: 12 }) {
+
+  if (!Array.isArray(window.CITY_LIST) || window.CITY_LIST.length === 0) {
+    console.warn("CITY_LIST not ready yet...");
+    return { labels: [], values: [] };
+  }
+
   const arr = window.CITY_LIST
     .map(c => {
-      const total = Number.isFinite(Number(c.total)) ? Number(c.total) :
+      const total = Number.isFinite(+c.total) ? +c.total :
         (c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0);
-      return { city: c.city || 'Unknown', total: total || 0 };
+
+      return {
+        city: c.city || "Unknown",
+        total: total || 0
+      };
     })
     .filter(x => x.total > 0);
 
-  // sort by total desc
   arr.sort((a, b) => b.total - a.total);
 
-  const top = arr.slice(0, options.topN || 12);
+  const top = arr.slice(0, options.topN);
 
-  const labels = top.map(x => x.city);
-  const values = top.map(x => x.total);
-  return { labels, values };
+  return {
+    labels: top.map(x => x.city),
+    values: top.map(x => x.total)
+  };
 }
 
+// ✅ Draw chart
 function renderLocCountChart() {
-  if (typeof Chart === 'undefined') {
-    console.warn('Chart.js not loaded — add https://cdn.jsdelivr.net/npm/chart.js');
+
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js is not loaded!");
     return;
   }
 
-  const placeholder = findChartPlaceholderByTitle('LOC Count');
-  if (!placeholder) return;
+  const placeholder = findChartPlaceholderByTitle("LOC Count");
 
-  // ensure a canvas exists
-  let canvas = placeholder.querySelector('canvas');
+  if (!placeholder) {
+    console.warn("LOC Count container not found");
+    return;
+  }
+
+  // force height (very important)
+  placeholder.style.height = "320px";
+
+  // ensure canvas
+  let canvas = placeholder.querySelector("canvas");
   if (!canvas) {
-    canvas = document.createElement('canvas');
-    placeholder.innerHTML = ''; // clear placeholder
+    canvas = document.createElement("canvas");
+    placeholder.innerHTML = "";
     placeholder.appendChild(canvas);
   }
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   const data = collectLocCounts({ topN: 12 });
 
-  // Destroy previous chart to avoid leaks
   if (_locCountChart) {
-    try { _locCountChart.destroy(); } catch (e) { }
+    try { _locCountChart.destroy(); } catch(e) {}
     _locCountChart = null;
   }
 
-  // color palette
   const palette = [
-    '#10b981', '#f97316', '#2563eb', '#7c3aed',
-    '#06b6d4', '#ef4444', '#f59e0b', '#94a3b8',
-    '#60a5fa', '#34d399', '#f43f5e', '#f59e0b'
+    "#10b981", "#f97316", "#2563eb", "#7c3aed",
+    "#06b6d4", "#ef4444", "#f59e0b", "#94a3b8",
+    "#60a5fa", "#34d399", "#f43f5e", "#f59e0b"
   ];
 
-  // plugin to draw value labels on top of bars
   const valueLabelPlugin = {
-    id: 'valueLabels',
+    id: "valueLabels",
     afterDatasetsDraw(chart) {
       const ctx = chart.ctx;
-      chart.data.datasets.forEach((dataset, dsIndex) => {
-        const meta = chart.getDatasetMeta(dsIndex);
-        meta.data.forEach((bar, i) => {
-          const val = dataset.data[i];
+
+      chart.data.datasets.forEach((dataset, i) => {
+        const meta = chart.getDatasetMeta(i);
+
+        meta.data.forEach((bar, index) => {
+          const val = dataset.data[index];
           if (val === undefined) return;
-          const x = bar.x;
-          const y = bar.y;
+
           ctx.save();
-          ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--graph-card-footer-dark') || '#cbd5e1';
-          ctx.font = '12px Inter, Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          // place label above bar
-          ctx.fillText(val, x, y - 6);
+          ctx.fillStyle = "#cbd5e1";
+          ctx.font = "12px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillText(val, bar.x, bar.y - 6);
           ctx.restore();
         });
       });
@@ -84,11 +109,11 @@ function renderLocCountChart() {
   };
 
   _locCountChart = new Chart(ctx, {
-    type: 'bar',
+    type: "bar",
     data: {
       labels: data.labels,
       datasets: [{
-        label: 'Devices',
+        label: "Devices",
         data: data.values,
         backgroundColor: palette.slice(0, data.values.length),
         borderRadius: 6,
@@ -97,13 +122,13 @@ function renderLocCountChart() {
       }]
     },
     options: {
-      indexAxis: 'x', // vertical bars (use 'y' for horizontal)
       responsive: true,
       maintainAspectRatio: false,
+
       scales: {
         x: {
           ticks: {
-            color: getComputedStyle(document.body).getPropertyValue('--graph-map-text-dark') || '#b8f4c9',
+            color: "#b8f4c9",
             maxRotation: 45,
             minRotation: 0
           },
@@ -111,19 +136,17 @@ function renderLocCountChart() {
         },
         y: {
           beginAtZero: true,
-          ticks: { color: getComputedStyle(document.body).getPropertyValue('--graph-map-text-dark') || '#b8f4c9' },
-          grid: {
-            color: 'rgba(255,255,255,0.03)'
-          }
+          ticks: { color: "#b8f4c9" },
+          grid: { color: "rgba(255,255,255,0.05)" }
         }
       },
+
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: function (ctx) {
-              const value = ctx.parsed?.y ?? 0;
-              return `${ctx.label} : ${value}`;
+            label(ctx) {
+              return `${ctx.label} : ${ctx.parsed.y}`;
             }
           }
         }
@@ -133,26 +156,34 @@ function renderLocCountChart() {
   });
 }
 
+// ✅ Update chart after CITY_LIST changes
 function updateLocCountChart() {
+
   if (!_locCountChart) {
-    renderLocCountChart();
-    return;
+    return renderLocCountChart();
   }
+
   const data = collectLocCounts({ topN: 12 });
+
   _locCountChart.data.labels = data.labels;
   _locCountChart.data.datasets[0].data = data.values;
   _locCountChart.data.datasets[0].backgroundColor = [
-    '#10b981', '#f97316', '#2563eb', '#7c3aed', '#06b6d4', '#ef4444', '#f59e0b', '#94a3b8'
+    "#10b981", "#f97316", "#2563eb", "#7c3aed",
+    "#06b6d4", "#ef4444", "#f59e0b", "#94a3b8"
   ].slice(0, data.values.length);
+
   _locCountChart.update();
 }
 
-// Hook: initial render and resize/refresh
-document.addEventListener('DOMContentLoaded', () => {
+// ✅ Auto-run
+document.addEventListener("DOMContentLoaded", () => {
+
   renderLocCountChart();
-  let resizeTO;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTO);
-    resizeTO = setTimeout(() => renderLocCountChart(), 250);
+
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(renderLocCountChart, 300);
   });
+
 });
