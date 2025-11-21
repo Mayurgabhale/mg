@@ -1,3 +1,49 @@
+
+{!loading && loc && !loc.found && (
+  <div style={{ color: '#2ced0e' }}>
+    <div>Out off office</div>
+
+    {loc.lastSwipe ? (
+      <div style={{ marginTop: 6, fontSize: 13 }}>
+        <table style={{ marginTop: 4 }}>
+          <tbody>
+            <tr>
+              <td style={{ paddingRight: 8 }}>Last Door:</td>
+              <td>{loc.lastSwipe.door || '—'}</td>
+            </tr>
+
+            <tr>
+              <td style={{ paddingRight: 8 }}>Direction:</td>
+              <td>{loc.lastSwipe.direction || '—'}</td>
+            </tr>
+
+            <tr>
+              <td style={{ paddingRight: 8 }}>Time:</td>
+              <td>
+                {loc.lastSwipe.time
+                  ? new Date(loc.lastSwipe.time).toLocaleTimeString([], {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })
+                  : '—'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div style={{ marginTop: 6, fontSize: 13, color: '#ccc' }}>
+        No swipe data available
+      </div>
+    )}
+  </div>
+)}
+
+
+...
+
+
 if (!matches.length) {
   const result = {
     found: false,
