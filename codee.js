@@ -1,131 +1,58 @@
- <div style={{ color: '#2ced0e' }}>Out of Office</div>
-i want to diplsy this and alos ther last swipe in this
-if out of office and then show in this last swipe 
-
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
-import './EmployeeCard.css';
-export default function CurrentLocation({ empId, showMore }) {
-  const [loading, setLoading] = useState(false);
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!empId) {
-      setLoc(null);
-      setError('');
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLoc(null);
-
-    axios
-      .get(`http://localhost:5001/api/employees/${empId}/location`)
-      .then((res) => {
-        if (cancelled) return;
-        setLoc(res.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Location load error', err?.message || err);
-        setError('Failed to load location');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [empId]);
-
-  if (!empId) return null;
-
-  return (
-    <div className="current-location-card" style={{ marginTop: 1 }}>
-      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color: '#f5a742' }}>Swipe Details</h4>
-
-      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
-      {error && <div style={{ color: '#fff' }}>{error}</div>}
-
-      {!loading && loc && !loc.found && (
-        <div style={{ color: '#2ced0e' }}>Out of Office</div>
-      )}
-
-      {!loading && loc && loc.found && (
-        <table className="swipe-details-table">
-          <tbody>
-            <tr>
-              <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
-              <td className="value">
-                {loc.partition || '—'}
-                {loc.floor ? ` · ${loc.floor}` : ''}
-              </td>
-            </tr>
-            <tr>
-              <td className="label">
-                <FaPalette className="icon zone" /> {loc.Zone ? 'Zone' : 'Floor'}
-              </td>
-              <td className="value">
-                {loc.Zone || loc.floor || '—'}
-              </td>
-            </tr>
-            {showMore && (
-              <>
-                <tr>
-                  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
-                  <td className="value">
-                    {loc.timestampUTC
-                      ? loc.timestampUTC.split('T')[0] // "2025-08-14"
-                      : '—'}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="label"><FaClock className="icon time" /> Time</td>
-                  <td className="value">
-                    {loc.timestampUTC
-                      ? new Date(
-                        `1970-01-01T${loc.timestampUTC.split('T')[1].replace('Z', '')}Z`
-                      ).toLocaleTimeString([], {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true,
-                        timeZone: 'UTC'   // <- keep it in UTC so it shows "4:21 PM"
-                      })
-                      : '—'}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td className="label"><FaDoorClosed className="icon door" /> Door</td>
-                  <td className="value">{loc.door || '—'}</td>
-                </tr>
-                <tr>
-                  <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
-                  <td className="value">{loc.direction || '—'}</td>
-                </tr>
-              </>
-            )}
-          </tbody>
-        </table>
-
-      )} 
-
-
-
-
-
-
+{!loading && loc && !loc.found && (
+  <>
+    <div style={{ color: '#2ced0e', marginBottom: 8, fontWeight: 'bold' }}>
+      Out of Office
     </div>
-  );
-}
 
+    {loc.lastSwipe ? (
+      <table className="swipe-details-table">
+        <tbody>
+          <tr>
+            <td className="label"><FaMapMarkerAlt /> Last Location</td>
+            <td className="value">
+              {loc.lastSwipe.partition || '—'}
+              {loc.lastSwipe.floor ? ` · ${loc.lastSwipe.floor}` : ''}
+            </td>
+          </tr>
 
+          <tr>
+            <td className="label"><FaCalendarAlt /> Date</td>
+            <td className="value">
+              {loc.lastSwipe.timestampUTC
+                ? loc.lastSwipe.timestampUTC.split('T')[0]
+                : '—'}
+            </td>
+          </tr>
 
+          <tr>
+            <td className="label"><FaClock /> Time</td>
+            <td className="value">
+              {loc.lastSwipe.timestampUTC
+                ? new Date(
+                    `1970-01-01T${loc.lastSwipe.timestampUTC.split('T')[1].replace('Z', '')}Z`
+                  ).toLocaleTimeString([], {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                    timeZone: 'UTC'
+                  })
+                : '—'}
+            </td>
+          </tr>
 
+          <tr>
+            <td className="label"><FaDoorClosed /> Door</td>
+            <td className="value">{loc.lastSwipe.door || '—'}</td>
+          </tr>
 
+          <tr>
+            <td className="label"><FaExchangeAlt /> Direction</td>
+            <td className="value">{loc.lastSwipe.direction || '—'}</td>
+          </tr>
+        </tbody>
+      </table>
+    ) : (
+      <div style={{ color: '#999' }}>No last swipe data available</div>
+    )}
+  </>
+)}
