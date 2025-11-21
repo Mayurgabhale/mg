@@ -1,3 +1,12 @@
+map.js:1188 updateMapData error ReferenceError: drawRegionBadges is not defined
+    at updateMapData (map.js:1186:5)
+
+map.js:921 Uncaught (in promise) TypeError: window.cityMarkerLayer.bringToFront is not a function
+    at placeCityMarkers (map.js:921:26)
+    at updateMapData (map.js:1190:3)
+map.js:921 Uncaught (in promise) TypeError: window.cityMarkerLayer.bringToFront is not a function
+    at placeCityMarkers (map.js:921:26)
+    at updateMapData (map.js:1190:3)
 // ============================
 // LOC Count Bar Chart (FIXED)
 // ============================
