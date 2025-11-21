@@ -1,38 +1,158 @@
-const isEmployeeOut = (loc) => {
-  if (!loc) return false;
+Profile Details
+ Name	Satpute, Sejal
+ Employee ID	W0019059
+ Manager	Lloyds Dass
+ Total Cards	2
+ Clearance	2
+ Company Name	Poona Security India Pvt.Ltd
+ Primary Location	Pune - Business Bay
+Swipe Details
+Out of Office
 
-  const dir = loc.direction ? loc.direction.toLowerCase() : '';
+last swipe is not show 
+
+
+
+// C:\Users\W0024618\Desktop\employee-verification\frontend\src\components\CurrentLocation.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { FaMapMarkerAlt, FaPalette, FaCalendarAlt, FaClock, FaDoorClosed, FaExchangeAlt } from 'react-icons/fa';
+import './EmployeeCard.css';
+export default function CurrentLocation({ empId, showMore }) {
+  const [loading, setLoading] = useState(false);
+  const [loc, setLoc] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!empId) {
+      setLoc(null);
+      setError('');
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    setLoc(null);
+
+    axios
+      .get(`http://localhost:5001/api/employees/${empId}/location`)
+      .then((res) => {
+        if (cancelled) return;
+        setLoc(res.data);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Location load error', err?.message || err);
+        setError('Failed to load location');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [empId]);
+
+  if (!empId) return null;
+
+
+
+  const isEmployeeOut = (loc) => {
+    if (!loc) return false;
+
+    const dir = loc.direction ? loc.direction.toLowerCase() : '';
+
+    return (
+      !loc.found ||
+      dir === 'out' ||
+      dir === 'exit' ||
+      dir === 'egress'
+    );
+  };
+
 
   return (
-    !loc.found || 
-    dir === 'out' || 
-    dir === 'exit' || 
-    dir === 'egress'
+    <div className="current-location-card" style={{ marginTop: 1 }}>
+      <h4 style={{ margin: '0 0 6px 0', fontSize: 14, color: '#f5a742' }}>Swipe Details</h4>
+
+      {loading && <div style={{ color: '#fff' }}>Loading location…</div>}
+      {error && <div style={{ color: '#fff' }}>{error}</div>}
+
+      {/* {!loading && loc && !loc.found && (
+        <div style={{ color: '#2ced0e' }}>Out office</div>
+      )} */}
+
+      {!loading && loc && isEmployeeOut(loc) && (
+        <div style={{ color: '#2ced0e' }}>Out of Office</div>
+      )}
+
+      {!loading && loc && loc.found && (
+        <table className="swipe-details-table">
+          <tbody>
+            <tr>
+              <td className="label"><FaMapMarkerAlt className="icon location" /> Location</td>
+              <td className="value">
+                {loc.partition || '—'}
+                {loc.floor ? ` · ${loc.floor}` : ''}
+              </td>
+            </tr>
+            <tr>
+              <td className="label">
+                <FaPalette className="icon zone" /> {loc.Zone ? 'Zone' : 'Floor'}
+              </td>
+              <td className="value">
+                {loc.Zone || loc.floor || '—'}
+              </td>
+            </tr>
+            {showMore && (
+              <>
+                <tr>
+                  <td className="label"><FaCalendarAlt className="icon date" /> Date</td>
+                  <td className="value">
+                    {loc.timestampUTC
+                      ? loc.timestampUTC.split('T')[0] // "2025-08-14"
+                      : '—'}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td className="label"><FaClock className="icon time" /> Time</td>
+                  <td className="value">
+                    {loc.timestampUTC
+                      ? new Date(
+                        `1970-01-01T${loc.timestampUTC.split('T')[1].replace('Z', '')}Z`
+                      ).toLocaleTimeString([], {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                        timeZone: 'UTC'   // <- keep it in UTC so it shows "4:21 PM"
+                      })
+                      : '—'}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td className="label"><FaDoorClosed className="icon door" /> Door</td>
+                  <td className="value">{loc.door || '—'}</td>
+                </tr>
+                <tr>
+                  <td className="label"><FaExchangeAlt className="icon direction" /> Direction</td>
+                  <td className="value">{loc.direction || '—'}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+
+      )}
+
+
+
+
+
+
+    </div>
   );
-};
-
-
-....
-
-{!loading && loc && isEmployeeOut(loc) && (
-  <div style={{ color: '#2ced0e' }}>Out of Office</div>
-)}
-
-{!loading && loc && isEmployeeOut(loc) && loc.found && (
-  <div style={{ color: '#aaa', fontSize: '12px', marginTop: '4px' }}>
-    Last swipe: {loc.direction || '—'} at{' '}
-    {loc.timestampUTC
-      ? new Date(loc.timestampUTC).toLocaleTimeString([], {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        })
-      : '—'}
-  </div>
-)}
-
-{!loading && loc && loc.found && !isEmployeeOut(loc) && (
-  <table className="swipe-details-table">
-    ...
-  </table>
-)}
+}
