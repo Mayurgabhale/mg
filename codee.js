@@ -1,9 +1,28 @@
+  <div class="bottom-row">
 
+              <!-- <div class="gcard wide gcard-pie">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div> -->
+              <div class="gcard wide">
+                <h4 class="gcard-title">LOC Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
 
-// ⬇️⬇️⬇️⬇️⬇️⬇️----- LOC Count Bar Chart -----
-i want loc bar chart wiht dynamic. 
-   lie our pie chart fetching the data.
-   that type fet the ciyt i mean lcaont and ddiplsy the data in bar chart ok 
+              <div class="gcard wide">
+                <h4 class="gcard-title">Failure Count</h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+              
+
+               <div class="gcard wide gcard-pie">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+            </div>
+
 
 function updateGauge(id, activeId, inactiveId, totalId) {
   const active = parseInt(document.getElementById(activeId).textContent) || 0;
