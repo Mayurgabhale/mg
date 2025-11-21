@@ -1,0 +1,166 @@
+............... 21-11- 
+last swipe
+// controllers/employeeLocationController.js
+const axios = require('axios');
+const sql = require('mssql');
+const { getPool } = require('../config/db');
+
+const OCCUPANCY_URLS = [
+  'http://10.199.22.57:3006/api/occupancy/live-summary',
+
+  'http://10.199.22.57:3007/api/occupancy/live-summary',  // EMEA
+
+
+  'http://10.199.22.57:3008/api/occupancy/live-summary',  //Pune
+
+
+  'http://10.199.22.57:4000/api/occupancy/live-summary'   //laca
+
+];
+
+// Simple in-memory cache: { [employeeObjId]: { ts: Number, data: Object } }
+const cache = {};
+const CACHE_TTL_MS = 50000; // 5 seconds — tune as needed
+
+function normalizeString(s) {
+  if (!s && s !== 0) return '';
+  return String(s).trim().toLowerCase();
+}
+
+function parseRecordTime(rec) {
+  // Priority: LocaleMessageTime -> snapshotTime -> Dateonly + Swipe_Time
+  if (rec.LocaleMessageTime) return new Date(rec.LocaleMessageTime);
+  if (rec.snapshotTime) return new Date(rec.snapshotTime);
+  if (rec.Dateonly && rec.Swipe_Time) {
+    // e.g. "2025-08-11" + "00:02:41"
+    return new Date(`${rec.Dateonly}T${rec.Swipe_Time}Z`);
+  }
+  return null;
+}
+
+async function getEmployeeLiveLocation(req, res) {
+  const employeeObjId = req.params.id;
+  if (!employeeObjId) return res.status(400).json({ error: 'Missing id' });
+
+  // Serve cache if fresh
+  // const cached = cache[employeeObjId];
+  // if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+  //   return res.json({ cached: true, ...cached.data });
+  // }
+
+
+  try {
+    // 1) Fetch EmployeeID and Name from DB (same logic as getEmployees)
+    const pool = await getPool();
+    const empResult = await pool.request()
+      .input('objid', sql.BigInt, employeeObjId)
+      .query(`
+        SELECT AP.ObjectID,
+               AP.Name AS EmpName,
+               AP.Int1,
+               AP.Text12
+        FROM ACVSCore.Access.Personnel AP
+        WHERE AP.ObjectID = @objid
+      `);
+
+    if (!empResult.recordset.length) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    const empRow = empResult.recordset[0];
+    // EmployeeID logic mirroring existing query:
+    const EmployeeID = (empRow.Int1 === 0 || empRow.Int1 === '0' || empRow.Int1 === null)
+      ? (empRow.Text12 ? String(empRow.Text12) : '')
+      : String(empRow.Int1);
+
+    const empName = empRow.EmpName || '';
+
+    // 2) Query occupancy endpoints concurrently
+    // const requests = OCCUPANCY_URLS.map(u => axios.get(u, { timeout: 5000 }).catch(e => ({ error: e, url: u })));
+    const requests = OCCUPANCY_URLS.map(u => axios.get(u).catch(e => ({ error: e, url: u })));
+    const responses = await Promise.all(requests);
+
+    // 3) Collect and flatten details
+    let allDetails = [];
+    for (const r of responses) {
+      if (!r || r.error) {
+        // Log but continue
+        console.warn('Occupancy fetch failed for', r && r.url, r && r.error && r.error.message);
+        continue;
+      }
+      if (r.data && Array.isArray(r.data.details)) {
+        // Keep source url for debugging
+        const src = r.config && r.config.url ? r.config.url : null;
+        const annotated = r.data.details.map(d => ({ ...d, __source: src }));
+        allDetails.push(...annotated);
+      }
+    }
+
+    // 4) Find matches by EmployeeID (preferred), fallback to name (ObjectName1), then PersonGUID
+    const normEmployeeID = normalizeString(EmployeeID);
+    const normEmpName = normalizeString(empName);
+
+    const matches = allDetails.filter(rec => {
+      const recEmpId = normalizeString(rec.EmployeeID);
+      if (recEmpId && normEmployeeID && recEmpId === normEmployeeID) return true;
+
+      const recName = normalizeString(rec.ObjectName1);
+      if (recName && normEmpName && recName === normEmpName) return true;
+
+      if (rec.PersonGUID) {
+        // optionally, you can compare GUIDs if you have them
+      }
+      return false;
+    });
+
+    if (!matches.length) {
+      const result = { found: false, message: 'No recent swipe found' };
+      cache[employeeObjId] = { ts: Date.now(), data: result };
+      return res.json(result);
+    }
+
+    // 5) Select most recent
+    let best = null;
+    for (const m of matches) {
+      const t = parseRecordTime(m);
+      if (!t) continue;
+      if (!best) best = { rec: m, time: t };
+      else if (t > best.time) best = { rec: m, time: t };
+    }
+
+    if (!best) {
+      const result = { found: false, message: 'No timestamped swipe found' };
+      cache[employeeObjId] = { ts: Date.now(), data: result };
+      return res.json(result);
+    }
+
+    const r = best.rec;
+
+
+
+    const payload = {
+      found: true,
+      source: r.__source || null,
+      partition: r.PartitionName2 || r.Partition || null,
+      floor: r.Floor || r.Zone || r.floor || null,
+      Zone: r.Zone,
+      door: r.Door || null,
+      direction: r.Direction || null,
+      timestampUTC: r.LocaleMessageTime || r.snapshotTime || `${r.Dateonly}T${r.Swipe_Time}Z` || null,
+      personnelType: r.PersonnelType || null,
+      cardNumber: r.CardNumber || null,
+      raw: r
+    };
+    cache[employeeObjId] = { ts: Date.now(), data: payload };
+
+    return res.json(payload);
+
+  } catch (err) {
+    console.error('getEmployeeLiveLocation error', err && err.stack || err);
+    return res.status(500).json({ error: 'Failed to fetch live location', message: err.message });
+  }
+}
+
+module.exports = { getEmployeeLiveLocation };
+
+
