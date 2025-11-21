@@ -1,3 +1,12 @@
+// Total label
+ctx.fillStyle = getComputedStyle(document.body)
+  .getPropertyValue('--graph-card-footer-dark');
+
+// Total value
+ctx.fillStyle = getComputedStyle(document.body)
+  .getPropertyValue('--graph-card-title-dark');
+
+
 
 
 
