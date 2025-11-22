@@ -1,3 +1,13 @@
+
+<div class="gcard wide">
+  <h4 class="gcard-title">Failure Count</h4>
+
+  <div class="chart-placeholder" style="height:260px;">
+    <!-- Chart.js canvas will be injected here by JS -->
+  </div>
+</div>
+
+
 // ========== Failure Count Chart ==========
 let failureCountChart = null;
 
