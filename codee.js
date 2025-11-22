@@ -1,15 +1,3 @@
-bottom side city nam i want streght ok..
-  _____ i want like 
-  ////  not like that ok 
-
-<div class="gcard wide" style="height:300px; width: 1208px; margin-bottom: 50px">
-                <h4 class="gcard-title">LOC Count</h4>
-                <canvas id="cityBarChart"></canvas>
-              </div>
-
-
-
-// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️ bar chart
 let cityChart = null;
 
 function drawCityBarChart() {
@@ -42,7 +30,8 @@ function drawCityBarChart() {
       labels: labels,
       datasets: [{
         label: "Total Devices",
-        data: data
+        data: data,
+        backgroundColor: "#00ffcc"
       }]
     },
     options: {
@@ -53,16 +42,24 @@ function drawCityBarChart() {
       },
       scales: {
         y: {
-          beginAtZero: true
+          beginAtZero: true,
+          ticks: { color: "#00ffcc" },
+          grid: { color: "rgba(0,255,204,0.2)" }
+        },
+        x: {
+          ticks: {
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: false,
+            color: "#00ffcc"
+          },
+          grid: {
+            display: false
+          }
         }
       }
     }
   });
 
-  console.log("✅ City bar chart drawn");
+  console.log("✅ City bar chart with straight labels drawn");
 }
-
-
-
-
-
