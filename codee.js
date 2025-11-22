@@ -1,33 +1,42 @@
-read alos privisue code that i uploed in this chart. summmary.js and trend.js
-that help you to slove this issue ok 
-graph.js:556 ❌ No table found at all
-findDeviceTable	@	graph.js:556
-collectFailureData	@	graph.js:583
-renderFailureChart	@	graph.js:638
-setInterval		
-(anonymous)	@	graph.js:712
+// ================================
+// FAILURE COUNT SCATTER CHART
+// ================================
 
 let failureChartInstance = null;
 
-// Auto detect device table if ID fails
-function findDeviceTable() {
-  let table = document.getElementById("device-table");
+// 🔥 CONFIGURE YOUR TABLE ID HERE
+const DEVICE_TABLE_ID = "networkDeviceTable";
 
-  if (!table) {
-    console.warn("⚠️ device-table not found. Trying auto-detect...");
-    table = document.querySelector("table"); // fallback: first table
-  }
+// =====================================
+// WAIT UNTIL TABLE EXISTS (supports dynamic loading)
+// =====================================
+function waitForTable(callback) {
+  let attempts = 0;
 
-  if (!table) {
-    console.error("❌ No table found at all");
-    return null;
-  }
+  const check = setInterval(() => {
 
-  console.log("✅ Device table found:", table);
-  return table;
+    const table = document.getElementById(DEVICE_TABLE_ID);
+
+    if (table) {
+      clearInterval(check);
+      console.log("✅ Device table detected:", table);
+      callback();
+      return;
+    }
+
+    attempts++;
+
+    if (attempts > 50) {
+      clearInterval(check);
+      console.error("❌ Table not found after waiting. Check ID or load order.");
+    }
+
+  }, 200);
 }
 
-// Normalize device type
+// =====================================
+// DEVICE TYPE NORMALIZER
+// =====================================
 function normalizeType(type) {
   if (!type) return 'Other';
 
@@ -43,14 +52,20 @@ function normalizeType(type) {
   return 'Other';
 }
 
-// Main data collector
+// =====================================
+// FAILURE DATA COLLECTOR
+// =====================================
 function collectFailureData() {
 
-  const table = findDeviceTable();
-  if (!table) return {};
+  const table = document.getElementById(DEVICE_TABLE_ID);
+
+  if (!table) {
+    console.error("❌ Table not found:", DEVICE_TABLE_ID);
+    return {};
+  }
 
   const rows = table.querySelectorAll("tbody tr");
-  console.log("✅ Table rows found:", rows.length);
+  console.log("✅ Table Rows Found:", rows.length);
 
   let data = {};
 
@@ -58,24 +73,18 @@ function collectFailureData() {
 
     const cells = row.querySelectorAll("td");
 
-    // Protect from broken rows
     if (cells.length < 7) return;
 
     const ip = cells[1]?.innerText.trim();
     const name = cells[2]?.innerText.trim();
     const rawType = cells[3]?.innerText.trim();
     const city = cells[4]?.innerText.trim();
-
-    let failureCount = parseInt(cells[6]?.innerText.trim()) || 0;
+    const failureCount = parseInt(cells[6]?.innerText.trim()) || 0;
 
     const deviceType = normalizeType(rawType);
+    const downtimeMinutes = failureCount * 5;
 
-    // Temporary downtime calc
-    let downtimeMinutes = failureCount * 5;
-
-    if (!data[deviceType]) {
-      data[deviceType] = [];
-    }
+    if (!data[deviceType]) data[deviceType] = [];
 
     data[deviceType].push({
       x: failureCount,
@@ -89,7 +98,9 @@ function collectFailureData() {
   return data;
 }
 
-// Render chart
+// =====================================
+// RENDER FAILURE CHART
+// =====================================
 function renderFailureChart() {
 
   const canvas = document.getElementById("failureChartCanvas");
@@ -104,7 +115,7 @@ function renderFailureChart() {
   const deviceData = collectFailureData();
 
   if (Object.keys(deviceData).length === 0) {
-    console.warn("⚠️ No failure data found");
+    console.warn("⚠️ No failure data yet - waiting for data load...");
     return;
   }
 
@@ -142,7 +153,7 @@ function renderFailureChart() {
             label: function(ctx) {
               const m = ctx.raw;
               return [
-                `Name: ${m.name}`,
+                `Device: ${m.name}`,
                 `IP: ${m.ip}`,
                 `City: ${m.city}`,
                 `Failures: ${m.x}`,
@@ -155,8 +166,7 @@ function renderFailureChart() {
       scales: {
         x: {
           title: { display: true, text: "Failure Count" },
-          beginAtZero: true,
-          ticks: { stepSize: 1 }
+          beginAtZero: true
         },
         y: {
           title: { display: true, text: "Downtime (Minutes)" },
@@ -169,10 +179,12 @@ function renderFailureChart() {
   console.log("✅ Failure Chart Rendered Successfully");
 }
 
-// Load
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(renderFailureChart, 2000);
-});
+// =====================================
+// AUTO BOOTSTRAP SYSTEM
+// =====================================
+waitForTable(() => {
+  renderFailureChart();
 
-// Auto refresh
-setInterval(renderFailureChart, 10000);
+  // Keep updating every 10s after table exists
+  setInterval(renderFailureChart, 10000);
+});
