@@ -1,3 +1,10 @@
+graph.js:556 ❌ No table found at all
+findDeviceTable	@	graph.js:556
+collectFailureData	@	graph.js:583
+renderFailureChart	@	graph.js:638
+setInterval		
+(anonymous)	@	graph.js:712
+
 let failureChartInstance = null;
 
 // Auto detect device table if ID fails
