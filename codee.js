@@ -1,51 +1,64 @@
-<!-- Temporary debug button - remove after testing -->
-<div style="position: fixed; top: 80px; right: 20px; z-index: 10000; background: #ff6b6b; padding: 10px; border-radius: 5px;">
-  <button onclick="testFailureChart()" style="background: white; color: #ff6b6b; border: none; padding: 8px 12px; border-radius: 3px; cursor: pointer; font-weight: bold;">
-    Test Failure Chart
-  </button>
-  <button onclick="console.log('Failure Chart:', failureChart); console.log('Device History:', window.deviceHistoryData); console.log('Current Details:', window.currentDeviceDetails)" 
-          style="background: #45b7d1; color: white; border: none; padding: 8px 12px; border-radius: 3px; cursor: pointer; margin-left: 5px;">
-    Debug Info
-  </button>
-</div>
+// Calculate failure counts from your device data - DYNAMIC VERSION
+function calculateFailureCounts(deviceDetails) {
+  console.log('CALCULATING FAILURE COUNTS from device details:', deviceDetails);
+  
+  const counts = {
+    cameras: 0,
+    controllers: 0,
+    archivers: 0,
+    servers: 0,
+    desktops: 0,
+    dbServers: 0
+  };
 
+  if (!deviceDetails || typeof deviceDetails !== 'object') {
+    console.warn('No valid device details provided');
+    return counts;
+  }
 
+  if (!window.deviceHistoryData) {
+    console.warn('No device history data available yet');
+    return counts;
+  }
 
+  console.log('Available device history data keys:', Object.keys(window.deviceHistoryData).length);
 
+  // Process each device type with proper error handling
+  const deviceTypes = ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'];
+  
+  deviceTypes.forEach(type => {
+    const devices = deviceDetails[type] || [];
+    console.log(`Processing ${type}: ${devices.length} devices`);
+    
+    devices.forEach(device => {
+      if (!device || !device.ip_address) return;
+      
+      const ip = device.ip_address;
+      const history = window.deviceHistoryData[ip] || [];
+      const category = type.toUpperCase();
+      
+      console.log(`Device ${ip} (${type}): ${history.length} history entries`);
+      
+      const filteredHistory = filterHistoryForDisplay(history, category);
+      const failureCount = filteredHistory.filter(e => e && e.status === 'Offline').length;
+      
+      if (failureCount > 0) {
+        console.log(`→ ${ip}: ${failureCount} failures`);
+      }
+      
+      // Map to appropriate category
+      switch(type) {
+        case 'cameras': counts.cameras += failureCount; break;
+        case 'controllers': counts.controllers += failureCount; break;
+        case 'archivers': counts.archivers += failureCount; break;
+        case 'servers': counts.servers += failureCount; break;
+        case 'pcDetails': counts.desktops += failureCount; break;
+        case 'DBDetails': counts.dbServers += failureCount; break;
+        default: console.warn(`Unknown device type: ${type}`);
+      }
+    });
+  });
 
-...
-/* Ensure Failure Count chart container is visible */
-.gcard.wide {
-  position: relative;
-  background: var(--card-bg);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-#failureCountChart {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  z-index: 10 !important;
-  position: relative !important;
-}
-
-/* Ensure the graphs section is properly styled */
-.graphs-section {
-  position: relative;
-  z-index: 1;
-}
-
-.bottom-row {
-  position: relative;
-  z-index: 1;
-}
-
-/* Make sure canvas is not hidden */
-canvas {
-  display: block !important;
-  visibility: visible !important;
+  console.log('FINAL DYNAMIC FAILURE COUNTS:', counts);
+  return counts;
 }
