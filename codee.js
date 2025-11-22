@@ -1,18 +1,21 @@
-.gcard {
-  background: #111;
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 0 10px rgba(0,255,204,0.3);
-}
+refreshFailureChart({
+  cameras: 15,
+  controllers: 8,
+  archivers: 20,
+  servers: 5,
+  desktops: 10,
+  dbServers: 3
+});
 
-.gcard-title {
-  color: #00ffcc;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 5px;
-  letter-spacing: 1px;
-}
 
-canvas {
-  background: transparent;
-}
+
+
+failureChart.data.datasets[0].data = [
+  { x: 2, y: 15 },
+  { x: 6, y: 8 },
+  { x: 10, y: 20 },
+  { x: 14, y: 5 },
+  { x: 18, y: 10 },
+  { x: 22, y: 3 }
+];
+failureChart.update();
