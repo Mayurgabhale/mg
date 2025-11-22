@@ -1,276 +1,732 @@
-<!-- Failure Count Chart Card -->
-<div class="gcard wide" id="failure-chart-card">
-  <h4 class="gcard-title">Failure Count</h4>
-
-  <div id="failure-chart-container" style="height:300px; width:100%;">
-    <canvas id="failureChartCanvas"></canvas>
-  </div>
-</div>
-
-<!-- Example device table (your real table will be produced by summary.js / trend.js).
-     Make sure your real table has the same column order:
-     0: Sr, 1: IP, 2: Name, 3: Category, 4: City, 5: Uptime, 6: downtime-count, 7: downtime-time, ...
--->
-<table id="networkDeviceTable" style="display:none;">
-  <thead>
-    <tr><th>#</th><th>IP</th><th>Name</th><th>Category</th><th>City</th><th>Uptime</th><th>DowntimeCount</th></tr>
-  </thead>
-  <tbody>
-    <!-- populated by summary.js / trend.js in your app -->
-  </tbody>
-</table>
+first slove this error, why thsi happinng.. 
+  ok then we move ahed ok 
+ReferenceError: renderFailureCountChart is not defined
+    at populateDeviceTable (trend.js:1071:3)
+    at trend.js:916:7
+ReferenceError: renderFailureCountChart is not defined
+    at populateDeviceTable (trend.js:1071:3)
+    at trend.js:916:7
+﻿
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\trend.js
 
 
+let deviceUptimeTimers = {};
+let deviceDowntimeTimers = {};
 
-....
-<!-- Chart.js CDN (if you don't already include it) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+let deviceOfflineAlerted = {};
+let deviceOnlineAlerted = {};
 
-<script>
-/* Robust Failure Count chart module
-   - automatically finds your device table
-   - exposes renderFailureChart() and renderFailureCountChart()
-   - observes table body changes and re-renders
-*/
-
-(function () {
-  // single chart instance
-  let failureChartInstance = null;
-  let tableObserver = null;
-  const canvasId = 'failureChartCanvas';
-
-  // Look for device table by several possible ids (fallback to first table)
-  function findDeviceTable() {
-    const ids = ['device-table', 'networkDeviceTable', 'networkDeviceTable', 'deviceTable'];
-    for (const id of ids) {
-      const t = document.getElementById(id);
-      if (t && t.querySelector && t.querySelector('tbody')) {
-        console.log('✅ Found device table by id:', id);
-        return t;
-      }
-    }
-    // fallback to first table with tbody
-    const firstTable = document.querySelector('table tbody') ? document.querySelector('table') : null;
-    if (firstTable) {
-      console.log('⚠️ Found fallback table (first <table>)');
-      return firstTable;
-    }
-    console.warn('❌ No device table found by id or fallback');
-    return null;
-  }
-
-  // Normalize device type string to short group
-  function normalizeType(type) {
-    if (!type) return 'Other';
-    const c = type.toString().toLowerCase();
-    if (c.includes('camera') || c.includes('cctv')) return 'CCTV';
-    if (c.includes('controller') || c.includes('acs')) return 'ACS';
-    if (c.includes('archiver') || c.includes('nvr') || c.includes('dvr')) return 'NVR/DVR';
-    if (c.includes('server') && !c.includes('db')) return 'SERVER';
-    if (c.includes('desktop') || c.includes('pc')) return 'Desktop';
-    if (c.includes('db')) return 'DB Server';
-    return 'Other';
-  }
-
-  // Read rows and build grouped dataset
-  function collectFailureData() {
-    const table = findDeviceTable();
-    if (!table) return {};
-
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return {};
-
-    const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.cells && r.cells.length > 0);
-    console.log('collectFailureData → rows:', rows.length);
-
-    const groups = {}; // { type: [ {x,y,ip,name,city} ] }
-
-    rows.forEach(row => {
-      const cells = row.cells;
-
-      // Defensive column discovery:
-      // prefer ids like downtime-count-<safeip> if present, else fallback to columns (6 or 7)
-      let ip = (cells[1]?.innerText || '').trim();
-      let name = (cells[2]?.innerText || '').trim();
-      let rawType = (cells[3]?.getAttribute('data-category') || cells[3]?.innerText || '').trim();
-      let city = (cells[4]?.innerText || '').trim();
-
-      // If your markup uses <span id="downtime-count-..."> find it
-      let safe = ip ? ip.replace(/[^a-zA-Z0-9]/g, '_') : null;
-      let downCount = 0;
-      if (safe) {
-        const inline = document.getElementById(`downtime-count-${safe}`);
-        if (inline && inline.innerText) {
-          downCount = parseInt(inline.innerText.trim()) || 0;
-        }
-      }
-      if (!downCount) {
-        // fallback: try column 6 or 7 (0-based)
-        downCount = parseInt((cells[6]?.innerText || cells[7]?.innerText || '0').trim()) || 0;
-      }
-
-      // If row is hidden/placeholder or missing ip -> skip
-      if (!ip) return;
-
-      const type = normalizeType(rawType);
-      const downtimeMinutes = Math.max(0, downCount * 5); // simple estimate; replace with real calc if history available
-
-      if (!groups[type]) groups[type] = [];
-      groups[type].push({
-        x: downCount,
-        y: downtimeMinutes,
-        ip, name, city
-      });
-    });
-
-    return groups;
-  }
-
-  function buildDatasets(groups) {
-    const COLORS = {
-      CCTV: "#22c55e",
-      ACS: "#f97316",
-      "NVR/DVR": "#3b82f6",
-      SERVER: "#9333ea",
-      Desktop: "#0ea5e9",
-      "DB Server": "#ef4444",
-      Other: "#6b7280"
-    };
-
-    return Object.keys(groups).map(type => ({
-      label: type,
-      data: groups[type],
-      backgroundColor: COLORS[type] || COLORS.Other,
-      pointRadius: 7
-    }));
-  }
-
-  // Create or update Chart
-  function renderFailureChart() {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) {
-      console.error('❌ failure chart canvas not found:', canvasId);
-      return;
-    }
-
-    if (typeof Chart === 'undefined') {
-      console.error('❌ Chart.js is not loaded. Add Chart.js before this script.');
-      return;
-    }
-
-    const groups = collectFailureData();
-    if (Object.keys(groups).length === 0) {
-      console.warn('⚠️ No failure data to render (groups empty). Chart will not render.');
-      // optionally destroy existing chart to avoid stale visuals:
-      if (failureChartInstance) {
-        failureChartInstance.destroy();
-        failureChartInstance = null;
-      }
-      return;
-    }
-
-    const ctx = canvas.getContext('2d');
-    const datasets = buildDatasets(groups);
-
-    if (failureChartInstance) {
-      failureChartInstance.destroy();
-      failureChartInstance = null;
-    }
-
-    failureChartInstance = new Chart(ctx, {
-      type: 'scatter',
-      data: { datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'top' },
-          tooltip: {
-            callbacks: {
-              label: function (ctx) {
-                const m = ctx.raw;
-                return [
-                  `Name: ${m.name || '-'}`,
-                  `IP: ${m.ip || '-'}`,
-                  `City: ${m.city || '-'}`,
-                  `Failures: ${m.x}`,
-                  `Downtime(min): ${m.y}`
-                ];
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            title: { display: true, text: 'Failure Count (occurrences)' },
-            beginAtZero: true,
-            ticks: { stepSize: 1 }
-          },
-          y: {
-            title: { display: true, text: 'Total Downtime (minutes)' },
-            beginAtZero: true
-          }
-        }
+function notifyWindows(title, message) {
+  if (Notification.permission === 'granted') {
+    new Notification(title, { body: message });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        new Notification(title, { body: message });
       }
     });
-
-    console.log('✅ Failure Chart rendered. groups:', Object.keys(groups));
   }
 
-  // Alias to keep older callers working
-  window.renderFailureChart = renderFailureChart;
-  window.renderFailureCountChart = renderFailureChart; // IMPORTANT: fixes ReferenceError
+  showToastAlert(title, message);
+}
 
-  // Re-render when table tbody changes (so when populateDeviceTable updates rows)
-  function observeTableChanges() {
-    const table = findDeviceTable();
-    if (!table) return;
 
-    const tbody = table.querySelector('tbody');
-    if (!tbody) return;
 
-    // disconnect previous observer
-    if (tableObserver) tableObserver.disconnect();
 
-    tableObserver = new MutationObserver((mutations) => {
-      // small debounce
-      clearTimeout(tableObserver._t);
-      tableObserver._t = setTimeout(() => {
-        console.log('🔁 Table mutation detected — re-render failure chart');
-        renderFailureChart();
-      }, 150);
-    });
 
-    tableObserver.observe(tbody, { childList: true, subtree: true, characterData: true });
-    console.log('👀 Observing device table changes to auto-refresh chart');
-  }
+// function notifyWindows(title, message) {
+//   showToastAlert(title, message);
+// }
 
-  // try to start observer when DOM ready; also try again later if table appears later
-  function start() {
-    // If Chart is not available yet, wait a bit
-    if (typeof Chart === 'undefined') {
-      console.warn('Chart.js not found yet — will retry in 300ms');
-      setTimeout(start, 300);
-      return;
-    }
+function showToastAlert(title, message) {
+  const container = document.getElementById('alert-toast-container');
 
-    // Setup observer and initial render
-    observeTableChanges();
-    renderFailureChart();
+  const toast = document.createElement('div');
+  toast.className = 'alert-toast';
 
-    // Periodic refresh (in case changes happen without DOM mutations)
-    setInterval(renderFailureChart, 10000);
-  }
+  // toast.innerHTML = `
+  //   <div class="close-btn" onclick="this.parentElement.remove()">×</div>
+  //   <h4>${title}</h4>
+  //   <pre>${message}</pre>
+  // `;
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // Wait a short time to allow summary.js / trend.js to populate the table if they run on DOMContentLoaded too.
-    setTimeout(() => {
-      start();
-    }, 600);
+  toast.innerHTML = `
+  <div class="close-btn">×</div>
+  <h4>${title}</h4>
+  <pre>${message}</pre>
+`;
+
+  const closeBtn = toast.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => {
+    toast.remove();
   });
 
-  // also expose a manual refresh
-  window.refreshFailureChart = renderFailureChart;
+  container.appendChild(toast);
 
-})();
-</script>
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    toast.remove();
+  }, 180000);
+}
+
+
+function startDowntime(ip, hist, category) {
+  const safe = sanitizeId(ip);
+  clearInterval(deviceUptimeTimers[safe]);
+
+  const off = hist.filter(e => e.status === 'Offline').pop();
+  if (!off) return;
+
+  const t0 = new Date(off.timestamp).getTime();
+
+  deviceOfflineAlerted[safe] = false;  // Reset per event
+
+  deviceDowntimeTimers[safe] = setInterval(() => {
+    const secs = Math.floor((Date.now() - t0) / 1000);
+    document.getElementById(`downtime-${safe}`).innerText = formatDuration(secs);
+    document.getElementById(`downtime-count-${safe}`).innerText = hist.filter(e => e.status === 'Offline').length;
+    updateRemarks(ip, hist, null, null);
+
+    // 🔔 Notify if offline ≥ 3 min
+    if (secs >= 180 && !deviceOfflineAlerted[safe]) {
+      deviceOfflineAlerted[safe] = true;
+
+      const name = document.getElementById(`name-${safe}`).innerText;
+      const type = document.querySelector(`#ip-${safe}`).parentNode.nextElementSibling.textContent;
+      const city = document.getElementById(`remark-${safe}`).dataset.city || 'Unknown';
+
+      const title = "⚠️ Device Offline ≥ 3 min";
+      const message =
+        `Device Name: ${name}\n` +
+        `Device Type: ${category}\n` +
+        `Device IP: ${ip}\n` +
+        `City: ${city}\n` +
+        `Status: Device is Offline\n` +
+        `Offline Time: ${formatDuration(secs)}`;
+
+      // notifyWindows(title, message);
+    }
+  }, 1000);
+}
+
+
+
+function startUptime(ip, hist, category) {
+  const safe = sanitizeId(ip);
+  clearInterval(deviceDowntimeTimers[safe]);
+
+  const on = hist.filter(e => e.status === 'Online').pop();
+  if (!on) return;
+
+  const tOn = new Date(on.timestamp).getTime();
+
+  // Calculate how long it was offline
+  const lastOff = hist.slice().reverse().find(e => e.status === 'Offline');
+  const offlineSecs = lastOff ? Math.floor((tOn - new Date(lastOff.timestamp)) / 1000) : 0;
+
+  deviceOnlineAlerted[safe] = false;
+
+  if (offlineSecs >= 120 && !deviceOnlineAlerted[safe]) {
+    deviceOnlineAlerted[safe] = true;
+
+    const name = document.getElementById(`name-${safe}`).innerText;
+    const type = document.querySelector(`#ip-${safe}`).parentNode.nextElementSibling.textContent;
+    const city = document.getElementById(`remark-${safe}`).dataset.city || 'Unknown';
+
+    const title = "✅ Device is Online after 2+ min";
+    const message =
+      `Device Name: ${name}\n` +
+      `Device Type: ${category}\n` +
+      `Device IP: ${ip}\n` +
+      `City: ${city}`;
+
+    notifyWindows(title, message);
+  }
+
+  const t0 = new Date(on.timestamp).getTime();
+  deviceUptimeTimers[safe] = setInterval(() => {
+    document.getElementById(`uptime-${safe}`).innerText =
+      formatDuration(Math.floor((Date.now() - t0) / 1000));
+  }, 1000);
+}
+
+
+
+// Utility to turn an IP (or any string) into a safe DOM-ID fragment
+function sanitizeId(str) {
+  return (str || '').replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+function fetchDeviceData() {
+  const region = document.getElementById('region').value;
+  fetch(`http://localhost/api/regions/details/${region}`)
+    .then(r => r.json())
+    .then(d => fetchDeviceHistory(d.details))
+    .catch(console.error);
+}
+
+function fetchDeviceHistory(details) {
+  fetch(`http://localhost/api/devices/history`)
+    .then(r => r.json())
+    .then(historyData => {
+      populateDeviceTable(details, historyData);
+      window.deviceHistoryData = historyData;
+    })
+    .catch(console.error);
+}
+
+function populateDeviceTable(details, historyData) {
+  const Devices = [];
+  const tbody = document.querySelector('#device-table tbody');
+  tbody.innerHTML = '';
+
+  const devices = [];
+  ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'].forEach(type => {
+    (details[type] || []).forEach(dev => {
+      const ip = dev.ip_address;
+      const safe = sanitizeId(ip);
+      // const name      = dev[type.slice(0,-1) + 'name'] || 'Unknown';
+      const name = dev.hostname || dev.pc_name || dev[type.slice(0, -1) + 'name'] || dev.name || dev.device_name || dev.ip_address || 'Unknown';
+      const category = type.slice(0, -1).toUpperCase();
+      const rawHist = historyData[ip] || [];
+      const city = dev.city || 'Unknown';
+      const hist = filterHistoryForDisplay(rawHist, category);
+      const lastRaw = rawHist[rawHist.length - 1]?.status || 'Unknown';
+      // if last raw Offline but <5min, treat Online
+      let status = lastRaw;
+      if (lastRaw === 'Offline' && ((Date.now() - new Date(rawHist[rawHist.length - 1].timestamp)) / 1000) < 300) {
+        status = 'Online';
+      }
+      const downCount = hist.filter(e => e.status === 'Offline').length;
+
+      // devices.push({ ip, safe, name, category, rawHist, hist, status, downCount,city  });
+      devices.push({ ip, safe, name, category, rawHist, hist, status, downCount, city, remark: dev.remark || '' });
+
+    });
+  });
+
+  // sort by ongoing ≥5min offline first, then by downCount desc
+  devices.sort((a, b) => {
+    const now = Date.now();
+    const aLast = a.hist[a.hist.length - 1], bLast = b.hist[b.hist.length - 1];
+    const aOff = aLast?.status === 'Offline' ? (now - new Date(aLast.timestamp)) / 1000 : 0;
+    const bOff = bLast?.status === 'Offline' ? (now - new Date(bLast.timestamp)) / 1000 : 0;
+    if ((aOff >= 300) !== (bOff >= 300)) return aOff >= 300 ? -1 : 1;
+    return b.downCount - a.downCount;
+  });
+
+  devices.forEach((d, i) => {
+    const row = tbody.insertRow();
+
+    // row.classList.add(d.status==='Online' ? 'status-online' : 'status-offline');
+
+    if (d.status === 'Offline') {
+      row.classList.add('row-offline');
+    } else if (d.status === 'Online') {
+      row.classList.add('row-online');
+    } else {
+      // Optional: handle unknown or other cases
+      row.classList.add('row-repair');
+    }
+
+
+    const displayCategory =
+  d.category === 'PCDETAIL' ? 'Desktop'
+  : d.category === 'DBDETAIL' ? 'DB Server'
+  : d.category;
+
+
+    //     row.innerHTML = `
+    // <td>${i+1}</td>
+    // <td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
+    // <td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
+    // <td>${d.category}</td>
+    // <td id="uptime-${d.safe}">0h/0m/0s</td>
+    // <td id="downtime-count-${d.safe}">${d.downCount}</td>
+    // <td id="downtime-${d.safe}">0h/0m/0s</td>
+    // <td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
+    // <td id="remark-${d.safe}">–</td>
+    // `;
+
+
+    row.innerHTML = `
+<td>${i + 1}</td>
+<td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
+<td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
+<td data-category="${d.category}">${displayCategory}</td>
+<td>${d.city}</td>
+<td id="uptime-${d.safe}">0h/0m/0s</td>
+<td id="downtime-count-${d.safe}">${d.downCount}</td>
+<td id="downtime-${d.safe}">0h/0m/0s</td>
+<td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
+<td id="remark-${d.safe}" data-city="${d.city}">–</td>
+`;
+
+
+
+    // show policy tooltip on hover for rows with explicit "Not accessible" remark
+    // modern hover message for "Not accessible" rows
+    if (d.remark && /not\s+access/i.test(d.remark)) {
+      row.classList.add('row-not-accessible');
+
+      // create tooltip element
+      const tooltip = document.createElement("div");
+      tooltip.className = "modern-tooltip";
+      tooltip.textContent = "Due to Network policy, this camera is Not accessible";
+      row.appendChild(tooltip);
+    }
+
+
+    if (d.status === 'Online') startUptime(d.ip, d.hist, d.category);
+    else startDowntime(d.ip, d.hist, d.category);
+
+    updateRemarks(d.ip, d.hist, d.status, d.downCount);
+  });
+
+
+
+  // ✅ Add this block AFTER `devices.forEach(...)` inside populateDeviceTable
+  // const cityFilter = document.getElementById('cityFilter');
+  // if (cityFilter) {
+  //   const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
+  //   cityFilter.innerHTML = '<option value="all">All Cities</option>';
+  //   uniqueCities.forEach(city => {
+  //     const option = document.createElement('option');
+  //     option.value = city;
+  //     option.textContent = city;
+  //     cityFilter.appendChild(option);
+  //   });
+  // }
+
+
+  const cityFilter = document.getElementById('cityFilter');
+  if (cityFilter) {
+    const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
+
+    // Build dropdown from scratch, ensure ALL option is uppercase and selected
+    cityFilter.innerHTML = '';
+    const allOpt = document.createElement('option');
+    allOpt.value = 'ALL';            // use 'ALL' (uppercase) to match filterData()
+    allOpt.textContent = 'All Cities';
+    allOpt.selected = true;          // explicitly mark selected so it shows on first render
+    cityFilter.appendChild(allOpt);
+
+    uniqueCities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      option.textContent = city;
+      cityFilter.appendChild(option);
+    });
+
+    // Force value + trigger change so UI and any listeners update immediately
+    cityFilter.value = 'ALL';
+    cityFilter.dispatchEvent(new Event('change'));
+  }
+
+  filterData();
+  renderFailureCountChart();
+
+}
+
+function filterHistoryForDisplay(hist, category) {
+  if (category === 'SERVER') return hist.slice();
+
+  const out = [];
+
+  let lastOff = null;
+  hist.forEach(e => {
+    if (e.status === 'Offline') lastOff = e;
+    else if (e.status === 'Online' && lastOff) {
+      const diff = (new Date(e.timestamp) - new Date(lastOff.timestamp)) / 1000;
+      if (diff >= 300) out.push(lastOff, e);
+
+      lastOff = null;
+    }
+  });
+
+  if (lastOff) {
+
+    const diff = (Date.now() - new Date(lastOff.timestamp)) / 1000;
+    if (diff >= 300) out.push(lastOff);
+
+  }
+
+  return out.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+}
+
+function startUptime(ip, hist) {
+  const safe = sanitizeId(ip);
+  clearInterval(deviceDowntimeTimers[safe]);
+  const on = hist.filter(e => e.status === 'Online').pop();
+  if (!on) return;
+  const t0 = new Date(on.timestamp).getTime();
+  deviceUptimeTimers[safe] = setInterval(() => {
+    document.getElementById(`uptime-${safe}`).innerText = formatDuration(Math.floor((Date.now() - t0) / 1000));
+  }, 1000);
+}
+
+// function startDowntime(ip, hist) {
+//   const safe = sanitizeId(ip);
+//   clearInterval(deviceUptimeTimers[safe]);
+//   const off = hist.filter(e => e.status==='Offline').pop();
+//   if (!off) return;
+//   const t0 = new Date(off.timestamp).getTime();
+//   deviceDowntimeTimers[safe] = setInterval(() => {
+//     const secs = Math.floor((Date.now()-t0)/1000);
+//     document.getElementById(`downtime-${safe}`).innerText = formatDuration(secs);
+//     document.getElementById(`downtime-count-${safe}`).innerText = hist.filter(e => e.status==='Offline').length;
+//     updateRemarks(ip, hist, null, null);
+//   }, 1000);
+// }
+
+function updateRemarks(ip, hist, forcedStatus, forcedCount) {
+  const safe = sanitizeId(ip);
+  // Determine status
+  let status = forcedStatus;
+  if (!status) {
+    const last = hist[hist.length - 1]?.status || 'Unknown';
+    status = last === 'Offline' && ((Date.now() - new Date(hist[hist.length - 1].timestamp)) / 1000) < 300
+      ? 'Online' : last;
+  }
+  const count = forcedCount ?? hist.filter(e => e.status === 'Offline').length;
+  const el = document.getElementById(`remark-${safe}`);
+  if (!el) return;
+  if (status === 'Offline') {
+    el.innerText = count > 0 ? 'Device is Offline, needs check.' : 'Device is Offline.';
+  } else if (status === 'Online') {
+    el.innerText = count > 0
+      ? `Device is Online, had ${count} downtime events ≥5 min.`
+      : 'Device is Online.';
+  } else {
+    el.innerText = 'Device status unknown.';
+  }
+}
+
+function formatDuration(sec) {
+  const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600),
+    m = Math.floor((sec % 3600) / 60), s = Math.round(sec % 60);
+  const parts = [];
+  if (d) parts.push(`${d}d`);
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  if (s || !parts.length) parts.push(`${s}s`);
+  return parts.join('/');
+}
+
+function openDeviceHistory(ip, name, category) {
+  const raw = window.deviceHistoryData[ip] || [];
+  const hist = filterHistoryForDisplay(raw, category);
+  displayDeviceHistory(ip, name, category, hist);
+  document.getElementById('device-history-modal').style.display = 'block';
+}
+
+
+
+function displayDeviceHistory(ip, name, category, hist) {
+  const header = document.getElementById('device-history-header');
+  const container = document.getElementById('device-history');
+  header.innerHTML = `
+    <h2 style="color: var(--yellow); font-size: 24px;">${name} <span style="font-size:16px;">(${ip})</span></h2>
+    <hr style="margin: 10px 0; border-color: var(--gray);">
+  `;
+
+  if (!hist.length) {
+    container.innerHTML = `<p style="font-style: italic; color: #777;">No downtime ≥5 min in history.</p>`;
+    return;
+  }
+
+  let html = `
+    <div class="scrollable-history-table">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Sr.No</th><th>Date</th><th>Day</th><th>Time</th><th>Status</th><th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  let idx = 1;
+  let lastOff = null;
+
+  hist.forEach(e => {
+    const t = new Date(e.timestamp);
+    const date = t.toLocaleDateString();
+    const day = t.toLocaleString('en-US', { weekday: 'long' });
+    const time = t.toLocaleTimeString();
+    let dur = '-';
+
+    if (e.status === 'Offline') {
+      if (!lastOff) {
+        lastOff = e.timestamp;
+        html += `
+          <tr>
+            <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
+            <td class="status-offline">${e.status}</td><td>${dur}</td>
+          </tr>`;
+      }
+    } else if (e.status === 'Online') {
+      if (lastOff) {
+        const diff = (new Date(e.timestamp) - new Date(lastOff)) / 1000;
+        dur = formatDuration(diff);
+        const offTime = new Date(lastOff);
+        const offDate = offTime.toLocaleDateString();
+        const offDay = offTime.toLocaleString('en-US', { weekday: 'long' });
+        const offClock = offTime.toLocaleTimeString();
+
+        html += `
+          <tr>
+            <td>${idx++}</td><td>${offDate}</td><td>${offDay}</td><td>${offClock}</td>
+            <td class="status-offline">Offline</td><td>${dur}</td>
+          </tr>
+          <tr>
+            <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
+            <td class="status-online">${e.status}</td><td>${formatDuration(0)}</td>
+          </tr>`;
+
+        lastOff = null;
+      } else {
+        html += `
+          <tr>
+            <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
+            <td class="status-online">${e.status}</td><td>${dur}</td>
+          </tr>`;
+      }
+    }
+  });
+
+  if (lastOff) {
+    const t = new Date(lastOff);
+    const date = t.toLocaleDateString();
+    const day = t.toLocaleString('en-US', { weekday: 'long' });
+    const time = t.toLocaleTimeString();
+    const now = Date.now();
+    const dur = formatDuration((now - new Date(lastOff)) / 1000);
+
+    html += `
+      <tr>
+        <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
+        <td class="status-offline">Offline</td><td>${dur}</td>
+      </tr>`;
+  }
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+
+
+
+function closeHistoryModal() {
+  document.getElementById('device-history-modal').style.display = 'none';
+}
+
+function exportDeviceTableToExcel() {
+  const table = document.getElementById("device-table");
+  const workbook = XLSX.utils.table_to_book(table, { sheet: "Device Table" });
+  XLSX.writeFile(workbook, "Device_Table.xlsx");
+}
+
+
+function exportDeviceHistoryToExcel() {
+  const historyTable = document.querySelector("#device-history-modal table");
+  if (!historyTable) {
+    alert("Please open a device's history first.");
+    return;
+  }
+  const workbook = XLSX.utils.table_to_book(historyTable, { sheet: "Device History" });
+  XLSX.writeFile(workbook, "Device_History.xlsx");
+}
+
+
+
+// function filterData() {
+//   const rawTypeSel = document.getElementById('device-type').value.toUpperCase();
+//   // normalize select values to match the Category text in the table
+//   const typeSel = rawTypeSel === 'PCDETAILS' ? 'PCDETAIL'
+//                 : rawTypeSel === 'DBDETAILS' ? 'DBDETAIL'
+//                 : rawTypeSel;
+
+//   const remarkSel = document.getElementById('remark-filter').value.toUpperCase();
+//   const citySel   = document.getElementById('cityFilter')?.value.toUpperCase() || "ALL";
+//   const searchTxt = document.getElementById('search-input').value.toUpperCase();
+
+//   document.querySelectorAll('#device-table tbody tr').forEach(r => {
+//     const ip     = r.cells[1].textContent.toUpperCase();
+//     const name   = r.cells[2].textContent.toUpperCase();
+//     const type   = r.cells[3].textContent.toUpperCase(); // e.g., CONTROLLER, PCDETAIL, DBDETAIL
+//     const city   = r.cells[4].textContent.toUpperCase();
+//     const remark = r.cells[9]?.textContent.toUpperCase();
+
+//     const matchesType   = (typeSel === 'ALL' || type === typeSel);
+//     const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
+//     const matchesCity   = (citySel === 'ALL' || city === citySel);
+//     const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
+
+//     r.style.display = matchesType && matchesRemark && matchesCity && matchesSearch ? '' : 'none';
+//   });
+// }
+
+// new 
+
+function filterData() {
+  // Read UI selections
+  const rawTypeSel = (document.getElementById('device-type')?.value || '');
+  const rt = rawTypeSel.toUpperCase();
+
+  // Normalize displayed device-type values to the internal data-category values
+  let typeSel;
+  if (rt === 'DESKTOP') typeSel = 'PCDETAIL';
+  else if (rt === 'DB SERVER' || rt === 'DBSERVER') typeSel = 'DBDETAIL';
+  else typeSel = rt; // e.g., ALL, CONTROLLER, CAMERA, SERVER, ARCHIVER
+
+  const remarkSel = (document.getElementById('remark-filter')?.value || '').toUpperCase();
+  const cityFilterEl = document.getElementById('cityFilter');
+  const prevCityVal = cityFilterEl?.value || 'ALL';
+  const searchTxt = (document.getElementById('search-input')?.value || '').toUpperCase();
+
+  // Collect rows
+  const tbodyRows = Array.from(document.querySelectorAll('#device-table tbody tr'));
+
+  // First: figure out which cities are possible given type+remark+search (preserve original casing)
+  const possibleCitiesMap = new Map(); // key: UPPERCASE city -> value: original city text
+  tbodyRows.forEach(r => {
+    const ip = r.cells[1].textContent.toUpperCase();
+    const name = r.cells[2].textContent.toUpperCase();
+
+    const typeCell = r.cells[3];
+    const typeVal = (typeCell && typeCell.getAttribute('data-category'))
+      ? typeCell.getAttribute('data-category').toUpperCase()
+      : typeCell.textContent.toUpperCase();
+
+    const cityOriginal = (r.cells[4].textContent || '').trim();
+    const cityUp = cityOriginal.toUpperCase();
+    const remark = (r.cells[9]?.textContent || '').toUpperCase();
+
+    const matchesType = (typeSel === 'ALL' || typeVal === typeSel);
+    const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
+    const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
+
+    if (matchesType && matchesRemark && matchesSearch && cityOriginal) {
+      possibleCitiesMap.set(cityUp, cityOriginal);
+    }
+  });
+
+  // Sort possible cities (preserve case)
+  const possibleCities = Array.from(possibleCitiesMap.values()).sort((a, b) => a.localeCompare(b));
+
+  // Rebuild the city dropdown so it contains only available cities + All Cities
+  if (cityFilterEl) {
+    const prev = prevCityVal;
+    cityFilterEl.innerHTML = '';
+
+    const allOpt = document.createElement('option');
+    allOpt.value = 'ALL';
+    allOpt.textContent = 'All Cities';
+    cityFilterEl.appendChild(allOpt);
+
+    possibleCities.forEach(cityName => {
+      const opt = document.createElement('option');
+      opt.value = cityName;
+      opt.textContent = cityName;
+      cityFilterEl.appendChild(opt);
+    });
+
+    // Restore previous selection if still valid; else choose ALL
+    const restored = (prev && (prev.toUpperCase() === 'ALL' || possibleCitiesMap.has(prev.toUpperCase()))) ? prev : 'ALL';
+    cityFilterEl.value = restored;
+  }
+
+  // Now apply visibility of rows using the (possibly updated) city selection
+  const citySel = (document.getElementById('cityFilter')?.value || 'ALL').toUpperCase();
+
+  tbodyRows.forEach(r => {
+    const ip = r.cells[1].textContent.toUpperCase();
+    const name = r.cells[2].textContent.toUpperCase();
+
+    const typeCell = r.cells[3];
+    const type = (typeCell && typeCell.getAttribute('data-category'))
+      ? typeCell.getAttribute('data-category').toUpperCase()
+      : typeCell.textContent.toUpperCase();
+
+    const city = (r.cells[4].textContent || '').toUpperCase();
+    const remark = (r.cells[9]?.textContent || '').toUpperCase();
+
+    const matchesType   = (typeSel === 'ALL' || type === typeSel);
+    const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
+    const matchesCity   = (citySel === 'ALL' || city === citySel);
+    const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
+
+    r.style.display = (matchesType && matchesRemark && matchesCity && matchesSearch) ? '' : 'none';
+  });
+}
+
+
+
+
+function copyToClipboard(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const text = el.innerText;
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast(`Copied: ${text}`))
+      .catch(err => console.error("Clipboard error:", err));
+  } else {
+    // fallback
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";  // avoid scrolling
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      document.execCommand("copy");
+      showToast(`Copied: ${text}`);
+    } catch (err) {
+      console.error("Fallback copy failed", err);
+    }
+    document.body.removeChild(textarea);
+  }
+}
+
+
+// document.addEventListener('DOMContentLoaded', () => {
+//   ['region', 'device-type', 'remark-filter'].forEach(id => {
+//     document.getElementById(id)?.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
+//   });
+
+//   document.getElementById('search-input')?.addEventListener('input', filterData);
+
+//   // ✅ Add cityFilter event
+//   document.getElementById('cityFilter')?.addEventListener('change', filterData);
+
+//   fetchDeviceData();
+// });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
+
+  ['region', 'device-type', 'remark-filter'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
+  });
+
+  document.getElementById('search-input')?.addEventListener('input', filterData);
+  document.getElementById('cityFilter')?.addEventListener('change', filterData);
+
+  fetchDeviceData();
+});
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = "toast show";
+  setTimeout(() => {
+    toast.className = toast.className.replace("show", "");
+  }, 2500);
+}
