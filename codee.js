@@ -1,3 +1,14 @@
+/* Ensure chart containers are visible */
+.gcard wide {
+  position: relative;
+}
+
+#failureCountChart {
+  width: 100% !important;
+  height: 100% !important;
+}
+..
+
 // Add this function to graph.js - it's referenced but not defined
 function filterHistoryForDisplay(hist, category) {
   const cat = (category || '').toString().toUpperCase();
