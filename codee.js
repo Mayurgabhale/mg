@@ -1,3 +1,6 @@
+graph.js:566 ❌ device-table not found
+collectFailureData	@	graph.js:566
+renderFailureChart	@	graph.js:620
 <!-- Failure Count Chart Card -->
 <div class="gcard wide" id="failure-chart-card">
 
