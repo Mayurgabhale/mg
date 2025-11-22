@@ -1,3 +1,24 @@
+
+function fetchDeviceHistory(details) {
+  fetch(`http://localhost/api/devices/history`)
+    .then(res => res.json())
+    .then(historyData => {
+      // set global first to avoid race when user clicks fast
+      window.deviceHistoryData = historyData;
+      populateDeviceTable(details, historyData);
+      
+      // Trigger chart update
+      if (typeof window.updateFailureChartWithData === 'function') {
+        window.updateFailureChartWithData(details, historyData);
+      }
+    })
+    .catch(err => console.error('Error fetching device history:', err));
+}
+
+.....
+
+
+
 function fetchDeviceHistory(details) {
   fetch(`http://localhost/api/devices/history`)
     .then(r => r.json())
