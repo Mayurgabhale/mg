@@ -1,3 +1,4 @@
+
 i want to create a Failure Count chart ok 
    so how to crate this chart for all device.. 
    i give youe my all js script that help to create this graph ok 
