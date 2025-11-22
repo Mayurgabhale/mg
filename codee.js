@@ -1,3 +1,5 @@
+read alos privisue code that i uploed in this chart. summmary.js and trend.js
+that help you to slove this issue ok 
 graph.js:556 ❌ No table found at all
 findDeviceTable	@	graph.js:556
 collectFailureData	@	graph.js:583
