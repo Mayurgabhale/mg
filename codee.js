@@ -1,3 +1,12 @@
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="path/to/graph.js"></script>
+<script src="path/to/summary.js"></script>
+<script src="path/to/trend.js"></script>
+
+
+
+
 <!-- Chart.js CDN (must be before your graph.js) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
