@@ -1,3 +1,4 @@
+
 Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
 SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSONUnderstand this error
 trend.js:910  GET http://localhost/api/devices/history 500 (Internal Server Error)
