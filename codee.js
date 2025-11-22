@@ -1,731 +1,363 @@
-
-Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSONUnderstand this error
-trend.js:910  GET http://localhost/api/devices/history 500 (Internal Server Error)
-fetchDeviceHistory @ trend.js:910
-(anonymous) @ trend.js:905Understand this error
-SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
-Promise.catch
-fetchDeviceHistory @ trend.js:916
-(anonymous) @ trend.js:905Understand this error
-
-why this error is came and how to slvoe it...
-  read below all code carefully, and how to slove it 
-
-let deviceUptimeTimers = {};
-let deviceDowntimeTimers = {};
-
-let deviceOfflineAlerted = {};
-let deviceOnlineAlerted = {};
-
-function notifyWindows(title, message) {
-  if (Notification.permission === 'granted') {
-    new Notification(title, { body: message });
-  } else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then(permission => {
-      if (permission === 'granted') {
-        new Notification(title, { body: message });
-      }
-    });
-  }
-
-  showToastAlert(title, message);
+'10.199.22.62': 'Online',
+  '10.58.118.23': 'Online'
 }
+SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at C:\Users\W0024618\Desktop\Backend\src\app.js:195:26
+    at Layer.handle [as handle_request] (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\index.js:280:10)
+    at jsonParser (C:\Users\W0024618\Desktop\Backend\node_modules\body-parser\lib\types\json.js:113:7)
+SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at C:\Users\W0024618\Desktop\Backend\src\app.js:195:26
+    at Layer.handle [as handle_request] (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\W0024618\Desktop\Backend\node_modules\express\lib\router\index.js:280:10)
+    at jsonParser (C:\Users\W0024618\Desktop\Backend\node_modules\body-parser\lib\types\json.js:113:7)
+Updated device status: {
+  '172.21.34.200': 'Online',
+  '10.64.21.85': 'Online',
+  '10.64.21.67': 'Online',
+  '10.64.21.66': 'Online',
+  '10.128.194.70': 'Online',
+  '10.136.63.236': 'Online',
+  '10.138.161.4': 'Online',
+  '10.138.33.9': 'Online',
+  '10.131.106.133': 'Online',
+  '10.128.218.70': 'Online',
+  '10.128.203.3': 'Online',
+  '10.192.5.9': 'Online',
+  '10.199.8.12': 'Online',
+  '10.199.16.45': 'Online',
+  '10.199.8.10': 'Online',
+  '10.194.2.190': 'Online'
 
 
-// function notifyWindows(title, message) {
-//   showToastAlert(title, message);
-// }
 
-function showToastAlert(title, message) {
-  const container = document.getElementById('alert-toast-container');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+//const ping = require("ping");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const { getDeviceInfo } = require("./services/excelService");
+const { sendTeamsAlert }    = require("./services/teamsService");
 
-  const toast = document.createElement('div');
-  toast.className = 'alert-toast';
+const controllerData = JSON.parse(
+  fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
+);
 
-  // toast.innerHTML = `
-  //   <div class="close-btn" onclick="this.parentElement.remove()">×</div>
-  //   <h4>${title}</h4>
-  //   <pre>${message}</pre>
-  // `;
+const app = express();
+const PORT = process.env.PORT || 80;
 
-  toast.innerHTML = `
-  <div class="close-btn">×</div>
-  <h4>${title}</h4>
-  <pre>${message}</pre>
-`;
-
-  const closeBtn = toast.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => {
-    toast.remove();
-  });
-
-  container.appendChild(toast);
-
-  // Auto-remove after 10 seconds
-  setTimeout(() => {
-    toast.remove();
-  }, 180000);
+// Helpers
+function pruneOldEntries(entries, days = 30) {
+  const cutoff = DateTime.now().minus({ days }).toMillis();
+  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
 }
-
-
-function startDowntime(ip, hist, category) {
-  const safe = sanitizeId(ip);
-  clearInterval(deviceUptimeTimers[safe]);
-
-  const off = hist.filter(e => e.status === 'Offline').pop();
-  if (!off) return;
-
-  const t0 = new Date(off.timestamp).getTime();
-
-  deviceOfflineAlerted[safe] = false;  // Reset per event
-
-  deviceDowntimeTimers[safe] = setInterval(() => {
-    const secs = Math.floor((Date.now() - t0) / 1000);
-    document.getElementById(`downtime-${safe}`).innerText = formatDuration(secs);
-    document.getElementById(`downtime-count-${safe}`).innerText = hist.filter(e => e.status === 'Offline').length;
-    updateRemarks(ip, hist, null, null);
-
-    // 🔔 Notify if offline ≥ 3 min
-    if (secs >= 180 && !deviceOfflineAlerted[safe]) {
-      deviceOfflineAlerted[safe] = true;
-
-      const name = document.getElementById(`name-${safe}`).innerText;
-      const type = document.querySelector(`#ip-${safe}`).parentNode.nextElementSibling.textContent;
-      const city = document.getElementById(`remark-${safe}`).dataset.city || 'Unknown';
-
-      const title = "⚠️ Device Offline ≥ 3 min";
-      const message =
-        `Device Name: ${name}\n` +
-        `Device Type: ${category}\n` +
-        `Device IP: ${ip}\n` +
-        `City: ${city}\n` +
-        `Status: Device is Offline\n` +
-        `Offline Time: ${formatDuration(secs)}`;
-
-      // notifyWindows(title, message);
-    }
-  }, 1000);
+function getLogFileForDate(dt) {
+  return `./deviceLogs-${dt.toISODate()}.json`;
 }
 
 
 
-function startUptime(ip, hist, category) {
-  const safe = sanitizeId(ip);
-  clearInterval(deviceDowntimeTimers[safe]);
+// Middleware
+app.use(cors({
+    origin: "http://127.0.0.1:5500",
+  //  origin: "http://localhost:3000",
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization",
+}));
+app.use(bodyParser.json());
 
-  const on = hist.filter(e => e.status === 'Online').pop();
-  if (!on) return;
+// Routes
+app.use("/api/regions", regionRoutes);
 
-  const tOn = new Date(on.timestamp).getTime();
+// Device Status Tracking
+const devices = fetchAllIpAddress();
+let deviceStatus = {};
 
-  // Calculate how long it was offline
-  const lastOff = hist.slice().reverse().find(e => e.status === 'Offline');
-  const offlineSecs = lastOff ? Math.floor((tOn - new Date(lastOff.timestamp)) / 1000) : 0;
+// Load only today's logs
+const today = DateTime.now().setZone("Asia/Kolkata");
+const todayLogFile = getLogFileForDate(today);
+let todayLogs = fs.existsSync(todayLogFile)
+  ? JSON.parse(fs.readFileSync(todayLogFile, "utf8"))
+  : {};
 
-  deviceOnlineAlerted[safe] = false;
-
-  if (offlineSecs >= 120 && !deviceOnlineAlerted[safe]) {
-    deviceOnlineAlerted[safe] = true;
-
-    const name = document.getElementById(`name-${safe}`).innerText;
-    const type = document.querySelector(`#ip-${safe}`).parentNode.nextElementSibling.textContent;
-    const city = document.getElementById(`remark-${safe}`).dataset.city || 'Unknown';
-
-    const title = "✅ Device is Online after 2+ min";
-    const message =
-      `Device Name: ${name}\n` +
-      `Device Type: ${category}\n` +
-      `Device IP: ${ip}\n` +
-      `City: ${city}`;
-
-    notifyWindows(title, message);
-  }
-
-  const t0 = new Date(on.timestamp).getTime();
-  deviceUptimeTimers[safe] = setInterval(() => {
-    document.getElementById(`uptime-${safe}`).innerText =
-      formatDuration(Math.floor((Date.now() - t0) / 1000));
-  }, 1000);
+// Persist today's logs
+function saveTodayLogs() {
+  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
 }
 
-
-
-// Utility to turn an IP (or any string) into a safe DOM-ID fragment
-function sanitizeId(str) {
-  return (str || '').replace(/[^a-zA-Z0-9]/g, '_');
-}
-
-function fetchDeviceData() {
-  const region = document.getElementById('region').value;
-  fetch(`http://localhost/api/regions/details/${region}`)
-    .then(r => r.json())
-    .then(d => fetchDeviceHistory(d.details))
-    .catch(console.error);
-}
-
-function fetchDeviceHistory(details) {
-  fetch(`http://localhost/api/devices/history`)
-    .then(r => r.json())
-    .then(historyData => {
-      populateDeviceTable(details, historyData);
-      window.deviceHistoryData = historyData;
-    })
-    .catch(console.error);
-}
-
-function populateDeviceTable(details, historyData) {
-  const Devices = [];
-  const tbody = document.querySelector('#device-table tbody');
-  tbody.innerHTML = '';
-
-  const devices = [];
-  ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'].forEach(type => {
-    (details[type] || []).forEach(dev => {
-      const ip = dev.ip_address;
-      const safe = sanitizeId(ip);
-      // const name      = dev[type.slice(0,-1) + 'name'] || 'Unknown';
-      const name = dev.hostname || dev.pc_name || dev[type.slice(0, -1) + 'name'] || dev.name || dev.device_name || dev.ip_address || 'Unknown';
-      const category = type.slice(0, -1).toUpperCase();
-      const rawHist = historyData[ip] || [];
-      const city = dev.city || 'Unknown';
-      const hist = filterHistoryForDisplay(rawHist, category);
-      const lastRaw = rawHist[rawHist.length - 1]?.status || 'Unknown';
-      // if last raw Offline but <5min, treat Online
-      let status = lastRaw;
-      if (lastRaw === 'Offline' && ((Date.now() - new Date(rawHist[rawHist.length - 1].timestamp)) / 1000) < 300) {
-        status = 'Online';
-      }
-      const downCount = hist.filter(e => e.status === 'Offline').length;
-
-      // devices.push({ ip, safe, name, category, rawHist, hist, status, downCount,city  });
-      devices.push({ ip, safe, name, category, rawHist, hist, status, downCount, city, remark: dev.remark || '' });
-
-    });
-  });
-
-  // sort by ongoing ≥5min offline first, then by downCount desc
-  devices.sort((a, b) => {
-    const now = Date.now();
-    const aLast = a.hist[a.hist.length - 1], bLast = b.hist[b.hist.length - 1];
-    const aOff = aLast?.status === 'Offline' ? (now - new Date(aLast.timestamp)) / 1000 : 0;
-    const bOff = bLast?.status === 'Offline' ? (now - new Date(bLast.timestamp)) / 1000 : 0;
-    if ((aOff >= 300) !== (bOff >= 300)) return aOff >= 300 ? -1 : 1;
-    return b.downCount - a.downCount;
-  });
-
-  devices.forEach((d, i) => {
-    const row = tbody.insertRow();
-
-    // row.classList.add(d.status==='Online' ? 'status-online' : 'status-offline');
-
-    if (d.status === 'Offline') {
-      row.classList.add('row-offline');
-    } else if (d.status === 'Online') {
-      row.classList.add('row-online');
-    } else {
-      // Optional: handle unknown or other cases
-      row.classList.add('row-repair');
-    }
-
-
-    const displayCategory =
-  d.category === 'PCDETAIL' ? 'Desktop'
-  : d.category === 'DBDETAIL' ? 'DB Server'
-  : d.category;
-
-
-    //     row.innerHTML = `
-    // <td>${i+1}</td>
-    // <td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
-    // <td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
-    // <td>${d.category}</td>
-    // <td id="uptime-${d.safe}">0h/0m/0s</td>
-    // <td id="downtime-count-${d.safe}">${d.downCount}</td>
-    // <td id="downtime-${d.safe}">0h/0m/0s</td>
-    // <td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
-    // <td id="remark-${d.safe}">–</td>
-    // `;
-
-
-    row.innerHTML = `
-<td>${i + 1}</td>
-<td><span id="ip-${d.safe}" class="copy-text" onclick="copyToClipboard('ip-${d.safe}')">${d.ip}</span></td>
-<td><span id="name-${d.safe}" class="copy-text" onclick="copyToClipboard('name-${d.safe}')">${d.name}</span></td>
-<td data-category="${d.category}">${displayCategory}</td>
-<td>${d.city}</td>
-<td id="uptime-${d.safe}">0h/0m/0s</td>
-<td id="downtime-count-${d.safe}">${d.downCount}</td>
-<td id="downtime-${d.safe}">0h/0m/0s</td>
-<td><button class="history-btn" onclick="openDeviceHistory('${d.ip}','${d.name}','${d.category}')">View History</button></td>
-<td id="remark-${d.safe}" data-city="${d.city}">–</td>
-`;
-
-
-
-    // show policy tooltip on hover for rows with explicit "Not accessible" remark
-    // modern hover message for "Not accessible" rows
-    if (d.remark && /not\s+access/i.test(d.remark)) {
-      row.classList.add('row-not-accessible');
-
-      // create tooltip element
-      const tooltip = document.createElement("div");
-      tooltip.className = "modern-tooltip";
-      tooltip.textContent = "Due to Network policy, this camera is Not accessible";
-      row.appendChild(tooltip);
-    }
-
-
-    if (d.status === 'Online') startUptime(d.ip, d.hist, d.category);
-    else startDowntime(d.ip, d.hist, d.category);
-
-    updateRemarks(d.ip, d.hist, d.status, d.downCount);
-  });
-
-
-
-  // ✅ Add this block AFTER `devices.forEach(...)` inside populateDeviceTable
-  // const cityFilter = document.getElementById('cityFilter');
-  // if (cityFilter) {
-  //   const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
-  //   cityFilter.innerHTML = '<option value="all">All Cities</option>';
-  //   uniqueCities.forEach(city => {
-  //     const option = document.createElement('option');
-  //     option.value = city;
-  //     option.textContent = city;
-  //     cityFilter.appendChild(option);
-  //   });
-  // }
-
-
-  const cityFilter = document.getElementById('cityFilter');
-  if (cityFilter) {
-    const uniqueCities = [...new Set(devices.map(dev => dev.city).filter(Boolean))].sort();
-
-    // Build dropdown from scratch, ensure ALL option is uppercase and selected
-    cityFilter.innerHTML = '';
-    const allOpt = document.createElement('option');
-    allOpt.value = 'ALL';            // use 'ALL' (uppercase) to match filterData()
-    allOpt.textContent = 'All Cities';
-    allOpt.selected = true;          // explicitly mark selected so it shows on first render
-    cityFilter.appendChild(allOpt);
-
-    uniqueCities.forEach(city => {
-      const option = document.createElement('option');
-      option.value = city;
-      option.textContent = city;
-      cityFilter.appendChild(option);
-    });
-
-    // Force value + trigger change so UI and any listeners update immediately
-    cityFilter.value = 'ALL';
-    cityFilter.dispatchEvent(new Event('change'));
-  }
-
-  filterData();
-
-
-}
-
-function filterHistoryForDisplay(hist, category) {
-  if (category === 'SERVER') return hist.slice();
-
-  const out = [];
-
-  let lastOff = null;
-  hist.forEach(e => {
-    if (e.status === 'Offline') lastOff = e;
-    else if (e.status === 'Online' && lastOff) {
-      const diff = (new Date(e.timestamp) - new Date(lastOff.timestamp)) / 1000;
-      if (diff >= 300) out.push(lastOff, e);
-
-      lastOff = null;
-    }
-  });
-
-  if (lastOff) {
-
-    const diff = (Date.now() - new Date(lastOff.timestamp)) / 1000;
-    if (diff >= 300) out.push(lastOff);
-
-  }
-
-  return out.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-}
-
-function startUptime(ip, hist) {
-  const safe = sanitizeId(ip);
-  clearInterval(deviceDowntimeTimers[safe]);
-  const on = hist.filter(e => e.status === 'Online').pop();
-  if (!on) return;
-  const t0 = new Date(on.timestamp).getTime();
-  deviceUptimeTimers[safe] = setInterval(() => {
-    document.getElementById(`uptime-${safe}`).innerText = formatDuration(Math.floor((Date.now() - t0) / 1000));
-  }, 1000);
-}
-
-// function startDowntime(ip, hist) {
-//   const safe = sanitizeId(ip);
-//   clearInterval(deviceUptimeTimers[safe]);
-//   const off = hist.filter(e => e.status==='Offline').pop();
-//   if (!off) return;
-//   const t0 = new Date(off.timestamp).getTime();
-//   deviceDowntimeTimers[safe] = setInterval(() => {
-//     const secs = Math.floor((Date.now()-t0)/1000);
-//     document.getElementById(`downtime-${safe}`).innerText = formatDuration(secs);
-//     document.getElementById(`downtime-count-${safe}`).innerText = hist.filter(e => e.status==='Offline').length;
-//     updateRemarks(ip, hist, null, null);
-//   }, 1000);
-// }
-
-function updateRemarks(ip, hist, forcedStatus, forcedCount) {
-  const safe = sanitizeId(ip);
-  // Determine status
-  let status = forcedStatus;
-  if (!status) {
-    const last = hist[hist.length - 1]?.status || 'Unknown';
-    status = last === 'Offline' && ((Date.now() - new Date(hist[hist.length - 1].timestamp)) / 1000) < 300
-      ? 'Online' : last;
-  }
-  const count = forcedCount ?? hist.filter(e => e.status === 'Offline').length;
-  const el = document.getElementById(`remark-${safe}`);
-  if (!el) return;
-  if (status === 'Offline') {
-    el.innerText = count > 0 ? 'Device is Offline, needs check.' : 'Device is Offline.';
-  } else if (status === 'Online') {
-    el.innerText = count > 0
-      ? `Device is Online, had ${count} downtime events ≥5 min.`
-      : 'Device is Online.';
-  } else {
-    el.innerText = 'Device status unknown.';
+// Log a status change
+function logDeviceChange(ip, status) {
+  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+  const arr = (todayLogs[ip] = todayLogs[ip] || []);
+  const last = arr[arr.length - 1];
+  if (!last || last.status !== status) {
+    arr.push({ status, timestamp });
+    todayLogs[ip] = pruneOldEntries(arr, 30);
+    saveTodayLogs();
   }
 }
 
-function formatDuration(sec) {
-  const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600),
-    m = Math.floor((sec % 3600) / 60), s = Math.round(sec % 60);
-  const parts = [];
-  if (d) parts.push(`${d}d`);
-  if (h) parts.push(`${h}h`);
-  if (m) parts.push(`${m}m`);
-  if (s || !parts.length) parts.push(`${s}s`);
-  return parts.join('/');
-}
+// Ping devices
+// async function pingDevices() {
+// const limit = require("p-limit")(20);
+//   await Promise.all(
+//     devices.map(ip =>
+//     limit(async () => {
+//         const newStatus = await pingHost(ip);
+//         if (deviceStatus[ip] !== newStatus) {
+//           logDeviceChange(ip, newStatus);
+//         }
+//         deviceStatus[ip] = newStatus;
+//       })
+//     )
+//   );
+//   console.log("Updated device status:", deviceStatus);
+//  }
 
-function openDeviceHistory(ip, name, category) {
-  const raw = window.deviceHistoryData[ip] || [];
-  const hist = filterHistoryForDisplay(raw, category);
-  displayDeviceHistory(ip, name, category, hist);
-  document.getElementById('device-history-modal').style.display = 'block';
-}
+async function pingDevices() {
+  const limit = require("p-limit")(20);
 
+  await Promise.all(
+    devices.map(ip =>
+      limit(async () => {
+        const newStatus = await pingHost(ip);
+        if (deviceStatus[ip] !== newStatus) {
+          logDeviceChange(ip, newStatus);
+        }
+        deviceStatus[ip] = newStatus;
+      })
+    )
+  );
 
+  // ✅ Build Controller + Door Status
+  buildControllerStatus();
 
-function displayDeviceHistory(ip, name, category, hist) {
-  const header = document.getElementById('device-history-header');
-  const container = document.getElementById('device-history');
-  header.innerHTML = `
-    <h2 style="color: var(--yellow); font-size: 24px;">${name} <span style="font-size:16px;">(${ip})</span></h2>
-    <hr style="margin: 10px 0; border-color: var(--gray);">
-  `;
-
-  if (!hist.length) {
-    container.innerHTML = `<p style="font-style: italic; color: #777;">No downtime ≥5 min in history.</p>`;
-    return;
-  }
-
-  let html = `
-    <div class="scrollable-history-table">
-      <table class="history-table">
-        <thead>
-          <tr>
-            <th>Sr.No</th><th>Date</th><th>Day</th><th>Time</th><th>Status</th><th>Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  let idx = 1;
-  let lastOff = null;
-
-  hist.forEach(e => {
-    const t = new Date(e.timestamp);
-    const date = t.toLocaleDateString();
-    const day = t.toLocaleString('en-US', { weekday: 'long' });
-    const time = t.toLocaleTimeString();
-    let dur = '-';
-
-    if (e.status === 'Offline') {
-      if (!lastOff) {
-        lastOff = e.timestamp;
-        html += `
-          <tr>
-            <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
-            <td class="status-offline">${e.status}</td><td>${dur}</td>
-          </tr>`;
-      }
-    } else if (e.status === 'Online') {
-      if (lastOff) {
-        const diff = (new Date(e.timestamp) - new Date(lastOff)) / 1000;
-        dur = formatDuration(diff);
-        const offTime = new Date(lastOff);
-        const offDate = offTime.toLocaleDateString();
-        const offDay = offTime.toLocaleString('en-US', { weekday: 'long' });
-        const offClock = offTime.toLocaleTimeString();
-
-        html += `
-          <tr>
-            <td>${idx++}</td><td>${offDate}</td><td>${offDay}</td><td>${offClock}</td>
-            <td class="status-offline">Offline</td><td>${dur}</td>
-          </tr>
-          <tr>
-            <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
-            <td class="status-online">${e.status}</td><td>${formatDuration(0)}</td>
-          </tr>`;
-
-        lastOff = null;
-      } else {
-        html += `
-          <tr>
-            <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
-            <td class="status-online">${e.status}</td><td>${dur}</td>
-          </tr>`;
-      }
-    }
-  });
-
-  if (lastOff) {
-    const t = new Date(lastOff);
-    const date = t.toLocaleDateString();
-    const day = t.toLocaleString('en-US', { weekday: 'long' });
-    const time = t.toLocaleTimeString();
-    const now = Date.now();
-    const dur = formatDuration((now - new Date(lastOff)) / 1000);
-
-    html += `
-      <tr>
-        <td>${idx++}</td><td>${date}</td><td>${day}</td><td>${time}</td>
-        <td class="status-offline">Offline</td><td>${dur}</td>
-      </tr>`;
-  }
-
-  html += `</tbody></table></div>`;
-  container.innerHTML = html;
+  console.log("Updated device status:", deviceStatus);
 }
 
 
+// 📝📝📝📝📝📝
 
+let fullStatus = [];
 
-function closeHistoryModal() {
-  document.getElementById('device-history-modal').style.display = 'none';
-}
+// function buildControllerStatus() {
+//   fullStatus = controllerData.map(controller => {
+//     const ip = controller.IP_address.trim();
+//     const status = deviceStatus[ip] || "Unknown";
 
-function exportDeviceTableToExcel() {
-  const table = document.getElementById("device-table");
-  const workbook = XLSX.utils.table_to_book(table, { sheet: "Device Table" });
-  XLSX.writeFile(workbook, "Device_Table.xlsx");
-}
+//     // If controller offline, mark all doors offline too
+//     const doors = controller.Doors.map(d => ({
+//       ...d,
+//       status: status === "Online" ? "Online" : "Offline",
+//     }));
 
-
-function exportDeviceHistoryToExcel() {
-  const historyTable = document.querySelector("#device-history-modal table");
-  if (!historyTable) {
-    alert("Please open a device's history first.");
-    return;
-  }
-  const workbook = XLSX.utils.table_to_book(historyTable, { sheet: "Device History" });
-  XLSX.writeFile(workbook, "Device_History.xlsx");
-}
-
-
-
-// function filterData() {
-//   const rawTypeSel = document.getElementById('device-type').value.toUpperCase();
-//   // normalize select values to match the Category text in the table
-//   const typeSel = rawTypeSel === 'PCDETAILS' ? 'PCDETAIL'
-//                 : rawTypeSel === 'DBDETAILS' ? 'DBDETAIL'
-//                 : rawTypeSel;
-
-//   const remarkSel = document.getElementById('remark-filter').value.toUpperCase();
-//   const citySel   = document.getElementById('cityFilter')?.value.toUpperCase() || "ALL";
-//   const searchTxt = document.getElementById('search-input').value.toUpperCase();
-
-//   document.querySelectorAll('#device-table tbody tr').forEach(r => {
-//     const ip     = r.cells[1].textContent.toUpperCase();
-//     const name   = r.cells[2].textContent.toUpperCase();
-//     const type   = r.cells[3].textContent.toUpperCase(); // e.g., CONTROLLER, PCDETAIL, DBDETAIL
-//     const city   = r.cells[4].textContent.toUpperCase();
-//     const remark = r.cells[9]?.textContent.toUpperCase();
-
-//     const matchesType   = (typeSel === 'ALL' || type === typeSel);
-//     const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
-//     const matchesCity   = (citySel === 'ALL' || city === citySel);
-//     const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
-
-//     r.style.display = matchesType && matchesRemark && matchesCity && matchesSearch ? '' : 'none';
+//     return {
+//       controllername: controller.controllername,
+//       IP_address: ip,
+//       controllerStatus: status,
+//       Doors: doors,
+//     };
 //   });
 // }
 
-// new 
 
-function filterData() {
-  // Read UI selections
-  const rawTypeSel = (document.getElementById('device-type')?.value || '');
-  const rt = rawTypeSel.toUpperCase();
+function buildControllerStatus() {
+  fullStatus = controllerData.map(controller => {
+    const ip = controller.IP_address.trim();
+    const status = deviceStatus[ip] || "Unknown";
 
-  // Normalize displayed device-type values to the internal data-category values
-  let typeSel;
-  if (rt === 'DESKTOP') typeSel = 'PCDETAIL';
-  else if (rt === 'DB SERVER' || rt === 'DBSERVER') typeSel = 'DBDETAIL';
-  else typeSel = rt; // e.g., ALL, CONTROLLER, CAMERA, SERVER, ARCHIVER
+    // If controller offline, mark all doors offline too
+    const doors = controller.Doors.map(d => ({
+      ...d,
+      status: status === "Online" ? "Online" : "Offline",
+    }));
 
-  const remarkSel = (document.getElementById('remark-filter')?.value || '').toUpperCase();
-  const cityFilterEl = document.getElementById('cityFilter');
-  const prevCityVal = cityFilterEl?.value || 'ALL';
-  const searchTxt = (document.getElementById('search-input')?.value || '').toUpperCase();
-
-  // Collect rows
-  const tbodyRows = Array.from(document.querySelectorAll('#device-table tbody tr'));
-
-  // First: figure out which cities are possible given type+remark+search (preserve original casing)
-  const possibleCitiesMap = new Map(); // key: UPPERCASE city -> value: original city text
-  tbodyRows.forEach(r => {
-    const ip = r.cells[1].textContent.toUpperCase();
-    const name = r.cells[2].textContent.toUpperCase();
-
-    const typeCell = r.cells[3];
-    const typeVal = (typeCell && typeCell.getAttribute('data-category'))
-      ? typeCell.getAttribute('data-category').toUpperCase()
-      : typeCell.textContent.toUpperCase();
-
-    const cityOriginal = (r.cells[4].textContent || '').trim();
-    const cityUp = cityOriginal.toUpperCase();
-    const remark = (r.cells[9]?.textContent || '').toUpperCase();
-
-    const matchesType = (typeSel === 'ALL' || typeVal === typeSel);
-    const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
-    const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
-
-    if (matchesType && matchesRemark && matchesSearch && cityOriginal) {
-      possibleCitiesMap.set(cityUp, cityOriginal);
-    }
-  });
-
-  // Sort possible cities (preserve case)
-  const possibleCities = Array.from(possibleCitiesMap.values()).sort((a, b) => a.localeCompare(b));
-
-  // Rebuild the city dropdown so it contains only available cities + All Cities
-  if (cityFilterEl) {
-    const prev = prevCityVal;
-    cityFilterEl.innerHTML = '';
-
-    const allOpt = document.createElement('option');
-    allOpt.value = 'ALL';
-    allOpt.textContent = 'All Cities';
-    cityFilterEl.appendChild(allOpt);
-
-    possibleCities.forEach(cityName => {
-      const opt = document.createElement('option');
-      opt.value = cityName;
-      opt.textContent = cityName;
-      cityFilterEl.appendChild(opt);
-    });
-
-    // Restore previous selection if still valid; else choose ALL
-    const restored = (prev && (prev.toUpperCase() === 'ALL' || possibleCitiesMap.has(prev.toUpperCase()))) ? prev : 'ALL';
-    cityFilterEl.value = restored;
-  }
-
-  // Now apply visibility of rows using the (possibly updated) city selection
-  const citySel = (document.getElementById('cityFilter')?.value || 'ALL').toUpperCase();
-
-  tbodyRows.forEach(r => {
-    const ip = r.cells[1].textContent.toUpperCase();
-    const name = r.cells[2].textContent.toUpperCase();
-
-    const typeCell = r.cells[3];
-    const type = (typeCell && typeCell.getAttribute('data-category'))
-      ? typeCell.getAttribute('data-category').toUpperCase()
-      : typeCell.textContent.toUpperCase();
-
-    const city = (r.cells[4].textContent || '').toUpperCase();
-    const remark = (r.cells[9]?.textContent || '').toUpperCase();
-
-    const matchesType   = (typeSel === 'ALL' || type === typeSel);
-    const matchesRemark = (remarkSel === 'ALL' || remark.includes(remarkSel));
-    const matchesCity   = (citySel === 'ALL' || city === citySel);
-    const matchesSearch = (ip.includes(searchTxt) || name.includes(searchTxt));
-
-    r.style.display = (matchesType && matchesRemark && matchesCity && matchesSearch) ? '' : 'none';
+    return {
+      controllername: controller.controllername,
+      IP_address: ip,
+      Location: controller.Location || "Unknown",
+      City: controller.City || "Unknown",
+      controllerStatus: status,
+      Doors: doors,
+    };
   });
 }
 
+// 📝📝📝📝📝📝
+
+
+const notifiedOffline=new Set();
+
+
+// Start ping loop
+// setInterval(pingDevices, 60_000);
+// pingDevices();
+
+
+setInterval(async () => {
+   pingDevices();
+ // await checkNotifications();
+}, 60_000);
+
+// initial run
+(async () => {
+   pingDevices();
+  //await checkNotifications();
+})();
 
 
 
-function copyToClipboard(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
 
-  const text = el.innerText;
-
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(text)
-      .then(() => showToast(`Copied: ${text}`))
-      .catch(err => console.error("Clipboard error:", err));
-  } else {
-    // fallback
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";  // avoid scrolling
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    try {
-      document.execCommand("copy");
-      showToast(`Copied: ${text}`);
-    } catch (err) {
-      console.error("Fallback copy failed", err);
-    }
-    document.body.removeChild(textarea);
-  }
-}
-
-
-// document.addEventListener('DOMContentLoaded', () => {
-//   ['region', 'device-type', 'remark-filter'].forEach(id => {
-//     document.getElementById(id)?.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
-//   });
-
-//   document.getElementById('search-input')?.addEventListener('input', filterData);
-
-//   // ✅ Add cityFilter event
-//   document.getElementById('cityFilter')?.addEventListener('change', filterData);
-
-//   fetchDeviceData();
-// });
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  if (Notification.permission !== 'granted') {
-    Notification.requestPermission();
-  }
-
-  ['region', 'device-type', 'remark-filter'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', id === 'region' ? fetchDeviceData : filterData);
-  });
-
-  document.getElementById('search-input')?.addEventListener('input', filterData);
-  document.getElementById('cityFilter')?.addEventListener('change', filterData);
-
-  fetchDeviceData();
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+  res.json(deviceStatus);
 });
 
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.className = "toast show";
-  setTimeout(() => {
-    toast.className = toast.className.replace("show", "");
-  }, 2500);
-}
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const combined = {};
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const ip of Object.keys(dayLogs)) {
+      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+    }
+  }
+  // prune to last 30 days
+  for (const ip of Object.keys(combined)) {
+    combined[ip] = pruneOldEntries(combined[ip], 30);
+  }
+  res.json(combined);
+});
+
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+  const region = req.params.region.toLowerCase();
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const regionLogs = {};
+
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const ip of Object.keys(dayLogs)) {
+      if (ipRegionMap[ip] === region) {
+        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+      }
+    }
+  }
+
+  if (!Object.keys(regionLogs).length) {
+    return res.status(404).json({ message: `No device history found for region: ${region}` });
+  }
+  // prune per‑IP
+  for (const ip of Object.keys(regionLogs)) {
+    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+  }
+  res.json(regionLogs);
+});
+
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+  const ip = req.params.ip;
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  let history = [];
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
+  }
+  if (!history.length) {
+    return res.status(404).json({ message: "No history found for this device" });
+  }
+  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  res.json({ ip, history });
+});
+
+
+// Get all controller + door statuses
+app.get("/api/controllers/status", (req, res) => {
+  res.json(fullStatus);
+});
+
+
+
+
+
+// async function checkNotifications() {
+//   const now = DateTime.now().setZone("Asia/Kolkata");
+//   for (const [ip, status] of Object.entries(deviceStatus)) {
+//     // get the last timestamp this ip changed state
+//     const logs = todayLogs[ip] || [];
+//     const lastEntry = logs[logs.length - 1];
+//     if (!lastEntry) continue;
+//     const changedAt = DateTime.fromISO(lastEntry.timestamp);
+//     const minutesDown = now.diff(changedAt, 'minutes').minutes;
+
+//     const dev = getDeviceInfo(ip);
+//     if (!dev) continue;
+//     const { device_name, location, region, device_type } = dev;
+
+//     // 1) OFFLINE > 5m and not yet notified
+//     if (
+//       status === "Offline" &&
+//       minutesDown >= 5 &&
+//       !notifiedOffline.has(ip)
+//     ) {
+//       const msg = `❗️ **${device_name}** (${ip}) in ${location}, ${region} (${device_type}) has been **OFFLINE** for over 5 minutes.`;
+//       await sendTeamsAlert(region, msg);
+//       notifiedOffline.add(ip);
+//     }
+
+//     // 2) Back ONLINE after offline alert
+//     if (
+//       status === "Online" &&
+//       notifiedOffline.has(ip)
+//     ) {
+//       const msg = `✅ **${device_name}** (${ip}) in ${location}, ${region} (${device_type}) is **back ONLINE**.`;
+//       await sendTeamsAlert(region, msg);
+//       notifiedOffline.delete(ip);
+//     }
+//   }
+// }
+
+
+
+
+
+
+
+
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+
+
+
+
+
+
+
+
+
