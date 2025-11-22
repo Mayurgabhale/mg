@@ -1,64 +1,28 @@
-// Calculate failure counts from your device data - DYNAMIC VERSION
-function calculateFailureCounts(deviceDetails) {
-  console.log('CALCULATING FAILURE COUNTS from device details:', deviceDetails);
+// Enhanced initialization for Failure Count Chart - DYNAMIC VERSION
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded - initializing Failure Count Chart for dynamic data');
   
-  const counts = {
-    cameras: 0,
-    controllers: 0,
-    archivers: 0,
-    servers: 0,
-    desktops: 0,
-    dbServers: 0
-  };
-
-  if (!deviceDetails || typeof deviceDetails !== 'object') {
-    console.warn('No valid device details provided');
-    return counts;
-  }
-
-  if (!window.deviceHistoryData) {
-    console.warn('No device history data available yet');
-    return counts;
-  }
-
-  console.log('Available device history data keys:', Object.keys(window.deviceHistoryData).length);
-
-  // Process each device type with proper error handling
-  const deviceTypes = ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'];
+  // Initialize the chart with empty data first
+  createFailureCountChart();
   
-  deviceTypes.forEach(type => {
-    const devices = deviceDetails[type] || [];
-    console.log(`Processing ${type}: ${devices.length} devices`);
-    
-    devices.forEach(device => {
-      if (!device || !device.ip_address) return;
-      
-      const ip = device.ip_address;
-      const history = window.deviceHistoryData[ip] || [];
-      const category = type.toUpperCase();
-      
-      console.log(`Device ${ip} (${type}): ${history.length} history entries`);
-      
-      const filteredHistory = filterHistoryForDisplay(history, category);
-      const failureCount = filteredHistory.filter(e => e && e.status === 'Offline').length;
-      
-      if (failureCount > 0) {
-        console.log(`→ ${ip}: ${failureCount} failures`);
+  // Set up a global reference for device details
+  window.currentDeviceDetails = window.currentDeviceDetails || {};
+  
+  // Check if we already have data (in case graph.js loads after other scripts)
+  setTimeout(() => {
+    if (window.deviceHistoryData && window.currentDeviceDetails && 
+        Object.keys(window.currentDeviceDetails).length > 0) {
+      console.log('Found existing device data, updating chart dynamically');
+      const failureData = calculateFailureCounts(window.currentDeviceDetails);
+      refreshFailureChart(failureData);
+    } else {
+      console.log('Waiting for device data to load...');
+      // Show loading state
+      if (failureChart) {
+        failureChart.data.datasets[0].data = [0, 0, 0, 0, 0, 0];
+        failureChart.data.datasets[0].backgroundColor = '#cccccc';
+        failureChart.update();
       }
-      
-      // Map to appropriate category
-      switch(type) {
-        case 'cameras': counts.cameras += failureCount; break;
-        case 'controllers': counts.controllers += failureCount; break;
-        case 'archivers': counts.archivers += failureCount; break;
-        case 'servers': counts.servers += failureCount; break;
-        case 'pcDetails': counts.desktops += failureCount; break;
-        case 'DBDetails': counts.dbServers += failureCount; break;
-        default: console.warn(`Unknown device type: ${type}`);
-      }
-    });
-  });
-
-  console.log('FINAL DYNAMIC FAILURE COUNTS:', counts);
-  return counts;
-}
+    }
+  }, 1000);
+});
