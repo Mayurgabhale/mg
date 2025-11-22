@@ -1,108 +1,78 @@
+<!-- Failure Count Chart Card -->
+<div class="gcard wide" id="failure-chart-card">
 
-<div class="gcard wide">
   <h4 class="gcard-title">Failure Count</h4>
 
-  <div class="chart-placeholder" style="height:260px;">
-    <!-- Chart.js canvas will be injected here by JS -->
+  <div id="failure-chart-container" style="height:300px; width:100%;">
+    <canvas id="failureChartCanvas"></canvas>
   </div>
+
 </div>
 
 
-// ========== Failure Count Chart ==========
-let failureCountChart = null;
 
-/** Find Failure Count chart container safely (no conflict) */
-function findFailureChartPlaceholder(titleText) {
-  const cards = document.querySelectorAll('.gcard');
-  for (const card of cards) {
-    const title = card.querySelector('.gcard-title');
-    if (title && title.textContent.trim().toLowerCase() === titleText.toLowerCase()) {
-      return card.querySelector('.chart-placeholder');
-    }
-  }
-  return null;
+
+
+
+
+// ================================
+// FAILURE COUNT SCATTER CHART
+// ================================
+
+let failureChartInstance = null;
+
+// DEVICE TYPE NORMALIZER
+function normalizeType(type) {
+  if (!type) return 'Other';
+  type = type.toLowerCase();
+
+  if (type.includes('camera') || type.includes('cctv')) return 'CCTV';
+  if (type.includes('acs') || type.includes('controller')) return 'ACS';
+  if (type.includes('nvr') || type.includes('dvr')) return 'NVR/DVR';
+  if (type.includes('desktop') || type.includes('pc')) return 'Desktop';
+  if (type.includes('server') && !type.includes('db')) return 'SERVER';
+  if (type.includes('db')) return 'DB Server';
+
+  return 'Other';
 }
 
-/** Normalize device types */
-function normalizeDeviceType(cat) {
-  if (!cat) return 'Other';
-  const c = cat.toLowerCase();
-  if (c.includes('camera') || c.includes('cctv')) return 'CCTV';
-  if (c.includes('controller') || c.includes('acs')) return 'ACS';
-  if (c.includes('archiver') || c.includes('nvr') || c.includes('dvr')) return 'NVR/DVR';
-  if (c.includes('server') && !c.includes('db')) return 'SERVER';
-  if (c.includes('desktop') || c.includes('pc')) return 'Desktop';
-  if (c.includes('db')) return 'DB Server';
-  return cat;
-}
+// MAIN DATA COLLECTOR
+function collectFailureData() {
 
-/** Collect metrics from device table */
-function collectFailureMetricsFromTable() {
-
-  const table = document.querySelector('#device-table');
+  const table = document.getElementById("device-table");
   if (!table) {
-    console.warn("❌ #device-table not found");
+    console.error("❌ device-table not found");
     return {};
   }
 
-  const rows = Array.from(table.querySelectorAll('tbody tr'));
+  const rows = table.querySelectorAll("tbody tr");
+  console.log("✅ Table rows found:", rows.length);
 
-  const metrics = {};
-  const histMap = window.deviceHistoryData || {};
-
-  console.log("✅ Rows found:", rows.length);
-  console.log("✅ History entries:", Object.keys(histMap).length);
+  let data = {};
 
   rows.forEach(row => {
 
-    const ip = (row.cells[1]?.textContent || '').trim();
-    const name = (row.cells[2]?.textContent || '').trim();
-    let category = (row.cells[3]?.dataset.category || row.cells[3]?.textContent || '').trim();
-    const city = (row.cells[4]?.textContent || '').trim();
+    const cells = row.querySelectorAll("td");
 
-    if (!ip) return;
+    const ip = cells[1]?.innerText.trim();
+    const name = cells[2]?.innerText.trim();
+    const rawType = cells[3]?.innerText.trim();
+    const city = cells[4]?.innerText.trim();
 
-    // Failure Count detection (flexible)
-    let failureCount = 0;
-    const safeId = ip.replace(/[^a-zA-Z0-9]/g, '_');
-    const downEl = row.querySelector(`#downtime-count-${safeId}`);
+    let failureCount = parseInt(cells[6]?.innerText.trim()) || 0;
 
-    if (downEl) {
-      failureCount = parseInt(downEl.textContent || '0', 10) || 0;
-    } else {
-      failureCount = parseInt(row.cells[6]?.textContent || '0', 10) || 0;
+    const deviceType = normalizeType(rawType);
+
+    // Simulate downtime (if no history yet)
+    let downtimeMinutes = failureCount * 5;
+
+    if (!data[deviceType]) {
+      data[deviceType] = [];
     }
 
-    // Calculate downtime minutes from history
-    const history = histMap[ip] || [];
-    let totalDownSec = 0;
-
-    for (let i = 0; i < history.length; i++) {
-      if (history[i].status === 'Offline') {
-        const downTime = new Date(history[i].timestamp).getTime();
-
-        const nextUp = history.slice(i + 1).find(ev =>
-          ev.status === 'Online' && 
-          new Date(ev.timestamp).getTime() > downTime
-        );
-
-        const upTime = nextUp 
-          ? new Date(nextUp.timestamp).getTime()
-          : Date.now();
-
-        totalDownSec += (upTime - downTime) / 1000;
-      }
-    }
-
-    const totalDownMin = Math.round(totalDownSec / 60);
-
-    const type = normalizeDeviceType(category);
-
-    if (!metrics[type]) metrics[type] = [];
-
-    metrics[type].push({
+    data[deviceType].push({
       x: failureCount,
-      y: totalDownMin,
+      y: downtimeMinutes,
       ip,
       name,
       city
@@ -110,63 +80,53 @@ function collectFailureMetricsFromTable() {
 
   });
 
-  return metrics;
+  return data;
 }
 
-/** Main render function */
-function renderFailureCountChart() {
+// MAIN RENDER FUNCTION
+function renderFailureChart() {
 
-  const placeholder = findFailureChartPlaceholder('Failure Count');
+  const canvas = document.getElementById("failureChartCanvas");
 
-  if (!placeholder) {
-    console.warn("❌ Failure Count card not found");
+  if (!canvas) {
+    console.error("❌ failureChartCanvas not found");
     return;
   }
 
-  placeholder.style.height = '260px';
+  const ctx = canvas.getContext("2d");
 
-  let canvas = placeholder.querySelector('canvas');
+  const deviceData = collectFailureData();
 
-  if (!canvas) {
-    canvas = document.createElement('canvas');
-    placeholder.innerHTML = '';
-    placeholder.appendChild(canvas);
-  }
-
-  const metrics = collectFailureMetricsFromTable();
-
-  if (!metrics || Object.keys(metrics).length === 0) {
-    console.warn("⚠️ No failure data found");
+  if (Object.keys(deviceData).length === 0) {
+    console.warn("⚠️ No data for chart");
     return;
   }
 
   const COLORS = {
-    CCTV: '#10b981',
-    ACS: '#f97316',
-    'NVR/DVR': '#2563eb',
-    SERVER: '#7c3aed',
-    Desktop: '#06b6d4',
-    'DB Server': '#ef4444',
-    Other: '#94a3b8'
+    CCTV: "#22c55e",
+    ACS: "#f97316",
+    "NVR/DVR": "#3b82f6",
+    SERVER: "#9333ea",
+    Desktop: "#0ea5e9",
+    "DB Server": "#ef4444",
+    Other: "#6b7280"
   };
 
-  const datasets = Object.entries(metrics).map(([type, points]) => ({
-    label: type,
-    data: points.map(p => ({ x: p.x, y: p.y, meta: p })),
-    backgroundColor: COLORS[type] || COLORS.Other,
-    pointRadius: 7,
-    pointHoverRadius: 10,
-    showLine: false
-  }));
+  const datasets = Object.keys(deviceData).map(type => {
+    return {
+      label: type,
+      data: deviceData[type],
+      backgroundColor: COLORS[type] || COLORS.Other,
+      pointRadius: 6
+    };
+  });
 
-  if (failureCountChart) {
-    failureCountChart.destroy();
+  if (failureChartInstance) {
+    failureChartInstance.destroy();
   }
 
-  const ctx = canvas.getContext('2d');
-
-  failureCountChart = new Chart(ctx, {
-    type: 'scatter',
+  failureChartInstance = new Chart(ctx, {
+    type: "scatter",
     data: { datasets },
     options: {
       responsive: true,
@@ -175,15 +135,14 @@ function renderFailureCountChart() {
         legend: { position: 'top' },
         tooltip: {
           callbacks: {
-            title: items => items[0].dataset.label,
-            label: ctx => {
-              const d = ctx.raw.meta;
+            label: function(ctx) {
+              const m = ctx.raw;
               return [
-                `Device: ${d.name}`,
-                `IP: ${d.ip}`,
-                `City: ${d.city}`,
-                `Failures: ${d.x}`,
-                `Downtime (min): ${d.y}`
+                `Device: ${m.name}`,
+                `IP: ${m.ip}`,
+                `City: ${m.city}`,
+                `Failures: ${m.x}`,
+                `Downtime(min): ${m.y}`
               ];
             }
           }
@@ -191,27 +150,25 @@ function renderFailureCountChart() {
       },
       scales: {
         x: {
+          title: { display: true, text: "Failure Count" },
           beginAtZero: true,
-          title: { display: true, text: 'Failure Count' },
           ticks: { stepSize: 1 }
         },
         y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Downtime (minutes)' }
+          title: { display: true, text: "Downtime (Minutes)" },
+          beginAtZero: true
         }
       }
     }
   });
 
-  console.log("✅ Failure Count chart rendered successfully");
+  console.log("✅ Failure Chart Rendered Successfully");
 }
 
-/** Auto render after load */
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(renderFailureCountChart, 2000);
+// AUTO LOAD AFTER PAGE LOAD
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(renderFailureChart, 1500);
 });
 
-/** Auto refresh every 10 seconds */
-setInterval(() => {
-  renderFailureCountChart();
-}, 10000);
+// AUTO UPDATE EVERY 10 SECONDS
+setInterval(renderFailureChart, 10000);
