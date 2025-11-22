@@ -1,32 +1,27 @@
-graph.js:566 ❌ device-table not found
-collectFailureData	@	graph.js:566
-renderFailureChart	@	graph.js:620
-<!-- Failure Count Chart Card -->
-<div class="gcard wide" id="failure-chart-card">
-
-  <h4 class="gcard-title">Failure Count</h4>
-
-  <div id="failure-chart-container" style="height:300px; width:100%;">
-    <canvas id="failureChartCanvas"></canvas>
-  </div>
-
-</div>
-
-
-
-
-
-
-
-// ================================
-// FAILURE COUNT SCATTER CHART
-// ================================
-
 let failureChartInstance = null;
 
-// DEVICE TYPE NORMALIZER
+// Auto detect device table if ID fails
+function findDeviceTable() {
+  let table = document.getElementById("device-table");
+
+  if (!table) {
+    console.warn("⚠️ device-table not found. Trying auto-detect...");
+    table = document.querySelector("table"); // fallback: first table
+  }
+
+  if (!table) {
+    console.error("❌ No table found at all");
+    return null;
+  }
+
+  console.log("✅ Device table found:", table);
+  return table;
+}
+
+// Normalize device type
 function normalizeType(type) {
   if (!type) return 'Other';
+
   type = type.toLowerCase();
 
   if (type.includes('camera') || type.includes('cctv')) return 'CCTV';
@@ -39,14 +34,11 @@ function normalizeType(type) {
   return 'Other';
 }
 
-// MAIN DATA COLLECTOR
+// Main data collector
 function collectFailureData() {
 
-  const table = document.getElementById("device-table");
-  if (!table) {
-    console.error("❌ device-table not found");
-    return {};
-  }
+  const table = findDeviceTable();
+  if (!table) return {};
 
   const rows = table.querySelectorAll("tbody tr");
   console.log("✅ Table rows found:", rows.length);
@@ -57,6 +49,9 @@ function collectFailureData() {
 
     const cells = row.querySelectorAll("td");
 
+    // Protect from broken rows
+    if (cells.length < 7) return;
+
     const ip = cells[1]?.innerText.trim();
     const name = cells[2]?.innerText.trim();
     const rawType = cells[3]?.innerText.trim();
@@ -66,7 +61,7 @@ function collectFailureData() {
 
     const deviceType = normalizeType(rawType);
 
-    // Simulate downtime (if no history yet)
+    // Temporary downtime calc
     let downtimeMinutes = failureCount * 5;
 
     if (!data[deviceType]) {
@@ -80,13 +75,12 @@ function collectFailureData() {
       name,
       city
     });
-
   });
 
   return data;
 }
 
-// MAIN RENDER FUNCTION
+// Render chart
 function renderFailureChart() {
 
   const canvas = document.getElementById("failureChartCanvas");
@@ -101,7 +95,7 @@ function renderFailureChart() {
   const deviceData = collectFailureData();
 
   if (Object.keys(deviceData).length === 0) {
-    console.warn("⚠️ No data for chart");
+    console.warn("⚠️ No failure data found");
     return;
   }
 
@@ -115,14 +109,12 @@ function renderFailureChart() {
     Other: "#6b7280"
   };
 
-  const datasets = Object.keys(deviceData).map(type => {
-    return {
-      label: type,
-      data: deviceData[type],
-      backgroundColor: COLORS[type] || COLORS.Other,
-      pointRadius: 6
-    };
-  });
+  const datasets = Object.keys(deviceData).map(type => ({
+    label: type,
+    data: deviceData[type],
+    backgroundColor: COLORS[type] || COLORS.Other,
+    pointRadius: 6
+  }));
 
   if (failureChartInstance) {
     failureChartInstance.destroy();
@@ -141,7 +133,7 @@ function renderFailureChart() {
             label: function(ctx) {
               const m = ctx.raw;
               return [
-                `Device: ${m.name}`,
+                `Name: ${m.name}`,
                 `IP: ${m.ip}`,
                 `City: ${m.city}`,
                 `Failures: ${m.x}`,
@@ -168,10 +160,10 @@ function renderFailureChart() {
   console.log("✅ Failure Chart Rendered Successfully");
 }
 
-// AUTO LOAD AFTER PAGE LOAD
+// Load
 document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(renderFailureChart, 1500);
+  setTimeout(renderFailureChart, 2000);
 });
 
-// AUTO UPDATE EVERY 10 SECONDS
+// Auto refresh
 setInterval(renderFailureChart, 10000);
