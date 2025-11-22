@@ -1,26 +1,22 @@
-  href="http://10.199.22.57:3014/"  this opne same page not new tap ok 
-
 <Box display="flex" alignItems="center" gap={1.5}>
-                  {/* 🏠 Dashboard Hub button (custom HTML icon) */}
-                  <Tooltip
-                    title={
-                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
-                        Dashboard Hub
-                      </Typography>
-                    }
-                    arrow
-                    placement="bottom"
-                  >
-                    <IconButton
-                      color="inherit"
-                      component="a"
-                      href="http://10.199.22.57:3014/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <i className="bi bi-house" style={{ fontSize: '20px', color: '#ffc107' }}></i>
-                    </IconButton>
-                  </Tooltip>
-
-
-                </Box>
+  <Tooltip
+    title={
+      <Typography sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
+        Dashboard Hub
+      </Typography>
+    }
+    arrow
+    placement="bottom"
+  >
+    <IconButton
+      color="inherit"
+      component="a"
+      href="http://10.199.22.57:3014/"
+    >
+      <i
+        className="bi bi-house"
+        style={{ fontSize: '20px', color: '#ffc107' }}
+      ></i>
+    </IconButton>
+  </Tooltip>
+</Box>
