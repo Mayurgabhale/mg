@@ -1,3 +1,19 @@
+function findChartPlaceholderByTitle(titleText) {
+  // Find the card whose title matches the text
+  const cards = document.querySelectorAll('.gcard');
+  for (const card of cards) {
+    const title = card.querySelector('.gcard-title');
+    if (title && title.textContent.trim().toLowerCase() === titleText.toLowerCase()) {
+      return card.querySelector('.chart-placeholder');
+    }
+  }
+  return null;
+}
+
+
+
+
+
 Failure Count chart is not diplsy.. 
 <div class="bottom-row">
 
