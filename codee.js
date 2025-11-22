@@ -1,3 +1,36 @@
+// Global update function that other scripts can call
+window.updateFailureChartWithData = function(deviceDetails, historyData) {
+  console.log('UPDATE FAILURE CHART CALLED with:', {
+    deviceDetails: deviceDetails,
+    historyDataCount: historyData ? Object.keys(historyData).length : 0
+  });
+  
+  // Update global references
+  if (deviceDetails) {
+    window.currentDeviceDetails = deviceDetails;
+  }
+  
+  if (historyData) {
+    window.deviceHistoryData = historyData;
+  }
+  
+  // Calculate and update chart if we have both data sources
+  if (window.currentDeviceDetails && window.deviceHistoryData) {
+    const failureData = calculateFailureCounts(window.currentDeviceDetails);
+    refreshFailureChart(failureData);
+  } else {
+    console.warn('Cannot update chart - missing data:', {
+      hasDeviceDetails: !!window.currentDeviceDetails,
+      hasHistoryData: !!window.deviceHistoryData
+    });
+  }
+};
+
+
+
+
+....
+
 // Enhanced initialization for Failure Count Chart - DYNAMIC VERSION
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded - initializing Failure Count Chart for dynamic data');
