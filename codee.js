@@ -1,57 +1,32 @@
-function populateDeviceTable(details, historyData) {
-  // Your existing code...
-  
-  // After populating the table, update the failure chart
-  if (typeof updateFailureCountChart === 'function') {
-    const failureData = updateFailureCountChart(details);
-    refreshFailureChart(failureData);
+// Global variable to store chart instance
+let failureChart = null;
+
+function refreshFailureChart(failureData) {
+  if (!failureChart) {
+    failureChart = createFailureCountChart();
   }
   
-  // Rest of your existing code...
+  failureChart.data.datasets[0].data = Object.values(failureData);
+  failureChart.update();
 }
 
-
-
 ....
-
-<div class="gcard wide" style="height:300px;">
-  <h4 class="gcard-title">Failure Count</h4>
-  <canvas id="failureCountChart"></canvas>
-</div>
-
-
-
-
-// Function to create Failure Count chart
+// Enhanced Failure Count Chart with real data
 function createFailureCountChart() {
-  const ctx = document.getElementById('failureCountChart').getContext('2d');
+  const ctx = document.getElementById('failureCountChart');
+  if (!ctx) return null;
   
-  // Sample data - you'll replace this with actual data from your API
-  const failureData = {
-    cameras: 12,
-    controllers: 8,
-    archivers: 5,
-    servers: 3,
-    desktops: 7,
-    dbServers: 2
-  };
-
-  const chart = new Chart(ctx, {
+  failureChart = new Chart(ctx.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: Object.keys(failureData).map(key => 
-        key.charAt(0).toUpperCase() + key.slice(1)
-      ),
+      labels: ['Cameras', 'Controllers', 'Archivers', 'Servers', 'Desktops', 'DB Servers'],
       datasets: [{
-        label: 'Failure Count',
-        data: Object.values(failureData),
-        backgroundColor: [
-          '#ff6b6b', '#ffa726', '#ffee58', '#4ecdc4', '#45b7d1', '#96ceb4'
-        ],
-        borderColor: [
-          '#ff5252', '#ff9800', '#fdd835', '#26a69a', '#29b6f6', '#81c784'
-        ],
-        borderWidth: 1
+        label: 'Total Failures',
+        data: [0, 0, 0, 0, 0, 0],
+        backgroundColor: '#ff6b6b',
+        borderColor: '#ff5252',
+        borderWidth: 1,
+        borderRadius: 4
       }]
     },
     options: {
@@ -61,17 +36,10 @@ function createFailureCountChart() {
         legend: {
           display: false
         },
-        title: {
-          display: true,
-          text: 'Device Failures by Category',
-          font: {
-            size: 16
-          }
-        },
         tooltip: {
           callbacks: {
             label: function(context) {
-              return `Failures: ${context.parsed.y}`;
+              return `${context.label}: ${context.parsed.y} failures`;
             }
           }
         }
@@ -81,29 +49,32 @@ function createFailureCountChart() {
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Number of Failures'
+            text: 'Failure Count'
           },
           ticks: {
-            stepSize: 1
+            precision: 0
           }
         },
         x: {
-          title: {
-            display: true,
-            text: 'Device Types'
+          ticks: {
+            autoSkip: false,
+            maxRotation: 45
           }
         }
+      },
+      animation: {
+        duration: 1000,
+        easing: 'easeInOutQuart'
       }
     }
   });
 
-  return chart;
+  return failureChart;
 }
 
-// Function to update chart with real data
-function updateFailureCountChart(deviceData) {
-  // This function will be called with actual device data
-  const failureCounts = {
+// Calculate failure counts from your device data
+function calculateFailureCounts(deviceDetails) {
+  const counts = {
     cameras: 0,
     controllers: 0,
     archivers: 0,
@@ -112,31 +83,29 @@ function updateFailureCountChart(deviceData) {
     dbServers: 0
   };
 
-  // Count failures for each device type
-  ['cameras', 'archivers', 'controllers', 'servers', 'pcDetails', 'DBDetails'].forEach(type => {
-    const devices = deviceData[type] || [];
-    devices.forEach(dev => {
-      const ip = dev.ip_address;
-      const hist = filterHistoryForDisplay(window.deviceHistoryData[ip] || [], type.toUpperCase());
-      const failureCount = hist.filter(e => e.status === 'Offline').length;
+  if (!deviceDetails || !window.deviceHistoryData) return counts;
+
+  // Process each device type
+  Object.keys(deviceDetails).forEach(type => {
+    const devices = deviceDetails[type] || [];
+    devices.forEach(device => {
+      const ip = device.ip_address;
+      const history = window.deviceHistoryData[ip] || [];
+      const filteredHistory = filterHistoryForDisplay(history, type.toUpperCase());
+      const failureCount = filteredHistory.filter(e => e.status === 'Offline').length;
       
-      // Map to the correct category names
-      if (type === 'cameras') failureCounts.cameras += failureCount;
-      else if (type === 'controllers') failureCounts.controllers += failureCount;
-      else if (type === 'archivers') failureCounts.archivers += failureCount;
-      else if (type === 'servers') failureCounts.servers += failureCount;
-      else if (type === 'pcDetails') failureCounts.desktops += failureCount;
-      else if (type === 'DBDetails') failureCounts.dbServers += failureCount;
+      // Map to appropriate category
+      switch(type) {
+        case 'cameras': counts.cameras += failureCount; break;
+        case 'controllers': counts.controllers += failureCount; break;
+        case 'archivers': counts.archivers += failureCount; break;
+        case 'servers': counts.servers += failureCount; break;
+        case 'pcDetails': counts.desktops += failureCount; break;
+        case 'DBDetails': counts.dbServers += failureCount; break;
+      }
     });
   });
 
-  return failureCounts;
+  return counts;
 }
 
-// Initialize chart when page loads
-document.addEventListener('DOMContentLoaded', function() {
-  // Wait a bit for other components to load
-  setTimeout(() => {
-    createFailureCountChart();
-  }, 1000);
-});
