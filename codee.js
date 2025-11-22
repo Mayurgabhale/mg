@@ -2,7 +2,7 @@ function populateDeviceTable(details, historyData) {
   // ... your existing code ...
 
   // After populating the table, update the failure chart DYNAMICALLY
-  console.log('TREND.JS: Updating failure chart with dynamic data');
+  console.log('SUMMARY.JS: Updating failure chart with dynamic data');
   
   // Use the global update function
   if (typeof window.updateFailureChartWithData === 'function') {
