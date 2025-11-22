@@ -1,3 +1,19 @@
+function populateDeviceTable(details, historyData) {
+  // Your existing code...
+  
+  // After populating the table, update the failure chart
+  if (typeof updateFailureCountChart === 'function') {
+    const failureData = updateFailureCountChart(details);
+    refreshFailureChart(failureData);
+  }
+  
+  // Rest of your existing code...
+}
+
+
+
+....
+
 <div class="gcard wide" style="height:300px;">
   <h4 class="gcard-title">Failure Count</h4>
   <canvas id="failureCountChart"></canvas>
