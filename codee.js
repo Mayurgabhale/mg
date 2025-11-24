@@ -1,53 +1,83 @@
-<div class="right-panel">
-    <div class="worldmap-wrapper">
-        <!-- MAP CARD with integrated LOC Chart -->
-        <div class="worldmap-card worldmap-card-with-chart">
-            <!-- Fullscreen Button -->
-            <button id="mapFullscreenBtn" class="map-fullscreen-btn">
-                ⛶ View Full
-            </button>
-            <button id="mapCityOverviewBtn" class="map-CityOverview-btn">
-                City Overview
-            </button>
-            
-            <!-- SIDE PANEL -->
-            <div class="region-panel" id="region-panel">
-                <h4 class="panel-title">Global (City Overview)</h4>
-                <div id="region-panel-content" class="panel-content"></div>
-            </div>
+/* Remove gap between right panel and LOC Count chart */
+.right-panel {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
 
-            <div id="realmap"></div>
+.worldmap-card {
+    margin-bottom: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
 
-            <!-- Legend + Controls Row -->
-            <div class="map-bottom-bar">
-                <!-- Legend -->
-                <div class="legend">
-                    <div class="legend-item">
-                        <i class="bi bi-camera"></i> Camera
-                    </div>
-                    <div class="legend-item">
-                        <i class="bi bi-hdd"></i> Controller
-                    </div>
-                    <div class="legend-item">
-                        <i class="fa-duotone fa-solid fa-server"></i> Server
-                    </div>
-                    <div class="legend-item">
-                        <i class="fas fa-database"></i> Archiver
-                    </div>
-                </div>
+/* LOC Count chart - remove top gap and connect directly to map */
+#Loc-Count-chart {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
 
-                <!-- Controls -->
-                <div class="map-controls">
-                    <button id="fit-all" class="btn-ghost">Fit All</button>
-                    <button id="show-global" class="btn-gv">Global View</button>
-                </div>
-            </div>
+/* Remove bottom gap from worldmap-card and connect directly to LOC chart */
+.worldmap-card .map-bottom-bar {
+    border-bottom: none !important;
+}
 
-            <!-- LOC Count Chart Integrated -->
-            <div class="loc-chart-section">
-                <h4 class="gcard-title">LOC Count</h4>
-                <canvas id="cityBarChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
+/* Ensure smooth transition between map and chart */
+.worldmap-card {
+    box-shadow: 0 6px 20px var(--shadow) !important;
+}
+
+#Loc-Count-chart {
+    box-shadow: 0 6px 20px var(--shadow) !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+/* Adjust the bottom-row to remove any gaps */
+.bottom-row {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    gap: 0 !important;
+}
+
+/* Specific styling for LOC Count chart when placed below map */
+#Loc-Count-chart.gcard {
+    border-top: 1px solid var(--border-color) !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+/* Remove any padding/margin from the canvas container */
+#Loc-Count-chart .gcard-title {
+    margin-bottom: 10px !important;
+    padding-top: 15px !important;
+}
+
+#cityBarChart {
+    width: 100% !important;
+    height: calc(100% - 50px) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .right-panel {
+        margin-bottom: 0 !important;
+    }
+    
+    #Loc-Count-chart {
+        margin-top: 0 !important;
+    }
+    
+    #Loc-Count-chart .gcard-title {
+        padding-top: 12px !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #Loc-Count-chart .gcard-title {
+        padding-top: 10px !important;
+        margin-bottom: 6px !important;
+    }
+}
