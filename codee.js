@@ -1,13 +1,15 @@
-anything is not show in not show,, 
-
+// ========== GLOBALS ==========
 let offlineChart;
+
 let cityIndexMap = {};
 let cityCounter = 0;
 
-let dynamicTypeIndexMap = {};   // Dynamic Y-axis mapping
-let dynamicTypeList = [];       // Track visible types
+let dynamicTypeIndexMap = {};
+let dynamicTypeList = [];
 
+// ========== INIT CHART ==========
 function initOfflineChart() {
+
   const canvas = document.getElementById("DotOfflineDevice");
   const ctx = canvas.getContext("2d");
 
@@ -15,63 +17,30 @@ function initOfflineChart() {
     type: "scatter",
     data: {
       datasets: [
-        {
-          label: "Camera",
-          data: [],
-          backgroundColor: "#ff4d4d",
-          pointStyle: "circle",
-          pointRadius: 6
-        },
-        {
-          label: "Archiver",
-          data: [],
-          backgroundColor: "#4da6ff",
-          pointStyle: "rect",
-          pointRadius: 6
-        },
-        {
-          label: "Controller",
-          data: [],
-          backgroundColor: "#ffaa00",
-          pointStyle: "triangle",
-          pointRadius: 7
-        },
-        {
-          label: "CCURE",
-          data: [],
-          backgroundColor: "#7d3cff",
-          pointStyle: "rectRot",
-          pointRadius: 6
-        }
+        { label: "Camera",     data: [], backgroundColor: "#ff4d4d", pointStyle: "circle",   pointRadius: 6 },
+        { label: "Archiver",   data: [], backgroundColor: "#4da6ff", pointStyle: "rect",     pointRadius: 6 },
+        { label: "Controller", data: [], backgroundColor: "#ffaa00", pointStyle: "triangle", pointRadius: 7 },
+        { label: "CCURE",      data: [], backgroundColor: "#7d3cff", pointStyle: "rectRot",  pointRadius: 6 }
       ]
     },
     options: {
       responsive: true,
 
       plugins: {
-
         tooltip: {
           callbacks: {
             label: (ctx) => {
               const d = ctx.raw;
               const lines = [];
 
-              if (d.name && d.name !== "Unknown") {
-                lines.push(`Name: ${d.name}`);
-              }
-
-              if (d.ip && d.ip !== "N/A" && d.ip !== "null") {
-                lines.push(`IP: ${d.ip}`);
-              }
-
-              // lines.push(`City: ${d.city}`);
-              lines.push(`IP: ${d.ip}`);
+              if (d.name) lines.push(`Name: ${d.name}`);
+              if (d.ip)   lines.push(`IP: ${d.ip}`);
+              if (d.city) lines.push(`City: ${d.city}`);
 
               return lines;
             }
           }
         }
-
       },
 
       scales: {
@@ -85,10 +54,11 @@ function initOfflineChart() {
             }
           }
         },
+
         y: {
           title: { display: true, text: "Device Type" },
           ticks: {
-            callback: v => getDynamicTypeLabel(v)
+            callback: v => dynamicTypeList[v] || ""
           },
           min: -0.5,
           max: () => dynamicTypeList.length - 0.5
@@ -98,11 +68,7 @@ function initOfflineChart() {
   });
 }
 
-/* ✅ Dynamic label for Y-axis */
-function getDynamicTypeLabel(value) {
-  return dynamicTypeList[value] || "";
-}
-
+// ========== UPDATE CHART ==========
 function updateOfflineChart(offlineDevices) {
 
   const typeNames = {
@@ -112,60 +78,48 @@ function updateOfflineChart(offlineDevices) {
     servers: "CCURE"
   };
 
-  // Reset Y mappings
+  // Reset mappings
   dynamicTypeList = [];
   dynamicTypeIndexMap = {};
 
-  // Reset city mappings
   cityIndexMap = {};
   cityCounter = 0;
 
-  // Filter only known types
+  // Only valid types
   const filtered = offlineDevices.filter(dev =>
     typeNames.hasOwnProperty(dev.type)
   );
 
-  // Detect which types actually exist
+  // Build dynamic Y indexes
   filtered.forEach(dev => {
     const label = typeNames[dev.type];
 
-    if (!dynamicTypeIndexMap[label]) {
+    if (!(label in dynamicTypeIndexMap)) {
       dynamicTypeIndexMap[label] = dynamicTypeList.length;
       dynamicTypeList.push(label);
     }
   });
 
-  // Clear datasets
+  // Clear all old points
   offlineChart.data.datasets.forEach(ds => ds.data = []);
 
+  // Add points
   filtered.forEach(dev => {
 
-    // const city = dev.city || "Unknown";
+    // ✅ support both direct and combinedDevices format
+    const source = dev.device ? dev.device : dev;
+
+    const deviceName = source.name || "Unknown";
+    const deviceIP = source.ip || null;
+    const city = source.city || "Unknown";
 
     if (!cityIndexMap[city]) {
       cityCounter++;
       cityIndexMap[city] = cityCounter;
     }
 
-    const deviceLabel = typeNames[dev.type];
-    const dynamicY = dynamicTypeIndexMap[deviceLabel];
-
-    // const point = {
-    //     x: cityIndexMap[city],
-    //     y: dynamicY,   // 👈 Dynamic Y index
-    //     name: dev.name || "Unknown",
-    //     ip: dev.ip || "N/A",
-    //     city: city
-    // };
-
-
-
-    // ✅ Your structure from combinedDevices
-    const source = dev.device ? dev.device : dev;
-
-    const deviceName = source.name || null;
-    const deviceIP = source.ip || null;
-    const city = source.city || "Unknown";
+    const label = typeNames[dev.type];
+    const dynamicY = dynamicTypeIndexMap[label];
 
     const point = {
       x: cityIndexMap[city],
@@ -175,11 +129,8 @@ function updateOfflineChart(offlineDevices) {
       city: city
     };
 
-
-
-    // Push into correct dataset by label
     const dataset = offlineChart.data.datasets.find(
-      ds => ds.label === deviceLabel
+      ds => ds.label === label
     );
 
     if (dataset) {
@@ -187,7 +138,7 @@ function updateOfflineChart(offlineDevices) {
     }
   });
 
-  // Hide datasets with no data (no offline devices)
+  // Hide empty types
   offlineChart.data.datasets.forEach(ds => {
     ds.hidden = ds.data.length === 0;
   });
@@ -195,19 +146,34 @@ function updateOfflineChart(offlineDevices) {
   offlineChart.update();
 }
 
-window.initOfflineChart = initOfflineChart;
-window.updateOfflineChart = updateOfflineChart;
+// ========== YOUR EXISTING PUSH (UNCHANGED) ==========
+combinedDevices.push({
+  card: card,
+  device: {
+    name: device.cameraname || 
+          device.controllername || 
+          device.archivername || 
+          device.servername || 
+          device.hostname || 
+          "Unknown",
 
-                    // push device with normalized vendor (may be empty string if unknown)
-                    combinedDevices.push({
-                        card: card,
-                        device: {
-                            ip:deviceIP,
-                            type: deviceType,
-                            status: currentStatus,
-                            city: city,
-                            vendor: datasetVendorValue // already normalized (uppercase) or ""
-                        }
-                    });
-                });
-            }
+    ip: deviceIP,
+    type: deviceType,
+    status: currentStatus,
+    city: city,
+    vendor: datasetVendorValue
+  }
+});
+
+// ========== CALL THIS WHEN YOU WANT TO UPDATE ==========
+function renderOfflineChartFromCombined(combinedDevices) {
+
+  const offlineDevices = combinedDevices
+    .filter(d => d.device.status === "offline")
+    .map(d => ({
+      device: d.device,
+      type: d.device.type
+    }));
+
+  updateOfflineChart(offlineDevices);
+}
