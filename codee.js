@@ -7,6 +7,36 @@
    for exmapl i want in map one buttion when i clikc on this buttin that timeopn this ok, like that 
        i measn worldmap-card in this ok, 
    so can yo do this..... 
+        <button id="mapFullscreenBtn" class="map-fullscreen-btn">
+                      ⛶ View Full
+                    </button>
+ <!-- SIDE PANEL -->
+                  <div class="region-panel" id="region-panel">
+                    <h4 class="panel-title">Global (City Overview)</h4>
+                    <div id="region-panel-content" class="panel-content"></div>
+                  </div>
+                </div>
+this button i want to move is here ok in   ⛶ View Full this buttion below side ok 
+        for this buttion i want anothe one buttion is City Overview then clikc on ths buttin i i want disply 
+         Global (City Overview)
+Taguig City
+— • 6 devices
+Pune Podium
+— • 8 devices
+Pune Tower B
+— • 3 devices
+Pune 2nd Floor
+— • 2 devices
+Kuala lumpur
+— • 2 devices
+Delta Building
+— • 6 devices
+Ireland, Dublin
+— • 2 devices
+Italy, Rome
+— • 2 devices
+Gama Building
+— • 8 devices this contetn ok 
 
 <div class="worldmap-card">
                     <!-- Fullscreen Button -->
