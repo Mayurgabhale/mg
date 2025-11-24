@@ -1,33 +1,45 @@
-combinedDevices.push({
-  card: card,
-  device: {
-      name: device.cameraname || 
-            device.controllername || 
-            device.archivername || 
-            device.servername || 
-            device.hostname || 
-            "Unknown",
+const deviceName =
+  dev.name ||
+  dev.device?.name ||
+  dev.details?.name ||
+  null;
 
-      ip: deviceIP,  // ✅ VERY IMPORTANT
+const deviceIP =
+  dev.ip ||
+  dev.device?.ip ||
+  dev.details?.ip ||
+  dev.card?.dataset?.ip ||
+  null;
 
-      type: deviceType,
-      status: currentStatus,
-      city: city,
-      vendor: datasetVendorValue
+const point = {
+  x: cityIndexMap[city],
+  y: dynamicY,
+  name: deviceName,
+  ip: deviceIP,
+  city: city
+};
+
+
+
+
+
+tooltip: {
+  callbacks: {
+    label: (ctx) => {
+      const d = ctx.raw;
+      const lines = [];
+
+      if (d.name && d.name !== "Unknown") {
+        lines.push(`Name: ${d.name}`);
+      }
+
+      if (d.ip && d.ip !== "N/A" && d.ip !== "null") {
+        lines.push(`IP: ${d.ip}`);
+      }
+
+      lines.push(`City: ${d.city}`);
+
+      return lines;
+    }
   }
-});
-
-
-
-
-
-
-const offlineDevices = filteredSummaryDevices
-  .filter(d => d.status === "offline")
-  .map(d => ({
-      name: d.name,
-      ip: d.ip,  // ✅ Now real IP is here
-      city: d.city,
-      type: d.type,
-      lastSeen: new Date().toISOString()
-  }));
+}
