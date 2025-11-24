@@ -1,5 +1,6 @@
-x     axis i dont want time 
 let offlineChart;
+let cityIndexMap = {};
+let cityCounter = 0;
 
 function initOfflineChart() {
     const canvas = document.getElementById("DotOfflineDevice");
@@ -49,8 +50,7 @@ function initOfflineChart() {
                             return [
                                 `Name: ${d.name}`,
                                 `IP: ${d.ip}`,
-                                `City: ${d.city}`,
-                                `Last Seen: ${new Date(d.lastSeen).toLocaleString()}`
+                                `City: ${d.city}`
                             ];
                         }
                     }
@@ -58,9 +58,13 @@ function initOfflineChart() {
             },
             scales: {
                 x: {
-                    title: { display: true, text: "Last Seen" },
+                    title: { display: true, text: "City" },
                     ticks: {
-                        callback: v => new Date(v).toLocaleString()
+                        callback: (value) => {
+                            return Object.keys(cityIndexMap).find(
+                                key => cityIndexMap[key] === value
+                            ) || "";
+                        }
                     }
                 },
                 y: {
@@ -89,23 +93,34 @@ function updateOfflineChart(offlineDevices) {
         servers: 3   // CCURE
     };
 
+    // Reset mapping every refresh
+    cityIndexMap = {};
+    cityCounter = 0;
+
     const filtered = offlineDevices.filter(dev =>
         Object.keys(typeMap).includes(dev.type)
     );
 
-    // Clear all datasets
+    // Clear datasets
     offlineChart.data.datasets.forEach(ds => ds.data = []);
 
     filtered.forEach(dev => {
+
+        const city = dev.city || "Unknown";
+
+        if (!cityIndexMap[city]) {
+            cityCounter++;
+            cityIndexMap[city] = cityCounter;
+        }
+
         const typeIndex = typeMap[dev.type];
 
         const point = {
-            x: Date.parse(dev.lastSeen) || Date.now(),
+            x: cityIndexMap[city],   // 👈 City-based X value
             y: typeIndex,
             name: dev.name || "Unknown",
             ip: dev.ip || "N/A",
-            city: dev.city || "N/A",
-            lastSeen: dev.lastSeen
+            city: city
         };
 
         offlineChart.data.datasets[typeIndex].data.push(point);
