@@ -1,555 +1,288 @@
-/* ============================================================
-   map.js — Consolidated + fixed version
-   - fixes: duplicate DOMContentLoaded, early DOM access,
-     Chart.js ticks typo, safer button hookup, Global View action
-   ============================================================ */
+GLOBAL Summary
+this is headr i want to change this also dark and light theme ok 
+write css light and dark theme only for the header ok 
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\styles.css
+GLOBAL Summary
+/* === Default (Desktop) === */
+#region-title {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background-color: #000000;
+  color: #ffdd00;
+  /* border-bottom: 3px solid #ffdd00; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  font-size: 35px;
+  /* border-bottom: 1px solid #000000; */
+  /* border-top: 1px solid #000000; */
+  font-family: "PP Right Grotesk";
+  font-weight: 600;
 
-let realMap;
-let CITY_LIST = []; // dynamically populated from API
-let cityLayers = {}; // cityName -> { summaryMarker, deviceLayer }
-let heatLayer = null;
-window._mapRegionMarkers = [];
-
-// Predefined coordinates for your cities (add/update as needed)
-const CITY_COORDS = {
-  "Casablanca": [33.5731, -7.5898],
-  "Dubai": [25.276987, 55.296249],
-  "Argentina": [-38.4161, -63.6167],
-  "Austin TX": [30.2672, -97.7431],
-  "Austria, Vienna": [48.2082, 16.3738],
-  "Costa Rica": [9.7489, -83.7534],
-  "Delta Building": [37.7749, -122.4194],
-  "Denver": [39.7392, -104.9903],
-  "Denver Colorado": [39.7392, -104.9903],
-  "Florida, Miami": [25.7617, -80.1918],
-  "Frankfurt": [50.1109, 8.6821],
-  "Gama Building": [37.7749, -122.4194],
-  "Ireland, Dublin": [53.3331, -6.2489],
-  "Italy, Rome": [41.9028, 12.4964],
-  "Japan Tokyo": [35.6762, 139.6503],
-  "Kuala lumpur": [3.1390, 101.6869],
-  "London": [51.5074, -0.1278],
-  "Madrid": [40.4168, -3.7038],
-  "Mexico": [23.6345, -102.5528],
-  "Moscow": [55.7558, 37.6173],
-  "NEW YORK": [40.7128, -74.0060],
-  "Panama": [8.5380, -80.7821],
-  "Peru": [-9.1900, -75.0152],
-  "Pune": [18.5204, 73.8567],
-  "Pune 2nd Floor": [18.5204, 73.8567],
-  "Pune Podium": [18.5204, 73.8567],
-  "Pune Tower B": [18.5204, 73.8567],
-  "Quezon": [14.6760, 121.0437],
-  "Sao Paulo, Brazil": [-23.5505, -46.6333],
-  "Taguig City": [14.5176, 121.0509],
-  "HYDERABAD": [17.3850, 78.4867],
-  "Singapore": [1.3521, 103.8198]
-};
-
-/* ----------------------
-   Helper: safe number parse
-   ---------------------- */
-function toNum(v) {
-  if (v === undefined || v === null || v === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
 }
 
-/* ============================================================
-   1. INIT MAP
-   ============================================================ */
-function initRealMap() {
-  if (realMap) return; // idempotent
-  realMap = L.map('realmap', {
-    preferCanvas: true,
-    maxBounds: [
-      [70, -135],
-      [-60, 160]
-    ],
-    maxBoundsViscosity: 1.0,
-    minZoom: 2.1,
-    maxZoom: 20
-  }).setView([15, 0], 2.4);
+#region-title .region-logo {
+  position: absolute;
+  left: 50px;
+ 
+  z-index: 1000;
 
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 20,
-    attribution: 'Tiles © Esri'
-  }).addTo(realMap);
-
-  if (!window.markerCluster) {
-    window.markerCluster = L.markerClusterGroup({ chunkedLoading: true, showCoverageOnHover: false });
-    realMap.addLayer(window.markerCluster);
-  }
-  if (!window.countryLayerGroup) window.countryLayerGroup = L.layerGroup().addTo(realMap);
-  L.control.scale().addTo(realMap);
 }
 
-/* ============================================================
-   2. DEVICE ICON HELPERS
-   ============================================================ */
-function _deviceIconDiv(type) {
-  const cls = `device-icon device-${type}`;
-  return L.divIcon({ className: cls, iconSize: [14, 14], iconAnchor: [7, 7] });
-}
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
 
-function _placeDeviceIconsForCity(cityObj, deviceCounts, devicesListForCity = []) {
-  if (!cityObj || toNum(cityObj.lat) === null || toNum(cityObj.lon) === null) {
-    return;
-  }
 
-  if (!cityLayers[cityObj.city]) cityLayers[cityObj.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-  const layer = cityLayers[cityObj.city].deviceLayer;
-  layer.clearLayers();
+    document.querySelectorAll(".region-button").forEach((button) => {
+        button.addEventListener("click", () => {
+            const region = button.getAttribute("data-region");
+            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
+            switchRegion(region);
+        });
+    });
 
-  const deviceTypes = ['camera', 'controller', 'server', 'archiver'];
-  deviceTypes.forEach(type => {
-    const cnt = (deviceCounts && deviceCounts[type]) || 0;
-    const displayCount = Math.min(cnt, 30);
-    for (let i = 0; i < displayCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radiusDeg = 0.02 + Math.random() * 0.035;
-      const lat = cityObj.lat + Math.cos(angle) * radiusDeg;
-      const lon = cityObj.lon + Math.sin(angle) * radiusDeg;
-      const marker = L.marker([lat, lon], { icon: _deviceIconDiv(type) });
-      marker.bindTooltip(`${type.toUpperCase()} ${i + 1}`, { direction: 'top', offset: [0, -8], opacity: 0.95 });
-      layer.addLayer(marker);
+    document.getElementById("close-modal").addEventListener("click", () => {
+        document.getElementById("modal").style.display = "none";
+    });
+
+                const region = currentRegion?.toUpperCase() || "GLOBAL";
+                const titleElement = document.getElementById("region-title");
+
+                const logoHTML = `
+                    <span class="region-logo">
+                        <a href="http://10.199.22.57:3014/" class="tooltip">
+                            <i class="fa-solid fa-house"></i>
+                            <span class="tooltiptext">Dashboard Hub</span>
+                        </a>
+                    </span>
+                    `;
+                if (selectedCity !== "all") {
+                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
+                } else {
+                    titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
+
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\newcss.css
+                   
+    /* Theme Variables */
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1a1d29;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-accent: #7c3aed;
+      --border-color: #334155;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --chart-bg: #0a0a0a;
     }
 
-    if (cnt > displayCount) {
-      const moreHtml = `<div class="city-label-box" style="padding:6px 8px; font-size:12px;">${type}: ${cnt}</div>`;
-      const labelLat = cityObj.lat + 0.045;
-      const labelLon = cityObj.lon + (type === 'camera' ? 0.03 : (type === 'controller' ? -0.03 : 0));
-      const labelMarker = L.marker([labelLat, labelLon], { icon: L.divIcon({ html: moreHtml, className: "" }) });
-      layer.addLayer(labelMarker);
-    }
-  });
-}
-
-/* ============================================================
-   3. CITY SUMMARY HTML
-   ============================================================ */
-function buildCitySummaryHTML(city) {
-  const total = city.total || 0;
-
-  const offline = (city.devicesList || []).reduce((acc, d) => {
-    const s = ((d.status || d.state || '') + '').toLowerCase();
-    if (s === 'offline' || s === 'down') return acc + 1;
-    if (d.online === false) return acc + 1;
-    return acc;
-  }, 0);
-
-  const ICONS = {
-    camera: `<i class="bi bi-camera "></i>`,
-    controller: `<i class="bi bi-hdd"></i>`,
-    server: `<i class="fa-duotone fa-solid fa-server"></i>`,
-    archiver: `<i class="fas fa-database"></i>`
-  };
-
-  let html = `
-  <div style="font-family: Inter, Roboto, Arial, sans-serif; font-size:13px; display:inline-block; width:auto; max-width:240px;">
-    <div style="font-weight:700; margin-bottom:6px; font-size:14px; white-space:nowrap;">${city.city}</div>
-    <div style="font-weight:600; margin-bottom:8px;">${total}/<span style="color:#ff3b3b;">${offline}</span></div>
-  `;
-
-  const mapList = ["camera", "controller", "server", "archiver"];
-  mapList.forEach(type => {
-    const count = city.devices?.[type] || 0;
-    if (count > 0) {
-      html += `<div style="margin-bottom:4px; display:flex; align-items:center; gap:6px; font-size:10px;">${ICONS[type]} <span>${count}</span></div>`;
-    }
-  });
-
-  const extraCounts = {};
-  (city.devicesList || []).forEach(d => {
-    const candidates = [d.type, d.product, d.deviceType, d.model];
-    for (let v of candidates) {
-      if (!v) continue;
-      const name = String(v).trim();
-      if (!name) continue;
-      const low = name.toLowerCase();
-      if (low.includes("camera") || low.includes("server") || low.includes("controller") || low.includes("archiver")) continue;
-      extraCounts[name] = (extraCounts[name] || 0) + 1;
-      break;
-    }
-  });
-  Object.keys(extraCounts).forEach(key => {
-    html += `<div style="margin-bottom:4px;">${key} ${extraCounts[key]}</div>`;
-  });
-
-  html += `</div>`;
-  return html;
-}
-
-/* ============================================================
-   4. placeCityMarkers — creates city markers
-   ============================================================ */
-function placeCityMarkers() {
-  if (!realMap) return;
-  if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
-  window.cityMarkerLayer.clearLayers();
-
-  CITY_LIST.forEach(c => {
-    if (toNum(c.lat) === null || toNum(c.lon) === null) return;
-
-    const blinkClass = c.shouldBlink ? 'blink' : '';
-    const severityClass = (c.blinkSeverity && c.blinkSeverity >= 3) ? ' blink-high' : '';
-
-    const cityIconHtml = `<div><span class="pin ${blinkClass}${severityClass}" title="${c.city}"><i class="bi bi-geo-alt-fill"></i></span></div>`;
-    const cityIcon = L.divIcon({
-      className: 'city-marker',
-      html: cityIconHtml,
-      iconAnchor: [12, 12]
-    });
-
-    const marker = L.marker([c.lat, c.lon], { icon: cityIcon });
-
-    console.log(`[placeCityMarkers] city="${c.city}" shouldBlink=${!!c.shouldBlink} severity=${c.blinkSeverity || 0}`);
-
-    const getSummary = () => buildCitySummaryHTML(c);
-
-    marker.on('mouseover', function () {
-      marker.bindTooltip(getSummary(), {
-        direction: 'top',
-        offset: [0, -12],
-        opacity: 1,
-        permanent: false,
-        className: 'city-summary-tooltip'
-      }).openTooltip();
-    });
-    marker.on('mouseout', function () {
-      try { marker.closeTooltip(); } catch (e) {}
-    });
-    marker.on('click', function () {
-      marker.bindPopup(getSummary(), { maxWidth: 260 }).openPopup();
-    });
-
-    marker.addTo(window.cityMarkerLayer);
-  });
-
-  window.cityMarkerLayer.bringToFront();
-}
-
-/* ============================================================
-   5. HEATMAP (unchanged)
-   ============================================================ */
-function drawHeatmap() {
-  const totals = CITY_LIST
-    .map(c => ({
-      lat: toNum(c.lat),
-      lon: toNum(c.lon),
-      total: c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0
-    }))
-    .filter(x => x.lat !== null && x.lon !== null && x.total > 0);
-
-  if (!totals.length) {
-    if (heatLayer) {
-      try { realMap.removeLayer(heatLayer); } catch (e) {}
-      heatLayer = null;
-    }
-    return;
-  }
-
-  let maxTotal = Math.max(...totals.map(t => t.total), 1);
-  const heatPoints = totals.map(t => [t.lat, t.lon, Math.min(1.5, (t.total / maxTotal) + 0.2)]);
-  if (heatLayer) realMap.removeLayer(heatLayer);
-  heatLayer = L.heatLayer(heatPoints, { radius: 40, blur: 25, gradient: { 0.2: '#34d399', 0.5: '#fbbf24', 0.8: '#f97316' } }).addTo(realMap);
-}
-function toggleHeat() {
-  if (!heatLayer) return;
-  if (realMap.hasLayer(heatLayer)) realMap.removeLayer(heatLayer);
-  else realMap.addLayer(heatLayer);
-}
-
-/* ============================================================
-   6. FIT / PANELS
-   ============================================================ */
-function fitAllCities() {
-  console.log("fitAllCities called; CITY_LIST length:", CITY_LIST.length);
-  const validCoords = CITY_LIST
-    .map(c => [toNum(c.lat), toNum(c.lon)])
-    .filter(([lat, lon]) => lat !== null && lon !== null);
-
-  console.log("validCoords:", validCoords.length);
-  if (!validCoords.length) {
-    console.warn("fitAllCities: no valid coordinates to fit.");
-    return;
-  }
-  const bounds = L.latLngBounds(validCoords);
-  realMap.fitBounds(bounds.pad(0.25));
-}
-
-function populateGlobalCityList() {
-  const panel = document.getElementById("region-panel-content");
-  if (!panel) {
-    console.warn("populateGlobalCityList: region-panel-content not found");
-    return;
-  }
-  let html = `<h4></h4><hr>`;
-  CITY_LIST.forEach((c, idx) => {
-    const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
-    html += `<div class="city-item" data-city-index="${idx}">
-                <div style="font-weight:700">${c.city}</div>
-                <div class="small-muted">${c.region || '—'} • ${total} devices</div>
-             </div>`;
-  });
-  panel.innerHTML = html;
-  panel.querySelectorAll('.city-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const idx = Number(el.getAttribute('data-city-index'));
-      const c = CITY_LIST[idx];
-      if (c && toNum(c.lat) !== null && toNum(c.lon) !== null) realMap.flyTo([c.lat, c.lon], 7, { duration: 1.0 });
-      populateCityPanel(c ? c.city : null);
-    });
-  });
-}
-
-function onCityItemClick(cityName) {
-  const c = CITY_LIST.find(x => x.city === cityName);
-  if (c && toNum(c.lat) !== null && toNum(c.lon) !== null) realMap.setView([c.lat, c.lon], 5, { animate: true });
-  populateCityPanel(cityName);
-}
-
-function populateCityPanel(cityName) {
-  const panel = document.getElementById("region-panel-content");
-  const c = CITY_LIST.find(x => x.city === cityName);
-  if (!panel || !c) return;
-  const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
-  panel.innerHTML = `
-    <h4>${cityName} — ${total} devices</h4><hr>
-    <div><b>Camera:</b> ${c.devices.camera || 0}</div>
-    <div><b>Controller:</b> ${c.devices.controller || 0}</div>
-    <div><b>Server:</b> ${c.devices.server || 0}</div>
-    <div><b>Archiver:</b> ${c.devices.archiver || 0}</div>
-  `;
-}
-
-function populateRegionPanel(region) {
-  const panel = document.getElementById("region-panel-content");
-  if (!panel) return;
-  const cities = CITY_LIST.filter(c => c.region === region);
-  let html = `<h4>${region} Region</h4><hr>`;
-  cities.forEach((c, idx) => {
-    const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
-    html += `<div class="city-item" data-city-index="${CITY_LIST.indexOf(c)}"><b>${c.city}</b> — ${total} devices</div>`;
-  });
-  panel.innerHTML = html;
-  panel.querySelectorAll('.city-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const idx = Number(el.getAttribute('data-city-index'));
-      const c = CITY_LIST[idx];
-      if (c && toNum(c.lat) !== null && toNum(c.lon) !== null) realMap.flyTo([c.lat, c.lon], 7, { duration: 1.0 });
-      populateCityPanel(c ? c.city : null);
-    });
-  });
-}
-
-function ensureUniqueCityCoordinates(cityArray) {
-  const map = {};
-  cityArray.forEach(c => {
-    const lat = toNum(c.lat);
-    const lon = toNum(c.lon);
-    if (lat === null || lon === null) return;
-    const key = `${lat.toFixed(6)}_${lon.toFixed(6)}`;
-    if (!map[key]) map[key] = [];
-    map[key].push(c);
-  });
-  Object.values(map).forEach(group => {
-    if (group.length <= 1) return;
-    const baseLat = toNum(group[0].lat);
-    const baseLon = toNum(group[0].lon);
-    if (baseLat === null || baseLon === null) return;
-    const radius = 0.02;
-    group.forEach((c, i) => {
-      const angle = (2 * Math.PI * i) / group.length;
-      c.lat = baseLat + Math.cos(angle) * radius;
-      c.lon = baseLon + Math.sin(angle) * radius;
-    });
-  });
-}
-
-/* ============================================================
-   7. GEOCODE MISSING CITIES (use local list)
-   ============================================================ */
-async function getCityCoordinates(cityName) {
-  if (!cityName || !cityName.trim()) return null;
-  cityName = cityName.trim();
-  // try exact then case-insensitive
-  if (CITY_COORDS[cityName]) return CITY_COORDS[cityName];
-  const low = cityName.toLowerCase();
-  for (const k of Object.keys(CITY_COORDS)) {
-    if (k.toLowerCase() === low) return CITY_COORDS[k];
-  }
-  console.warn("City not found in CITY_COORDS:", cityName);
-  return null;
-}
-
-/* ============================================================
-   8. UPDATE MAP DYNAMICALLY (MAIN)
-   ============================================================ */
-async function updateMapData(summary, details) {
-  try {
-    if (!realMap || !details) return;
-
-    const deviceBuckets = details.details || details;
-    if (!deviceBuckets) return;
-
-    const cityMap = {};
-    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
-      if (!Array.isArray(arr)) return;
-      arr.forEach(dev => {
-        const cityNameRaw = dev.city || dev.location || dev.site || "Unknown";
-        const cityName = (typeof cityNameRaw === 'string') ? cityNameRaw.trim() : String(cityNameRaw);
-        let lat = toNum(dev.lat);
-        let lon = toNum(dev.lon);
-
-        const keyLower = (rawKey || "").toLowerCase();
-        const type = keyLower.includes("camera") ? "camera" :
-          keyLower.includes("controller") ? "controller" :
-            keyLower.includes("server") ? "server" :
-              keyLower.includes("archiver") ? "archiver" : null;
-
-        if (!cityMap[cityName]) cityMap[cityName] = {
-          city: cityName,
-          lat: (lat !== null ? lat : null),
-          lon: (lon !== null ? lon : null),
-          devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
-          offline: { camera: 0, controller: 0, server: 0, archiver: 0 },
-          total: 0,
-          devicesList: [],
-          region: dev.region || dev.zone || null
-        };
-
-        if (type) cityMap[cityName].devices[type] += 1;
-        cityMap[cityName].total += 1;
-        cityMap[cityName].devicesList.push(dev);
-
-        if (lat !== null && lon !== null) {
-          cityMap[cityName].lat = lat;
-          cityMap[cityName].lon = lon;
-        }
-
-        const s = ((dev.status || dev.state || '') + '').toLowerCase();
-        const isOffline = (s === 'offline' || s === 'down' || dev.online === false);
-        if (isOffline && type) {
-          cityMap[cityName].offline[type] = (cityMap[cityName].offline[type] || 0) + 1;
-        }
-      });
-    });
-
-    // populate CITY_LIST (array)
-    CITY_LIST = Object.values(cityMap);
-
-    // geocode missing coords
-    for (let c of CITY_LIST) {
-      if (toNum(c.lat) === null || toNum(c.lon) === null) {
-        const coords = await getCityCoordinates(c.city);
-        if (coords && coords.length === 2) {
-          c.lat = coords[0];
-          c.lon = coords[1];
-        } else {
-          c.lat = null;
-          c.lon = null;
-        }
-      }
+    .theme-light {
+      /* Light Theme */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-accent: #7c3aed;
+      --border-color: #e2e8f0;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --chart-bg: #f1f5f9;
     }
 
-    // ensure unique coords
-    ensureUniqueCityCoordinates(CITY_LIST);
-
-    // compute shouldBlink and severity
-    CITY_LIST.forEach(c => {
-      const a = (c.offline && c.offline.archiver) || 0;
-      const ctrl = (c.offline && c.offline.controller) || 0;
-      const srv = (c.offline && c.offline.server) || 0;
-      c.shouldBlink = (a + ctrl + srv) > 0;
-      c.blinkSeverity = Math.min(5, a + ctrl + srv);
-    });
-
-    // Place device icons & device layers
-    CITY_LIST.forEach(c => {
-      if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-      cityLayers[c.city].deviceLayer.clearLayers();
-      _placeDeviceIconsForCity(c, c.devices, c.devicesList);
-    });
-
-    drawHeatmap();
-    populateGlobalCityList();
-    if (typeof drawRegionBadges === 'function') drawRegionBadges();
-
-  } catch (err) {
-    console.error("updateMapData error", err);
-  }
-
-  // redraw UI overlays and markers
-  if (typeof drawCityBarChart === 'function') drawCityBarChart();
-  placeCityMarkers();
-  fitAllCities();
-}
-
-/* ============================================================
-   9. EXPORTS / BUTTON HOOKS (single DOMContentLoaded)
-   ============================================================ */
-document.addEventListener("DOMContentLoaded", () => {
-  initRealMap();
-  placeCityMarkers(); // show (empty) markers initially if any
-
-  // safe hookup helper with warning if missing
-  function setOnClick(id, fn) {
-    const el = document.getElementById(id);
-    if (!el) {
-      console.warn(`setOnClick: element with id="${id}" not found`);
-      return;
+    /* Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    el.addEventListener('click', fn);
-  }
 
-  // Fit All button
-  setOnClick("fit-all", () => {
-    console.log("Fit All clicked");
-    fitAllCities();
-  });
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      min-height: 100vh;
+    }
 
-  // Global View button — reset view + update panel + show markers
-  setOnClick("show-global", () => {
-    console.log("Global View clicked");
-    if (!realMap) return;
-    realMap.setView([15, 0], 2.4, { animate: true, duration: 0.8 });
-    populateGlobalCityList();
-    placeCityMarkers();
-    // do not force fitAllCities() here; user expects global center
-  });
+    /* Layout */
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
 
-  // Toggle heat and other buttons
-  setOnClick("toggle-heat", () => {
-    toggleHeat();
-  });
+    /* Sidebar Styles */
+    .sidebar-toggle {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1001;
+      background: var(--text-accent);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: all 0.3s ease;
+    }
 
-  // Fullscreen button hookup (safe)
-  const fullscreenBtn = document.getElementById("mapFullscreenBtn");
-  const mapCard = document.querySelector(".worldmap-card");
-  if (fullscreenBtn && mapCard) {
-    let isFullscreen = false;
-    fullscreenBtn.addEventListener("click", () => {
-      isFullscreen = !isFullscreen;
-      if (isFullscreen) {
-        mapCard.classList.add("fullscreen");
-        document.body.classList.add("map-fullscreen-active");
-        fullscreenBtn.innerText = "✖ Exit Full";
-      } else {
-        mapCard.classList.remove("fullscreen");
-        document.body.classList.remove("map-fullscreen-active");
-        fullscreenBtn.innerText = "⛶ View Full";
-      }
-      setTimeout(() => {
-        try { realMap.invalidateSize(true); } catch (e) {}
-      }, 300);
-    });
-  } else {
-    if (!fullscreenBtn) console.warn("#mapFullscreenBtn not found");
-    if (!mapCard) console.warn(".worldmap-card not found");
-  }
+    .sidebar-toggle:hover {
+      transform: scale(1.05);
+    }
 
-  window.updateMapData = updateMapData;
-});
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: -320px;
+      width: 300px;
+      height: 100vh;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 20px;
+      overflow-y: auto;
+      transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 4px 0 20px var(--shadow);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-/* =
+    #sidebar.active {
+      left: 0;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      /* background: rgba(0, 0, 0, 0.5); */
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Main Content */
+    #content {
+      margin-top: 35px;
+      flex: 1;
+      padding: 10px 5px;
+      transition: margin-left 0.3s ease;
+      margin-left: 0;
+    }
+
+    #sidebar.active ~ #content {
+      margin-left: 300px;
+    }
+
+    /* Details Section */
+    .details-section {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px var(--shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .details-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .details-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .details-header h2 i {
+      font-size: 1.3rem;
+    }
+
+    #device-search {
+      flex: 1;
+      min-width: 250px;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    #device-search:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+
+    #device-search::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+
+
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1001;
+      background: var(--text-accent);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.05);
+    }
