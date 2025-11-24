@@ -1,185 +1,81 @@
-/* Offline Device Graph Card */
-.offline-device-card {
-    background: var(--graph-card-bg-dark);
-    border: 1px solid var(--graph-card-border-dark);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 280px;
-    grid-column: 1 / -1; /* Span full width in grid */
-}
 
-.theme-light .offline-device-card {
-    background: var(--graph-card-bg-light);
-    border: 1px solid var(--graph-card-border-light);
-}
+<div class="right-panel"> and   <h4 class="gcard-title">LOC Count</h4> 
+right panel and loc cout bitween gatting some space i wan to rmove this space 
+in rihgt panel or  <div class="worldmap-card"> bottom side i want to dispoly  this loc count chart wihtou top and bottom gap ok 
 
-.offline-device-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px var(--graph-shadow-dark);
-}
+<div class="gcard wide" id="Loc-Count-chart">
+                <h4 class="gcard-title">LOC Count</h4>
+                <canvas id="cityBarChart"></canvas>
+              </div>
 
-.theme-light .offline-device-card:hover {
-    box-shadow: 0 8px 25px var(--graph-shadow-light);
-}
+<div class="right-panel">
+              <!-- <div class="gcard tall"> -->
+              <div class="">
+                <div class="worldmap-wrapper">
+                  <!-- MAP CARD -->
+                  <div class="worldmap-card">
+                    <!-- Fullscreen Button -->
+                    <button id="mapFullscreenBtn" class="map-fullscreen-btn">
+                      ⛶ View Full
+                    </button>
+                    <button id="mapCityOverviewBtn" class="map-CityOverview-btn">
+                      City Overview
+                    </button>
+                    <!-- SIDE PANEL -->
+                    <div class="region-panel" id="region-panel">
+                      <h4 class="panel-title">Global (City Overview)</h4>
+                      <div id="region-panel-content" class="panel-content"></div>
+                    </div>
 
-/* Card title specific for offline device */
-.offline-device-card .gcard-title {
-    font-size: clamp(14px, 2.5vw, 16px);
-    color: var(--graph-card-title-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-    text-align: center;
-}
+                    <div id="realmap"></div>
 
-.theme-light .offline-device-card .gcard-title {
-    color: var(--graph-card-title-light);
-}
+                    <!-- Legend + Controls Row -->
+                    <div class="map-bottom-bar">
 
-/* Canvas container for offline device chart */
-.offline-device-card .chart-container {
-    width: 100%;
-    height: 100%;
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
+                      <!-- Legend -->
+                      <div class="legend">
+                        <div class="legend-item">
+                          <i class="bi bi-camera"></i>
+                          Camera
+                        </div>
+                        <div class="legend-item">
+                          <i class="bi bi-hdd"></i> Controller
+                        </div>
+                        <div class="legend-item">
+                          <i class="fa-duotone fa-solid fa-server"></i> Server
+                        </div>
+                        <div class="legend-item">
+                          <i class="fas fa-database "></i> Archiver
+                        </div>
+                      </div>
 
-/* Canvas element styling */
-#DotOfflineDevice {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 240px;
-    box-sizing: border-box;
-}
+                      <!-- Controls -->
+                      <div class="map-controls">
+                        <button id="fit-all" class="btn-ghost">Fit All</button>
+                        <button id="show-global" class="btn-gv">Global View</button>
+                      </div>
 
-/* Responsive Design for Offline Device Card */
-/* Tablets and larger phones */
-@media (min-width: 768px) {
-    .offline-device-card {
-        grid-column: 1 / -1;
-        min-height: 300px;
-    }
-    
-    #DotOfflineDevice {
-        max-height: 260px;
-    }
-}
+                    </div>
 
-/* Desktop and larger tablets */
-@media (min-width: 1024px) {
-    .offline-device-card {
-        min-height: 320px;
-    }
-    
-    #DotOfflineDevice {
-        max-height: 280px;
-    }
-}
-
-/* Mobile devices */
-@media (max-width: 767px) {
-    .offline-device-card {
-        min-height: 250px;
-        padding: 12px;
-    }
-    
-    #DotOfflineDevice {
-        max-height: 200px;
-    }
-}
-
-/* Small mobile devices */
-@media (max-width: 480px) {
-    .offline-device-card {
-        min-height: 220px;
-        padding: 10px;
-    }
-    
-    .offline-device-card .gcard-title {
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-    
-    #DotOfflineDevice {
-        max-height: 180px;
-    }
-}
-
-/* Extra small devices */
-@media (max-width: 360px) {
-    .offline-device-card {
-        min-height: 200px;
-    }
-    
-    #DotOfflineDevice {
-        max-height: 160px;
-    }
-}
+                  </div>
 
 
 
-
-<div class="left-grid">
-    <div class="gcard">
-        <h4 class="gcard-title">Total No. of Cameras</h4>
-        <div class="semi-donut gauge" id="gauge-cameras" data-fill="#12b76a"
-            style="--percentage:0; --fill:#12b76a">
-            <div class="gtext">
-                <b class="total">0</b>
-                <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+                </div>
+                
+              </div>
             </div>
-        </div>
-    </div>
+ <div class="bottom-row">
 
-    <div class="gcard">
-        <h4 class="gcard-title">Total No. of Archivers</h4>
-        <div class="semi-donut gauge" id="gauge-archivers" data-fill="#12b76a"
-            style="--percentage:0; --fill:#12b76a">
-            <div class="gtext">
-                <b class="total">0</b>
-                <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
+              <div class="gcard wide gcard-pie" style="height:300px; width: 728px;">
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div>
+
+            
+              <div class="gcard wide" id="Loc-Count-chart">
+                <h4 class="gcard-title">LOC Count</h4>
+                <canvas id="cityBarChart"></canvas>
+              </div>
+
             </div>
-        </div>
-    </div>
-
-    <div class="gcard">
-        <h4 class="gcard-title">Total No. of Controllers</h4>
-        <div class="semi-donut gauge" id="gauge-controllers" data-fill="#12b76a"
-            style="--percentage:0; --fill:#12b76a">
-            <div class="gtext">
-                <b class="total">0</b>
-                <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
-            </div>
-        </div>
-    </div>
-
-    <div class="gcard">
-        <h4 class="gcard-title">TOTAL No. of CCURE</h4>
-        <div class="semi-donut gauge" id="gauge-ccure" data-fill="#12b76a"
-            style="--percentage:0; --fill:#12b76a">
-            <div class="gtext">
-                <b class="total">0</b>
-                <small><span class="active">0</span> active / <span class="inactive">0</span> inactive</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- Updated Offline Device Card with new class -->
-    <div class="offline-device-card">
-        <h4 class="gcard-title">Offline Device</h4>
-        <div class="chart-container">
-            <canvas id="DotOfflineDevice"></canvas>
-        </div>
-    </div>
-</div>
