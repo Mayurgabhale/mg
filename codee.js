@@ -1,3 +1,9 @@
+
+const offlineDevices = devices.filter(d => d.status === "Offline");
+
+
+
+
 <canvas id="DotOfflineDevice"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
