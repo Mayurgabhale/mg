@@ -1,3 +1,4 @@
+x     axis i dont want time 
 let offlineChart;
 
 function initOfflineChart() {
