@@ -1,3 +1,7 @@
+in y asix you show device type ok,
+this alos i wnat to show only if the offline if no any offline theny dow show laos hti s'
+for eaxmaple no any Archivers is offline then dont show i Archivers not disly i y axis ok 
+like that 
 let offlineChart;
 let cityIndexMap = {};
 let cityCounter = 0;
