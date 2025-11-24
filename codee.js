@@ -1,9 +1,5 @@
-in x axis city name i dont want 
-<div class="gcard wide" id="Loc-Count-chart">
-                <h4 class="gcard-title">LOC Count</h4>
-                <canvas id="cityBarChart"></canvas>
-              </div>
-
+ony city name i want to hide, x axis ok,
+  
 let cityChart = null;
 
 function drawCityBarChart() {
@@ -51,7 +47,8 @@ function drawCityBarChart() {
         },
         x: {
           tick: {
-            maxRatation: 0
+            display:false
+            // maxRatation: 0
           }
         }
       }
