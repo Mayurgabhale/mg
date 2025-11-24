@@ -92,3 +92,10 @@ function renderFailureChart(devices) {
 
   console.log("✅ Failure chart drawn:", failureCounts);
 }
+
+
+
+
+..
+
+renderFailureChart(devices);
