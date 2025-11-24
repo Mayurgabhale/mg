@@ -1,3 +1,16 @@
+const point = {
+    x: cityIndexMap[city],
+    y: dynamicY,
+    name: dev.name || null,
+    ip: dev.ip || null,
+    city: city
+};
+
+
+
+
+
+
 plugins: {
     tooltip: {
         callbacks: {
