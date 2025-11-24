@@ -1,10 +1,9 @@
-in y asix you show device type ok,
-this alos i wnat to show only if the offline if no any offline theny dow show laos hti s'
-for eaxmaple no any Archivers is offline then dont show i Archivers not disly i y axis ok 
-like that 
 let offlineChart;
 let cityIndexMap = {};
 let cityCounter = 0;
+
+let dynamicTypeIndexMap = {};   // Dynamic Y-axis mapping
+let dynamicTypeList = [];       // Track visible types
 
 function initOfflineChart() {
     const canvas = document.getElementById("DotOfflineDevice");
@@ -74,36 +73,52 @@ function initOfflineChart() {
                 y: {
                     title: { display: true, text: "Device Type" },
                     ticks: {
-                        callback: v => deviceTypeLabel(v)
+                        callback: v => getDynamicTypeLabel(v)
                     },
                     min: -0.5,
-                    max: 3.5
+                    max: () => dynamicTypeList.length - 0.5
                 }
             }
         }
     });
 }
 
-function deviceTypeLabel(v) {
-    return ["Camera", "Archiver", "Controller", "CCURE"][v] || "";
+/* ✅ Dynamic label for Y-axis */
+function getDynamicTypeLabel(value) {
+    return dynamicTypeList[value] || "";
 }
 
 function updateOfflineChart(offlineDevices) {
 
-    const typeMap = {
-        cameras: 0,
-        archivers: 1,
-        controllers: 2,
-        servers: 3   // CCURE
+    const typeNames = {
+        cameras: "Camera",
+        archivers: "Archiver",
+        controllers: "Controller",
+        servers: "CCURE"
     };
 
-    // Reset mapping every refresh
+    // Reset Y mappings
+    dynamicTypeList = [];
+    dynamicTypeIndexMap = {};
+
+    // Reset city mappings
     cityIndexMap = {};
     cityCounter = 0;
 
+    // Filter only known types
     const filtered = offlineDevices.filter(dev =>
-        Object.keys(typeMap).includes(dev.type)
+        typeNames.hasOwnProperty(dev.type)
     );
+
+    // Detect which types actually exist
+    filtered.forEach(dev => {
+        const label = typeNames[dev.type];
+
+        if (!dynamicTypeIndexMap[label]) {
+            dynamicTypeIndexMap[label] = dynamicTypeList.length;
+            dynamicTypeList.push(label);
+        }
+    });
 
     // Clear datasets
     offlineChart.data.datasets.forEach(ds => ds.data = []);
@@ -117,17 +132,30 @@ function updateOfflineChart(offlineDevices) {
             cityIndexMap[city] = cityCounter;
         }
 
-        const typeIndex = typeMap[dev.type];
+        const deviceLabel = typeNames[dev.type];
+        const dynamicY = dynamicTypeIndexMap[deviceLabel];
 
         const point = {
-            x: cityIndexMap[city],   // 👈 City-based X value
-            y: typeIndex,
+            x: cityIndexMap[city],
+            y: dynamicY,   // 👈 Dynamic Y index
             name: dev.name || "Unknown",
             ip: dev.ip || "N/A",
             city: city
         };
 
-        offlineChart.data.datasets[typeIndex].data.push(point);
+        // Push into correct dataset by label
+        const dataset = offlineChart.data.datasets.find(
+            ds => ds.label === deviceLabel
+        );
+
+        if (dataset) {
+            dataset.data.push(point);
+        }
+    });
+
+    // Hide datasets with no data (no offline devices)
+    offlineChart.data.datasets.forEach(ds => {
+        ds.hidden = ds.data.length === 0;
     });
 
     offlineChart.update();
