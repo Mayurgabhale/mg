@@ -1,29 +1,19 @@
+      ok, good, but i want to dilsy __ in streght line __
+not /// like 
 x: {
   ticks: {
-    display: true,       // must be TRUE
-    autoSkip: false,     // don't auto remove labels
+    display: true,
+    autoSkip: false,
     callback: function(value, index) {
-
       const risk = riskLabels[index];
 
-      // Show ONLY Medium & High cities
+      // Show city name ONLY if risk is Medium or High
       if (risk === "Medium" || risk === "High") {
         return labels[index];
       }
 
-      // Hide Low risk city label
+      // Hide Low risk city labels
       return "";
-    },
-    font: function(context) {
-      const idx = context.index;
-      const risk = riskLabels[idx];
-
-      // Make High risk bold
-      if (risk === "High") {
-        return { size: 12, weight: "bold" };
-      }
-
-      return { size: 10 };
     }
   },
   grid: {
