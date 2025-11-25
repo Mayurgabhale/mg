@@ -1,3 +1,37 @@
+LEGEND i want to disply in right side top in chart ok 
+
+/* ================================
+   LEGEND (ONLY 3 LEVELS)
+   ================================ */
+
+function createCityLegend(containerId = "cityBarLegend") {
+  let container = document.getElementById(containerId);
+
+  if (!container) {
+    container = document.createElement("div");
+    container.id = containerId;
+    const holder = document.getElementById("Loc-Count-chart");
+    if (holder) holder.appendChild(container);
+  }
+
+  container.style.marginTop = "10px";
+  container.style.fontSize = "12px";
+  container.style.display = "flex";
+  container.style.gap = "16px";
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="width:14px;height:14px;background:#16A34A;border-radius:3px;display:inline-block"></span> Low
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="width:14px;height:14px;background:#FACC15;border-radius:3px;display:inline-block"></span> Medium
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="width:14px;height:14px;background:#DC2626;border-radius:3px;display:inline-block"></span> High
+    </div>
+  `;
+}
+
 /* ================================
    CITY RISK SCORING (3 LEVELS)
    ================================ */
