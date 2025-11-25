@@ -1,3 +1,4 @@
+https://www.riskpal.com/wp-content/uploads/2022/11/RP_Cover_What-is-a-risk-assessment-matrix-1-1200x675.jpg
 now i want to do my this Loc count more adance ok,
   in this i want to use risk assessment matrix colors ok 
   if is Camera is offline -- that time  low med 
