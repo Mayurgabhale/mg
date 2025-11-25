@@ -1,43 +1,8 @@
-LEGEND i want to disply in right side top in chart ok 
-
-/* ================================
-   LEGEND (ONLY 3 LEVELS)
-   ================================ */
-
-function createCityLegend(containerId = "cityBarLegend") {
-  let container = document.getElementById(containerId);
-
-  if (!container) {
-    container = document.createElement("div");
-    container.id = containerId;
-    const holder = document.getElementById("Loc-Count-chart");
-    if (holder) holder.appendChild(container);
-  }
-
-  container.style.marginTop = "10px";
-  container.style.fontSize = "12px";
-  container.style.display = "flex";
-  container.style.gap = "16px";
-
-  container.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="width:14px;height:14px;background:#16A34A;border-radius:3px;display:inline-block"></span> Low
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="width:14px;height:14px;background:#FACC15;border-radius:3px;display:inline-block"></span> Medium
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="width:14px;height:14px;background:#DC2626;border-radius:3px;display:inline-block"></span> High
-    </div>
-  `;
-}
-
-/* ================================
-   CITY RISK SCORING (3 LEVELS)
-   ================================ */
+/*********************************
+ * CITY RISK SCORING (3 LEVELS)
+ *********************************/
 
 function computeCityRiskScore(city) {
-  // weights: camera=1, archiver=2, server=3, controller=4
   if (!city || !city.offline) return 0;
 
   const cam  = city.offline.camera || 0;
@@ -49,58 +14,70 @@ function computeCityRiskScore(city) {
 }
 
 function mapScoreToRisk(score) {
-  // ONLY 3 LEVELS: Low, Medium, High
   if (score <= 2) {
-    return { label: "Low", color: "#16A34A" };     // Green
+    return { label: "Low", color: "#16A34A" };
   }
   if (score <= 6) {
-    return { label: "Medium", color: "#FACC15" };  // Yellow
+    return { label: "Medium", color: "#FACC15" };
   }
-  return { label: "High", color: "#DC2626" };      // Red
+  return { label: "High", color: "#DC2626" };
 }
 
-/* ================================
-   LEGEND (ONLY 3 LEVELS)
-   ================================ */
+
+/*********************************
+ * LEGEND (TOP RIGHT)
+ *********************************/
 
 function createCityLegend(containerId = "cityBarLegend") {
+
+  const holder = document.getElementById("Loc-Count-chart");
+  if (!holder) return;
+
+  holder.style.position = "relative"; // important for top-right
+
   let container = document.getElementById(containerId);
 
   if (!container) {
     container = document.createElement("div");
     container.id = containerId;
-    const holder = document.getElementById("Loc-Count-chart");
-    if (holder) holder.appendChild(container);
+    holder.appendChild(container);
   }
 
-  container.style.marginTop = "10px";
+  container.style.position = "absolute";
+  container.style.top = "5px";
+  container.style.right = "10px";
   container.style.fontSize = "12px";
   container.style.display = "flex";
-  container.style.gap = "16px";
+  container.style.flexDirection = "column";
+  container.style.gap = "6px";
+  container.style.background = "rgba(255,255,255,0.9)";
+  container.style.padding = "6px 10px";
+  container.style.borderRadius = "6px";
+  container.style.boxShadow = "0px 2px 6px rgba(0,0,0,0.15)";
 
   container.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="width:14px;height:14px;background:#16A34A;border-radius:3px;display:inline-block"></span> Low
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#16A34A;border-radius:3px;"></span> Low
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="width:14px;height:14px;background:#FACC15;border-radius:3px;display:inline-block"></span> Medium
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#FACC15;border-radius:3px;"></span> Medium
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="width:14px;height:14px;background:#DC2626;border-radius:3px;display:inline-block"></span> High
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#DC2626;border-radius:3px;"></span> High
     </div>
   `;
 }
 
-/* ================================
-   CITY BAR CHART (RISK COLORED)
-   ================================ */
+
+/*********************************
+ * CITY BAR CHART
+ *********************************/
 
 let cityChart = null;
 
 function drawCityBarChart() {
 
   const chartCanvas = document.getElementById("cityBarChart");
-
   if (!chartCanvas) {
     console.warn("Canvas not found");
     return;
@@ -109,7 +86,7 @@ function drawCityBarChart() {
   if (!CITY_LIST || CITY_LIST.length === 0) {
     console.warn("CITY_LIST empty. Chart not drawn.");
     const lg = document.getElementById("cityBarLegend");
-    if (lg) lg.innerHTML = "";
+    if (lg) lg.remove();
     return;
   }
 
@@ -120,7 +97,6 @@ function drawCityBarChart() {
     return Object.values(c.devices).reduce((a, b) => a + b, 0);
   });
 
-  // Compute risk for each city
   const riskInfo = CITY_LIST.map(c => {
     const score = computeCityRiskScore(c);
     return mapScoreToRisk(score);
@@ -129,9 +105,7 @@ function drawCityBarChart() {
   const colors = riskInfo.map(r => r.color);
   const riskLabels = riskInfo.map(r => r.label);
 
-  if (cityChart) {
-    cityChart.destroy();
-  }
+  if (cityChart) cityChart.destroy();
 
   cityChart = new Chart(chartCanvas.getContext("2d"), {
     type: "bar",
@@ -143,7 +117,7 @@ function drawCityBarChart() {
         backgroundColor: colors,
         borderColor: colors,
         borderWidth: 1,
-        borderRadius: 5,
+        borderRadius: 6,
         barPercentage: 0.8,
         categoryPercentage: 0.9
       }]
@@ -155,12 +129,11 @@ function drawCityBarChart() {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            title: function(tooltipItems) {
-              const idx = tooltipItems[0].dataIndex;
-              return labels[idx];
+            title: function(items) {
+              return labels[items[0].dataIndex];
             },
-            label: function(tooltipItem) {
-              const idx = tooltipItem.dataIndex;
+            label: function(item) {
+              const idx = item.dataIndex;
               const c = CITY_LIST[idx] || {};
 
               const total = c.devices
@@ -198,8 +171,8 @@ function drawCityBarChart() {
     }
   });
 
-  // Draw legend
+  // Add legend in top-right
   createCityLegend("cityBarLegend");
 
-  console.log("✅ City bar chart updated: Risk = Low / Medium / High");
+  console.log("✅ City bar chart updated with top-right legend");
 }
