@@ -1,4 +1,6 @@
-not disply total count in pie chart center 
+  ctx.fillText('TOTAL', centerX, centerY - 22);
+i say this TOTAL is not diplsy, read the belwoo all code carefully and chekc why this tola is not disply ..
+  
 
 // ⬇️⬇️⬇️⬇️⬇️⬇️ PIE chart
 
@@ -257,13 +259,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // Call updateTotalCountChart() whenever your data changes.
 // We'll call it inside renderGauges() so it updates after gauges refresh.
 function renderGauges() {
+  updateTotalCountChart();
   updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
   updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
   updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
   updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
 
   // update Total Count pie
-  updateTotalCountChart();
 }
-
-
