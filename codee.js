@@ -1,8 +1,5 @@
-
-/* ---------------------------
-   Risk helpers for bar chart
-   --------------------------- */
-
+now i want only low, Medium, High
+only this there i want, so do ony this there risk ok 
 function computeCityRiskScore(city) {
   // weights: camera=1, archiver=2, server=3, controller=4
   // uses offline counts collected in updateMapData (city.offline)
