@@ -1,3 +1,6 @@
+now in bar bottom side i wnat to disply the city name only for
+the risk is medium and high that time ony show the city name ok 
+
 /*********************************
  * CITY RISK SCORING (3 LEVELS)
  *********************************/
@@ -50,7 +53,7 @@ function createCityLegend(containerId = "cityBarLegend") {
   container.style.display = "flex";
   container.style.flexDirection = "column";
   container.style.gap = "6px";
-  container.style.background = "rgba(255,255,255,0.9)";
+  // container.style.background = "rgba(255,255,255,0.9)";
   container.style.padding = "6px 10px";
   container.style.borderRadius = "6px";
   container.style.boxShadow = "0px 2px 6px rgba(0,0,0,0.15)";
