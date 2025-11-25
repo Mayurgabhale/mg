@@ -1,495 +1,261 @@
+in this chart there are some issue 
+1. in pie chart center Total count is not diplsy emditalty, it take more time to  disply, that time diplsy onely 0,
+2, and pie chart riht side, 
+    Cameras - 21
+    Archivers- 71 
+        this text is not disply when i dot dark, them 
+        i measn dark them time color is not change ok. 
+3.   this is O pie chart  in between getting more space so i want ot remove this space,     Cameras - 21
+                              Archivers- 71 
+                                  pie and  Cameras - 21
+                                             Archivers- 71  
+                                 i watn neare to each other ok 
+                                     
+<div class="totacl-gcard wide gcard-pie offline-device-card" >
+                <h4 class="gcard-title">Total Count </h4>
+                <div class="chart-placeholder"></div>
+              </div>
 
-seee i am try all but not  light theme is not wokr in light theme time text are diplsy 
-but not that much ok 
 
-// ========== GLOBALS ==========
-let offlineChart;
-let cityIndexMap = {};
-let cityCounter = 0;
-let dynamicTypeIndexMap = {};
-let dynamicTypeList = [];
+// ⬇️⬇️⬇️⬇️⬇️⬇️ PIE chart
 
-// ========== GET CHART COLORS BASED ON THEME ==========
-function getChartColors() {
-    const isLightTheme = document.body.classList.contains('theme-light');
-    
-    if (isLightTheme) {
-        return {
-          backgroundColor:'#0a0a0a',
-           text: '#e6eef7', // Visible text color
-        };
-    } else {
-        // Dark theme colors - fixed for visibility
-        return {
-            camera: '#ff4d4d',
-            archiver: '#4da6ff',
-            controller: '#ffaa00', 
-            ccure: '#7d3cff',
-            grid: 'rgba(255, 255, 255, 0.2)', // Visible grid lines
-            text: '#e6eef7', // Visible text color
-            background: '#0a0a0a'
-        };
+// --- Total Count doughnut chart (uses Chart.js) ---
+
+let _totalCountChart = null;
+
+/**
+ * Find the chart-placeholder element inside the card whose title matches text.
+ * Returns the placeholder element or null.
+ */
+function findChartPlaceholderByTitle(titleText) {
+  const cards = document.querySelectorAll('.totacl-gcard.wide');
+  for (let card of cards) {
+    const h = card.querySelector('.gcard-title');
+    if (h && h.textContent.trim().toLowerCase() === titleText.trim().toLowerCase()) {
+      return card.querySelector('.chart-placeholder');
     }
+  }
+  return null;
 }
 
-// ========== UPDATE CHART THEME ==========
-function updateChartTheme() {
-    if (!offlineChart) return;
-    
-    const colors = getChartColors();
-    
-    // Update grid lines and borders
-    offlineChart.options.scales.x.grid.color = colors.grid;
-    offlineChart.options.scales.y.grid.color = colors.grid;
-    
-    // Update text colors
-    offlineChart.options.scales.x.ticks.color = colors.text;
-    offlineChart.options.scales.y.ticks.color = colors.text;
-    
-    // Update legend text color
-    if (offlineChart.options.plugins.legend) {
-        offlineChart.options.plugins.legend.labels.color = colors.text;
+/**
+ * Collect totals from DOM. Add/remove device keys as needed.
+ * Make sure IDs used here exist in your summary-section.
+ */
+
+
+function collectTotalCounts() {
+  const keys = [
+    { id: 'camera-total', label: 'Cameras' },
+    { id: 'archiver-total', label: 'Archivers' },
+    { id: 'controller-total', label: 'Controllers' },
+    { id: 'server-total', label: 'CCURE' },
+    { id: 'doorReader-total', label: 'Door' },
+    { id: 'reader-total-inline', label: 'Reader' },
+    { id: 'pc-total', label: 'Desktop' },
+    { id: 'db-total', label: 'DB Server' }
+  ];
+
+  const labels = [];
+  const values = [];
+
+  keys.forEach(k => {
+    const el = document.getElementById(k.id);
+    const v = el
+      ? parseInt((el.textContent || '0').replace(/,/g, '').trim(), 10)
+      : 0;
+
+    if (v > 0) {
+      labels.push(k.label);
+      values.push(v);
     }
-    
-    offlineChart.update();
+  });
+
+  if (values.length === 0) {
+    return { labels: ['No devices'], values: [0] };  // ✅ fixed
+  }
+
+  return { labels, values };
 }
 
-// ========== INIT CHART ==========
-function initOfflineChart() {
-    const canvas = document.getElementById("DotOfflineDevice");
-    const ctx = canvas.getContext("2d");
-    
-    const colors = getChartColors();
+/**
+ * Render or update the Total Count doughnut.
+ */
 
-    offlineChart = new Chart(ctx, {
-        type: "scatter",
-        data: {
-            datasets: [
-                { 
-                    label: "Camera", 
-                    data: [], 
-                    backgroundColor: colors.camera, 
-                    pointStyle: "circle", 
-                    pointRadius: 6 
-                },
-                { 
-                    label: "Archiver", 
-                    data: [], 
-                    backgroundColor: colors.archiver, 
-                    pointStyle: "rect", 
-                    pointRadius: 6 
-                },
-                { 
-                    label: "Controller", 
-                    data: [], 
-                    backgroundColor: colors.controller, 
-                    pointStyle: "triangle", 
-                    pointRadius: 7 
-                },
-                { 
-                    label: "CCURE", 
-                    data: [], 
-                    backgroundColor: colors.ccure, 
-                    pointStyle: "rectRot", 
-                    pointRadius: 6 
-                }
-            ]
+
+
+function renderTotalCountChart() {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded — add https://cdn.jsdelivr.net/npm/chart.js');
+    return;
+  }
+
+  const placeholder = findChartPlaceholderByTitle('Total Count');
+  if (!placeholder) return;
+
+  let canvas = placeholder.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    placeholder.innerHTML = '';
+    placeholder.appendChild(canvas);
+  }
+
+  const ctx = canvas.getContext('2d');
+  const data = collectTotalCounts();
+
+  // calculate total
+  //   const totalValue = data.values.reduce((a, b) => a + b, 0);
+  const totalValue = data.labels[0] === 'No devices'
+    ? 0
+    : data.values.reduce((a, b) => a + b, 0);
+
+  if (_totalCountChart) {
+    _totalCountChart.destroy();
+  }
+
+  const palette = [
+    '#10b981', '#f97316', '#2563eb',
+    '#7c3aed', '#06b6d4', '#ef4444',
+    '#f59e0b', '#94a3b8'
+  ];
+
+  // ---- Plugin for CENTER TEXT ----
+  const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+      const { ctx, chartArea } = chart;
+      const centerX = (chartArea.left + chartArea.right) / 2;
+      const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+      ctx.save();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Total label
+      ctx.font = '14px Inter, Arial';
+      // ctx.fillStyle = '#aaa';
+      // Total label
+      ctx.fillStyle = getComputedStyle(document.body)
+        .getPropertyValue('--graph-card-footer-dark');
+
+      ctx.fillText('TOTAL', centerX, centerY - 22);
+
+      // Total value
+      ctx.font = 'bold 20px Inter, Arial';
+      // ctx.fillStyle = '#fff';
+      // Total value
+      ctx.fillStyle = getComputedStyle(document.body)
+        .getPropertyValue('--graph-card-title-dark');
+      ctx.fillText(totalValue, centerX, centerY + 12);
+
+      ctx.restore();
+    }
+  };
+
+  _totalCountChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: palette.slice(0, data.values.length),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '45%',
+      radius: '90%',  // ✅ shrink only circle size
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            usePointStyle: true,
+            padding: 12,
+
+            // 🔥 THIS adds count next to label
+            generateLabels: function (chart) {
+              const dataset = chart.data.datasets[0];
+              const labels = chart.data.labels;
+              const bgColors = dataset.backgroundColor;
+
+              return labels.map((label, i) => {
+                return {
+                  text: `${label} - ${dataset.data[i]}`,
+                  fillStyle: bgColors[i],
+                  strokeStyle: bgColors[i],
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+          }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        color: colors.text, // Set legend text color
-                        font: {
-                            size: 12
-                        },
-                        usePointStyle: true
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => {
-                            const d = ctx.raw;
-                            const lines = [];
-                            if (d.ip) lines.push(`IP: ${d.ip}`);
-                            if (d.city) lines.push(`City: ${d.city}`);
-                            return lines;
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    title: { 
-                        display: false, 
-                        text: "City" 
-                    },
-                    grid: {
-                        color: colors.grid, // Set grid line color
-                        drawBorder: true
-                    },
-                    ticks: {
-                        color: colors.text, // Set x-axis text color
-                        maxRotation: 0,
-                        minRotation: 0,
-                        callback: (value) => {
-                            return Object.keys(cityIndexMap).find(
-                                key => cityIndexMap[key] === value
-                            ) || "";
-                        }
-                    }
-                },
-                y: {
-                    title: { 
-                        display: false, 
-                        text: "Device Type" 
-                    },
-                    grid: {
-                        color: colors.grid, // Set grid line color
-                        drawBorder: true
-                    },
-                    ticks: {
-                        color: colors.text, // Set y-axis text color
-                        callback: v => dynamicTypeList[v] || ""
-                    },
-                    min: -0.5,
-                    max: () => Math.max(dynamicTypeList.length - 0.5, 0.5)
-                }
+
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              const label = ctx.label || '';
+              const value = ctx.parsed || 0;
+              return `${label} : ${value}`;
             }
+          }
         }
-    });
-}
+      }
+    },
 
-// ========== UPDATE CHART ==========
-function updateOfflineChart(offlineDevices) {
-    const typeNames = {
-        cameras: "Camera",
-        archivers: "Archiver",
-        controllers: "Controller", 
-        servers: "CCURE"
-    };
-
-    // Reset mappings
-    dynamicTypeList = [];
-    dynamicTypeIndexMap = {};
-    cityIndexMap = {};
-    cityCounter = 0;
-
-    // Only valid types
-    const filtered = offlineDevices.filter(dev =>
-        typeNames.hasOwnProperty(dev.type)
-    );
-
-    // Build dynamic Y indexes
-    filtered.forEach(dev => {
-        const label = typeNames[dev.type];
-        if (!(label in dynamicTypeIndexMap)) {
-            dynamicTypeIndexMap[label] = dynamicTypeList.length;
-            dynamicTypeList.push(label);
-        }
-    });
-
-    // Clear all old points
-    offlineChart.data.datasets.forEach(ds => ds.data = []);
-
-    // Add points
-    filtered.forEach(dev => {
-        const source = dev.device ? dev.device : dev;
-        const deviceIP = source.ip || null;
-        const city = source.city || "Unknown";
-
-        if (!cityIndexMap[city]) {
-            cityCounter++;
-            cityIndexMap[city] = cityCounter;
-        }
-
-        const label = typeNames[dev.type];
-        const dynamicY = dynamicTypeIndexMap[label];
-
-        const point = {
-            x: cityIndexMap[city],
-            y: dynamicY,
-            ip: deviceIP,
-            city: city
-        };
-
-        const dataset = offlineChart.data.datasets.find(
-            ds => ds.label === label
-        );
-
-        if (dataset) {
-            dataset.data.push(point);
-        }
-    });
-
-    // Hide empty types
-    offlineChart.data.datasets.forEach(ds => {
-        ds.hidden = ds.data.length === 0;
-    });
-
-    offlineChart.update();
-}
-
-// ========== THEME CHANGE DETECTION ==========
-function setupThemeObserver() {
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class') {
-                setTimeout(updateChartTheme, 100);
-            }
-        });
-    });
-
-    observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class']
-    });
-}
-
-// ========== INITIALIZE EVERYTHING ==========
-function initializeChartSystem() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            initOfflineChart();
-            setupThemeObserver();
-        });
-    } else {
-        initOfflineChart();
-        setupThemeObserver();
-    }
-}
-
-// Initialize the chart system
-initializeChartSystem();
-
-// ========== YOUR EXISTING FUNCTION ==========
-function renderOfflineChartFromCombined(combinedDevices) {
-    const offlineDevices = combinedDevices
-        .filter(d => d.device.status === "offline")
-        .map(d => ({
-            device: d.device,
-            type: d.device.type
-        }));
-
-    updateOfflineChart(offlineDevices);
-}
-
-
-/*  */
-/* Offline Device Graph Card */
-.offline-device-card {
-     background: var(--graph-card-bg-dark);
-    border: 1px solid var(--graph-card-border-dark);
-    padding: 5px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 220px;
-    grid-column: 1 / -1;
-    /* Span full width in grid */
-}
-
-.totacl-gcard {
-    background: var(--graph-card-bg-dark);
-    border: 1px solid var(--graph-card-border-dark);
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    height: 240px;
-    grid-column: 1 / -1;
-    /* Span full width in grid */
+    plugins: [centerTextPlugin]   // ✅ center total plugin
+  });
 }
 
 
 
-/* Fix for Offline Device Card in Light Theme */
-.theme-light .offline-device-card {
-    background: var(--graph-card-bg-light);
-    border: 1px solid var(--graph-card-border-light);
-}
-.offline-device-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px var(--graph-shadow-dark);
-}
 
-.theme-light .offline-device-card:hover {
-    box-shadow: 0 8px 25px var(--graph-shadow-light);
-}
+/**
+ * Update the Total Count chart data in-place (if chart exists) otherwise render
+ */
+function updateTotalCountChart() {
+  if (!_totalCountChart) {
+    renderTotalCountChart();
+    return;
+  }
+  const data = collectTotalCounts();
+  _totalCountChart.data.labels = data.labels;
+  _totalCountChart.data.datasets[0].data = data.values;
+  _totalCountChart.data.datasets[0].backgroundColor = [
 
-/* Card title specific for offline device */
-.offline-device-card .gcard-title {
-    font-size: clamp(14px, 2.5vw, 16px);
-     color: var(--graph-card-title-dark);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
-    /* text-align: center; */
-}
-.theme-light .offline-device-card .gcard-title {
-    color: var(--graph-card-title-light);
+    '#10b981', '#f97316', '#2563eb', '#7c3aed', '#06b6d4', '#ef4444', '#f59e0b', '#94a3b8'
+  ].slice(0, data.values.length);
+  _totalCountChart.update();
 }
 
-/* Canvas container for offline device chart */
-.offline-device-card .chart-container {
-    width: 100%;
-    height: 100%;
-    min-height: 240px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    color: var(--graph-card-title-light);
-  
+// Hook it up: render on DOMContentLoaded and update when gauges refresh
+document.addEventListener('DOMContentLoaded', () => {
+  // initial render (if Chart.js loaded)
+  renderTotalCountChart();
 
-}
+  // re-render on window resize (debounced)
+  let resizeTO;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTO);
+    resizeTO = setTimeout(() => {
+      renderTotalCountChart(); // re-create with correct sizing
+    }, 200);
+  });
+});
 
-/* Canvas element styling */
-#DotOfflineDevice {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 220px;
-    box-sizing: border-box;
-     /* background: var(--chart-bg-color) !important; */
-}
+// Call updateTotalCountChart() whenever your data changes.
+// We'll call it inside renderGauges() so it updates after gauges refresh.
+function renderGauges() {
+  updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
+  updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
+  updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
+  updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
 
-/* Ensure chart background is properly set */
-
-
-/* Responsive Design for Offline Device Card */
-/* Tablets and larger phones */
-@media (min-width: 768px) {
-    .offline-device-card {
-        grid-column: 1 / -1;
-        min-height: 300px;
-    }
-
-    #DotOfflineDevice {
-        max-height: 220px;
-    }
-}
-
-/* Desktop and larger tablets */
-@media (min-width: 1024px) {
-    .offline-device-card {
-        min-height: 260px;
-    }
-
-    #DotOfflineDevice {
-        max-height: 220px;
-    }
-}
-
-/* Mobile devices */
-@media (max-width: 767px) {
-    .offline-device-card {
-        min-height: 250px;
-        padding: 12px;
-    }
-
-    #DotOfflineDevice {
-        max-height: 200px;
-    }
-}
-
-/* Small mobile devices */
-@media (max-width: 480px) {
-    .offline-device-card {
-        min-height: 220px;
-        padding: 10px;
-    }
-
-    .offline-device-card .gcard-title {
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-
-    #DotOfflineDevice {
-        max-height: 180px;
-    }
-}
-
-/* Extra small devices */
-@media (max-width: 360px) {
-    .offline-device-card {
-        min-height: 200px;
-    }
-
-    #DotOfflineDevice {
-        max-height: 160px;
-    }
+  // update Total Count pie
+  updateTotalCountChart();
 }
 
 
-/* Graph Section - Dark/Light Theme */
-:root {
-    /* Dark Theme Colors */
-    --graph-bg-dark: #0a0a0a;
-    --graph-text-dark: #e6eef7;
-    --graph-title-dark: #2ef07f;
-    --graph-card-bg-dark: linear-gradient(180deg, rgba(255, 255, 255, 0.099), rgba(255, 255, 255, 0.104));
-    --graph-card-border-dark: rgba(255, 255, 255, 0.94);
-    --graph-card-title-dark: #cfeeed;
-    --graph-card-footer-dark: #98a3a8;
-    --graph-map-bg-dark: #060606;
-    --graph-map-text-dark: #b8f4c9;
-    --graph-map-annot-bg-dark: rgba(0, 0, 0, 0.45);
-    --graph-map-annot-border-dark: rgba(255, 255, 255, 0.04);
-    --graph-gauge-active: #12b76a;
-    --graph-gauge-inactive: #f6b43a;
-    --graph-gauge-total: #0ee08f;
-    --graph-gauge-text: #f6b43a;
-    --graph-shadow-dark: rgba(0, 0, 0, 0.6);
-
-    /* Chart Colors for Dark Theme */
-    --chart-camera-color: #ff4d4d;
-    --chart-archiver-color: #4da6ff;
-    --chart-controller-color: #ffaa00;
-    --chart-ccure-color: #7d3cff;
-    --chart-grid-color: rgba(255, 255, 255, 0.1);
-    --chart-text-color: #e6eef7;
-    --chart-bg-color: #0a0a0a;
-}
-.theme-light {
-    /* Light Theme Colors - Fixed for Graph Visibility */
-    --graph-bg-light: #ffffff;
-    --graph-text-light: #1e293b;
-    --graph-title-light: #059669;
-    --graph-card-bg-light: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01));
-    --graph-card-border-light: rgba(0, 0, 0, 0.15);
-    --graph-card-title-light: #1f2937;
-    --graph-card-footer-light: #6b7280;
-    --graph-map-bg-light: #ffffff;
-    --graph-map-text-light: #059669;
-    --graph-map-annot-bg-light: rgba(0, 0, 0, 0.05);
-    --graph-map-annot-border-light: rgba(0, 0, 0, 0.1);
-    --graph-gauge-active: #10b981;
-    --graph-gauge-inactive: #d97706;
-    --graph-gauge-total: #059669;
-    --graph-gauge-text: #d97706;
-    --graph-shadow-light: rgba(0, 0, 0, 0.1);
-
-    /* Chart Colors for Light Theme - Enhanced Contrast */
-    --chart-camera-color: #dc2626;
-    --chart-archiver-color: #2563eb;
-    --chart-controller-color: #d97706;
-    --chart-ccure-color: #7c3aed;
-    --chart-grid-color: #d1d5db; /* Light gray for grid lines */
-    --chart-text-color: #374151; /* Dark gray for text */
-    --chart-bg-color: #ffffff;
-    --chart-axis-color: #4b5563; /* Specific color for axis */
-}
