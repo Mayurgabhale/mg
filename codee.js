@@ -22,9 +22,10 @@
     --chart-archiver-color: #2563eb;
     --chart-controller-color: #d97706;
     --chart-ccure-color: #7c3aed;
-    --chart-grid-color: rgba(0, 0, 0, 0.2);
-    --chart-text-color: #1e293b;
+    --chart-grid-color: #d1d5db; /* Light gray for grid lines */
+    --chart-text-color: #374151; /* Dark gray for text */
     --chart-bg-color: #ffffff;
+    --chart-axis-color: #4b5563; /* Specific color for axis */
 }
 
 /* Fix for Offline Device Card in Light Theme */
@@ -40,36 +41,4 @@
 /* Ensure chart background is properly set */
 .theme-light #DotOfflineDevice {
     background: var(--chart-bg-color) !important;
-}
-
-
-
-
-
-
-...
-function getChartColors() {
-    const isLightTheme = document.body.classList.contains('theme-light');
-    
-    if (isLightTheme) {
-        return {
-            camera: '#dc2626', // Direct color values as fallback
-            archiver: '#2563eb',
-            controller: '#d97706', 
-            ccure: '#7c3aed',
-            grid: 'rgba(0, 0, 0, 0.2)', // Darker grid for better visibility
-            text: '#1e293b', // Dark text for light background
-            background: '#ffffff'
-        };
-    } else {
-        return {
-            camera: '#ff4d4d',
-            archiver: '#4da6ff',
-            controller: '#ffaa00',
-            ccure: '#7d3cff',
-            grid: 'rgba(255, 255, 255, 0.2)',
-            text: '#e6eef7',
-            background: '#0a0a0a'
-        };
-    }
 }
