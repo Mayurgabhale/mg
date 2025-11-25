@@ -1,3 +1,7 @@
+
+seee i am try all but not  light theme is not wokr in light theme time text are diplsy 
+but not that much ok 
+
 // ========== GLOBALS ==========
 let offlineChart;
 let cityIndexMap = {};
@@ -11,13 +15,8 @@ function getChartColors() {
     
     if (isLightTheme) {
         return {
-            camera: '#dc2626',
-            archiver: '#2563eb', 
-            controller: '#d97706',
-            ccure: '#7c3aed',
-            grid: 'rgba(0, 0, 0, 0.1)',
-            text: '#1e293b',
-            background: '#ffffff'
+          backgroundColor:'#0a0a0a',
+           text: '#e6eef7', // Visible text color
         };
     } else {
         // Dark theme colors - fixed for visibility
@@ -276,4 +275,221 @@ function renderOfflineChartFromCombined(combinedDevices) {
         }));
 
     updateOfflineChart(offlineDevices);
+}
+
+
+/*  */
+/* Offline Device Graph Card */
+.offline-device-card {
+     background: var(--graph-card-bg-dark);
+    border: 1px solid var(--graph-card-border-dark);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 220px;
+    grid-column: 1 / -1;
+    /* Span full width in grid */
+}
+
+.totacl-gcard {
+    background: var(--graph-card-bg-dark);
+    border: 1px solid var(--graph-card-border-dark);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    height: 240px;
+    grid-column: 1 / -1;
+    /* Span full width in grid */
+}
+
+
+
+/* Fix for Offline Device Card in Light Theme */
+.theme-light .offline-device-card {
+    background: var(--graph-card-bg-light);
+    border: 1px solid var(--graph-card-border-light);
+}
+.offline-device-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--graph-shadow-dark);
+}
+
+.theme-light .offline-device-card:hover {
+    box-shadow: 0 8px 25px var(--graph-shadow-light);
+}
+
+/* Card title specific for offline device */
+.offline-device-card .gcard-title {
+    font-size: clamp(14px, 2.5vw, 16px);
+     color: var(--graph-card-title-dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    /* text-align: center; */
+}
+.theme-light .offline-device-card .gcard-title {
+    color: var(--graph-card-title-light);
+}
+
+/* Canvas container for offline device chart */
+.offline-device-card .chart-container {
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: var(--graph-card-title-light);
+  
+
+}
+
+/* Canvas element styling */
+#DotOfflineDevice {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 220px;
+    box-sizing: border-box;
+     /* background: var(--chart-bg-color) !important; */
+}
+
+/* Ensure chart background is properly set */
+
+
+/* Responsive Design for Offline Device Card */
+/* Tablets and larger phones */
+@media (min-width: 768px) {
+    .offline-device-card {
+        grid-column: 1 / -1;
+        min-height: 300px;
+    }
+
+    #DotOfflineDevice {
+        max-height: 220px;
+    }
+}
+
+/* Desktop and larger tablets */
+@media (min-width: 1024px) {
+    .offline-device-card {
+        min-height: 260px;
+    }
+
+    #DotOfflineDevice {
+        max-height: 220px;
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 767px) {
+    .offline-device-card {
+        min-height: 250px;
+        padding: 12px;
+    }
+
+    #DotOfflineDevice {
+        max-height: 200px;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .offline-device-card {
+        min-height: 220px;
+        padding: 10px;
+    }
+
+    .offline-device-card .gcard-title {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+
+    #DotOfflineDevice {
+        max-height: 180px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+    .offline-device-card {
+        min-height: 200px;
+    }
+
+    #DotOfflineDevice {
+        max-height: 160px;
+    }
+}
+
+
+/* Graph Section - Dark/Light Theme */
+:root {
+    /* Dark Theme Colors */
+    --graph-bg-dark: #0a0a0a;
+    --graph-text-dark: #e6eef7;
+    --graph-title-dark: #2ef07f;
+    --graph-card-bg-dark: linear-gradient(180deg, rgba(255, 255, 255, 0.099), rgba(255, 255, 255, 0.104));
+    --graph-card-border-dark: rgba(255, 255, 255, 0.94);
+    --graph-card-title-dark: #cfeeed;
+    --graph-card-footer-dark: #98a3a8;
+    --graph-map-bg-dark: #060606;
+    --graph-map-text-dark: #b8f4c9;
+    --graph-map-annot-bg-dark: rgba(0, 0, 0, 0.45);
+    --graph-map-annot-border-dark: rgba(255, 255, 255, 0.04);
+    --graph-gauge-active: #12b76a;
+    --graph-gauge-inactive: #f6b43a;
+    --graph-gauge-total: #0ee08f;
+    --graph-gauge-text: #f6b43a;
+    --graph-shadow-dark: rgba(0, 0, 0, 0.6);
+
+    /* Chart Colors for Dark Theme */
+    --chart-camera-color: #ff4d4d;
+    --chart-archiver-color: #4da6ff;
+    --chart-controller-color: #ffaa00;
+    --chart-ccure-color: #7d3cff;
+    --chart-grid-color: rgba(255, 255, 255, 0.1);
+    --chart-text-color: #e6eef7;
+    --chart-bg-color: #0a0a0a;
+}
+.theme-light {
+    /* Light Theme Colors - Fixed for Graph Visibility */
+    --graph-bg-light: #ffffff;
+    --graph-text-light: #1e293b;
+    --graph-title-light: #059669;
+    --graph-card-bg-light: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01));
+    --graph-card-border-light: rgba(0, 0, 0, 0.15);
+    --graph-card-title-light: #1f2937;
+    --graph-card-footer-light: #6b7280;
+    --graph-map-bg-light: #ffffff;
+    --graph-map-text-light: #059669;
+    --graph-map-annot-bg-light: rgba(0, 0, 0, 0.05);
+    --graph-map-annot-border-light: rgba(0, 0, 0, 0.1);
+    --graph-gauge-active: #10b981;
+    --graph-gauge-inactive: #d97706;
+    --graph-gauge-total: #059669;
+    --graph-gauge-text: #d97706;
+    --graph-shadow-light: rgba(0, 0, 0, 0.1);
+
+    /* Chart Colors for Light Theme - Enhanced Contrast */
+    --chart-camera-color: #dc2626;
+    --chart-archiver-color: #2563eb;
+    --chart-controller-color: #d97706;
+    --chart-ccure-color: #7c3aed;
+    --chart-grid-color: #d1d5db; /* Light gray for grid lines */
+    --chart-text-color: #374151; /* Dark gray for text */
+    --chart-bg-color: #ffffff;
+    --chart-axis-color: #4b5563; /* Specific color for axis */
 }
