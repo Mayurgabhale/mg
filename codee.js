@@ -1,216 +1,244 @@
-/* Update these specific sections in your CSS */
+PIE chart in pie chart cirlc heihg and wihd i want to decrease so
+how to do this i want samll cirlc ok 
+// ⬇️⬇️⬇️⬇️⬇️⬇️ PIE chart
 
-/* Main grid layout - Responsive */
-.graphs-grid.dashboard-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-    align-items: start;
-    grid-auto-rows: minmax(0, 1fr); /* Changed from auto */
-    width: 100%;
-    box-sizing: border-box;
-    height: calc(100vh - 60px); /* Account for padding */
-    overflow: hidden;
-}
 
-/* Left area is its own grid to form cards */
-.left-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    grid-template-rows: repeat(3, minmax(0, 1fr)); /* 3 rows for 6 items */
-    gap: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    height: 100%;
-    max-height: 100%;
-    overflow: hidden;
-}
 
-/* General card - Reduced heights */
-.gcard {
-    background: var(--graph-card-bg-dark);
-    border: 1px solid var(--graph-card-border-dark);
-    padding: 5px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 160px; /* Reduced from 200px */
-    max-height: 180px; /* Added max-height */
-    height: 100%;
-}
 
-/* Semi-donut - Reduced size */
-.semi-donut {
-    --percentage: 0;
-    --active: var(--graph-gauge-active);
-    --inactive: var(--graph-gauge-inactive);
-    width: 100%;
-    max-width: 250px; /* Reduced from 300px */
-    height: 120px; /* Reduced from 150px */
-    position: relative;
-    font-size: clamp(14px, 3vw, 18px); /* Reduced font size */
-    font-weight: 600;
-    overflow: hidden;
-    color: var(--active);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    box-sizing: border-box;
-    margin: 0 auto;
-}
+// --- Total Count doughnut chart (uses Chart.js) ---
 
-/* Semi-donut after - Reduced size */
-.semi-donut::after {
-    content: '';
-    width: 100%;
-    height: 200%;
-    max-width: 250px; /* Reduced from 300px */
-    max-height: 250px; /* Reduced from 300px */
-    border: 40px solid; /* Reduced from 50px */
-    border-color: var(--inactive) var(--inactive) var(--active) var(--active);
-    position: absolute;
-    border-radius: 50%;
-    left: 0;
-    top: 0;
-    transform: rotate(calc(-45deg + var(--percentage) * 1.8deg));
-    animation: fillAnimation 1s ease-in;
-    box-sizing: border-box;
-}
+let _totalCountChart = null;
 
-/* Gtext adjustments */
-.gtext {
-    position: absolute;
-    bottom: 6px; /* Reduced from 8px */
-    text-align: center;
-    color: var(--graph-gauge-text);
-    width: 100%;
-    padding: 0 8px; /* Reduced from 10px */
-    box-sizing: border-box;
-}
-
-.gtext .total {
-    font-size: clamp(14px, 3vw, 18px); /* Reduced from 16-22px */
-    color: var(--graph-gauge-total);
-    display: block;
-    line-height: 1.2;
-}
-
-.gtext small {
-    font-size: clamp(9px, 2vw, 12px); /* Reduced from 10-14px */
-    color: var(--graph-card-footer-dark);
-    display: block;
-    line-height: 1.3;
-}
-
-/* Offline Device Card - Reduced height */
-.offline-device-card {
-    background: var(--graph-card-bg-dark);
-    border: 1px solid var(--graph-card-border-dark);
-    padding: 12px; /* Reduced from 15px */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 200px; /* Reduced from 280px */
-    max-height: 220px; /* Added max-height */
-    grid-column: 1 / -1;
-    height: 100%;
-}
-
-/* Offline device chart container */
-.offline-device-card .chart-container {
-    width: 100%;
-    height: 100%;
-    min-height: 150px; /* Reduced from 200px */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-/* Offline device canvas */
-#DotOfflineDevice {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 180px; /* Reduced from 240px */
-    box-sizing: border-box;
-}
-
-/* Remove the duplicate Total Count card styles */
-.gcard.wide.gcard-pie.offline-device-card {
-    display: none; /* Hide duplicate card */
-}
-
-/* Desktop and laptop specific optimizations */
-@media (min-width: 1024px) {
-    .graphs-grid.dashboard-layout {
-        grid-template-columns: 1fr 1.8fr;
-        gap: 15px;
-        height: calc(100vh - 40px);
+/**
+ * Find the chart-placeholder element inside the card whose title matches text.
+ * Returns the placeholder element or null.
+ */
+function findChartPlaceholderByTitle(titleText) {
+  const cards = document.querySelectorAll('.totacl-gcard.wide');
+  for (let card of cards) {
+    const h = card.querySelector('.gcard-title');
+    if (h && h.textContent.trim().toLowerCase() === titleText.trim().toLowerCase()) {
+      return card.querySelector('.chart-placeholder');
     }
-    
-    .left-grid {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-    }
-    
-    .gcard {
-        min-height: 170px;
-        max-height: 190px;
-    }
-    
-    .offline-device-card {
-        min-height: 210px;
-        max-height: 230px;
-    }
-    
-    .semi-donut {
-        max-width: 240px;
-        height: 130px;
-    }
+  }
+  return null;
 }
 
-/* Large desktop optimizations */
-@media (min-width: 1440px) {
-    .graphs-grid.dashboard-layout {
-        grid-template-columns: 1fr 2fr;
+/**
+ * Collect totals from DOM. Add/remove device keys as needed.
+ * Make sure IDs used here exist in your summary-section.
+ */
+
+
+function collectTotalCounts() {
+  const keys = [
+    { id: 'camera-total', label: 'Cameras' },
+    { id: 'archiver-total', label: 'Archivers' },
+    { id: 'controller-total', label: 'Controllers' },
+    { id: 'server-total', label: 'CCURE' },
+    { id: 'doorReader-total', label: 'Door' },
+    { id: 'reader-total-inline', label: 'Reader' },
+    { id: 'pc-total', label: 'Desktop' },
+    { id: 'db-total', label: 'DB Server' }
+  ];
+
+  const labels = [];
+  const values = [];
+
+  keys.forEach(k => {
+    const el = document.getElementById(k.id);
+    const v = el
+      ? parseInt((el.textContent || '0').replace(/,/g, '').trim(), 10)
+      : 0;
+
+    if (v > 0) {
+      labels.push(k.label);
+      values.push(v);
     }
-    
-    .gcard {
-        min-height: 180px;
-        max-height: 200px;
-    }
-    
-    .offline-device-card {
-        min-height: 220px;
-        max-height: 240px;
-    }
-    
-    .semi-donut {
-        max-width: 260px;
-        height: 140px;
-    }
+  });
+
+  if (values.length === 0) {
+    return { labels: ['No devices'], values: [0] };  // ✅ fixed
+  }
+
+  return { labels, values };
 }
 
-/* Remove bottom row if empty */
-.bottom-row:empty {
-    display: none !important;
+/**
+ * Render or update the Total Count doughnut.
+ */
+
+
+
+function renderTotalCountChart() {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded — add https://cdn.jsdelivr.net/npm/chart.js');
+    return;
+  }
+
+  const placeholder = findChartPlaceholderByTitle('Total Count');
+  if (!placeholder) return;
+
+  let canvas = placeholder.querySelector('canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    placeholder.innerHTML = '';
+    placeholder.appendChild(canvas);
+  }
+
+  const ctx = canvas.getContext('2d');
+  const data = collectTotalCounts();
+
+  // calculate total
+  //   const totalValue = data.values.reduce((a, b) => a + b, 0);
+  const totalValue = data.labels[0] === 'No devices'
+    ? 0
+    : data.values.reduce((a, b) => a + b, 0);
+
+  if (_totalCountChart) {
+    _totalCountChart.destroy();
+  }
+
+  const palette = [
+    '#10b981', '#f97316', '#2563eb',
+    '#7c3aed', '#06b6d4', '#ef4444',
+    '#f59e0b', '#94a3b8'
+  ];
+
+  // ---- Plugin for CENTER TEXT ----
+  const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+      const { ctx, chartArea } = chart;
+      const centerX = (chartArea.left + chartArea.right) / 2;
+      const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+      ctx.save();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Total label
+      ctx.font = '14px Inter, Arial';
+      // ctx.fillStyle = '#aaa';
+      // Total label
+      ctx.fillStyle = getComputedStyle(document.body)
+        .getPropertyValue('--graph-card-footer-dark');
+
+      ctx.fillText('TOTAL', centerX, centerY - 22);
+
+      // Total value
+      ctx.font = 'bold 20px Inter, Arial';
+      // ctx.fillStyle = '#fff';
+      // Total value
+      ctx.fillStyle = getComputedStyle(document.body)
+        .getPropertyValue('--graph-card-title-dark');
+      ctx.fillText(totalValue, centerX, centerY + 22);
+
+      ctx.restore();
+    }
+  };
+
+  _totalCountChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: palette.slice(0, data.values.length),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            usePointStyle: true,
+            padding: 12,
+
+            // 🔥 THIS adds count next to label
+            generateLabels: function (chart) {
+              const dataset = chart.data.datasets[0];
+              const labels = chart.data.labels;
+              const bgColors = dataset.backgroundColor;
+
+              return labels.map((label, i) => {
+                return {
+                  text: `${label} - ${dataset.data[i]}`,
+                  fillStyle: bgColors[i],
+                  strokeStyle: bgColors[i],
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+          }
+        },
+
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              const label = ctx.label || '';
+              const value = ctx.parsed || 0;
+              return `${label} : ${value}`;
+            }
+          }
+        }
+      }
+    },
+
+    plugins: [centerTextPlugin]   // ✅ center total plugin
+  });
 }
 
-/* Ensure no overflow anywhere */
-.graphs-section,
-.graphs-inner,
-.graphs-grid.dashboard-layout,
-.left-grid {
-    overflow: hidden !important;
+
+
+
+/**
+ * Update the Total Count chart data in-place (if chart exists) otherwise render
+ */
+function updateTotalCountChart() {
+  if (!_totalCountChart) {
+    renderTotalCountChart();
+    return;
+  }
+  const data = collectTotalCounts();
+  _totalCountChart.data.labels = data.labels;
+  _totalCountChart.data.datasets[0].data = data.values;
+  _totalCountChart.data.datasets[0].backgroundColor = [
+
+    '#10b981', '#f97316', '#2563eb', '#7c3aed', '#06b6d4', '#ef4444', '#f59e0b', '#94a3b8'
+  ].slice(0, data.values.length);
+  _totalCountChart.update();
+}
+
+// Hook it up: render on DOMContentLoaded and update when gauges refresh
+document.addEventListener('DOMContentLoaded', () => {
+  // initial render (if Chart.js loaded)
+  renderTotalCountChart();
+
+  // re-render on window resize (debounced)
+  let resizeTO;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTO);
+    resizeTO = setTimeout(() => {
+      renderTotalCountChart(); // re-create with correct sizing
+    }, 200);
+  });
+});
+
+// Call updateTotalCountChart() whenever your data changes.
+// We'll call it inside renderGauges() so it updates after gauges refresh.
+function renderGauges() {
+  updateGauge("gauge-cameras", "camera-online", "camera-offline", "camera-total");
+  updateGauge("gauge-archivers", "archiver-online", "archiver-offline", "archiver-total");
+  updateGauge("gauge-controllers", "controller-online", "controller-offline", "controller-total");
+  updateGauge("gauge-ccure", "server-online", "server-offline", "server-total");
+
+  // update Total Count pie
+  updateTotalCountChart();
 }
