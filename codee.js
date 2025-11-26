@@ -1,12 +1,11 @@
-/* Updated script.js — enhanced controller->doors popup behavior
-   - Keeps your existing features but fixes and hardens controller click -> door popup.
-   - Adds accessible modal handling (ESC to close, click outside to close, focus trap basic).
-   - Ensures close button exists even if HTML doesn't provide one.
-   - Escapes door/controller text to avoid accidental HTML injection when using innerHTML.
+// script.js (updated)
+// -------------------
+// Notes:
+// - Adds caching of controller data (window.controllerDataCached).
+// - Adds click handlers on controller-type device cards so clicking them opens the door list modal.
+// - If controller info is not yet cached, it fetches controllers first then opens the modal.
 
-   NOTE: This file replaces/overwrites your previous script.js. Keep a backup.
-*/
-
+// Base URL and intervals
 const baseUrl = "http://localhost:80/api/regions";
 let refreshInterval = 300000; // 5 minutes
 let pingInterval = 60000; // 30 seconds
@@ -14,42 +13,16 @@ let countdownTime = refreshInterval / 1000; // Convert to seconds
 let currentRegion = "global";
 let deviceDetailsCache = {}; // Store previous details to prevent redundant updates
 let latestDetails = null; // Cache the latest fetched details
-let controllersCache = null; // cache controllers response to avoid repeated fetches
 
-// ---------------- Utility helpers ----------------
-function escapeHtml(unsafe) {
-    if (unsafe === null || unsafe === undefined) return "";
-    return String(unsafe)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+// Controller cache (populated inside fetchData)
+window.controllerDataCached = null; // <-- ADDED: global cache for controllers
 
-function createEl(tag, props = {}, children = []) {
-    const el = document.createElement(tag);
-    Object.keys(props).forEach(k => {
-        if (k === 'className') el.className = props[k];
-        else if (k === 'dataset') Object.assign(el.dataset, props[k]);
-        else if (k === 'style') Object.assign(el.style, props[k]);
-        else if (k.startsWith('on') && typeof props[k] === 'function') el.addEventListener(k.slice(2), props[k]);
-        else el.setAttribute(k, props[k]);
-    });
-    children.forEach(c => {
-        if (typeof c === 'string') el.appendChild(document.createTextNode(c));
-        else if (c instanceof Node) el.appendChild(c);
-    });
-    return el;
-}
-
-// ---------------- DOMContentLoaded ----------------
 document.addEventListener("DOMContentLoaded", () => {
-    initOfflineChart && initOfflineChart();
+    initOfflineChart();
     fetchData("global"); // Load initial data
     startAutoRefresh("global");
 
-    // Attach Door click on the summary "door-card" if present
+    // Attach Door click for summary card if exists (keeps your existing behavior)
     const doorCard = document.getElementById("door-card");
     if (doorCard) {
         doorCard.style.cursor = "pointer";
@@ -60,31 +33,87 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".region-button").forEach((button) => {
         button.addEventListener("click", () => {
             const region = button.getAttribute("data-region");
-            const titleElem = document.getElementById("region-title");
-            if (titleElem) titleElem.textContent = `${region.toUpperCase()} Summary`;
+            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
             switchRegion(region);
         });
     });
-
-    // Ensure modal close element exists for backward compatibility
-    ensureDoorModalExists();
-
-    // Close door modal close button
-    const closeDoorBtn = document.getElementById("close-door-modal");
-    if (closeDoorBtn) closeDoorBtn.addEventListener("click", closeDoorModal);
-
-    // Accessibility: close modal with ESC
-    document.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Escape') closeDoorModal();
+    document.getElementById("close-modal").addEventListener("click", () => {
+        document.getElementById("modal").style.display = "none";
     });
 
-    // existing summary card handlers (unchanged logic but moved here so that door-card attach runs once)
-    attachSummaryCardFilterHandlers && attachSummaryCardFilterHandlers();
+    // ---------------------------
+    // NEW: Summary card click/dblclick filter behavior (unchanged)
+    // ---------------------------
+    (function attachSummaryCardFilterHandlers() {
+        const summaryCards = document.querySelectorAll(".summary .card");
+        if (!summaryCards || summaryCards.length === 0) return;
+
+        function mapCardTitleToFilterValue(title) {
+            if (!title) return "all";
+            const t = title.toLowerCase();
+            if (t.includes("camera")) return "cameras";
+            if (t.includes("archiver")) return "archivers";
+            if (t.includes("controller")) return "controllers";
+            if (t.includes("ccure")) return "servers";
+            if (t.includes("db")) return "dbdetails";
+            if (t.includes("desktop")) return "pcdetails";
+            if (t.includes("total")) return "all";
+            return "all";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const doorCard = document.getElementById("door-card");
+            if (doorCard) {
+                doorCard.style.cursor = "pointer";
+                doorCard.title = "Click to view Controllers";
+                doorCard.addEventListener("click", loadControllersInDetails);
+            }
+        });
+
+        summaryCards.forEach((card) => {
+            card.style.cursor = "pointer";
+
+            let clickTimer = null;
+            const clickDelay = 100; // ms
+
+            card.addEventListener("click", (ev) => {
+                if (clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => {
+                    const h3 = card.querySelector("h3");
+                    const titleText = h3 ? h3.innerText.trim() : card.innerText.trim();
+                    const filterValue = mapCardTitleToFilterValue(titleText);
+
+                    const deviceFilterElem = document.getElementById("device-filter");
+                    if (!deviceFilterElem) return;
+
+                    deviceFilterElem.value = filterValue;
+                    deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
+
+                    document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
+                    if (filterValue !== "all") {
+                        card.classList.add("active");
+                    }
+                }, clickDelay);
+            });
+
+            card.addEventListener("dblclick", (ev) => {
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                const deviceFilterElem = document.getElementById("device-filter");
+                if (!deviceFilterElem) return;
+
+                deviceFilterElem.value = "all";
+                deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
+
+                document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
+            });
+        });
+    })();
 });
 
-// ------------------- Existing helper functions -------------------
-// (I kept your original helper functions intact so they work as before.)
-
+// --- Helper: build URL from hints (unchanged) ---
 function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
     ip = (ip || "").trim();
     hyperlink = (hyperlink || "").trim();
@@ -108,25 +137,27 @@ function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
 
 function openCamera(ip, name, hyperlink = "") {
     const url = buildUrlFromHints(ip, name, hyperlink);
-    console.log("Opening URL:", url);
+    console.log("Opening URL:", url);  // Debug
     window.open(url, "_blank", "noopener");
 }
 
 function switchRegion(region) {
-    clearExistingIntervals();
+    clearExistingIntervals(); // Avoid interval duplication
     currentRegion = region;
     deviceDetailsCache = {};
     fetchData(region);
     startAutoRefresh(region);
 }
 
+// Auto-refresh mechanism (unchanged)
 function startAutoRefresh(regionName) {
     fetchData(regionName);
+
     clearExistingIntervals();
 
     window.countdownTimer = setInterval(() => {
-        const el = document.getElementById("countdown");
-        if (el) el.innerText = `Refreshing in ${countdownTime} seconds`;
+        const countdownEl = document.getElementById("countdown");
+        if (countdownEl) countdownEl.innerText = `Refreshing in ${countdownTime} seconds`;
         countdownTime--;
         if (countdownTime < 0) countdownTime = refreshInterval / 1000;
     }, 1000);
@@ -140,47 +171,56 @@ function startAutoRefresh(regionName) {
         pingAllDevices(regionName);
     }, pingInterval);
 }
-
 function clearExistingIntervals() {
     clearInterval(window.countdownTimer);
     clearInterval(window.refreshTimer);
     clearInterval(window.pingTimer);
 }
 
+// Fetch summary, details and controllers together
 function fetchData(regionName) {
     Promise.all([
         fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
         fetch(`${baseUrl}/details/${regionName}`).then(res => res.json()),
-        fetch(`http://localhost/api/controllers/status`).then(res => res.json())
+        fetch(`http://localhost/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
     ])
         .then(([summary, details, controllerData]) => {
             console.log("Summary Data:", summary);
             console.log("Details Data:", details);
             console.log("Controller Data:", controllerData);
 
+            // Cache controller data for reuse
+            if (Array.isArray(controllerData)) {
+                window.controllerDataCached = controllerData; // <-- ADDED: cache controllers globally
+            } else {
+                window.controllerDataCached = null;
+            }
+
+            // Compute door + reader summary from controllers API
             const controllerExtras = processDoorAndReaderData(controllerData);
 
+            // Attach extras into the same structure updateSummary expects:
             if (!summary.summary) summary.summary = {};
             summary.summary.controllerExtras = controllerExtras;
 
+            // Update UI and details
             updateSummary(summary);
 
+            // Tell the map about new live counts if map exists
             if (typeof window.updateMapData === 'function') {
                 window.updateMapData(summary, details);
             }
 
             if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
                 updateDetails(details);
-                deviceDetailsCache = details;
+                deviceDetailsCache = details; // Update cache
             }
             latestDetails = details;
-
-            // Update controllers cache for the controller popup so we don't refetch unnecessarily
-            controllersCache = Array.isArray(controllerData) ? controllerData : null;
         })
         .catch((error) => console.error("Error fetching data:", error));
 }
 
+/* pingAllDevices (unchanged logic; updates status dots/text) */
 function copyToClipboard(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text)
@@ -195,7 +235,6 @@ function copyToClipboard(text) {
         fallbackCopyTextToClipboard(text);
     }
 }
-
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
@@ -254,6 +293,8 @@ function pingAllDevices(regionName) {
                         statusDot.style.backgroundColor = newStatus === "online" ? "green" : "red";
                         statusDot.classList.remove("online-dot", "offline-dot");
                         statusDot.classList.add(newStatus === "online" ? "online-dot" : "offline-dot");
+                    } else {
+                        console.warn(`Status dot element not found for IP: ${ip}`);
                     }
                     if (statusText) {
                         const textColor = newStatus === "online" ? "green" : "red";
@@ -263,6 +304,8 @@ function pingAllDevices(regionName) {
                         statusText.style.backgroundColor = "transparent";
                         statusText.style.padding = "0";
                         statusText.style.borderRadius = "0";
+                    } else {
+                        console.warn(`Status text element not found for IP: ${ip}`);
                     }
 
                     if (newStatus !== currentStatus) {
@@ -283,6 +326,7 @@ function pingAllDevices(regionName) {
         });
 }
 
+// Process controllers API to compute doors & readers totals
 function processDoorAndReaderData(controllerData) {
     if (!Array.isArray(controllerData)) {
         return {
@@ -322,20 +366,22 @@ function processDoorAndReaderData(controllerData) {
     };
 }
 
-// ---------------- Summary & Details keep unchanged ----------------
 function updateSummary(data) {
     const summary = data.summary || {};
+
     window.lastSummary = window.lastSummary || {};
     const merged = {
         totalDevices: summary.totalDevices ?? window.lastSummary.totalDevices ?? 0,
         totalOnlineDevices: summary.totalOnlineDevices ?? window.lastSummary.totalOnlineDevices ?? 0,
         totalOfflineDevices: summary.totalOfflineDevices ?? window.lastSummary.totalOfflineDevices ?? 0,
+
         cameras: { ...window.lastSummary.cameras, ...summary.cameras },
         archivers: { ...window.lastSummary.archivers, ...summary.archivers },
         controllers: { ...window.lastSummary.controllers, ...summary.controllers },
         servers: { ...window.lastSummary.servers, ...summary.servers },
         pcdetails: { ...window.lastSummary.pcdetails, ...summary.pcdetails },
         dbdetails: { ...window.lastSummary.dbdetails, ...summary.dbdetails },
+
         controllerExtras: { ...window.lastSummary.controllerExtras, ...summary.controllerExtras }
     };
 
@@ -359,37 +405,41 @@ function updateSummary(data) {
         (merged.dbdetails?.online || 0) +
         doors.online;
 
-    merged.totalOfflineDevices = merged.totalDevices - merged.totalOnlineDevices;
+    merged.totalOfflineDevices =
+        merged.totalDevices - merged.totalOnlineDevices;
+
     window.lastSummary = merged;
 
-    document.getElementById("total-devices").textContent = merged.totalDevices;
-    document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
-    document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
+    // Update UI safely (IDs from your HTML)
+    if (document.getElementById("total-devices")) document.getElementById("total-devices").textContent = merged.totalDevices;
+    if (document.getElementById("online-devices")) document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
+    if (document.getElementById("offline-devices")) document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
 
-    document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
-    document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
-    document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
+    if (document.getElementById("camera-total")) document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
+    if (document.getElementById("camera-online")) document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
+    if (document.getElementById("camera-offline")) document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
 
-    document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
-    document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
-    document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
+    if (document.getElementById("archiver-total")) document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
+    if (document.getElementById("archiver-online")) document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
+    if (document.getElementById("archiver-offline")) document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
 
-    document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
-    document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
-    document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
+    if (document.getElementById("controller-total")) document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
+    if (document.getElementById("controller-online")) document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
+    if (document.getElementById("controller-offline")) document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
 
-    document.getElementById("server-total").textContent = merged.servers?.total || 0;
-    document.getElementById("server-online").textContent = merged.servers?.online || 0;
-    document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
+    if (document.getElementById("server-total")) document.getElementById("server-total").textContent = merged.servers?.total || 0;
+    if (document.getElementById("server-online")) document.getElementById("server-online").textContent = merged.servers?.online || 0;
+    if (document.getElementById("server-offline")) document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
 
-    document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
-    document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
-    document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
+    if (document.getElementById("pc-total")) document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
+    if (document.getElementById("pc-online")) document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
+    if (document.getElementById("pc-offline")) document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
 
-    document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
-    document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
-    document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
+    if (document.getElementById("db-total")) document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
+    if (document.getElementById("db-online")) document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
+    if (document.getElementById("db-offline")) document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
 
+    // Door/Reader card updates
     const extras = merged.controllerExtras || {};
     if (extras.doors) {
         const doorTotalEl = document.getElementById("doorReader-total");
@@ -414,64 +464,759 @@ function updateSummary(data) {
     }
 }
 
-// ----------------- Controller list & popup (ENHANCED) -----------------
-
-// Ensure the modal DOM exists (in case index.html didn't include it)
-function ensureDoorModalExists() {
-    if (document.getElementById('door-modal')) return;
-
-    const modal = createEl('div', { id: 'door-modal', className: 'door-modal', style: { display: 'none', position: 'fixed', inset: 0, 'alignItems': 'center', 'justifyContent': 'center', 'backgroundColor': 'rgba(0,0,0,0.45)', zIndex: 9999 } });
-    const dialog = createEl('div', { id: 'door-modal-content', className: 'door-modal-content', role: 'dialog', 'aria-modal': 'true', style: { 'maxWidth': '920px', width: '92%', background: '#fff', padding: '20px', borderRadius: '12px', maxHeight: '80vh', overflowY: 'auto', boxSizing: 'border-box' } });
-
-    const closeBtn = createEl('button', { id: 'close-door-modal', className: 'close-door-modal', title: 'Close', style: { position: 'absolute', right: '18px', top: '12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '20px' } }, ['✕']);
-
-    // position close button inside dialog
-    dialog.appendChild(closeBtn);
-    modal.appendChild(dialog);
-    document.body.appendChild(modal);
-
-    // click outside to close
-    modal.addEventListener('click', (ev) => {
-        if (ev.target === modal) closeDoorModal();
-    });
-}
-
+/* loadControllersInDetails (mostly unchanged) */
 function loadControllersInDetails() {
     const detailsContainer = document.getElementById("device-details");
     const extraContainer = document.getElementById("details-container");
 
-    if (!detailsContainer) return;
-
     detailsContainer.innerHTML = "<p>Loading controllers...</p>";
-    extraContainer && (extraContainer.innerHTML = "");
+    extraContainer.innerHTML = "";
 
     // Use cached controllers if available
-    const fetchPromise = controllersCache ? Promise.resolve(controllersCache) : fetch("http://localhost/api/controllers/status").then(res => res.json());
+    if (Array.isArray(window.controllerDataCached) && window.controllerDataCached.length > 0) {
+        renderControllersInDetails(window.controllerDataCached, detailsContainer);
+        return;
+    }
 
-    fetchPromise.then(data => {
-        controllersCache = Array.isArray(data) ? data : controllersCache;
+    fetch("http://localhost/api/controllers/status")
+        .then(res => res.json())
+        .then(data => {
+            window.controllerDataCached = Array.isArray(data) ? data : null; // cache
+            renderControllersInDetails(data, detailsContainer);
+        })
+        .catch(err => {
+            console.error("Error loading controllers:", err);
+            detailsContainer.innerHTML = "<p style='color:red;'>Failed to load controllers.</p>";
+        });
+}
 
-        detailsContainer.innerHTML = "";
-        if (!Array.isArray(data) || data.length === 0) {
-            detailsContainer.innerHTML = "<p>No controllers found.</p>";
-            return;
-        }
+function renderControllersInDetails(data, detailsContainer) {
+    detailsContainer.innerHTML = "";
+    if (!Array.isArray(data) || data.length === 0) {
+        detailsContainer.innerHTML = "<p>No controllers found.</p>";
+        return;
+    }
 
-        renderControllerCards(detailsContainer, data);
-    }).catch(err => {
-        console.error("Error loading controllers:", err);
-        if (detailsContainer) detailsContainer.innerHTML = "<p style='color:red;'>Failed to load controllers.</p>";
+    data.forEach(ctrl => {
+        const card = document.createElement("div");
+        card.className = "door-device-card";
+        card.style.cssText = `
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        `;
+
+        card.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: #1f2937;">
+                    ${ctrl.controllername || "Unknown Controller"}
+                </h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${ctrl.controllerStatus === "Online" ? "#10b981" : "#ef4444"};"></div>
+                    <span style="font-size: 14px; color: ${ctrl.controllerStatus === "Online" ? "#059669" : "#dc2626"}; font-weight: 600;">
+                        ${ctrl.controllerStatus}
+                    </span>
+                </div>
+            </div>
+              
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 14px; color: #6b7280;">🌐</span>
+                    <div>
+                        <div style="font-size: 12px; color: #6b7280;">IP Address</div>
+                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.IP_address || "N/A"}</div>
+                    </div>
+                </div>
+                  
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 14px; color: #6b7280;">🏢</span>
+                    <div>
+                        <div style="font-size: 12px; color: #6b7280;">Location</div>
+                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.City || "Unknown"}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Hover effects
+        card.addEventListener('mouseenter', function () {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            this.style.borderColor = '#3b82f6';
+        });
+
+        card.addEventListener('mouseleave', function () {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+            this.style.borderColor = '#e5e7eb';
+        });
+
+        // When a controller is clicked, show its doors + readers
+        card.addEventListener("click", () => showDoorsReaders(ctrl));
+        detailsContainer.appendChild(card);
     });
 }
 
-function renderControllerCards(container, controllers) {
-    container.innerHTML = '';
+// showDoorsReaders unchanged (uses openDoorModal)
+function showDoorsReaders(controller) {
+    if (!controller) return;
 
-    controllers.forEach(ctrl => {
-        const card = createEl('div', { className: 'door-device-card', style: {
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-            border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px', marginBottom: '16px', cursor: 'pointer', transition: 'all 0.3s ease', boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-        }});
+    let html = `
+    <div style="margin-bottom:25px;">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:15px;">
+        <div style="
+          width:50px;
+          height:50px;
+          border-radius:12px;
+          background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:white;
+          font-size:20px;
+        ">🔒</div>
+        <div>
+          <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
+          <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
+        </div>
+      </div>
+    </div>
+      
+    <div style="margin:25px 0 15px 0; display:flex; align-items:center; justify-content:space-between;">
+      <h4 style="margin:0; color:#374151; font-size:1.1rem;">Doors & Readers</h4>
+      <span class="status-badge ${controller.controllerStatus === "Online" ? "status-online" : "status-offline"}">
+        ${controller.controllerStatus}
+      </span>
+    </div>
+  `;
 
-        const statusColor = (ctrl.controllerStatus || '').toLowerCase() === 'online' ? '#10b981' : '#ef4444';
-        const statusTextColor = (ctrl.controllerStatus ||
+    if (!controller.Doors || controller.Doors.length === 0) {
+        html += `
+      <div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:12px;">
+        <div style="font-size:48px; margin-bottom:15px;">🚪</div>
+        <h4 style="color:#475569; margin-bottom:8px;">No Doors Found</h4>
+        <p style="color:#64748b; margin:0;">This controller doesn't have any doors configured.</p>
+      </div>
+    `;
+    } else {
+        html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
+
+        controller.Doors.forEach((door, index) => {
+            const doorStatusClass = door.status === "Online" ? "status-online" : "status-offline";
+
+            html += `
+        <div class="door-item" style="animation-delay: ${index * 0.1}s;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="
+                width:36px;
+                height:36px;
+                border-radius:8px;
+                background:#f1f5f9;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#475569;
+                font-size:16px;
+              ">🚪</div>
+              <div>
+                <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
+                <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
+              </div>
+            </div>
+            <span class="status-badge ${doorStatusClass}" style="font-size:0.8rem;">
+              ${door.status}
+            </span>
+          </div>
+        </div>
+      `;
+        });
+
+        html += `</div>`;
+    }
+
+    const closeBtn = document.getElementById("close-door-modal");
+    if (closeBtn) {
+        closeBtn.addEventListener("mouseenter", function () {
+            this.style.transform = "scale(1.1)";
+        });
+        closeBtn.addEventListener("mouseleave", function () {
+            this.style.transform = "scale(1)";
+        });
+    }
+
+    openDoorModal(html);
+}
+
+// updateDetails: major function where we build device cards.
+// We add logic to attach click -> open doors modal for controller-type cards.
+function updateDetails(data) {
+    const detailsContainer = document.getElementById("device-details");
+    const deviceFilter = document.getElementById("device-filter");
+    const onlineFilterButton = document.getElementById("filter-online");
+    const offlineFilterButton = document.getElementById("filter-offline");
+    const allFilterButton = document.getElementById("filter-all");
+    const cityFilter = document.getElementById("city-filter");
+
+    detailsContainer.innerHTML = "";
+    cityFilter.innerHTML = '<option value="all">All Cities</option>';
+
+    let combinedDevices = [];
+    let citySet = new Set();
+    let vendorSet = new Set(); // collect normalized vendor values
+    let typeCityMap = {}; // deviceType -> Set of cities
+
+    function getDeviceIcon(type = "") {
+        type = type.toLowerCase();
+        if (type.includes("camera")) return "fas fa-video";
+        if (type.includes("controller")) return "fas fa-cogs";
+        if (type.includes("archiver")) return "fas fa-database";
+        if (type.includes("server")) return "fas fa-server";
+        if (type.includes("pc")) return "fas fa-desktop";
+        if (type.includes("dbdetails")) return "fa-solid fa-life-ring";
+        return "fas fa-microchip";
+    }
+
+    // Helper to find matching controller (by IP or name)
+    function findControllerForDevice(device) {
+        const controllers = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : null;
+        const ipToMatch = (device.ip || device.ip_address || "").toString().trim();
+        const nameToMatch = (device.controllername || device.controller_name || device.cameraname || "").toString().trim();
+
+        if (controllers) {
+            // Try IP match first
+            if (ipToMatch) {
+                const byIp = controllers.find(c => c.IP_address && c.IP_address.toString().trim() === ipToMatch);
+                if (byIp) return byIp;
+            }
+            // Try controller name match (loose contains)
+            if (nameToMatch) {
+                const nameLower = nameToMatch.toLowerCase();
+                const byName = controllers.find(c => (c.controllername || "").toLowerCase().includes(nameLower) || nameLower.includes((c.controllername || "").toLowerCase()));
+                if (byName) return byName;
+            }
+            // Last resort: try city match + online status (heuristic)
+            if (device.city) {
+                const byCity = controllers.find(c => (c.City || "").toLowerCase() === (device.city || "").toLowerCase());
+                if (byCity) return byCity;
+            }
+        }
+        return null;
+    }
+
+    // If controllers aren't cached, we will fetch them when necessary (lazy)
+    function ensureControllersCached() {
+        if (Array.isArray(window.controllerDataCached)) return Promise.resolve(window.controllerDataCached);
+        return fetch("http://localhost/api/controllers/status")
+            .then(res => res.json())
+            .then(data => {
+                window.controllerDataCached = Array.isArray(data) ? data : null;
+                return window.controllerDataCached;
+            })
+            .catch(err => {
+                console.error("Failed to fetch controllers:", err);
+                return null;
+            });
+    }
+
+    // Fetch real-time status if available.
+    fetch("http://localhost:80/api/region/devices/status")
+        .then((response) => response.json())
+        .then((realTimeStatus) => {
+            console.log("Live Status Data:", realTimeStatus);
+
+            for (const [key, devices] of Object.entries(data.details)) {
+                if (!Array.isArray(devices) || devices.length === 0) continue;
+                const deviceType = key.toLowerCase();
+
+                if (!typeCityMap[deviceType]) typeCityMap[deviceType] = new Set();
+
+                devices.forEach((device) => {
+                    const deviceIP = device.ip_address || device.ip || "N/A";
+                    let currentStatus = (realTimeStatus[deviceIP] || device.status || "offline").toLowerCase();
+                    const city = device.city || device.City || "Unknown";
+
+                    citySet.add(city);
+                    typeCityMap[deviceType].add(city);
+
+                    let rawVendor = device.deviec_details || device.device_details || (device.device_details && device.device_details.vendor) || device.vendor || device.vendor_name || device.manufacturer || "";
+                    rawVendor = (rawVendor || "").toString().trim();
+                    let vendorNormalized = rawVendor ? rawVendor.toUpperCase() : null;
+                    if (vendorNormalized && vendorNormalized !== "UNKNOWN") {
+                        vendorSet.add(vendorNormalized);
+                    }
+                    const datasetVendorValue = vendorNormalized || "";
+
+                    // Build card
+                    const card = document.createElement("div");
+                    card.className = "device-card";
+                    card.dataset.type = deviceType;
+                    card.dataset.status = currentStatus;
+                    card.dataset.city = city;
+                    if (datasetVendorValue) card.dataset.vendor = datasetVendorValue;
+                    card.setAttribute("data-ip", deviceIP);
+
+                    // Status container
+                    const statusContainer = document.createElement("p");
+                    statusContainer.className = "device-status";
+
+                    const statusText = document.createElement("span");
+                    statusText.className = "status-text";
+                    statusText.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+                    statusText.style.color = currentStatus === "online" ? "green" : "red";
+
+                    const statusDot = document.createElement("span");
+                    statusDot.classList.add(currentStatus === "online" ? "online-dot" : "offline-dot");
+                    statusDot.classList.add("status-dot");
+                    statusDot.style.backgroundColor = (currentStatus === "online") ? "green" : "red";
+                    statusDot.style.display = "inline-block";
+                    statusDot.style.width = "10px";
+                    statusDot.style.height = "10px";
+                    statusDot.style.marginLeft = "5px";
+                    statusDot.style.marginRight = "5px";
+                    statusDot.style.borderRadius = "50%";
+
+                    statusContainer.appendChild(statusDot);
+                    statusContainer.appendChild(statusText);
+
+                    // deviceLabel
+                    let deviceLabel;
+                    if (deviceType === "dbdetails") {
+                        deviceLabel = device.application || deviceType.toUpperCase();
+                    } else if (deviceType.includes("pc")) {
+                        deviceLabel = device.pc_name || device.hostname || "PC";
+                    } else {
+                        deviceLabel = deviceType.toUpperCase();
+                    }
+
+                    // Insert HTML content (similar to your original)
+                    card.insertAdjacentHTML("beforeend", `
+  <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
+      ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
+  </h3>
+
+  <div class="card-content">
+      <p class="device-type-label ${deviceType}"   
+         style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+            
+          <strong>
+            <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i>   
+            ${deviceLabel}
+          </strong>
+            
+          ${deviceType.includes("camera")
+                            ? `<button class="open-camera-btn"
+        onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
+        title="Open Camera"
+        style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+</button>`
+                            : ""
+                        }
+      </p>
+
+      <p style="font-size: ;  font-family: Roboto; margin-bottom: 8px;">
+          <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
+          <span   
+              class="device-ip"   
+              style="font-weight:100; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3);  font-family: Roboto;"
+              onclick="copyToClipboard('${deviceIP}')"
+              title="Click to copy IP"
+          >
+              ${deviceIP}
+          </span>
+      </p>
+
+      <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
+          <strong style="color: rgb(13, 13, 13);"><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
+          <span style="font-size:; font-weight:100; color: rgb(8, 9, 9); margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
+      </p>
+
+      <p style="font-size:;  font-family: Roboto;>
+          <strong style="color: rgb(215, 217, 222);"><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
+          <span style="font-weight:100; color: rgb(7, 7, 7); margin-left: 4px;  font-family: Roboto; font-size:;">${city}</span>
+      </p>
+  </div>
+`);
+
+                    card.appendChild(statusContainer);
+
+                    // --- ADDED: if this is a controller card, attach click to open doors modal ---
+                    if (deviceType.includes("controller")) {
+                        card.style.cursor = "pointer";
+                        card.title = "Click to view Doors for this controller";
+                        card.setAttribute("role", "button");
+                        card.setAttribute("tabindex", "0");
+
+                        // click handler that uses cached controllers when possible
+                        const openControllerDoors = async () => {
+                            // try to find matching controller from cache
+                            let ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
+                            if (!ctrl) {
+                                // ensure controllers are cached then try again
+                                await ensureControllersCached();
+                                ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
+                            }
+                            if (ctrl) {
+                                showDoorsReaders(ctrl);
+                            } else {
+                                // fallback: open controllers list then highlight nearest by city/IP
+                                loadControllersInDetails();
+                                // show a quick toast/message to indicate we couldn't find exact match
+                                console.warn("Controller details not found in cache for IP/name:", deviceIP, device.controllername);
+                            }
+                        };
+
+                        card.addEventListener("click", (ev) => {
+                            openControllerDoors();
+                        });
+
+                        // keyboard accessibility (Enter / Space)
+                        card.addEventListener("keydown", (ev) => {
+                            if (ev.key === "Enter" || ev.key === " ") {
+                                ev.preventDefault();
+                                openControllerDoors();
+                            }
+                        });
+                    }
+                    // --- END ADDED CLICK HANDLER ---
+
+                    // show policy tooltip for devices marked "Not accessible"
+                    const remarkText = (device.remark || "").toString().trim();
+                    if (remarkText && /not\s+access/i.test(remarkText)) {
+                        if (!card.style.position) card.style.position = "relative";
+
+                        const tooltip = document.createElement("div");
+                        tooltip.className = "device-access-tooltip";
+                        tooltip.textContent = "Due to Network policy, this camera is Not accessible";
+
+                        tooltip.style.position = "absolute";
+                        tooltip.style.bottom = "100%";
+                        tooltip.style.left = "8px";
+                        tooltip.style.padding = "6px 8px";
+                        tooltip.style.background = "rgba(0,0,0,0.85)";
+                        tooltip.style.color = "#fff";
+                        tooltip.style.borderRadius = "4px";
+                        tooltip.style.fontSize = "12px";
+                        tooltip.style.whiteSpace = "nowrap";
+                        tooltip.style.pointerEvents = "none";
+                        tooltip.style.opacity = "0";
+                        tooltip.style.transform = "translateY(-6px)";
+                        tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
+                        tooltip.style.zIndex = "999";
+
+                        card.appendChild(tooltip);
+
+                        card.addEventListener("mouseenter", () => {
+                            tooltip.style.opacity = "1";
+                            tooltip.style.transform = "translateY(-10px)";
+                        });
+                        card.addEventListener("mouseleave", () => {
+                            tooltip.style.opacity = "0";
+                            tooltip.style.transform = "translateY(-6px)";
+                        });
+
+                        card.title = tooltip.textContent;
+                    }
+
+                    combinedDevices.push({
+                        card: card,
+                        device: {
+                            ip: deviceIP,
+                            type: deviceType,
+                            status: currentStatus,
+                            city: city,
+                            vendor: datasetVendorValue
+                        }
+                    });
+                });
+            }
+
+            combinedDevices.sort((a, b) => {
+                const statusA = (a.device.status === "offline") ? 0 : 1;
+                const statusB = (b.device.status === "offline") ? 0 : 1;
+                return statusA - statusB;
+            });
+
+            const allDevices = combinedDevices.map(item => item.card);
+            const deviceObjects = combinedDevices.map(item => item.device);
+
+            function populateCityOptions(selectedType = "all") {
+                const prevSelected = cityFilter.value;
+                cityFilter.innerHTML = '<option value="all">All Cities</option>';
+
+                let citiesToShow = new Set();
+
+                if (!selectedType || selectedType === "all") {
+                    citiesToShow = citySet;
+                } else {
+                    const setForType = typeCityMap[selectedType];
+                    if (setForType && setForType.size > 0) {
+                        citiesToShow = setForType;
+                    } else {
+                        citiesToShow = new Set();
+                    }
+                }
+
+                Array.from(citiesToShow).sort().forEach((city) => {
+                    const option = document.createElement("option");
+                    option.value = city;
+                    option.textContent = city;
+                    cityFilter.appendChild(option);
+                });
+
+                if (prevSelected && Array.from(citiesToShow).includes(prevSelected)) {
+                    cityFilter.value = prevSelected;
+                } else {
+                    cityFilter.value = "all";
+                }
+            }
+
+            // vendor filter
+            let vendorFilter = document.getElementById("vendorFilter");
+            if (!vendorFilter) {
+                vendorFilter = document.createElement("select");
+                vendorFilter.id = "vendorFilter";
+                vendorFilter.style.marginTop = "8px";
+                deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
+            }
+
+            vendorFilter.innerHTML = `<option value="all">All camera</option>`;
+            [...vendorSet].sort().forEach(v => {
+                if (!v) return;
+                const opt = document.createElement("option");
+                opt.value = v;
+                opt.textContent = v;
+                vendorFilter.appendChild(opt);
+            });
+
+            vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+
+            vendorFilter.onchange = filterDevices;
+
+            populateCityOptions(deviceFilter.value || "all");
+
+            deviceFilter.value = "all";
+            cityFilter.value = "all";
+            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+            allFilterButton.classList.add("active");
+
+            function filterDevices() {
+                const selectedType = deviceFilter.value;
+                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
+                const selectedCity = cityFilter.value;
+                const vendorFilterLabel = document.getElementById("vendorFilterLabel");
+
+                vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+                if (vendorFilterLabel) {
+                    vendorFilterLabel.style.display = vendorFilter.style.display;
+                }
+
+                const vendorFilterElem = document.getElementById("vendorFilter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
+                const searchTerm = document.getElementById("device-search").value.toLowerCase();
+
+                if (vendorFilterElem) {
+                    vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
+                }
+
+                detailsContainer.innerHTML = "";
+
+                const filteredDevices = allDevices.filter((device) =>
+                    (selectedType === "all" || device.dataset.type === selectedType) &&
+                    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
+                    (selectedCity === "all" || device.dataset.city === selectedCity) &&
+                    (selectedVendor === "all" || (device.dataset.vendor || "") === selectedVendor) &&
+                    (
+                        !searchTerm ||
+                        device.innerText.toLowerCase().includes(searchTerm)
+                    )
+                );
+
+                filteredDevices.forEach((deviceCard) => {
+                    detailsContainer.appendChild(deviceCard);
+                });
+
+                const region = currentRegion?.toUpperCase() || "GLOBAL";
+                const titleElement = document.getElementById("region-title");
+
+                const logoHTML = `
+                    <span class="region-logo">
+                        <a href="http://10.199.22.57:3014/" class="tooltip">
+                            <i class="fa-solid fa-house"></i>
+                            <span class="tooltiptext">Dashboard Hub</span>
+                        </a>
+                    </span>
+                    `;
+                if (selectedCity !== "all") {
+                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
+                } else {
+                    titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
+                }
+
+                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
+                    const correspondingCard = allDevices[index];
+                    return (
+                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
+                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
+                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
+                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
+                    );
+                });
+                const offlineDevices = filteredSummaryDevices
+                    .filter(d => d.status === "offline")
+                    .map(d => ({
+                        name: d.name || "Unknown",
+                        ip: d.ip,
+                        city: d.city,
+                        type: d.type,
+                        lastSeen: new Date().toISOString()
+                    }));
+
+                if (window.updateOfflineChart) {
+                    window.updateOfflineChart(offlineDevices);
+                }
+
+                const summary = calculateCitySummary(filteredSummaryDevices);
+                updateSummary(summary);
+            }
+
+            function calculateCitySummary(devices) {
+                const summary = {
+                    summary: {
+                        totalDevices: devices.length,
+                        totalOnlineDevices: devices.filter(d => d.status === "online").length,
+                        totalOfflineDevices: devices.filter(d => d.status === "offline").length,
+                        cameras: { total: 0, online: 0, offline: 0 },
+                        archivers: { total: 0, online: 0, offline: 0 },
+                        controllers: { total: 0, online: 0, offline: 0 },
+                        servers: { total: 0, online: 0, offline: 0 },
+                        pcdetails: { total: 0, online: 0, offline: 0 },
+                        dbdetails: { total: 0, online: 0, offline: 0 }
+                    }
+                };
+
+                devices.forEach((device) => {
+                    if (!summary.summary[device.type]) return;
+                    summary.summary[device.type].total += 1;
+                    if (device.status === "online") summary.summary[device.type].online += 1;
+                    else summary.summary[device.type].offline += 1;
+                });
+
+                return summary;
+            }
+
+            // initial filter run
+            filterDevices();
+
+            setTimeout(() => {
+                const selectedCity = cityFilter.value;
+                const selectedType = deviceFilter.value;
+                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
+                const vendorFilterElem = document.getElementById("vendorFilter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
+                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
+                    const correspondingCard = allDevices[index];
+                    return (
+                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
+                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
+                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
+                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
+                    );
+                });
+
+                const summary = calculateCitySummary(filteredSummaryDevices);
+                updateSummary(summary);
+            }, 100);
+
+            // ---- EVENTS ----
+            deviceFilter.addEventListener("change", () => {
+                populateCityOptions(deviceFilter.value || "all");
+                filterDevices();
+            });
+
+            document.getElementById("device-search").addEventListener("input", filterDevices);
+            cityFilter.addEventListener("change", filterDevices);
+            allFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                allFilterButton.classList.add("active");
+                filterDevices();
+            });
+            onlineFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                onlineFilterButton.classList.add("active");
+                filterDevices();
+            });
+            offlineFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                offlineFilterButton.classList.add("active");
+                filterDevices();
+            });
+        })
+        .catch((error) => {
+            console.error("Error fetching real-time device status:", error);
+            detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
+        });
+}
+
+function showModal(name, ip, location, status, city) {
+    document.getElementById("modal-title").textContent = `Details for ${name}`;
+    document.getElementById("modal-body").innerHTML = `
+            <li><strong>Name:</strong> ${name}</li>
+            <li><strong>IP:</strong> ${ip}</li>
+            <li><strong>Location:</strong> ${location}</li>
+            <li><strong>Status:</strong> ${status}</li>
+            <li><strong>City:</strong> ${city}</li>
+        `;
+    document.getElementById("modal").style.display = "block";
+}
+
+// UI behaviors (unchanged)
+window.addEventListener("scroll", () => {
+    const btn = document.getElementById("scrollToTopBtn");
+    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+        btn.style.display = "block";
+    } else {
+        btn.style.display = "none";
+    }
+});
+document.getElementById("scrollToTopBtn").addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+function openDoorModal(html) {
+    const modal = document.getElementById("door-modal");
+    const modalContent = document.getElementById("door-modal-content");
+    if (modalContent) modalContent.innerHTML = html;
+    if (modal) modal.style.display = "flex";
+}
+document.getElementById("close-door-modal").addEventListener("click", () => {
+    const m = document.getElementById("door-modal");
+    if (m) m.style.display = "none";
+});
+window.addEventListener("click", (e) => {
+    if (e.target.id === "door-modal") {
+        const m = document.getElementById("door-modal");
+        if (m) m.style.display = "none";
+    }
+});
+
+document.getElementById("toggle-main-btn").addEventListener("click", function () {
+    const details = document.getElementById("details-section");
+    const graph = document.getElementById("main-graph");
+
+    if (details.style.display === "none") {
+        details.style.display = "block";   // Show details
+        graph.style.display = "none";      // Hide graph
+    } else {
+        details.style.display = "none";    // Hide details
+        graph.style.display = "block";     // Show graph
+    }
+});
