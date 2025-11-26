@@ -1,24 +1,24 @@
-this x axix label ciyt text colro i wna red 
-
 x: {
-          ticks: {
-            display: true,
-            autoSkip: false,
-            callback: function (value, index) {
-              const risk = riskLabels[index];
+  ticks: {
+    display: true,
+    autoSkip: false,
 
-              // Show city name ONLY if risk is Medium or High
-              if (risk === "Medium" || risk === "High") {
-                return labels[index];
-              }
+    callback: function (value, index) {
+      const risk = riskLabels[index];
 
-              // Hide Low risk city labels
-              return "";
-            }
-          },
-          grid: {
-            display: true
-          }
-        }
-
+      if (risk === "Medium" || risk === "High") {
+        return labels[index];
       }
+      return "";
+    },
+
+    color: function(context) {
+      const idx = context.index;
+      const risk = riskLabels[idx];
+      return (risk === "Medium" || risk === "High") ? "red" : "#666";
+    }
+  },
+  grid: {
+    display: true
+  }
+}
