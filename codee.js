@@ -1,5 +1,5 @@
 not update other camera, controllr, and arachver updae db serer, bu
-    ony door, and readere count is not update 
+    ony door, and readere count is not update when fillte 
 <div class="totacl-gcard wide gcard-pie offline-device-card">
             <h4 class="gcard-title">Total Count </h4>
             <div class="chart-placeholder"></div>
