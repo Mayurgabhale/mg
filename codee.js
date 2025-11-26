@@ -1,30 +1,55 @@
-// Cache full controller data for reuse (keep unfiltered copy)
-            if (Array.isArray(controllerData)) {
-                window.controllerDataCached = controllerData; // full cache
-            } else {
-                window.controllerDataCached = null;
-            }
+function computeFilteredControllerExtras(selectedCity = "all", selectedStatus = "all") {
+                const controllersAll = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : [];
+                const result = { doors: { total: 0, online: 0, offline: 0 }, readers: { total: 0, online: 0, offline: 0 } };
 
-            // Build controllers list filtered by the requested region (so summary reflects region)
-            let controllersForRegion = Array.isArray(controllerData) ? controllerData.slice() : [];
-            try {
-                const regionLower = (regionName || "global").toString().toLowerCase();
-                if (regionLower !== "global") {
-                    controllersForRegion = controllersForRegion.filter(c => {
-                        const loc = (c.Location || c.location || "").toString().toLowerCase();
-                        // also allow matching by City if you ever pass city as region
-                        const city = (c.City || c.city || "").toString().toLowerCase();
-                        return loc === regionLower || city === regionLower;
+                if (!controllersAll || controllersAll.length === 0) return result;
+
+                const cityFilterLower = (selectedCity || "all").toString().toLowerCase();
+                const statusFilterLower = (selectedStatus || "all").toString().toLowerCase();
+                const regionFilterLower = (currentRegion || "global").toString().toLowerCase();
+
+                controllersAll.forEach(ctrl => {
+                    // Skip if controller has no Doors
+                    if (!Array.isArray(ctrl.Doors) || ctrl.Doors.length === 0) return;
+
+                    // Region filter (if a specific region other than 'global' is active)
+                    if (regionFilterLower !== "global") {
+                        const ctrlLocation = (ctrl.Location || ctrl.location || "").toString().toLowerCase();
+                        const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
+                        if (ctrlLocation !== regionFilterLower && ctrlCity !== regionFilterLower) {
+                            // controller not in selected region => skip
+                            return;
+                        }
+                    }
+
+                    // Apply city filter if any (match City OR Location)
+                    if (cityFilterLower !== "all") {
+                        const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
+                        const ctrlLocation = (ctrl.Location || ctrl.location || "").toString().toLowerCase();
+
+                        // Match either City OR Location
+                        if (ctrlCity !== cityFilterLower && ctrlLocation !== cityFilterLower) return;
+                    }
+
+                    // Apply status filter if any (match controllerStatus)
+                    if (statusFilterLower !== "all") {
+                        const ctrlStatus = (ctrl.controllerStatus || ctrl.status || "").toString().toLowerCase();
+                        if (ctrlStatus !== statusFilterLower) return;
+                    }
+
+                    // Count doors/readers for this controller
+                    ctrl.Doors.forEach(d => {
+                        result.doors.total++;
+                        if ((d.status || "").toString().toLowerCase() === "online") result.doors.online++;
+
+                        if (d.Reader && d.Reader.toString().trim() !== "") {
+                            result.readers.total++;
+                            if ((d.status || "").toString().toLowerCase() === "online") result.readers.online++;
+                        }
                     });
-                }
-            } catch (e) {
-                // fallback: keep full list if something goes wrong
-                controllersForRegion = Array.isArray(controllerData) ? controllerData.slice() : [];
+                });
+
+                result.doors.offline = result.doors.total - result.doors.online;
+                result.readers.offline = result.readers.total - result.readers.online;
+                return result;
             }
-
-            // Compute door + reader summary from controllers API but using region-filtered controllers
-            const controllerExtras = processDoorAndReaderData(controllersForRegion);
-
-            // Attach extras into the same structure updateSummary expects:
-            if (!summary.summary) summary.summary = {};
-            summary.summary.controllerExtras = controllerExtras;
