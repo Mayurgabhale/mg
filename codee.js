@@ -1,93 +1,488 @@
-/* add somewhere in your CSS file */
-.chartjs-tooltip {
-  position: absolute;
-  background: rgba(18,18,18,0.95);
-  color: #fff;
-  padding: 8px 10px;
-  border-radius: 6px;
-  pointer-events: none;
-  transform: translate(-50%, -100%);
-  font-size: 13px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-  z-index: 10000;
-  min-width: 160px;
+this is our productiion file, server file, ok 
+in localhost we add new code, ok, so integret my server file, prodiction filem, 
+  and give me wiht correct production file,
+  read teh below localhost file, carefully,  
+  ----------
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const path = require("path");
+
+
+const app = express();
+
+const HOST = "0.0.0.0";
+
+// Your username and password (you should ideally store these securely)
+const USERNAME = 'admin';
+const PASSWORD = '12345';
+
+// Middleware to check basic auth
+function basicAuthMiddleware(req, res, next) {
+  const user = basicAuth(req);
+
+  if (!user || user.name !== USERNAME || user.pass !== PASSWORD) {
+      res.setHeader('WWW-Authenticate', 'Basic realm="Authorization required"');
+      return res.status(401).send('Access denied');
+  }
+
+  next();
 }
-.chartjs-tooltip .tt-title { font-weight: 700; margin-bottom:6px; }
-.chartjs-tooltip .tt-line { margin: 2px 0; white-space:nowrap; }
-.chartjs-tooltip .tt-key { opacity: 0.8; margin-right:6px; }
-.chartjs-tooltip .tt-val { font-weight:600; }
+
+// Use the authentication middleware globally
+app.use(basicAuthMiddleware);
 
 
 
+// Helpers
+function pruneOldEntries(entries, days = 30) {
+  const cutoff = DateTime.now().minus({ days }).toMillis();
+  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+}
+function getLogFileForDate(dt) {
+  return `./deviceLogs-${dt.toISODate()}.json`;
+}
 
-.... is
+
+
+app.use(cors());
+app.use(express.json());
+
+app.use(cors({
+  origin:"*",
+  methods:"GET,POST,PUT,DELETE",
+  allowedHeaders:"Content-Type,Authorization"
+}));
+
+app.use(bodyParser.json());
+
+
+app.use('/Frontend/Device Dashboard',express.static(path.join(__dirname, '../../Frontend/Device Dashboard')));
 
 
 
-// Replace existing tooltip: { ... } with this:
-tooltip: {
-  enabled: false, // disable built-in tooltip rendering
-  external: function(context) {
-    // get/create tooltip element
-    let tooltipEl = document.getElementById('chartjs-tooltip');
-    if (!tooltipEl) {
-      tooltipEl = document.createElement('div');
-      tooltipEl.id = 'chartjs-tooltip';
-      tooltipEl.className = 'chartjs-tooltip';
-      document.body.appendChild(tooltipEl);
-    }
+// serve everything in public/ as static files
 
-    // Hide if no tooltip
-    const tooltipModel = context.tooltip;
-    if (!tooltipModel || tooltipModel.opacity === 0) {
-      tooltipEl.style.opacity = 0;
-      return;
-    }
+app.use(
+  '/dashboard',
+  express.static(path.join(__dirname,'../../Frontend/Device Dashboard'))
+);
 
-    // Determine index for the hovered bar
-    const dataIndex = tooltipModel.dataPoints && tooltipModel.dataPoints.length ? tooltipModel.dataPoints[0].dataIndex : null;
-    if (dataIndex === null) {
-      tooltipEl.style.opacity = 0;
-      return;
-    }
+app.get('/health',(req,res)=>{
+  res.json({status:'up' });
+});
 
-    // Build lines (same order you used)
-    const c = CITY_LIST[dataIndex] || {};
-    const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0;
-    const camOff = (c.offline && c.offline.camera) || 0;
-    const ctrlOff = (c.offline && c.offline.controller) || 0;
-    const srvOff = (c.offline && c.offline.server) || 0;
-    const archOff = (c.offline && c.offline.archiver) || 0;
-    const risk = riskLabels[dataIndex] || 'Low';
+app.use('/api/regions',regionRoutes);
+// fallback to frontend  index.html
 
-    const lines = [
-      { key: 'Total Devices', val: total, color: '#ffffff' },
-      { key: 'Risk Level', val: risk, color: '#ffffff' },
-      { key: 'Offline Camera', val: camOff, color: camOff > 0 ? 'red' : '#ffffff' },
-      { key: 'Offline Controller', val: ctrlOff, color: ctrlOff > 0 ? 'red' : '#ffffff' },
-      { key: 'Offline Server', val: srvOff, color: srvOff > 0 ? 'red' : '#ffffff' },
-      { key: 'Offline Archiver', val: archOff, color: archOff > 0 ? 'red' : '#ffffff' }
-    ];
+app.get('/Frontend/Device Dashboard/*', (req, res)=>{
+  res.sendFile(path.join(__dirname, '../../Frontend/Device Dashboard/index.html'));
+})
 
-    // Build HTML
-    let innerHtml = `<div class="tt-title">${labels[dataIndex]}</div>`;
-    lines.forEach(line => {
-      // don't show 0 offline lines? you said show but not red — keep visible but not red
-      innerHtml += `<div class="tt-line"><span class="tt-key">${line.key}:</span> <span class="tt-val" style="color:${line.color}">${line.val}</span></div>`;
-    });
 
-    tooltipEl.innerHTML = innerHtml;
-    tooltipEl.style.opacity = 1;
+// Device Status Tracking
+const devices = fetchAllIpAddress();
+let deviceStatus = {};
 
-    // Positioning: try to place tooltip near the caret (Chart.js provides caretX/caretY in tooltipModel)
-    const canvas = context.chart.canvas;
-    const canvasRect = canvas.getBoundingClientRect();
-    // caret coordinates are in chart pixels; convert to page coords
-    const left = canvasRect.left + window.pageXOffset + tooltipModel.caretX;
-    const top = canvasRect.top + window.pageYOffset + tooltipModel.caretY;
+// Load only today's logs
+const today = DateTime.now().setZone("Asia/Kolkata");
+const todayLogFile = getLogFileForDate(today);
+let todayLogs = fs.existsSync(todayLogFile)
+  ? JSON.parse(fs.readFileSync(todayLogFile, "utf8"))
+  : {};
 
-    // Position slightly above the cursor
-    tooltipEl.style.left = `${left}px`;
-    tooltipEl.style.top = `${top - 10}px`;
+// Persist today's logs
+function saveTodayLogs() {
+  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
+}
+
+// Log a status change
+function logDeviceChange(ip, status) {
+  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+  const arr = (todayLogs[ip] = todayLogs[ip] || []);
+  const last = arr[arr.length - 1];
+  if (!last || last.status !== status) {
+    arr.push({ status, timestamp });
+    todayLogs[ip] = pruneOldEntries(arr, 30);
+    saveTodayLogs();
   }
 }
+
+// Ping devices
+ async function pingDevices() {
+  const limit = require("p-limit")(20);
+  await Promise.all(
+    devices.map(ip =>
+      limit(async () => {
+        const newStatus = await pingHost(ip);
+        if (deviceStatus[ip] !== newStatus) {
+          logDeviceChange(ip, newStatus);
+        }
+        deviceStatus[ip] = newStatus;
+      })
+    )
+  );
+  console.log("Updated device status:", deviceStatus);
+ }
+
+// Start ping loop
+setInterval(pingDevices, 12_0000); //60_000
+pingDevices();
+
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+  res.json(deviceStatus);
+});
+
+
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const combined = {};
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const ip of Object.keys(dayLogs)) {
+      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+    }
+  }
+  // prune to last 30 days
+  for (const ip of Object.keys(combined)) {
+    combined[ip] = pruneOldEntries(combined[ip], 30);
+  }
+  res.json(combined);
+});
+
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+  const region = req.params.region.toLowerCase();
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const regionLogs = {};
+
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const ip of Object.keys(dayLogs)) {
+      if (ipRegionMap[ip] === region) {
+        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+      }
+    }
+  }
+
+  if (!Object.keys(regionLogs).length) {
+    return res.status(404).json({ message: `No device history found for region: ${region}` });
+  }
+  // prune per‑IP
+  for (const ip of Object.keys(regionLogs)) {
+    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+  }
+  res.json(regionLogs);
+});
+
+
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+  const ip = req.params.ip;
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  let history = [];
+  for (const f of files) {
+    const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
+  }
+  if (!history.length) {
+    return res.status(404).json({ message: "No history found for this device" });
+  }
+  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  res.json({ ip, history });
+});
+
+
+
+// Start Server
+ const PORT = process.env.PORT || 3000;
+ app.listen(3000,'0.0.0.0', ()=>{
+
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Server running on Your LAN at http://10.138.161.4:${PORT}`);
+  pingDevices();
+ })
+;;;;;;;;;;;;;;;;
+
+localhost host file is below check this 
+C:\Users\W0024618\Desktop\Backend\src\app.js
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+//const ping = require("ping");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const { getDeviceInfo } = require("./services/excelService");
+const { sendTeamsAlert }    = require("./services/teamsService");
+
+const controllerData = JSON.parse(
+  fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
+);
+
+const app = express();
+const PORT = process.env.PORT || 80;
+
+// Helpers
+function pruneOldEntries(entries, days = 30) {
+  const cutoff = DateTime.now().minus({ days }).toMillis();
+  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+}
+function getLogFileForDate(dt) {
+  return `./deviceLogs-${dt.toISODate()}.json`;
+}
+
+function safeJsonParse(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, "utf8").trim();
+    if (!content) return {};  // empty file = empty object
+    return JSON.parse(content);
+  } catch (err) {
+    console.error("❌ Corrupted JSON file detected:", filePath);
+    console.error("Error:", err.message);
+    return {};  // fallback so server NEVER crashes
+  }
+}
+
+
+
+// Middleware
+app.use(cors({
+    origin: "http://127.0.0.1:5500",
+  //  origin: "http://localhost:3000",
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization",
+}));
+app.use(bodyParser.json());
+
+// Routes
+app.use("/api/regions", regionRoutes);
+
+// Device Status Tracking
+const devices = fetchAllIpAddress();
+let deviceStatus = {};
+
+// Load only today's logs
+const today = DateTime.now().setZone("Asia/Kolkata");
+const todayLogFile = getLogFileForDate(today);
+
+
+
+let todayLogs = fs.existsSync(todayLogFile)
+  ? safeJsonParse(todayLogFile)
+  : {};
+
+
+
+// Persist today's logs
+function saveTodayLogs() {
+  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
+}
+
+// Log a status change
+function logDeviceChange(ip, status) {
+  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+  const arr = (todayLogs[ip] = todayLogs[ip] || []);
+  const last = arr[arr.length - 1];
+  if (!last || last.status !== status) {
+    arr.push({ status, timestamp });
+    todayLogs[ip] = pruneOldEntries(arr, 30);
+    saveTodayLogs();
+  }
+}
+
+
+async function pingDevices() {
+  const limit = require("p-limit")(20);
+
+  await Promise.all(
+    devices.map(ip =>
+      limit(async () => {
+        const newStatus = await pingHost(ip);
+        if (deviceStatus[ip] !== newStatus) {
+          logDeviceChange(ip, newStatus);
+        }
+        deviceStatus[ip] = newStatus;
+      })
+    )
+  );
+
+  // ✅ Build Controller + Door Status
+  buildControllerStatus();
+
+  console.log("Updated device status:", deviceStatus);
+}
+
+
+// 📝📝📝📝📝📝
+
+let fullStatus = [];
+function buildControllerStatus() {
+  fullStatus = controllerData.map(controller => {
+    const ip = controller.IP_address.trim();
+    const status = deviceStatus[ip] || "Unknown";
+
+    // If controller offline, mark all doors offline too
+    const doors = controller.Doors.map(d => ({
+      ...d,
+      status: status === "Online" ? "Online" : "Offline",
+    }));
+
+    return {
+      controllername: controller.controllername,
+      IP_address: ip,
+      Location: controller.Location || "Unknown",
+      City: controller.City || "Unknown",
+      controllerStatus: status,
+      Doors: doors,
+    };
+  });
+}
+
+// 📝📝📝📝📝📝
+
+
+const notifiedOffline=new Set();
+
+
+// Start ping loop
+// setInterval(pingDevices, 60_000);
+// pingDevices();
+
+
+setInterval(async () => {
+   pingDevices();
+ // await checkNotifications();
+}, 60_000);
+
+// initial run
+(async () => {
+   pingDevices();
+  //await checkNotifications();
+})();
+
+
+
+
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+  res.json(deviceStatus);
+});
+
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const combined = {};
+  for (const f of files) {
+    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    const dayLogs = safeJsonParse(f);
+
+    for (const ip of Object.keys(dayLogs)) {
+      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+    }
+  }
+  // prune to last 30 days
+  for (const ip of Object.keys(combined)) {
+    combined[ip] = pruneOldEntries(combined[ip], 30);
+  }
+  res.json(combined);
+});
+
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+  const region = req.params.region.toLowerCase();
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const regionLogs = {};
+
+  for (const f of files) {
+    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    const dayLogs = safeJsonParse(f);
+
+    for (const ip of Object.keys(dayLogs)) {
+      if (ipRegionMap[ip] === region) {
+        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+      }
+    }
+  }
+
+  if (!Object.keys(regionLogs).length) {
+    return res.status(404).json({ message: `No device history found for region: ${region}` });
+  }
+  // prune per‑IP
+  for (const ip of Object.keys(regionLogs)) {
+    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+  }
+  res.json(regionLogs);
+});
+
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+  const ip = req.params.ip;
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  let history = [];
+  for (const f of files) {
+    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    const dayLogs = safeJsonParse(f);
+
+    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
+  }
+  if (!history.length) {
+    return res.status(404).json({ message: "No history found for this device" });
+  }
+  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  res.json({ ip, history });
+});
+
+
+// Get all controller + door statuses
+app.get("/api/controllers/status", (req, res) => {
+  res.json(fullStatus);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
