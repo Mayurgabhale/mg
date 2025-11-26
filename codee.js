@@ -1,211 +1,439 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-const basicAuth = require('basic-auth');
-const { pingHost } = require('./services/pingService');
-const { DateTime } = require('luxon');
-const regionRoutes = require('./routes/regionRoutes');
-const { fetchAllIpAddress, ipRegionMap } = require('./services/excelService');
+this is our productiion file, server file, ok
+in localhost we add new code, ok, so integret my server file, prodiction filem,
+and give me wiht correct production file,
+read teh below localhost file, carefully,
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const path = require("path");
 
 const app = express();
-const HOST = process.env.HOST || '0.0.0.0';
-const PORT = process.env.PORT || 3000;
 
-// AUTH (move to .env in production)
-const USERNAME = process.env.BASIC_AUTH_USER || 'admin';
-const PASSWORD = process.env.BASIC_AUTH_PASS || '12345';
+const HOST = "0.0.0.0";
 
-/* ================= HELPERS ================= */
+// Your username and password (you should ideally store these securely)
+const USERNAME = 'admin';
+const PASSWORD = '12345';
 
-function safeJsonParse(filePath) {
-  try {
-    if (!fs.existsSync(filePath)) return {};
-    const content = fs.readFileSync(filePath, 'utf8').trim();
-    if (!content) return {};
-    return JSON.parse(content);
-  } catch (err) {
-    console.error("❌ Corrupted JSON:", filePath);
-    return {};
-  }
+// Middleware to check basic auth
+function basicAuthMiddleware(req, res, next) {
+const user = basicAuth(req);
+
+if (!user || user.name !== USERNAME || user.pass !== PASSWORD) {
+res.setHeader('WWW-Authenticate', 'Basic realm="Authorization required"');
+return res.status(401).send('Access denied');
 }
 
+next();
+}
+
+// Use the authentication middleware globally
+app.use(basicAuthMiddleware);
+
+// Helpers
 function pruneOldEntries(entries, days = 30) {
-  const cutoff = DateTime.now().minus({ days }).toMillis();
-  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+const cutoff = DateTime.now().minus({ days }).toMillis();
+return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
 }
-
 function getLogFileForDate(dt) {
-  return `./deviceLogs-${dt.toISODate()}.json`;
+return ./deviceLogs-${dt.toISODate()}.json;
 }
 
-/* ================= BASIC AUTH ================= */
-
-// ✅ DO NOT LOCK API WITH AUTH — unless you want it.
-// If you want auth, uncomment below
-
-/*
-app.use((req, res, next) => {
-  if (
-    req.path === '/health' ||
-    req.path.startsWith('/api') || 
-    req.path.startsWith('/Frontend') || 
-    req.path.startsWith('/dashboard')
-  ) {
-    return next();
-  }
-
-  const user = basicAuth(req);
-  if (!user || user.name !== USERNAME || user.pass !== PASSWORD) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Authorization required"');
-    return res.status(401).send('Access denied');
-  }
-  next();
-});
-*/
-
-/* ================= MIDDLEWARE ================= */
-
-app.use(cors({ origin: "*", methods: "GET,POST,PUT,DELETE", allowedHeaders: "Content-Type,Authorization" }));
-app.use(bodyParser.json());
+app.use(cors());
 app.use(express.json());
 
-/* ================= STATIC FRONTEND ================= */
+app.use(cors({
+origin:"*",
+methods:"GET,POST,PUT,DELETE",
+allowedHeaders:"Content-Type,Authorization"
+}));
 
-app.use('/Frontend/Device Dashboard', express.static(path.join(__dirname, '../../Frontend/Device Dashboard')));
-app.use('/dashboard', express.static(path.join(__dirname, '../../Frontend/Device Dashboard')));
+app.use(bodyParser.json());
 
-/* ================= ROUTES ================= */
+app.use('/Frontend/Device Dashboard',express.static(path.join(__dirname, '../../Frontend/Device Dashboard')));
 
-app.get('/health', (req, res) => res.json({ status: 'up' }));
-app.use('/api/regions', regionRoutes);
+// serve everything in public/ as static files
 
-/* ================= CONTROLLER DATA ================= */
+app.use(
+'/dashboard',
+express.static(path.join(__dirname,'../../Frontend/Device Dashboard'))
+);
 
-let controllerData = [];
+app.get('/health',(req,res)=>{
+res.json({status:'up' });
+});
 
-const controllerPath = path.join(__dirname, './src/data/ControllerDataWithDoorReader.json');
+app.use('/api/regions',regionRoutes);
+// fallback to frontend  index.html
 
-if (fs.existsSync(controllerPath)) {
-  controllerData = safeJsonParse(controllerPath);
-  console.log("✅ Controller data loaded");
-} else {
-  console.warn("⚠️ Controller data file NOT found:", controllerPath);
-}
+app.get('/Frontend/Device Dashboard/*', (req, res)=>{
+res.sendFile(path.join(__dirname, '../../Frontend/Device Dashboard/index.html'));
+})
 
-/* ================= DEVICE MONITORING ================= */
-
+// Device Status Tracking
 const devices = fetchAllIpAddress();
 let deviceStatus = {};
-let fullStatus = [];
 
-// Load logs
+// Load only today's logs
 const today = DateTime.now().setZone("Asia/Kolkata");
 const todayLogFile = getLogFileForDate(today);
-let todayLogs = safeJsonParse(todayLogFile);
+let todayLogs = fs.existsSync(todayLogFile)
+? JSON.parse(fs.readFileSync(todayLogFile, "utf8"))
+: {};
 
-// Save logs
+// Persist today's logs
 function saveTodayLogs() {
-  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
+fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
 }
 
-// Log changes
+// Log a status change
 function logDeviceChange(ip, status) {
-  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
-  const arr = todayLogs[ip] = todayLogs[ip] || [];
-  const last = arr[arr.length - 1];
-
-  if (!last || last.status !== status) {
-    arr.push({ status, timestamp });
-    todayLogs[ip] = pruneOldEntries(arr, 30);
-    saveTodayLogs();
-  }
+const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+const arr = (todayLogs[ip] = todayLogs[ip] || []);
+const last = arr[arr.length - 1];
+if (!last || last.status !== status) {
+arr.push({ status, timestamp });
+todayLogs[ip] = pruneOldEntries(arr, 30);
+saveTodayLogs();
+}
 }
 
-// ✅ Controller + Door Status Builder
-function buildControllerStatus() {
-  fullStatus = controllerData.map(controller => {
-    const ip = controller.IP_address?.trim();
-    const status = deviceStatus[ip] || "Unknown";
-
-    const doors = (controller.Doors || []).map(d => ({
-      ...d,
-      status: status === "Online" ? "Online" : "Offline"
-    }));
-
-    return {
-      controllername: controller.controllername,
-      IP_address: ip,
-      Location: controller.Location || "Unknown",
-      City: controller.City || "Unknown",
-      controllerStatus: status,
-      Doors: doors
-    };
-  });
-}
-
-// ✅ PING LOOP
+// Ping devices
 async function pingDevices() {
-  const limit = require("p-limit")(20);
-
-  await Promise.all(
-    devices.map(ip =>
-      limit(async () => {
-        const newStatus = await pingHost(ip);
-        if (deviceStatus[ip] !== newStatus) {
-          logDeviceChange(ip, newStatus);
-        }
-        deviceStatus[ip] = newStatus;
-      })
-    )
-  );
-
-  buildControllerStatus();
-  console.log("✅ Device Status Updated");
+const limit = require("p-limit")(20);
+await Promise.all(
+devices.map(ip =>
+limit(async () => {
+const newStatus = await pingHost(ip);
+if (deviceStatus[ip] !== newStatus) {
+logDeviceChange(ip, newStatus);
+}
+deviceStatus[ip] = newStatus;
+})
+)
+);
+console.log("Updated device status:", deviceStatus);
 }
 
-// Ping every 60 seconds
-setInterval(pingDevices, 60000);
+// Start ping loop
+setInterval(pingDevices, 12_0000); //60_000
 pingDevices();
 
-/* ================= API ENDPOINTS ================= */
-
-// ✅ THIS IS YOUR MISSING ROUTE — NOW FIXED
-app.get('/api/controllers/status', (req, res) => {
-  res.json(fullStatus);
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+res.json(deviceStatus);
 });
 
-app.get('/api/region/devices/status', (req, res) => {
-  res.json(deviceStatus);
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+const files = fs.readdirSync(".")
+.filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+const combined = {};
+for (const f of files) {
+const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+for (const ip of Object.keys(dayLogs)) {
+combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+}
+}
+// prune to last 30 days
+for (const ip of Object.keys(combined)) {
+combined[ip] = pruneOldEntries(combined[ip], 30);
+}
+res.json(combined);
 });
 
-app.get('/api/devices/history', (req, res) => {
-  const files = fs.readdirSync('.').filter(f => f.startsWith("deviceLogs-"));
-  const combined = {};
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+const region = req.params.region.toLowerCase();
+const files = fs.readdirSync(".")
+.filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+const regionLogs = {};
 
-  for (const f of files) {
-    const logs = safeJsonParse(f);
-    for (const ip in logs) {
-      combined[ip] = (combined[ip] || []).concat(logs[ip]);
-    }
-  }
+for (const f of files) {
+const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+for (const ip of Object.keys(dayLogs)) {
+if (ipRegionMap[ip] === region) {
+regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+}
+}
+}
 
-  for (const ip in combined)
-    combined[ip] = pruneOldEntries(combined[ip], 30);
-
-  res.json(combined);
+if (!Object.keys(regionLogs).length) {
+return res.status(404).json({ message: No device history found for region: ${region} });
+}
+// prune per‑IP
+for (const ip of Object.keys(regionLogs)) {
+regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+}
+res.json(regionLogs);
 });
 
-/* ================= FRONTEND FALLBACK ================= */
-
-app.get('/Frontend/Device Dashboard/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../Frontend/Device Dashboard/index.html'));
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+const ip = req.params.ip;
+const files = fs.readdirSync(".")
+.filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+let history = [];
+for (const f of files) {
+const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
+}
+if (!history.length) {
+return res.status(404).json({ message: "No history found for this device" });
+}
+history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+res.json({ ip, history });
 });
 
-/* ================= START SERVER ================= */
+// Start Server
+const PORT = process.env.PORT || 3000;
+app.listen(3000,'0.0.0.0', ()=>{
 
-app.listen(PORT, HOST, () => {
-  console.log(`✅ Server running at http://${HOST}:${PORT}`);
+console.log(Server running on http://0.0.0.0:${PORT});
+console.log(Server running on Your LAN at http://10.138.161.4:${PORT});
+pingDevices();
+})
+;;;;;;;;;;;;;;;;
+
+localhost host file is below check this
+C:\Users\W0024618\Desktop\Backend\src\app.js
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+//const ping = require("ping");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const { getDeviceInfo } = require("./services/excelService");
+const { sendTeamsAlert }    = require("./services/teamsService");
+
+const controllerData = JSON.parse(
+fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
+);
+
+const app = express();
+const PORT = process.env.PORT || 80;
+
+// Helpers
+function pruneOldEntries(entries, days = 30) {
+const cutoff = DateTime.now().minus({ days }).toMillis();
+return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+}
+function getLogFileForDate(dt) {
+return ./deviceLogs-${dt.toISODate()}.json;
+}
+
+function safeJsonParse(filePath) {
+try {
+const content = fs.readFileSync(filePath, "utf8").trim();
+if (!content) return {};  // empty file = empty object
+return JSON.parse(content);
+} catch (err) {
+console.error("❌ Corrupted JSON file detected:", filePath);
+console.error("Error:", err.message);
+return {};  // fallback so server NEVER crashes
+}
+}
+
+// Middleware
+app.use(cors({
+origin: "http://127.0.0.1:5500",
+//  origin: "http://localhost:3000",
+methods: "GET,POST,PUT,DELETE",
+allowedHeaders: "Content-Type,Authorization",
+}));
+app.use(bodyParser.json());
+
+// Routes
+app.use("/api/regions", regionRoutes);
+
+// Device Status Tracking
+const devices = fetchAllIpAddress();
+let deviceStatus = {};
+
+// Load only today's logs
+const today = DateTime.now().setZone("Asia/Kolkata");
+const todayLogFile = getLogFileForDate(today);
+
+let todayLogs = fs.existsSync(todayLogFile)
+? safeJsonParse(todayLogFile)
+: {};
+
+// Persist today's logs
+function saveTodayLogs() {
+fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
+}
+
+// Log a status change
+function logDeviceChange(ip, status) {
+const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+const arr = (todayLogs[ip] = todayLogs[ip] || []);
+const last = arr[arr.length - 1];
+if (!last || last.status !== status) {
+arr.push({ status, timestamp });
+todayLogs[ip] = pruneOldEntries(arr, 30);
+saveTodayLogs();
+}
+}
+
+async function pingDevices() {
+const limit = require("p-limit")(20);
+
+await Promise.all(
+devices.map(ip =>
+limit(async () => {
+const newStatus = await pingHost(ip);
+if (deviceStatus[ip] !== newStatus) {
+logDeviceChange(ip, newStatus);
+}
+deviceStatus[ip] = newStatus;
+})
+)
+);
+
+// ✅ Build Controller + Door Status
+buildControllerStatus();
+
+console.log("Updated device status:", deviceStatus);
+}
+
+// 📝📝📝📝📝📝
+
+let fullStatus = [];
+function buildControllerStatus() {
+fullStatus = controllerData.map(controller => {
+const ip = controller.IP_address.trim();
+const status = deviceStatus[ip] || "Unknown";
+
+// If controller offline, mark all doors offline too  
+const doors = controller.Doors.map(d => ({  
+  ...d,  
+  status: status === "Online" ? "Online" : "Offline",  
+}));  
+
+return {  
+  controllername: controller.controllername,  
+  IP_address: ip,  
+  Location: controller.Location || "Unknown",  
+  City: controller.City || "Unknown",  
+  controllerStatus: status,  
+  Doors: doors,  
+};
+
+});
+}
+
+// 📝📝📝📝📝📝
+
+const notifiedOffline=new Set();
+
+// Start ping loop
+// setInterval(pingDevices, 60_000);
+// pingDevices();
+
+setInterval(async () => {
+pingDevices();
+// await checkNotifications();
+}, 60_000);
+
+// initial run
+(async () => {
+pingDevices();
+//await checkNotifications();
+})();
+
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+res.json(deviceStatus);
+});
+
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+const files = fs.readdirSync(".")
+.filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+const combined = {};
+for (const f of files) {
+// const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+const dayLogs = safeJsonParse(f);
+
+for (const ip of Object.keys(dayLogs)) {  
+  combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);  
+}
+
+}
+// prune to last 30 days
+for (const ip of Object.keys(combined)) {
+combined[ip] = pruneOldEntries(combined[ip], 30);
+}
+res.json(combined);
+});
+
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+const region = req.params.region.toLowerCase();
+const files = fs.readdirSync(".")
+.filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+const regionLogs = {};
+
+for (const f of files) {
+// const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+const dayLogs = safeJsonParse(f);
+
+for (const ip of Object.keys(dayLogs)) {  
+  if (ipRegionMap[ip] === region) {  
+    regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);  
+  }  
+}
+
+}
+
+if (!Object.keys(regionLogs).length) {
+return res.status(404).json({ message: No device history found for region: ${region} });
+}
+// prune per‑IP
+for (const ip of Object.keys(regionLogs)) {
+regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+}
+res.json(regionLogs);
+});
+
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+const ip = req.params.ip;
+const files = fs.readdirSync(".")
+.filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+let history = [];
+for (const f of files) {
+// const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+const dayLogs = safeJsonParse(f);
+
+if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
+
+}
+if (!history.length) {
+return res.status(404).json({ message: "No history found for this device" });
+}
+history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+res.json({ ip, history });
+});
+
+// Get all controller + door statuses
+app.get("/api/controllers/status", (req, res) => {
+res.json(fullStatus);
+});
+
+// Start server
+app.listen(PORT, () => {
+console.log(Server running on http://localhost:${PORT});
 });
