@@ -1,3 +1,90 @@
+count is not chagne,,
+    
+use "Location": "APAC",
+    "City": "Pune 2nd Floor", 
+
+    
+this is global 
+not update:
+TOTAL
+1476
+Cameras-9
+Archivers-21
+Controllers-71
+CCURE-5
+Door-698
+Reader-645
+Desktop-17
+DB Server-10
+
+this is apac ok 
+TOTAL
+1391
+Cameras-9
+Archivers-6
+Controllers-13
+CCURE-1
+Door-698
+Reader-645
+Desktop-17
+DB Server-2
+http://localhost/api/controllers/status
+[
+  {
+    "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+    "IP_address": "10.199.13.10",
+    "Location": "APAC",
+    "City": "Pune 2nd Floor",
+    "controllerStatus": "Online",
+    "Doors": [
+      {
+        "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
+        "Reader": "in:1",
+        "status": "Online"
+      },
+      {
+        "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
+        "Reader": "in:1",
+        "status": "Online"
+      },
+      {
+        "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+        "Reader": "in:1",
+        "status": "Online"
+      },
+      {
+        "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+        "Reader": "out:1",
+        "status": "Online"
+      },
+      {
+        "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+        "Reader": "in:1",
+        "status": "Online"
+      },
+      {
+        "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
+        "Reader": "",
+        "status": "Online"
+      }
+    ]
+  },
+  {
+    "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
+    "IP_address": "10.199.8.20",
+    "Location": "APAC",
+    "City": "Pune Podium",
+    "controllerStatus": "Online",
+    "Doors": [
+      {
+        "Door": "APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR",
+        "Reader": "",
+        "status": "Online"
+      },
+      {
+        "Door": "APAC_IN_PUN_PODIUM_RED_IDF ROOM-02-Restricted Door",
+        "Reader": "in:1",
+
 // --- Add this helper inside updateDetails (same scope as filterDevices) ---
 function computeFilteredControllerExtras(selectedCity = "all", selectedStatus = "all") {
     const controllers = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : [];
