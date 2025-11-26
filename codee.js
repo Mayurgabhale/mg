@@ -1,3 +1,14 @@
+// add this entry (or modify existing) inside CITY_COORDS
+  "Vilnius": [54.6872, 25.2797],
+  "Pune": [18.5204, 73.8567],
+  // keep Pune sub-entries if you want, but mapping will normalize them:
+  "Pune 2nd Floor": [18.5204, 73.8567],
+  "Pune Podium": [18.5204, 73.8567],
+  "Pune Tower B": [18.5204, 73.8567],
+
+
+
+
 // ---------- ADD THIS (after CITY_COORDS) ----------
 const CITY_PARENT_PATTERNS = [
   { patterns: [/^vilnius\b/i, /gama building/i, /delta building/i], parent: "Vilnius" },
