@@ -1,3 +1,8 @@
+const ctrlStatus = (ctrl.controllerStatus || ctrl.status || "").toString().toLowerCase();
+
+
+
+
 // Apply location OR city filter
 if (cityFilterLower !== "all") {
     const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
