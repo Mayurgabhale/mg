@@ -1,3 +1,5 @@
+http://10.138.161.4:3000/api/controllers/status
+Cannot GET /api/controllers/status
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
