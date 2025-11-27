@@ -1,250 +1,251 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Offline Devices Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    body {
-      background: #0f172a;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
+i want to change risk live,
+  only Cameras is offline tht time  midulmn ..
+  amd Cameras or and  Archivers,Controllers,  CCURE - high
+  and only Archivers,Controllers,CCURE that this lao high ok 
+// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ bar chart
 
-    .container {
-      display: flex;
-      gap: 20px;
-      padding: 20px;
-    }
+/*********************************
+ * CITY RISK SCORING (3 LEVELS)
+ *********************************/
 
-    .chart-box {
-      width: 50%;
-      height: 400px;
-      background: #111827;
-      padding: 15px;
-      border-radius: 12px;
-    }
+function computeCityRiskScore(city) {
+  if (!city || !city.offline) return 0;
 
-    canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-  </style>
-</head>
-<body>
+  const cam = city.offline.camera || 0;
+  const arch = city.offline.archiver || 0;
+  const srv = city.offline.server || 0;
+  const ctrl = city.offline.controller || 0;
 
-<h2 style="text-align:center;">Offline Devices Monitoring Dashboard</h2>
-
-<div class="container">
-  <div class="chart-box">
-    <h3>Offline Scatter</h3>
-    <canvas id="offlineScatter"></canvas>
-  </div>
-
-  <div class="chart-box">
-    <h3>Offline Devices (City-wise)</h3>
-    <canvas id="CityBarChart"></canvas>
-  </div>
-</div>
-
-<script>
-let offlineChart;
-let cityBarChart;
-
-// 🔵 Fake Offline Data (replace with your real data)
-const offlineDevices = [
-  { city: "Delhi", type: "camera", x: 10, y: 20 },
-  { city: "Delhi", type: "camera", x: 12, y: 23 },
-  { city: "Mumbai", type: "archiver", x: 30, y: 55 },
-  { city: "Mumbai", type: "controller", x: 33, y: 60 },
-  { city: "Kolkata", type: "ccure", x: 80, y: 10 },
-  { city: "Chennai", type: "camera", x: 20, y: 70 },
-  { city: "Chennai", type: "controller", x: 25, y: 75 },
-];
-
-function getChartColors() {
-  return {
-    text: "#ffffff"
-  };
+  return (cam * 1) + (arch * 2) + (srv * 3) + (ctrl * 4);
 }
 
-// ✅ Scatter Chart
-function updateOfflineChart(devices) {
+function mapScoreToRisk(score) {
+  if (score <= 2) {
+    return { label: "Low", color: "#16A34A" };
+  }
+  if (score <= 6) {
+    return { label: "Medium", color: "#FACC15" };
+  }
+  return { label: "High", color: "#DC2626" };
+}
 
-  const scatterData = devices.map(d => ({
-    x: d.x,
-    y: d.y,
-    city: d.city,
-    type: d.type
-  }));
 
-  const ctx = document.getElementById("offlineScatter").getContext("2d");
+/*********************************
+ * LEGEND (TOP RIGHT)
+ *********************************/
 
-  if (offlineChart) {
-    offlineChart.destroy();
+function createCityLegend(containerId = "cityBarLegend") {
+
+  const holder = document.getElementById("Loc-Count-chart");
+  if (!holder) return;
+
+  holder.style.position = "relative"; // important for top-right
+
+  let container = document.getElementById(containerId);
+
+  if (!container) {
+    container = document.createElement("div");
+    container.id = containerId;
+    holder.appendChild(container);
   }
 
-  offlineChart = new Chart(ctx, {
-    type: "scatter",
-    data: {
-      datasets: [{
-        label: "Offline Devices",
-        data: scatterData,
-        backgroundColor: "#38bdf8"
-      }]
-    },
-    options: {
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label(ctx) {
-              const d = ctx.raw;
-              return `${d.city} - ${d.type}`;
-            }
-          }
-        }
-      }
-    }
-  });
+  container.style.position = "absolute";
+  container.style.top = "5px";
+  container.style.right = "10px";
+  container.style.fontSize = "12px";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "6px";
+  container.style.padding = "6px 10px";
+  container.style.borderRadius = "6px";
+  container.style.boxShadow = "0px 2px 6px rgba(0,0,0,0.15)";
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#16A34A;border-radius:3px;"></span> Low
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#FACC15;border-radius:3px;"></span> Medium
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#DC2626;border-radius:3px;"></span> High
+    </div>
+  `;
 }
 
-// ✅ Build City Statistics
-function buildCityStatsFromScatter() {
-  const stats = {};
 
-  offlineChart.data.datasets[0].data.forEach(point => {
-    const city = point.city;
-    const type = point.type;
+/*********************************
+ * CITY BAR CHART
+ *********************************/
 
-    if (!stats[city]) {
-      stats[city] = {
-        total: 0,
-        cameras: 0,
-        archivers: 0,
-        controllers: 0,
-        ccure: 0
-      };
-    }
+let cityChart = null;
 
-    stats[city].total++;
-
-    if (type === "camera") stats[city].cameras++;
-    if (type === "archiver") stats[city].archivers++;
-    if (type === "controller") stats[city].controllers++;
-    if (type === "ccure") stats[city].ccure++;
-
-  });
-
-  return stats;
-}
-
-// ✅ Risk Calculation
-function determineRisk(cityStats) {
-  if (cityStats.total > 3) return "High";
-  if (cityStats.total > 1) return "Medium";
-  return "None";
-}
-
-// ✅ Upgraded City Bar Chart
 function drawCityBarChart() {
 
-  const stats = buildCityStatsFromScatter();
-  const rows = [];
-
-  Object.keys(stats).forEach(city => {
-    const s = stats[city];
-    const risk = determineRisk(s);
-
-    rows.push({
-      city,
-      total: s.total,
-      cameras: s.cameras,
-      archivers: s.archivers,
-      controllers: s.controllers,
-      ccure: s.ccure,
-      risk
-    });
-  });
-
-  if (rows.length === 0) {
-    rows.push({ city: "No Offline Devices", total: 0, risk: "None" });
+  const chartCanvas = document.getElementById("cityBarChart");
+  if (!chartCanvas) {
+    console.warn("Canvas not found");
+    return;
   }
 
-  const riskPriority = { High: 1, Medium: 2, None: 3 };
+  if (!CITY_LIST || CITY_LIST.length === 0) {
+    console.warn("CITY_LIST empty. Chart not drawn.");
+    const lg = document.getElementById("cityBarLegend");
+    if (lg) lg.remove();
+    return;
+  }
 
-  rows.sort((a, b) => {
-    if (riskPriority[a.risk] !== riskPriority[b.risk])
-      return riskPriority[a.risk] - riskPriority[b.risk];
-    return b.total - a.total;
+  const labels = CITY_LIST.map(c => c.city);
+
+  const data = CITY_LIST.map(c => {
+    if (!c.devices) return 0;
+    return Object.values(c.devices).reduce((a, b) => a + b, 0);
   });
 
-  const labels = rows.map(r => r.city);
-  const totals = rows.map(r => r.total);
-
-  const colors = rows.map(r => {
-    if (r.risk === "High") return "#ef4444";
-    if (r.risk === "Medium") return "#f97316";
-    return "#10b981";
+  const riskInfo = CITY_LIST.map(c => {
+    const score = computeCityRiskScore(c);
+    return mapScoreToRisk(score);
   });
 
-  const ctx = document.getElementById("CityBarChart").getContext("2d");
+  const colors = riskInfo.map(r => r.color);
+  const riskLabels = riskInfo.map(r => r.label);
 
-  if (cityBarChart) cityBarChart.destroy();
+  if (cityChart) cityChart.destroy();
 
-  cityBarChart = new Chart(ctx, {
+  cityChart = new Chart(chartCanvas.getContext("2d"), {
     type: "bar",
     data: {
-      labels,
+      labels: labels,
       datasets: [{
-        label: "Offline Devices",
-        data: totals,
+        label: "Total Devices",
+        data: data,
         backgroundColor: colors,
-        borderRadius: 8
+        borderColor: colors,
+        borderWidth: 1,
+        borderRadius: 6,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: "Offline Devices (City Wise)",
-          color: getChartColors().text
-        },
+        legend: { display: false },
+
+
+        // Replace existing tooltip: { ... } with this:
         tooltip: {
-          callbacks: {
-            afterLabel(ctx) {
-              const r = rows[ctx.dataIndex];
-              return [
-                `Risk: ${r.risk}`,
-                `Cameras: ${r.cameras}`,
-                `Archivers: ${r.archivers}`,
-                `Controllers: ${r.controllers}`,
-                `CCURE: ${r.ccure}`
-              ];
+          enabled: false, // disable built-in tooltip rendering
+          external: function (context) {
+            // get/create tooltip element
+            let tooltipEl = document.getElementById('chartjs-tooltip');
+            if (!tooltipEl) {
+              tooltipEl = document.createElement('div');
+              tooltipEl.id = 'chartjs-tooltip';
+              tooltipEl.className = 'chartjs-tooltip';
+              document.body.appendChild(tooltipEl);
             }
+
+            // Hide if no tooltip
+            const tooltipModel = context.tooltip;
+            if (!tooltipModel || tooltipModel.opacity === 0) {
+              tooltipEl.style.opacity = 0;
+              return;
+            }
+
+            // Determine index for the hovered bar
+            const dataIndex = tooltipModel.dataPoints && tooltipModel.dataPoints.length ? tooltipModel.dataPoints[0].dataIndex : null;
+            if (dataIndex === null) {
+              tooltipEl.style.opacity = 0;
+              return;
+            }
+
+            // Build lines (same order you used)
+            const c = CITY_LIST[dataIndex] || {};
+            const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
+            const camOff = (c.offline && c.offline.camera) || 0;
+            const ctrlOff = (c.offline && c.offline.controller) || 0;
+            const srvOff = (c.offline && c.offline.server) || 0;
+            const archOff = (c.offline && c.offline.archiver) || 0;
+            const risk = riskLabels[dataIndex] || 'Low';
+
+            const lines = [
+              { key: 'Total Devices', val: total, color: '#ffffff' },
+              { key: 'Risk Level', val: risk, color: '#ffffff' },
+              { key: 'Offline Camera', val: camOff, color: camOff > 0 ? 'red' : '#ffffff' },
+              { key: 'Offline Controller', val: ctrlOff, color: ctrlOff > 0 ? 'red' : '#ffffff' },
+              { key: 'Offline Server', val: srvOff, color: srvOff > 0 ? 'red' : '#ffffff' },
+              { key: 'Offline Archiver', val: archOff, color: archOff > 0 ? 'red' : '#ffffff' }
+            ];
+
+            // Build HTML
+            let innerHtml = `<div class="tt-title">${labels[dataIndex]}</div>`;
+            lines.forEach(line => {
+              // don't show 0 offline lines? you said show but not red — keep visible but not red
+              innerHtml += `<div class="tt-line"><span class="tt-key">${line.key}:</span> <span class="tt-val" style="color:${line.color}">${line.val}</span></div>`;
+            });
+
+            tooltipEl.innerHTML = innerHtml;
+            tooltipEl.style.opacity = 1;
+
+            // Positioning: try to place tooltip near the caret (Chart.js provides caretX/caretY in tooltipModel)
+            const canvas = context.chart.canvas;
+            const canvasRect = canvas.getBoundingClientRect();
+            // caret coordinates are in chart pixels; convert to page coords
+            const left = canvasRect.left + window.pageXOffset + tooltipModel.caretX;
+            const top = canvasRect.top + window.pageYOffset + tooltipModel.caretY;
+
+            // Position slightly above the cursor
+            tooltipEl.style.left = `${left}px`;
+            tooltipEl.style.top = `${top - 10}px`;
           }
         }
+
+
+
       },
       scales: {
-        x: { ticks: { color: "#fff" }},
-        y: { ticks: { color: "#fff" }}
+        y: {
+          beginAtZero: true
+        },
+
+
+        x: {
+          ticks: {
+            display: true,
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0,
+
+            callback: function (value, index) {
+              const risk = riskLabels[index];
+
+              if (risk === "Medium" || risk === "High") {
+                return labels[index];
+              }
+              return "";
+            },
+
+            color: function (context) {
+              const idx = context.index;
+              const risk = riskLabels[idx];
+              return (risk === "Medium" || risk === "High") ? "red" : "#666";
+            }
+          },
+          grid: {
+            display: true
+          }
+        }
+
+
       }
     }
   });
+
+  // Add legend in top-right
+  createCityLegend("cityBarLegend");
+
+  console.log("✅ City bar chart updated with top-right legend");
 }
-
-// ✅ Main Render
-function renderOfflineChartFromCombined() {
-  updateOfflineChart(offlineDevices);
-
-  requestAnimationFrame(() => {
-    drawCityBarChart();
-  });
-}
-
-// Run everything
-renderOfflineChartFromCombined();
-</script>
-
-</body>
-</html>
