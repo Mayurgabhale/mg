@@ -1,14 +1,11 @@
-// place near top of map.js or a shared utils file
-function isDeviceOffline(dev) {
-  if (!dev) return false;
-  const s = ((dev.status || dev.state || '') + '').toString().trim().toLowerCase();
-  if (s === 'offline' || s === 'down') return true;
-  if (typeof dev.online === 'boolean' && dev.online === false) return true;
-  return false;
-}
-....
-
-
-
-// sum offline counts per type (city.offline built in updateMapData)
-const offline = Object.values(city.offline || {}).reduce((acc, v) => acc + (v || 0), 0);
+const mapList = ["camera", "controller", "server", "archiver"];
+mapList.forEach(type => {
+  const count = city.devices?.[type] || 0;
+  const off = city.offline?.[type] || 0;
+  if (count > 0) {
+    html += `<div style="margin-bottom:4px; display:flex; align-items:center; gap:6px; font-size:10px;">
+               ${ICONS[type]} <span>${count}</span>
+               ${off ? `<span style="color:#ff3b3b; margin-left:6px">(${off} offline)</span>` : ''}
+             </div>`;
+  }
+});
