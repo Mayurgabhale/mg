@@ -1,3 +1,22 @@
+tooltip: {
+  callbacks: {
+    label: (ctx) => {
+      const d = ctx.raw;
+
+      // If you already added count per point
+      if (d.count !== undefined) {
+        return `${d.count}`;
+      }
+
+      // If not grouped yet, return 1 for each device
+      return `1`;
+    }
+  }
+}
+
+
+
+
  tooltip: {
           callbacks: {
             label: (ctx) => {
