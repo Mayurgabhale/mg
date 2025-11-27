@@ -1,3 +1,5 @@
+Uncaught ReferenceError: deviceBuckets is not defined
+    at map.js:224:42
 C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
 
 
