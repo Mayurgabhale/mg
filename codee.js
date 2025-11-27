@@ -1,332 +1,289 @@
-in localhost work correct but in server, not show api, so what is the issue, can you chekc it,
-  read alove privius server code that i upload, and alos belwo code, abd tell me wht is the isseu 
-why we getting this ieeeu 
-http://localhost/api/controllers/status
-  http://10.138.161.4:3000/api/controllers/status
-
-      Cannot GET /api/controllers/status
-[
-  {
-    "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
-    "IP_address": "10.199.13.10",
-    "Location": "APAC",
-    "City": "Pune 2nd Floor",
-    "controllerStatus": "Online",
-    "Doors": [
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
-        "Reader": "out:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
-        "Reader": "in:1",
-        "status": "Online"
-      },
-      {
-        "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
-        "Reader": "",
-        "status": "Online"
-      }
-    ]
-  },
-  {
-    "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
-    "IP_address": "10.199.8.20",
-    "Location": "APAC",
-    "City": "Pune Podium",
-    "controllerStatus": "Online",
-    "Doors": [
-      {
-        "Door": "APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR",
-        "Reader": "",
-        "status": "Online"
-      },
------------------
-
-      http://10.138.161.4:3000/api/controllers/status
-
-      Cannot GET /api/controllers/status
-      C:\Users\W0024618\Desktop\Backend\src\app.js
-
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const fs = require("fs");
-//const ping = require("ping");
-const { pingHost } = require("./services/pingService");
-const { DateTime } = require("luxon");
-const regionRoutes = require("./routes/regionRoutes");
-const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
-const { getDeviceInfo } = require("./services/excelService");
-const { sendTeamsAlert }    = require("./services/teamsService");
-
-const controllerData = JSON.parse(
-  fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
-);
-
-const app = express();
-const PORT = process.env.PORT || 80;
-
-// Helpers
-function pruneOldEntries(entries, days = 30) {
-  const cutoff = DateTime.now().minus({ days }).toMillis();
-  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
-}
-function getLogFileForDate(dt) {
-  return `./deviceLogs-${dt.toISODate()}.json`;
-}
-
-function safeJsonParse(filePath) {
-  try {
-    const content = fs.readFileSync(filePath, "utf8").trim();
-    if (!content) return {};  // empty file = empty object
-    return JSON.parse(content);
-  } catch (err) {
-    console.error("❌ Corrupted JSON file detected:", filePath);
-    console.error("Error:", err.message);
-    return {};  // fallback so server NEVER crashes
-  }
-}
-
-
-
-// Middleware
-app.use(cors({
-    origin: "http://127.0.0.1:5500",
-  //  origin: "http://localhost:3000",
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type,Authorization",
-}));
-app.use(bodyParser.json());
-
-// Routes
-app.use("/api/regions", regionRoutes);
-
-// Device Status Tracking
-const devices = fetchAllIpAddress();
-let deviceStatus = {};
-
-// Load only today's logs
-const today = DateTime.now().setZone("Asia/Kolkata");
-const todayLogFile = getLogFileForDate(today);
-
-
-
-let todayLogs = fs.existsSync(todayLogFile)
-  ? safeJsonParse(todayLogFile)
-  : {};
-
-
-
-// Persist today's logs
-function saveTodayLogs() {
-  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
-}
-
-// Log a status change
-function logDeviceChange(ip, status) {
-  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
-  const arr = (todayLogs[ip] = todayLogs[ip] || []);
-  const last = arr[arr.length - 1];
-  if (!last || last.status !== status) {
-    arr.push({ status, timestamp });
-    todayLogs[ip] = pruneOldEntries(arr, 30);
-    saveTodayLogs();
-  }
-}
-
-
-async function pingDevices() {
-  const limit = require("p-limit")(20);
-
-  await Promise.all(
-    devices.map(ip =>
-      limit(async () => {
-        const newStatus = await pingHost(ip);
-        if (deviceStatus[ip] !== newStatus) {
-          logDeviceChange(ip, newStatus);
+ tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = ctx.raw;
+              const lines = [];
+              if (d.ip) lines.push(`IP: ${d.ip}`);
+              if (d.city) lines.push(`City: ${d.city}`);
+              return lines;
+            }
+          }
         }
-        deviceStatus[ip] = newStatus;
-      })
-    )
-  );
 
-  // ✅ Build Controller + Door Status
-  buildControllerStatus();
+in tooltip, i want to show ony count of offline devices ok not ip or city ok 
 
-  console.log("Updated device status:", deviceStatus);
+// ========== GLOBALS ==========
+let offlineChart;
+let cityIndexMap = {};
+let cityCounter = 0;
+let dynamicTypeIndexMap = {};
+let dynamicTypeList = [];
+
+// ========== GET CHART COLORS BASED ON THEME ==========
+function getChartColors() {
+  const isLightTheme = document.body.classList.contains('theme-light');
+
+  if (isLightTheme) {
+    return {
+      backgroundColor: '#0a0a0a',
+      text: '#e6eef7', // Visible text color
+    };
+  } else {
+    // Dark theme colors - fixed for visibility
+    return {
+      camera: '#ff4d4d',
+      archiver: '#4da6ff',
+      controller: '#ffaa00',
+      ccure: '#7d3cff',
+      grid: 'rgba(255, 255, 255, 0.2)', // Visible grid lines
+      text: '#e6eef7', // Visible text color
+      background: '#0a0a0a'
+    };
+  }
 }
 
+// ========== UPDATE CHART THEME ==========
+function updateChartTheme() {
+  if (!offlineChart) return;
 
-// 📝📝📝📝📝📝
+  const colors = getChartColors();
 
-let fullStatus = [];
-function buildControllerStatus() {
-  fullStatus = controllerData.map(controller => {
-    const ip = controller.IP_address.trim();
-    const status = deviceStatus[ip] || "Unknown";
+  // Update grid lines and borders
+  offlineChart.options.scales.x.grid.color = colors.grid;
+  offlineChart.options.scales.y.grid.color = colors.grid;
 
-    // If controller offline, mark all doors offline too
-    const doors = controller.Doors.map(d => ({
-      ...d,
-      status: status === "Online" ? "Online" : "Offline",
-    }));
+  // Update text colors
+  offlineChart.options.scales.x.ticks.color = colors.text;
+  offlineChart.options.scales.y.ticks.color = colors.text;
 
-    return {
-      controllername: controller.controllername,
-      IP_address: ip,
-      Location: controller.Location || "Unknown",
-      City: controller.City || "Unknown",
-      controllerStatus: status,
-      Doors: doors,
-    };
+  // Update legend text color
+  if (offlineChart.options.plugins.legend) {
+    offlineChart.options.plugins.legend.labels.color = colors.text;
+  }
+
+  offlineChart.update();
+}
+
+// ========== INIT CHART ==========
+function initOfflineChart() {
+  const canvas = document.getElementById("DotOfflineDevice");
+  const ctx = canvas.getContext("2d");
+
+  const colors = getChartColors();
+
+  offlineChart = new Chart(ctx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label: "Camera",
+          data: [],
+          backgroundColor: colors.camera,
+          pointStyle: "circle",
+          pointRadius: 6
+        },
+        {
+          label: "Archiver",
+          data: [],
+          backgroundColor: colors.archiver,
+          pointStyle: "rect",
+          pointRadius: 6
+        },
+        {
+          label: "Controller",
+          data: [],
+          backgroundColor: colors.controller,
+          pointStyle: "triangle",
+          pointRadius: 7
+        },
+        {
+          label: "CCURE",
+          data: [],
+          backgroundColor: colors.ccure,
+          pointStyle: "rectRot",
+          pointRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: colors.text, // Set legend text color
+            font: {
+              size: 12
+            },
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = ctx.raw;
+              const lines = [];
+              if (d.ip) lines.push(`IP: ${d.ip}`);
+              if (d.city) lines.push(`City: ${d.city}`);
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: false,
+            text: "City"
+          },
+          grid: {
+            color: colors.grid, // Set grid line color
+            drawBorder: true
+          },
+          ticks: {
+            color: colors.text, // Set x-axis text color
+            maxRotation: 0,
+            minRotation: 0,
+            callback: (value) => {
+              return Object.keys(cityIndexMap).find(
+                key => cityIndexMap[key] === value
+              ) || "";
+            }
+          }
+        },
+        y: {
+          title: {
+            display: false,
+            text: "Device Type"
+          },
+          grid: {
+            color: colors.grid, // Set grid line color
+            drawBorder: true
+          },
+          ticks: {
+            color: colors.text, // Set y-axis text color
+            callback: v => dynamicTypeList[v] || ""
+          },
+          min: -0.5,
+          max: () => Math.max(dynamicTypeList.length - 0.5, 0.5)
+        }
+      }
+    }
   });
 }
 
-// 📝📝📝📝📝📝
+// ========== UPDATE CHART ==========
+function updateOfflineChart(offlineDevices) {
+  const typeNames = {
+    cameras: "Camera",
+    archivers: "Archiver",
+    controllers: "Controller",
+    servers: "CCURE"
+  };
 
+  // Reset mappings
+  dynamicTypeList = [];
+  dynamicTypeIndexMap = {};
+  cityIndexMap = {};
+  cityCounter = 0;
 
-const notifiedOffline=new Set();
+  // Only valid types
+  const filtered = offlineDevices.filter(dev =>
+    typeNames.hasOwnProperty(dev.type)
+  );
 
-
-// Start ping loop
-// setInterval(pingDevices, 60_000);
-// pingDevices();
-
-
-setInterval(async () => {
-   pingDevices();
- // await checkNotifications();
-}, 60_000);
-
-// initial run
-(async () => {
-   pingDevices();
-  //await checkNotifications();
-})();
-
-
-
-
-// Real‑time status
-app.get("/api/region/devices/status", (req, res) => {
-  res.json(deviceStatus);
-});
-
-// Full history: stitch together all daily files
-app.get("/api/devices/history", (req, res) => {
-  const files = fs.readdirSync(".")
-    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  const combined = {};
-  for (const f of files) {
-    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
-    const dayLogs = safeJsonParse(f);
-
-    for (const ip of Object.keys(dayLogs)) {
-      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+  // Build dynamic Y indexes
+  filtered.forEach(dev => {
+    const label = typeNames[dev.type];
+    if (!(label in dynamicTypeIndexMap)) {
+      dynamicTypeIndexMap[label] = dynamicTypeList.length;
+      dynamicTypeList.push(label);
     }
-  }
-  // prune to last 30 days
-  for (const ip of Object.keys(combined)) {
-    combined[ip] = pruneOldEntries(combined[ip], 30);
-  }
-  res.json(combined);
-});
+  });
 
-// Region‑wise history
-app.get("/api/region/:region/history", (req, res) => {
-  const region = req.params.region.toLowerCase();
-  const files = fs.readdirSync(".")
-    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  const regionLogs = {};
+  // Clear all old points
+  offlineChart.data.datasets.forEach(ds => ds.data = []);
 
-  for (const f of files) {
-    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
-    const dayLogs = safeJsonParse(f);
+  // Add points
+  filtered.forEach(dev => {
+    const source = dev.device ? dev.device : dev;
+    const deviceIP = source.ip || null;
+    const city = source.city || "Unknown";
 
-    for (const ip of Object.keys(dayLogs)) {
-      if (ipRegionMap[ip] === region) {
-        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+    if (!cityIndexMap[city]) {
+      cityCounter++;
+      cityIndexMap[city] = cityCounter;
+    }
+
+    const label = typeNames[dev.type];
+    const dynamicY = dynamicTypeIndexMap[label];
+
+    const point = {
+      x: cityIndexMap[city],
+      y: dynamicY,
+      ip: deviceIP,
+      city: city
+    };
+
+    const dataset = offlineChart.data.datasets.find(
+      ds => ds.label === label
+    );
+
+    if (dataset) {
+      dataset.data.push(point);
+    }
+  });
+
+  // Hide empty types
+  offlineChart.data.datasets.forEach(ds => {
+    ds.hidden = ds.data.length === 0;
+  });
+
+  offlineChart.update();
+}
+
+// ========== THEME CHANGE DETECTION ==========
+function setupThemeObserver() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        setTimeout(updateChartTheme, 100);
       }
-    }
+    });
+  });
+
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+}
+
+// ========== INITIALIZE EVERYTHING ==========
+function initializeChartSystem() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initOfflineChart();
+      setupThemeObserver();
+    });
+  } else {
+    initOfflineChart();
+    setupThemeObserver();
   }
+}
 
-  if (!Object.keys(regionLogs).length) {
-    return res.status(404).json({ message: `No device history found for region: ${region}` });
-  }
-  // prune per‑IP
-  for (const ip of Object.keys(regionLogs)) {
-    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
-  }
-  res.json(regionLogs);
-});
+// Initialize the chart system
+initializeChartSystem();
 
-// Single‑device history
-app.get("/api/device/history/:ip", (req, res) => {
-  const ip = req.params.ip;
-  const files = fs.readdirSync(".")
-    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  let history = [];
-  for (const f of files) {
-    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
-    const dayLogs = safeJsonParse(f);
+// ========== YOUR EXISTING FUNCTION ==========
+function renderOfflineChartFromCombined(combinedDevices) {
+  const offlineDevices = combinedDevices
+    .filter(d => d.device.status === "offline")
+    .map(d => ({
+      device: d.device,
+      type: d.device.type
+    }));
 
-    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
-  }
-  if (!history.length) {
-    return res.status(404).json({ message: "No history found for this device" });
-  }
-  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  res.json({ ip, history });
-});
-
-
-// Get all controller + door statuses
-app.get("/api/controllers/status", (req, res) => {
-  res.json(fullStatus);
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
-
-
-
-
-
-
-
-
-
+  updateOfflineChart(offlineDevices);
+}
 
