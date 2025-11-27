@@ -1,3 +1,12 @@
+
+// Update the offline scatter chart (uses grouping logic inside)
+  updateOfflineChart(offlineDevices);
+
+  // Also update LOC Count bar chart and map overlays to stay in sync
+  if (typeof drawCityBarChart === 'function') drawCityBarChart();
+
+
+
 <!-- City-wise Offline Bar Chart -->
 <div class="totacl-gcard wide gcard-bar city-bar-card">
   <h4 class="gcard-title">Offline Devices (City-wise)</h4>
