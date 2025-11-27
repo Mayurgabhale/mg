@@ -1,191 +1,3 @@
-it is disply 
-1
-1
-1
-1
-
-
-but i want totla count 
-for example pune camare offline is 5 
-is i want to in tooltip dipsoly 5 ok 
-// ========== GLOBALS ==========
-let offlineChart;
-let cityIndexMap = {};
-let cityCounter = 0;
-let dynamicTypeIndexMap = {};
-let dynamicTypeList = [];
-
-// ========== GET CHART COLORS BASED ON THEME ==========
-function getChartColors() {
-  const isLightTheme = document.body.classList.contains('theme-light');
-
-  if (isLightTheme) {
-    return {
-      backgroundColor: '#0a0a0a',
-      text: '#e6eef7', // Visible text color
-    };
-  } else {
-    // Dark theme colors - fixed for visibility
-    return {
-      camera: '#ff4d4d',
-      archiver: '#4da6ff',
-      controller: '#ffaa00',
-      ccure: '#7d3cff',
-      grid: 'rgba(255, 255, 255, 0.2)', // Visible grid lines
-      text: '#e6eef7', // Visible text color
-      background: '#0a0a0a'
-    };
-  }
-}
-
-// ========== UPDATE CHART THEME ==========
-function updateChartTheme() {
-  if (!offlineChart) return;
-
-  const colors = getChartColors();
-
-  // Update grid lines and borders
-  offlineChart.options.scales.x.grid.color = colors.grid;
-  offlineChart.options.scales.y.grid.color = colors.grid;
-
-  // Update text colors
-  offlineChart.options.scales.x.ticks.color = colors.text;
-  offlineChart.options.scales.y.ticks.color = colors.text;
-
-  // Update legend text color
-  if (offlineChart.options.plugins.legend) {
-    offlineChart.options.plugins.legend.labels.color = colors.text;
-  }
-
-  offlineChart.update();
-}
-
-// ========== INIT CHART ==========
-function initOfflineChart() {
-  const canvas = document.getElementById("DotOfflineDevice");
-  const ctx = canvas.getContext("2d");
-
-  const colors = getChartColors();
-
-  offlineChart = new Chart(ctx, {
-    type: "scatter",
-    data: {
-      datasets: [
-        {
-          label: "Camera",
-          data: [],
-          backgroundColor: colors.camera,
-          pointStyle: "circle",
-          pointRadius: 6
-        },
-        {
-          label: "Archiver",
-          data: [],
-          backgroundColor: colors.archiver,
-          pointStyle: "rect",
-          pointRadius: 6
-        },
-        {
-          label: "Controller",
-          data: [],
-          backgroundColor: colors.controller,
-          pointStyle: "triangle",
-          pointRadius: 7
-        },
-        {
-          label: "CCURE",
-          data: [],
-          backgroundColor: colors.ccure,
-          pointStyle: "rectRot",
-          pointRadius: 6
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          labels: {
-            color: colors.text, // Set legend text color
-            font: {
-              size: 12
-            },
-            usePointStyle: true
-          }
-        },
-        // tooltip: {
-        //   callbacks: {
-        //     label: (ctx) => {
-        //       const d = ctx.raw;
-        //       const lines = [];
-        //       if (d.ip) lines.push(`IP: ${d.ip}`);
-        //       if (d.city) lines.push(`City: ${d.city}`);
-        //       return lines;
-        //     }
-        //   }
-        // }
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = ctx.raw;
-
-              // If you already added count per point
-              if (d.count !== undefined) {
-                return `${d.count}`;
-              }
-
-              // If not grouped yet, return 1 for each device
-              return `1`;
-            }
-          }
-        }
-
-      },
-      scales: {
-        x: {
-          title: {
-            display: false,
-            text: "City"
-          },
-          grid: {
-            color: colors.grid, // Set grid line color
-            drawBorder: true
-          },
-          ticks: {
-            color: colors.text, // Set x-axis text color
-            maxRotation: 0,
-            minRotation: 0,
-            callback: (value) => {
-              return Object.keys(cityIndexMap).find(
-                key => cityIndexMap[key] === value
-              ) || "";
-            }
-          }
-        },
-        y: {
-          title: {
-            display: false,
-            text: "Device Type"
-          },
-          grid: {
-            color: colors.grid, // Set grid line color
-            drawBorder: true
-          },
-          ticks: {
-            color: colors.text, // Set y-axis text color
-            callback: v => dynamicTypeList[v] || ""
-          },
-          min: -0.5,
-          max: () => Math.max(dynamicTypeList.length - 0.5, 0.5)
-        }
-      }
-    }
-  });
-}
-
-// ========== UPDATE CHART ==========
 function updateOfflineChart(offlineDevices) {
   const typeNames = {
     cameras: "Camera",
@@ -194,7 +6,6 @@ function updateOfflineChart(offlineDevices) {
     servers: "CCURE"
   };
 
-  // Reset mappings
   dynamicTypeList = [];
   dynamicTypeIndexMap = {};
   cityIndexMap = {};
@@ -214,32 +25,48 @@ function updateOfflineChart(offlineDevices) {
     }
   });
 
-  // Clear all old points
-  offlineChart.data.datasets.forEach(ds => ds.data = []);
+  // ✅ GROUP BY CITY + TYPE
+  const grouped = {};
 
-  // Add points
   filtered.forEach(dev => {
     const source = dev.device ? dev.device : dev;
-    const deviceIP = source.ip || null;
     const city = source.city || "Unknown";
+    const label = typeNames[dev.type];
 
-    if (!cityIndexMap[city]) {
-      cityCounter++;
-      cityIndexMap[city] = cityCounter;
+    const key = city + "|" + label;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        city: city,
+        label: label,
+        count: 0
+      };
     }
 
-    const label = typeNames[dev.type];
-    const dynamicY = dynamicTypeIndexMap[label];
+    grouped[key].count++;
+  });
+
+  // Clear datasets
+  offlineChart.data.datasets.forEach(ds => ds.data = []);
+
+  // ✅ Add grouped points (only ONE point per city+type)
+  Object.values(grouped).forEach(item => {
+
+    if (!cityIndexMap[item.city]) {
+      cityCounter++;
+      cityIndexMap[item.city] = cityCounter;
+    }
+
+    const dynamicY = dynamicTypeIndexMap[item.label];
 
     const point = {
-      x: cityIndexMap[city],
+      x: cityIndexMap[item.city],
       y: dynamicY,
-      ip: deviceIP,
-      city: city
+      count: item.count   // ✅ count stored here
     };
 
     const dataset = offlineChart.data.datasets.find(
-      ds => ds.label === label
+      ds => ds.label === item.label
     );
 
     if (dataset) {
@@ -247,55 +74,10 @@ function updateOfflineChart(offlineDevices) {
     }
   });
 
-  // Hide empty types
+  // Hide empty
   offlineChart.data.datasets.forEach(ds => {
     ds.hidden = ds.data.length === 0;
   });
 
   offlineChart.update();
 }
-
-// ========== THEME CHANGE DETECTION ==========
-function setupThemeObserver() {
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.attributeName === 'class') {
-        setTimeout(updateChartTheme, 100);
-      }
-    });
-  });
-
-  observer.observe(document.body, {
-    attributes: true,
-    attributeFilter: ['class']
-  });
-}
-
-// ========== INITIALIZE EVERYTHING ==========
-function initializeChartSystem() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      initOfflineChart();
-      setupThemeObserver();
-    });
-  } else {
-    initOfflineChart();
-    setupThemeObserver();
-  }
-}
-
-// Initialize the chart system
-initializeChartSystem();
-
-// ========== YOUR EXISTING FUNCTION ==========
-function renderOfflineChartFromCombined(combinedDevices) {
-  const offlineDevices = combinedDevices
-    .filter(d => d.device.status === "offline")
-    .map(d => ({
-      device: d.device,
-      type: d.device.type
-    }));
-
-  updateOfflineChart(offlineDevices);
-}
-
