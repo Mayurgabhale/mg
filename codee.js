@@ -6,6 +6,7 @@
               <canvas id="DotOfflineDevice"></canvas>
             </div>
           </div>
+
 our >Offline Device this chart is show correct data all.
 
 but  this 
