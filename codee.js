@@ -1,3 +1,5 @@
+ok,
+   this is map.js first this 
 C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\map.js
 
 /* ============================================================
