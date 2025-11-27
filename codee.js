@@ -1,3 +1,8 @@
+const riskInfo = CITY_LIST.map(c => computeCityRisk(c));
+
+
+
+
 function computeCityRisk(city) {
   if (!city || !city.offline) {
     return { label: "Low", color: "#16A34A" };
