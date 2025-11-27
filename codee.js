@@ -1,4 +1,22 @@
 
+          <!-- Updated Offline Device Card with new class -->
+          <div class="offline-device-card">
+            <h4 class="gcard-title">Offline Device</h4>
+            <div class="chart-container">
+              <canvas id="DotOfflineDevice"></canvas>
+            </div>
+          </div>
+our >Offline Device this chart is show correct data all.
+
+but  this 
+  <div class="gcard wide" id="Loc-Count-chart">
+            <h4 class="gcard-title">LOC Count</h4>
+            <canvas id="cityBarChart"></canvas>
+          </div>
+is not show correct data cour count,  ok
+get the referes of offline device code and correct the loc count charet code be carefully, ok 
+read the beloww code each line carefullym and give me correct the loc count code ok.. 
+  
 function updateGauge(id, activeId, inactiveId, totalId) {
   // read elements safely (avoid exception if missing)
   const activeEl = document.getElementById(activeId);
@@ -59,7 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let _totalCountChart = null;
 
-
+/**
+ * Find the chart-placeholder element inside the card whose title matches text.
+ * Returns the placeholder element or null.
+ */
 function findChartPlaceholderByTitle(titleText) {
   const cards = document.querySelectorAll('.totacl-gcard.wide');
   for (let card of cards) {
@@ -110,6 +131,12 @@ function collectTotalCounts() {
 
   return { labels, values };
 }
+
+/**
+ * Render or update the Total Count doughnut.
+ */
+
+
 
 function renderTotalCountChart() {
   if (typeof Chart === 'undefined') {
@@ -250,6 +277,12 @@ function renderTotalCountChart() {
   });
 }
 
+
+
+
+/**
+ * Update the Total Count chart data in-place (if chart exists) otherwise render
+ */
 function updateTotalCountChart() {
   if (!_totalCountChart) {
     renderTotalCountChart();
@@ -584,7 +617,7 @@ function initializeChartSystem() {
 // Initialize the chart system
 initializeChartSystem();
 
-//
+
 
 function renderOfflineChartFromCombined(combinedDevices) {
   // Build canonical CITY_LIST from combined data
@@ -673,6 +706,7 @@ function buildCityListFromCombined(combinedDevices) {
   // If you want deterministic order, sort by city name:
   CITY_LIST.sort((a, b) => a.city.localeCompare(b.city));
 }
+
 
 // ⬇️⬇️⬇️⬇️⬇️⬇️⬇️ bar chart
 
@@ -765,6 +799,8 @@ document.getElementById("mapCityOverviewBtn").addEventListener("click", function
     panel.style.display = "block";
   }
 });
+
+// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
 
 
 
@@ -866,7 +902,10 @@ function drawCityBarChart() {
     return Object.values(c.devices).reduce((a, b) => a + b, 0);
   });
 
-
+  // const riskInfo = CITY_LIST.map(c => {
+  //   const score = computeCityRiskScore(c);
+  //   return mapScoreToRisk(score);
+  // });
 
   const riskInfo = CITY_LIST.map(c => computeCityRiskLevel(c));
 
@@ -896,6 +935,7 @@ function drawCityBarChart() {
       plugins: {
         legend: { display: false },
 
+        
         // Replace existing tooltip: { ... } with this:
         tooltip: {
           enabled: false, // disable built-in tooltip rendering
