@@ -1,7 +1,4 @@
-i want to combine this boht graph.js and map.js file in one file in graph.js file
-ok but withou changing any logic, ok, and get all data wiht same function and pipl line ok 
-but carefully, wihtu changing nay privius logic, and our code, 
-  can you do this 
+ 
 C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
 
 function updateGauge(id, activeId, inactiveId, totalId) {
