@@ -1,36 +1,13 @@
-tooltip: {
-  callbacks: {
-    label: (ctx) => {
-      const d = ctx.raw;
-
-      // If you already added count per point
-      if (d.count !== undefined) {
-        return `${d.count}`;
-      }
-
-      // If not grouped yet, return 1 for each device
-      return `1`;
-    }
-  }
-}
+it is disply 
+1
+1
+1
+1
 
 
-
-
- tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = ctx.raw;
-              const lines = [];
-              if (d.ip) lines.push(`IP: ${d.ip}`);
-              if (d.city) lines.push(`City: ${d.city}`);
-              return lines;
-            }
-          }
-        }
-
-in tooltip, i want to show ony count of offline devices ok not ip or city ok 
-
+but i want totla count 
+for example pune camare offline is 5 
+is i want to in tooltip dipsoly 5 ok 
 // ========== GLOBALS ==========
 let offlineChart;
 let cityIndexMap = {};
@@ -138,17 +115,33 @@ function initOfflineChart() {
             usePointStyle: true
           }
         },
+        // tooltip: {
+        //   callbacks: {
+        //     label: (ctx) => {
+        //       const d = ctx.raw;
+        //       const lines = [];
+        //       if (d.ip) lines.push(`IP: ${d.ip}`);
+        //       if (d.city) lines.push(`City: ${d.city}`);
+        //       return lines;
+        //     }
+        //   }
+        // }
         tooltip: {
           callbacks: {
             label: (ctx) => {
               const d = ctx.raw;
-              const lines = [];
-              if (d.ip) lines.push(`IP: ${d.ip}`);
-              if (d.city) lines.push(`City: ${d.city}`);
-              return lines;
+
+              // If you already added count per point
+              if (d.count !== undefined) {
+                return `${d.count}`;
+              }
+
+              // If not grouped yet, return 1 for each device
+              return `1`;
             }
           }
         }
+
       },
       scales: {
         x: {
