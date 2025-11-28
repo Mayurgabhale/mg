@@ -28,6 +28,8 @@ Ireland
 and in this i click then i wnt ot get dairect ion for in map, 
   for exmapl i clikc on Taguig City i ma going on Taguig City ok ok,
   so do that carefully,  use i am upload first js codd 
+,
+  and give me update code,
       an user dont uer name
         use this icosn 
            <div class="legend">
