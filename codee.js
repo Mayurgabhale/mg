@@ -10,3 +10,11 @@ if (dev && dev.type) {
   else if (keyLower.includes("archiver")) type = "archiver";
   else type = null;
 }
+
+
+const allowedTypes = ['camera','controller','server','archiver'];
+if (allowedTypes.includes(type)) {
+  cityMap[cityName].devices[type] += 1;
+  cityMap[cityName].total += 1;
+  cityMap[cityName].devicesList.push(dev);
+}
