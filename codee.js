@@ -1,3 +1,19 @@
+const allDevices = combinedDevices.map(item => item.card);
+const deviceObjects = combinedDevices.map(item => item.device);
+
+// ================= STEP 1: Build offline city data =================
+const offlineCityData = buildOfflineCityCount(combinedDevices);
+
+// ================= STEP 2: Convert for map =================
+const mapCityData = convertOfflineCityForMap(offlineCityData);
+
+// ================= STEP 3: Send to map =================
+if (typeof updateOfflineMap === "function") {
+    updateOfflineMap(mapCityData);
+}
+
+...
+
 
 const mapCityData = convertOfflineCityForMap(offlineCityData);
 
