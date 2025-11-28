@@ -1,3 +1,17 @@
+
+const mapCityData = convertOfflineCityForMap(offlineCityData);
+
+// send to map
+if (typeof updateOfflineMap === "function") {
+    updateOfflineMap(mapCityData);
+}
+
+...
+
+.
+
+
+
 const allDevices = combinedDevices.map(item => item.card);
 const deviceObjects = combinedDevices.map(item => item.device);
 
