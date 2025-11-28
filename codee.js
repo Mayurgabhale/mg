@@ -1,3 +1,13 @@
+
+ok. good, now i want to disply, 
+this bar in any ordeer, ok 
+not assending or desecnding ok 
+and i i want ot do this is ,
+  risk assessment
+if, only camere is offline then midumn
+and if camers + archiver , onctroller, server, then high
+or server, cotroller, or archiver if offline that time alos high ok 
+
 // ---------------- START: City BAR chart (Total devices + offline breakdown tooltip) ----------------
 let offlineCityBarChart = null;
 
