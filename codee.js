@@ -1,407 +1,558 @@
-// map.js — cleaned & fixed
-// Key fixes:
-// - Centralized isDeviceOffline(dev) helper
-// - Tooltip buildCitySummaryHTML uses city.offline (precomputed) and lists offline IPs
-// - updateMapData dedupes devices per city and uses isDeviceOffline consistently
-// - Removed duplicate DOMContentLoaded blocks
+this is my chart only show offline device, 
+  this is show/ disply coorrect count or correct data, in this not any issue ok
+  but our LOC Count chart is not show correct count or data, ok,
+  i hove you understadn waht i say, 
+  so read teh boht code that i give me in below ok 
+1>> offline device
+<!-- Updated Offline Device Card with new class -->
+          <div class="offline-device-card">
+            <h4 class="gcard-title">Offline Device</h4>
+            <div class="chart-container">
+              <canvas id="DotOfflineDevice"></canvas>
+            </div>
+          </div>
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\graph.js
+// ========== GLOBALS ==========
+// ⬇️⬇️ this call in scrip.js
+let offlineChart;
+let cityIndexMap = {};
+let cityCounter = 0;
+let dynamicTypeIndexMap = {};
+let dynamicTypeList = [];
 
-let realMap;
-let CITY_LIST = []; // dynamically populated from API
-let cityLayers = {}; // cityName -> { summaryMarker, deviceLayer }
-let heatLayer = null;
-window._mapRegionMarkers = [];
+// ========== GET CHART COLORS BASED ON THEME ==========
+function getChartColors() {
+  const isLightTheme = document.body.classList.contains('theme-light');
 
-const CITY_COORDS = {
-  "Casablanca": [33.5731, -7.5898],
-  "Dubai": [25.276987, 55.296249],
-  "Argentina": [-38.4161, -63.6167],
-  "Austin TX": [30.2672, -97.7431],
-  "Austria, Vienna": [48.2082, 16.3734],
-  "Costa Rica": [9.7489, -83.7534],
-  "Denver": [39.7392, -104.9903],
-  "Florida, Miami": [25.7617, -80.1918],
-  "Frankfurt": [50.1109, 8.6821],
-  "Gama Building": [37.7749, -122.4194],
-  "Delta Building": [37.7749, -122.4194],
-  "Ireland, Dublin": [53.3331, -6.2489],
-  "Italy, Rome": [41.9028, 12.4964],
-  "Japan Tokyo": [35.6762, 139.6503],
-  "Kuala lumpur": [3.1390, 101.6869],
-  "London": [51.5074, -0.1278],
-  "Madrid": [40.4168, -3.7038],
-  "Mexico": [23.6345, -102.5528],
-  "Moscow": [55.7558, 37.6173],
-  "NEW YORK": [40.7128, -74.0060],
-  "Panama": [8.5380, -80.7821],
-  "Peru": [-9.1900, -75.0152],
-  "Pune": [18.5204, 73.8567],
-  "Quezon": [20.6760, 121.0437],
-  "Sao Paulo, Brazil": [-23.5505, -46.6333],
-  "Taguig City": [14.5176, 121.0509],
-  "HYDERABAD": [17.3850, 78.4867],
-  "Singapore": [1.3521, 103.8198]
-};
+  if (isLightTheme) {
+    return {
+      backgroundColor: '#0a0a0a',
+      text: '#e6eef7', // Visible text color
+    };
+  } else {
+    // Dark theme colors - fixed for visibility
+    return {
+      camera: '#ff4d4d',
+      archiver: '#4da6ff',
+      controller: '#ffaa00',
+      ccure: '#7d3cff',
+      grid: 'rgba(255, 255, 255, 0.2)', // Visible grid lines
+      text: '#e6eef7', // Visible text color
+      background: '#0a0a0a'
+    };
+  }
+}
 
-const CITY_PARENT_PATTERNS = [
-  { patterns: [/^vilnius\b/i, /gama building/i, /delta building/i], parent: "Vilnius" },
-  { patterns: [/^pune\b/i, /\bpune\b/i, /pune 2nd floor/i, /pune podium/i, /pune tower/i], parent: "Pune" }
-];
+// ========== UPDATE CHART THEME ==========
+function updateChartTheme() {
+  if (!offlineChart) return;
 
-function normalizeCityForMap(rawName) {
-  if (!rawName) return "Unknown";
-  const name = String(rawName).trim();
+  const colors = getChartColors();
 
-  for (const rule of CITY_PARENT_PATTERNS) {
-    for (const p of rule.patterns) {
-      if (p.test(name)) return rule.parent;
-    }
+  // Update grid lines and borders
+  offlineChart.options.scales.x.grid.color = colors.grid;
+  offlineChart.options.scales.y.grid.color = colors.grid;
+
+  // Update text colors
+  offlineChart.options.scales.x.ticks.color = colors.text;
+  offlineChart.options.scales.y.ticks.color = colors.text;
+
+  // Update legend text color
+  if (offlineChart.options.plugins.legend) {
+    offlineChart.options.plugins.legend.labels.color = colors.text;
   }
 
-  if (name.includes(" - ")) return name.split(" - ")[0].trim();
-  if (name.includes(",")) return name.split(",")[0].trim();
-  return name;
+  offlineChart.update();
 }
 
-function toNum(v) {
-  if (v === undefined || v === null || v === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
 
-function initRealMap() {
-  realMap = L.map('realmap', {
-    preferCanvas: true,
-    maxBounds: [ [70, -135], [-60, 160] ],
-    maxBoundsViscosity: 1.0,
-    minZoom: 2.1,
-    maxZoom: 20
-  }).setView([15, 0], 2.4);
+// ========== INIT CHART ==========
+// ⬇️⬇️ this is call in scrip.js 
+function initOfflineChart() {
+  const canvas = document.getElementById("DotOfflineDevice");
+  const ctx = canvas.getContext("2d");
 
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 20,
-    attribution: 'Tiles © Esri'
-  }).addTo(realMap);
+  const colors = getChartColors();
 
-  window.markerCluster = L.markerClusterGroup({ chunkedLoading: true, showCoverageOnHover: false });
-  window.countryLayerGroup = L.layerGroup().addTo(realMap);
-  realMap.addLayer(window.markerCluster);
-  L.control.scale().addTo(realMap);
-}
-
-function _deviceIconDiv(type) {
-  const cls = `device-icon device-${type}`;
-  return L.divIcon({ className: cls, iconSize: [14, 14], iconAnchor: [7, 7] });
-}
-
-function _placeDeviceIconsForCity(cityObj, deviceCounts, devicesListForCity = []) {
-  if (!cityObj || toNum(cityObj.lat) === null || toNum(cityObj.lon) === null) return;
-
-  if (!cityLayers[cityObj.city]) cityLayers[cityObj.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-  const layer = cityLayers[cityObj.city].deviceLayer;
-  layer.clearLayers();
-
-  const deviceTypes = ['camera', 'controller', 'server', 'archiver'];
-  deviceTypes.forEach(type => {
-    const cnt = (deviceCounts && deviceCounts[type]) || 0;
-    const displayCount = Math.min(cnt, 30);
-    for (let i = 0; i < displayCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const radiusDeg = 0.02 + Math.random() * 0.035;
-      const lat = cityObj.lat + Math.cos(angle) * radiusDeg;
-      const lon = cityObj.lon + Math.sin(angle) * radiusDeg;
-      const marker = L.marker([lat, lon], { icon: _deviceIconDiv(type) });
-      marker.bindTooltip(`${type.toUpperCase()} ${i + 1}`, { direction: 'top', offset: [0, -8], opacity: 0.95 });
-      layer.addLayer(marker);
-    }
-
-    if (cnt > displayCount) {
-      const moreHtml = `<div class="city-label-box" style="padding:6px 8px; font-size:12px; display:none;">${type}: ${cnt}</div>`;
-      const labelLat = cityObj.lat + 0.045;
-      const labelLon = cityObj.lon + (type === 'camera' ? 0.03 : (type === 'controller' ? -0.03 : 0));
-      const labelMarker = L.marker([labelLat, labelLon], { icon: L.divIcon({ html: moreHtml, className: "" }) });
-      layer.addLayer(labelMarker);
-    }
-  });
-}
-
-// ----------------------------
-// Centralized offline detection
-// ----------------------------
-function isDeviceOffline(dev) {
-  if (!dev) return false;
-  const s = ((dev.status || dev.state || '') + '').toString().trim().toLowerCase();
-  if (s === 'offline' || s === 'down') return true;
-  if (typeof dev.online === 'boolean' && dev.online === false) return true;
-  return false;
-}
-
-// ----------------------------
-// Build city tooltip HTML (now lists offline IPs)
-// ----------------------------
-function buildCitySummaryHTML(city) {
-  const total = city.total || 0;
-
-  // Use precomputed offline counts (built in updateMapData)
-  const offline = Object.values(city.offline || {}).reduce((acc, v) => acc + (v || 0), 0);
-
-  const ICONS = {
-    camera: `<i class="bi bi-camera "></i>`,
-    controller: `<i class="bi bi-hdd"></i>`,
-    server: `<i class="fa-duotone fa-solid fa-server"></i>`,
-    archiver: `<i class="fas fa-database"></i>`
-  };
-
-  let html = `
-  <div style="font-family: Inter, Roboto, Arial, sans-serif; font-size:13px; display:inline-block; width:auto; max-width:280px;">
-    <div style="font-weight:700; margin-bottom:6px; font-size:14px; white-space:nowrap;">${city.city}</div>
-    <div style="font-weight:600; margin-bottom:8px;">${total}/<span style="color:#ff3b3b;">${offline}</span></div>
-  `;
-
-  const mapList = ["camera", "controller", "server", "archiver"];
-  mapList.forEach(type => {
-    const count = city.devices?.[type] || 0;
-    const off = city.offline?.[type] || 0;
-    if (count > 0) {
-      html += `<div style="margin-bottom:4px; display:flex; align-items:center; gap:6px; font-size:10px;">${ICONS[type]} <span>${count}</span> ${off ? `<span style=\"color:#ff3b3b; margin-left:6px\">(${off} offline)</span>` : ''}</div>`;
-    }
-  });
-
-  // Collect offline device IPs (type + ip) and dedupe
-  const offlineDevices = (city.devicesList || []).filter(isDeviceOffline);
-  const offlineEntries = offlineDevices.map(d => {
-    const ip = d.ip || d.ip_address || d.address || d.hostname || d.name || 'Unknown IP';
-    const type = (d.type || d.deviceType || d.product || 'device').toString().toUpperCase();
-    return `${type} - ${ip}`;
-  });
-  const uniqueOffline = [...new Set(offlineEntries)];
-
-  if (uniqueOffline.length > 0) {
-    html += `
-      <div style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06);">
-        <div style="color:#ff3b3b; font-size:11px; font-weight:600; margin-bottom:4px;">Offline devices (${uniqueOffline.length}):</div>
-        <div style="font-size:11px; max-height:90px; overflow:auto; color:#d1d5db; line-height:1.4;">
-          ${uniqueOffline.map(u => `<div style=\"display:flex; justify-content:space-between; gap:8px;\">` +
-            `<span style=\"flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;\">• ${u}</span>` +
-            `<button style=\"margin-left:8px; font-size:10px; padding:2px 6px; cursor:pointer;\" onclick=\"(function(ip){ try{ if(navigator.clipboard) navigator.clipboard.writeText(ip); else { var ta=document.createElement('textarea'); ta.value=ip; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);} }catch(e){console.warn('copy failed', e);} })(\'${uniqueOffline[0].split(' - ')[1]}\')\">Copy</button>` +
-            `</div>`).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  html += `</div>`;
-  return html;
-}
-
-function placeCityMarkers() {
-  if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
-  window.cityMarkerLayer.clearLayers();
-
-  CITY_LIST.forEach(c => {
-    if (toNum(c.lat) === null || toNum(c.lon) === null) return;
-
-    const blinkClass = c.shouldBlink ? 'blink' : '';
-    const severityClass = (c.blinkSeverity && c.blinkSeverity >= 3) ? ' blink-high' : '';
-    const cityIconHtml = `<div><span class="pin ${blinkClass}${severityClass}"><i class="bi bi-geo-alt-fill"></i></span></div>`;
-    const cityIcon = L.divIcon({ className: 'city-marker', html: cityIconHtml, iconAnchor: [12, 12] });
-
-    const marker = L.marker([c.lat, c.lon], { icon: cityIcon });
-
-    console.log(`[placeCityMarkers] city="${c.city}" shouldBlink=${!!c.shouldBlink} severity=${c.blinkSeverity || 0}`);
-
-    const getSummary = () => buildCitySummaryHTML(c);
-
-    marker.on('mouseover', function () {
-      marker.bindTooltip(getSummary(), { direction: 'top', offset: [0, -12], opacity: 1, permanent: false, className: 'city-summary-tooltip' }).openTooltip();
-    });
-    marker.on('mouseout', function () { try { marker.closeTooltip(); } catch (e) {} });
-    marker.on('click', function () { marker.bindPopup(getSummary(), { maxWidth: 360 }).openPopup(); });
-
-    marker.addTo(window.cityMarkerLayer);
-  });
-
-  window.cityMarkerLayer.bringToFront();
-}
-
-function drawHeatmap() {
-  const totals = CITY_LIST
-    .map(c => ({ lat: toNum(c.lat), lon: toNum(c.lon), total: c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0 }))
-    .filter(x => x.lat !== null && x.lon !== null && x.total > 0);
-
-  if (!totals.length) {
-    if (heatLayer) try { realMap.removeLayer(heatLayer); } catch (e) {}
-    heatLayer = null; return;
-  }
-
-  let maxTotal = Math.max(...totals.map(t => t.total), 1);
-  const heatPoints = totals.map(t => [t.lat, t.lon, Math.min(1.5, (t.total / maxTotal) + 0.2)]);
-  if (heatLayer) realMap.removeLayer(heatLayer);
-  heatLayer = L.heatLayer(heatPoints, { radius: 40, blur: 25, gradient: { 0.2: '#34d399', 0.5: '#fbbf24', 0.8: '#f97316' } }).addTo(realMap);
-}
-
-function fitAllCities() {
-  const validCoords = CITY_LIST.map(c => [toNum(c.lat), toNum(c.lon)]).filter(([lat,lon]) => lat !== null && lon !== null);
-  if (!validCoords.length) return;
-  const bounds = L.latLngBounds(validCoords);
-  realMap.fitBounds(bounds.pad(0.25));
-}
-
-function populateGlobalCityList() {
-  const panel = document.getElementById("region-panel-content");
-  if (!panel) return;
-  let html = `<h4></h4><hr>`;
-  CITY_LIST.forEach((c, idx) => {
-    const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0;
-    html += `<div class="city-item" data-city-index="${idx}"><div style="font-weight:700">${c.city}</div><div class="small-muted">${c.region || '—'} • ${total} devices</div></div>`;
-  });
-  panel.innerHTML = html;
-  panel.querySelectorAll('.city-item').forEach(el => el.addEventListener('click', () => { const idx = Number(el.getAttribute('data-city-index')); const c = CITY_LIST[idx]; if (c && toNum(c.lat)!==null && toNum(c.lon)!==null) realMap.flyTo([c.lat,c.lon],7,{duration:1.0}); populateCityPanel(c?c.city:null); }));
-}
-
-function onCityItemClick(cityName) { const c = CITY_LIST.find(x => x.city === cityName); if (c && toNum(c.lat)!==null && toNum(c.lon)!==null) realMap.setView([c.lat,c.lon],5,{animate:true}); populateCityPanel(cityName); }
-
-function populateCityPanel(cityName) { const panel = document.getElementById("region-panel-content"); const c = CITY_LIST.find(x => x.city === cityName); if (!panel || !c) return; const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0; panel.innerHTML = `\n    <h4 style="font-size: 12px;">${cityName} — ${total} devices</h4><hr>\n    <div style="font-size: 10px;"><b>Camera:</b> ${c.devices.camera || 0}</div>\n    <div style="font-size: 10px;"><b>Controller:</b> ${c.devices.controller || 0}</div>\n    <div style="font-size: 10px;"><b>Server:</b> ${c.devices.server || 0}</div>\n    <div style="font-size: 10px;"><b>Archiver:</b> ${c.devices.archiver || 0}</div>\n  `; }
-
-function populateRegionPanel(region) { const panel = document.getElementById("region-panel-content"); if (!panel) return; const cities = CITY_LIST.filter(c => c.region === region); let html = `<h4>${region} Region</h4><hr>`; cities.forEach((c,idx) => { const total = c.devices ? Object.values(c.devices).reduce((a,b)=>a+b,0) : 0; html += `<div class="city-item" data-city-index="${CITY_LIST.indexOf(c)}"><b>${c.city}</b> — ${total} devices</div>`; }); panel.innerHTML = html; panel.querySelectorAll('.city-item').forEach(el => el.addEventListener('click', () => { const idx = Number(el.getAttribute('data-city-index')); const c = CITY_LIST[idx]; if (c && toNum(c.lat)!==null && toNum(c.lon)!==null) realMap.flyTo([c.lat,c.lon],7,{duration:1.0}); populateCityPanel(c?c.city:null); })); }
-
-function ensureUniqueCityCoordinates(cityArray) {
-  const map = {};
-  cityArray.forEach(c => {
-    const lat = toNum(c.lat);
-    const lon = toNum(c.lon);
-    if (lat === null || lon === null) return;
-    const key = `${lat.toFixed(6)}_${lon.toFixed(6)}`;
-    if (!map[key]) map[key] = [];
-    map[key].push(c);
-  });
-  Object.values(map).forEach(group => {
-    if (group.length <= 1) return;
-    const baseLat = toNum(group[0].lat);
-    const baseLon = toNum(group[0].lon);
-    if (baseLat === null || baseLon === null) return;
-    const radius = 0.02;
-    group.forEach((c,i) => { const angle = (2*Math.PI*i)/group.length; c.lat = baseLat + Math.cos(angle)*radius; c.lon = baseLon + Math.sin(angle)*radius; });
-  });
-}
-
-async function getCityCoordinates(cityName) {
-  cityName = cityName.trim();
-  if (CITY_COORDS[cityName]) return CITY_COORDS[cityName];
-  console.warn("City not found in CITY_COORDS:", cityName);
-  return null;
-}
-
-// ----------------------------
-// Main: updateMapData (called from script.js)
-// ----------------------------
-async function updateMapData(summary, details) {
-  try {
-    if (!realMap || !details) return;
-
-    const deviceBuckets = details.details || details;
-    if (!deviceBuckets) return;
-
-    const cityMap = {};
-    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
-      if (!Array.isArray(arr)) return;
-      arr.forEach(dev => {
-        const cityNameRaw = dev.city || dev.location || dev.site || "Unknown";
-        let cityNameCandidate = (typeof cityNameRaw === 'string') ? cityNameRaw.trim() : String(cityNameRaw);
-        const cityName = normalizeCityForMap(cityNameCandidate);
-        let lat = toNum(dev.lat);
-        let lon = toNum(dev.lon);
-
-        const keyLower = (rawKey || "").toLowerCase();
-        const type = keyLower.includes("camera") ? "camera" : keyLower.includes("controller") ? "controller" : keyLower.includes("server") ? "server" : keyLower.includes("archiver") ? "archiver" : null;
-
-        if (!cityMap[cityName]) cityMap[cityName] = {
-          city: cityName,
-          lat: (lat !== null ? lat : null),
-          lon: (lon !== null ? lon : null),
-          devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
-          offline: { camera: 0, controller: 0, server: 0, archiver: 0 },
-          total: 0,
-          devicesList: [],
-          region: dev.region || dev.zone || null,
-          seen: new Set()
-        };
-
-        // Deduplicate by a stable key (id, serial, name, ip)
-        const dedupeKey = (dev.id || dev.serial || dev.name || dev.ip || dev.ip_address || '') + '|' + (dev.type || dev.deviceType || '');
-        if (cityMap[cityName].seen.has(dedupeKey)) return; // skip duplicate
-        cityMap[cityName].seen.add(dedupeKey);
-
-        if (type) cityMap[cityName].devices[type] += 1;
-        cityMap[cityName].total += 1;
-        cityMap[cityName].devicesList.push(dev);
-
-        if (lat !== null && lon !== null) {
-          cityMap[cityName].lat = lat;
-          cityMap[cityName].lon = lon;
+  offlineChart = new Chart(ctx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label: "Camera",
+          data: [],
+          backgroundColor: colors.camera,
+          pointStyle: "circle",
+          pointRadius: 6
+        },
+        {
+          label: "Archiver",
+          data: [],
+          backgroundColor: colors.archiver,
+          pointStyle: "rect",
+          pointRadius: 6
+        },
+        {
+          label: "Controller",
+          data: [],
+          backgroundColor: colors.controller,
+          pointStyle: "triangle",
+          pointRadius: 7
+        },
+        {
+          label: "CCURE",
+          data: [],
+          backgroundColor: colors.ccure,
+          pointStyle: "rectRot",
+          pointRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: colors.text, // Set legend text color
+            font: {
+              size: 12
+            },
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = ctx.raw;
+              return `${d.count || 0}`;
+            }
+          }
         }
 
-        if (isDeviceOffline(dev) && type) {
-          cityMap[cityName].offline[type] = (cityMap[cityName].offline[type] || 0) + 1;
+      },
+      scales: {
+        x: {
+          title: {
+            display: false,
+            text: "City"
+          },
+          grid: {
+            color: colors.grid, // Set grid line color
+            drawBorder: true
+          },
+          ticks: {
+            color: colors.text, // Set x-axis text color
+            maxRotation: 0,
+            minRotation: 0,
+            callback: (value) => {
+              return Object.keys(cityIndexMap).find(
+                key => cityIndexMap[key] === value
+              ) || "";
+            }
+          }
+        },
+        y: {
+          title: {
+            display: false,
+            text: "Device Type"
+          },
+          grid: {
+            color: colors.grid, // Set grid line color
+            drawBorder: true
+          },
+          ticks: {
+            color: colors.text, // Set y-axis text color
+            callback: v => dynamicTypeList[v] || ""
+          },
+          min: -0.5,
+          max: () => Math.max(dynamicTypeList.length - 0.5, 0.5)
         }
-      });
-    });
-
-    CITY_LIST = Object.values(cityMap);
-
-    // geocode missing coords
-    for (let c of CITY_LIST) {
-      if (toNum(c.lat) === null || toNum(c.lon) === null) {
-        const coords = await getCityCoordinates(c.city);
-        if (coords && coords.length === 2) { c.lat = coords[0]; c.lon = coords[1]; } else { c.lat = null; c.lon = null; }
       }
     }
-
-    ensureUniqueCityCoordinates(CITY_LIST);
-
-    // compute blink flags (archiver/controller/server only)
-    CITY_LIST.forEach(c => {
-      const a = (c.offline && c.offline.archiver) || 0;
-      const ctrl = (c.offline && c.offline.controller) || 0;
-      const srv = (c.offline && c.offline.server) || 0;
-      c.shouldBlink = (a + ctrl + srv) > 0;
-      c.blinkSeverity = Math.min(5, a + ctrl + srv);
-    });
-
-    // Place device icons & device layers
-    CITY_LIST.forEach(c => {
-      if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
-      cityLayers[c.city].deviceLayer.clearLayers();
-      _placeDeviceIconsForCity(c, c.devices, c.devicesList);
-    });
-
-    drawHeatmap();
-    populateGlobalCityList();
-    if (typeof drawRegionBadges === 'function') drawRegionBadges();
-
-  } catch (err) {
-    console.error("updateMapData error", err);
-  }
-
-  // redraw UI overlays and markers
-  if (typeof drawCityBarChart === 'function') drawCityBarChart();
-  placeCityMarkers();
-  fitAllCities();
+  });
 }
 
-// Single DOMContentLoaded init (no duplicate blocks)
-document.addEventListener("DOMContentLoaded", () => {
-  initRealMap();
+// ⬇️⬇️ this is call in scrip.js 
+function updateOfflineChart(offlineDevices) {
+  const typeNames = {
+    cameras: "Camera",
+    archivers: "Archiver",
+    controllers: "Controller",
+    servers: "CCURE"
+  };
 
-  function setOnClick(id, fn) { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); }
-  setOnClick("toggle-heat", toggleHeat);
-  setOnClick("fit-all", fitAllCities);
-  setOnClick("show-global", populateGlobalCityList);
+  dynamicTypeList = [];
+  dynamicTypeIndexMap = {};
+  cityIndexMap = {};
+  cityCounter = 0;
 
-  window.updateMapData = updateMapData;
-});
+  // Only valid types
+  const filtered = offlineDevices.filter(dev =>
+    typeNames.hasOwnProperty(dev.type)
+  );
 
-// Toggle heat helper
-function toggleHeat() { if (!heatLayer) return; if (realMap.hasLayer(heatLayer)) realMap.removeLayer(heatLayer); else realMap.addLayer(heatLayer); }
+  // Build dynamic Y indexes
+  filtered.forEach(dev => {
+    const label = typeNames[dev.type];
+    if (!(label in dynamicTypeIndexMap)) {
+      dynamicTypeIndexMap[label] = dynamicTypeList.length;
+      dynamicTypeList.push(label);
+    }
+  });
 
-// Export for debugging
-window._mapHelpers = { isDeviceOffline };
+  // ✅ GROUP BY CITY + TYPE
+  const grouped = {};
+
+  filtered.forEach(dev => {
+    const source = dev.device ? dev.device : dev;
+    const city = source.city || "Unknown";
+    const label = typeNames[dev.type];
+
+    const key = city + "|" + label;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        city: city,
+        label: label,
+        count: 0
+      };
+    }
+
+    grouped[key].count++;
+  });
+
+  // Clear datasets
+  offlineChart.data.datasets.forEach(ds => ds.data = []);
+
+  // ✅ Add grouped points (only ONE point per city+type)
+  Object.values(grouped).forEach(item => {
+
+    if (!cityIndexMap[item.city]) {
+      cityCounter++;
+      cityIndexMap[item.city] = cityCounter;
+    }
+
+    const dynamicY = dynamicTypeIndexMap[item.label];
+
+    const point = {
+      x: cityIndexMap[item.city],
+      y: dynamicY,
+      count: item.count   // ✅ count stored here
+    };
+
+    const dataset = offlineChart.data.datasets.find(
+      ds => ds.label === item.label
+    );
+
+    if (dataset) {
+      dataset.data.push(point);
+    }
+  });
+
+  // Hide empty
+  offlineChart.data.datasets.forEach(ds => {
+    ds.hidden = ds.data.length === 0;
+  });
+
+  offlineChart.update();
+}
+
+
+// ========== THEME CHANGE DETECTION ==========
+function setupThemeObserver() {
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        setTimeout(updateChartTheme, 100);
+      }
+    });
+  });
+
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+}
+
+// ========== INITIALIZE EVERYTHING ==========
+function initializeChartSystem() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initOfflineChart();
+      setupThemeObserver();
+    });
+  } else {
+    initOfflineChart();
+    setupThemeObserver();
+  }
+}
+
+// Initialize the chart system
+initializeChartSystem();
+
+// ========== YOUR EXISTING FUNCTION ==========
+function renderOfflineChartFromCombined(combinedDevices) {
+  const offlineDevices = combinedDevices
+    .filter(d => d.device.status === "offline")
+    .map(d => ({
+      device: d.device,
+      type: d.device.type
+    }));
+
+  updateOfflineChart(offlineDevices);
+}
+
+
+
+2>>> LOC Count 
+ <div class="gcard wide" id="Loc-Count-chart">
+            <h4 class="gcard-title">LOC Count</h4>
+            <canvas id="cityBarChart"></canvas>
+          </div>
+
+C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\map.js
+// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ bar chart
+
+/*********************************
+ * CITY RISK SCORING (3 LEVELS)
+ *********************************/
+function computeCityRisk(city) {
+  if (!city || !city.offline) {
+    return { label: "Low", color: "#16A34A" };
+  }
+
+  const cam = city.offline.camera || 0;
+  const arch = city.offline.archiver || 0;
+  const srv = city.offline.server || 0;   // CCURE
+  const ctrl = city.offline.controller || 0;
+
+  const camerasOffline = cam > 0;
+  const otherOffline = (arch > 0 || srv > 0 || ctrl > 0);
+
+  // RULE 1: Only Cameras offline → Medium
+  if (camerasOffline && !otherOffline) {
+    return { label: "Medium", color: "#FACC15" };
+  }
+
+  // RULE 2: Cameras + Others offline → High
+  if (camerasOffline && otherOffline) {
+    return { label: "High", color: "#DC2626" };
+  }
+
+  // RULE 3: Only Archiver / Controller / CCURE offline → High
+  if (!camerasOffline && otherOffline) {
+    return { label: "High", color: "#DC2626" };
+  }
+
+  // RULE 4: Nothing offline → Low
+  return { label: "Low", color: "#16A34A" };
+}
+
+/*********************************
+ * LEGEND (TOP RIGHT)
+ *********************************/
+
+function createCityLegend(containerId = "cityBarLegend") {
+
+  const holder = document.getElementById("Loc-Count-chart");
+  if (!holder) return;
+
+  holder.style.position = "relative"; // important for top-right
+
+  let container = document.getElementById(containerId);
+
+  if (!container) {
+    container = document.createElement("div");
+    container.id = containerId;
+    holder.appendChild(container);
+  }
+
+  container.style.position = "absolute";
+  container.style.top = "5px";
+  container.style.right = "10px";
+  container.style.fontSize = "12px";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "6px";
+  container.style.padding = "6px 10px";
+  container.style.borderRadius = "6px";
+  container.style.boxShadow = "0px 2px 6px rgba(0,0,0,0.15)";
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#16A34A;border-radius:3px;"></span> Low
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#FACC15;border-radius:3px;"></span> Medium
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:12px;height:12px;background:#DC2626;border-radius:3px;"></span> High
+    </div>
+  `;
+}
+
+
+/*********************************
+ * CITY BAR CHART
+ *********************************/
+let cityChart = null;
+
+function drawCityBarChart() {
+
+  const chartCanvas = document.getElementById("cityBarChart");
+  if (!chartCanvas) {
+    console.warn("Canvas not found");
+    return;
+  }
+
+  if (!CITY_LIST || CITY_LIST.length === 0) {
+    console.warn("CITY_LIST empty. Chart not drawn.");
+    const lg = document.getElementById("cityBarLegend");
+    if (lg) lg.remove();
+    return;
+  }
+
+  const labels = CITY_LIST.map(c => c.city);
+
+  const data = CITY_LIST.map(c => {
+    if (!c.devices) return 0;
+    return Object.values(c.devices).reduce((a, b) => a + b, 0);
+  });
+
+
+  const riskInfo = CITY_LIST.map(c => computeCityRisk(c));
+  const colors = riskInfo.map(r => r.color);
+  const riskLabels = riskInfo.map(r => r.label);
+
+  if (cityChart) cityChart.destroy();
+
+  cityChart = new Chart(chartCanvas.getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Total Devices",
+        data: data,
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1,
+        borderRadius: 6,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        // Replace existing tooltip: { ... } with this:
+        tooltip: {
+          enabled: false, // disable built-in tooltip rendering
+          external: function (context) {
+            // get/create tooltip element
+            let tooltipEl = document.getElementById('chartjs-tooltip');
+            if (!tooltipEl) {
+              tooltipEl = document.createElement('div');
+              tooltipEl.id = 'chartjs-tooltip';
+              tooltipEl.className = 'chartjs-tooltip';
+              document.body.appendChild(tooltipEl);
+            }
+
+            // Hide if no tooltip
+            const tooltipModel = context.tooltip;
+            if (!tooltipModel || tooltipModel.opacity === 0) {
+              tooltipEl.style.opacity = 0;
+              return;
+            }
+
+            // Determine index for the hovered bar
+            const dataIndex = tooltipModel.dataPoints && tooltipModel.dataPoints.length ? tooltipModel.dataPoints[0].dataIndex : null;
+            if (dataIndex === null) {
+              tooltipEl.style.opacity = 0;
+              return;
+            }
+
+            // Build lines (same order you used)
+            const c = CITY_LIST[dataIndex] || {};
+            const total = c.devices ? Object.values(c.devices).reduce((a, b) => a + b, 0) : 0;
+            const camOff = (c.offline && c.offline.camera) || 0;
+            const ctrlOff = (c.offline && c.offline.controller) || 0;
+            const srvOff = (c.offline && c.offline.server) || 0;
+            const archOff = (c.offline && c.offline.archiver) || 0;
+            const risk = riskLabels[dataIndex] || 'Low';
+
+            const lines = [
+              { key: 'Total Devices', val: total, color: '#ffffff' },
+              { key: 'Risk Level', val: risk, color: '#ffffff' },
+              { key: 'Offline Camera', val: camOff, color: camOff > 0 ? 'red' : '#ffffff' },
+              { key: 'Offline Controller', val: ctrlOff, color: ctrlOff > 0 ? 'red' : '#ffffff' },
+              { key: 'Offline Server', val: srvOff, color: srvOff > 0 ? 'red' : '#ffffff' },
+              { key: 'Offline Archiver', val: archOff, color: archOff > 0 ? 'red' : '#ffffff' }
+            ];
+
+            // Build HTML
+            let innerHtml = `<div class="tt-title">${labels[dataIndex]}</div>`;
+            lines.forEach(line => {
+              // don't show 0 offline lines? you said show but not red — keep visible but not red
+              innerHtml += `<div class="tt-line"><span class="tt-key">${line.key}:</span> <span class="tt-val" style="color:${line.color}">${line.val}</span></div>`;
+            });
+
+            tooltipEl.innerHTML = innerHtml;
+            tooltipEl.style.opacity = 1;
+
+            // Positioning: try to place tooltip near the caret (Chart.js provides caretX/caretY in tooltipModel)
+            const canvas = context.chart.canvas;
+            const canvasRect = canvas.getBoundingClientRect();
+            // caret coordinates are in chart pixels; convert to page coords
+            const left = canvasRect.left + window.pageXOffset + tooltipModel.caretX;
+            const top = canvasRect.top + window.pageYOffset + tooltipModel.caretY;
+
+            // Position slightly above the cursor
+            tooltipEl.style.left = `${left}px`;
+            tooltipEl.style.top = `${top - 10}px`;
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        },
+        x: {
+          ticks: {
+            display: true,
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0,
+
+            callback: function (value, index) {
+              const risk = riskLabels[index];
+
+              if (risk === "Medium" || risk === "High") {
+                return labels[index];
+              }
+              return "";
+            },
+
+            color: function (context) {
+              const idx = context.index;
+              const risk = riskLabels[idx];
+              return (risk === "Medium" || risk === "High") ? "red" : "#666";
+            }
+          },
+          grid: {
+            display: true
+          }
+        }
+      }
+    }
+  });
+
+  // Add legend in top-right
+  createCityLegend("cityBarLegend");
+  console.log("✅ City bar chart updated with top-right legend");
+}
+
+
