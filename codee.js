@@ -1,441 +1,21 @@
-see this code, in ths bar chart diplsy all,
-  just this data i want to diplsy in map ok 
-get this code referese and crete map.js file 
-ok,...
-  
-// ========== INITIALIZE EVERYTHING ==========
-  <div class="gcard wide" id="total-city-count">
-            <h4 class="gcard-title">LOC Count</h4>
-            <canvas id="OfflineCityBarChart"></canvas>
-          </div>
-// new
-// ========== INITIALIZE EVERYTHING ==========
-function initializeChartSystem() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      initOfflineChart();
-      initOfflineCityBarChart();   // ✅ ADD THIS
-      setupThemeObserver();
-    });
-  } else {
-    initOfflineChart();
-    initOfflineCityBarChart();     // ✅ ADD THIS
-    setupThemeObserver();
-  }
-}
-
-// Initialize the chart system
-initializeChartSystem();
-
-// ========== YOUR EXISTING FUNCTION ==========
-
-
-function renderOfflineChartFromCombined(combinedDevices) {
-  const offlineDevices = combinedDevices
-    .filter(d => d.device.status === "offline")
-    .map(d => ({
-      device: d.device,
-      type: d.device.type
-    }));
-
-  updateOfflineChart(offlineDevices);
-
-  // ✅ ADD BAR CHART UPDATE HERE
-  updateOfflineCityBarChart(combinedDevices);
-  updateMapFromCombined(combinedDevices)
-}
-
-// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
-
-
-// ---------------- START: City BAR chart (Total devices + offline breakdown tooltip) ----------------
-let offlineCityBarChart = null;
-
-const TYPE_MAP = {
-  cameras: 'camera',
-  archivers: 'archiver',
-  controllers: 'controller',
-  servers: 'server',
-  // other types exist (pcdetails, dbdetails) — we ignore them for the offline breakdown fields
-};
-
-function normalizeCityName(city) {
-  city = city.toLowerCase().trim();
-
-  // Pune group
-  if (city.startsWith("pune")) return "Pune";
-
-  // Vilnius group
-  if (city.includes("vilnius") || 
-      city.includes("gama") || 
-      city.includes("delta")) {
-    return "Vilnius";
-  }
-
-  // Default – return as-is (capitalized first letter)
-  return city.charAt(0).toUpperCase() + city.slice(1);
-}
-
-function getBarColors() {
-  if (typeof getChartColors === 'function') {
-    const c = getChartColors();
-    return {
-      bar: c.camera || c.bar || '#d32f2f',
-      text: c.text || '#e6eef7',
-      grid: c.grid || 'rgba(0,0,0,0.08)'
-    };
-  }
-  const isDark = document.body.classList.contains("dark-mode");
-  return {
-    bar: isDark ? "#ff5252" : "#d32f2f",
-    text: isDark ? "#ffffff" : "#333333",
-    grid: isDark ? "#444" : "#ddd"
-  };
-}
-
-/**
- * Build the per-city totals + offline breakdown.
- * Input: combinedDevices = [{ device: { type, status, city, ... } }, ...]
- * Output: { labels: [], values: [], details: [{ city, total, offline: { camera, controller, archiver, server } }, ...] }
- */
-
-function buildCityBarDataWithBreakdown(combinedDevices = []) {
-  const map = {}; // city -> info
-
-  if (!Array.isArray(combinedDevices)) return { labels: [], values: [], details: [] };
-
-  combinedDevices.forEach(entry => {
-    if (!entry || !entry.device) return;
-    const dev = entry.device;
-
-    // const city = (dev.city || "Unknown").toString(); 
-    const rawCity = (dev.city || "Unknown").toString();
-const city = normalizeCityName(rawCity);
-
-    if (!map[city]) {
-      map[city] = {
-        city,
-        total: 0,
-        offline: {
-          camera: 0,
-          controller: 0,
-          archiver: 0,
-          server: 0
-        },
-        risk: "Low" // default
-      };
-    }
-
-    map[city].total++;
-
-    const status = (dev.status || "").toLowerCase();
-    const devTypeKey = (dev.type || "").toLowerCase();
-
-    if (status === "offline") {
-      const short = TYPE_MAP[devTypeKey];
-      if (short && map[city].offline.hasOwnProperty(short)) {
-        map[city].offline[short]++;
-      }
-    }
-  });
-
-  // ✅ APPLY RISK LOGIC
-  Object.values(map).forEach(cityObj => {
-    const off = cityObj.offline;
-
-    const cam = off.camera;
-    const ctrl = off.controller;
-    const arch = off.archiver;
-    const serv = off.server;
-
-    // High conditions
-    if (
-      serv > 0 ||
-      ctrl > 0 ||
-      arch > 0 ||
-      (cam > 0 && (ctrl > 0 || arch > 0 || serv > 0))
-    ) {
-      cityObj.risk = "High";
-    }
-    // Medium condition
-    else if (cam > 0) {
-      cityObj.risk = "Medium";
-    }
-    // Otherwise Low
-    else {
-      cityObj.risk = "Low";
-    }
-  });
-
-  // ❌ NO SORTING – Keep original insertion order
-  
-  let entries = Object.values(map);
-
-  // ✅ Shuffle entries into random order
-  for (let i = entries.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [entries[i], entries[j]] = [entries[j], entries[i]];
-  }
-
-  const labels = entries.map(e => e.city);
-  const values = entries.map(e => e.total);
-  const details = entries.map(e => ({
-    city: e.city,
-    total: e.total,
-    offline: { ...e.offline },
-    risk: e.risk
-  }));
-
-  return { labels, values, details };
-}
-
-/**
- * Initialize the bar chart (placeholder). Safe to call multiple times.
- */
-function initOfflineCityBarChart() {
-  if (typeof Chart === 'undefined') {
-    console.warn('initOfflineCityBarChart: Chart.js not loaded.');
-    return;
-  }
-  const canvas = document.getElementById("OfflineCityBarChart");
-  if (!canvas) {
-    console.warn('initOfflineCityBarChart: #OfflineCityBarChart canvas not found.');
-    return;
-  }
-
-  if (offlineCityBarChart) return; // already init
-
-  const ctx = canvas.getContext("2d");
-  const colors = getBarColors();
-
-  offlineCityBarChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ['No Data'],
-      datasets: [{
-        label: "Total Devices",
-        data: [0],
-        backgroundColor: [colors.bar],
-        borderRadius: 8,
-        barThickness: 35
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: colors.text }, display: false },
-        tooltip: {
-          enabled: true,
-          callbacks: {
-            // Title is the city name
-            title: function (items) {
-              if (!items || !items.length) return '';
-              return items[0].label;
-            },
-            // First line: total devices (use dataset value)
-            label: function (context) {
-              const value = context.parsed.y ?? context.parsed ?? 0;
-              return `Total Devices: ${value}`;
-            },
-            // After body: show offline breakdown lines (one per line)
-            afterBody: function (context) {
-              if (!context || !context.length) return [];
-
-              const dataIndex = context[0].dataIndex;
-              const chart = context[0].chart || offlineCityBarChart;
-              const details = chart.cityDetails[dataIndex];
-              if (!details) return [];
-
-              const off = details.offline;
-
-              return [
-                `Risk Level: ${details.risk}`,
-                `Offline Cameras: ${off.camera || 0}`,
-                `Offline Controllers: ${off.controller || 0}`,
-                `Offline Archivers: ${off.archiver || 0}`,
-                `Offline Servers: ${off.server || 0}`
-              ];
-            }
-
-          }
-        }
-      },
-      scales: {
-
-        x: {
-          ticks: {
-            autoSkip: false,
-            maxRotation: 0,
-            minRotation: 0,
-
-            callback: function (value, index) {
-              const chart = this.chart;
-              const details = chart.cityDetails?.[index];
-
-              // Show label ONLY for High and Medium
-              if (!details || details.risk === "Low") {
-                return "";
-              }
-
-              return details.city;
-            },
-
-            color: function (context) {
-              const index = context.index;
-              const chart = context.chart;
-              const details = chart.cityDetails?.[index];
-
-              if (!details) return colors.text;
-
-              if (details.risk === "High") return "#d32f2f";    // red
-              if (details.risk === "Medium") return "#fbc02d";  // yellow
-
-              return "transparent"; // hide Low city label
-            },
-
-            font: function (context) {
-              const index = context.index;
-              const chart = context.chart;
-              const details = chart.cityDetails?.[index];
-
-              if (!details || details.risk === "Low") {
-                return { size: 0 };  // Fully hide low labels
-              }
-
-              return { size: 12, weight: "bold" };
-            }
-          },
-          grid: {
-            color: colors.grid
-          }
-        },
-        
-     
-        y: {
-          beginAtZero: true,
-          ticks: { color: colors.text, precision: 0 },
-          grid: { color: colors.grid }
-        }
-      }
-    }
-  });
-
-  // attach an empty cityDetails array to chart (populated on updates)
-  offlineCityBarChart.cityDetails = [];
-  console.debug('initOfflineCityBarChart: initialized');
-}
-
-/**
- * Update the bar chart with combinedDevices (array of {device: {...}})
- */
-function updateOfflineCityBarChart(combinedDevices) {
-  if (!offlineCityBarChart) {
-    initOfflineCityBarChart();
-    if (!offlineCityBarChart) {
-      console.warn('updateOfflineCityBarChart: chart not initialized (canvas missing or Chart.js not loaded).');
-      return;
-    }
-  }
-
-  const colors = getBarColors();
-  const { labels, values, details } = buildCityBarDataWithBreakdown(combinedDevices);
-
-  if (!labels || labels.length === 0) {
-    offlineCityBarChart.data.labels = ['No Data'];
-    offlineCityBarChart.data.datasets[0].data = [0];
-    offlineCityBarChart.data.datasets[0].backgroundColor = ['#8a8a8a'];
-    offlineCityBarChart.cityDetails = [];
-    offlineCityBarChart.update();
-    console.debug('updateOfflineCityBarChart: no data.');
-    return;
-  }
-
-  offlineCityBarChart.data.labels = labels;
-  offlineCityBarChart.data.datasets[0].data = values;
-  // offlineCityBarChart.data.datasets[0].backgroundColor = labels.map(() => colors.bar); 
-  offlineCityBarChart.data.datasets[0].backgroundColor = details.map(d => {
-    if (d.risk === "High") return "#d32f2f";    // red
-    if (d.risk === "Medium") return "#fbc02d";  // yellow
-    return "#388e3c";                           // green
-  });
-  offlineCityBarChart.cityDetails = details; // store details used by tooltip callbacks
-
-  offlineCityBarChart.update();
-  console.debug('updateOfflineCityBarChart: updated with', labels.length, 'cities.');
-}
-
-/**
- * Ensure initialization on DOM ready (harmless if already done elsewhere)
- */
-function ensureBarInitOnDomReady() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initOfflineCityBarChart);
-  } else {
-    initOfflineCityBarChart();
-  }
-}
-ensureBarInitOnDomReady();
-// ---------------- END: City BAR chart (Total devices + offline breakdown tooltip) -----------------------------------
-
- <div class="worldmap-wrapper">
-              <!-- MAP CARD -->
-              <div class="worldmap-card">
-                <!-- Fullscreen Button -->
-                <button id="mapFullscreenBtn" class="map-fullscreen-btn">
-                  ⛶ View Full
-                </button>
-                <button id="mapCityOverviewBtn" class="map-CityOverview-btn">
-                  City Overview
-                </button>
-                <!-- SIDE PANEL -->
-                <div class="region-panel" id="region-panel">
-                  <h4 class="panel-title">Global (City Overview)</h4>
-                  <div id="region-panel-content" class="panel-content"></div>
-                </div>
-
-                <div id="realmap"></div>
-
-                <!-- Legend + Controls Row -->
-                <div class="map-bottom-bar">
-
-                  <!-- Legend -->
-                  <div class="legend">
-                    <div class="legend-item">
-                      <i class="bi bi-camera"></i>
-                      Camera
-                    </div>
-                    <div class="legend-item">
-                      <i class="bi bi-hdd"></i> Controller
-                    </div>
-                    <div class="legend-item">
-                      <i class="fa-duotone fa-solid fa-server"></i> Server
-                    </div>
-                    <div class="legend-item">
-                      <i class="fas fa-database "></i> Archiver
-                    </div>
-                  </div>
-
-                  <!-- Controls -->
-                  <div class="map-controls">
-                    <button id="fit-all" class="btn-ghost">Fit All</button>
-                    <button id="show-global" class="btn-gv">Global View</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-
-// ==================================================
-// MAP.JS - FINAL CLEAN VERSION
-// ==================================================
-
-let realMap;
+// map.js - Dynamic map that uses the same city data logic as your bar chart
+// Drop this in C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\map.js
+// Requirements satisfied:
+//  - Uses your existing combinedDevices array
+//  - Re-uses buildCityBarDataWithBreakdown() if available (keeps same logic & risk levels)
+//  - Falls back to internal aggregation if needed
+//  - Creates side-panel list (Global (City Overview)) matching bar chart cities
+//  - Click a city -> flyTo on map and open popup
+//  - Hover marker shows counts and offline/online info
+//  - Safe checks and helpful console logs
+
+/* global L, buildCityBarDataWithBreakdown */ // for linters (buildCityBarDataWithBreakdown may exist in graph.js)
+
+let realMap = null;
 window.cityMarkerLayer = null;
-window._cityMarkerIndex = {};
+window._cityMarkerIndex = {}; // city -> marker
 
-// ------------------ CITY COORDS ------------------
+// City coordinate lookup (extend as needed)
 const CITY_COORDS = {
   "Casablanca": [33.5731, -7.5898],
   "Dubai": [25.276987, 55.296249],
@@ -465,206 +45,340 @@ const CITY_COORDS = {
   "Quezon": [14.6760, 121.0437]
 };
 
-// ------------------ DEVICE TYPE MAP ------------------
-const TYPE_KEYS = {
-  camera: "camera",
-  cameras: "camera",
-  archiver: "archiver",
-  archivers: "archiver",
-  controller: "controller",
-  controllers: "controller",
-  server: "server",
-  ccure: "server"
-};
+// ---------- Helpers ----------
+function ensureMapContainerHeight() {
+  const el = document.getElementById('realmap');
+  if (!el) return;
+  const h = (el.clientHeight || 0);
+  if (h === 0) {
+    // ensure visibility: set a sensible default height if CSS forgot
+    el.style.minHeight = '420px';
+  }
+}
 
-// ------------------ MAP INIT ------------------
+function isLeafletLoaded() {
+  return typeof L !== 'undefined' && !!L;
+}
+
+function fuzzyCityCoords(cityName) {
+  if (!cityName) return null;
+  // exact
+  if (CITY_COORDS[cityName]) return CITY_COORDS[cityName];
+  const low = cityName.toLowerCase();
+  // find key that includes the city or vice versa
+  const match = Object.keys(CITY_COORDS).find(k => k.toLowerCase().includes(low) || low.includes(k.toLowerCase()));
+  return match ? CITY_COORDS[match] : null;
+}
+
+function normalizeCityForMap(raw) {
+  if (!raw) return 'Unknown';
+  const s = raw.toString().trim().toLowerCase();
+  if (s.startsWith('pune')) return 'Pune';
+  if (s.includes('vilnius') || s.includes('gama') || s.includes('delta')) return 'Vilnius';
+  if (s.includes('taguig')) return 'Taguig City';
+  if (s.includes('quezon')) return 'Quezon';
+  // fallback: capitalize first letter
+  return raw.toString().trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// Build detailed city stats (ensures we have totals + online/offline + per-type counts)
+function computeFullCityStats(combinedDevices = []) {
+  const map = {};
+  (combinedDevices || []).forEach(entry => {
+    const dev = entry.device ? entry.device : entry;
+    if (!dev) return;
+    const rawCity = dev.city || dev.location || 'Unknown';
+    const city = normalizeCityForMap(rawCity);
+    if (!map[city]) {
+      map[city] = {
+        city,
+        total: 0,
+        online: 0,
+        offline: 0,
+        types: { camera: 0, archiver: 0, controller: 0, server: 0 } // counts
+      };
+    }
+    const status = (dev.status || '').toString().toLowerCase();
+    const type = (dev.type || '').toString().toLowerCase();
+
+    map[city].total++;
+    if (status === 'offline' || status === 'down') map[city].offline++;
+    else map[city].online++;
+
+    if (type.includes('camera')) map[city].types.camera++;
+    else if (type.includes('archiver')) map[city].types.archiver++;
+    else if (type.includes('controller')) map[city].types.controller++;
+    else if (type.includes('server') || type.includes('ccure')) map[city].types.server++;
+    // else ignore unknown types for the per-type count
+  });
+  return map;
+}
+
+// ---------- Map init ----------
 function initRealMap() {
-  realMap = L.map("realmap", {
+  ensureMapContainerHeight();
+
+  if (!isLeafletLoaded()) {
+    console.error('Leaflet not loaded. Add <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>');
+    return;
+  }
+  if (realMap) return;
+
+  realMap = L.map('realmap', {
     preferCanvas: true,
     minZoom: 2,
     maxZoom: 18,
     worldCopyJump: true
   }).setView([15, 0], 2.5);
 
-  L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    { maxZoom: 20 }
-  ).addTo(realMap);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 20,
+    attribution: 'Tiles © Esri'
+  }).addTo(realMap);
 
   window.cityMarkerLayer = L.layerGroup().addTo(realMap);
+  console.debug('initRealMap: initialized');
 }
 
-// ------------------ NORMALIZE CITY ------------------
-function normalizeCity(city) {
-  if (!city) return "Unknown";
-  city = city.toLowerCase().trim();
-
-  if (city.includes("pune")) return "Pune";
-  if (city.includes("vilnius")) return "Vilnius";
-  if (city.includes("taguig")) return "Taguig City";
-  if (city.includes("quezon")) return "Quezon";
-
-  return city.charAt(0).toUpperCase() + city.slice(1);
-}
-
-// ------------------ AGGREGATE DATA ------------------
-function aggregateDevicesByCity(combinedDevices) {
-  const result = {};
-
-  combinedDevices.forEach(entry => {
-    const dev = entry.device ? entry.device : entry;
-    if (!dev) return;
-
-    const city = normalizeCity(dev.city || dev.location);
-    const status = (dev.status || "").toLowerCase();
-    const type = TYPE_KEYS[(dev.type || "").toLowerCase()] || null;
-
-    if (!result[city]) {
-      result[city] = {
-        city,
-        total: 0,
-        online: 0,
-        offline: 0,
-        counts: { camera: 0, archiver: 0, controller: 0, server: 0 },
-        onlineCount: { camera: 0, archiver: 0, controller: 0, server: 0 },
-        offlineCount: { camera: 0, archiver: 0, controller: 0, server: 0 },
-        lat: null,
-        lon: null
-      };
-    }
-
-    const c = result[city];
-    c.total++;
-
-    const isOffline = status === "offline" || status === "down";
-    isOffline ? c.offline++ : c.online++;
-
-    if (type) {
-      c.counts[type]++;
-      isOffline ? c.offlineCount[type]++ : c.onlineCount[type]++;
-    }
-  });
-
-  Object.values(result).forEach(c => {
-    const coords = CITY_COORDS[c.city];
-    if (coords) {
-      c.lat = coords[0];
-      c.lon = coords[1];
-    }
-  });
-
-  return result;
-}
-
-// ------------------ CREATE MARKERS ------------------
-function createCityMarker(cityStats) {
+// ---------- Create marker (divIcon) ----------
+function createCityDivMarker(stats, extra = {}) {
+  const color = stats.offline > 0 ? '#d32f2f' : '#388e3c'; // red if any offline, else green
+  const html = `
+    <div class="city-pin" style="display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:20px;background:rgba(0,0,0,0.6);color:#fff;">
+      <span style="font-size:14px"><i class="bi bi-geo-alt-fill"></i></span>
+      <span class="city-pin-count" style="font-weight:700">${stats.total}</span>
+    </div>`.trim();
 
   const icon = L.divIcon({
-    className: "city-marker",
-    html: `
-      <div class="city-pin">
-        <i class="bi bi-geo-alt-fill"></i>
-        <div class="city-count">${cityStats.total}</div>
-      </div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 40]
+    html,
+    className: 'city-pin-wrapper',
+    iconSize: [44, 36],
+    iconAnchor: [22, 36]
   });
 
-  const marker = L.marker([cityStats.lat, cityStats.lon], { icon });
+  const marker = L.marker([stats.lat, stats.lon], { icon });
 
-  const tooltip = `
-  <strong>${cityStats.city}</strong><br>
-  <i class="bi bi-camera"></i> Cameras: ${cityStats.counts.camera}<br>
-  <i class="fas fa-database"></i> Archivers: ${cityStats.counts.archiver}<br>
-  <i class="bi bi-hdd"></i> Controllers: ${cityStats.counts.controller}<br>
-  <i class="fa-solid fa-server"></i> CCURE: ${cityStats.counts.server}<br>
-  Online: ${cityStats.online} | Offline: ${cityStats.offline}
+  // Tooltip / popup content: combine bar-chart details (offline per type & risk) if available (extra.details)
+  let tooltipHtml = `<div style="min-width:220px">
+    <div style="font-weight:700;margin-bottom:6px">${stats.city}</div>
+    <div><strong>Total:</strong> ${stats.total}</div>
+    <div><strong>Online:</strong> ${stats.online} &nbsp; | &nbsp; <strong>Offline:</strong> ${stats.offline}</div>
+    <hr style="margin:6px 0"/>
+    <div><i class="bi bi-camera"></i> Cameras: ${stats.types.camera}</div>
+    <div><i class="fas fa-database"></i> Archivers: ${stats.types.archiver}</div>
+    <div><i class="bi bi-hdd"></i> Controllers: ${stats.types.controller}</div>
+    <div><i class="fa-solid fa-server"></i> CCURE: ${stats.types.server}</div>
   `;
 
-  marker.bindTooltip(tooltip, { sticky: true });
-  marker.bindPopup(tooltip);
+  if (extra && extra.details) {
+    const d = extra.details; // { offline: {...}, risk: 'High' }
+    tooltipHtml += `<hr style="margin:6px 0"/><div><strong>Risk:</strong> ${d.risk}</div>`;
+    tooltipHtml += `<div style="font-size:13px;color:#eee;margin-top:6px">Offline breakdown:<br>
+      Cameras: ${d.offline.camera || 0}, Controllers: ${d.offline.controller || 0}, Archivers: ${d.offline.archiver || 0}, Servers: ${d.offline.server || 0}
+    </div>`;
+  }
+
+  tooltipHtml += `</div>`;
+
+  marker.bindTooltip(tooltipHtml, { sticky: true, direction: 'top', opacity: 0.95, className: 'city-tooltip' });
+  marker.bindPopup(tooltipHtml, { maxWidth: 320 });
 
   return marker;
 }
 
-// ------------------ SIDE PANEL ------------------
-function buildRegionPanel(data) {
-  const panel = document.getElementById("region-panel-content");
+// ---------- Build side panel content (uses same order/labels as bar chart) ----------
+function buildRegionPanelFromBarData(barResult, fullStatsMap) {
+  const panel = document.getElementById('region-panel-content');
   if (!panel) return;
+  panel.innerHTML = '';
 
-  panel.innerHTML = "";
+  // barResult.details is like [{city, total, offline: {...}, risk}, ...]
+  const details = (barResult && Array.isArray(barResult.details)) ? barResult.details : [];
 
-  const cityList = Object.values(data).sort((a, b) => b.total - a.total);
+  // if no details, fallback to fullStatsMap keys
+  const rows = details.length ? details : Object.values(fullStatsMap).map(s => ({
+    city: s.city,
+    total: s.total,
+    offline: { camera: 0, controller: 0, archiver: 0, server: 0 },
+    risk: 'Low'
+  }));
 
-  cityList.forEach(city => {
-    const div = document.createElement("div");
-    div.className = "city-item";
-    div.innerHTML = `
-      <div>${city.city}</div>
-      <div>— • ${city.total} devices</div>
-    `;
+  rows.forEach(r => {
+    const c = document.createElement('div');
+    c.className = 'city-item';
+    c.style.padding = '8px';
+    c.style.cursor = 'pointer';
+    c.dataset.city = r.city;
 
-    div.onclick = () => {
-      if (!city.lat) return alert(`No coordinates for ${city.city}`);
-      realMap.flyTo([city.lat, city.lon], 12);
-      if (window._cityMarkerIndex[city.city]) {
-        window._cityMarkerIndex[city.city].openPopup();
+    const left = document.createElement('div');
+    left.textContent = r.city;
+    left.style.fontWeight = '600';
+
+    const right = document.createElement('div');
+    right.innerHTML = `— • ${r.total} devices`;
+    right.style.color = '#666';
+    right.style.fontSize = '13px';
+
+    c.appendChild(left);
+    c.appendChild(right);
+
+    c.addEventListener('click', () => {
+      // find full stat entry for lat/lon
+      const full = fullStatsMap[r.city];
+      if (!full || full.lat == null) {
+        alert(`${r.city} does not have coordinates configured. Add to CITY_COORDS.`);
+        return;
       }
-    };
+      if (!realMap) initRealMap();
+      realMap.flyTo([full.lat, full.lon], 12, { duration: 0.6 });
+      const m = window._cityMarkerIndex[r.city];
+      if (m) m.openPopup();
+    });
 
-    panel.appendChild(div);
-  });
-}
+    c.addEventListener('mouseenter', () => c.classList.add('hover'));
+    c.addEventListener('mouseleave', () => c.classList.remove('hover'));
 
-// ------------------ MAIN UPDATE ------------------
-function updateMapFromCombined(combinedDevices) {
-  const data = aggregateDevicesByCity(combinedDevices);
-
-  buildRegionPanel(data);
-
-  window.cityMarkerLayer.clearLayers();
-  window._cityMarkerIndex = {};
-
-  const allCoords = [];
-
-  Object.values(data).forEach(city => {
-    if (!city.lat) return;
-
-    const marker = createCityMarker(city).addTo(window.cityMarkerLayer);
-    window._cityMarkerIndex[city.city] = marker;
-
-    allCoords.push([city.lat, city.lon]);
+    panel.appendChild(c);
   });
 
-  if (allCoords.length) {
-    realMap.fitBounds(L.latLngBounds(allCoords).pad(0.3));
+  if (rows.length === 0) {
+    panel.innerHTML = '<div class="no-cities">No city data available</div>';
   }
 }
 
-// ------------------ UI BUTTONS ------------------
-document.getElementById("fit-all")?.addEventListener("click", () => {
-  if (!window.cityMarkerLayer) return;
-  const group = L.featureGroup(window.cityMarkerLayer.getLayers());
-  realMap.fitBounds(group.getBounds().pad(0.3));
+// ---------- MAIN: use bar chart logic if available, else compute ourselves ----------
+function updateMapFromCombined(combinedDevices = []) {
+  if (!isLeafletLoaded()) {
+    console.error('Leaflet not loaded - cannot render map.');
+    return;
+  }
+  if (!realMap) initRealMap();
+
+  // compute full stats (per-city totals + per-type + online/offline)
+  const fullStats = computeFullCityStats(combinedDevices); // map: city -> stats
+
+  // Try to reuse the bar-chart function to get the same city list/order + risk/offline details
+  let barResult = null;
+  try {
+    if (typeof buildCityBarDataWithBreakdown === 'function') {
+      barResult = buildCityBarDataWithBreakdown(combinedDevices);
+      console.debug('updateMapFromCombined: obtained barResult from buildCityBarDataWithBreakdown');
+    } else {
+      console.debug('updateMapFromCombined: buildCityBarDataWithBreakdown not found, falling back.');
+    }
+  } catch (e) {
+    console.warn('updateMapFromCombined: error calling buildCityBarDataWithBreakdown(), falling back.', e);
+    barResult = null;
+  }
+
+  // Merge details: barResult.details gives offline breakdown and risk, fullStats gives totals + lat candidates
+  // Build unified map: city -> { city, total, online, offline, types: {...}, lat, lon, details: {...} }
+  const unified = {};
+
+  // Use keys from barResult.labels (if present) for ordering
+  const cityKeys = (barResult && Array.isArray(barResult.labels) && barResult.labels.length) ? barResult.labels : Object.keys(fullStats);
+
+  cityKeys.forEach(key => {
+    const cityName = key;
+    const fs = fullStats[cityName] || { city: cityName, total: 0, online: 0, offline: 0, types: { camera:0, archiver:0, controller:0, server:0 } };
+    const detail = (barResult && Array.isArray(barResult.details)) ? barResult.details.find(d => d.city === cityName) : null;
+
+    // find coords
+    let coords = fuzzyCityCoords(cityName);
+    if (!coords) {
+      // try searching in fullStats devices for lat/lon in device objects - but we don't have device-level coords here
+      // leave coords null and warn
+    }
+
+    unified[cityName] = {
+      city: cityName,
+      total: fs.total,
+      online: fs.online,
+      offline: fs.offline,
+      types: fs.types,
+      lat: coords ? coords[0] : null,
+      lon: coords ? coords[1] : null,
+      details: detail || { offline: { camera:0, controller:0, archiver:0, server:0 }, risk: (fs.offline>0 ? 'Medium' : 'Low') }
+    };
+  });
+
+  // Build side panel using barResult (to keep consistent with chart)
+  buildRegionPanelFromBarData(barResult || { labels: Object.keys(unified), details: Object.values(unified).map(u => ({ city: u.city, total: u.total, offline: u.details.offline, risk: u.details.risk })) }, fullStats);
+
+  // Clear existing markers
+  if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
+  window.cityMarkerLayer.clearLayers();
+  window._cityMarkerIndex = {};
+
+  const coordsForBounds = [];
+
+  // Add markers for cities that have coords
+  Object.values(unified).forEach(city => {
+    if (city.lat == null || city.lon == null) {
+      // skip adding marker but keep in panel
+      console.debug(`No coords for city '${city.city}' - skipping marker`);
+      return;
+    }
+
+    const marker = createCityDivMarker(city, { details: city.details });
+    marker.addTo(window.cityMarkerLayer);
+    window._cityMarkerIndex[city.city] = marker;
+    coordsForBounds.push([city.lat, city.lon]);
+  });
+
+  // Fit map to markers if any
+  if (coordsForBounds.length) {
+    try {
+      realMap.fitBounds(L.latLngBounds(coordsForBounds).pad(0.25));
+    } catch (e) {
+      console.warn('fitBounds failed', e);
+    }
+  } else {
+    // If no markers, go to global view
+    realMap.setView([15, 0], 2.5);
+  }
+}
+
+// ---------- Utility UI wiring ----------
+function setupButtons() {
+  document.getElementById('fit-all')?.addEventListener('click', () => {
+    if (!window.cityMarkerLayer) return;
+    const layers = window.cityMarkerLayer.getLayers();
+    if (!layers || !layers.length) return;
+    const group = L.featureGroup(layers);
+    realMap.fitBounds(group.getBounds().pad(0.25));
+  });
+
+  document.getElementById('show-global')?.addEventListener('click', () => {
+    realMap.setView([15, 0], 2.5);
+  });
+
+  document.getElementById('mapFullscreenBtn')?.addEventListener('click', () => {
+    const card = document.querySelector('.worldmap-card');
+    if (card) card.classList.toggle('fullscreen');
+    setTimeout(() => realMap.invalidateSize(), 300);
+  });
+
+  document.getElementById('mapCityOverviewBtn')?.addEventListener('click', () => {
+    const panel = document.getElementById('region-panel');
+    if (panel) panel.classList.toggle('open');
+    setTimeout(() => realMap.invalidateSize(), 300);
+  });
+}
+
+// ---------- Init on DOM ready ----------
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    initRealMap();
+    setupButtons();
+    const panel = document.getElementById('region-panel-content');
+    if (panel) panel.innerHTML = '<div class="no-cities">Waiting for data…</div>';
+    console.debug('map.js loaded and initialized');
+  } catch (e) {
+    console.error('map.js init error', e);
+  }
 });
 
-document.getElementById("show-global")?.addEventListener("click", () => {
-  realMap.setView([15, 0], 2.5);
-});
-
-// ------------------ FULLSCREEN ------------------
-document.getElementById("mapFullscreenBtn")?.addEventListener("click", () => {
-  document.querySelector(".worldmap-card").classList.toggle("fullscreen");
-  setTimeout(() => realMap.invalidateSize(), 300);
-});
-
-// ------------------ PANEL TOGGLE ------------------
-document.getElementById("mapCityOverviewBtn")?.addEventListener("click", () => {
-  document.getElementById("region-panel").classList.toggle("open");
-});
-
-// ------------------ INIT ------------------
-document.addEventListener("DOMContentLoaded", () => {
-  initRealMap();
-  document.getElementById("region-panel-content").innerHTML = "Loading…";
-});
+// ---------- Export for other scripts to call ----------
+// `graph.js` should call updateMapFromCombined(combinedDevices) inside renderOfflineChartFromCombined
+window.updateMapFromCombined = updateMapFromCombined;
