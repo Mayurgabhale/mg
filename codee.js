@@ -1,17 +1,13 @@
-// ========== INITIALIZE EVERYTHING ==========
-function initializeChartSystem() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      initOfflineChart();
-      initOfflineCityBarChart();   // ✅ ADD THIS
-      setupThemeObserver();
-    });
-  } else {
-    initOfflineChart();
-    initOfflineCityBarChart();     // ✅ ADD THIS
-    setupThemeObserver();
-  }
-}
+function renderOfflineChartFromCombined(combinedDevices) {
+  const offlineDevices = combinedDevices
+    .filter(d => d.device.status === "offline")
+    .map(d => ({
+      device: d.device,
+      type: d.device.type
+    }));
 
-// Initialize the chart system
-initializeChartSystem();
+  updateOfflineChart(offlineDevices);
+
+  // ✅ ADD BAR CHART UPDATE HERE
+  updateOfflineCityBarChart(combinedDevices);
+}
