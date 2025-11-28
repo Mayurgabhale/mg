@@ -1,14 +1,22 @@
-const allDevices = combinedDevices.map(item => item.card);
-const deviceObjects = combinedDevices.map(item => item.device);
+// compute summary for filtered devices
+const summary = calculateCitySummary(filteredSummaryDevices);
 
-// ===== Build offline city data for map (safe: helper functions must be defined above) =====
-const offlineCityData = buildOfflineCityCount(combinedDevices);
-const mapCityData = convertOfflineCityForMap(offlineCityData);
+// compute controller extras (you already had this)
+const controllerExtrasFiltered = computeFilteredControllerExtras(selectedCity, selectedStatus);
+if (!summary.summary) summary.summary = {};
+summary.summary.controllerExtras = controllerExtrasFiltered;
 
-// If you have a specialized offline-map update function, call it; otherwise the main map updater:
-if (typeof window.updateOfflineMap === "function") {
-    try { window.updateOfflineMap(mapCityData); } catch (e) { console.warn("updateOfflineMap() failed:", e); }
+// Now safely call the map update with the full details object (not data.details)
+if (typeof window.updateMapData === 'function') {
+    try {
+        // pass summary and the original details object that was passed into updateDetails()
+        window.updateMapData(summary, data);
+    } catch (err) {
+        console.warn("updateMapData failed:", err);
+    }
 } else {
-    // update main map with summary + details later (we will call updateMapData further below)
-    console.debug("updateOfflineMap not found — mapCityData built", mapCityData);
+    console.debug("updateMapData not available yet.");
 }
+
+// Then update UI summary and other charts
+updateSummary(summary);
