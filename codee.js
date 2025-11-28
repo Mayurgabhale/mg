@@ -1,30 +1,14 @@
-// ---- ADD THIS near the top of updateDetails(), before you use it ----
-/**
- * Build a per-city offline counts from combinedDevices array.
- * combinedDevices is an array of { card, device } objects.
- */
-function buildOfflineCityCount(devices) {
-    const cityMap = {};
-    (devices || []).forEach(item => {
-        const dev = item.device;
-        if (!dev) return;
-        if ((dev.status || '').toString().toLowerCase() !== 'offline') return;
-        const city = (dev.city || "Unknown").toString();
-        const type = (dev.type || "").toString();
-        if (!cityMap[city]) {
-            cityMap[city] = { city, offline: { camera: 0, controller: 0, server: 0, archiver: 0 } };
-        }
-        if (cityMap[city].offline.hasOwnProperty(type)) {
-            cityMap[city].offline[type] += 1;
-        }
-    });
-    return Object.values(cityMap);
-}
+const allDevices = combinedDevices.map(item => item.card);
+const deviceObjects = combinedDevices.map(item => item.device);
 
-function convertOfflineCityForMap(offlineCities) {
-    return (offlineCities || []).map(city => ({
-        city: city.city,
-        offlineDevices: city.offline,
-        totalOffline: Object.values(city.offline || {}).reduce((a, b) => a + (b || 0), 0)
-    }));
+// ===== Build offline city data for map (safe: helper functions must be defined above) =====
+const offlineCityData = buildOfflineCityCount(combinedDevices);
+const mapCityData = convertOfflineCityForMap(offlineCityData);
+
+// If you have a specialized offline-map update function, call it; otherwise the main map updater:
+if (typeof window.updateOfflineMap === "function") {
+    try { window.updateOfflineMap(mapCityData); } catch (e) { console.warn("updateOfflineMap() failed:", e); }
+} else {
+    // update main map with summary + details later (we will call updateMapData further below)
+    console.debug("updateOfflineMap not found — mapCityData built", mapCityData);
 }
