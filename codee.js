@@ -1,5 +1,5 @@
 ok, but offline count is not display..
-  
+  all count is disply on offline count is not dilsy 
 // map.js
 // Ensures the map uses the exact same aggregation logic as the bar chart
 // so map counts match the bar chart counts.
