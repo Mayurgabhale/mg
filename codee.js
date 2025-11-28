@@ -654,70 +654,7 @@ function renderControllersInDetails(data, detailsContainer) {
         return;
     }
 
-    data.forEach(ctrl => {
-        const card = document.createElement("div");
-        card.className = "door-device-card";
-        card.style.cssText = `
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        `;
 
-        card.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: #1f2937;">
-                    ${ctrl.controllername || "Unknown Controller"}
-                </h3>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${ctrl.controllerStatus === "Online" ? "#10b981" : "#ef4444"};"></div>
-                    <span style="font-size: 14px; color: ${ctrl.controllerStatus === "Online" ? "#059669" : "#dc2626"}; font-weight: 600;">
-                        ${ctrl.controllerStatus}
-                    </span>
-                </div>
-            </div>
-              
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px; color: #6b7280;">🌐</span>
-                    <div>
-                        <div style="font-size: 12px; color: #6b7280;">IP Address</div>
-                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.IP_address || "N/A"}</div>
-                    </div>
-                </div>
-                  
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px; color: #6b7280;">🏢</span>
-                    <div>
-                        <div style="font-size: 12px; color: #6b7280;">Location</div>
-                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.City || "Unknown"}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Hover effects
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-2px)';
-            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            this.style.borderColor = '#3b82f6';
-        });
-
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-            this.style.borderColor = '#e5e7eb';
-        });
-
-        // When a controller is clicked, show its doors + readers
-        card.addEventListener("click", () => showDoorsReaders(ctrl));
-        detailsContainer.appendChild(card);
-    });
-}
 
 
 // --- REPLACE showDoorsReaders WITH THIS UPDATED VERSION ---
@@ -732,100 +669,7 @@ function showDoorsReaders(controller) {
         : 0;
 
     // Export button (id used to attach handler after modal is opened)
-    const exportButtonHtml = `
-      <button id="export-doors-btn"
-        style="background:#0b74ff; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600;">
-        Export (Excel)
-      </button>
-    `;
-
-    let html = `
-    <div style="margin-bottom:25px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="
-            width:50px;
-            height:50px;
-            border-radius:12px;
-            background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:20px;
-          ">🔒</div>
-          <div>
-            <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
-            <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
-          </div>
-        </div>
-
-        <!-- stats: total doors & readers + export -->
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div style="text-align:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff;">
-            <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Doors</div>
-            <div style="font-weight:700; color:#1f2937; font-size:16px;">${totalDoors}</div>
-          </div>
-          <div style="text-align:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff;">
-            <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Readers</div>
-            <div style="font-weight:700; color:#1f2937; font-size:16px;">${totalReaders}</div>
-          </div>
-
-          ${exportButtonHtml}
-        </div>
-      </div>
-    </div>
-
-    <div style="margin:25px 0 15px 0; display:flex; align-items:center; justify-content:space-between;">
-      <h4 style="margin:0; color:#374151; font-size:1.1rem;">Doors & Readers</h4>
-      <span class="status-badge ${controller.controllerStatus === "Online" ? "status-online" : "status-offline"}">
-        ${controller.controllerStatus}
-      </span>
-    </div>
-  `;
-
-    if (!controller.Doors || controller.Doors.length === 0) {
-        html += `
-      <div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:12px;">
-        <div style="font-size:48px; margin-bottom:15px;">🚪</div>
-        <h4 style="color:#475569; margin-bottom:8px;">No Doors Found</h4>
-        <p style="color:#64748b; margin:0;">This controller doesn't have any doors configured.</p>
-      </div>
-    `;
-    } else {
-        html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
-
-        controller.Doors.forEach((door, index) => {
-            const doorStatusClass = door.status === "Online" ? "status-online" : "status-offline";
-
-            html += `
-        <div class="door-item" style="animation-delay: ${index * 0.1}s;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="
-                width:36px;
-                height:36px;
-                border-radius:8px;
-                background:#f1f5f9;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#475569;
-                font-size:16px;
-              ">🚪</div>
-              <div>
-                <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
-                <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
-              </div>
-            </div>
-            <span class="status-badge ${doorStatusClass}" style="font-size:0.8rem;">
-              ${door.status}
-            </span>
-          </div>
-        </div>
-      `;
-        });
-
+ 
         html += `</div>`;
     }
 
@@ -1081,43 +925,7 @@ function updateDetails(data) {
                     card.insertAdjacentHTML("beforeend", `
   <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
       ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
-  </h3>
-
-  <div class="card-content">
-      <p class="device-type-label ${deviceType}" 
-         style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-          
-          <strong>
-            <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
-            ${deviceLabel}
-          </strong>
-          
-          ${deviceType.includes("camera")
-                            ? `<button class="open-camera-btn"
-        onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
-        title="Open Camera"
-        style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
-    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
-</button>`
-                            : ""
-                        }
-      </p>
-
-      <p style="font-size: ;  font-family: Roboto; margin-bottom: 8px;">
-          <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
-          <span 
-              class="device-ip" 
-              style="font-weight:100; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3);  font-family: Roboto;"
-              onclick="copyToClipboard('${deviceIP}')"
-              title="Click to copy IP"
-          >
-              ${deviceIP}
-          </span>
-      </p>
-
-      <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
-          <strong ><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-          <span style="font-size:; font-weight:100; margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
+ o; font-size: ;">${device.location || "N/A"}</span>
       </p>
 
       <p style="font-size:;  font-family: Roboto;>
@@ -1177,30 +985,6 @@ function updateDetails(data) {
                         tooltip.className = "device-access-tooltip";
                         tooltip.textContent = "Due to Network policy, this camera is Not accessible";
 
-                        tooltip.style.position = "absolute";
-                        tooltip.style.bottom = "100%";
-                        tooltip.style.left = "8px";
-                        tooltip.style.padding = "6px 8px";
-                        tooltip.style.background = "rgba(0,0,0,0.85)";
-                        tooltip.style.color = "#fff";
-                        tooltip.style.borderRadius = "4px";
-                        tooltip.style.fontSize = "12px";
-                        tooltip.style.whiteSpace = "nowrap";
-                        tooltip.style.pointerEvents = "none";
-                        tooltip.style.opacity = "0";
-                        tooltip.style.transform = "translateY(-6px)";
-                        tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
-                        tooltip.style.zIndex = "999";
-
-                        card.appendChild(tooltip);
-
-                        card.addEventListener("mouseenter", () => {
-                            tooltip.style.opacity = "1";
-                            tooltip.style.transform = "translateY(-10px)";
-                        });
-                        card.addEventListener("mouseleave", () => {
-                            tooltip.style.opacity = "0";
-                            tooltip.style.transform = "translateY(-6px)";
                         });
 
                         card.title = tooltip.textContent;
