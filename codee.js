@@ -1,5 +1,4 @@
-
-let simpleMap;
+let realMap;
 
 const CITY_COORDS = {
   "Casablanca": [33.5731, -7.5898],
@@ -24,30 +23,33 @@ const CITY_COORDS = {
   "Vilnius": [54.6872, 25.2797]
 };
 
-function initSimpleMap() {
-  simpleMap = L.map("simpleMap").setView([20, 0], 2);
+function initRealMap() {
+
+  realMap = L.map("realmap").setView([20, 0], 2.4);
 
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-    maxZoom: 18
-  }).addTo(simpleMap);
+    maxZoom: 18,
+    attribution: "Tiles © Esri"
+  }).addTo(realMap);
 
   placeCityMarkers();
 }
 
 function placeCityMarkers() {
 
-  for (const city in CITY_COORDS) {
+  Object.keys(CITY_COORDS).forEach(city => {
     const coords = CITY_COORDS[city];
 
-    const marker = L.marker(coords).addTo(simpleMap);
+    const marker = L.marker(coords).addTo(realMap);
 
     marker.bindTooltip(city, {
+      direction: "top",
       permanent: false,
-      direction: "top"
+      opacity: 0.9
     });
 
     marker.bindPopup(`<b>${city}</b>`);
-  }
+  });
 }
 
-document.addEventListener("DOMContentLoaded", initSimpleMap);
+document.addEventListener("DOMContentLoaded", initRealMap);
