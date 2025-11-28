@@ -1,26 +1,10 @@
-// ================= OFFLINE CITY COUNT =================
-function buildOfflineCityCount(devices) {
-    const cityMap = {};
+const allDevices = combinedDevices.map(item => item.card);
+const deviceObjects = combinedDevices.map(item => item.device);
 
-    devices.forEach(item => {
-        const dev = item.device;
 
-        if (dev.status !== "offline") return;
 
-        const city = dev.city || "Unknown";
-        const type = dev.type;
+...
+// Build offline city data
+const offlineCityData = buildOfflineCityCount(combinedDevices);
 
-        if (!cityMap[city]) {
-            cityMap[city] = {
-                city: city,
-                offline: { camera: 0, controller: 0, server: 0, archiver: 0 }
-            };
-        }
-
-        if (cityMap[city].offline[type] !== undefined) {
-            cityMap[city].offline[type]++;
-        }
-    });
-
-    return Object.values(cityMap);
-}
+console.log("Offline city data:", offlineCityData);
