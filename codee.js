@@ -1,1974 +1,460 @@
+// map.js - final integrated version for your dashboard
+// Works with:
+// 1) renderOfflineChartFromCombined(combinedDevices) -> window.updateMapFromCombined(combinedDevices)
+// 2) fetchData() -> window.updateMapData(summary, details)
+// Place this file after Leaflet is loaded in your HTML.
 
-// C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
-// const baseUrl = "http://localhost:80/api/regions";
-const baseUrl = "http://10.138.161.4:3000/api/regions";
-let refreshInterval = 300000; // 5 minutes
-let pingInterval = 60000; // 30 seconds
-let countdownTime = refreshInterval / 1000; // Convert to seconds
-let currentRegion = "global";
-let deviceDetailsCache = {}; // Store previous details to prevent redundant updates
-let latestDetails = null; // Cache the latest fetched details
+(function () {
+  // ---------- Globals ----------
+  let realMap = null;
+  window.cityMarkerLayer = null;
+  window._cityMarkerIndex = {}; // city -> marker
 
+  // ---------- City coordinates (extend as needed) ----------
+  const CITY_COORDS = {
+    "Pune": [18.5204, 73.8567],
+    "Vilnius": [54.6872, 25.2797],
+    "Casablanca": [33.5731, -7.5898],
+    "Dubai": [25.276987, 55.296249],
+    "Taguig City": [14.5176, 121.0509],
+    "Quezon": [14.6760, 121.0437],
+    "NEW YORK": [40.7128, -74.0060],
+    "Singapore": [1.3521, 103.8198],
+    "HYDERABAD": [17.3850, 78.4867],
+    "London": [51.5074, -0.1278],
+    "Madrid": [40.4168, -3.7038],
+    "Frankfurt": [50.1109, 8.6821],
+    "Kuala lumpur": [3.1390, 101.6869],
+    "Mexico": [23.6345, -102.5528],
+    "Moscow": [55.7558, 37.6173],
+    "Peru": [-9.1900, -75.0152],
+    "Panama": [8.5380, -80.7821],
+    "Argentina": [-38.4161, -63.6167],
+    "Austin TX": [30.2672, -97.7431],
+    "Denver": [39.7392, -104.9903],
+    "Florida, Miami": [25.7617, -80.1918],
+    "Italy, Rome": [41.9028, 12.4964],
+    "Japan Tokyo": [35.6762, 139.6503]
+  };
 
+  // ---------- Utility helpers ----------
+  function isLeafletLoaded() {
+    return typeof L !== "undefined" && !!L;
+  }
 
-
-// Controller cache (populated inside fetchData)
-window.controllerDataCached = null; // <-- ADDED: global cache for controllers
-
-document.addEventListener("DOMContentLoaded", () => {
-    // ⬇️⬇️ this is call from graph.js
-    initOfflineChart();
-    // ensure bar chart is also created (safe to call even if already initialized)
-    if (typeof initOfflineCityBarChart === "function") {
-      try { initOfflineCityBarChart(); } catch(e){ console.warn("initOfflineCityBarChart failed:", e); }
+  function ensureMapDivHeight() {
+    const el = document.getElementById("realmap");
+    if (!el) return;
+    const h = el.clientHeight;
+    if (!h || h < 20) {
+      // If CSS forgot to set a height, make it visible
+      el.style.minHeight = "420px";
+      el.style.height = "420px";
     }
-    fetchData("global"); // Load initial data
-    startAutoRefresh("global");
+  }
 
+  function normalizeCityName(city) {
+    // Uses same logic as your bar chart's normalizeCityName
+    if (!city) return "Unknown";
+    city = city.toString().toLowerCase().trim();
 
+    if (city.startsWith("pune")) return "Pune";
+    if (city.includes("vilnius") || city.includes("gama") || city.includes("delta")) return "Vilnius";
+    if (city.includes("taguig")) return "Taguig City";
+    if (city.includes("quezon")) return "Quezon";
 
-    // Attach Door click
-    const doorCard = document.getElementById("door-card");
-    if (doorCard) {
-        doorCard.style.cursor = "pointer";
-        doorCard.title = "Click to view Controllers";
-        doorCard.addEventListener("click", loadControllersInDetails);
+    // fallback capitalization
+    return city.charAt(0).toUpperCase() + city.slice(1);
+  }
+
+  function fuzzyCoordsForCity(city) {
+    if (!city) return null;
+    if (CITY_COORDS[city]) return CITY_COORDS[city];
+    // try case-insensitive match or inclusion
+    const low = city.toLowerCase();
+    const match = Object.keys(CITY_COORDS).find(k => k.toLowerCase() === low || k.toLowerCase().includes(low) || low.includes(k.toLowerCase()));
+    return match ? CITY_COORDS[match] : null;
+  }
+
+  // ---------- Map init ----------
+  function initRealMap() {
+    ensureMapDivHeight();
+    if (!isLeafletLoaded()) {
+      console.error("Leaflet is not loaded. Add leaflet css & js before map.js.");
+      return;
     }
-
-
-    document.querySelectorAll(".region-button").forEach((button) => {
-        button.addEventListener("click", () => {
-            const region = button.getAttribute("data-region");
-            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
-            switchRegion(region);
-        });
-    });
-
-    document.getElementById("close-modal").addEventListener("click", () => {
-        document.getElementById("modal").style.display = "none";
-    });
-
-
-    // ---------------------------
-    // NEW: Summary card click/dblclick filter behavior
-    // Single click: set device-filter to that type and trigger change (show only that type)
-    // Double click: set device-filter to 'all' and trigger change (show all)
-    // ---------------------------
-
-    (function attachSummaryCardFilterHandlers() {
-        const summaryCards = document.querySelectorAll(".summary .card");
-        if (!summaryCards || summaryCards.length === 0) return;
-
-        // helper: derive deviceFilter value from card title text
-        function mapCardTitleToFilterValue(title) {
-            if (!title) return "all";
-            const t = title.toLowerCase();
-
-            if (t.includes("camera")) return "cameras";
-            if (t.includes("archiver")) return "archivers";
-            if (t.includes("controller")) return "controllers";
-            if (t.includes("ccure")) return "servers";       // CCURE servers
-            if (t.includes("db")) return "dbdetails";        // DB servers
-            if (t.includes("desktop")) return "pcdetails";
-            if (t.includes("total")) return "all";
-
-            return "all";
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const doorCard = document.getElementById("door-card");
-            if (doorCard) {
-                doorCard.style.cursor = "pointer";
-                doorCard.title = "Click to view Controllers";
-                doorCard.addEventListener("click", loadControllersInDetails);
-            }
-        });
-
-
-
-        summaryCards.forEach((card) => {
-            // make interactive
-            card.style.cursor = "pointer";
-
-            let clickTimer = null;
-            const clickDelay = 100; // ms
-
-
-            card.addEventListener("click", (ev) => {
-                if (clickTimer) clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => {
-                    const h3 = card.querySelector("h3");
-                    const titleText = h3 ? h3.innerText.trim() : card.innerText.trim();
-                    const filterValue = mapCardTitleToFilterValue(titleText);
-
-                    const deviceFilterElem = document.getElementById("device-filter");
-                    if (!deviceFilterElem) return;
-
-                    deviceFilterElem.value = filterValue;
-                    deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
-
-                    // 🔥 Highlight clicked card, remove from others
-                    document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
-                    if (filterValue !== "all") {
-                        card.classList.add("active");
-                    }
-                }, clickDelay);
-            });
-
-            card.addEventListener("dblclick", (ev) => {
-                if (clickTimer) {
-                    clearTimeout(clickTimer);
-                    clickTimer = null;
-                }
-                const deviceFilterElem = document.getElementById("device-filter");
-                if (!deviceFilterElem) return;
-
-                deviceFilterElem.value = "all";
-                deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
-
-                // 🔥 Remove all highlights on double-click (reset)
-                document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
-            });
-
-
-
-        });
-    })();
-
-
-
-// C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
-// const baseUrl = "http://localhost:80/api/regions";
-const baseUrl = "http://10.138.161.4:3000/api/regions";
-let refreshInterval = 300000; // 5 minutes
-let pingInterval = 60000; // 30 seconds
-let countdownTime = refreshInterval / 1000; // Convert to seconds
-let currentRegion = "global";
-let deviceDetailsCache = {}; // Store previous details to prevent redundant updates
-let latestDetails = null; // Cache the latest fetched details
-
-
-
-
-// Controller cache (populated inside fetchData)
-window.controllerDataCached = null; // <-- ADDED: global cache for controllers
-
-document.addEventListener("DOMContentLoaded", () => {
-    // ⬇️⬇️ this is call from graph.js
-    initOfflineChart();
-    // ensure bar chart is also created (safe to call even if already initialized)
-    if (typeof initOfflineCityBarChart === "function") {
-      try { initOfflineCityBarChart(); } catch(e){ console.warn("initOfflineCityBarChart failed:", e); }
-    }
-    fetchData("global"); // Load initial data
-    startAutoRefresh("global");
-
-
-
-    // Attach Door click
-    const doorCard = document.getElementById("door-card");
-    if (doorCard) {
-        doorCard.style.cursor = "pointer";
-        doorCard.title = "Click to view Controllers";
-        doorCard.addEventListener("click", loadControllersInDetails);
-    }
-
-
-    document.querySelectorAll(".region-button").forEach((button) => {
-        button.addEventListener("click", () => {
-            const region = button.getAttribute("data-region");
-            document.getElementById("region-title").textContent = `${region.toUpperCase()} Summary`;
-            switchRegion(region);
-        });
-    });
-
-    document.getElementById("close-modal").addEventListener("click", () => {
-        document.getElementById("modal").style.display = "none";
-    });
-
-
-    // ---------------------------
-    // NEW: Summary card click/dblclick filter behavior
-    // Single click: set device-filter to that type and trigger change (show only that type)
-    // Double click: set device-filter to 'all' and trigger change (show all)
-    // ---------------------------
-
-    (function attachSummaryCardFilterHandlers() {
-        const summaryCards = document.querySelectorAll(".summary .card");
-        if (!summaryCards || summaryCards.length === 0) return;
-
-        // helper: derive deviceFilter value from card title text
-        function mapCardTitleToFilterValue(title) {
-            if (!title) return "all";
-            const t = title.toLowerCase();
-
-            if (t.includes("camera")) return "cameras";
-            if (t.includes("archiver")) return "archivers";
-            if (t.includes("controller")) return "controllers";
-            if (t.includes("ccure")) return "servers";       // CCURE servers
-            if (t.includes("db")) return "dbdetails";        // DB servers
-            if (t.includes("desktop")) return "pcdetails";
-            if (t.includes("total")) return "all";
-
-            return "all";
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const doorCard = document.getElementById("door-card");
-            if (doorCard) {
-                doorCard.style.cursor = "pointer";
-                doorCard.title = "Click to view Controllers";
-                doorCard.addEventListener("click", loadControllersInDetails);
-            }
-        });
-
-
-
-        summaryCards.forEach((card) => {
-            // make interactive
-            card.style.cursor = "pointer";
-
-            let clickTimer = null;
-            const clickDelay = 100; // ms
-
-
-            card.addEventListener("click", (ev) => {
-                if (clickTimer) clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => {
-                    const h3 = card.querySelector("h3");
-                    const titleText = h3 ? h3.innerText.trim() : card.innerText.trim();
-                    const filterValue = mapCardTitleToFilterValue(titleText);
-
-                    const deviceFilterElem = document.getElementById("device-filter");
-                    if (!deviceFilterElem) return;
-
-                    deviceFilterElem.value = filterValue;
-                    deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
-
-                    // 🔥 Highlight clicked card, remove from others
-                    document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
-                    if (filterValue !== "all") {
-                        card.classList.add("active");
-                    }
-                }, clickDelay);
-            });
-
-            card.addEventListener("dblclick", (ev) => {
-                if (clickTimer) {
-                    clearTimeout(clickTimer);
-                    clickTimer = null;
-                }
-                const deviceFilterElem = document.getElementById("device-filter");
-                if (!deviceFilterElem) return;
-
-                deviceFilterElem.value = "all";
-                deviceFilterElem.dispatchEvent(new Event("change", { bubbles: true }));
-
-                // 🔥 Remove all highlights on double-click (reset)
-                document.querySelectorAll(".summary .card").forEach(c => c.classList.remove("active"));
-            });
-
-
-
-        });
-    })();
-
-
-
-});
-
-// // --- Camera URL auto-detect helpers ---
-
-function buildUrlFromHints(ip, cameraname = "", hyperlink = "") {
-    ip = (ip || "").trim();
-    hyperlink = (hyperlink || "").trim();
-
-    // 🔑 Always prefer Excel's hyperlink if present
-    if (hyperlink && /^https?:\/\//.test(hyperlink)) {
-        return hyperlink;
-    }
-
-    // Direct IP
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
-        return `http://${ip}`;
-    }
-
-    // Brand-based fallback
-    const name = (cameraname || "").toLowerCase();
-    if (/\bverkada\b/.test(name)) return `https://${ip}/#/login`;
-    if (/\bflir\b/.test(name)) return `http://${ip}/control/userimage.html`;
-    if (/\bhoneywell\b/.test(name)) return `http://${ip}/www/index.html`;
-    if (/axis/.test(name)) return `http://${ip}/view/view.shtml`;
-
-    return `http://${ip}`;
-}
-
-function openCamera(ip, name, hyperlink = "") {
-    const url = buildUrlFromHints(ip, name, hyperlink);
-    console.log("Opening URL:", url);  // Debug
-    window.open(url, "_blank", "noopener");
-}
-
-
-
-
-
-function switchRegion(region) {
-    clearExistingIntervals(); // Avoid interval duplication
-    currentRegion = region;
-    deviceDetailsCache = {};
-    fetchData(region);
-    startAutoRefresh(region);
-}
-
-// **Auto-refresh mechanism**
-function startAutoRefresh(regionName) {
-    fetchData(regionName); // Fetch initial data
-
-    clearExistingIntervals();
-
-    // Start countdown timer
-    window.countdownTimer = setInterval(() => {
-        document.getElementById("countdown").innerText = `Refreshing in ${countdownTime} seconds`;
-        countdownTime--;
-        if (countdownTime < 0) countdownTime = refreshInterval / 1000;
-    }, 1000);
-
-    // Refresh summary & details every 5 minutes
-    window.refreshTimer = setInterval(() => {
-        fetchData(regionName);
-        countdownTime = refreshInterval / 1000;
-    }, refreshInterval);
-
-    // Ping devices every 30 seconds using history API
-    window.pingTimer = setInterval(() => {
-        pingAllDevices(regionName);
-    }, pingInterval);
-}
-
-function clearExistingIntervals() {
-    clearInterval(window.countdownTimer);
-    clearInterval(window.refreshTimer);
-    clearInterval(window.pingTimer);
-}
-
-// **Fetch summary and details together**
-
-
-
-
-
-// Fetch summary, details and controllers together
-function fetchData(regionName) {
-    Promise.all([
-        fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
-        fetch(`${baseUrl}/details/${regionName}`).then(res => res.json()),
-        // fetch(`http://localhost/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
-        fetch(`http://10.138.161.4:3000/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
-    ])
-        .then(([summary, details, controllerData]) => {
-            console.log("Summary Data:", summary);
-            console.log("Details Data:", details);
-            console.log("Controller Data:", controllerData);
-
-            // Cache full controller data for reuse (keep unfiltered copy)
-            if (Array.isArray(controllerData)) {
-                window.controllerDataCached = controllerData; // full cache
-            } else {
-                window.controllerDataCached = null;
-            }
-
-            // Build controllers list filtered by the requested region (so summary reflects region)
-            let controllersForRegion = Array.isArray(controllerData) ? controllerData.slice() : [];
-            try {
-                const regionLower = (regionName || "global").toString().toLowerCase();
-                if (regionLower !== "global") {
-                    controllersForRegion = controllersForRegion.filter(c => {
-                        const loc = (c.Location || c.location || "").toString().toLowerCase();
-                        // also allow matching by City if you ever pass city as region
-                        const city = (c.City || c.city || "").toString().toLowerCase();
-                        return loc === regionLower || city === regionLower;
-                    });
-                }
-            } catch (e) {
-                // fallback: keep full list if something goes wrong
-                controllersForRegion = Array.isArray(controllerData) ? controllerData.slice() : [];
-            }
-
-            // Compute door + reader summary from controllers API but using region-filtered controllers
-            const controllerExtras = processDoorAndReaderData(controllersForRegion);
-
-            // Attach extras into the same structure updateSummary expects:
-            if (!summary.summary) summary.summary = {};
-            summary.summary.controllerExtras = controllerExtras;
-            // Update UI and details
-            updateSummary(summary);
-
-            // ⬇️⬇️
-            // Tell the map about new live counts if map exists
-            if (typeof window.updateMapData === 'function') {
-                window.updateMapData(summary, details);
-            }
-
-            if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
-                updateDetails(details);
-                deviceDetailsCache = details; // Update cache
-            }
-            latestDetails = details;
-        })
-        .catch((error) => console.error("Error fetching data:", error));
-}
-
-/*
-   Updated pingAllDevices:
-   Instead of calling a non-existent ping endpoint, we now use the history API to fetch 
-   device history and update each device’s status by updating the separate status dot and text.
-*/
-
-function copyToClipboard(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                alert("IP copied: " + text);
-            })
-            .catch(err => {
-                console.error("Clipboard API failed", err);
-                fallbackCopyTextToClipboard(text);
-            });
-    } else {
-        fallbackCopyTextToClipboard(text);
-    }
-}
-
-function fallbackCopyTextToClipboard(text) {
-    // Create a temporary textarea
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    // Prevent scrolling to bottom
-    textArea.style.position = "fixed";
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    textArea.style.opacity = "0";
-
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-
-    try {
-        const successful = document.execCommand("copy");
-        if (successful) {
-            alert("IP copied (fallback): " + text);
-        } else {
-            alert("Fallback copy failed");
-        }
-    } catch (err) {
-        console.error("Fallback copy failed", err);
-        alert("Unable to copy");
-    }
-
-    document.body.removeChild(textArea);
-}
-
-function pingAllDevices(regionName) {
-    let details = latestDetails;
-    if (!details || !details.details) return;
-
-    // fetch("http://localhost/api/devices/history")
-    fetch("http://10.138.161.4:3000/api/devices/history")
-        .then(response => response.json())
-        .then(historyData => {
-            let statusChanged = false;
-
-            for (const [key, devices] of Object.entries(details.details)) {
-                if (!Array.isArray(devices) || devices.length === 0) continue;
-
-                devices.forEach((device) => {
-                    const ip = device.ip_address || "N/A";
-                    const card = document.querySelector(`[data-ip="${ip}"]`);
-                    if (!card) return;
-
-                    // Determine new status from history API if available.
-                    const historyArray = historyData[ip];
-                    let newStatus = (device.status || "offline").toLowerCase();
-                    if (Array.isArray(historyArray) && historyArray.length > 0) {
-                        const latestEntry = historyArray[historyArray.length - 1];
-                        newStatus = (latestEntry.status || "offline").toLowerCase();
-                    }
-                    const currentStatus = card.dataset.status;
-
-                    // Update UI: update the dot and the text.
-                    const statusDot = card.querySelector(".status-dot");
-                    const statusText = card.querySelector(".status-text");
-                    if (statusDot) {
-                        statusDot.style.backgroundColor = newStatus === "online" ? "green" : "red";
-                        statusDot.classList.remove("online-dot", "offline-dot");
-                        statusDot.classList.add(newStatus === "online" ? "online-dot" : "offline-dot");
-                    }
-                    else {
-                        console.warn(`Status dot element not found for IP: ${ip}`);
-                    }
-                    if (statusText) {
-                        const textColor = newStatus === "online" ? "green" : "red";
-
-                        statusText.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
-                        statusText.style.color = textColor;
-                        statusText.style.backgroundColor = "transparent";
-                        statusText.style.padding = "0";
-                        statusText.style.borderRadius = "0";
-                    } else {
-                        console.warn(`Status text element not found for IP: ${ip}`);
-                    }
-
-                    if (newStatus !== currentStatus) {
-                        statusChanged = true;
-                        card.dataset.status = newStatus;
-                    }
-                });
-            }
-
-            setTimeout(() => {
-                if (statusChanged) {
-                    fetchData(regionName);
-                }
-            }, 5000);
-        })
-        .catch(error => {
-            console.error("Error fetching device history:", error);
-        });
-}
-
-
-
-
-
-// Process controllers API to compute doors & readers totals
-function processDoorAndReaderData(controllerData) {
-    // controllerData is expected to be an array of controller objects (per your example)
-    if (!Array.isArray(controllerData)) {
-        return {
-            doors: { total: 0, online: 0, offline: 0 },
-            readers: { total: 0, online: 0, offline: 0 }
-        };
-    }
-
-    let doorsTotal = 0, doorsOnline = 0;
-    let readersTotal = 0, readersOnline = 0;
-
-    controllerData.forEach(ctrl => {
-        if (!Array.isArray(ctrl.Doors)) return;
-
-        ctrl.Doors.forEach(door => {
-            // Count door
-            doorsTotal++;
-            if ((door.status || "").toLowerCase() === "online") doorsOnline++;
-
-            // Count reader only if Reader field is present & non-empty
-            if (door.Reader && door.Reader.toString().trim() !== "") {
-                readersTotal++;
-                if ((door.status || "").toLowerCase() === "online") readersOnline++;
-            }
-        });
-    });
-
-    return {
-        doors: {
-            total: doorsTotal,
-            online: doorsOnline,
-            offline: doorsTotal - doorsOnline
-        },
-        readers: {
-            total: readersTotal,
-            online: readersOnline,
-            offline: readersTotal - readersOnline
-        }
-    };
-}
-
-
-function updateSummary(data) {
-    const summary = data.summary || {};
-
-    // ✅ Always keep last known values if new data doesn’t have them
-    window.lastSummary = window.lastSummary || {};
-    const merged = {
-        totalDevices: summary.totalDevices ?? window.lastSummary.totalDevices ?? 0,
-        totalOnlineDevices: summary.totalOnlineDevices ?? window.lastSummary.totalOnlineDevices ?? 0,
-        totalOfflineDevices: summary.totalOfflineDevices ?? window.lastSummary.totalOfflineDevices ?? 0,
-
-        cameras: { ...window.lastSummary.cameras, ...summary.cameras },
-        archivers: { ...window.lastSummary.archivers, ...summary.archivers },
-        controllers: { ...window.lastSummary.controllers, ...summary.controllers },
-        servers: { ...window.lastSummary.servers, ...summary.servers },
-        pcdetails: { ...window.lastSummary.pcdetails, ...summary.pcdetails },
-        dbdetails: { ...window.lastSummary.dbdetails, ...summary.dbdetails },
-
-        // 🆕 door/reader extras merged (summary.controllerExtras is created in fetchData)
-        controllerExtras: { ...window.lastSummary.controllerExtras, ...summary.controllerExtras }
-    };
-
-
-    // 🆕 Recalculate totals to include Door counts (but not Readers)
-    const doors = merged.controllerExtras?.doors || { total: 0, online: 0, offline: 0 };
-
-    // Recompute totals including doors
-    merged.totalDevices =
-        (merged.cameras?.total || 0) +
-        (merged.archivers?.total || 0) +
-        (merged.controllers?.total || 0) +
-        (merged.servers?.total || 0) +
-        (merged.pcdetails?.total || 0) +
-        (merged.dbdetails?.total || 0) +
-        doors.total; // ✅ include doors only
-
-    merged.totalOnlineDevices =
-        (merged.cameras?.online || 0) +
-        (merged.archivers?.online || 0) +
-        (merged.controllers?.online || 0) +
-        (merged.servers?.online || 0) +
-        (merged.pcdetails?.online || 0) +
-        (merged.dbdetails?.online || 0) +
-        doors.online; // ✅ include doors only
-
-    merged.totalOfflineDevices =
-        merged.totalDevices - merged.totalOnlineDevices;
-
-
-
-
-    // ✅ Save merged result for next refresh
-    window.lastSummary = merged;
-
-    // Update UI safely
-    document.getElementById("total-devices").textContent = merged.totalDevices;
-    document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
-    document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
-
-    document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
-    document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
-    document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
-
-    document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
-    document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
-    document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
-
-    document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
-    document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
-    document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
-
-    document.getElementById("server-total").textContent = merged.servers?.total || 0;
-    document.getElementById("server-online").textContent = merged.servers?.online || 0;
-    document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
-
-    // ✅ Fix for Desktop and DB Server
-    document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
-    document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
-    document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
-
-    document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
-    document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
-    document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
-
-
-    // ✅  new for Door and Reader 
-    
-
-    // //////////////////////////////////
-
-
-    // ====== Door / Reader card updates (from controllers API) ======
-    const extras = merged.controllerExtras || {};
-
-    // Prefer the combined doorReader-* IDs (your summary card)
-    const doorTotalEl = document.getElementById("doorReader-total");
-    const doorOnlineEl = document.getElementById("doorReader-online");
-    const doorOfflineEl = document.getElementById("doorReader-offline");
-
-    // Also mirror IDs expected by graph.js / other scripts (safe to set only if they exist)
-    const doorOnlineAlt = document.getElementById("door-online");
-    const doorOfflineAlt = document.getElementById("door-offline");
-
-    const readerTotalEl = document.getElementById("reader-total-inline");
-    const readerOnlineEl = document.getElementById("reader-online-inline");
-    const readerOfflineEl = document.getElementById("reader-offline-inline");
-
-    // Also mirror IDs expected by graph.js
-    const readerOnlineAlt = document.getElementById("reader-online");
-    const readerOfflineAlt = document.getElementById("reader-offline");
-
-    if (extras.doors) {
-        if (doorTotalEl) doorTotalEl.textContent = extras.doors.total || 0;
-        if (doorOnlineEl) doorOnlineEl.textContent = extras.doors.online || 0;
-        if (doorOfflineEl) doorOfflineEl.textContent = extras.doors.offline || 0;
-
-        // mirror
-        if (doorOnlineAlt) doorOnlineAlt.textContent = extras.doors.online || 0;
-        if (doorOfflineAlt) doorOfflineAlt.textContent = extras.doors.offline || 0;
-    } else {
-        if (doorTotalEl) doorTotalEl.textContent = 0;
-        if (doorOnlineEl) doorOnlineEl.textContent = 0;
-        if (doorOfflineEl) doorOfflineEl.textContent = 0;
-
-        if (doorOnlineAlt) doorOnlineAlt.textContent = 0;
-        if (doorOfflineAlt) doorOfflineAlt.textContent = 0;
-    }
-
-    if (extras.readers) {
-        if (readerTotalEl) readerTotalEl.textContent = extras.readers.total || 0;
-        if (readerOnlineEl) readerOnlineEl.textContent = extras.readers.online || 0;
-        if (readerOfflineEl) readerOfflineEl.textContent = extras.readers.offline || 0;
-
-        // mirror
-        if (readerOnlineAlt) readerOnlineAlt.textContent = extras.readers.online || 0;
-        if (readerOfflineAlt) readerOfflineAlt.textContent = extras.readers.offline || 0;
-    } else {
-        if (readerTotalEl) readerTotalEl.textContent = 0;
-        if (readerOnlineEl) readerOnlineEl.textContent = 0;
-        if (readerOfflineEl) readerOfflineEl.textContent = 0;
-
-        if (readerOnlineAlt) readerOnlineAlt.textContent = 0;
-        if (readerOfflineAlt) readerOfflineAlt.textContent = 0;
-    }
-
-    // ⬇️⬇️ this is call from graph.js
-    // --- Immediately refresh gauges/total-chart so UI updates right away after filtering ---
-    if (typeof renderGauges === "function") {
-        try { renderGauges(); } catch (e) { console.warn("renderGauges failed:", e); }
-    }
-    if (typeof updateTotalCountChart === "function") {
-        try { updateTotalCountChart(); } catch (e) { console.warn("updateTotalCountChart failed:", e); }
-    }
-
-
-}
-
-/*
-   Updated updateDetails:
-   Each device card is built with separate elements for the status dot and status text.
-   This ensures that later updates from pingAllDevices can reliably find and update them.
-*/
-
-
-
-
-// 📝📝📝📝📝📝📝📝📝
-
-
-
-/* loadControllersInDetails (mostly unchanged) */
-function loadControllersInDetails() {
-    const detailsContainer = document.getElementById("device-details");
-    const extraContainer = document.getElementById("details-container");
-
-    detailsContainer.innerHTML = "<p>Loading controllers...</p>";
-    extraContainer.innerHTML = "";
-
-    // Use cached controllers if available
-    if (Array.isArray(window.controllerDataCached) && window.controllerDataCached.length > 0) {
-        renderControllersInDetails(window.controllerDataCached, detailsContainer);
-        return;
-    }
-
-    // fetch("http://localhost/api/controllers/status")
-    fetch("http://10.138.161.4:3000/api/controllers/status")
-        .then(res => res.json())
-        .then(data => {
-            window.controllerDataCached = Array.isArray(data) ? data : null; // cache
-            renderControllersInDetails(data, detailsContainer);
-        })
-        .catch(err => {
-            console.error("Error loading controllers:", err);
-            detailsContainer.innerHTML = "<p style='color:red;'>Failed to load controllers.</p>";
-        });
-}
-
-function renderControllersInDetails(data, detailsContainer) {
-    detailsContainer.innerHTML = "";
-    if (!Array.isArray(data) || data.length === 0) {
-        detailsContainer.innerHTML = "<p>No controllers found.</p>";
-        return;
-    }
-
-    data.forEach(ctrl => {
-        const card = document.createElement("div");
-        card.className = "door-device-card";
-        card.style.cssText = `
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        `;
-
-        card.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: #1f2937;">
-                    ${ctrl.controllername || "Unknown Controller"}
-                </h3>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${ctrl.controllerStatus === "Online" ? "#10b981" : "#ef4444"};"></div>
-                    <span style="font-size: 14px; color: ${ctrl.controllerStatus === "Online" ? "#059669" : "#dc2626"}; font-weight: 600;">
-                        ${ctrl.controllerStatus}
-                    </span>
-                </div>
-            </div>
-              
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px; color: #6b7280;">🌐</span>
-                    <div>
-                        <div style="font-size: 12px; color: #6b7280;">IP Address</div>
-                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.IP_address || "N/A"}</div>
-                    </div>
-                </div>
-                  
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px; color: #6b7280;">🏢</span>
-                    <div>
-                        <div style="font-size: 12px; color: #6b7280;">Location</div>
-                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.City || "Unknown"}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Hover effects
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-2px)';
-            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            this.style.borderColor = '#3b82f6';
-        });
-
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-            this.style.borderColor = '#e5e7eb';
-        });
-
-        // When a controller is clicked, show its doors + readers
-        card.addEventListener("click", () => showDoorsReaders(ctrl));
-        detailsContainer.appendChild(card);
-    });
-}
-
-
-// --- REPLACE showDoorsReaders WITH THIS UPDATED VERSION ---
-// Adds an "Export (Excel)" button which downloads a CSV file of the doors/readers.
-function showDoorsReaders(controller) {
-    if (!controller) return;
-
-    // --- counts for header ---
-    const totalDoors = Array.isArray(controller.Doors) ? controller.Doors.length : 0;
-    const totalReaders = Array.isArray(controller.Doors)
-        ? controller.Doors.reduce((acc, d) => acc + (d.Reader && d.Reader.toString().trim() ? 1 : 0), 0)
-        : 0;
-
-    // Export button (id used to attach handler after modal is opened)
-    const exportButtonHtml = `
-      <button id="export-doors-btn"
-        style="background:#0b74ff; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600;">
-        Export (Excel)
-      </button>
-    `;
-
-    let html = `
-    <div style="margin-bottom:25px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="
-            width:50px;
-            height:50px;
-            border-radius:12px;
-            background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:20px;
-          ">🔒</div>
-          <div>
-            <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
-            <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
-          </div>
-        </div>
-
-        <!-- stats: total doors & readers + export -->
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div style="text-align:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff;">
-            <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Doors</div>
-            <div style="font-weight:700; color:#1f2937; font-size:16px;">${totalDoors}</div>
-          </div>
-          <div style="text-align:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff;">
-            <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Readers</div>
-            <div style="font-weight:700; color:#1f2937; font-size:16px;">${totalReaders}</div>
-          </div>
-
-          ${exportButtonHtml}
-        </div>
-      </div>
-    </div>
-
-    <div style="margin:25px 0 15px 0; display:flex; align-items:center; justify-content:space-between;">
-      <h4 style="margin:0; color:#374151; font-size:1.1rem;">Doors & Readers</h4>
-      <span class="status-badge ${controller.controllerStatus === "Online" ? "status-online" : "status-offline"}">
-        ${controller.controllerStatus}
-      </span>
-    </div>
-  `;
-
-    if (!controller.Doors || controller.Doors.length === 0) {
-        html += `
-      <div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:12px;">
-        <div style="font-size:48px; margin-bottom:15px;">🚪</div>
-        <h4 style="color:#475569; margin-bottom:8px;">No Doors Found</h4>
-        <p style="color:#64748b; margin:0;">This controller doesn't have any doors configured.</p>
+    if (realMap) return;
+
+    realMap = L.map("realmap", {
+      preferCanvas: true,
+      minZoom: 2,
+      maxZoom: 18,
+      worldCopyJump: true
+    }).setView([15, 0], 2.5);
+
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 20,
+      attribution: 'Tiles © Esri'
+    }).addTo(realMap);
+
+    window.cityMarkerLayer = L.layerGroup().addTo(realMap);
+    console.debug("map.js: realMap initialized");
+  }
+
+  // ---------- Create marker ----------
+  function createCityMarker(cityStats, barDetail) {
+    const hasOffline = (cityStats.offline && cityStats.offline > 0);
+    const color = hasOffline ? "#d32f2f" : "#388e3c";
+
+    const html = `
+      <div class="city-pin" style="
+        display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:18px;
+        background: rgba(0,0,0,0.65); color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      ">
+        <span style="font-size:16px"><i class="bi bi-geo-alt-fill"></i></span>
+        <span style="font-weight:700">${cityStats.total}</span>
       </div>
     `;
-    } else {
-        html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
 
-        controller.Doors.forEach((door, index) => {
-            const doorStatusClass = door.status === "Online" ? "status-online" : "status-offline";
-
-            html += `
-        <div class="door-item" style="animation-delay: ${index * 0.1}s;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="
-                width:36px;
-                height:36px;
-                border-radius:8px;
-                background:#f1f5f9;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#475569;
-                font-size:16px;
-              ">🚪</div>
-              <div>
-                <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
-                <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
-              </div>
-            </div>
-            <span class="status-badge ${doorStatusClass}" style="font-size:0.8rem;">
-              ${door.status}
-            </span>
-          </div>
-        </div>
-      `;
-        });
-
-        html += `</div>`;
-    }
-
-    // Add modal close button interaction
-    const closeBtn = document.getElementById("close-door-modal");
-    if (closeBtn) {
-        closeBtn.addEventListener("mouseenter", function () {
-            this.style.transform = "scale(1.1)";
-        });
-        closeBtn.addEventListener("mouseleave", function () {
-            this.style.transform = "scale(1)";
-        });
-    }
-
-    openDoorModal(html);
-
-    // --- attach export handler after modal content is inserted ---
-    const exportBtn = document.getElementById("export-doors-btn");
-    if (exportBtn) {
-        // remove previous listener if any (prevent duplicates on repeated opens)
-        exportBtn.replaceWith(exportBtn.cloneNode(true));
-        const newExportBtn = document.getElementById("export-doors-btn");
-        newExportBtn.addEventListener("click", () => exportDoorsToCsv(controller));
-    }
-}
-
-// --- helper: safely escape CSV values ---
-function _escapeCsvValue(val) {
-    if (val == null) return "";
-    const s = String(val);
-    // if contains double quotes, escape them by doubling
-    const escaped = s.replace(/"/g, '""');
-    // If contains comma, newline or quote wrap in quotes
-    if (/[",\n]/.test(s)) {
-        return `"${escaped}"`;
-    }
-    return escaped;
-}
-
-// --- helper: export controller doors to CSV and trigger download ---
-function exportDoorsToCsv(controller) {
-    if (!controller) return;
-
-    const filenameBase = (controller.controllername || "controller").replace(/[^\w\-]/g, "_");
-    const filename = `${filenameBase}_doors.csv`;
-
-    const rows = [];
-
-    // Header info
-    rows.push([`Controller: ${controller.controllername || ""}`]);
-    rows.push([`IP: ${controller.IP_address || ""}`, `City: ${controller.City || ""}`]);
-    const totalDoors = Array.isArray(controller.Doors) ? controller.Doors.length : 0;
-    const totalReaders = Array.isArray(controller.Doors)
-        ? controller.Doors.reduce((acc, d) => acc + (d.Reader && d.Reader.toString().trim() ? 1 : 0), 0)
-        : 0;
-    rows.push([`Total Doors: ${totalDoors}`, `Total Readers: ${totalReaders}`]);
-    rows.push([]); // blank row
-
-    // Column headers
-    rows.push(["Door", "Reader", "Status"]);
-
-    // Door rows
-    if (Array.isArray(controller.Doors)) {
-        controller.Doors.forEach((d) => {
-            rows.push([d.Door || "", d.Reader || "", d.status || ""]);
-        });
-    }
-
-    // convert rows to CSV string
-    const csvContent = rows.map(r => r.map(_escapeCsvValue).join(",")).join("\r\n");
-
-    // create blob and trigger download
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename);
-    } else {
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-}
-
-function updateDetails(data) {
-    const detailsContainer = document.getElementById("device-details");
-    const deviceFilter = document.getElementById("device-filter");
-    const onlineFilterButton = document.getElementById("filter-online");
-    const offlineFilterButton = document.getElementById("filter-offline");
-    const allFilterButton = document.getElementById("filter-all");
-    const cityFilter = document.getElementById("city-filter");
-
-
-
-    detailsContainer.innerHTML = "";
-    cityFilter.innerHTML = '<option value="all">All Cities</option>';
-
-    let combinedDevices = [];
-    let citySet = new Set();
-    let vendorSet = new Set(); // collect normalized vendor values
-    let typeCityMap = {}; // <-- NEW: map deviceType -> Set of cities
-
-    // Icon utility based on device type
-    function getDeviceIcon(type = "") {
-        type = type.toLowerCase();
-        if (type.includes("camera")) return "fas fa-video";
-        if (type.includes("controller")) return "fas fa-cogs";
-        if (type.includes("archiver")) return "fas fa-database";
-        if (type.includes("server")) return "fas fa-server";
-        if (type.includes("pc")) return "fas fa-desktop";
-        if (type.includes("dbdetails")) return "fa-solid fa-life-ring";
-        return "fas fa-microchip"; // fallback
-    }
-
-
-
-    // Helper to find matching controller (by IP or name)
-    function findControllerForDevice(device) {
-        const controllers = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : null;
-        const ipToMatch = (device.ip || device.ip_address || "").toString().trim();
-        const nameToMatch = (device.controllername || device.controller_name || device.cameraname || "").toString().trim();
-
-        if (controllers) {
-            // Try IP match first
-            if (ipToMatch) {
-                const byIp = controllers.find(c => c.IP_address && c.IP_address.toString().trim() === ipToMatch);
-                if (byIp) return byIp;
-            }
-            // Try controller name match (loose contains)
-            if (nameToMatch) {
-                const nameLower = nameToMatch.toLowerCase();
-                const byName = controllers.find(c => (c.controllername || "").toLowerCase().includes(nameLower) || nameLower.includes((c.controllername || "").toLowerCase()));
-                if (byName) return byName;
-            }
-            // Last resort: try city match + online status (heuristic)
-            if (device.city) {
-                const byCity = controllers.find(c => (c.City || "").toLowerCase() === (device.city || "").toLowerCase());
-                if (byCity) return byCity;
-            }
-        }
-        return null;
-    }
-
-    // If controllers aren't cached, we will fetch them when necessary (lazy)
-    function ensureControllersCached() {
-        if (Array.isArray(window.controllerDataCached)) return Promise.resolve(window.controllerDataCached);
-        // return fetch("http://localhost/api/controllers/status")
-        return fetch("http://10.138.161.4:3000/api/controllers/status")
-            .then(res => res.json())
-            .then(data => {
-                window.controllerDataCached = Array.isArray(data) ? data : null;
-                return window.controllerDataCached;
-            })
-            .catch(err => {
-                console.error("Failed to fetch controllers:", err);
-                return null;
-            });
-    }
-
-
-    // Fetch real-time status if available.
-    // fetch("http://localhost:80/api/region/devices/status")
-    fetch("http://10.138.161.4:3000/api/region/devices/status")
-        .then((response) => response.json())
-        .then((realTimeStatus) => {
-            console.log("Live Status Data:", realTimeStatus);
-
-            for (const [key, devices] of Object.entries(data.details)) {
-                if (!Array.isArray(devices) || devices.length === 0) continue;
-                const deviceType = key.toLowerCase();
-
-                // ensure map entry exists
-                if (!typeCityMap[deviceType]) typeCityMap[deviceType] = new Set();
-
-                devices.forEach((device) => {
-                    const deviceIP = device.ip_address || "N/A";
-                    let currentStatus = (realTimeStatus[deviceIP] || device.status || "offline").toLowerCase();
-                    const city = device.city || "Unknown";
-
-                    // collect city globally and per device type
-                    citySet.add(city);
-                    typeCityMap[deviceType].add(city);
-
-                    // --- VENDOR: read possible fields, normalize, skip empty/unknown ---
-                    // NOTE: your JSON uses the key "deviec_details" (typo) — we read that first.
-                    let rawVendor = device.deviec_details || device.device_details || (device.device_details && device.device_details.vendor) || device.vendor || device.vendor_name || device.manufacturer || "";
-                    rawVendor = (rawVendor || "").toString().trim();
-
-                    // Normalize: empty -> null, otherwise uppercase for consistent set values
-                    let vendorNormalized = rawVendor ? rawVendor.toUpperCase() : null;
-
-                    // Only add real vendors (skip "UNKNOWN", "", null)
-                    if (vendorNormalized && vendorNormalized !== "UNKNOWN") {
-                        vendorSet.add(vendorNormalized);
-                    }
-
-                    const datasetVendorValue = vendorNormalized || "";
-
-                    // Create card element.
-                    const card = document.createElement("div");
-                    card.className = "device-card";
-                    card.dataset.type = deviceType;
-                    card.dataset.status = currentStatus;
-                    card.dataset.city = city;
-                    if (datasetVendorValue) card.dataset.vendor = datasetVendorValue; // only set if valid
-                    card.setAttribute("data-ip", deviceIP);
-
-                    // Apply background color based on online/offline status (kept your placeholders)
-                    card.style.backgroundColor = currentStatus === "online" ? "" : "";
-                    card.style.borderColor = currentStatus === "online" ? "" : "";
-
-                    // Create a container for status
-                    const statusContainer = document.createElement("p");
-                    statusContainer.className = "device-status";
-
-                    // Status text
-                    const statusText = document.createElement("span");
-                    statusText.className = "status-text";
-                    statusText.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
-                    statusText.style.color = currentStatus === "online" ? "green" : "red";
-
-                    // Status dot
-                    const statusDot = document.createElement("span");
-                    statusDot.classList.add(currentStatus === "online" ? "online-dot" : "offline-dot");
-                    statusDot.style.backgroundColor = (currentStatus === "online") ? "green" : "red";
-                    statusDot.style.display = "inline-block";
-                    statusDot.style.width = "10px";
-                    statusDot.style.height = "10px";
-                    statusDot.style.marginLeft = "5px";
-                    statusDot.style.marginRight = "5px";
-                    statusDot.style.borderRadius = "50%";
-
-                    // Combine status parts
-                    statusContainer.appendChild(statusDot);
-                    statusContainer.appendChild(statusText);
-
-                    // compute a nicer label for the device-type area
-                    let deviceLabel;
-
-                    if (deviceType === "dbdetails") {
-                        // For DB Details: show the application if available, else fallback
-                        deviceLabel = device.application || deviceType.toUpperCase();
-                    } else if (deviceType.includes("pc")) {
-                        deviceLabel = device.pc_name || device.hostname || "PC";
-                    } else {
-                        deviceLabel = deviceType.toUpperCase();
-                    }
-
-                    card.insertAdjacentHTML("beforeend", `
-  <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
-      ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
-  </h3>
-
-  <div class="card-content">
-      <p class="device-type-label ${deviceType}" 
-         style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-          
-          <strong>
-            <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
-            ${deviceLabel}
-          </strong>
-          
-          ${deviceType.includes("camera")
-                            ? `<button class="open-camera-btn"
-        onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
-        title="Open Camera"
-        style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
-    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
-</button>`
-                            : ""
-                        }
-      </p>
-
-      <p style="font-size: ;  font-family: Roboto; margin-bottom: 8px;">
-          <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
-          <span 
-              class="device-ip" 
-              style="font-weight:100; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3);  font-family: Roboto;"
-              onclick="copyToClipboard('${deviceIP}')"
-              title="Click to copy IP"
-          >
-              ${deviceIP}
-          </span>
-      </p>
-
-      <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
-          <strong ><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-          <span style="font-size:; font-weight:100; margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
-      </p>
-
-      <p style="font-size:;  font-family: Roboto;>
-          <strong "><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
-          <span style="font-weight:100;margin-left: 4px;  font-family: Roboto; font-size:;">${city}</span>
-      </p>
-  </div>
-`);
-                    card.appendChild(statusContainer);
-
-                    // --- ADDED: if this is a controller card, attach click to open doors modal ---
-                    if (deviceType.includes("controller")) {
-                        card.style.cursor = "pointer";
-                        card.title = "Click to view Doors for this controller";
-                        card.setAttribute("role", "button");
-                        card.setAttribute("tabindex", "0");
-
-                        // click handler that uses cached controllers when possible
-                        const openControllerDoors = async () => {
-                            // try to find matching controller from cache
-                            let ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
-                            if (!ctrl) {
-                                // ensure controllers are cached then try again
-                                await ensureControllersCached();
-                                ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
-                            }
-                            if (ctrl) {
-                                showDoorsReaders(ctrl);
-                            } else {
-                                // fallback: open controllers list then highlight nearest by city/IP
-                                loadControllersInDetails();
-                                // show a quick toast/message to indicate we couldn't find exact match
-                                console.warn("Controller details not found in cache for IP/name:", deviceIP, device.controllername);
-                            }
-                        };
-
-                        card.addEventListener("click", (ev) => {
-                            openControllerDoors();
-                        });
-
-                        // keyboard accessibility (Enter / Space)
-                        card.addEventListener("keydown", (ev) => {
-                            if (ev.key === "Enter" || ev.key === " ") {
-                                ev.preventDefault();
-                                openControllerDoors();
-                            }
-                        });
-                    }
-                    // --- END ADDED CLICK HANDLER ---
-
-                    // --- show policy tooltip for devices marked "Not accessible" ---
-                    const remarkText = (device.remark || "").toString().trim();
-                    if (remarkText && /not\s+access/i.test(remarkText)) {
-                        if (!card.style.position) card.style.position = "relative";
-
-                        const tooltip = document.createElement("div");
-                        tooltip.className = "device-access-tooltip";
-                        tooltip.textContent = "Due to Network policy, this camera is Not accessible";
-
-                        tooltip.style.position = "absolute";
-                        tooltip.style.bottom = "100%";
-                        tooltip.style.left = "8px";
-                        tooltip.style.padding = "6px 8px";
-                        tooltip.style.background = "rgba(0,0,0,0.85)";
-                        tooltip.style.color = "#fff";
-                        tooltip.style.borderRadius = "4px";
-                        tooltip.style.fontSize = "12px";
-                        tooltip.style.whiteSpace = "nowrap";
-                        tooltip.style.pointerEvents = "none";
-                        tooltip.style.opacity = "0";
-                        tooltip.style.transform = "translateY(-6px)";
-                        tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
-                        tooltip.style.zIndex = "999";
-
-                        card.appendChild(tooltip);
-
-                        card.addEventListener("mouseenter", () => {
-                            tooltip.style.opacity = "1";
-                            tooltip.style.transform = "translateY(-10px)";
-                        });
-                        card.addEventListener("mouseleave", () => {
-                            tooltip.style.opacity = "0";
-                            tooltip.style.transform = "translateY(-6px)";
-                        });
-
-                        card.title = tooltip.textContent;
-                    }
-
-                    // push device with normalized vendor (may be empty string if unknown)
-                    combinedDevices.push({
-                        card: card,
-                        device: {
-                            ip: deviceIP,
-                            type: deviceType,
-                            status: currentStatus,
-                            city: city,
-                            vendor: datasetVendorValue // already normalized (uppercase) or ""
-                        }
-                    });
-                });
-            }
-
-            combinedDevices.sort((a, b) => {
-                const statusA = (a.device.status === "offline") ? 0 : 1;
-                const statusB = (b.device.status === "offline") ? 0 : 1;
-                return statusA - statusB;
-            });
-
-            const allDevices = combinedDevices.map(item => item.card);
-            const deviceObjects = combinedDevices.map(item => item.device);
-
-            // --- NEW: function to populate city select based on selected device type ---
-            function populateCityOptions(selectedType = "all") {
-                // preserve current selected city if possible
-                const prevSelected = cityFilter.value;
-
-                cityFilter.innerHTML = '<option value="all">All Cities</option>';
-
-                let citiesToShow = new Set();
-
-                if (!selectedType || selectedType === "all") {
-                    citiesToShow = citySet;
-                } else {
-                    const setForType = typeCityMap[selectedType];
-                    if (setForType && setForType.size > 0) {
-                        citiesToShow = setForType;
-                    } else {
-                        // no cities for selected type -> keep empty (except "All Cities")
-                        citiesToShow = new Set();
-                    }
-                }
-
-                // Add cities in sorted order for stable UI
-                Array.from(citiesToShow).sort().forEach((city) => {
-                    const option = document.createElement("option");
-                    option.value = city;
-                    option.textContent = city;
-                    cityFilter.appendChild(option);
-                });
-
-                // restore previous if still valid, otherwise set to 'all'
-                if (prevSelected && Array.from(citiesToShow).includes(prevSelected)) {
-                    cityFilter.value = prevSelected;
-                } else {
-                    cityFilter.value = "all";
-                }
-            }
-
-            // populate vendor options
-            let vendorFilter = document.getElementById("vendorFilter");
-            if (!vendorFilter) {
-                vendorFilter = document.createElement("select");
-                vendorFilter.id = "vendorFilter";
-                vendorFilter.style.marginTop = "8px";
-                deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
-            }
-
-            vendorFilter.innerHTML = `<option value="all">All camera</option>`;
-            [...vendorSet].sort().forEach(v => {
-                if (!v) return;
-                const opt = document.createElement("option");
-                opt.value = v;
-                opt.textContent = v;
-                vendorFilter.appendChild(opt);
-            });
-
-            // hide vendor filter by default unless cameras selected
-            vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
-
-            vendorFilter.onchange = filterDevices; // uses filterDevices defined below
-
-            // Build initial city options for the current deviceFilter selection
-            populateCityOptions(deviceFilter.value || "all");
-
-            // avoid duplicate listeners on repeated updates
-            deviceFilter.value = "all";
-            cityFilter.value = "all";
-            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-            allFilterButton.classList.add("active");
-
-
-            // new -----
-            // --- Add this helper inside updateDetails (same scope as filterDevices) ---
-            
-
-
-            function computeFilteredControllerExtras(selectedCity = "all", selectedStatus = "all") {
-                const controllersAll = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : [];
-                const result = { doors: { total: 0, online: 0, offline: 0 }, readers: { total: 0, online: 0, offline: 0 } };
-
-                if (!controllersAll || controllersAll.length === 0) return result;
-
-                const cityFilterLower = (selectedCity || "all").toString().toLowerCase();
-                const statusFilterLower = (selectedStatus || "all").toString().toLowerCase();
-                const regionFilterLower = (currentRegion || "global").toString().toLowerCase();
-
-                controllersAll.forEach(ctrl => {
-                    // Skip if controller has no Doors
-                    if (!Array.isArray(ctrl.Doors) || ctrl.Doors.length === 0) return;
-
-                    // Region filter (if a specific region other than 'global' is active)
-                    if (regionFilterLower !== "global") {
-                        const ctrlLocation = (ctrl.Location || ctrl.location || "").toString().toLowerCase();
-                        const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
-                        if (ctrlLocation !== regionFilterLower && ctrlCity !== regionFilterLower) {
-                            // controller not in selected region => skip
-                            return;
-                        }
-                    }
-
-                    // Apply city filter if any (match City OR Location)
-                    if (cityFilterLower !== "all") {
-                        const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
-                        const ctrlLocation = (ctrl.Location || ctrl.location || "").toString().toLowerCase();
-
-                        // Match either City OR Location
-                        if (ctrlCity !== cityFilterLower && ctrlLocation !== cityFilterLower) return;
-                    }
-
-                    // Apply status filter if any (match controllerStatus)
-                    if (statusFilterLower !== "all") {
-                        const ctrlStatus = (ctrl.controllerStatus || ctrl.status || "").toString().toLowerCase();
-                        if (ctrlStatus !== statusFilterLower) return;
-                    }
-
-                    // Count doors/readers for this controller
-                    ctrl.Doors.forEach(d => {
-                        result.doors.total++;
-                        if ((d.status || "").toString().toLowerCase() === "online") result.doors.online++;
-
-                        if (d.Reader && d.Reader.toString().trim() !== "") {
-                            result.readers.total++;
-                            if ((d.status || "").toString().toLowerCase() === "online") result.readers.online++;
-                        }
-                    });
-                });
-
-                result.doors.offline = result.doors.total - result.doors.online;
-                result.readers.offline = result.readers.total - result.readers.online;
-                return result;
-            }
-
-            // new -----
-
-
-
-            function filterDevices() {
-                const selectedType = deviceFilter.value;
-                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
-                const selectedCity = cityFilter.value;
-                const vendorFilterLabel = document.getElementById("vendorFilterLabel");
-
-                // toggle vendor UI
-                vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
-                if (vendorFilterLabel) {
-                    vendorFilterLabel.style.display = vendorFilter.style.display;
-                }
-
-                // get vendor selection (if filter exists)
-                const vendorFilterElem = document.getElementById("vendorFilter");
-                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
-
-                // Search bar input
-                const searchTerm = document.getElementById("device-search").value.toLowerCase();
-
-                // Show/hide vendor filter based on type
-                if (vendorFilterElem) {
-                    vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
-                }
-
-                detailsContainer.innerHTML = "";
-
-                const filteredDevices = allDevices.filter((device) =>
-                    (selectedType === "all" || device.dataset.type === selectedType) &&
-                    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
-                    (selectedCity === "all" || device.dataset.city === selectedCity) &&
-                    (selectedVendor === "all" || (device.dataset.vendor || "") === selectedVendor) &&
-                    (
-                        !searchTerm ||
-                        device.innerText.toLowerCase().includes(searchTerm)
-                    )
-                );
-
-                filteredDevices.forEach((deviceCard) => {
-                    detailsContainer.appendChild(deviceCard);
-                });
-
-                const region = currentRegion?.toUpperCase() || "GLOBAL";
-                const titleElement = document.getElementById("region-title");
-
-                const logoHTML = `
-                    <span class="region-logo">
-                        <a href="http://10.199.22.57:3014/" class="tooltip">
-                            <i class="fa-solid fa-house"></i>
-                            <span class="tooltiptext">Dashboard Hub</span>
-                        </a>
-                    </span>
-                    `;
-                if (selectedCity !== "all") {
-                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
-                } else {
-                    titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
-                }
-
-
-                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
-                    const correspondingCard = allDevices[index];
-                    return (
-                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
-                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
-                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
-                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
-                    );
-                });
-                const offlineDevices = filteredSummaryDevices
-                    .filter(d => d.status === "offline")
-                    .map(d => ({
-                        name: d.name || "Unknown",
-                        ip: d.ip,
-                        city: d.city,
-                        type: d.type,
-                        lastSeen: new Date().toISOString()
-                    }));
-
-                //     // ⬇️⬇️ this is call from graph.js
-                // if (window.updateOfflineChart) {
-                //     window.updateOfflineChart(offlineDevices);
-                // }
-
-                // ⬇️⬇️ this is call from graph.js (scatter)
-                if (window.updateOfflineChart) {
-                    try {
-                      window.updateOfflineChart(offlineDevices);
-                    } catch (e) {
-                      console.warn("updateOfflineChart failed:", e);
-                    }
-                }
-
-                // ✅ ALSO update the Offline City BAR chart
-                // updateOfflineCityBarChart expects combinedDevices items with a `.device` property,
-                // so map our flat deviceObjects into that shape.
-                if (typeof window.updateOfflineCityBarChart === "function") {
-                    try {
-                        const barInput = (Array.isArray(deviceObjects) ? deviceObjects : []).map(dev => ({ device: dev }));
-                        window.updateOfflineCityBarChart(barInput);
-                    } catch (e) {
-                        console.warn("updateOfflineCityBarChart failed:", e);
-                    }
-                } else {
-                    console.debug("updateOfflineCityBarChart() not found - ensure graph.js was loaded.");
-                }
-
-                const summary = calculateCitySummary(filteredSummaryDevices);
-
-                // --- NEW: compute controller door/reader counts for the current filters ---
-                // We pass selectedCity and selectedStatus so door counts reflect the active filters.
-                const controllerExtrasFiltered = computeFilteredControllerExtras(selectedCity, selectedStatus);
-                if (!summary.summary) summary.summary = {};
-                summary.summary.controllerExtras = controllerExtrasFiltered;
-
-                updateSummary(summary);
-            }
-
-            function calculateCitySummary(devices) {
-                const summary = {
-                    summary: {
-                        totalDevices: devices.length,
-                        totalOnlineDevices: devices.filter(d => d.status === "online").length,
-                        totalOfflineDevices: devices.filter(d => d.status === "offline").length,
-                        cameras: { total: 0, online: 0, offline: 0 },
-                        archivers: { total: 0, online: 0, offline: 0 },
-                        controllers: { total: 0, online: 0, offline: 0 },
-                        servers: { total: 0, online: 0, offline: 0 },
-                        pcdetails: { total: 0, online: 0, offline: 0 },
-                        dbdetails: { total: 0, online: 0, offline: 0 }
-                    }
-                };
-
-                devices.forEach((device) => {
-                    if (!summary.summary[device.type]) return;
-                    summary.summary[device.type].total += 1;
-                    if (device.status === "online") summary.summary[device.type].online += 1;
-                    else summary.summary[device.type].offline += 1;
-                });
-
-                return summary;
-            }
-
-            // initial filter run
-            filterDevices();
-
-            setTimeout(() => {
-                const selectedCity = cityFilter.value;
-                const selectedType = deviceFilter.value;
-                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
-                const vendorFilterElem = document.getElementById("vendorFilter");
-                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
-
-                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
-                    const correspondingCard = allDevices[index];
-                    return (
-                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
-                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
-                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
-                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
-                    );
-                });
-
-                const summary = calculateCitySummary(filteredSummaryDevices);
-                updateSummary(summary);
-            }, 100);
-
-            // ---- EVENTS ----
-            // When device type changes, rebuild city options first then apply filters.
-            deviceFilter.addEventListener("change", () => {
-                populateCityOptions(deviceFilter.value || "all");
-                filterDevices();
-            });
-
-            // Search bar input
-            document.getElementById("device-search").addEventListener("input", filterDevices);
-            cityFilter.addEventListener("change", filterDevices);
-            allFilterButton.addEventListener("click", () => {
-                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-                allFilterButton.classList.add("active");
-                filterDevices();
-            });
-            onlineFilterButton.addEventListener("click", () => {
-                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-                onlineFilterButton.classList.add("active");
-                filterDevices();
-            });
-            offlineFilterButton.addEventListener("click", () => {
-                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
-                offlineFilterButton.classList.add("active");
-                filterDevices();
-            });
-        })
-        .catch((error) => {
-            console.error("Error fetching real-time device status:", error);
-            detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
-        });
-}
-});// ================== MAP.JS ==================
-
-let realMap;
-window.cityMarkerLayer = null;
-window._cityMarkerIndex = {};
-
-// ------------------ CITY COORDS ------------------
-const CITY_COORDS = {
-  "Pune": [18.5204, 73.8567],
-  "Vilnius": [54.6872, 25.2797],
-  "Casablanca": [33.5731, -7.5898],
-  "Dubai": [25.276987, 55.296249],
-  "Argentina": [-38.4161, -63.6167],
-  "Austin TX": [30.2672, -97.7431],
-  "Austria": [48.2082, 16.3738],
-  "Costa Rica": [9.7489, -83.7534],
-  "Denver": [39.7392, -104.9903],
-  "Florida, Miami": [25.7617, -80.1918],
-  "Frankfurt": [50.1109, 8.6821],
-  "Ireland": [53.3331, -6.2489],
-  "Italy, Rome": [41.9028, 12.4964],
-  "Japan Tokyo": [35.6762, 139.6503],
-  "Kuala lumpur": [3.1390, 101.6869],
-  "London": [51.5074, -0.1278],
-  "Madrid": [40.4168, -3.7038],
-  "Mexico": [23.6345, -102.5528],
-  "Moscow": [55.7558, 37.6173],
-  "NEW YORK": [40.7128, -74.0060],
-  "Panama": [8.5380, -80.7821],
-  "Peru": [-9.1900, -75.0152],
-  "Singapore": [1.3521, 103.8198],
-  "HYDERABAD": [17.3850, 78.4867],
-  "Taguig City": [14.5176, 121.0509],
-  "Quezon": [14.6760, 121.0437]
-};
-
-// ------------------ DEVICE TYPE MAP ------------------
-const TYPE_KEYS = {
-  camera: "camera",
-  cameras: "camera",
-  archiver: "archiver",
-  archivers: "archiver",
-  controller: "controller",
-  controllers: "controller",
-  server: "server",
-  ccure: "server"
-};
-
-// ✅ SAME LOGIC AS YOUR BAR CHART
-function normalizeCityName(city) {
-  if (!city) return "Unknown";
-
-  city = city.toLowerCase().trim();
-
-  if (city.startsWith("pune")) return "Pune";
-
-  if (city.includes("vilnius") ||
-      city.includes("gama") ||
-      city.includes("delta")) {
-    return "Vilnius";
+    const icon = L.divIcon({ html, className: "city-pin-wrapper", iconSize: [44, 36], iconAnchor: [22, 36] });
+    const marker = L.marker([cityStats.lat, cityStats.lon], { icon });
+
+    // Build tooltip / popup consistent with bar chart details if available
+    const offlineBreakdown = (barDetail && barDetail.offline) ? barDetail.offline : { camera: 0, controller: 0, archiver: 0, server: 0 };
+    const risk = (barDetail && barDetail.risk) ? barDetail.risk : (cityStats.offline > 0 ? "Medium" : "Low");
+
+    const tooltip = `
+      <div style="min-width:220px">
+        <div style="font-weight:700;margin-bottom:4px">${cityStats.city}</div>
+        <div><strong>Total:</strong> ${cityStats.total}</div>
+        <div><strong>Online:</strong> ${cityStats.online} &nbsp; | &nbsp; <strong>Offline:</strong> ${cityStats.offline}</div>
+        <hr style="margin:6px 0"/>
+        <div><i class="bi bi-camera"></i> Cameras: ${cityStats.types?.camera || 0}</div>
+        <div><i class="fas fa-database"></i> Archivers: ${cityStats.types?.archiver || 0}</div>
+        <div><i class="bi bi-hdd"></i> Controllers: ${cityStats.types?.controller || 0}</div>
+        <div><i class="fa-solid fa-server"></i> CCURE: ${cityStats.types?.server || 0}</div>
+        <hr style="margin:6px 0"/>
+        <div><strong>Risk:</strong> ${risk}</div>
+        <div style="font-size:12px;color:#eee;margin-top:6px">Offline breakdown: Cameras ${offlineBreakdown.camera||0}, Controllers ${offlineBreakdown.controller||0}, Archivers ${offlineBreakdown.archiver||0}, Servers ${offlineBreakdown.server||0}</div>
+      </div>
+    `;
+
+    marker.bindTooltip(tooltip, { sticky: true, direction: "top", opacity: 0.95, className: "city-tooltip" });
+    marker.bindPopup(tooltip, { maxWidth: 320 });
+
+    return marker;
   }
 
-  return city.charAt(0).toUpperCase() + city.slice(1);
-}
+  // ---------- Build full per-city stats from combinedDevices (fallback) ----------
+  function computeFullStatsFromCombined(combinedDevices) {
+    const map = {};
+    (combinedDevices || []).forEach(entry => {
+      const d = entry.device ? entry.device : entry;
+      if (!d) return;
+      const cityKey = normalizeCityName(d.city || d.location || "Unknown");
+      if (!map[cityKey]) {
+        map[cityKey] = { city: cityKey, total: 0, online: 0, offline: 0, types: { camera:0, archiver:0, controller:0, server:0 }, lat: null, lon: null };
+      }
+      const cs = map[cityKey];
+      cs.total++;
+      const s = (d.status || "").toString().toLowerCase();
+      if (s === "offline" || s === "down") cs.offline++; else cs.online++;
+      const t = (d.type || "").toString().toLowerCase();
+      if (t.includes("camera")) cs.types.camera++;
+      else if (t.includes("archiver")) cs.types.archiver++;
+      else if (t.includes("controller")) cs.types.controller++;
+      else if (t.includes("server") || t.includes("ccure")) cs.types.server++;
+    });
 
-// ------------------ MAP INIT ------------------
-function initRealMap() {
+    // attach coords if known
+    Object.values(map).forEach(c => {
+      const coords = fuzzyCoordsForCity(c.city);
+      if (coords) { c.lat = coords[0]; c.lon = coords[1]; }
+    });
 
-  const mapDiv = document.getElementById("realmap");
-
-  if (!mapDiv) {
-    console.error("❌ #realmap div not found");
-    return;
+    return map;
   }
 
-  realMap = L.map("realmap", {
-    preferCanvas: true,
-    minZoom: 2,
-    maxZoom: 18,
-    worldCopyJump: true
-  }).setView([15, 0], 2.5);
+  // ---------- Use bar-chart function if available, otherwise fallback ----------
+  function buildUnifiedCityDataFromCombined(combinedDevices) {
+    // First compute full stats from combined
+    const fullStats = computeFullStatsFromCombined(combinedDevices); // city -> stats
 
-  L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-  ).addTo(realMap);
+    // Try to use buildCityBarDataWithBreakdown from graph.js to get same order & offline details
+    let barResult = null;
+    if (typeof window.buildCityBarDataWithBreakdown === 'function') {
+      try {
+        barResult = window.buildCityBarDataWithBreakdown(combinedDevices);
+      } catch (e) {
+        console.warn("map.js: buildCityBarDataWithBreakdown() threw:", e);
+        barResult = null;
+      }
+    }
 
-  window.cityMarkerLayer = L.layerGroup().addTo(realMap);
+    const unified = {}; // city -> merged object
+    const citiesInOrder = (barResult && Array.isArray(barResult.labels) && barResult.labels.length) ? barResult.labels : Object.keys(fullStats);
 
-  console.log("✅ Map initialized");
-}
+    citiesInOrder.forEach(cityName => {
+      const fs = fullStats[cityName] || { city: cityName, total: 0, online: 0, offline: 0, types: { camera:0, archiver:0, controller:0, server:0 }, lat: null, lon: null };
+      const detail = (barResult && Array.isArray(barResult.details)) ? barResult.details.find(d => d.city === cityName) : null;
 
-// ------------------ AGGREGATE DATA ------------------
-function aggregateDevicesByCity(combinedDevices) {
+      const coords = fuzzyCoordsForCity(cityName);
+      const lat = coords ? coords[0] : fs.lat;
+      const lon = coords ? coords[1] : fs.lon;
 
-  const result = {};
-
-  if (!Array.isArray(combinedDevices)) {
-    console.warn("❌ combinedDevices not array");
-    return result;
-  }
-
-  combinedDevices.forEach(entry => {
-
-    const dev = entry.device ? entry.device : entry;
-    if (!dev) return;
-
-    const city = normalizeCityName(dev.city || "Unknown");
-    const status = (dev.status || "").toLowerCase();
-    const type = TYPE_KEYS[(dev.type || "").toLowerCase()] || null;
-
-    if (!result[city]) {
-      result[city] = {
-        city,
-        total: 0,
-        online: 0,
-        offline: 0,
-        counts: { camera: 0, archiver: 0, controller: 0, server: 0 },
-        lat: null,
-        lon: null
+      unified[cityName] = {
+        city: cityName,
+        total: fs.total,
+        online: fs.online,
+        offline: fs.offline,
+        types: fs.types,
+        lat: lat,
+        lon: lon,
+        barDetail: detail
       };
+    });
+
+    return unified;
+  }
+
+  // ---------- Build unified city data directly from (summary, details) shape your fetch provides ----------
+  // details is expected to be the same object you pass to updateDetails(details) — in your code you used details.details
+  function buildUnifiedCityDataFromSummaryDetails(summary, details) {
+    // Try to convert details into combinedDevices array
+    const combined = [];
+    try {
+      if (details && typeof details === 'object') {
+        // Many of your functions above iterate details.details where key-> array of devices
+        const bucket = details.details || details;
+        if (bucket && typeof bucket === 'object') {
+          Object.values(bucket).forEach(arr => {
+            if (Array.isArray(arr)) {
+              arr.forEach(dev => {
+                combined.push({ device: dev });
+              });
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("map.js: error flattening details -> combined", e);
     }
 
-    const c = result[city];
-    c.total++;
-
-    const isOffline = status === "offline" || status === "down";
-    isOffline ? c.offline++ : c.online++;
-
-    if (type) {
-      c.counts[type]++;
+    // if combined is empty but summary has totals per city, build minimal entries
+    if (combined.length === 0 && summary && summary.summary && typeof summary.summary === 'object') {
+      // try to extract city totals from summary (common patterns)
+      const summaryObj = summary.summary;
+      Object.keys(summaryObj).forEach(k => {
+        // skip nested controllerExtras etc.
+        if (typeof summaryObj[k] === 'number' && k.toLowerCase().includes('total')) {
+          // not helpful
+        }
+      });
+      // nothing robust to do — fallback to empty combined
     }
-  });
 
-  // Assign coordinates
-  Object.values(result).forEach(c => {
-    const coords = CITY_COORDS[c.city];
-    if (coords) {
-      c.lat = coords[0];
-      c.lon = coords[1];
-    } else {
-      console.warn("⚠️ No coordinates for:", c.city);
+    return buildUnifiedCityDataFromCombined(combined);
+  }
+
+  // ---------- SIDE PANEL builder ----------
+  function buildRegionPanelFromUnified(unified) {
+    const panel = document.getElementById("region-panel-content");
+    if (!panel) return;
+    panel.innerHTML = "";
+
+    const list = Object.values(unified).sort((a,b) => b.total - a.total);
+
+    list.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "city-item";
+      row.style.display = "flex";
+      row.style.justifyContent = "space-between";
+      row.style.padding = "8px";
+      row.style.cursor = "pointer";
+
+      const left = document.createElement("div");
+      left.textContent = item.city;
+      left.style.fontWeight = "600";
+
+      const right = document.createElement("div");
+      right.textContent = `— • ${item.total} devices`;
+      right.style.color = "#666";
+
+      row.appendChild(left);
+      row.appendChild(right);
+
+      row.addEventListener("click", () => {
+        if (!item.lat || !item.lon) {
+          alert(`${item.city} does not have coordinates configured. Add to CITY_COORDS to enable map focus.`);
+          return;
+        }
+        if (!realMap) initRealMap();
+        realMap.flyTo([item.lat, item.lon], 12, { duration: 0.6 });
+        const m = window._cityMarkerIndex[item.city];
+        if (m) m.openPopup();
+      });
+
+      panel.appendChild(row);
+    });
+
+    if (list.length === 0) {
+      panel.innerHTML = "<div class='no-cities'>No city data available</div>";
     }
-  });
+  }
 
-  return result;
-}
+  // ---------- MAIN: accept combinedDevices array ----------
+  function updateMapFromCombined(combinedDevices) {
+    if (!isLeafletLoaded()) { console.error("Leaflet not loaded"); return; }
+    if (!realMap) initRealMap();
+    if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
 
-// ------------------ CREATE MARKER ------------------
-function createCityMarker(cityStats) {
+    const unified = buildUnifiedCityDataFromCombined(combinedDevices);
 
-  const icon = L.divIcon({
-    className: "city-marker",
-    html: `
-      <div class="city-pin">
-        <i class="bi bi-geo-alt-fill"></i>
-        <div class="city-count">${cityStats.total}</div>
-      </div>
-    `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 40]
-  });
+    // populate side panel consistent with bar chart
+    buildRegionPanelFromUnified(unified);
 
-  const marker = L.marker([cityStats.lat, cityStats.lon], { icon });
+    // clear previous markers
+    window.cityMarkerLayer.clearLayers();
+    window._cityMarkerIndex = {};
 
-  const tooltip = `
-  <b>${cityStats.city}</b><br>
-  Cameras: ${cityStats.counts.camera}<br>
-  Archivers: ${cityStats.counts.archiver}<br>
-  Controllers: ${cityStats.counts.controller}<br>
-  Servers: ${cityStats.counts.server}<br>
-  Online: ${cityStats.online} | Offline: ${cityStats.offline}
-  `;
+    const coords = [];
 
-  marker.bindTooltip(tooltip, { sticky: true });
-  marker.bindPopup(tooltip);
-
-  return marker;
-}
-
-// ------------------ SIDE PANEL ------------------
-function buildRegionPanel(data) {
-  const panel = document.getElementById("region-panel-content");
-  if (!panel) return;
-
-  panel.innerHTML = "";
-
-  const cities = Object.values(data).sort((a, b) => b.total - a.total);
-
-  cities.forEach(city => {
-
-    const div = document.createElement("div");
-    div.className = "city-item";
-
-    div.innerHTML = `
-      <strong>${city.city}</strong>
-      <div>${city.total} Devices</div>
-    `;
-
-    div.onclick = () => {
-      if (!city.lat) {
-        alert(`No coordinates for ${city.city}`);
+    Object.values(unified).forEach(city => {
+      if (!city.lat || !city.lon) {
+        console.debug("map.js: skipping marker (no coords) for", city.city);
         return;
       }
+      const marker = createCityMarker(city, city.barDetail);
+      marker.addTo(window.cityMarkerLayer);
+      window._cityMarkerIndex[city.city] = marker;
+      coords.push([city.lat, city.lon]);
+    });
 
-      realMap.flyTo([city.lat, city.lon], 8);
+    if (coords.length) {
+      try { realMap.fitBounds(L.latLngBounds(coords).pad(0.25)); } catch (e) { console.warn("fitBounds failed", e); }
+    } else {
+      realMap.setView([15,0], 2.5);
+    }
+  }
 
-      if (window._cityMarkerIndex[city.city]) {
-        window._cityMarkerIndex[city.city].openPopup();
+  // ---------- MAIN: accept (summary, details) from fetchData ----------
+  function updateMapData(summary, details) {
+    if (!isLeafletLoaded()) { console.error("Leaflet not loaded"); return; }
+    if (!realMap) initRealMap();
+    if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
+
+    // Try to build unified data using bar chart builder if available
+    let unified = null;
+    // Preferred path: try to call buildCityBarDataWithBreakdown(combinedDevices) if available (keeps exact offline/risk)
+    try {
+      if (typeof window.buildCityBarDataWithBreakdown === 'function' && details) {
+        // Convert details.details -> combinedDevices array
+        const combined = [];
+        try {
+          const bucket = details.details || details;
+          Object.values(bucket || {}).forEach(arr => {
+            if (Array.isArray(arr)) arr.forEach(d => combined.push({ device: d }));
+          });
+        } catch (e) {
+          console.warn("map.js: failed to flatten details for bar builder", e);
+        }
+
+        const bar = window.buildCityBarDataWithBreakdown(combined);
+        // bar has labels, values, details
+        // Build unified using combined->full stats plus bar details
+        const full = computeFullStatsFromCombined(combined);
+        unified = {};
+        (bar.labels || []).forEach(label => {
+          const fs = full[label] || { city: label, total: 0, online: 0, offline: 0, types: {camera:0,archiver:0,controller:0,server:0} };
+          const det = (bar.details || []).find(d => d.city === label);
+          const coords = fuzzyCoordsForCity(label);
+          unified[label] = {
+            city: label,
+            total: fs.total,
+            online: fs.online,
+            offline: fs.offline,
+            types: fs.types,
+            lat: coords ? coords[0] : fs.lat,
+            lon: coords ? coords[1] : fs.lon,
+            barDetail: det || null
+          };
+        });
+      } else {
+        // Fallback: build from details directly
+        unified = buildUnifiedCityDataFromSummaryDetails(summary, details);
       }
-    };
+    } catch (e) {
+      console.warn("map.js: updateMapData error, falling back to details flatten", e);
+      unified = buildUnifiedCityDataFromSummaryDetails(summary, details);
+    }
 
-    panel.appendChild(div);
-  });
-}
+    // build panel and markers
+    buildRegionPanelFromUnified(unified);
 
-// ------------------ MAIN FUNCTION ------------------
-function updateMapFromCombined(combinedDevices) {
+    window.cityMarkerLayer.clearLayers();
+    window._cityMarkerIndex = {};
+    const coords = [];
 
-  if (!realMap || !window.cityMarkerLayer) {
-    console.warn("⚠️ Map not initialized yet");
-    return;
+    Object.values(unified).forEach(city => {
+      if (!city.lat || !city.lon) {
+        console.debug("map.js: no coords for", city.city);
+        return;
+      }
+      const marker = createCityMarker(city, city.barDetail);
+      marker.addTo(window.cityMarkerLayer);
+      window._cityMarkerIndex[city.city] = marker;
+      coords.push([city.lat, city.lon]);
+    });
+
+    if (coords.length) {
+      try { realMap.fitBounds(L.latLngBounds(coords).pad(0.25)); } catch (e) { console.warn("fitBounds failed", e); }
+    } else {
+      realMap.setView([15,0], 2.5);
+    }
   }
 
-  const data = aggregateDevicesByCity(combinedDevices);
+  // ---------- Buttons wiring ----------
+  function setupButtons() {
+    document.getElementById("fit-all")?.addEventListener("click", () => {
+      if (!window.cityMarkerLayer) return;
+      const layers = window.cityMarkerLayer.getLayers();
+      if (!layers || layers.length === 0) return;
+      const group = L.featureGroup(layers);
+      realMap.fitBounds(group.getBounds().pad(0.25));
+    });
 
-  buildRegionPanel(data);
+    document.getElementById("show-global")?.addEventListener("click", () => {
+      realMap.setView([15,0], 2.5);
+    });
 
-  window.cityMarkerLayer.clearLayers();
-  window._cityMarkerIndex = {};
+    document.getElementById("mapFullscreenBtn")?.addEventListener("click", () => {
+      const card = document.querySelector(".worldmap-card");
+      if (card) card.classList.toggle("fullscreen");
+      setTimeout(() => realMap.invalidateSize(), 300);
+    });
 
-  const allCoords = [];
+    document.getElementById("mapCityOverviewBtn")?.addEventListener("click", () => {
+      const panel = document.getElementById("region-panel");
+      if (panel) panel.classList.toggle("open");
+      setTimeout(() => realMap.invalidateSize(), 300);
+    });
+  }
 
-  Object.values(data).forEach(city => {
-
-    if (!city.lat) return;
-
-    const marker = createCityMarker(city).addTo(window.cityMarkerLayer);
-
-    window._cityMarkerIndex[city.city] = marker;
-
-    allCoords.push([city.lat, city.lon]);
+  // ---------- Init on DOM ready ----------
+  document.addEventListener("DOMContentLoaded", () => {
+    try {
+      initRealMap();
+      setupButtons();
+      const panel = document.getElementById("region-panel-content");
+      if (panel) panel.innerHTML = "<div class='no-cities'>Waiting for data…</div>";
+      console.debug("map.js loaded");
+    } catch (e) {
+      console.error("map.js init error", e);
+    }
   });
 
-  if (allCoords.length > 0) {
-    realMap.fitBounds(allCoords, { padding: [50, 50] });
-  } else {
-    console.warn("⚠️ No valid coordinates to show");
-  }
-}
+  // ---------- Export functions for other scripts ----------
+  window.updateMapFromCombined = updateMapFromCombined;
+  window.updateMapData = updateMapData;
 
-// ------------------ BUTTON CONTROLS ------------------
-document.getElementById("fit-all")?.addEventListener("click", () => {
-  const group = L.featureGroup(window.cityMarkerLayer.getLayers());
-  realMap.fitBounds(group.getBounds(), { padding: [50, 50] });
-});
-
-document.getElementById("show-global")?.addEventListener("click", () => {
-  realMap.setView([15, 0], 2.5);
-});
-
-document.getElementById("mapFullscreenBtn")?.addEventListener("click", () => {
-  document.querySelector(".worldmap-card").classList.toggle("fullscreen");
-  setTimeout(() => realMap.invalidateSize(), 300);
-});
-
-document.getElementById("mapCityOverviewBtn")?.addEventListener("click", () => {
-  document.getElementById("region-panel").classList.toggle("open");
-});
-
-// ------------------ INIT ------------------
-document.addEventListener("DOMContentLoaded", () => {
-
-  initRealMap();
-
-  const panel = document.getElementById("region-panel-content");
-  if (panel) panel.innerHTML = "Waiting for data...";
-});
+})();
