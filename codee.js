@@ -3,7 +3,7 @@ see this code,
   it is getting all data dynamically ok 
 i want alos map getting dynamic data, like this ok 
 read this code, and use same logic for map.js file for getting dynamically data  ok 
-
+and give me update map.js file ok 
 C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\index.html
 function updateGauge(id, activeId, inactiveId, totalId) {
   // read elements safely (avoid exception if missing)
