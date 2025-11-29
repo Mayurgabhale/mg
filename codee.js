@@ -1,4 +1,33 @@
-// --- Replace your existing map.js functions with this block ---
+chart.js:13 Uncaught Error: Canvas is already in use. Chart with ID '0' must be destroyed before the canvas with ID 'DotOfflineDevice' can be reused.
+script.js:232 Summary Data: Object
+script.js:233 Details Data: Object
+script.js:234 Controller Data: Array(71)
+script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
+    at updateMapData (map.js:1729:5)
+    at script.js:272:24
+(anonymous) @ script.js:281
+script.js:232 Summary Data: Object
+script.js:233 Details Data: Object
+script.js:234 Controller Data: Array(71)
+script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
+    at updateMapData (map.js:1729:5)
+    at script.js:272:24
+(anonymous) @ script.js:281
+script.js:232 Summary Data: Object
+script.js:233 Details Data: Object
+script.js:234 Controller Data: Array(71)
+script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
+    at updateMapData (map.js:1729:5)
+    at script.js:272:24
+(anonymous) @ script.js:281
+script.js:232 Summary Data: Object
+script.js:233 Details Data: Object
+script.js:234 Controller Data: Array(71)
+script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
+    at updateMapData (map.js:1729:5)
+    at script.js:272:24
+(anonymous) @ script.js:281
+
 
 (function () {
   // ---------- Globals ----------
