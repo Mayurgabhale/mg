@@ -1,24 +1,27 @@
-function initRealMap() {
-  if (realMap) return; // Prevent multiple initializations
+function placeCityMarkers() {
+  if (!window.cityMarkerLayer) return;
 
-  realMap = L.map('realmap', {
-    preferCanvas: true,
-    maxBounds: [[70, -135], [-60, 160]],
-    maxBoundsViscosity: 1.0,
-    minZoom: 2.1,
-    maxZoom: 20
-  }).setView([15, 0], 2.4);
+  window.cityMarkerLayer.clearLayers();
 
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 20,
-    attribution: 'Tiles © Esri'
-  }).addTo(realMap);
+  CITY_LIST.forEach(c => {
+    if (toNum(c.lat) === null || toNum(c.lon) === null) return;
 
-  window.markerCluster = L.markerClusterGroup({ chunkedLoading: true, showCoverageOnHover: false });
-  window.countryLayerGroup = L.layerGroup().addTo(realMap);
-  realMap.addLayer(window.markerCluster);
-  L.control.scale().addTo(realMap);
+    const blinkClass = c.shouldBlink ? 'blink' : '';
+    const severityClass = (c.blinkSeverity >= 3) ? ' blink-high' : '';
 
-  // Layer for city markers
-  window.cityMarkerLayer = L.layerGroup().addTo(realMap);
+    const cityIconHtml = `<div><span class="pin ${blinkClass}${severityClass}"><i class="bi bi-geo-alt-fill"></i></span></div>`;
+    const cityIcon = L.divIcon({ className: 'city-marker', html: cityIconHtml, iconAnchor: [12, 12] });
+    const marker = L.marker([c.lat, c.lon], { icon: cityIcon });
+
+    const getSummary = () => buildCitySummaryHTML(c);
+
+    marker.on('mouseover', () => marker.bindTooltip(getSummary(), { direction: 'top', offset: [0, -12], opacity: 1 }).openTooltip());
+    marker.on('mouseout', () => marker.closeTooltip());
+    marker.on('click', () => marker.bindPopup(getSummary(), { maxWidth: 260 }).openPopup());
+
+    marker.addTo(window.cityMarkerLayer);
+  });
+
+  // Bring individual markers to front safely
+  window.cityMarkerLayer.eachLayer(layer => layer.bringToFront && layer.bringToFront());
 }
