@@ -1,26 +1,20 @@
-chartInst.current = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [{
-      label: 'PIN rejections',
-      data: values,
-      borderColor: '#2563eb',
-      backgroundColor: 'rgba(37,99,235,0.2)',
-      fill: true,
-      tension: 0.3,
-      pointBackgroundColor: '#2563eb',
-      pointRadius: 5,
-      pointHoverRadius: 7,
-      borderWidth: 2
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: { type: 'category' },
-      y: { beginAtZero: true, ticks: { precision: 0 } }
-    }
-  }
+const preferredOrder = [
+  "T.Vilnius",
+  "DU.Abu Dhab",
+  "ES.Madrid",
+  "AUT.Vienna",
+  "IE.Dublin",
+  "MA.Casablanca",
+  "UK.London",
+  "IT.Rome",
+  "RU.Moscow"
+];
+
+
+const orderedData = preferredOrder.map(name => {
+  const loc = byLocation.find(x => x.name === name);
+  return loc || { name, count: 0 }; // default 0 if missing
 });
+
+const labels = orderedData.map(x => x.name);
+const values = orderedData.map(x => x.count);
