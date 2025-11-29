@@ -1,34 +1,3 @@
-chart.js:13 Uncaught Error: Canvas is already in use. Chart with ID '0' must be destroyed before the canvas with ID 'DotOfflineDevice' can be reused.
-script.js:232 Summary Data: Object
-script.js:233 Details Data: Object
-script.js:234 Controller Data: Array(71)
-script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
-    at updateMapData (map.js:1729:5)
-    at script.js:272:24
-(anonymous) @ script.js:281
-script.js:232 Summary Data: Object
-script.js:233 Details Data: Object
-script.js:234 Controller Data: Array(71)
-script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
-    at updateMapData (map.js:1729:5)
-    at script.js:272:24
-(anonymous) @ script.js:281
-script.js:232 Summary Data: Object
-script.js:233 Details Data: Object
-script.js:234 Controller Data: Array(71)
-script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
-    at updateMapData (map.js:1729:5)
-    at script.js:272:24
-(anonymous) @ script.js:281
-script.js:232 Summary Data: Object
-script.js:233 Details Data: Object
-script.js:234 Controller Data: Array(71)
-script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified is not defined
-    at updateMapData (map.js:1729:5)
-    at script.js:272:24
-(anonymous) @ script.js:281
-
-
 (function () {
   // ---------- Globals ----------
   let realMap = null;
@@ -71,15 +40,18 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
     servers: 'server'
   };
 
+  // Normalize city names
   function normalizeCityName(city) {
     if (!city) return "Unknown";
     city = city.toString().toLowerCase().trim();
 
     if (city.startsWith("pune")) return "Pune";
 
-    if (city.includes("vilnius") ||
-        city.includes("gama") ||
-        city.includes("delta")) {
+    if (
+      city.includes("vilnius") ||
+      city.includes("gama") ||
+      city.includes("delta")
+    ) {
       return "Vilnius";
     }
 
@@ -100,25 +72,26 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
     return typeof L !== "undefined" && !!L;
   }
 
-  // Robust safe builder: accepts either combinedDevices entries like { device: {...} } OR raw device objects
+  // ---------------------------------------------------------------------
+  // SAFE BAR BUILDER (FIXED) — no shuffle, consistent city-order
+  // ---------------------------------------------------------------------
   function safeBuildCityBarDataWithBreakdown(combinedDevices) {
     if (typeof window.buildCityBarDataWithBreakdown === "function") {
       try {
         return window.buildCityBarDataWithBreakdown(combinedDevices);
       } catch (e) {
-        console.warn("map.js: buildCityBarDataWithBreakdown threw, falling back to internal implementation", e);
+        console.warn("map.js: external builder failed, using fallback", e);
       }
     }
 
-    const map = {}; // city -> info
+    const map = {};
     if (!Array.isArray(combinedDevices)) return { labels: [], values: [], details: [] };
 
     combinedDevices.forEach(entry => {
       const dev = (entry && entry.device) ? entry.device : entry;
       if (!dev) return;
 
-      const rawCity = (dev.city || "Unknown").toString();
-      const city = normalizeCityName(rawCity);
+      const city = normalizeCityName(dev.city || "Unknown");
 
       if (!map[city]) {
         map[city] = {
@@ -132,18 +105,17 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
       map[city].total++;
 
       const status = (dev.status || "").toLowerCase();
-      const devTypeKey = (dev.type || "").toLowerCase();
-      const short = TYPE_MAP[devTypeKey];
-
+      const short = TYPE_MAP[(dev.type || "").toLowerCase()];
       if (status === "offline" && short && map[city].offline.hasOwnProperty(short)) {
         map[city].offline[short]++;
       }
     });
 
-    // apply risk
+    // risk
     Object.values(map).forEach(cityObj => {
       const off = cityObj.offline;
       const cam = off.camera, ctrl = off.controller, arch = off.archiver, serv = off.server;
+
       if (serv > 0 || ctrl > 0 || arch > 0 || (cam > 0 && (ctrl > 0 || arch > 0 || serv > 0))) {
         cityObj.risk = "High";
       } else if (cam > 0) {
@@ -153,8 +125,7 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
       }
     });
 
-    // keep insertion order (no shuffle)
-    const entries = Object.values(map);
+    const entries = Object.values(map); // NO SHUFFLE
 
     const labels = entries.map(e => e.city);
     const values = entries.map(e => e.total);
@@ -168,7 +139,9 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
     return { labels, values, details };
   }
 
-  // Build per-city type totals (used by the map)
+  // ---------------------------------------------------------------------
+  // Device type totals used for map
+  // ---------------------------------------------------------------------
   function buildTypeTotalsFromCombined(combinedDevices = []) {
     const result = {};
 
@@ -178,8 +151,7 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
 
       const city = normalizeCityName(dev.city || "Unknown");
       const status = (dev.status || "").toLowerCase();
-      const devTypeKey = (dev.type || "").toLowerCase();
-      const short = TYPE_MAP[devTypeKey];
+      const short = TYPE_MAP[(dev.type || "").toLowerCase()];
 
       if (!result[city]) {
         result[city] = {
@@ -194,46 +166,46 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
 
       result[city].total++;
 
-      if (short && result[city].counts.hasOwnProperty(short)) {
-        result[city].counts[short] = (result[city].counts[short] || 0) + 1;
+      if (short) {
+        result[city].counts[short]++;
         if (status === "offline") {
-          result[city].offline[short] = (result[city].offline[short] || 0) + 1;
-          result[city].offlineTotal = (result[city].offlineTotal || 0) + 1;
+          result[city].offline[short]++;
+          result[city].offlineTotal++;
         }
-      } else {
-        // If type isn't in TYPE_MAP we still count total/offline
-        if (status === "offline") {
-          result[city].offlineTotal = (result[city].offlineTotal || 0) + 1;
-        }
+      } else if (status === "offline") {
+        result[city].offlineTotal++;
       }
     });
 
-    // compute online
     Object.values(result).forEach(c => {
-      c.online = c.total - (c.offlineTotal || 0);
-      // also guarantee offline object keys exist (for tooltip printing)
-      c.offline.camera = c.offline.camera || 0;
-      c.offline.controller = c.offline.controller || 0;
-      c.offline.archiver = c.offline.archiver || 0;
-      c.offline.server = c.offline.server || 0;
+      c.online = c.total - c.offlineTotal;
     });
 
     return result;
   }
 
+  // ---------------------------------------------------------------------
+  // Coordinates matching
+  // ---------------------------------------------------------------------
   function fuzzyCoords(city) {
     if (!city) return null;
     if (CITY_COORDS[city]) return CITY_COORDS[city];
     const low = city.toLowerCase();
-    const matchKey = Object.keys(CITY_COORDS).find(k => k.toLowerCase().includes(low) || low.includes(k.toLowerCase()));
-    if (matchKey) return CITY_COORDS[matchKey];
-    return null;
+
+    const matchKey = Object.keys(CITY_COORDS).find(
+      k => k.toLowerCase().includes(low) || low.includes(k.toLowerCase())
+    );
+
+    return matchKey ? CITY_COORDS[matchKey] : null;
   }
 
+  // ---------------------------------------------------------------------
+  // Map initialization
+  // ---------------------------------------------------------------------
   function initRealMap() {
     ensureMapDivHeight();
     if (!isLeafletLoaded()) {
-      console.error("Leaflet is not loaded. Add <script src='https://unpkg.com/leaflet/dist/leaflet.js'></script>");
+      console.error("Leaflet not loaded");
       return;
     }
     if (realMap) return;
@@ -245,22 +217,21 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
       worldCopyJump: true
     }).setView([15, 0], 2.5);
 
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 20,
-      attribution: "Tiles © Esri"
-    }).addTo(realMap);
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { maxZoom: 20, attribution: "Tiles © Esri" }
+    ).addTo(realMap);
 
     window.cityMarkerLayer = L.layerGroup().addTo(realMap);
-    console.debug("map.js: map initialized");
   }
 
+  // ---------------------------------------------------------------------
+  // Marker creation
+  // ---------------------------------------------------------------------
   function createCityMarker(cityStats, extraDetail) {
-    // cityStats.offlineTotal is preferred (computed earlier).
-    const offlineTotal = (typeof cityStats.offlineTotal === 'number')
-      ? cityStats.offlineTotal
-      : ((cityStats.offline?.camera || 0) + (cityStats.offline?.controller || 0) + (cityStats.offline?.archiver || 0) + (cityStats.offline?.server || 0));
+    const offlineTotal = cityStats.offlineTotal;
 
-    const labelHTML = `
+    const html = `
       <div class="city-pin">
         <i class="bi bi-geo-alt-fill"></i>
         <div class="city-count">${cityStats.total}</div>
@@ -268,190 +239,203 @@ script.js:281 Error fetching data: ReferenceError: buildRegionPanelFromUnified i
 
     const icon = L.divIcon({
       className: "city-marker",
-      html: labelHTML,
+      html,
       iconSize: [40, 40],
       iconAnchor: [20, 40]
     });
 
-    const lat = cityStats.lat, lon = cityStats.lon;
-    const marker = L.marker([lat, lon], { icon });
+    const marker = L.marker([cityStats.lat, cityStats.lon], { icon });
 
-    // prefer per-type offline from cityStats.offline (computed from typeTotals)
-    const off = cityStats.offline && typeof cityStats.offline === 'object'
-      ? cityStats.offline
-      : (extraDetail && extraDetail.offline ? extraDetail.offline : { camera: 0, controller: 0, archiver: 0, server: 0 });
+    const off = cityStats.offline || { camera: 0, controller: 0, archiver: 0, server: 0 };
+    const risk = cityStats.risk || "Low";
 
-    const risk = (extraDetail && extraDetail.risk) || cityStats.risk || "Low";
-
-    const tooltip = `
-      <div style="min-width:220px">
+    const tip = `
+      <div>
         <strong>${cityStats.city}</strong><br/>
         Total: ${cityStats.total}<br/>
         Online: ${cityStats.online} | Offline: ${offlineTotal}<br/><br/>
 
-        Cameras: ${cityStats.counts.camera} (Offline ${off.camera || 0})<br/>
-        Archivers: ${cityStats.counts.archiver} (Offline ${off.archiver || 0})<br/>
-        Controllers: ${cityStats.counts.controller} (Offline ${off.controller || 0})<br/>
-        Servers: ${cityStats.counts.server} (Offline ${off.server || 0})<br/>
+        Cameras: ${cityStats.counts.camera} (Offline ${off.camera})<br/>
+        Archivers: ${cityStats.counts.archiver} (Offline ${off.archiver})<br/>
+        Controllers: ${cityStats.counts.controller} (Offline ${off.controller})<br/>
+        Servers: ${cityStats.counts.server} (Offline ${off.server})<br/><br/>
 
-        <hr style="margin:6px 0"/>
         Risk: ${risk}
       </div>
     `;
 
-    marker.bindTooltip(tooltip, {
-      sticky: true,
-      direction: "top",
-      opacity: 0.95,
-      className: "city-tooltip"
-    });
-
-    marker.bindPopup(tooltip, { maxWidth: 320 });
+    marker.bindTooltip(tip, { sticky: true, direction: "top", opacity: 0.95 });
+    marker.bindPopup(tip);
 
     return marker;
   }
 
-  // flatten details.details -> combinedDevices array
+  // ---------------------------------------------------------------------
+  // Convert details object -> combinedDevices array
+  // ---------------------------------------------------------------------
   function flattenDetailsToCombined(details) {
     const combined = [];
     if (!details) return combined;
+
     const buckets = details.details || details;
-    if (!buckets || typeof buckets !== "object") return combined;
+    if (!buckets) return combined;
 
     Object.values(buckets).forEach(arr => {
       if (Array.isArray(arr)) {
         arr.forEach(d => combined.push({ device: d }));
-      } else if (arr && typeof arr === 'object' && arr.device) {
-        combined.push(arr);
       }
     });
 
     return combined;
   }
 
+  // ---------------------------------------------------------------------
+  // REGION PANEL (OPTION A — NO-OP, SAFE)
+  // ---------------------------------------------------------------------
+  function buildRegionPanelFromUnified(unified) {
+    // prevents crashes — but does nothing (Option A)
+    return;
+  }
+
+  // ---------------------------------------------------------------------
+  // Main map update using summary + details
+  // ---------------------------------------------------------------------
   function updateMapData(summary, details) {
-    if (!isLeafletLoaded()) { console.error("Leaflet not loaded"); return; }
+    if (!isLeafletLoaded()) return;
     if (!realMap) initRealMap();
     if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
 
     const combined = flattenDetailsToCombined(details);
-    const bar = safeBuildCityBarDataWithBreakdown(combined || []);
-    const typeTotals = buildTypeTotalsFromCombined(combined || []);
+    const bar = safeBuildCityBarDataWithBreakdown(combined);
+    const typeTotals = buildTypeTotalsFromCombined(combined);
 
-    const labels = Array.isArray(bar.labels) && bar.labels.length ? bar.labels : Object.keys(typeTotals);
+    const labels = bar.labels.length ? bar.labels : Object.keys(typeTotals);
     const unified = {};
 
     labels.forEach(cityName => {
-      const tt = typeTotals[cityName] || { counts: { camera:0,archiver:0,controller:0,server:0 }, offline: { camera:0,archiver:0,controller:0,server:0 }, total: 0, online: 0, offlineTotal: 0 };
-      const barDetail = (Array.isArray(bar.details) ? bar.details.find(d => d.city === cityName) : null) || null;
-      const coords = fuzzyCoords(cityName);
-
-      // prefer barDetail.offline for per-type breakdown (bar logic authoritative),
-      // but always compute offlineTotal deterministically.
-      const perTypeOffline = barDetail ? { ...barDetail.offline } : { ...tt.offline };
-      const offlineTotal = (barDetail && Object.values(barDetail.offline||{}).reduce((a,b)=>a+b,0)) || (tt.offlineTotal || Object.values(tt.offline||{}).reduce((a,b)=>a+b,0));
-
-      unified[cityName] = {
-        city: cityName,
-        total: tt.total || (barDetail ? barDetail.total : 0),
-        counts: tt.counts || { camera:0,archiver:0,controller:0,server:0 },
-        offline: perTypeOffline,
-        offlineTotal: offlineTotal,
-        online: tt.online || ( (barDetail ? (barDetail.total - offlineTotal) : (tt.total - offlineTotal)) ),
-        lat: coords ? coords[0] : null,
-        lon: coords ? coords[1] : null,
-        barDetail: barDetail,
-        risk: barDetail ? barDetail.risk : "Low"
+      const tt = typeTotals[cityName] || {
+        counts: { camera: 0, archiver: 0, controller: 0, server: 0 },
+        offline: { camera: 0, archiver: 0, controller: 0, server: 0 },
+        total: 0,
+        online: 0,
+        offlineTotal: 0
       };
-    });
 
-    buildRegionPanelFromUnified(unified);
-
-    window.cityMarkerLayer.clearLayers();
-    window._cityMarkerIndex = {};
-    const coordsForBounds = [];
-
-    Object.values(unified).forEach(city => {
-      if (!city.lat || !city.lon) {
-        console.debug("map.js: skipping city (no coords):", city.city);
-        return;
-      }
-      const marker = createCityMarker(city, city.barDetail);
-      marker.addTo(window.cityMarkerLayer);
-      window._cityMarkerIndex[city.city] = marker;
-      coordsForBounds.push([city.lat, city.lon]);
-    });
-
-    if (coordsForBounds.length) {
-      try { realMap.fitBounds(L.latLngBounds(coordsForBounds).pad(0.25)); } catch (e) { console.warn("fitBounds failed", e); }
-    } else {
-      realMap.setView([15, 0], 2.5);
-    }
-
-    console.debug("map.js: map updated using bar-logic (cities shown):", Object.keys(unified).length);
-  }
-
-  // same buildRegionPanelFromUnified & setupButtons & init DOM as before
-  // (leave your existing implementations for buildRegionPanelFromUnified, setupButtons and DOMContentLoaded init)
-
-  // expose
-  window.updateMapFromCombined = updateMapFromCombined;
-  window.updateMapData = updateMapData;
-
-  // Provide updateMapFromCombined exported wrapper (same as before)
-  function updateMapFromCombined(combinedDevices) {
-    if (!isLeafletLoaded()) { console.error("Leaflet not loaded"); return; }
-    if (!realMap) initRealMap();
-    if (!window.cityMarkerLayer) window.cityMarkerLayer = L.layerGroup().addTo(realMap);
-
-    const bar = safeBuildCityBarDataWithBreakdown(combinedDevices || []);
-    const typeTotals = buildTypeTotalsFromCombined(combinedDevices || []);
-
-    const labels = Array.isArray(bar.labels) && bar.labels.length ? bar.labels : Object.keys(typeTotals);
-    const unified = {};
-
-    labels.forEach(cityName => {
-      const tt = typeTotals[cityName] || { counts: { camera:0, archiver:0, controller:0, server:0 }, offline: { camera:0, archiver:0, controller:0, server:0 }, total: 0, online: 0, offlineTotal: 0 };
-      const barDetail = (Array.isArray(bar.details) ? bar.details.find(d => d.city === cityName) : null) || null;
+      const barDetail = bar.details.find(d => d.city === cityName) || null;
       const coords = fuzzyCoords(cityName);
 
-      const perTypeOffline = barDetail ? { ...barDetail.offline } : { ...tt.offline };
-      const offlineTotal = (barDetail && Object.values(barDetail.offline||{}).reduce((a,b)=>a+b,0)) || (tt.offlineTotal || Object.values(tt.offline||{}).reduce((a,b)=>a+b,0));
+      const offlineBreakdown = barDetail ? barDetail.offline : tt.offline;
+      const offlineTotal =
+        barDetail ?
+        Object.values(barDetail.offline).reduce((a, b) => a + b, 0) :
+        tt.offlineTotal;
 
       unified[cityName] = {
         city: cityName,
         total: tt.total || (barDetail ? barDetail.total : 0),
         counts: tt.counts,
-        offline: perTypeOffline,
-        offlineTotal: offlineTotal,
-        online: tt.online || (barDetail ? (barDetail.total - offlineTotal) : (tt.total - offlineTotal)),
+        offline: offlineBreakdown,
+        offlineTotal,
+        online: tt.total - offlineTotal,
         lat: coords ? coords[0] : null,
         lon: coords ? coords[1] : null,
-        barDetail: barDetail,
-        risk: barDetail ? barDetail.risk : "Low"
+        risk: (barDetail ? barDetail.risk : "Low"),
+        barDetail
       };
     });
 
-    // reuse the same marker & panel logic as updateMapData
     buildRegionPanelFromUnified(unified);
 
     window.cityMarkerLayer.clearLayers();
     window._cityMarkerIndex = {};
-    const coordsForBounds = [];
+
+    const bounds = [];
 
     Object.values(unified).forEach(city => {
       if (!city.lat || !city.lon) return;
+
       const marker = createCityMarker(city, city.barDetail);
       marker.addTo(window.cityMarkerLayer);
       window._cityMarkerIndex[city.city] = marker;
-      coordsForBounds.push([city.lat, city.lon]);
+      bounds.push([city.lat, city.lon]);
     });
 
-    if (coordsForBounds.length) {
-      try { realMap.fitBounds(L.latLngBounds(coordsForBounds).pad(0.25)); } catch (e) { console.warn("fitBounds failed", e); }
+    if (bounds.length) {
+      realMap.fitBounds(L.latLngBounds(bounds).pad(0.25));
     } else {
       realMap.setView([15, 0], 2.5);
     }
   }
+
+  // ---------------------------------------------------------------------
+  // Secondary updater using combinedDevices array directly
+  // ---------------------------------------------------------------------
+  function updateMapFromCombined(combined) {
+    const bar = safeBuildCityBarDataWithBreakdown(combined);
+    const typeTotals = buildTypeTotalsFromCombined(combined);
+
+    const labels = bar.labels.length ? bar.labels : Object.keys(typeTotals);
+    const unified = {};
+
+    labels.forEach(cityName => {
+      const tt = typeTotals[cityName] || {
+        counts: { camera: 0, archiver: 0, controller: 0, server: 0 },
+        offline: { camera: 0, archiver: 0, controller: 0, server: 0 },
+        total: 0,
+        online: 0,
+        offlineTotal: 0
+      };
+
+      const barDetail = bar.details.find(d => d.city === cityName) || null;
+      const coords = fuzzyCoords(cityName);
+
+      const offlineBreakdown = barDetail ? barDetail.offline : tt.offline;
+      const offlineTotal =
+        barDetail ?
+        Object.values(barDetail.offline).reduce((a, b) => a + b, 0) :
+        tt.offlineTotal;
+
+      unified[cityName] = {
+        city: cityName,
+        total: tt.total || (barDetail ? barDetail.total : 0),
+        counts: tt.counts,
+        offline: offlineBreakdown,
+        offlineTotal,
+        online: tt.total - offlineTotal,
+        lat: coords ? coords[0] : null,
+        lon: coords ? coords[1] : null,
+        risk: (barDetail ? barDetail.risk : "Low"),
+        barDetail
+      };
+    });
+
+    buildRegionPanelFromUnified(unified);
+
+    window.cityMarkerLayer.clearLayers();
+    window._cityMarkerIndex = {};
+
+    const bounds = [];
+
+    Object.values(unified).forEach(city => {
+      if (!city.lat || !city.lon) return;
+
+      const marker = createCityMarker(city, city.barDetail);
+      marker.addTo(window.cityMarkerLayer);
+      window._cityMarkerIndex[city.city] = marker;
+      bounds.push([city.lat, city.lon]);
+    });
+
+    if (bounds.length) {
+      realMap.fitBounds(L.latLngBounds(bounds).pad(0.25));
+    } else {
+      realMap.setView([15, 0], 2.5);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Export
+  // ---------------------------------------------------------------------
+  window.updateMapData = updateMapData;
+  window.updateMapFromCombined = updateMapFromCombined;
 
 })();
