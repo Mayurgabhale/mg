@@ -1,27 +1,83 @@
-function placeCityMarkers() {
-  if (!window.cityMarkerLayer) return;
+async function updateMapData(summary, details) {
+  if (!realMap || !details) return;
 
-  window.cityMarkerLayer.clearLayers();
+  try {
+    const deviceBuckets = details.details || details;
+    if (!deviceBuckets) return;
 
-  CITY_LIST.forEach(c => {
-    if (toNum(c.lat) === null || toNum(c.lon) === null) return;
+    const cityMap = {};
 
-    const blinkClass = c.shouldBlink ? 'blink' : '';
-    const severityClass = (c.blinkSeverity >= 3) ? ' blink-high' : '';
+    Object.entries(deviceBuckets).forEach(([rawKey, arr]) => {
+      if (!Array.isArray(arr)) return;
 
-    const cityIconHtml = `<div><span class="pin ${blinkClass}${severityClass}"><i class="bi bi-geo-alt-fill"></i></span></div>`;
-    const cityIcon = L.divIcon({ className: 'city-marker', html: cityIconHtml, iconAnchor: [12, 12] });
-    const marker = L.marker([c.lat, c.lon], { icon: cityIcon });
+      arr.forEach(dev => {
+        const cityName = normalizeCityForMap(dev.city || dev.location || dev.site || "Unknown");
+        let lat = toNum(dev.lat), lon = toNum(dev.lon);
 
-    const getSummary = () => buildCitySummaryHTML(c);
+        const type = ['camera','controller','server','archiver'].find(t => rawKey.toLowerCase().includes(t));
 
-    marker.on('mouseover', () => marker.bindTooltip(getSummary(), { direction: 'top', offset: [0, -12], opacity: 1 }).openTooltip());
-    marker.on('mouseout', () => marker.closeTooltip());
-    marker.on('click', () => marker.bindPopup(getSummary(), { maxWidth: 260 }).openPopup());
+        if (!cityMap[cityName]) {
+          cityMap[cityName] = {
+            city: cityName,
+            lat: lat || null,
+            lon: lon || null,
+            devices: { camera: 0, controller: 0, server: 0, archiver: 0 },
+            offline: { camera: 0, controller: 0, server: 0, archiver: 0 },
+            total: 0,
+            devicesList: [],
+            region: dev.region || dev.zone || null
+          };
+        }
 
-    marker.addTo(window.cityMarkerLayer);
-  });
+        if (type) cityMap[cityName].devices[type] += 1;
+        cityMap[cityName].total += 1;
+        cityMap[cityName].devicesList.push(dev);
 
-  // Bring individual markers to front safely
-  window.cityMarkerLayer.eachLayer(layer => layer.bringToFront && layer.bringToFront());
+        if (lat !== null && lon !== null) {
+          cityMap[cityName].lat = lat;
+          cityMap[cityName].lon = lon;
+        }
+
+        if (isDeviceOffline(dev) && type) {
+          cityMap[cityName].offline[type] += 1;
+        }
+      });
+    });
+
+    CITY_LIST = Object.values(cityMap);
+
+    // Fill missing coordinates
+    for (const c of CITY_LIST) {
+      if (toNum(c.lat) === null || toNum(c.lon) === null) {
+        const coords = await getCityCoordinates(c.city);
+        if (coords) [c.lat, c.lon] = coords;
+      }
+    }
+
+    ensureUniqueCityCoordinates(CITY_LIST);
+
+    // Compute blinking
+    CITY_LIST.forEach(c => {
+      const offlineSum = c.offline.archiver + c.offline.controller + c.offline.server;
+      c.shouldBlink = offlineSum > 0;
+      c.blinkSeverity = Math.min(5, offlineSum);
+    });
+
+    // Update device layers
+    CITY_LIST.forEach(c => {
+      if (!cityLayers[c.city]) cityLayers[c.city] = { deviceLayer: L.layerGroup().addTo(realMap), summaryMarker: null };
+      cityLayers[c.city].deviceLayer.clearLayers();
+      _placeDeviceIconsForCity(c, c.devices, c.devicesList);
+    });
+
+    drawHeatmap();
+    populateGlobalCityList();
+    if (typeof drawRegionBadges === 'function') drawRegionBadges();
+
+    placeCityMarkers();
+    fitAllCities();
+
+  } catch (err) {
+    console.error("updateMapData error", err);
+  }
 }
