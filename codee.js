@@ -1,16 +1,3 @@
-function shuffle(arr) {
-  return arr
-    .map(value => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
-}
-
-// Randomize the order so chart is not sorted
-const randomized = shuffle(byLocation);
-
-const labels = randomized.map(x => x.name || 'Unknown');
-const values = randomized.map(x => x.count || 0);
-
 chartInst.current = new Chart(ctx, {
   type: 'line',
   data: {
