@@ -1,7 +1,9 @@
-PS C:\Users\W0024618\Desktop\Backend\src\data> dir
+ok, i am do this 
+    
+PS C:\Users\W0024618\Desktop\Backend\python-service\data> dir
 
 
-    Directory: C:\Users\W0024618\Desktop\Backend\src\data
+    Directory: C:\Users\W0024618\Desktop\Backend\python-service\data
 
 
 Mode                 LastWriteTime         Length Name
@@ -22,12 +24,11 @@ Mode                 LastWriteTime         Length Name
 -a----         12/1/2025  12:39 PM            855 servers.json
 
 
-PS C:\Users\W0024618\Desktop\Backend\src\data> 
+PS C:\Users\W0024618\Desktop\Backend\python-service\data> 
 
 
 
-_____________________
-  C:\Users\W0024618\Desktop\Backend\python-service\import_devices.py
+    C:\Users\W0024618\Desktop\Backend\python-service\import_devices.py
 import json
 import pandas as pd
 from database import get_db
