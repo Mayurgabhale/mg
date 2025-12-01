@@ -1,6 +1,14 @@
 see this is my frontend code, ok, how to add 
 updete and edit or and add new device in this 
-
+  <main id="content">
+      <section id="details-section" class="details-section">
+        <div class="details-header">
+          <h2><i class="fas fa-microchip"></i> Device Details</h2>
+          <input type="text" id="device-search" placeholder="🔍 Search by IP, Location, City..." />
+        </div>
+        <div id="device-details" class="device-grid">Loading device data...</div>
+        <div id="details-container" class="device-grid"></div>
+      </section>
 // C:\Users\W0024618\Desktop\NewFrontend\Device Dashboard\script.js
 const baseUrl = "http://localhost:80/api/regions";
 // const baseUrl = "http://10.138.161.4:3000/api/regions";
