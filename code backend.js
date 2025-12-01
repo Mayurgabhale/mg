@@ -1,3 +1,6 @@
+
+pip install fastapi uvicorn apscheduler icmplib
+
 Backend/
 │
 ├── src/                    ← Your existing Node.js backend
