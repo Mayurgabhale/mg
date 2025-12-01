@@ -1,55 +1,268 @@
+see this app.js file, and where is need to do chagne wiht thie new 
+  
+require("dotenv").config();
 const express = require("express");
-const router = express.Router();
-const {
-  addDevice,
-  updateDevice,
-  deleteDevice,
-  fetchGlobalData,
-} = require("../services/excelService");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+//const ping = require("ping");
+const { pingHost } = require("./services/pingService");
+const { DateTime } = require("luxon");
+const regionRoutes = require("./routes/regionRoutes");
+const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
+const { getDeviceInfo } = require("./services/excelService");
+const { sendTeamsAlert }    = require("./services/teamsService");
 
-// get all devices (summary + details)
-router.get("/all", async (req, res) => {
+const controllerData = JSON.parse(
+  fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
+);
+
+const app = express();
+const PORT = process.env.PORT || 80;
+
+// Helpers
+function pruneOldEntries(entries, days = 30) {
+  const cutoff = DateTime.now().minus({ days }).toMillis();
+  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+}
+function getLogFileForDate(dt) {
+  return `./deviceLogs-${dt.toISODate()}.json`;
+}
+
+function safeJsonParse(filePath) {
   try {
-    const data = await fetchGlobalData();
-    res.json(data);
+    const content = fs.readFileSync(filePath, "utf8").trim();
+    if (!content) return {};  // empty file = empty object
+    return JSON.parse(content);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Corrupted JSON file detected:", filePath);
+    console.error("Error:", err.message);
+    return {};  // fallback so server NEVER crashes
   }
+}
+
+
+
+// Middleware
+app.use(cors({
+    origin: "http://127.0.0.1:5500",
+  //  origin: "http://localhost:3000",
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization",
+}));
+app.use(bodyParser.json());
+
+// Routes
+app.use("/api/regions", regionRoutes);
+
+// Device Status Tracking
+const devices = fetchAllIpAddress();
+let deviceStatus = {};
+
+// Load only today's logs
+const today = DateTime.now().setZone("Asia/Kolkata");
+const todayLogFile = getLogFileForDate(today);
+
+
+
+let todayLogs = fs.existsSync(todayLogFile)
+  ? safeJsonParse(todayLogFile)
+  : {};
+
+
+
+// Persist today's logs
+function saveTodayLogs() {
+  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
+}
+
+// Log a status change
+function logDeviceChange(ip, status) {
+  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
+  const arr = (todayLogs[ip] = todayLogs[ip] || []);
+  const last = arr[arr.length - 1];
+  if (!last || last.status !== status) {
+    arr.push({ status, timestamp });
+    todayLogs[ip] = pruneOldEntries(arr, 30);
+    saveTodayLogs();
+  }
+}
+
+
+async function pingDevices() {
+  const limit = require("p-limit")(20);
+
+  await Promise.all(
+    devices.map(ip =>
+      limit(async () => {
+        const newStatus = await pingHost(ip);
+        if (deviceStatus[ip] !== newStatus) {
+          logDeviceChange(ip, newStatus);
+        }
+        deviceStatus[ip] = newStatus;
+      })
+    )
+  );
+
+  // ✅ Build Controller + Door Status
+  buildControllerStatus();
+
+  console.log("Updated device status:", deviceStatus);
+}
+
+
+// 📝📝📝📝📝📝
+
+let fullStatus = [];
+function buildControllerStatus() {
+  fullStatus = controllerData.map(controller => {
+    const ip = controller.IP_address.trim();
+    const status = deviceStatus[ip] || "Unknown";
+
+    // If controller offline, mark all doors offline too
+    const doors = controller.Doors.map(d => ({
+      ...d,
+      status: status === "Online" ? "Online" : "Offline",
+    }));
+
+    return {
+      controllername: controller.controllername,
+      IP_address: ip,
+      Location: controller.Location || "Unknown",
+      City: controller.City || "Unknown",
+      controllerStatus: status,
+      Doors: doors,
+    };
+  });
+}
+
+// 📝📝📝📝📝📝
+
+
+const notifiedOffline=new Set();
+
+
+// Start ping loop
+// setInterval(pingDevices, 60_000);
+// pingDevices();
+
+
+setInterval(async () => {
+   pingDevices();
+ // await checkNotifications();
+}, 60_000);
+
+// initial run
+(async () => {
+   pingDevices();
+  //await checkNotifications();
+})();
+
+
+
+
+// Real‑time status
+app.get("/api/region/devices/status", (req, res) => {
+  res.json(deviceStatus);
 });
 
-// add new device
-router.post("/", (req, res) => {
-  try {
-    const { type, device } = req.body;
-    if (!type || !device) return res.status(400).json({ error: "type and device are required" });
-    const added = addDevice(type, device);
-    res.status(201).json({ added });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+// Full history: stitch together all daily files
+app.get("/api/devices/history", (req, res) => {
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const combined = {};
+  for (const f of files) {
+    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    const dayLogs = safeJsonParse(f);
+
+    for (const ip of Object.keys(dayLogs)) {
+      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+    }
   }
+  // prune to last 30 days
+  for (const ip of Object.keys(combined)) {
+    combined[ip] = pruneOldEntries(combined[ip], 30);
+  }
+  res.json(combined);
 });
 
-// update device by old ip
-router.put("/:ip", (req, res) => {
-  try {
-    const oldIp = req.params.ip;
-    const updates = req.body;
-    const updated = updateDevice(oldIp, updates);
-    res.json({ updated });
-  } catch (err) {
-    res.status(404).json({ error: err.message });
+// Region‑wise history
+app.get("/api/region/:region/history", (req, res) => {
+  const region = req.params.region.toLowerCase();
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  const regionLogs = {};
+
+  for (const f of files) {
+    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    const dayLogs = safeJsonParse(f);
+
+    for (const ip of Object.keys(dayLogs)) {
+      if (ipRegionMap[ip] === region) {
+        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
+      }
+    }
   }
+
+  if (!Object.keys(regionLogs).length) {
+    return res.status(404).json({ message: `No device history found for region: ${region}` });
+  }
+  // prune per‑IP
+  for (const ip of Object.keys(regionLogs)) {
+    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
+  }
+  res.json(regionLogs);
 });
 
-// delete device
-router.delete("/:ip", (req, res) => {
-  try {
-    const ip = req.params.ip;
-    deleteDevice(ip);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(404).json({ error: err.message });
+// Single‑device history
+app.get("/api/device/history/:ip", (req, res) => {
+  const ip = req.params.ip;
+  const files = fs.readdirSync(".")
+    .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
+  let history = [];
+  for (const f of files) {
+    // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
+    const dayLogs = safeJsonParse(f);
+
+    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
   }
+  if (!history.length) {
+    return res.status(404).json({ message: "No history found for this device" });
+  }
+  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  res.json({ ip, history });
 });
 
-module.exports = router;
+
+// Get all controller + door statuses
+app.get("/api/controllers/status", (req, res) => {
+  res.json(fullStatus);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+
+
+
+
+
+
+
+
+
