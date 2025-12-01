@@ -1,17 +1,27 @@
+import sqlite3
 
-pip install fastapi uvicorn apscheduler icmplib
+def create_db():
+    conn = sqlite3.connect("devices.db")
+    c = conn.cursor()
 
-Backend/
-│
-├── src/                    ← Your existing Node.js backend
-│   ├── controllers/
-│   ├── services/
-│   ├── routes/
-│   ├── data/
-│   └── app.js
-│
-└── python-service/         ← New Python microservice
-    ├── api.py              (FastAPI server)
-    ├── db.py               (SQLite init + helpers)
-    ├── ping_worker.py      (Ping scheduler)
-    ├── devices.db          (SQLite database)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS devices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT,
+        name TEXT,
+        ip_address TEXT UNIQUE,
+        location TEXT,
+        city TEXT,
+        details TEXT,
+        hyperlink TEXT,
+        remark TEXT,
+        status TEXT,
+        last_ping TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+if __name__ == "__main__":
+    create_db()
