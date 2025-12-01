@@ -211,10 +211,6 @@ function fetchData(regionName) {
         // fetch(`http://10.138.161.4:3000/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
     ])
         .then(([summary, details, controllerData]) => {
-            // console.log("Summary Data:", summary);
-            // console.log("Details Data:", details);
-            // console.log("Controller Data:", controllerData);
-
             // Cache full controller data for reuse (keep unfiltered copy)
             if (Array.isArray(controllerData)) {
                 window.controllerDataCached = controllerData; // full cache
@@ -603,17 +599,7 @@ function renderControllersInDetails(data, detailsContainer) {
     data.forEach(ctrl => {
         const card = document.createElement("div");
         card.className = "door-device-card";
-        card.style.cssText = `
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        `;
-
+    
         card.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                 <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: #1f2937;">
@@ -646,25 +632,6 @@ function renderControllersInDetails(data, detailsContainer) {
             </div>
         `;
 
-        // Hover effects
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-2px)';
-            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            this.style.borderColor = '#3b82f6';
-        });
-
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-            this.style.borderColor = '#e5e7eb';
-        });
-
-        // When a controller is clicked, show its doors + readers
-        card.addEventListener("click", () => showDoorsReaders(ctrl));
-        detailsContainer.appendChild(card);
-    });
-}
-
 
 // --- REPLACE showDoorsReaders WITH THIS UPDATED VERSION ---
 // Adds an "Export (Excel)" button which downloads a CSV file of the doors/readers.
@@ -685,21 +652,6 @@ function showDoorsReaders(controller) {
       </button>
     `;
 
-    let html = `
-    <div style="margin-bottom:25px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="
-            width:50px;
-            height:50px;
-            border-radius:12px;
-            background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:20px;
-          ">🔒</div>
           <div>
             <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
             <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
@@ -747,18 +699,7 @@ function showDoorsReaders(controller) {
             html += `
         <div class="door-item" style="animation-delay: ${index * 0.1}s;">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="
-                width:36px;
-                height:36px;
-                border-radius:8px;
-                background:#f1f5f9;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#475569;
-                font-size:16px;
-              ">🚪</div>
+  
               <div>
                 <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
                 <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
@@ -882,16 +823,6 @@ function updateDetails(data) {
     function getDeviceIcon(type = "") {
         type = type.toLowerCase();
         if (type.includes("camera")) return "fas fa-video";
-        if (type.includes("controller")) return "fas fa-cogs";
-        if (type.includes("archiver")) return "fas fa-database";
-        if (type.includes("server")) return "fas fa-server";
-        if (type.includes("pc")) return "fas fa-desktop";
-        if (type.includes("dbdetails")) return "fa-solid fa-life-ring";
-        return "fas fa-microchip"; // fallback
-    }
-
-
-
     // Helper to find matching controller (by IP or name)
     function findControllerForDevice(device) {
         const controllers = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : null;
@@ -918,7 +849,6 @@ function updateDetails(data) {
         }
         return null;
     }
-
     // If controllers aren't cached, we will fetch them when necessary (lazy)
     function ensureControllersCached() {
         if (Array.isArray(window.controllerDataCached)) return Promise.resolve(window.controllerDataCached);
@@ -941,8 +871,7 @@ function updateDetails(data) {
     // fetch("http://10.138.161.4:3000/api/region/devices/status")
         .then((response) => response.json())
         .then((realTimeStatus) => {
-            // console.log("Live Status Data:", realTimeStatus);
-
+            // console.log("Live Status Data:", realTimeStatus)
             for (const [key, devices] of Object.entries(data.details)) {
                 if (!Array.isArray(devices) || devices.length === 0) continue;
                 const deviceType = key.toLowerCase();
@@ -963,17 +892,13 @@ function updateDetails(data) {
                     // NOTE: your JSON uses the key "deviec_details" (typo) — we read that first.
                     let rawVendor = device.deviec_details || device.device_details || (device.device_details && device.device_details.vendor) || device.vendor || device.vendor_name || device.manufacturer || "";
                     rawVendor = (rawVendor || "").toString().trim();
-
                     // Normalize: empty -> null, otherwise uppercase for consistent set values
                     let vendorNormalized = rawVendor ? rawVendor.toUpperCase() : null;
-
                     // Only add real vendors (skip "UNKNOWN", "", null)
                     if (vendorNormalized && vendorNormalized !== "UNKNOWN") {
                         vendorSet.add(vendorNormalized);
                     }
-
                     const datasetVendorValue = vendorNormalized || "";
-
                     // Create card element.
                     const card = document.createElement("div");
                     card.className = "device-card";
@@ -996,19 +921,9 @@ function updateDetails(data) {
                     statusText.className = "status-text";
                     statusText.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
                     statusText.style.color = currentStatus === "online" ? "green" : "red";
-
                     // Status dot
                     const statusDot = document.createElement("span");
-                    statusDot.classList.add(currentStatus === "online" ? "online-dot" : "offline-dot");
-                    statusDot.style.backgroundColor = (currentStatus === "online") ? "green" : "red";
-                    statusDot.style.display = "inline-block";
-                    statusDot.style.width = "10px";
-                    statusDot.style.height = "10px";
-                    statusDot.style.marginLeft = "5px";
-                    statusDot.style.marginRight = "5px";
-                    statusDot.style.borderRadius = "50%";
-
-                    // Combine status parts
+         
                     statusContainer.appendChild(statusDot);
                     statusContainer.appendChild(statusText);
 
@@ -1058,31 +973,12 @@ function updateDetails(data) {
               title="Click to copy IP"
           >
               ${deviceIP}
-          </span>
-      </p>
-
-      <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
-          <strong ><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
-          <span style="font-size:; font-weight:100; margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
-      </p>
-
-      <p style="font-size:;  font-family: Roboto;>
-          <strong "><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
-          <span style="font-weight:100;margin-left: 4px;  font-family: Roboto; font-size:;">${city}</span>
-      </p>
+   
   </div>
 `);
                     card.appendChild(statusContainer);
 
-                    // --- ADDED: if this is a controller card, attach click to open doors modal ---
-                    if (deviceType.includes("controller")) {
-                        card.style.cursor = "pointer";
-                        card.title = "Click to view Doors for this controller";
-                        card.setAttribute("role", "button");
-                        card.setAttribute("tabindex", "0");
-
-                        // click handler that uses cached controllers when possible
-                        const openControllerDoors = async () => {
+                 
                             // try to find matching controller from cache
                             let ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
                             if (!ctrl) {
@@ -1116,50 +1012,7 @@ function updateDetails(data) {
 
                     // --- show policy tooltip for devices marked "Not accessible" ---
                     const remarkText = (device.remark || "").toString().trim();
-                    if (remarkText && /not\s+access/i.test(remarkText)) {
-                        if (!card.style.position) card.style.position = "relative";
-
-                        const tooltip = document.createElement("div");
-                        tooltip.className = "device-access-tooltip";
-                        tooltip.textContent = "Due to Network policy, this camera is Not accessible";
-
-                        tooltip.style.position = "absolute";
-                        tooltip.style.bottom = "100%";
-                        tooltip.style.left = "8px";
-                        tooltip.style.padding = "6px 8px";
-                        tooltip.style.background = "rgba(0,0,0,0.85)";
-                        tooltip.style.color = "#fff";
-                        tooltip.style.borderRadius = "4px";
-                        tooltip.style.fontSize = "12px";
-                        tooltip.style.whiteSpace = "nowrap";
-                        tooltip.style.pointerEvents = "none";
-                        tooltip.style.opacity = "0";
-                        tooltip.style.transform = "translateY(-6px)";
-                        tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
-                        tooltip.style.zIndex = "999";
-
-                        card.appendChild(tooltip);
-
-                        card.addEventListener("mouseenter", () => {
-                            tooltip.style.opacity = "1";
-                            tooltip.style.transform = "translateY(-10px)";
-                        });
-                        card.addEventListener("mouseleave", () => {
-                            tooltip.style.opacity = "0";
-                            tooltip.style.transform = "translateY(-6px)";
-                        });
-
-                        card.title = tooltip.textContent;
-                    }
-
-                    // push device with normalized vendor (may be empty string if unknown)
-                    combinedDevices.push({
-                        card: card,
-                        device: {
-                            ip: deviceIP,
-                            type: deviceType,
-                            status: currentStatus,
-                            city: city,
+     
                             vendor: datasetVendorValue // already normalized (uppercase) or ""
                         }
                     });
@@ -1213,11 +1066,7 @@ function updateDetails(data) {
             }
 
             // populate vendor options
-            let vendorFilter = document.getElementById("vendorFilter");
-            if (!vendorFilter) {
-                vendorFilter = document.createElement("select");
-                vendorFilter.id = "vendorFilter";
-                vendorFilter.style.marginTop = "8px";
+       
                 deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
             }
 
@@ -1243,13 +1092,9 @@ function updateDetails(data) {
             cityFilter.value = "all";
             document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
             allFilterButton.classList.add("active");
-
-
             // new -----
             // --- Add this helper inside updateDetails (same scope as filterDevices) ---
-            
-
-
+        
             function computeFilteredControllerExtras(selectedCity = "all", selectedStatus = "all") {
                 const controllersAll = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : [];
                 const result = { doors: { total: 0, online: 0, offline: 0 }, readers: { total: 0, online: 0, offline: 0 } };
@@ -1305,11 +1150,7 @@ function updateDetails(data) {
                 result.readers.offline = result.readers.total - result.readers.online;
                 return result;
             }
-
             // new -----
-
-
-
             function filterDevices() {
                 const selectedType = deviceFilter.value;
                 const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
@@ -1354,16 +1195,7 @@ function updateDetails(data) {
                 const region = currentRegion?.toUpperCase() || "GLOBAL";
                 const titleElement = document.getElementById("region-title");
 
-                const logoHTML = `
-                    <span class="region-logo">
-                        <a href="http://10.199.22.57:3014/" class="tooltip">
-                            <i class="fa-solid fa-house"></i>
-                            <span class="tooltiptext">Dashboard Hub</span>
-                        </a>
-                    </span>
-                    `;
-                if (selectedCity !== "all") {
-                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
+        
                 } else {
                     titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
                 }
@@ -1387,13 +1219,6 @@ function updateDetails(data) {
                         type: d.type,
                         lastSeen: new Date().toISOString()
                     }));
-
-                //     // ⬇️⬇️ this is call from graph.js
-                // if (window.updateOfflineChart) {
-                //     window.updateOfflineChart(offlineDevices);
-                // }
-
-                // ⬇️⬇️ this is call from graph.js (scatter)
                 if (window.updateOfflineChart) {
                     try {
                       window.updateOfflineChart(offlineDevices);
@@ -1475,14 +1300,12 @@ function updateDetails(data) {
                 const summary = calculateCitySummary(filteredSummaryDevices);
                 updateSummary(summary);
             }, 100);
-
             // ---- EVENTS ----
             // When device type changes, rebuild city options first then apply filters.
             deviceFilter.addEventListener("change", () => {
                 populateCityOptions(deviceFilter.value || "all");
                 filterDevices();
             });
-
             // Search bar input
             document.getElementById("device-search").addEventListener("input", filterDevices);
             cityFilter.addEventListener("change", filterDevices);
