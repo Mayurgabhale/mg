@@ -1,18 +1,56 @@
-how to save device in database 
-C:\Users\W0024618\Desktop\Backend\src\data
-├───data
-│       ArchiverData.xlsx
-│       archivers.json
-│       CameraData.xlsx
-│       cameras.json
-│       ControllerData.xlsx
-│       ControllerDataWithDoorReader.json
-│       controllers.json
-│       controllerWithdoor.xlsx
-│       DBDetails.json
-│       DBDetails.xlsx
-│       pcDetails.json
-│       PCDetails.xlsx
-│       ServerData.xlsx
-│       servers.json
-│
+import json
+import pandas as pd
+from database import get_db
+import os
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+
+def save_excel_to_db(file_path, device_type, doors_json=None):
+    db = get_db()
+    
+    # read Excel
+    df = pd.read_excel(file_path)
+    
+    for _, row in df.iterrows():
+        # normalize columns
+        name = row.get("cameraname") or row.get("archivername") or row.get("controllername") or row.get("servername") or row.get("hostname")
+        ip = row.get("Ip_address") or row.get("IP_address")
+        location = row.get("Location")
+        city = row.get("City")
+        details = row.get("Deviec_details") or row.get("Application") or None
+        hyperlink = row.get("hyperlink") if "hyperlink" in row else None
+        remark = row.get("Remark") if "Remark" in row else None
+        
+        db.execute("""
+            INSERT OR IGNORE INTO devices
+            (type, name, ip_address, location, city, details, hyperlink, remark, doors)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            device_type,
+            name,
+            ip,
+            location,
+            city,
+            details,
+            hyperlink,
+            remark,
+            json.dumps(doors_json) if doors_json else None
+        ))
+    
+    db.commit()
+    print(f"Saved {device_type} data from {os.path.basename(file_path)}")
+
+
+pip install openpyxl pandas
+
+
+# Example: load all Excel files
+save_excel_to_db(os.path.join(DATA_DIR, "CameraData.xlsx"), "camera")
+save_excel_to_db(os.path.join(DATA_DIR, "ArchiverData.xlsx"), "archiver")
+save_excel_to_db(os.path.join(DATA_DIR, "ControllerData.xlsx"), "controller")
+
+# For Controllers with doors (JSON)
+with open(os.path.join(DATA_DIR, "ControllerDataWithDoorReader.json")) as f:
+    controllers_with_doors = json.load(f)
+    for ctrl in controllers_with_doors:
+        save_excel_to_db(None, "controller", doors_json=ctrl.get("Doors"))
