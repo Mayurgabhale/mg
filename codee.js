@@ -1,7 +1,31 @@
-  // Derived: filtered & paginated rows for display in the details table
-      const filteredAll = useMemo(() => getFilteredDetailsAll(), [detailsRows, columnFilters]);
-      const paginatedRows = useMemo(() => {
-        const start = Math.max(0, detailsOffset || 0);
-        const lim = Math.max(1, detailsLimit || 200);
-        return filteredAll.slice(start, start + lim);
-      }, [filteredAll, detailsOffset, detailsLimit]);
+<div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8 }}>
+  <div style={{ fontSize:13 }}>
+    {`Showing ${detailsOffset + 1} - ${Math.min(detailsOffset + paginatedRows.length, filteredAll.length)} of ${filteredAll.length}`}
+  </div>
+
+  <div style={{ display:'flex', gap:8 }}>
+    <button
+      className="small-button"
+      onClick={() => {
+        const newOffset = Math.max(0, detailsOffset - detailsLimit);
+        setDetailsOffset(newOffset);
+      }}
+      disabled={detailsOffset === 0}
+    >
+      Prev
+    </button>
+
+    <button
+      className="small-button"
+      onClick={() => {
+        const newOffset = detailsOffset + detailsLimit;
+        if (newOffset < filteredAll.length) {
+          setDetailsOffset(newOffset);
+        }
+      }}
+      disabled={detailsOffset + detailsLimit >= filteredAll.length}
+    >
+      Next
+    </button>
+  </div>
+</div>
