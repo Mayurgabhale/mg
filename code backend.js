@@ -4,7 +4,7 @@ it, is ok.. but i wnat to do move on next, i want ot do
 whe i want ot add new device then i do add this device in excle data ok. like that i do 
 but i want  to do the, when i want to add new device that do from frontedn, ok 
 when  i add devie form frontend to backend, and get statu also this device ok 
-ok, so who do this. 
+ok, so who do this. (and if i want to store this all data in python sqlit data base it is when i add new device that all data store in this data base) 
 read the belwo all code carefully and tell me, can we do this or no 
 C:\Users\W0024618\Desktop\Backend\src\routes\deviceRoutes.js
 const express = require("express");
