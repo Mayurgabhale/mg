@@ -1,37 +1,7 @@
-thanks, for your help, ok 
-ok, but in futue fron frontend when any one add new devic, that time 
-alos menstin ther name, update by or add by than name of person ok 
-PS C:\Users\W0024618\Desktop\Backend> node setupDatabase.js     
-
-🚀 Creating SQLite Database and Tables...
-
-✔ All tables created successfully.
-
-📥 Importing Excel data...
-
-⚠ Sheet missing: Camera in CameraData.xlsx
-✔ Camera data imported
-⚠ Sheet missing: Archiver in ArchiverData.xlsx
-✔ Archiver data imported
-⚠ Sheet missing: Controller in ControllerData.xlsx
-✔ Controller data imported
-⚠ ControllerDoors.json missing — skipping doors.
-⚠ Sheet missing: Server in ServerData.xlsx
-✔ Server data imported
-⚠ Sheet missing: DBDetails in DBDetails.xlsx
-✔ DB details imported
-⚠ Sheet missing: PCDetails in PCDetails.xlsx
-✔ PC details imported
-
-🎉 DATABASE SETUP COMPLETE!
-📁 Database file created at: src/data/devices.db
-
-PS C:\Users\W0024618\Desktop\Backend> 
-  
 // setupDatabase.js
 // --------------------------------------------------------
-// This script creates SQLite DB + tables + imports ALL Excel data
-// Run:  node setupDatabase.js
+// Creates SQLite DB + tables + imports ALL Excel data
+// Run: node setupDatabase.js
 // --------------------------------------------------------
 
 const xlsx = require("xlsx");
@@ -49,7 +19,7 @@ const db = new Database(path.join(dataDir, "devices.db"));
 console.log("\n🚀 Creating SQLite Database and Tables...\n");
 
 // --------------------------------------------------------
-// STEP 1: CREATE TABLES
+// CREATE TABLES (with added_by, updated_by, timestamps)
 // --------------------------------------------------------
 
 db.exec(`
@@ -61,7 +31,11 @@ CREATE TABLE IF NOT EXISTS cameras (
   city TEXT,
   device_details TEXT,
   hyperlink TEXT,
-  remark TEXT
+  remark TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS archivers (
@@ -69,7 +43,11 @@ CREATE TABLE IF NOT EXISTS archivers (
   archivername TEXT,
   ip_address TEXT UNIQUE,
   location TEXT,
-  city TEXT
+  city TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS controllers (
@@ -77,15 +55,18 @@ CREATE TABLE IF NOT EXISTS controllers (
   controllername TEXT,
   ip_address TEXT UNIQUE,
   location TEXT,
-  city TEXT
+  city TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS controller_doors (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   controller_ip TEXT,
   door TEXT,
-  reader TEXT,
-  FOREIGN KEY(controller_ip) REFERENCES controllers(ip_address)
+  reader TEXT
 );
 
 CREATE TABLE IF NOT EXISTS servers (
@@ -93,7 +74,11 @@ CREATE TABLE IF NOT EXISTS servers (
   servername TEXT,
   ip_address TEXT UNIQUE,
   location TEXT,
-  city TEXT
+  city TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS dbdetails (
@@ -103,7 +88,11 @@ CREATE TABLE IF NOT EXISTS dbdetails (
   hostname TEXT,
   ip_address TEXT UNIQUE,
   application TEXT,
-  windows_server TEXT
+  windows_server TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS pc_details (
@@ -112,35 +101,41 @@ CREATE TABLE IF NOT EXISTS pc_details (
   ip_address TEXT UNIQUE,
   location TEXT,
   city TEXT,
-  pc_name TEXT
+  pc_name TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 `);
 
 console.log("✔ All tables created successfully.\n");
 
 // --------------------------------------------------------
-// STEP 2: HELPER FUNCTION TO READ EXCEL SHEETS
+// Helper – Read Excel Sheet
 // --------------------------------------------------------
 
 function readSheet(file, sheet) {
   const fullPath = path.join(dataDir, file);
+
   if (!fs.existsSync(fullPath)) {
     console.log(`⚠ File missing: ${file}`);
     return [];
   }
 
-  const wb = xlsx.readFile(fullPath);
-  const ws = wb.Sheets[sheet];
-  if (!ws) {
+  const workbook = xlsx.readFile(fullPath);
+  const worksheet = workbook.Sheets[sheet];
+
+  if (!worksheet) {
     console.log(`⚠ Sheet missing: ${sheet} in ${file}`);
     return [];
   }
 
-  return xlsx.utils.sheet_to_json(ws);
+  return xlsx.utils.sheet_to_json(worksheet);
 }
 
 // --------------------------------------------------------
-// STEP 3: IMPORT DATA
+// IMPORT DATA
 // --------------------------------------------------------
 
 console.log("📥 Importing Excel data...\n");
@@ -149,8 +144,8 @@ console.log("📥 Importing Excel data...\n");
 readSheet("CameraData.xlsx", "Camera").forEach(row => {
   db.prepare(`
     INSERT OR IGNORE INTO cameras 
-    (cameraname, ip_address, location, city, device_details, hyperlink, remark)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    (cameraname, ip_address, location, city, device_details, hyperlink, remark, added_by, added_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.cameraname || null,
     row.Ip_address || null,
@@ -158,7 +153,8 @@ readSheet("CameraData.xlsx", "Camera").forEach(row => {
     row.City || null,
     row.Deviec_details || null,
     row.hyperlink || null,
-    row.Remark || null
+    row.Remark || null,
+    "system-import"
   );
 });
 console.log("✔ Camera data imported");
@@ -166,13 +162,15 @@ console.log("✔ Camera data imported");
 // ---------- Archiver ----------
 readSheet("ArchiverData.xlsx", "Archiver").forEach(row => {
   db.prepare(`
-    INSERT OR IGNORE INTO archivers (archivername, ip_address, location, city)
-    VALUES (?, ?, ?, ?)
+    INSERT OR IGNORE INTO archivers
+    (archivername, ip_address, location, city, added_by, added_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.archivername || null,
     row.Ip_address || null,
     row.Location || null,
-    row.City || null
+    row.City || null,
+    "system-import"
   );
 });
 console.log("✔ Archiver data imported");
@@ -180,21 +178,23 @@ console.log("✔ Archiver data imported");
 // ---------- Controller ----------
 readSheet("ControllerData.xlsx", "Controller").forEach(row => {
   db.prepare(`
-    INSERT OR IGNORE INTO controllers (controllername, ip_address, location, city)
-    VALUES (?, ?, ?, ?)
+    INSERT OR IGNORE INTO controllers
+    (controllername, ip_address, location, city, added_by, added_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.controllername || null,
     row.IP_address || null,
     row.Location || null,
-    row.City || null
+    row.City || null,
+    "system-import"
   );
 });
 console.log("✔ Controller data imported");
 
-// ---------- Controller Doors from JSON ----------
-const doorsPath = path.join(dataDir, "ControllerDoors.json");
-if (fs.existsSync(doorsPath)) {
-  const controllerDoors = JSON.parse(fs.readFileSync(doorsPath));
+// ---------- Controller Doors JSON ----------
+const doorsFile = path.join(dataDir, "ControllerDoors.json");
+if (fs.existsSync(doorsFile)) {
+  const controllerDoors = JSON.parse(fs.readFileSync(doorsFile));
   controllerDoors.forEach(ctrl => {
     ctrl.Doors.forEach(door => {
       db.prepare(`
@@ -203,21 +203,23 @@ if (fs.existsSync(doorsPath)) {
       `).run(ctrl.IP_address, door.Door, door.Reader);
     });
   });
-  console.log("✔ Controller door data imported");
+  console.log("✔ Controller doors imported");
 } else {
-  console.log("⚠ ControllerDoors.json missing — skipping doors.");
+  console.log("⚠ ControllerDoors.json missing — skipping");
 }
 
-// ---------- Server ----------
+// ---------- Servers ----------
 readSheet("ServerData.xlsx", "Server").forEach(row => {
   db.prepare(`
-    INSERT OR IGNORE INTO servers (servername, ip_address, location, city)
-    VALUES (?, ?, ?, ?)
+    INSERT OR IGNORE INTO servers
+    (servername, ip_address, location, city, added_by, added_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.servername || null,
     row.IP_address || null,
     row.Location || null,
-    row.City || null
+    row.City || null,
+    "system-import"
   );
 });
 console.log("✔ Server data imported");
@@ -225,16 +227,17 @@ console.log("✔ Server data imported");
 // ---------- DB Details ----------
 readSheet("DBDetails.xlsx", "DBDetails").forEach(row => {
   db.prepare(`
-    INSERT OR IGNORE INTO dbdetails 
-    (location, city, hostname, ip_address, application, windows_server)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO dbdetails
+    (location, city, hostname, ip_address, application, windows_server, added_by, added_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.Location || null,
     row.City || null,
     row.HostName || null,
     row.Ip_address || null,
     row.Application || null,
-    row["Windows Server"] || null
+    row["Windows Server"] || null,
+    "system-import"
   );
 });
 console.log("✔ DB details imported");
@@ -242,20 +245,19 @@ console.log("✔ DB details imported");
 // ---------- PC Details ----------
 readSheet("PCDetails.xlsx", "PCDetails").forEach(row => {
   db.prepare(`
-    INSERT OR IGNORE INTO pc_details 
-    (hostname, ip_address, location, city, pc_name)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO pc_details
+    (hostname, ip_address, location, city, pc_name, added_by, added_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.HostName || null,
     row.Ip_address || null,
     row.Location || null,
     row.City || null,
-    row["PC Name"] || null
+    row["PC Name"] || null,
+    "system-import"
   );
 });
 console.log("✔ PC details imported");
 
-// --------------------------------------------------------
-
 console.log("\n🎉 DATABASE SETUP COMPLETE!");
-console.log("📁 Database file created at: src/data/devices.db\n");
+console.log("📁 Database created at: src/data/devices.db\n");
