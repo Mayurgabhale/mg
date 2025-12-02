@@ -1,4 +1,3 @@
-give me this file wiht above all correction 
 // setupDatabase.js
 // --------------------------------------------------------
 const xlsx = require("xlsx");
@@ -63,7 +62,11 @@ CREATE TABLE IF NOT EXISTS controller_doors (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   controller_ip TEXT,
   door TEXT,
-  reader TEXT
+  reader TEXT,
+  added_by TEXT,
+  updated_by TEXT,
+  added_at TEXT,
+  updated_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS servers (
@@ -196,9 +199,10 @@ if (fs.existsSync(doorsFile)) {
   controllerDoors.forEach(ctrl => {
     ctrl.Doors.forEach(door => {
       db.prepare(`
-        INSERT INTO controller_doors (controller_ip, door, reader)
-        VALUES (?, ?, ?)
-      `).run(ctrl.IP_address, door.Door, door.Reader);
+        INSERT INTO controller_doors 
+        (controller_ip, door, reader, added_by, added_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+      `).run(ctrl.IP_address, door.Door, door.Reader, "system-import");
     });
   });
   console.log("✔ Controller doors imported");
@@ -260,6 +264,4 @@ console.log("✔ PC details imported");
 console.log("\n🎉 DATABASE SETUP COMPLETE!");
 console.log("📁 Database created at: src/data/devices.db\n");
 
-
-
-// npm install better-sqlite3    ⬇️⬇️⬇️⬇️⬇️
+// npm install better-sqlite3
