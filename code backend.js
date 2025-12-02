@@ -1,3 +1,47 @@
+ok data base is crete but data is not add in data base this is path fo exle file 
+
+C:\Users\W0024618\Desktop\Backend\src\data\ArchiverData.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\CameraData.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\ControllerData.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\DBDetails.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\PCDetails.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\ServerData.xlsx
+C:\Users\W0024618\Desktop\Backend\src\data\ControllerDataWithDoorReader.json
+[
+    {
+        "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+        "IP_address": "10.199.13.10",
+        "Location": "APAC",
+        "City": "Pune 2nd Floor",
+        "Doors": [
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
+                "Reader": ""
+            }
+        ]
+    },
+  -------------------
+  C:\Users\W0024618\Desktop\Backend\setupDatabase.js
 // setupDatabase.js
 // --------------------------------------------------------
 // Creates SQLite DB + tables + imports ALL Excel data
@@ -261,3 +305,31 @@ console.log("✔ PC details imported");
 
 console.log("\n🎉 DATABASE SETUP COMPLETE!");
 console.log("📁 Database created at: src/data/devices.db\n");
+
+-----------
+  PS C:\Users\W0024618\Desktop\Backend> node setupDatabase.js
+
+🚀 Creating SQLite Database and Tables...
+
+✔ All tables created successfully.
+
+📥 Importing Excel data...
+
+⚠ Sheet missing: Camera in CameraData.xlsx
+✔ Camera data imported
+⚠ Sheet missing: Archiver in ArchiverData.xlsx
+✔ Archiver data imported
+⚠ Sheet missing: Controller in ControllerData.xlsx
+✔ Controller data imported
+⚠ ControllerDoors.json missing — skipping
+⚠ Sheet missing: Server in ServerData.xlsx
+✔ Server data imported
+⚠ Sheet missing: DBDetails in DBDetails.xlsx
+✔ DB details imported
+⚠ Sheet missing: PCDetails in PCDetails.xlsx
+✔ PC details imported
+
+🎉 DATABASE SETUP COMPLETE!
+📁 Database created at: src/data/devices.db
+
+PS C:\Users\W0024618\Desktop\Backend> 
