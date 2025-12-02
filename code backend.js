@@ -1,164 +1,8 @@
-// excelService.js
-
-const Database = require("better-sqlite3");
-const path = require("path");
-
-// Path to SQLite DB
-const dbPath = path.join(__dirname, "data", "devices.db");
-const db = new Database(dbPath);
-
-// ------------------------------------------------------
-// MEMORY DATA STRUCTURE
-// ------------------------------------------------------
-let allData = {
-  archivers: [],
-  controllers: [],
-  cameras: [],
-  servers: [],
-  pcDetails: [],
-  DBDetails: [],
-  controller_doors: []   // ⬅ NEW
-};
-
-// ------------------------------------------------------
-// UTILITY: MAP A DB ROW INTO A GENERIC DEVICE OBJECT
-// ------------------------------------------------------
-function mapRowToDevice(deviceType, row) {
-  return {
-    deviceType,
-    region: row.region || "Unknown",
-    building: row.building || "Unknown",
-    floor: row.floor || "Unknown",
-    deviceName: row.name || row.deviceName || "Unknown",
-    ipAddress: row.ip_address || row.ip || null,
-    macAddress: row.mac_address || row.mac || null,
-    status: "Unknown"
-  };
-}
-
-// ------------------------------------------------------
-// LOAD DATA FROM SQLITE ON STARTUP
-// ------------------------------------------------------
-function loadDbData() {
-  try {
-    // ARCHIVERS
-    const arch = db.prepare("SELECT * FROM archiver").all();
-    allData.archivers = arch.map(r => mapRowToDevice("archiver", r));
-
-    // CONTROLLERS
-    const ctrls = db.prepare("SELECT * FROM controller").all();
-    allData.controllers = ctrls.map(r => mapRowToDevice("controller", r));
-
-    // CAMERAS
-    const cams = db.prepare("SELECT * FROM camera").all();
-    allData.cameras = cams.map(r => mapRowToDevice("camera", r));
-
-    // SERVERS
-    const srvs = db.prepare("SELECT * FROM server").all();
-    allData.servers = srvs.map(r => mapRowToDevice("server", r));
-
-    // PC DETAILS
-    const pcs = db.prepare("SELECT * FROM pc_details").all();
-    allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
-
-    // DB DETAILS
-    const dbs = db.prepare("SELECT * FROM dbdetails").all();
-    allData.DBDetails = dbs.map(r => mapRowToDevice("dbdetails", r));
-
-    // -------------------------------------------------
-    // 🔥 NEW: LOAD CONTROLLER DOORS FROM SQLite
-    // -------------------------------------------------
-    const doors = db.prepare("SELECT * FROM controller_doors").all();
-    allData.controller_doors = doors.map(r => ({
-      controller_ip: r.controller_ip,
-      door: r.door,
-      reader: r.reader
-    }));
-
-    console.log("✔ SQLite data loaded successfully.");
-
-  } catch (err) {
-    console.error("❌ Error loading DB data:", err);
-  }
-}
-
-// Call once on server start
-loadDbData();
-
-// ------------------------------------------------------
-// SUMMARY CALCULATION (No changes needed)
-// ------------------------------------------------------
-function calculateSummary(data) {
-  return {
-    totalArchivers: data.archivers.length,
-    totalControllers: data.controllers.length,
-    totalCameras: data.cameras.length,
-    totalServers: data.servers.length,
-    totalPCs: data.pcDetails.length,
-    totalDBs: data.DBDetails.length,
-    totalControllerDoors: data.controller_doors.length
-  };
-}
-
-// ------------------------------------------------------
-// FETCH ALL DATA (for Global Dashboard)
-// ------------------------------------------------------
-function fetchGlobalData() {
-  return {
-    summary: calculateSummary(allData),
-    details: allData
-  };
-}
-
-// ------------------------------------------------------
-// REGION-BASED API (controller_doors included automatically)
-// ------------------------------------------------------
-function fetchRegionData(regionName) {
-  let filtered = {
-    archivers: allData.archivers.filter(d => d.region === regionName),
-    controllers: allData.controllers.filter(d => d.region === regionName),
-    cameras: allData.cameras.filter(d => d.region === regionName),
-    servers: allData.servers.filter(d => d.region === regionName),
-    pcDetails: allData.pcDetails.filter(d => d.region === regionName),
-    DBDetails: allData.DBDetails.filter(d => d.region === regionName),
-
-    // Doors grouped by controllers in that region
-    controller_doors: allData.controller_doors.filter(d =>
-      allData.controllers.some(ctrl =>
-        ctrl.ipAddress === d.controller_ip && ctrl.region === regionName
-      )
-    )
-  };
-
-  return {
-    summary: calculateSummary(filtered),
-    details: filtered
-  };
-}
-
-// ------------------------------------------------------
-// CONTROLLER DOOR LOOKUP
-// ------------------------------------------------------
-function getControllerDoors(controllerIp) {
-  return allData.controller_doors.filter(d => d.controller_ip === controllerIp);
-}
-
-// ------------------------------------------------------
-// EXPORTS
-// ------------------------------------------------------
-module.exports = {
-  fetchGlobalData,
-  fetchRegionData,
-  getControllerDoors
-};
-
-above file i to sort as comper below file 
-give me full excelService.js fie wiht correct 
--------------
-  
 // src/services/excelService.js
 // Uses SQLite (src/data/devices.db) as the single source of truth.
-// Exports the same functions your app expects: fetchGlobalData, fetchRegionData, fetchAllIpAddress, ipRegionMap, getDeviceInfo, addDevice, updateDevice, deleteDevice, getControllersList
+// Exports the same functions your app expects:
+// fetchGlobalData, fetchRegionData, fetchAllIpAddress, ipRegionMap,
+// getDeviceInfo, addDevice, updateDevice, deleteDevice, getControllersList, getControllerDoors
 
 const fs = require("fs");
 const path = require("path");
@@ -174,7 +18,7 @@ if (!fs.existsSync(dbPath)) {
 }
 const db = new Database(dbPath, { readonly: false });
 
-// In-memory cache (same shape as previous implementation)
+// In-memory cache (same shape as previous implementation) + controller_doors
 let allData = {
   archivers: [],
   controllers: [],
@@ -182,6 +26,7 @@ let allData = {
   servers: [],
   pcDetails: [],
   DBDetails: [],
+  controller_doors: [], // NEW: doors linked to controllers
 };
 
 // ip -> region map
@@ -195,15 +40,13 @@ function normalizeKey(k) {
 // Convert DB row for a given table into the normalized object shape your app expects
 function mapRowToDevice(table, row) {
   if (!row) return null;
-  // create a new object with normalized keys and include original case keys commonly used by other code
   const dev = {};
 
-  // Generic mapping — prefer explicit columns per table
   switch (table) {
     case "cameras":
       dev.cameraname = row.cameraname || row.camera_name || null;
       dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null; // include both variants so other code can find it
+      dev.IP_address = row.ip_address || null;
       dev.location = row.location || null;
       dev.city = row.city || null;
       dev.device_details = row.device_details || row.deviec_details || null;
@@ -255,55 +98,70 @@ function mapRowToDevice(table, row) {
       break;
 
     default:
-      // generic fallback: copy all keys normalized
       Object.keys(row).forEach(k => {
         dev[normalizeKey(k)] = row[k];
       });
   }
 
-  // common metadata
+  // common metadata used by other parts of your app
   dev.history = Array.isArray(row.history) ? row.history : [];
-  // ensure status property may be present (DB doesn't currently store status by default)
   if (row.status) dev.status = row.status;
   return dev;
 }
 
-// Load all rows from DB into allData
+// Load all rows from DB into allData (including controller_doors)
 function loadDbData() {
-  // cameras
-  const cams = db.prepare("SELECT * FROM cameras").all();
-  allData.cameras = cams.map(r => mapRowToDevice("cameras", r));
+  try {
+    // cameras
+    const cams = db.prepare("SELECT * FROM cameras").all();
+    allData.cameras = cams.map(r => mapRowToDevice("cameras", r));
 
-  // archivers
-  const archs = db.prepare("SELECT * FROM archivers").all();
-  allData.archivers = archs.map(r => mapRowToDevice("archivers", r));
+    // archivers
+    const archs = db.prepare("SELECT * FROM archivers").all();
+    allData.archivers = archs.map(r => mapRowToDevice("archivers", r));
 
-  // controllers
-  const ctrls = db.prepare("SELECT * FROM controllers").all();
-  allData.controllers = ctrls.map(r => mapRowToDevice("controllers", r));
+    // controllers
+    const ctrls = db.prepare("SELECT * FROM controllers").all();
+    allData.controllers = ctrls.map(r => mapRowToDevice("controllers", r));
 
-  // servers
-  const srvs = db.prepare("SELECT * FROM servers").all();
-  allData.servers = srvs.map(r => mapRowToDevice("servers", r));
+    // servers
+    const srvs = db.prepare("SELECT * FROM servers").all();
+    allData.servers = srvs.map(r => mapRowToDevice("servers", r));
 
-  // dbdetails
-  const dbs = db.prepare("SELECT * FROM dbdetails").all();
-  allData.DBDetails = dbs.map(r => mapRowToDevice("dbdetails", r));
+    // dbdetails
+    const dbs = db.prepare("SELECT * FROM dbdetails").all();
+    allData.DBDetails = dbs.map(r => mapRowToDevice("dbdetails", r));
 
-  // pc_details
-  const pcs = db.prepare("SELECT * FROM pc_details").all();
-  allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
+    // pc_details
+    const pcs = db.prepare("SELECT * FROM pc_details").all();
+    allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
 
-  rebuildIpRegionMap();
-  console.log("Loaded data from DB. counts:", {
-    cameras: allData.cameras.length,
-    controllers: allData.controllers.length,
-    archivers: allData.archivers.length,
-    servers: allData.servers.length,
-    pcDetails: allData.pcDetails.length,
-    DBDetails: allData.DBDetails.length,
-  });
+    // controller_doors (NEW)
+    // columns expected: id, controller_ip, door, reader
+    const doors = db.prepare("SELECT * FROM controller_doors").all();
+    allData.controller_doors = doors.map(r => ({
+      id: r.id,
+      controller_ip: r.controller_ip,
+      door: r.door,
+      reader: r.reader
+    }));
+
+    rebuildIpRegionMap();
+    console.log("Loaded data from DB. counts:", {
+      cameras: allData.cameras.length,
+      controllers: allData.controllers.length,
+      archivers: allData.archivers.length,
+      servers: allData.servers.length,
+      pcDetails: allData.pcDetails.length,
+      DBDetails: allData.DBDetails.length,
+      controller_doors: allData.controller_doors.length,
+    });
+  } catch (err) {
+    console.error("Error loading DB data:", err.message);
+    throw err;
+  }
 }
+loadDbData();
 
 // rebuild ipRegionMap (called after any mutation)
 function rebuildIpRegionMap() {
@@ -318,10 +176,18 @@ function rebuildIpRegionMap() {
 
 // Fetch all IP addresses (array of ip strings) — used by ping loop
 function fetchAllIpAddress() {
-  return Object.values(allData).flat().map(d => d.ip_address).filter(Boolean);
+  // exclude non-ip entries (controller_doors don't have ip)
+  return [
+    ...allData.cameras,
+    ...allData.archivers,
+    ...allData.controllers,
+    ...allData.servers,
+    ...allData.pcDetails,
+    ...allData.DBDetails,
+  ].map(d => d.ip_address).filter(Boolean);
 }
 
-// Ping helpers (cache + concurrency)
+// ping helpers (cache + concurrency)
 const cache = new Map();
 async function pingDevice(ip) {
   if (!ip) return "IP Address Missing";
@@ -370,6 +236,11 @@ function getDeviceInfo(ip) {
 function getControllersList() {
   // return shallow copy
   return (allData.controllers || []).map(c => ({ ...c }));
+}
+
+// get doors for a controller IP
+function getControllerDoors(controllerIp) {
+  return allData.controller_doors.filter(d => d.controller_ip === controllerIp);
 }
 
 // Add device: type must match one of keys in allData
@@ -677,16 +548,23 @@ async function fetchRegionData(regionName) {
     servers: filter(allData.servers),
     pcDetails: filter(allData.pcDetails),
     DBDetails: filter(allData.DBDetails),
+    // include doors for controllers in this region
+    controller_doors: allData.controller_doors.filter(d =>
+      allData.controllers.some(ctrl =>
+        (ctrl.ip_address || ctrl.IP_address) === d.controller_ip && (ctrl.location || "").toString().toLowerCase() === regionName.toLowerCase()
+      )
+    )
   };
-  const allToPing = [].concat(...Object.values(regionDevices));
+  const allToPing = [].concat(...Object.values(regionDevices).filter(v => Array.isArray(v)));
   await pingDevices(allToPing);
   return { summary: calculateSummary(regionDevices), details: regionDevices };
 }
 
 // Initialize cache from DB
+// (already called earlier, but safe to call again if needed)
 loadDbData();
 
-// Export public API (same function names as before)
+// Export public API (same function names as before) including getControllerDoors
 module.exports = {
   fetchGlobalData,
   fetchRegionData,
@@ -697,4 +575,5 @@ module.exports = {
   updateDevice,
   deleteDevice,
   getControllersList,
+  getControllerDoors,
 };
