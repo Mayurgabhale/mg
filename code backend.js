@@ -1,20 +1,3 @@
-cameraname and servername is not store in data from excle sheet 
-all store in data base onlyt thuis two are not stor in database ok 
-so read the below code also  carefully, 
-    and also this excle heder name alos ok 
-chekc why because other are stor only this both are not steor ok  
-
-this is for camera 
-cameraname 	Ip_address	Location	City	Deviec_details 	hyperlink	Remark
-Green Zone to yellow zone passage - 10.199.10.20 (FLIR CM-3102-11-I T71552107) - 350	10.199.10.20	APAC	Pune Podium	FLIR		
-IN-PNQ-PF - Green Zone Exit Passage 10.199.10.139	10.199.10.139	APAC	Pune Podium	FLIR		
-
-this is for server
-servername 	IP_address	Location	City
-Master Server 	10.58.118.20	NAMER	Denver Colorado
-NAMER Server 	10.58.118.21	NAMER	Denver Colorado
-
-ok 
 // setupDatabase.js
 // --------------------------------------------------------
 const xlsx = require("xlsx");
@@ -129,9 +112,20 @@ CREATE TABLE IF NOT EXISTS pc_details (
 console.log("✔ All tables created successfully.\n");
 
 // --------------------------------------------------------
-// Helper – ALWAYS READ FROM Sheet1
+// CLEAN EXCEL KEYS (MAIN FIX FOR YOUR ISSUE)
 // --------------------------------------------------------
+function cleanKeys(row) {
+  const cleaned = {};
+  Object.keys(row).forEach(key => {
+    const newKey = key.trim().toLowerCase().replace(/\s+/g, "_");
+    cleaned[newKey] = row[key];
+  });
+  return cleaned;
+}
 
+// --------------------------------------------------------
+// Helper: ALWAYS READ FIRST SHEET
+// --------------------------------------------------------
 function readSheet(file) {
   const fullPath = path.join(dataDir, file);
 
@@ -141,15 +135,15 @@ function readSheet(file) {
   }
 
   const workbook = xlsx.readFile(fullPath);
-  const sheetName = workbook.SheetNames[0]; // always Sheet1
-
+  const sheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[sheetName];
+
   if (!worksheet) {
-    console.log(`⚠ Sheet missing in ${file}`);
+    console.log(`⚠ Sheet missing: ${file}`);
     return [];
   }
 
-  return xlsx.utils.sheet_to_json(worksheet);
+  return xlsx.utils.sheet_to_json(worksheet).map(cleanKeys);
 }
 
 // --------------------------------------------------------
@@ -166,12 +160,12 @@ readSheet("CameraData.xlsx").forEach(row => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.cameraname || null,
-    row.Ip_address || null,
-    row.Location || null,
-    row.City || null,
-    row.Deviec_details || null,
+    row.ip_address || row.ipaddress || null,
+    row.location || null,
+    row.city || null,
+    row.device_details || row.deviec_details || null,
     row.hyperlink || null,
-    row.Remark || null,
+    row.remark || null,
     "system-import"
   );
 });
@@ -185,9 +179,9 @@ readSheet("ArchiverData.xlsx").forEach(row => {
     VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.archivername || null,
-    row.Ip_address || null,
-    row.Location || null,
-    row.City || null,
+    row.ip_address || row.ipaddress || null,
+    row.location || null,
+    row.city || null,
     "system-import"
   );
 });
@@ -201,9 +195,9 @@ readSheet("ControllerData.xlsx").forEach(row => {
     VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.controllername || null,
-    row.IP_address || null,
-    row.Location || null,
-    row.City || null,
+    row.ip_address || row.ipaddress || null,
+    row.location || null,
+    row.city || null,
     "system-import"
   );
 });
@@ -213,15 +207,22 @@ console.log("✔ Controller data imported");
 const doorsFile = path.join(dataDir, "ControllerDataWithDoorReader.json");
 if (fs.existsSync(doorsFile)) {
   const controllerDoors = JSON.parse(fs.readFileSync(doorsFile));
+
   controllerDoors.forEach(ctrl => {
     ctrl.Doors.forEach(door => {
       db.prepare(`
         INSERT INTO controller_doors 
         (controller_ip, door, reader, added_by, added_at)
         VALUES (?, ?, ?, ?, datetime('now'))
-      `).run(ctrl.IP_address, door.Door, door.Reader, "system-import");
+      `).run(
+        ctrl.IP_address,
+        door.Door,
+        door.Reader,
+        "system-import"
+      );
     });
   });
+
   console.log("✔ Controller doors imported");
 } else {
   console.log("⚠ ControllerDataWithDoorReader.json missing — skipping");
@@ -235,9 +236,9 @@ readSheet("ServerData.xlsx").forEach(row => {
     VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(
     row.servername || null,
-    row.IP_address || null,
-    row.Location || null,
-    row.City || null,
+    row.ip_address || row.ipaddress || null,
+    row.location || null,
+    row.city || null,
     "system-import"
   );
 });
@@ -250,12 +251,12 @@ readSheet("DBDetails.xlsx").forEach(row => {
     (location, city, hostname, ip_address, application, windows_server, added_by, added_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
-    row.Location || null,
-    row.City || null,
-    row.HostName || null,
-    row.Ip_address || null,
-    row.Application || null,
-    row["Windows Server"] || null,
+    row.location || null,
+    row.city || null,
+    row.hostname || null,
+    row.ip_address || row.ipaddress || null,
+    row.application || null,
+    row.windows_server || null,
     "system-import"
   );
 });
@@ -268,11 +269,11 @@ readSheet("PCDetails.xlsx").forEach(row => {
     (hostname, ip_address, location, city, pc_name, added_by, added_at)
     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
-    row.HostName || null,
-    row.Ip_address || null,
-    row.Location || null,
-    row.City || null,
-    row["PC Name"] || null,
+    row.hostname || null,
+    row.ip_address || row.ipaddress || null,
+    row.location || null,
+    row.city || null,
+    row.pc_name || null,
     "system-import"
   );
 });
@@ -280,5 +281,3 @@ console.log("✔ PC details imported");
 
 console.log("\n🎉 DATABASE SETUP COMPLETE!");
 console.log("📁 Database created at: src/data/devices.db\n");
-
-// npm install better-sqlite3
