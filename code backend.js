@@ -1,575 +1,387 @@
-Incident Reporting Form
-When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.
-*Required
-1.Type of Incident / Accident (select option )
-•	Medical 
-•	Theft 
-•	Fire 
-•	HR Related Incident 
-•	Outside Work Place Violence 
-•	Threat 
-•	Death 
-•	Fraud 
-•	Any Other Safety / Security Related Incident 
-•	Other – Enter your answer
-2.Date of Report 
-3.Time of Report (HH:MM)
-4.Name of Impacted Employee / Person
-5.Employee ID of Impacted Employee
-6.Was this incident reported verbally before submitting this report?
- ** In case of medical emergency inform local HR
-•	Yes
-•	No
+import React, { useState, useEffect, useRef } from "react";
+import "./IncidentForm.css";
 
-If Yes then
-7.Incident reported to: (select option )
-•	Supervisor
-•	Manager
-•	HR
-•	Other Employee
-•	Not Reported
-8.If Yes, to whom ( Name and Department ):
-9.Location of Incident or Accident (Specify Office / Branch)
-10.Reported By - Name:
-11.Reported By - Employee ID #
-12.Reported By - Contact Number
-13.Date of Incident Occurred
-14.Time of Incident 
-15.Detailed Description of Incident (long ans)
-16.Immediate Actions Taken: (long ans)
-17.Accompanying Person Name and Contact Details
-18.Name of Witnesses or Employee present during the incident/accident:
-19.Contact Number - Witness or Employee
-20.Root cause analysis of the incident/accident:
-21.Preventive actions taken during or after incident/accident (If any):
-Submit 
+/**
+ * IncidentForm
+ * - Autosaves draft to localStorage (key: incident_draft)
+ * - Validates required branching rules:
+ *     when was_reported_verbally === true -> incident_reported_to must be non-empty array
+ * - Submits JSON to POST /incident/create
+ */
 
+const INCIDENT_TYPES = [
+  "Medical",
+  "Theft",
+  "Fire",
+  "HR Related Incident",
+  "Outside Work Place Violence",
+  "Threat",
+  "Death",
+  "Fraud",
+  "Any Other Safety / Security Related Incident",
+  "Other"
+];
 
-If No then 
-7.Location of Incident or Accident (Specify Office / Branch)
-8.Reported By - Name:
-9.Reported By - Employee ID #
-10.Reported By - Contact Number
-11.Date of Incident Occurred
-12.Time of Incident 
-13.Detailed Description of Incident  (long ans)
-14.Immediate Actions Taken: (long ans)
-15.Accompanying Person Name and Contact Details
-16.Name of Witnesses or Employee present during the incident/accident:
-17.Contact Number - Witness or Employee
-18.Root cause analysis of the incident/accident:
-19.Preventive actions taken during or after incident/accident (If any):
+const REPORTED_TO_OPTIONS = [
+  "Supervisor",
+  "Manager",
+  "HR",
+  "Other Employee",
+  "Not Reported"
+];
 
-now create a from ok 
-read the below code carefullym and add thei new future in travel dasbhoad ok, read above all above in includein fomr ok 
-give me code step step ok 
-C:\Users\W0024618\Desktop\swipeData\client\src\pages\EmployeeTravelDashboard.jsx
-from "react-icons/fi";
-import { IoIosAddCircle } from "react-icons/io";
-import { BsPersonWalking } from "react-icons/bs";
-import {
-    FaCar,
-    FaTruck,
-    FaTrain,
-    FaPlane,
-    FaShip,
-    FaBicycle, FaHotel, FaBuilding
-} from "react-icons/fa";
-
-import { FaLocationArrow } from 'react-icons/fa6';
-
-import './EmployeeTravelDashboard.css';
-
-const fmt = (iso) => {
-    if (!iso) return "";
-    try {
-        const d = new Date(iso);
-        return d.toLocaleDateString() + " " + d.toLocaleTimeString();
-    } catch {
-        return String(iso);
-    }
+const blankDraft = {
+  type_of_incident: "",
+  other_type_text: "",
+  date_of_report: "",
+  time_of_report: "",
+  impacted_name: "",
+  impacted_employee_id: "",
+  was_reported_verbally: null, // true/false
+  incident_reported_to: [], // array of strings
+  reported_to_details: "",
+  location: "",
+  reported_by_name: "",
+  reported_by_employee_id: "",
+  reported_by_contact: "",
+  date_of_incident: "",
+  time_of_incident: "",
+  detailed_description: "",
+  immediate_actions_taken: "",
+  accompanying_person: [], // [{name, contact}]
+  witnesses: [], // array of strings
+  witness_contacts: [], // array of strings (parallel to witnesses)
+  root_cause_analysis: "",
+  preventive_actions: ""
 };
 
-const EmployeeTravelDashboard = () => {
-    const [file, setFile] = useState(null);
-    const [items, setItems] = useState([]);
-    const [summary, setSummary] = useState({});
-    const [loading, setLoading] = useState(false);
+export default function IncidentForm({ onSubmitted }) {
+  const [form, setForm] = useState(blankDraft);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const autosaveTimer = useRef(null);
 
-    const [filters, setFilters] = useState({
-        country: "",
-        location: "",
-        legType: "",
-        search: "",
-        status: "",
-        showVIPOnly: false,
-    });
-    const [selectedTraveler, setSelectedTraveler] = useState(null);
-    const [activeTab, setActiveTab] = useState("overview");
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("incident_draft");
+      if (raw) setForm(JSON.parse(raw));
+    } catch (e) {
+      console.warn("Failed to restore draft", e);
+    }
+  }, []);
 
-    const [showUploadFileSection, setShowUploadFileSection] = useState(false);
-    // track which city cards are expanded
-    const [expandedCities, setExpandedCities] = useState({});
+  // autosave on change (debounced)
+  useEffect(() => {
+    clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      localStorage.setItem("incident_draft", JSON.stringify(form));
+      setSaving(false);
+    }, 700);
+    setSaving(true);
+    return () => clearTimeout(autosaveTimer.current);
+  }, [form]);
 
+  // helpers
+  const update = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
 
-    // login start
-    const [showLogin, setShowLogin] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    // login end
+  const toggleReportedTo = (option) => {
+    const arr = form.incident_reported_to || [];
+    if (arr.includes(option)) {
+      update(
+        "incident_reported_to",
+        arr.filter(x => x !== option)
+      );
+    } else {
+      update("incident_reported_to", [...arr, option]);
+    }
+  };
 
+  const addWitness = () => {
+    update("witnesses", [...(form.witnesses || []), ""]);
+    update("witness_contacts", [...(form.witness_contacts || []), ""]);
+  };
+  const removeWitness = (idx) => {
+    const w = [...(form.witnesses || [])];
+    const wc = [...(form.witness_contacts || [])];
+    w.splice(idx, 1);
+    wc.splice(idx, 1);
+    update("witnesses", w);
+    update("witness_contacts", wc);
+  };
+  const updateWitness = (idx, val) => {
+    const w = [...(form.witnesses || [])];
+    w[idx] = val;
+    update("witnesses", w);
+  };
+  const updateWitnessContact = (idx, val) => {
+    const wc = [...(form.witness_contacts || [])];
+    wc[idx] = val;
+    update("witness_contacts", wc);
+  };
 
-    // 🆕 Add theme state
-    const [isDarkTheme, setIsDarkTheme] = useState(false);
-    // 🆕 Toggle theme function
-    const toggleTheme = () => {
-        setIsDarkTheme(!isDarkTheme);
+  const addAccompanying = () => {
+    update("accompanying_person", [...(form.accompanying_person || []), { name: "", contact: "" }]);
+  };
+  const removeAccompanying = (idx) => {
+    const a = [...(form.accompanying_person || [])];
+    a.splice(idx, 1);
+    update("accompanying_person", a);
+  };
+  const updateAccompanying = (idx, key, val) => {
+    const a = [...(form.accompanying_person || [])];
+    a[idx] = { ...(a[idx] || {}), [key]: val };
+    update("accompanying_person", a);
+  };
+
+  const validate = () => {
+    const errs = {};
+    // minimal required checks
+    if (!form.type_of_incident) errs.type_of_incident = "Type is required";
+    if (form.type_of_incident === "Other" && !form.other_type_text) errs.other_type_text = "Please enter other type";
+    if (!form.date_of_report) errs.date_of_report = "Date of report is required";
+    if (form.was_reported_verbally === null) errs.was_reported_verbally = "Please select Yes or No";
+
+    if (form.was_reported_verbally) {
+      if (!form.incident_reported_to || form.incident_reported_to.length === 0) {
+        errs.incident_reported_to = "Select at least one option for who it was reported to";
+      }
+    }
+
+    // require reported_by fields for both branches
+    if (!form.reported_by_name) errs.reported_by_name = "Reported by - Name is required";
+    if (!form.reported_by_contact) errs.reported_by_contact = "Reported by - Contact is required";
+    if (!form.date_of_incident) errs.date_of_incident = "Date of incident is required";
+    if (!form.detailed_description) errs.detailed_description = "Description is required";
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem("incident_draft");
+    setForm(blankDraft);
+    setErrors({});
+  };
+
+  const handleSubmit = async (e) => {
+    e && e.preventDefault();
+    if (!validate()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // prepare payload matching your backend pydantic model
+    const payload = {
+      type_of_incident: form.type_of_incident === "Other" ? form.other_type_text : form.type_of_incident,
+      date_of_report: form.date_of_report || null,
+      time_of_report: form.time_of_report || null,
+      impacted_name: form.impacted_name || null,
+      impacted_employee_id: form.impacted_employee_id || null,
+      was_reported_verbally: !!form.was_reported_verbally,
+      incident_reported_to: form.was_reported_verbably ? form.incident_reported_to : form.incident_reported_to,
+      reported_to_details: form.reported_to_details || null,
+      location: form.location || null,
+      reported_by_name: form.reported_by_name || null,
+      reported_by_employee_id: form.reported_by_employee_id || null,
+      reported_by_contact: form.reported_by_contact || null,
+      date_of_incident: form.date_of_incident || null,
+      time_of_incident: form.time_of_incident || null,
+      detailed_description: form.detailed_description || null,
+      immediate_actions_taken: form.immediate_actions_taken || null,
+      accompanying_person: form.accompanying_person && form.accompanying_person.length ? form.accompanying_person : null,
+      witnesses: form.witnesses && form.witnesses.length ? form.witnesses : null,
+      witness_contacts: form.witness_contacts && form.witness_contacts.length ? form.witness_contacts : null,
+      root_cause_analysis: form.root_cause_analysis || null,
+      preventive_actions: form.preventive_actions || null
     };
 
-    // Add to your existing state variables
-    const [regionsData, setRegionsData] = useState({});
-    const [selectedRegion, setSelectedRegion] = useState(null);
-    const [regionDetails, setRegionDetails] = useState(null);
-    // 🆕 Helper functions for regions
-    const getRegionColor = (regionCode) => {
-        const colors = {
-            'GLOBAL': '#6b7280',
-            'APAC': '#7c3aed',
-            'EMEA': '#7c3aed',
-            'LACA': '#7c3aed',
-            'NAMER': '#7c3aed'
-        };
-        return colors[regionCode] || '#6b7280';
-    };
+    try {
+      const res = await fetch("http://localhost:8000/incident/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.detail || JSON.stringify(json));
+      }
+      alert("Incident submitted successfully");
+      clearDraft();
+      if (typeof onSubmitted === "function") onSubmitted(json);
+    } catch (err) {
+      console.error("Submit failed", err);
+      alert("Submit failed: " + (err.message || err));
+    }
+  };
 
-    const getRegionIcon = (regionCode) => {
-        const icons = {
-            'GLOBAL': '🌍',
-            'APAC': '🌏',
-            'EMEA': '🌍',
-            'LACA': '🌎',
-            'NAMER': '🌎'
-        };
-        return icons[regionCode] || '📍';
-    };
+  return (
+    <div className="incident-card">
+      <h2>Incident Reporting Form</h2>
+      <p className="muted">When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.</p>
 
-    const [regionData, setRegionData] = useState({});
+      <form onSubmit={handleSubmit} className="incident-form" noValidate>
+        <label>1. Type of Incident / Accident *</label>
+        <div className="row">
+          <select value={form.type_of_incident} onChange={e => update("type_of_incident", e.target.value)}>
+            <option value="">-- select type --</option>
+            {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
+        </div>
 
-    // 📝📝📝📝📝📝📝
+        {form.type_of_incident === "Other" && (
+          <div className="row">
+            <label>Other - Enter your answer *</label>
+            <input type="text" value={form.other_type_text} onChange={e => update("other_type_text", e.target.value)} />
+            {errors.other_type_text && <div className="error">{errors.other_type_text}</div>}
+          </div>
+        )}
 
-    // State variables - UPDATED
-    const [employeeData, setEmployeeData] = useState([]);
-    const [monthlyFile, setMonthlyFile] = useState(null);
-    const [showUploadPopup, setShowUploadPopup] = useState(false);
-    const [hasUploadedData, setHasUploadedData] = useState(false);
-    const [uploadTime, setUploadTime] = useState(null);
-    const [uploadStatus, setUploadStatus] = useState("");
+        <div className="row">
+          <label>2. Date of Report *</label>
+          <input type="date" value={form.date_of_report} onChange={e => update("date_of_report", e.target.value)} />
+          {errors.date_of_report && <div className="error">{errors.date_of_report}</div>}
+        </div>
 
-    // Load data on component mount - UPDATED
-    useEffect(() => {
-        const savedHasUploadedData = localStorage.getItem('hasUploadedData');
-        const savedUploadTime = localStorage.getItem('uploadTime');
-        const savedMonthlyFile = localStorage.getItem('monthlyFile');
+        <div className="row">
+          <label>3. Time of Report (HH:MM)</label>
+          <input type="time" value={form.time_of_report} onChange={e => update("time_of_report", e.target.value)} />
+        </div>
 
-        if (savedHasUploadedData === 'true') {
-            setHasUploadedData(true);
-            if (savedUploadTime) {
-                setUploadTime(new Date(savedUploadTime));
-            }
-            if (savedMonthlyFile) {
-                setMonthlyFile(JSON.parse(savedMonthlyFile));
-            }
-            fetchEmployeeData();
-        }
-    }, []);
+        <div className="row">
+          <label>4. Name of Impacted Employee / Person</label>
+          <input value={form.impacted_name} onChange={e => update("impacted_name", e.target.value)} />
+        </div>
 
+        <div className="row">
+          <label>5. Employee ID of Impacted Employee</label>
+          <input value={form.impacted_employee_id} onChange={e => update("impacted_employee_id", e.target.value)} />
+        </div>
 
-    const fetchEmployeeData = async () => {
-        try {
-            const res = await fetch("http://localhost:8000/monthly_sheet/employees");
-            const data = await res.json();
+        <div className="row">
+          <label>6. Was this incident reported verbally before submitting this report? *</label>
+          <div className="radio-row">
+            <label><input type="radio" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
+            <label><input type="radio" checked={form.was_reported_verbually === false || form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
+          </div>
+          {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
+          <div className="muted">** In case of medical emergency inform local HR</div>
+        </div>
 
-            setEmployeeData(data.employees || []);  // ✅ Fix: use array
-            setUploadTime(data.uploaded_at ? new Date(data.uploaded_at) : null);
-            setUploadStatus(data.message || "");
-        } catch (err) {
-            console.error("Failed to fetch employee data:", err);
-        }
-    };
+        {/* Branching: If Yes */}
+        {form.was_reported_verbally === true && (
+          <>
+            <div className="row">
+              <label>7. Incident reported to: (select one or more) *</label>
+              <div className="checkbox-grid">
+                {REPORTED_TO_OPTIONS.map(opt => (
+                  <label key={opt}>
+                    <input type="checkbox"
+                      checked={(form.incident_reported_to || []).includes(opt)}
+                      onChange={() => toggleReportedTo(opt)} /> {opt}
+                  </label>
+                ))}
+              </div>
+              {errors.incident_reported_to && <div className="error">{errors.incident_reported_to}</div>}
+            </div>
 
-    // Handle file selection
-    const handleMonthlyFileChange = (e) => {
-        const selected = e.target.files?.[0];
-        setMonthlyFile(selected);
-    };
+            <div className="row">
+              <label>8. If Yes, to whom (Name and Department):</label>
+              <input value={form.reported_to_details} onChange={e => update("reported_to_details", e.target.value)} />
+            </div>
+          </>
+        )}
 
-    // Handle upload submission - UPDATED
-    const handleUploadSubmit = async () => {
-        if (!monthlyFile) return;
+        {/* Common fields (both branches include location + reporter + incident details) */}
+        <div className="row">
+          <label>9. Location of Incident or Accident (Specify Office / Branch)</label>
+          <input value={form.location} onChange={e => update("location", e.target.value)} />
+        </div>
 
-        const formData = new FormData();
-        formData.append("file", monthlyFile);
+        <div className="row">
+          <label>10. Reported By - Name: *</label>
+          <input value={form.reported_by_name} onChange={e => update("reported_by_name", e.target.value)} />
+          {errors.reported_by_name && <div className="error">{errors.reported_by_name}</div>}
+        </div>
 
-        try {
-            setUploadStatus("Uploading...");
+        <div className="row">
+          <label>11. Reported By - Employee ID #</label>
+          <input value={form.reported_by_employee_id} onChange={e => update("reported_by_employee_id", e.target.value)} />
+        </div>
 
-            const res = await fetch("http://localhost:8000/monthly_sheet/upload_monthly", {
-                method: "POST",
-                body: formData,
-            });
+        <div className="row">
+          <label>12. Reported By - Contact Number *</label>
+          <input value={form.reported_by_contact} onChange={e => update("reported_by_contact", e.target.value)} />
+          {errors.reported_by_contact && <div className="error">{errors.reported_by_contact}</div>}
+        </div>
 
-            const result = await res.json();
+        <div className="row">
+          <label>13. Date of Incident Occurred *</label>
+          <input type="date" value={form.date_of_incident} onChange={e => update("date_of_incident", e.target.value)} />
+          {errors.date_of_incident && <div className="error">{errors.date_of_incident}</div>}
+        </div>
 
-            if (res.ok) {
-                setUploadStatus("Upload successful!");
-                setUploadTime(new Date());
-                setHasUploadedData(true);
-                setShowUploadPopup(false);
+        <div className="row">
+          <label>14. Time of Incident</label>
+          <input type="time" value={form.time_of_incident} onChange={e => update("time_of_incident", e.target.value)} />
+        </div>
 
-                // Save ALL data to localStorage
-                localStorage.setItem('hasUploadedData', 'true');
-                localStorage.setItem('uploadTime', new Date().toISOString());
-                localStorage.setItem('monthlyFile', JSON.stringify({
-                    name: monthlyFile.name,
-                    size: monthlyFile.size,
-                    type: monthlyFile.type,
-                    lastModified: monthlyFile.lastModified
-                }));
+        <div className="row">
+          <label>15. Detailed Description of Incident *</label>
+          <textarea value={form.detailed_description} onChange={e => update("detailed_description", e.target.value)} rows={5} />
+          {errors.detailed_description && <div className="error">{errors.detailed_description}</div>}
+        </div>
 
-                // Fetch the uploaded data
-                await fetchEmployeeData();
-                toast.success("File uploaded successfully!");
-            } else {
-                throw new Error(result.detail || "Upload failed");
-            }
-        } catch (err) {
-            console.error(err);
-            setUploadStatus("Upload failed!");
-            toast.error("Upload failed!");
-        }
-    };
+        <div className="row">
+          <label>16. Immediate Actions Taken</label>
+          <textarea value={form.immediate_actions_taken} onChange={e => update("immediate_actions_taken", e.target.value)} rows={3} />
+        </div>
 
-    // Delete confirmation
-    const confirmDeleteData = () => {
-        if (window.confirm("Are you sure you want to delete all employee data? This action cannot be undone.")) {
-            deleteEmployeeData();
-        }
-    };
+        <div className="row">
+          <label>17. Accompanying Person Name and Contact Details</label>
+          <div className="small-note">You can add multiple accompanying persons.</div>
+          {(form.accompanying_person || []).map((p, idx) => (
+            <div key={idx} className="accompany-row">
+              <input placeholder="Name" value={p.name || ""} onChange={e => updateAccompanying(idx, "name", e.target.value)} />
+              <input placeholder="Contact" value={p.contact || ""} onChange={e => updateAccompanying(idx, "contact", e.target.value)} />
+              <button type="button" className="btn small" onClick={() => removeAccompanying(idx)}>Remove</button>
+            </div>
+          ))}
+          <button type="button" className="btn" onClick={addAccompanying}>Add Accompanying Person</button>
+        </div>
 
-    // Delete employee data - UPDATED
-    const deleteEmployeeData = async () => {
-        try {
-            // Clear backend data
-            await fetch("http://localhost:8000/monthly_sheet/clear_data", {
-                method: "DELETE"
-            });
+        <div className="row">
+          <label>18/19. Name of Witnesses & Contact Numbers</label>
+          <div className="small-note">Add one witness per row.</div>
+          {(form.witnesses || []).map((w, idx) => (
+            <div key={idx} className="accompany-row">
+              <input placeholder="Witness Name" value={w || ""} onChange={e => updateWitness(idx, e.target.value)} />
+              <input placeholder="Contact" value={(form.witness_contacts || [])[idx] || ""} onChange={e => updateWitnessContact(idx, e.target.value)} />
+              <button type="button" className="btn small" onClick={() => removeWitness(idx)}>Remove</button>
+            </div>
+          ))}
+          <button type="button" className="btn" onClick={addWitness}>Add Witness</button>
+        </div>
 
-            // Clear frontend state
-            setEmployeeData([]);
-            setMonthlyFile(null);
-            setHasUploadedData(false);
-            setUploadTime(null);
-            setUploadStatus("");
+        <div className="row">
+          <label>20. Root cause analysis of the incident/accident</label>
+          <textarea value={form.root_cause_analysis} onChange={e => update("root_cause_analysis", e.target.value)} rows={3} />
+        </div>
 
-            // Clear localStorage
-            localStorage.removeItem('hasUploadedData');
-            localStorage.removeItem('uploadTime');
-            localStorage.removeItem('monthlyFile');
+        <div className="row">
+          <label>21. Preventive actions taken during or after incident/accident (If any)</label>
+          <textarea value={form.preventive_actions} onChange={e => update("preventive_actions", e.target.value)} rows={3} />
+        </div>
 
-            toast.success("Employee data cleared successfully.");
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to clear data.");
-        }
-    };
-   <aside style={styles.sidebar}>
-                    <nav style={styles.nav}>
-                        {[
-
-                            { id: "regions", label: "Global", icon: FiGlobe }, // 🆕 New tab
-                            { id: "AddNewTraveler", label: "Add New Traveler", icon: IoIosAddCircle },
-                            { id: "overview", label: "Overview", icon: FiActivity },
-                            { id: "analytics", label: "Analytics", icon: FiBarChart2 },
-                            { id: "recent", label: "Recent Travels", icon: FiClock },
-                            { id: "countries", label: "Country Analysis", icon: FiMapPin },
-                            { id: "types", label: "Travel Types", icon: FiAward },
-
-                        ].map(item => (
-                            <button
-                                key={item.id}
-                                onClick={() => setActiveTab(item.id)}
-                                style={{
-                                    ...styles.navItem,
-                                    ...(activeTab === item.id ? styles.navItemActive : {})
-                                }}
-                            >
-                                <item.icon style={styles.navIcon} />
-                                {item.label}
-                            </button>
-                        ))}
-                    </nav>
-
-                    {/* Quick Stats */}
-                    <div style={styles.sideCard}>
-                        <div style={styles.cardHeader}>
-                            <FiTrendingUp style={styles.cardIcon} />
-                            <h3 style={styles.sideTitle}>Quick Stats</h3>
-                        </div>
-
-                            {activeTab === "overview" && (
-                                <div style={styles.card}>
-                                    <div style={styles.tableHeader}>
-
-                                        <h3 style={styles.tableTitle}>
-                                            {filters.region ? `${filters.region} - Travel Records` : "All Travel Records"}
-                                        </h3>
-                                        <div style={styles.tableHeaderRight}>
-                                            {filters.region && (
-                                                <button
-                                                    onClick={() => setFilters(prev => ({ ...prev, region: "" }))}
-                                                    style={styles.clearRegionButton}
-                                                >
-                                                    Clear Region
-                                                </button>
-                                            )}
-                                            <span style={styles.tableBadge}>{filtered.length} records</span>
-                                        </div>
-                                    </div>
-                                    <div style={styles.tableWrap}>
-                                        <table style={styles.table}>
-                                            <thead style={styles.thead}>
-                                                <tr>
-                                                    <th style={styles.th}>Status</th>
-                                                    <th style={styles.th}>Traveler</th>
- {activeTab === "analytics" && (
-                                <div style={styles.analyticsGrid}>
-                                    <div style={styles.analyticsCard}>
-                                        <h4 style={styles.analyticsTitle}>Travel Analytics</h4>
-                                        <div style={styles.analyticsStats}>
-                                            <div style={styles.analyticsStat}>
-                                                <span style={styles.analyticsLabel}>Average Duration</span>
-                                                <strong style={styles.analyticsValue}>{analy
-both themme
-                                                                                       
-// 🆕 Theme-aware style functions
-const getStyles = (isDark) => ({
-
-
-    // new card
-    regionCard: {
-        padding: "12px 16px",
-        borderRadius: "16px",
-        backgroundColor: isDark ? "#1
-                                                                                       
-# incident_report.py
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, validator
-from typing import Optional, List, Any
-from sqlalchemy import Column, Integer, String, DateTime, Text
-from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON  # maps to TEXT in SQLite
-from datetime import datetime, date
-import zoneinfo
-import json
-
-# reuse DB Base/engine/SessionLocal exported from monthly_sheet
-from monthly_sheet import Base, engine, SessionLocal
-
-router = APIRouter(prefix="/incident", tags=["incident"])
-
-SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
-
-# -------------------------
-# SQLAlchemy model
-# -------------------------
-class IncidentReport(Base):
-    __tablename__ = "incident_reports"
-
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    type_of_incident = Column(String, nullable=True)   # Medical / Theft / ...
-    date_of_report = Column(String, nullable=True)     # stored as ISO date string
-    time_of_report = Column(String, nullable=True)     # HH:MM
-    impacted_name = Column(String, nullable=True)
-    impacted_employee_id = Column(String, nullable=True)
-    was_reported_verbally = Column(Integer, default=0)  # 1 = Yes, 0 = No
-    # if yes: who it was reported to (list of choices) and details about to-whom
-    incident_reported_to = Column(String, nullable=True)   # CSV or JSON string
-    reported_to_details = Column(String, nullable=True)    # "If yes, to whom (Name and Department)"
-    # common fields
-    location = Column(String, nullable=True)  # Location of Incident or Accident (Office / Branch)
-    reported_by_name = Column(String, nullable=True)
-    reported_by_employee_id = Column(String, nullable=True)
-    reported_by_contact = Column(String, nullable=True)
-    date_of_incident = Column(String, nullable=True)    # ISO date string
-    time_of_incident = Column(String, nullable=True)
-    detailed_description = Column(Text, nullable=True)
-    immediate_actions_taken = Column(Text, nullable=True)
-    accompanying_person = Column(SQLITE_JSON, nullable=True)   # JSON array or null
-    witnesses = Column(SQLITE_JSON, nullable=True)            # JSON array
-    witness_contacts = Column(SQLITE_JSON, nullable=True)     # JSON array
-    root_cause_analysis = Column(Text, nullable=True)
-    preventive_actions = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.now)
-
-# ensure table exists
-Base.metadata.create_all(bind=engine)
-
-# -------------------------
-# Pydantic Schemas
-# -------------------------
-class IncidentCreate(BaseModel):
-    type_of_incident: Optional[str]
-    date_of_report: Optional[str]      # allow ISO string or plain date string
-    time_of_report: Optional[str]      # "HH:MM"
-    impacted_name: Optional[str]
-    impacted_employee_id: Optional[str]
-    was_reported_verbally: bool
-    # if was_reported_verbally == True:
-    incident_reported_to: Optional[List[str]] = None
-    reported_to_details: Optional[str] = None
-
-    # fields used in both branches
-    location: Optional[str] = None
-    reported_by_name: Optional[str] = None
-    reported_by_employee_id: Optional[str] = None
-    reported_by_contact: Optional[str] = None
-    date_of_incident: Optional[str] = None
-    time_of_incident: Optional[str] = None
-    detailed_description: Optional[str] = None
-    immediate_actions_taken: Optional[str] = None
-    accompanying_person: Optional[List[dict]] = None
-    witnesses: Optional[List[str]] = None
-    witness_contacts: Optional[List[str]] = None
-    root_cause_analysis: Optional[str] = None
-    preventive_actions: Optional[str] = None
-
-    @validator("incident_reported_to", always=True)
-    def validate_reported_to(cls, v, values):
-        # When was_reported_verbally is True, incident_reported_to must be provided (at least one)
-        if values.get("was_reported_verbally"):
-            if not v or not isinstance(v, list) or len(v) == 0:
-                raise ValueError("When was_reported_verbally is True, provide incident_reported_to (list of options).")
-        return v
-
-    @validator("reported_to_details", always=True)
-    def validate_reported_to_details(cls, v, values):
-        # recommended to provide details when was_reported_verbally is True
-        if values.get("was_reported_verbally"):
-            # not strictly required, but warn/require: here we require at least an empty string allowed
-            if v is None:
-                return ""  # keep DB field non-null if caller omits
-        return v
-
-class IncidentOut(BaseModel):
-    id: int
-    type_of_incident: Optional[str]
-    date_of_report: Optional[str]
-    time_of_report: Optional[str]
-    impacted_name: Optional[str]
-    impacted_employee_id: Optional[str]
-    was_reported_verbally: bool
-    incident_reported_to: Optional[List[str]] = None
-    reported_to_details: Optional[str] = None
-    location: Optional[str] = None
-    reported_by_name: Optional[str] = None
-    reported_by_employee_id: Optional[str] = None
-    reported_by_contact: Optional[str] = None
-    date_of_incident: Optional[str] = None
-    time_of_incident: Optional[str] = None
-    detailed_description: Optional[str] = None
-    immediate_actions_taken: Optional[str] = None
-    accompanying_person: Optional[List[dict]] = None
-    witnesses: Optional[List[str]] = None
-    witness_contacts: Optional[List[str]] = None
-    root_cause_analysis: Optional[str] = None
-    preventive_actions: Optional[str] = None
-    created_at: Optional[datetime]
-
-    class Config:
-        orm_mode = True
-
-# -------------------------
-# Endpoints
-# -------------------------
-@router.post("/create", response_model=IncidentOut)
-def create_incident(payload: IncidentCreate):
-    """
-    Create a new incident record.
-    Validation: enforces incident_reported_to when was_reported_verbally is True.
-    """
-    db = SessionLocal()
-    try:
-        inst = IncidentReport(
-            type_of_incident = payload.type_of_incident,
-            date_of_report = payload.date_of_report,
-            time_of_report = payload.time_of_report,
-            impacted_name = payload.impacted_name,
-            impacted_employee_id = payload.impacted_employee_id,
-            was_reported_verbally = 1 if payload.was_reported_verbally else 0,
-            incident_reported_to = json.dumps(payload.incident_reported_to) if payload.incident_reported_to else None,
-            reported_to_details = payload.reported_to_details,
-            location = payload.location,
-            reported_by_name = payload.reported_by_name,
-            reported_by_employee_id = payload.reported_by_employee_id,
-            reported_by_contact = payload.reported_by_contact,
-            date_of_incident = payload.date_of_incident,
-            time_of_incident = payload.time_of_incident,
-            detailed_description = payload.detailed_description,
-            immediate_actions_taken = payload.immediate_actions_taken,
-            accompanying_person = payload.accompanying_person,
-            witnesses = payload.witnesses,
-            witness_contacts = payload.witness_contacts,
-            root_cause_analysis = payload.root_cause_analysis,
-            preventive_actions = payload.preventive_actions,
-            created_at = datetime.now(tz=SERVER_TZ)
-        )
-        db.add(inst)
-        db.commit()
-        db.refresh(inst)
-
-        # convert JSON-string fields back to Python lists for response_model
-        out = inst
-        try:
-            if out.incident_reported_to:
-                out.incident_reported_to = json.loads(out.incident_reported_to)
-        except Exception:
-            out.incident_reported_to = None
-
-        return out
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        db.close()
-
-
-@router.get("/list", response_model=List[IncidentOut])
-def list_incidents(limit: int = 200):
-    db = SessionLocal()
-    try:
-        rows = db.query(IncidentReport).order_by(IncidentReport.created_at.desc()).limit(limit).all()
-        # convert JSON-string incident_reported_to to list
-        for r in rows:
-            try:
-                if isinstance(r.incident_reported_to, str):
-                    r.incident_reported_to = json.loads(r.incident_reported_to)
-            except Exception:
-                r.incident_reported_to = None
-        return rows
-    finally:
-        db.close()
-
-
-@router.get("/{incident_id}", response_model=IncidentOut)
-def get_incident(incident_id: int):
-    db = SessionLocal()
-    try:
-        row = db.query(IncidentReport).filter(IncidentReport.id == incident_id).first()
-        if not row:
-            raise HTTPException(status_code=404, detail="Incident not found")
-        try:
-            if isinstance(row.incident_reported_to, str):
-                row.incident_reported_to = json.loads(row.incident_reported_to)
-        except Exception:
-            row.incident_reported_to = None
-        return row
-    finally:
-        db.close()
+        <div className="form-actions">
+          <button type="submit" className="btn primary">Submit</button>
+          <button type="button" className="btn outline" onClick={clearDraft}>Clear Draft</button>
+          <div className="muted">{saving ? "Saving draft..." : "Draft saved locally"}</div>
+        </div>
+      </form>
+    </div>
+  );
+}
