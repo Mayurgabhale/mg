@@ -1,3 +1,29 @@
+PS C:\Users\W0024618\Desktop\Backend> node setupDatabase.js
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'better-sqlite3'
+Require stack:
+- C:\Users\W0024618\Desktop\Backend\setupDatabase.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\Backend\setupDatabase.js:10:18)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'C:\\Users\\W0024618\\Desktop\\Backend\\setupDatabase.js' ]
+}
+
+Node.js v22.17.0
+PS C:\Users\W0024618\Desktop\Backend> 
+  C:\Users\W0024618\Desktop\Backend\src\data
+  C:\Users\W0024618\Desktop\Backend\setupDatabase.js
 // setupDatabase.js
 // --------------------------------------------------------
 // This script creates SQLite DB + tables + imports ALL Excel data
