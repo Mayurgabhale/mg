@@ -1,3 +1,55 @@
+ok, good,
+  now only one issue is 
+in controller_doors
+Location and City are not show 
+only this issue ok 
+C:\Users\W0024618\Desktop\Backend\src\data\ControllerDataWithDoorReader.json
+[
+    {
+        "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
+        "IP_address": "10.199.13.10",
+        "Location": "APAC",
+        "City": "Pune 2nd Floor",
+        "Doors": [
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_RECPTION TO WORKSTATION DOOR_10:05:4B",
+                "Reader": "out:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO RECEPTION EMTRY DOOR_10:05:74",
+                "Reader": "in:1"
+            },
+            {
+                "Door": "APAC_IN_PUN_2NDFLR_LIFTLOBBY TO WORKSTATION DOOR_10:05:F0",
+                "Reader": ""
+            }
+        ]
+    },
+    {
+        "controllername": "IN-PUN-PODIUM-ISTAR PRO-01",
+        "IP_address": "10.199.8.20",
+        "Location": "APAC",
+        "City": "Pune Podium",
+        "Doors": [
+            {
+                "Door": "APAC_IN-PUN-PODIUM-RED-RECREATION AREA FIRE EXIT 1-DOOR",
+                "Reader": ""
+            },
+
+          
+
 // setupDatabase.js
 // --------------------------------------------------------
 const xlsx = require("xlsx");
