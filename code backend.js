@@ -1,88 +1,46 @@
-import React, { useEffect, useState } from "react";
-import "./IncidentForm.css";
-
-export default function IncidentList() {
-  const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [search, setSearch] = useState("");
-
-  const fetchIncidents = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:8000/incident/list");
-      const json = await res.json();
-      setIncidents(Array.isArray(json) ? json : []);
-    } catch (e) {
-      console.error("Failed to fetch incidents", e);
-      setIncidents([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchIncidents();
-  }, []);
-
-  const filtered = incidents.filter(it => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return (it.type_of_incident || "").toLowerCase().includes(s) ||
-           (it.impacted_name || "").toLowerCase().includes(s) ||
-           (it.reported_by_name || "").toLowerCase().includes(s) ||
-           (it.location || "").toLowerCase().includes(s);
-  });
-
-  return (
-    <div className="incident-list">
-      <div className="list-header">
-        <h3>Recent Incidents</h3>
-        <div>
-          <input placeholder="Search by type, name, reporter, location" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn" onClick={fetchIncidents}>Refresh</button>
-        </div>
-      </div>
-
-      {loading ? <div>Loading...</div> : (
-        <table className="inc-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Impacted</th>
-              <th>Reported By</th>
-              <th>Date of Incident</th>
-              <th>Location</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(row => (
-              <tr key={row.id}>
-                <td>{row.id}</td>
-                <td>{row.type_of_incident}</td>
-                <td>{row.impacted_name || "-"}</td>
-                <td>{row.reported_by_name || "-"}</td>
-                <td>{row.date_of_incident || row.date_of_report || "-"}</td>
-                <td>{row.location || "-"}</td>
-                <td><button className="btn small" onClick={() => setSelected(row)}>View</button></td>
-              </tr>
-            ))}
-            {filtered.length === 0 && <tr><td colSpan={7}>No incidents</td></tr>}
-          </tbody>
-        </table>
-      )}
-
-      {selected && (
-        <div className="modal">
-          <div className="modal-inner">
-            <button className="modal-close" onClick={() => setSelected(null)}>Close</button>
-            <h3>Incident #{selected.id} — {selected.type_of_incident}</h3>
-            <pre className="detail-json">{JSON.stringify(selected, null, 2)}</pre>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+.incident-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin: 12px 0;
 }
+.incident-card h2 { margin-top: 0; }
+.incident-form .row { margin-bottom: 12px; display:block; }
+.incident-form label { font-weight: 600; display:block; margin-bottom:6px; }
+.incident-form input[type="text"],
+.incident-form input[type="date"],
+.incident-form input[type="time"],
+.incident-form input[type="tel"],
+.incident-form select,
+.incident-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+.incident-form textarea { min-height: 80px; }
+.form-actions { display:flex; gap:10px; align-items:center; margin-top:10px; }
+.btn { padding:8px 10px; border-radius:6px; border: none; background:#007bff; color:white; cursor:pointer; }
+.btn.outline { background:transparent; border:1px solid #ccc; color:#333; }
+.btn.small { padding:6px 8px; font-size:13px; }
+.btn.primary { background:#0b74de; }
+.muted { color:#666; font-size:13px; margin-top:6px; }
+.error { color:#b00020; font-size:13px; margin-top:6px; }
+
+.checkbox-grid label { display:inline-block; margin-right:10px; margin-bottom:6px; }
+.radio-row label { margin-right:14px; }
+
+.accompany-row { display:flex; gap:8px; margin-bottom:8px; }
+.accompany-row input { flex:1; }
+
+.incident-list { margin-top:12px; }
+.list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.inc-table { width:100%; border-collapse: collapse; }
+.inc-table th, .inc-table td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
+
+.modal { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; justify-content:center; align-items:center; z-index:1000; }
+.modal-inner { background:#fff; padding:18px; border-radius:8px; width:90%; max-width:900px; max-height:80vh; overflow:auto; position:relative; }
+.modal-close { position:absolute; right:10px; top:10px; }
+.detail-json { background:#f7f7f7; padding:10px; border-radius:6px; font-family:monospace; white-space:pre-wrap; }
