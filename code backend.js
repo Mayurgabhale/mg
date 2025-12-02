@@ -1,377 +1,143 @@
-C:\Users\W0024618\Desktop\Backend\src\data\devices.db
-
-ok, now i want ot get all data form data base ok not form excle file ok 
-read teh below all code carefulym and give me correct code, withou chagen nay logic ok carefully, 
-only get data for database ok 
-
-C:\Users\W0024618\Desktop\Backend\src\controllers\regionControllers.js
-const { fetchGlobalData, fetchRegionData} = require("../services/excelService");
-
-
-// Global Summary Controller
-const getGlobalSummary = async (req, res) => {
-    try {
-        const globalData = await fetchGlobalData();
-        res.status(200).json({ summary: globalData.summary });
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error", details: error.message });
-    }
-};
-
-// Global Details Controller
-const getGlobalDetails = async (req, res) => {
-    try {
-        const globalData = await fetchGlobalData();
-        res.status(200).json({ details: globalData.details });
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error", details: error.message });
-    }
-};
-
-// Region Summary Controller
-const getRegionSummary = async (req, res) => {
-    const { regionName } = req.params;
-    try {
-        const regionData = await fetchRegionData(regionName);
-        res.status(200).json({ summary: regionData.summary });
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error", details: error.message });
-    }
-};
-
-
-// Region Details Controller
-const getRegionDetails = async (req, res) => {
-    const { regionName } = req.params;
-    try {
-        const regionData = await fetchRegionData(regionName);
-        res.status(200).json({ details: regionData.details });
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error", details: error.message });
-    }
-};
-
-module.exports = {
-    getGlobalSummary,
-    getGlobalDetails,
-    getRegionSummary,
-    getRegionDetails,
-};
-----------------------------
-  C:\Users\W0024618\Desktop\Backend\src\routes\deviceRoutes.js
-const express = require("express");
-const router = express.Router();
-const {
-  addDevice,
-  updateDevice,
-  deleteDevice,
-  fetchGlobalData,
-} = require("../services/excelService");
-
-// get all devices (summary + details)
-router.get("/all", async (req, res) => {
-  try {
-    const data = await fetchGlobalData();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// add new device
-router.post("/", (req, res) => {
-  try {
-    const { type, device } = req.body;
-    if (!type || !device) return res.status(400).json({ error: "type and device are required" });
-    const added = addDevice(type, device);
-    res.status(201).json({ added });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// update device by old ip
-router.put("/:ip", (req, res) => {
-  try {
-    const oldIp = req.params.ip;
-    const updates = req.body;
-    const updated = updateDevice(oldIp, updates);
-    res.json({ updated });
-  } catch (err) {
-    res.status(404).json({ error: err.message });
-  }
-});
-
-// delete device
-router.delete("/:ip", (req, res) => {
-  try {
-    const ip = req.params.ip;
-    deleteDevice(ip);
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(404).json({ error: err.message });
-  }
-});
-
-module.exports = router;
-
-C:\Users\W0024618\Desktop\Backend\src\routes\regionRoutes.js
-//  my code working 
- const express = require("express");
- const {
-     getGlobalSummary,
-     getGlobalDetails,
-     getRegionSummary,
-     getRegionDetails,
- } = require("../controllers/regionControllers");
- 
- const router = express.Router();
- 
- // Global Routes
- router.get("/summary/global", getGlobalSummary);
- router.get("/details/global", getGlobalDetails);
- 
- 
- // Region Routes
- router.get("/summary/:regionName", getRegionSummary);
- router.get("/details/:regionName", getRegionDetails)
- 
- module.exports = router;
-
-
-C:\Users\W0024618\Desktop\Backend\src\services\excelService.js
-
-// const fs = require("fs");
-// const xlsx = require("xlsx");
-// const path = require("path");
-//  const pLimit = require("p-limit");
-//  const { pingHost } = require("./pingService");
- 
-// const { DateTime } = require("luxon");
-// const { all } = require("axios");
- 
-// // Excel paths
-// const archiverPath = path.join(__dirname, "../data/ArchiverData.xlsx");
-// const controllerPath = path.join(__dirname, "../data/ControllerData.xlsx");
-// const cameraPath = path.join(__dirname, "../data/CameraData.xlsx");
-// const serverPath = path.join(__dirname, "../data/ServerData.xlsx");
-// const pcDetailsPath = path.join(__dirname, "../data/PCDetails.xlsx");
-
-// const DBDetails = path.join(__dirname, "../data/DBDetails.xlsx");
-
- 
-// // In‑memory cache
-// let allData = {};
- 
-// // Helper: prune old entries
-// function pruneOldEntries(entries, days = 30) {
-//   const cutoff = DateTime.now().minus({ days }).toMillis();
-//   return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
-// }
- 
-// // Load Excel sheets once
-// function loadExcelData() {
-//   if (Object.keys(allData).length) return;
-//   const loadSheet = file => {
-//     const wb = xlsx.readFile(file);
-//     const rows = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-//     return rows.map(r => {
-//       const norm = {};
-//       Object.entries(r).forEach(([k, v]) => {
-//         norm[k.trim().toLowerCase().replace(/\s+/g, "_")] = v;
-//       });
-//       norm.history = [];
-//       return norm;
-//     });
-//   };
-//   allData = {
-//     archivers: loadSheet(archiverPath),
-//     controllers: loadSheet(controllerPath),
-//     cameras: loadSheet(cameraPath),
-//     servers: loadSheet(serverPath),
-//     pcDetails:loadSheet(pcDetailsPath),
-//     DBDetails:loadSheet(DBDetails),
-//   };
-//   console.log("Excel Data Loaded:", Object.keys(allData));
-// }
-// loadExcelData();
- 
-// // Build IP→region map
-// const ipRegionMap = {};
-// Object.values(allData).flat().forEach(dev => {
-//   if (dev.ip_address && dev.location) {
-//     ipRegionMap[dev.ip_address] = dev.location.toLowerCase();
-//   }
-// });
- 
-// // Fetch all IPs
-// function fetchAllIpAddress() {
-//   return Object.values(allData)
-//     .flat()
-//     .map(d => d.ip_address)
-//     .filter(Boolean);
-// }
- 
-// // Ping helpers
-//  const cache = new Map();
-//  async function pingDevice(ip) {
-//     if (!ip) return "IP Address Missing";
-//      return await pingHost(ip);
-//    }
- 
-//  cache.clear();
- 
-//  async function pingDevices(devices) {
-//    //cache.clear();
-//     const limit = pLimit(20);
-//     await Promise.all(
-//       devices.map(dev =>
-//         limit(async () => {
-//           const status = cache.get(dev.ip_address) || await pingDevice(dev.ip_address);
-//           cache.set(dev.ip_address, status);
-//           dev.status = status;
-//         })
-//       )
-//     );
-//   }
- 
- 
-// // Summary calculators
-// function calculateSummary(groups) {
-//   const summary = {};
-//   for (const [k, list] of Object.entries(groups)) {
-//     const total = list.length;
-//     const online = list.filter(d => d.status === "Online").length;
-//     summary[k] = { total, online, offline: total - online };
-//   }
-//   return {
-//     totalDevices: Object.values(summary).reduce((s, g) => s + g.total, 0),
-//     totalOnlineDevices: Object.values(summary).reduce((s, g) => s + g.online, 0),
-//     totalOfflineDevices: Object.values(summary).reduce((s, g) => s + g.offline, 0),
-//     ...summary
-//   };
-// }
- 
-// // Public APIs
-// async function fetchGlobalData() {
-//   const all = [...allData.cameras, ...allData.archivers, ...allData.controllers, ...allData.servers, ...allData.pcDetails, ...allData.DBDetails];
-//   await pingDevices(all);
-//   return { summary: calculateSummary(allData), details: allData };
-// }
- 
-// async function fetchRegionData(regionName) {
-//   const filter = list => list.filter(d => d.location?.toLowerCase() === regionName.toLowerCase());
-//   const regionDevices = {
-//     cameras: filter(allData.cameras),
-//     archivers: filter(allData.archivers),
-//     controllers: filter(allData.controllers),
-//     servers: filter(allData.servers),
-//     pcDetails:filter(allData.pcDetails),
-//     DBDetails:filter(allData.DBDetails),
-//   };
-//   await pingDevices([].concat(...Object.values(regionDevices)));
-//   return { summary: calculateSummary(regionDevices), details: regionDevices };
-// }
-
-
-// function getDeviceInfo(ip) {
-//   for (const list of Object.values(allData)) {
-//     const dev = list.find(d => d.ip_address === ip);
-//     if (dev) return dev;
-//   }
-//   return null;
-// }
-
-
-
- 
-// module.exports = {
-//   fetchGlobalData,
-//   fetchRegionData,
-//   fetchAllIpAddress,
-//   ipRegionMap,
-//   getDeviceInfo,       // ← new
-
-// };
- 
-
-
-// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️ mayur 1-12 
-
+// src/services/excelService.js
+// Uses SQLite (src/data/devices.db) as the single source of truth.
+// Exports the same functions your app expects: fetchGlobalData, fetchRegionData, fetchAllIpAddress, ipRegionMap, getDeviceInfo, addDevice, updateDevice, deleteDevice, getControllersList
 
 const fs = require("fs");
-const xlsx = require("xlsx");
 const path = require("path");
 const pLimit = require("p-limit");
-const { pingHost } = require("./pingService");
 const { DateTime } = require("luxon");
+const { pingHost } = require("./pingService");
+const Database = require("better-sqlite3");
 
-// Excel paths
-const archiverPath = path.join(__dirname, "../data/ArchiverData.xlsx");
-const controllerPath = path.join(__dirname, "../data/ControllerData.xlsx");
-const cameraPath = path.join(__dirname, "../data/CameraData.xlsx");
-const serverPath = path.join(__dirname, "../data/ServerData.xlsx");
-const pcDetailsPath = path.join(__dirname, "../data/PCDetails.xlsx");
-const DBDetailsPath = path.join(__dirname, "../data/DBDetails.xlsx");
+// DB path
+const dbPath = path.join(__dirname, "../data/devices.db");
+if (!fs.existsSync(dbPath)) {
+  throw new Error(`Database file not found at ${dbPath}. Run setupDatabase.js first.`);
+}
+const db = new Database(dbPath, { readonly: false });
 
-// json fallback files (we will persist runtime edits here)
-const jsonFiles = {
-  archivers: path.join(__dirname, "../data/archivers.json"),
-  controllers: path.join(__dirname, "../data/controllers.json"),
-  cameras: path.join(__dirname, "../data/cameras.json"),
-  servers: path.join(__dirname, "../data/servers.json"),
-  pcDetails: path.join(__dirname, "../data/pcDetails.json"),
-  DBDetails: path.join(__dirname, "../data/DBDetails.json"),
+// In-memory cache (same shape as previous implementation)
+let allData = {
+  archivers: [],
+  controllers: [],
+  cameras: [],
+  servers: [],
+  pcDetails: [],
+  DBDetails: [],
 };
 
-// In-memory cache
-let allData = {};
+// ip -> region map
+let ipRegionMap = {};
 
-// Helper: normalize keys
-function normalizeRow(r) {
-  const norm = {};
-  Object.entries(r).forEach(([k, v]) => {
-    const key = k.trim().toLowerCase().replace(/\s+/g, "_");
-    norm[key] = v;
-  });
-  norm.history = norm.history || [];
-  return norm;
+// small helper: normalize keys the same way your old code did
+function normalizeKey(k) {
+  return k.toString().trim().toLowerCase().replace(/\s+/g, "_");
 }
 
-// Load either JSON (if exists) or Excel
-function loadSheetFromExcelOrJson(sheetName, excelPath) {
-  const jsonPath = jsonFiles[sheetName];
-  if (fs.existsSync(jsonPath)) {
-    try {
-      const raw = fs.readFileSync(jsonPath, "utf8");
-      const rows = JSON.parse(raw);
-      return rows.map(r => ({ ...r, history: r.history || [] }));
-    } catch (e) {
-      console.error("Failed to parse JSON for", sheetName, e.message);
-      // fallback to excel
-    }
+// Convert DB row for a given table into the normalized object shape your app expects
+function mapRowToDevice(table, row) {
+  if (!row) return null;
+  // create a new object with normalized keys and include original case keys commonly used by other code
+  const dev = {};
+
+  // Generic mapping — prefer explicit columns per table
+  switch (table) {
+    case "cameras":
+      dev.cameraname = row.cameraname || row.camera_name || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null; // include both variants so other code can find it
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      dev.device_details = row.device_details || row.deviec_details || null;
+      dev.hyperlink = row.hyperlink || null;
+      dev.remark = row.remark || null;
+      break;
+
+    case "archivers":
+      dev.archivername = row.archivername || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      break;
+
+    case "controllers":
+      dev.controllername = row.controllername || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      break;
+
+    case "servers":
+      dev.servername = row.servername || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      break;
+
+    case "dbdetails":
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      dev.hostname = row.hostname || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.application = row.application || null;
+      dev.windows_server = row.windows_server || null;
+      break;
+
+    case "pc_details":
+      dev.hostname = row.hostname || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      dev.pc_name = row.pc_name || null;
+      break;
+
+    default:
+      // generic fallback: copy all keys normalized
+      Object.keys(row).forEach(k => {
+        dev[normalizeKey(k)] = row[k];
+      });
   }
-  // fallback: read excel
-  if (!fs.existsSync(excelPath)) {
-    console.warn("Excel file not found:", excelPath);
-    return [];
-  }
-  const wb = xlsx.readFile(excelPath);
-  const rows = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]] || {});
-  return rows.map(normalizeRow);
+
+  // common metadata
+  dev.history = Array.isArray(row.history) ? row.history : [];
+  // ensure status property may be present (DB doesn't currently store status by default)
+  if (row.status) dev.status = row.status;
+  return dev;
 }
 
-// Initialize
-function loadExcelData() {
-  allData = {
-    archivers: loadSheetFromExcelOrJson("archivers", archiverPath),
-    controllers: loadSheetFromExcelOrJson("controllers", controllerPath),
-    cameras: loadSheetFromExcelOrJson("cameras", cameraPath),
-    servers: loadSheetFromExcelOrJson("servers", serverPath),
-    pcDetails: loadSheetFromExcelOrJson("pcDetails", pcDetailsPath),
-    DBDetails: loadSheetFromExcelOrJson("DBDetails", DBDetailsPath),
-  };
-  console.log("Data Loaded. counts:", {
+// Load all rows from DB into allData
+function loadDbData() {
+  // cameras
+  const cams = db.prepare("SELECT * FROM cameras").all();
+  allData.cameras = cams.map(r => mapRowToDevice("cameras", r));
+
+  // archivers
+  const archs = db.prepare("SELECT * FROM archivers").all();
+  allData.archivers = archs.map(r => mapRowToDevice("archivers", r));
+
+  // controllers
+  const ctrls = db.prepare("SELECT * FROM controllers").all();
+  allData.controllers = ctrls.map(r => mapRowToDevice("controllers", r));
+
+  // servers
+  const srvs = db.prepare("SELECT * FROM servers").all();
+  allData.servers = srvs.map(r => mapRowToDevice("servers", r));
+
+  // dbdetails
+  const dbs = db.prepare("SELECT * FROM dbdetails").all();
+  allData.DBDetails = dbs.map(r => mapRowToDevice("dbdetails", r));
+
+  // pc_details
+  const pcs = db.prepare("SELECT * FROM pc_details").all();
+  allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
+
+  rebuildIpRegionMap();
+  console.log("Loaded data from DB. counts:", {
     cameras: allData.cameras.length,
     controllers: allData.controllers.length,
     archivers: allData.archivers.length,
@@ -380,26 +146,24 @@ function loadExcelData() {
     DBDetails: allData.DBDetails.length,
   });
 }
-loadExcelData();
 
-// Build IP→region map (and helper to rebuild after changes)
-let ipRegionMap = {};
+// rebuild ipRegionMap (called after any mutation)
 function rebuildIpRegionMap() {
   ipRegionMap = {};
   Object.values(allData).flat().forEach(dev => {
-    if (dev.ip_address && dev.location) {
-      ipRegionMap[dev.ip_address] = dev.location.toLowerCase();
+    const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
+    if (ip && dev.location) {
+      ipRegionMap[ip] = (dev.location || "").toString().toLowerCase();
     }
   });
 }
-rebuildIpRegionMap();
 
-// Fetch all IPs
+// Fetch all IP addresses (array of ip strings) — used by ping loop
 function fetchAllIpAddress() {
   return Object.values(allData).flat().map(d => d.ip_address).filter(Boolean);
 }
 
-// ping helpers (similar to your current code)
+// Ping helpers (cache + concurrency)
 const cache = new Map();
 async function pingDevice(ip) {
   if (!ip) return "IP Address Missing";
@@ -411,15 +175,16 @@ async function pingDevices(devices) {
   await Promise.all(
     devices.map(dev =>
       limit(async () => {
-        const status = cache.get(dev.ip_address) || await pingDevice(dev.ip_address);
-        cache.set(dev.ip_address, status);
+        const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
+        const status = cache.get(ip) || await pingDevice(ip);
+        cache.set(ip, status);
         dev.status = status;
       })
     )
   );
 }
 
-// Summary calculators
+// Summary calculators (same logic as before)
 function calculateSummary(groups) {
   const summary = {};
   for (const [k, list] of Object.entries(groups)) {
@@ -435,90 +200,318 @@ function calculateSummary(groups) {
   };
 }
 
-// Save functions: write each top-level array to json file
-function persistAllDataToJson() {
-  for (const [key, filePath] of Object.entries(jsonFiles)) {
-    try {
-      fs.writeFileSync(filePath, JSON.stringify(allData[key], null, 2), "utf8");
-    } catch (err) {
-      console.error("Failed to persist", key, err.message);
-    }
-  }
-}
-
-// Utility: lookup device by ip and also provide list name
-function findDeviceByIp(ip) {
-  for (const [listName, list] of Object.entries(allData)) {
-    const idx = list.findIndex(d => d.ip_address === ip);
-    if (idx !== -1) return { listName, idx, device: list[idx] };
+// Accessors
+function getDeviceInfo(ip) {
+  for (const list of Object.values(allData)) {
+    const dev = list.find(d => (d.ip_address || d.IP_address) === ip);
+    if (dev) return dev;
   }
   return null;
 }
 
-// Add device
-function addDevice(type, deviceObj) {
-  if (!allData[type]) throw new Error("Invalid device type: " + type);
-  // minimal normalization
-  const norm = {};
-  Object.entries(deviceObj).forEach(([k, v]) => {
-    norm[k.toString().trim().toLowerCase().replace(/\s+/g, "_")] = v;
-  });
-  norm.history = norm.history || [];
-  allData[type].push(norm);
-  rebuildIpRegionMap();
-  persistAllDataToJson();
-  return norm;
-}
-
-// Update device
-function updateDevice(oldIp, updateFields) {
-  const found = findDeviceByIp(oldIp);
-  if (!found) throw new Error("Device not found");
-  const { listName, idx } = found;
-  // merge
-  allData[listName][idx] = { ...allData[listName][idx], ...updateFields };
-  // ensure ip key uses normalized name
-  if (allData[listName][idx].ip_address) {
-    allData[listName][idx].ip_address = allData[listName][idx].ip_address.toString().trim();
-  }
-  rebuildIpRegionMap();
-  persistAllDataToJson();
-  return allData[listName][idx];
-}
-
-// Delete device
-function deleteDevice(ip) {
-  const found = findDeviceByIp(ip);
-  if (!found) throw new Error("Device not found");
-  const { listName, idx } = found;
-  allData[listName].splice(idx, 1);
-  rebuildIpRegionMap();
-  persistAllDataToJson();
-  return true;
-}
-
-// Accessors used by other modules
-function getDeviceInfo(ip) {
-  const f = findDeviceByIp(ip);
-  return f ? f.device : null;
-}
-
-// helper for controllers status (used by app.js)
 function getControllersList() {
   // return shallow copy
   return (allData.controllers || []).map(c => ({ ...c }));
 }
 
-// Public APIs used by controllers/routers
+// Add device: type must match one of keys in allData
+// Supported types (same as old code): archivers, controllers, cameras, servers, pcDetails, DBDetails
+function addDevice(type, deviceObj) {
+  if (!allData[type]) throw new Error("Invalid device type: " + type);
+
+  // normalize keys to match DB columns
+  const norm = {};
+  Object.entries(deviceObj).forEach(([k, v]) => {
+    norm[normalizeKey(k)] = v;
+  });
+  norm.history = norm.history || [];
+
+  // derive ip
+  const ip = (norm.ip_address || norm.ip || norm.IP_address || "").toString().trim();
+  if (!ip) throw new Error("ip_address is required");
+
+  // Determine DB table name mapping
+  const tableMap = {
+    archivers: "archivers",
+    controllers: "controllers",
+    cameras: "cameras",
+    servers: "servers",
+    pcDetails: "pc_details",
+    DBDetails: "dbdetails",
+  };
+  const table = tableMap[type];
+  if (!table) throw new Error("Unsupported device type for DB: " + type);
+
+  // insert into DB (fields per table)
+  try {
+    switch (table) {
+      case "cameras":
+        db.prepare(`
+          INSERT INTO cameras (cameraname, ip_address, location, city, device_details, hyperlink, remark, added_by, added_at)
+          VALUES (@cameraname, @ip_address, @location, @city, @device_details, @hyperlink, @remark, @added_by, datetime('now'))
+        `).run({
+          cameraname: norm.cameraname || norm.camera_name || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          device_details: norm.device_details || norm.deviec_details || null,
+          hyperlink: norm.hyperlink || null,
+          remark: norm.remark || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "archivers":
+        db.prepare(`
+          INSERT INTO archivers (archivername, ip_address, location, city, added_by, added_at)
+          VALUES (@archivername, @ip_address, @location, @city, @added_by, datetime('now'))
+        `).run({
+          archivername: norm.archivername || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "controllers":
+        db.prepare(`
+          INSERT INTO controllers (controllername, ip_address, location, city, added_by, added_at)
+          VALUES (@controllername, @ip_address, @location, @city, @added_by, datetime('now'))
+        `).run({
+          controllername: norm.controllername || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "servers":
+        db.prepare(`
+          INSERT INTO servers (servername, ip_address, location, city, added_by, added_at)
+          VALUES (@servername, @ip_address, @location, @city, @added_by, datetime('now'))
+        `).run({
+          servername: norm.servername || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "dbdetails":
+        db.prepare(`
+          INSERT INTO dbdetails (location, city, hostname, ip_address, application, windows_server, added_by, added_at)
+          VALUES (@location, @city, @hostname, @ip_address, @application, @windows_server, @added_by, datetime('now'))
+        `).run({
+          location: norm.location || null,
+          city: norm.city || null,
+          hostname: norm.hostname || null,
+          ip_address: ip,
+          application: norm.application || null,
+          windows_server: norm.windows_server || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "pc_details":
+        db.prepare(`
+          INSERT INTO pc_details (hostname, ip_address, location, city, pc_name, added_by, added_at)
+          VALUES (@hostname, @ip_address, @location, @city, @pc_name, @added_by, datetime('now'))
+        `).run({
+          hostname: norm.hostname || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          pc_name: norm.pc_name || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+    }
+  } catch (err) {
+    // bubble up DB constraint errors (e.g., duplicate IP)
+    throw err;
+  }
+
+  // refresh in-memory cache: load the newly inserted row and push to allData
+  const insertedRow = db.prepare(`SELECT * FROM ${table} WHERE ip_address = ?`).get(ip);
+  const mapped = mapRowToDevice(table, insertedRow);
+  allData[type].push(mapped);
+  rebuildIpRegionMap();
+  return mapped;
+}
+
+// Update device (oldIp) with updateFields
+function updateDevice(oldIp, updateFields) {
+  const found = findInAllData(oldIp);
+  if (!found) throw new Error("Device not found");
+  const { listName, idx } = found;
+
+  // table mapping
+  const tableMap = {
+    archivers: "archivers",
+    controllers: "controllers",
+    cameras: "cameras",
+    servers: "servers",
+    pcDetails: "pc_details",
+    DBDetails: "dbdetails",
+  };
+  const table = tableMap[listName];
+  if (!table) throw new Error("Unsupported device type for update: " + listName);
+
+  // Merge in-memory
+  allData[listName][idx] = { ...allData[listName][idx], ...updateFields };
+  // Update DB — construct update statements per table
+  const ip = (allData[listName][idx].ip_address || allData[listName][idx].IP_address || "").toString().trim();
+
+  try {
+    switch (table) {
+      case "cameras":
+        db.prepare(`
+          UPDATE cameras SET cameraname=@cameraname, location=@location, city=@city, device_details=@device_details, hyperlink=@hyperlink, remark=@remark, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          cameraname: allData[listName][idx].cameraname || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          device_details: allData[listName][idx].device_details || null,
+          hyperlink: allData[listName][idx].hyperlink || null,
+          remark: allData[listName][idx].remark || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+      case "archivers":
+        db.prepare(`
+          UPDATE archivers SET archivername=@archivername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          archivername: allData[listName][idx].archivername || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+      case "controllers":
+        db.prepare(`
+          UPDATE controllers SET controllername=@controllername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          controllername: allData[listName][idx].controllername || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+      case "servers":
+        db.prepare(`
+          UPDATE servers SET servername=@servername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          servername: allData[listName][idx].servername || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+      case "dbdetails":
+        db.prepare(`
+          UPDATE dbdetails SET location=@location, city=@city, hostname=@hostname, application=@application, windows_server=@windows_server, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          hostname: allData[listName][idx].hostname || null,
+          application: allData[listName][idx].application || null,
+          windows_server: allData[listName][idx].windows_server || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+      case "pc_details":
+        db.prepare(`
+          UPDATE pc_details SET hostname=@hostname, location=@location, city=@city, pc_name=@pc_name, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          hostname: allData[listName][idx].hostname || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          pc_name: allData[listName][idx].pc_name || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+    }
+  } catch (err) {
+    throw err;
+  }
+
+  // If IP changed (updateFields contains ip_address), handle DB ip update
+  if (updateFields.ip_address && updateFields.ip_address !== oldIp) {
+    const newIp = updateFields.ip_address.toString().trim();
+    db.prepare(`UPDATE ${table} SET ip_address = ? WHERE ip_address = ?`).run(newIp, oldIp);
+    // sync in-memory object ip_address field
+    allData[listName][idx].ip_address = newIp;
+    allData[listName][idx].IP_address = newIp;
+  }
+
+  rebuildIpRegionMap();
+  return allData[listName][idx];
+}
+
+// find device by ip in allData and return {listName, idx, device}
+function findInAllData(ip) {
+  for (const [listName, list] of Object.entries(allData)) {
+    const idx = list.findIndex(d => (d.ip_address || d.IP_address) === ip);
+    if (idx !== -1) return { listName, idx, device: list[idx] };
+  }
+  return null;
+}
+
+// Delete device
+function deleteDevice(ip) {
+  const found = findInAllData(ip);
+  if (!found) throw new Error("Device not found");
+  const { listName, idx } = found;
+
+  const tableMap = {
+    archivers: "archivers",
+    controllers: "controllers",
+    cameras: "cameras",
+    servers: "servers",
+    pcDetails: "pc_details",
+    DBDetails: "dbdetails",
+  };
+  const table = tableMap[listName];
+  if (!table) throw new Error("Unsupported device type for delete: " + listName);
+
+  db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
+  allData[listName].splice(idx, 1);
+  rebuildIpRegionMap();
+  return true;
+}
+
+// Public functions: fetchGlobalData, fetchRegionData (same semantics as before)
 async function fetchGlobalData() {
-  // ping everything
-  const all = [...allData.cameras, ...allData.archivers, ...allData.controllers, ...allData.servers, ...allData.pcDetails, ...allData.DBDetails];
+  // gather all devices (flatten) and ping them
+  const all = [
+    ...allData.cameras,
+    ...allData.archivers,
+    ...allData.controllers,
+    ...allData.servers,
+    ...allData.pcDetails,
+    ...allData.DBDetails,
+  ];
   await pingDevices(all);
   return { summary: calculateSummary(allData), details: allData };
 }
 
 async function fetchRegionData(regionName) {
-  const filter = list => list.filter(d => (d.location || "").toLowerCase() === regionName.toLowerCase());
+  const filter = list => list.filter(d => (d.location || "").toString().toLowerCase() === regionName.toLowerCase());
   const regionDevices = {
     cameras: filter(allData.cameras),
     archivers: filter(allData.archivers),
@@ -527,11 +520,15 @@ async function fetchRegionData(regionName) {
     pcDetails: filter(allData.pcDetails),
     DBDetails: filter(allData.DBDetails),
   };
-  await pingDevices([].concat(...Object.values(regionDevices)));
+  const allToPing = [].concat(...Object.values(regionDevices));
+  await pingDevices(allToPing);
   return { summary: calculateSummary(regionDevices), details: regionDevices };
 }
 
-// export
+// Initialize cache from DB
+loadDbData();
+
+// Export public API (same function names as before)
 module.exports = {
   fetchGlobalData,
   fetchRegionData,
@@ -543,524 +540,3 @@ module.exports = {
   deleteDevice,
   getControllersList,
 };
-
-C:\Users\W0024618\Desktop\Backend\src\services\pingService.js
-const ping = require("ping");
-const DEFAULT_TIMEOUT = 5; // seconds
-const ICMP_COUNT_FLAG = process.platform === "win32" ? "-n" : "-c";
-
-async function pingHost(ip) {
-  if(typeof ip =="string")ip=ip.trim();
-  try {
-    const res = await ping.promise.probe(ip, {
-      timeout: DEFAULT_TIMEOUT,
-      extra: [ICMP_COUNT_FLAG, "1"],
-    });
-    return res.alive ? "Online" : "Offline";
-  } catch {
-    return "Offline";
-  }
-}
-
-module.exports = { pingHost };
-
-
-
-C:\Users\W0024618\Desktop\Backend\src\app.js
-
-// require("dotenv").config();
-// const express = require("express");
-// const cors = require("cors");
-// const bodyParser = require("body-parser");
-// const fs = require("fs");
-// //const ping = require("ping");
-// const { pingHost } = require("./services/pingService");
-// const { DateTime } = require("luxon");
-// const regionRoutes = require("./routes/regionRoutes");
-// const { fetchAllIpAddress, ipRegionMap } = require("./services/excelService");
-// const { getDeviceInfo } = require("./services/excelService");
-// const { sendTeamsAlert }    = require("./services/teamsService");
-
-// const controllerData = JSON.parse(
-//   fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
-// );
-
-// const app = express();
-// const PORT = process.env.PORT || 80;
-
-// // Helpers
-// function pruneOldEntries(entries, days = 30) {
-//   const cutoff = DateTime.now().minus({ days }).toMillis();
-//   return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
-// }
-// function getLogFileForDate(dt) {
-//   return `./deviceLogs-${dt.toISODate()}.json`;
-// }
-
-// function safeJsonParse(filePath) {
-//   try {
-//     const content = fs.readFileSync(filePath, "utf8").trim();
-//     if (!content) return {};  // empty file = empty object
-//     return JSON.parse(content);
-//   } catch (err) {
-//     console.error("❌ Corrupted JSON file detected:", filePath);
-//     console.error("Error:", err.message);
-//     return {};  // fallback so server NEVER crashes
-//   }
-// }
-
-
-
-// // Middleware
-// app.use(cors({
-//     origin: "http://127.0.0.1:5500",
-//   //  origin: "http://localhost:3000",
-//   methods: "GET,POST,PUT,DELETE",
-//   allowedHeaders: "Content-Type,Authorization",
-// }));
-// app.use(bodyParser.json());
-
-// // Routes
-// app.use("/api/regions", regionRoutes);
-
-// // Device Status Tracking
-// const devices = fetchAllIpAddress();
-// let deviceStatus = {};
-
-// // Load only today's logs
-// const today = DateTime.now().setZone("Asia/Kolkata");
-// const todayLogFile = getLogFileForDate(today);
-
-
-
-// let todayLogs = fs.existsSync(todayLogFile)
-//   ? safeJsonParse(todayLogFile)
-//   : {};
-
-
-
-// // Persist today's logs
-// function saveTodayLogs() {
-//   fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
-// }
-
-// // Log a status change
-// function logDeviceChange(ip, status) {
-//   const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
-//   const arr = (todayLogs[ip] = todayLogs[ip] || []);
-//   const last = arr[arr.length - 1];
-//   if (!last || last.status !== status) {
-//     arr.push({ status, timestamp });
-//     todayLogs[ip] = pruneOldEntries(arr, 30);
-//     saveTodayLogs();
-//   }
-// }
-
-
-// async function pingDevices() {
-//   const limit = require("p-limit")(20);
-
-//   await Promise.all(
-//     devices.map(ip =>
-//       limit(async () => {
-//         const newStatus = await pingHost(ip);
-//         if (deviceStatus[ip] !== newStatus) {
-//           logDeviceChange(ip, newStatus);
-//         }
-//         deviceStatus[ip] = newStatus;
-//       })
-//     )
-//   );
-
-//   // ✅ Build Controller + Door Status
-//   buildControllerStatus();
-
-//   console.log("Updated device status:", deviceStatus);
-// }
-
-
-// // 📝📝📝📝📝📝
-
-// let fullStatus = [];
-// function buildControllerStatus() {
-//   fullStatus = controllerData.map(controller => {
-//     const ip = controller.IP_address.trim();
-//     const status = deviceStatus[ip] || "Unknown";
-
-//     // If controller offline, mark all doors offline too
-//     const doors = controller.Doors.map(d => ({
-//       ...d,
-//       status: status === "Online" ? "Online" : "Offline",
-//     }));
-
-//     return {
-//       controllername: controller.controllername,
-//       IP_address: ip,
-//       Location: controller.Location || "Unknown",
-//       City: controller.City || "Unknown",
-//       controllerStatus: status,
-//       Doors: doors,
-//     };
-//   });
-// }
-
-// // 📝📝📝📝📝📝
-
-
-// const notifiedOffline=new Set();
-
-
-// // Start ping loop
-// // setInterval(pingDevices, 60_000);
-// // pingDevices();
-
-
-// setInterval(async () => {
-//    pingDevices();
-//  // await checkNotifications();
-// }, 60_000);
-
-// // initial run
-// (async () => {
-//    pingDevices();
-//   //await checkNotifications();
-// })();
-
-
-
-
-// // Real‑time status
-// app.get("/api/region/devices/status", (req, res) => {
-//   res.json(deviceStatus);
-// });
-
-// // Full history: stitch together all daily files
-// app.get("/api/devices/history", (req, res) => {
-//   const files = fs.readdirSync(".")
-//     .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-//   const combined = {};
-//   for (const f of files) {
-//     // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
-//     const dayLogs = safeJsonParse(f);
-
-//     for (const ip of Object.keys(dayLogs)) {
-//       combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
-//     }
-//   }
-//   // prune to last 30 days
-//   for (const ip of Object.keys(combined)) {
-//     combined[ip] = pruneOldEntries(combined[ip], 30);
-//   }
-//   res.json(combined);
-// });
-
-// // Region‑wise history
-// app.get("/api/region/:region/history", (req, res) => {
-//   const region = req.params.region.toLowerCase();
-//   const files = fs.readdirSync(".")
-//     .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-//   const regionLogs = {};
-
-//   for (const f of files) {
-//     // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
-//     const dayLogs = safeJsonParse(f);
-
-//     for (const ip of Object.keys(dayLogs)) {
-//       if (ipRegionMap[ip] === region) {
-//         regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
-//       }
-//     }
-//   }
-
-//   if (!Object.keys(regionLogs).length) {
-//     return res.status(404).json({ message: `No device history found for region: ${region}` });
-//   }
-//   // prune per‑IP
-//   for (const ip of Object.keys(regionLogs)) {
-//     regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
-//   }
-//   res.json(regionLogs);
-// });
-
-// // Single‑device history
-// app.get("/api/device/history/:ip", (req, res) => {
-//   const ip = req.params.ip;
-//   const files = fs.readdirSync(".")
-//     .filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-//   let history = [];
-//   for (const f of files) {
-//     // const dayLogs = JSON.parse(fs.readFileSync(f, "utf8"));
-//     const dayLogs = safeJsonParse(f);
-
-//     if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
-//   }
-//   if (!history.length) {
-//     return res.status(404).json({ message: "No history found for this device" });
-//   }
-//   history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-//   res.json({ ip, history });
-// });
-
-
-// // Get all controller + door statuses
-// app.get("/api/controllers/status", (req, res) => {
-//   res.json(fullStatus);
-// });
-
-
-// // Start server
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
-// });
-
-
-// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️ mayur 1-12
-
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const fs = require("fs");
-//const ping = require("ping");
-const { pingHost } = require("./services/pingService");
-const { DateTime } = require("luxon");
-
-const regionRoutes = require("./routes/regionRoutes");
-
-// ← NEW imports from excelService (fetchAllIpAddress + ipRegionMap + getDeviceInfo + getControllersList)
-const {
-  fetchAllIpAddress,
-  ipRegionMap,
-  getDeviceInfo,
-  getControllersList,
-} = require("./services/excelService");
-
-// ← NEW device router
-const deviceRoutes = require("./routes/deviceRoutes");
-
-const { sendTeamsAlert } = require("./services/teamsService");
-
-// KEEP this JSON — used for door metadata / door structure
-const controllerData = JSON.parse(
-  fs.readFileSync("./src/data/ControllerDataWithDoorReader.json", "utf8")
-);
-
-const app = express();
-const PORT = process.env.PORT || 80;
-
-// Helpers
-function pruneOldEntries(entries, days = 30) {
-  const cutoff = DateTime.now().minus({ days }).toMillis();
-  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
-}
-function getLogFileForDate(dt) {
-  return `./deviceLogs-${dt.toISODate()}.json`;
-}
-
-function safeJsonParse(filePath) {
-  try {
-    const content = fs.readFileSync(filePath, "utf8").trim();
-    if (!content) return {}; // empty file = empty object
-    return JSON.parse(content);
-  } catch (err) {
-    console.error("❌ Corrupted JSON file detected:", filePath);
-    console.error("Error:", err.message);
-    return {}; // fallback so server NEVER crashes
-  }
-}
-
-// Middleware
-app.use(
-  cors({
-    origin: "http://127.0.0.1:5500",
-    // origin: "http://localhost:3000",
-    methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type,Authorization",
-  })
-);
-app.use(bodyParser.json());
-
-// Routes
-app.use("/api/regions", regionRoutes);
-
-// ← register device router
-app.use("/api/devices", deviceRoutes);
-
-// Device Status Tracking
-// NOTE: we intentionally do NOT keep a static `devices` array here;
-// instead pingDevices() fetches current IP list from excelService each run.
-let deviceStatus = {};
-
-// Load only today's logs
-const today = DateTime.now().setZone("Asia/Kolkata");
-const todayLogFile = getLogFileForDate(today);
-
-let todayLogs = fs.existsSync(todayLogFile) ? safeJsonParse(todayLogFile) : {};
-
-// Persist today's logs
-function saveTodayLogs() {
-  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
-}
-
-// Log a status change
-function logDeviceChange(ip, status) {
-  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
-  const arr = (todayLogs[ip] = todayLogs[ip] || []);
-  const last = arr[arr.length - 1];
-  if (!last || last.status !== status) {
-    arr.push({ status, timestamp });
-    todayLogs[ip] = pruneOldEntries(arr, 30);
-    saveTodayLogs();
-  }
-}
-
-async function pingDevices() {
-  const limit = require("p-limit")(20);
-
-  // ← fetch fresh IP list each run so edits/adds are picked up immediately
-  const devices = fetchAllIpAddress(); // returns array of IP strings
-
-  await Promise.all(
-    devices.map(ip =>
-      limit(async () => {
-        const newStatus = await pingHost(ip);
-        if (deviceStatus[ip] !== newStatus) {
-          logDeviceChange(ip, newStatus);
-        }
-        deviceStatus[ip] = newStatus;
-      })
-    )
-  );
-
-  // ✅ Build Controller + Door Status
-  buildControllerStatus();
-
-  console.log("Updated device status:", deviceStatus);
-}
-
-// 📝 Controller + Door status builder
-let fullStatus = [];
-
-function buildControllerStatus() {
-  // Excel-sourced controllers (metadata may include Location/City)
-  const excelControllers = getControllersList(); // array of controllers from excelService
-
-  // We keep your controllerData JSON for door structure (Door list and names)
-  fullStatus = controllerData.map(controller => {
-    // some controller objects use IP_address, some ip_address — normalize
-    const ipRaw = controller.IP_address || controller.ip_address || "";
-    const ip = ipRaw.toString().trim();
-
-    const status = deviceStatus[ip] || "Unknown";
-
-    // If controller offline, mark all doors offline too
-    const doors = (controller.Doors || []).map(d => ({
-      ...d,
-      status: status === "Online" ? "Online" : "Offline",
-    }));
-
-    // Try find excel entry to enrich Location/City (fall back to JSON values)
-    const excelInfo = excelControllers.find(c => {
-      const cIp = (c.IP_address || c.ip_address || "").toString().trim();
-      return cIp === ip;
-    }) || {};
-
-    return {
-      controllername: controller.controllername || controller.controller_name || excelInfo.controllername || "",
-      IP_address: ip,
-      Location: controller.Location || excelInfo.Location || excelInfo.location || "Unknown",
-      City: controller.City || excelInfo.City || excelInfo.city || "Unknown",
-      controllerStatus: status,
-      Doors: doors,
-    };
-  });
-}
-
-const notifiedOffline = new Set();
-
-// Start ping loop
-setInterval(async () => {
-  pingDevices();
-  // await checkNotifications();
-}, 60_000);
-
-// initial run
-(async () => {
-  pingDevices();
-  // await checkNotifications();
-})();
-
-// Real-time status
-app.get("/api/region/devices/status", (req, res) => {
-  res.json(deviceStatus);
-});
-
-// Full history: stitch together all daily files
-app.get("/api/devices/history", (req, res) => {
-  const files = fs.readdirSync(".").filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  const combined = {};
-  for (const f of files) {
-    const dayLogs = safeJsonParse(f);
-    for (const ip of Object.keys(dayLogs)) {
-      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
-    }
-  }
-  // prune to last 30 days
-  for (const ip of Object.keys(combined)) {
-    combined[ip] = pruneOldEntries(combined[ip], 30);
-  }
-  res.json(combined);
-});
-
-// Region-wise history
-app.get("/api/region/:region/history", (req, res) => {
-  const region = req.params.region.toLowerCase();
-  const files = fs.readdirSync(".").filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  const regionLogs = {};
-
-  for (const f of files) {
-    const dayLogs = safeJsonParse(f);
-    for (const ip of Object.keys(dayLogs)) {
-      if (ipRegionMap[ip] === region) {
-        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
-      }
-    }
-  }
-
-  if (!Object.keys(regionLogs).length) {
-    return res.status(404).json({ message: `No device history found for region: ${region}` });
-  }
-  // prune per-IP
-  for (const ip of Object.keys(regionLogs)) {
-    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
-  }
-  res.json(regionLogs);
-});
-
-// Single-device history
-app.get("/api/device/history/:ip", (req, res) => {
-  const ip = req.params.ip;
-  const files = fs.readdirSync(".").filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  let history = [];
-  for (const f of files) {
-    const dayLogs = safeJsonParse(f);
-    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
-  }
-  if (!history.length) {
-    return res.status(404).json({ message: "No history found for this device" });
-  }
-  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  res.json({ ip, history });
-});
-
-// Get all controller + door statuses
-app.get("/api/controllers/status", (req, res) => {
-  res.json(fullStatus);
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
-
