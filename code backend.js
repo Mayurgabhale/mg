@@ -1,37 +1,20 @@
-in 
-cameras cameraname is not disply ok
-and in servers servername also not added or diplsy 
-and controller_doors in this Location and City also not disply ok, 
-read this code and chekc why 
+cameraname and servername is not store in data from excle sheet 
+all store in data base onlyt thuis two are not stor in database ok 
+so read the below code also  carefully, 
+    and also this excle heder name alos ok 
+chekc why because other are stor only this both are not steor ok  
 
-see this alos
-C:\Users\W0024618\Desktop\Backend\src\data\~$CameraData.xlsx
+this is for camera 
 cameraname 	Ip_address	Location	City	Deviec_details 	hyperlink	Remark
 Green Zone to yellow zone passage - 10.199.10.20 (FLIR CM-3102-11-I T71552107) - 350	10.199.10.20	APAC	Pune Podium	FLIR		
 IN-PNQ-PF - Green Zone Exit Passage 10.199.10.139	10.199.10.139	APAC	Pune Podium	FLIR		
 
-C:\Users\W0024618\Desktop\Backend\src\data\~$ServerData.xlsx
+this is for server
 servername 	IP_address	Location	City
 Master Server 	10.58.118.20	NAMER	Denver Colorado
 NAMER Server 	10.58.118.21	NAMER	Denver Colorado
 
-C:\Users\W0024618\Desktop\Backend\src\data\ControllerDataWithDoorReader.json
-[
-    {
-        "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
-        "IP_address": "10.199.13.10",
-        "Location": "APAC",
-        "City": "Pune 2nd Floor",
-        "Doors": [
-            {
-                "Door": "APAC_IN_PUN_2NDFLR_IDF ROOM_10:05:86 Restricted Door",
-                "Reader": "in:1"
-            },
-            {
-                "Door": "APAC_IN_PUN_2NDFLR_UPS/ELEC ROOM Restricted Door_10:05:FE",
-                "Reader": "in:1"
-            },
-
+ok 
 // setupDatabase.js
 // --------------------------------------------------------
 const xlsx = require("xlsx");
@@ -299,4 +282,3 @@ console.log("\n🎉 DATABASE SETUP COMPLETE!");
 console.log("📁 Database created at: src/data/devices.db\n");
 
 // npm install better-sqlite3
-
