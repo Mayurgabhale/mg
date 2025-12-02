@@ -1,3 +1,6 @@
+
+ controller_doors
+this is missing
 // src/services/excelService.js
 // Uses SQLite (src/data/devices.db) as the single source of truth.
 // Exports the same functions your app expects: fetchGlobalData, fetchRegionData, fetchAllIpAddress, ipRegionMap, getDeviceInfo, addDevice, updateDevice, deleteDevice, getControllersList
