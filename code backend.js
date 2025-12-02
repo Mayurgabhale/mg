@@ -19,6 +19,16 @@ this are mission "controllername": "IN-PUN-2NDFLR-ISTAR PRO",
         "IP_address": "10.199.13.10",
         "Location": "APAC",
         "City": "Pune 2nd Floor",
+
+
+and  cameraname and servername is also not save in data base chek alos this ok carefullym
+read the belowo all code carefully and corret it ok 
+  cameraname 	Ip_address	Location	City	Deviec_details 	hyperlink	Remark	
+Green Zone to yellow zone passage - 10.199.10.20 (FLIR CM-3102-11-I T71552107) - 350	10.199.10.20	APAC	Pune Podium	FLIR			
+
+  servername 	IP_address	Location	City
+Master Server 	10.58.118.20	NAMER	Denver Colorado
+
               
 // ---------- Controller Doors JSON ----------
 const doorsFile = path.join(dataDir, "ControllerDataWithDoorReader.json");
