@@ -1,5 +1,3 @@
-what is say 1 to 6 disply by dafult ok not only 6 
-
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
@@ -268,8 +266,8 @@ export default function IncidentForm({ onSubmitted }) {
     window.print();
   };
 
-  // render only Q6 initially: if was_reported_verbally null show only question 6
-  const showFullForm = form.was_reported_verbally !== null;
+  // NOTE: changed to show questions 1-6 by default (previously only Q6 showed first)
+  const showFullForm = true;
 
   return (
     <div className="incident-card">
@@ -279,10 +277,7 @@ export default function IncidentForm({ onSubmitted }) {
       </div>
 
       <form className="incident-form" onSubmit={handleSubmit} noValidate>
-        {/* Q1-5 are hidden until user picks Q6 per requirement.
-            But per spec, many fields including type/date/time/impacted are required.
-            We'll show Q1-5 only after selecting Q6 to keep UI as requested.
-        */}
+        {/* Q1-6 are now visible by default. Q7 etc remain conditional on the 'was_reported_verbally' answer. */}
 
         <div className="row">
           <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
