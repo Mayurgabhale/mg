@@ -1,4 +1,4 @@
-1.Type of Incident / Accident *
+1.Type of Incident / Accident * ( this is select box )
 •	Medical 
 •	Theft 
 •	Fire 
@@ -20,7 +20,7 @@ Enter your answer
 •	No
 
 If Yes then
-7.Incident reported to:  *
+7.Incident reported to:  * ( this is select box )
 •	Supervisor
 •	Manager
 •	HR
@@ -60,7 +60,7 @@ If No then
   Print (IN pdf) 
 
 this data i want to store in data in probar formate and strict type ok string to string inter ge data boold to bool ok like 
-
+and one more thing is to , proof for this we can you photos, image , or pdf any thing ok one ro extrac column of this ok 
 and all fild are requie only 
 18.Root cause analysis of the incident/accident:
 19.Preventive actions taken during or after incident/accident (If any):    
