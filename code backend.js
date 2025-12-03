@@ -1,3 +1,8 @@
+you dont ynderstnd what say ok
+i say frist 
+squiesns wise 1,2,3,4,5 and 6 disply
+or 7 to .. hide ok,
+then if is then only yes part diplsy ok  show 7 to ... ok 
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
@@ -268,15 +273,7 @@ export default function IncidentForm({ onSubmitted }) {
 
       <form className="incident-form" onSubmit={handleSubmit} noValidate>
 
-        <div className="row">
-          <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
-          <div className="radio-row">
-            <label><input type="radio" name="reported" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
-            <label><input type="radio" name="reported" checked={form.was_reported_verbably === false || form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
-          </div>
-          {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
-          <div className="muted">** In case of medical emergency inform local HR</div>
-        </div>
+
 
         {showFullForm && (
           <>
@@ -319,6 +316,15 @@ export default function IncidentForm({ onSubmitted }) {
                 <input value={form.impacted_employee_id} onChange={e => update("impacted_employee_id", e.target.value)} />
                 {errors.impacted_employee_id && <div className="error">{errors.impacted_employee_id}</div>}
               </div>
+            </div>
+            <div className="row">
+              <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
+              <div className="radio-row">
+                <label><input type="radio" name="reported" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
+                <label><input type="radio" name="reported" checked={form.was_reported_verbably === false || form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
+              </div>
+              {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
+              <div className="muted">** In case of medical emergency inform local HR</div>
             </div>
 
             {form.was_reported_verbally === true && (
