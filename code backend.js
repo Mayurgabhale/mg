@@ -1,3 +1,29 @@
+what is say 
+1.Type of Incident / Accident *
+•	Medical 
+•	Theft 
+•	Fire 
+•	HR Related Incident 
+•	Outside Work Place Violence 
+•	Threat 
+•	Death 
+•	Fraud 
+•	Any Other Safety / Security Related Incident 
+•	Other – 
+Enter your answer
+2.Date of Report *
+3.Time of Report (HH:MM) *
+4.Name of Impacted Employee / Person *
+5.Employee ID of Impacted Employee *
+6.Was this incident reported verbally before submitting this report? *
+ ** In case of medical emergency inform local HR 
+•	Yes
+•	No
+
+when i opne this form first i want to diplsy this 6 ok, then yes or no if yes then yes if no then no ok 
+but first disply this all 1 to 6 all ok 
+
+
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
@@ -266,8 +292,8 @@ export default function IncidentForm({ onSubmitted }) {
     window.print();
   };
 
-  // NOTE: changed to show questions 1-6 by default (previously only Q6 showed first)
-  const showFullForm = true;
+  // render only Q6 initially: if was_reported_verbally null show only question 6
+  const showFullForm = form.was_reported_verbally !== null;
 
   return (
     <div className="incident-card">
@@ -277,7 +303,10 @@ export default function IncidentForm({ onSubmitted }) {
       </div>
 
       <form className="incident-form" onSubmit={handleSubmit} noValidate>
-        {/* Q1-6 are now visible by default. Q7 etc remain conditional on the 'was_reported_verbally' answer. */}
+        {/* Q1-5 are hidden until user picks Q6 per requirement.
+            But per spec, many fields including type/date/time/impacted are required.
+            We'll show Q1-5 only after selecting Q6 to keep UI as requested.
+        */}
 
         <div className="row">
           <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
