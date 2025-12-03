@@ -1,26 +1,26 @@
-Backend/
-│
-├── venv/                         ← Python virtual environment
-│
-├── main.py                       ← FastAPI main entry point
-├── incident_report.py            ← Your incident routes + models
-├── monthly_sheet.py              ← DB engine + Base + SessionLocal
-│
-├── requirements.txt              ← All dependency packages
-│
-└── __init__.py                   ← Makes folder a module
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from incident_report import router as incident_router
 
+app = FastAPI(title="Incident Reporting API")
 
+# CORS for frontend
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
-cd C:\Users\W0024618\Desktop\IncidentDashboard\Backend
-python -m venv venv
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# Register routes
+app.include_router(incident_router)
 
-
-
-venv\Scripts\activate
-
-
-pip install fastapi uvicorn sqlalchemy pydantic zoneinfo python-multipart
-
-pip freeze > requirements.txt
+@app.get("/")
+def read_root():
+    return {"message": "Incident Reporting Backend is running"}
