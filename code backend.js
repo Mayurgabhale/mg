@@ -1,3 +1,18 @@
+this is my working code, ok 
+in this dot chane  antyigng ok
+in this i want to do 
+first i want to disly 1 to 6 question,
+  ok 
+then 
+this is 
+6. Was this incident reported verbally before submitting this report? *
+ Yes
+ No
+
+if user yes, then disly yes relted quesin then no then no releted question ok 
+but frist only show 1 to 6 ok not other 
+this is issue only only fix this and give me as it is code wihtou chanign anything ok 
+
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
