@@ -1,6 +1,7 @@
 i want to crete in this form live validation, at the time i get the error message
 and only number file only can number if Contact Number  then perecfet length on number this is global form in this we got all country numbe so use power full algorithm 
 alos email and all fild ok but i want live validation ok 
+dont make any other changes ok or dont chan otehr code or logic
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
