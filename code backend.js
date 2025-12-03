@@ -53,14 +53,12 @@ export default function IncidentForm({ onSubmitted }) {
   const [form, setForm] = useState(emptyForm);
   const [files, setFiles] = useState([]);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [saving, setSaving] = useState(false);
   const autosaveRef = useRef(null);
 
   // 👇 NEW: Show only 1–6 initially
   const [showAfterSix, setShowAfterSix] = useState(false);
-
-  // NEW: touched fields (to avoid showing required errors before user interacts)
-  const [touched, setTouched] = useState({});
 
   useEffect(() => {
     try {
@@ -86,197 +84,182 @@ export default function IncidentForm({ onSubmitted }) {
     return () => clearTimeout(autosaveRef.current);
   }, [form]);
 
-  // regexes used by both live validation and final validate()
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
-
-  /**
-   * PHONE UTILITIES
-   * - only allow a single leading '+' (optional) and digits
-   * - enforce E.164 acceptable range: 7..15 digits total (this is global-friendly)
-   */
-
-  const sanitizePhoneInput = (val) => {
-    if (!val && val !== "") return val;
-    // remove everything except digits and plus
-    let v = String(val).replace(/[^\d+]/g, "");
-    // allow + only at start, and only one
-    v = v.replace(/\++/g, "+");
-    if (v.indexOf("+") > 0) {
-      // move any '+' not at start to start only if existed
-      v = "+" + v.replace(/\+/g, "");
+  // Enhanced phone number validation for international numbers
+  const validatePhoneNumber = (phone) => {
+    if (!phone || phone.trim() === "") {
+      return { isValid: false, message: "Phone number is required" };
     }
-    // if multiple plus signs, keep single leading +
-    if (v.startsWith("+")) {
-      v = "+" + v.slice(1).replace(/\+/g, "");
-    } else {
-      v = v.replace(/\+/g, "");
+    
+    // Clean the phone number - remove all non-digit except leading +
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    
+    // Check if it starts with + or digit
+    if (!/^[\d+]/.test(phone)) {
+      return { isValid: false, message: "Phone number must start with digit or +" };
     }
-    return v;
+    
+    // Remove + for length calculation
+    const digitsOnly = cleaned.replace('+', '');
+    
+    // Check minimum and maximum length (for international numbers)
+    if (digitsOnly.length < 6) {
+      return { isValid: false, message: "Phone number too short (minimum 6 digits)" };
+    }
+    
+    if (digitsOnly.length > 15) {
+      return { isValid: false, message: "Phone number too long (maximum 15 digits)" };
+    }
+    
+    // Validate format with libphonenumber-like logic
+    // Allow formats: +[1-3 digits][rest], or just digits
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(cleaned)) {
+      return { isValid: false, message: "Invalid phone number format" };
+    }
+    
+    // Country code validation (basic)
+    if (cleaned.startsWith('+')) {
+      const countryCode = cleaned.match(/^\+\d{1,3}/);
+      if (!countryCode) {
+        return { isValid: false, message: "Invalid country code" };
+      }
+      
+      // Check if the number after country code is valid
+      const nationalNumber = cleaned.substring(countryCode[0].length);
+      if (nationalNumber.length < 4) {
+        return { isValid: false, message: "National number too short" };
+      }
+    }
+    
+    return { isValid: true, message: "" };
   };
 
-  const countPhoneDigits = (val) => {
-    if (!val) return 0;
-    return (String(val).replace(/\D/g, "") || "").length;
+  // Email validation
+  const validateEmail = (email) => {
+    if (!email || email.trim() === "") {
+      return { isValid: false, message: "Email is required" };
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return { isValid: false, message: "Invalid email address format" };
+    }
+    
+    // Additional validation for domain
+    const parts = email.split('@');
+    if (parts[1].split('.').length < 2) {
+      return { isValid: false, message: "Invalid domain format" };
+    }
+    
+    return { isValid: true, message: "" };
   };
 
-  const isValidPhoneLive = (val) => {
-    if (!val) return false;
-    const digits = countPhoneDigits(val);
-    // E.164: maximum 15 digits; set minimum to 7 (common smallest usable numbers)
-    return digits >= 7 && digits <= 15;
+  // Employee ID validation
+  const validateEmployeeId = (empId) => {
+    if (!empId || empId.trim() === "") {
+      return { isValid: false, message: "Employee ID is required" };
+    }
+    
+    const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
+    if (!empIdRegex.test(empId)) {
+      return { isValid: false, message: "Invalid employee ID. Only letters, numbers, hyphens, underscores and periods allowed" };
+    }
+    
+    return { isValid: true, message: "" };
   };
 
-  // validate single field live and update errors state accordingly
-  const validateField = (key, value, extra = {}) => {
-    // extra can include index for witness/accompany or other context
+  // Required field validation
+  const validateRequired = (value, fieldName) => {
+    if (!value || (typeof value === 'string' && value.trim() === "")) {
+      return { isValid: false, message: `${fieldName} is required` };
+    }
+    return { isValid: true, message: "" };
+  };
+
+  // Live validation function
+  const validateField = (fieldName, value, customValidation = null) => {
+    switch (fieldName) {
+      case 'reported_by_email':
+        return validateEmail(value);
+      case 'reported_by_contact':
+        return validatePhoneNumber(value);
+      case 'reported_by_employee_id':
+      case 'impacted_employee_id':
+        return validateEmployeeId(value);
+      case 'detailed_description':
+        if (!value || value.trim().length < 5) {
+          return { isValid: false, message: "Please provide a detailed description (min 5 chars)" };
+        }
+        return { isValid: true, message: "" };
+      default:
+        if (customValidation) {
+          return customValidation(value);
+        }
+        return { isValid: true, message: "" };
+    }
+  };
+
+  // Handle field change with live validation
+  const handleFieldChange = (fieldName, value, validationFn = null) => {
+    // Update form
+    update(fieldName, value);
+    
+    // Mark field as touched
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    
+    // Validate the field
+    const validation = validateField(fieldName, value, validationFn);
+    
+    // Update errors
     setErrors(prev => {
-      const next = { ...prev };
-
-      const setErr = (k, msg) => (next[k] = msg);
-      const clearErr = (k) => { if (next[k]) delete next[k]; };
-
-      switch (key) {
-        case "type_of_incident":
-          if (!value && touched.type_of_incident) setErr("type_of_incident", "Type is required.");
-          else clearErr("type_of_incident");
-          break;
-        case "other_type_text":
-          if (form.type_of_incident === "Other" && (!value || !value.trim()) && touched.other_type_text)
-            setErr("other_type_text", "Please enter the incident type.");
-          else clearErr("other_type_text");
-          break;
-        case "date_of_report":
-          if (!value && touched.date_of_report) setErr("date_of_report", "Date of report required.");
-          else clearErr("date_of_report");
-          break;
-        case "time_of_report":
-          if (!value && touched.time_of_report) setErr("time_of_report", "Time of report required.");
-          else clearErr("time_of_report");
-          break;
-        case "impacted_name":
-          if (!value && touched.impacted_name) setErr("impacted_name", "Impacted name is required.");
-          else clearErr("impacted_name");
-          break;
-        case "impacted_employee_id":
-          if (!value && touched.impacted_employee_id) setErr("impacted_employee_id", "Impacted employee ID is required.");
-          else if (value && !empIdRegex.test(value)) setErr("impacted_employee_id", "Invalid employee ID.");
-          else clearErr("impacted_employee_id");
-          break;
-        case "was_reported_verbally":
-          if (value === null && touched.was_reported_verbally) setErr("was_reported_verbally", "Please select Yes or No.");
-          else clearErr("was_reported_verbally");
-          break;
-        case "incident_reported_to":
-          if (form.was_reported_verbally === true && (!value || !value.length) && touched.incident_reported_to)
-            setErr("incident_reported_to", "Select at least one option.");
-          else clearErr("incident_reported_to");
-          break;
-        case "reported_to_details":
-          if (form.was_reported_verbally === true && (!value || !value.trim()) && touched.reported_to_details)
-            setErr("reported_to_details", "Provide name & department.");
-          else clearErr("reported_to_details");
-          break;
-        case "location":
-          if ((!value || !String(value).trim()) && touched.location) setErr("location", "Location is required.");
-          else clearErr("location");
-          break;
-        case "reported_by_name":
-          if (!value && touched.reported_by_name) setErr("reported_by_name", "Reporter name required.");
-          else clearErr("reported_by_name");
-          break;
-        case "reported_by_employee_id":
-          if (!value && touched.reported_by_employee_id) setErr("reported_by_employee_id", "Reporter employee ID required.");
-          else if (value && !empIdRegex.test(value)) setErr("reported_by_employee_id", "Invalid employee ID.");
-          else clearErr("reported_by_employee_id");
-          break;
-        case "reported_by_email":
-          if (!value && touched.reported_by_email) setErr("reported_by_email", "Reporter email required.");
-          else if (value && !emailRegex.test(value)) setErr("reported_by_email", "Invalid email address.");
-          else clearErr("reported_by_email");
-          break;
-        case "reported_by_contact":
-          if (!value && touched.reported_by_contact) setErr("reported_by_contact", "Reporter contact required.");
-          else if (value && !isValidPhoneLive(value)) setErr("reported_by_contact", "Invalid phone number — must be 7 to 15 digits (can include leading +).");
-          else clearErr("reported_by_contact");
-          break;
-        case "date_of_incident":
-          if (!value && touched.date_of_incident) setErr("date_of_incident", "Date of incident required.");
-          else clearErr("date_of_incident");
-          break;
-        case "time_of_incident":
-          if (!value && touched.time_of_incident) setErr("time_of_incident", "Time of incident required.");
-          else clearErr("time_of_incident");
-          break;
-        case "detailed_description":
-          if ((!value || !String(value).trim() || String(value).length < 5) && touched.detailed_description)
-            setErr("detailed_description", "Please provide a detailed description (min 5 chars).");
-          else clearErr("detailed_description");
-          break;
-        case "immediate_actions_taken":
-          if ((!value || !String(value).trim()) && touched.immediate_actions_taken)
-            setErr("immediate_actions_taken", "Immediate actions are required.");
-          else clearErr("immediate_actions_taken");
-          break;
-        default:
-          break;
+      if (!validation.isValid) {
+        return { ...prev, [fieldName]: validation.message };
+      } else {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
       }
-
-      // witness / accompanying contact validation by index if provided
-      if (extra.type === "witness_contact") {
-        const idx = extra.index;
-        const keyName = `witness_contacts_${idx}`;
-        if (!value && touched[`witness_contacts_${idx}`]) {
-          next[keyName] = "Contact required for this witness.";
-        } else if (value && !isValidPhoneLive(value)) {
-          next[keyName] = "Invalid phone number — must be 7 to 15 digits (can include leading +).";
-        } else {
-          if (next[keyName]) delete next[keyName];
-        }
-      }
-
-      if (extra.type === "accompany_contact") {
-        const idx = extra.index;
-        const keyName = `accompanying_person_contact_${idx}`;
-        if (!value && touched[keyName]) {
-          next[keyName] = "Contact required for this person.";
-        } else if (value && !isValidPhoneLive(value)) {
-          next[keyName] = "Invalid phone number — must be 7 to 15 digits (can include leading +).";
-        } else {
-          if (next[keyName]) delete next[keyName];
-        }
-      }
-
-      // cleanup: if witness count mismatch error existed but counts fixed, remove it
-      if ((form.witnesses || []).length === (form.witness_contacts || []).length) {
-        if (next.witness_contacts) delete next.witness_contacts;
-      }
-
-      return next;
     });
   };
 
-  const update = (k, v) => {
-    // mark touched
-    setTouched(prev => ({ ...prev, [k]: true }));
-
-    // Special handling for phone-like fields: sanitize input
-    if (k === "reported_by_contact") {
-      v = sanitizePhoneInput(v);
+  // Handle blur event for fields
+  const handleBlur = (fieldName, value) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    
+    // Special handling for radio buttons
+    if (fieldName === 'was_reported_verbally') {
+      if (value === null) {
+        setErrors(prev => ({ ...prev, [fieldName]: "Please select Yes or No." }));
+      } else {
+        const newErrors = { ...errors };
+        delete newErrors[fieldName];
+        setErrors(newErrors);
+      }
     }
+  };
 
-    // Update state
-    setForm(prev => ({ ...prev, [k]: v }));
-
-    // Run live validation for this field
-    validateField(k, v);
-
-    // For fields that depend on others, also validate dependent fields:
-    if (k === "type_of_incident") validateField("other_type_text", form.other_type_text);
+  const update = (k, v) => {
     if (k === "was_reported_verbally") {
       setShowAfterSix(true); // 👈 When user answers Q6 → show rest
-      validateField("incident_reported_to", form.incident_reported_to);
-      validateField("reported_to_details", form.reported_to_details);
+      
+      // Clear related errors when changing this field
+      if (v === false) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors['incident_reported_to'];
+          delete newErrors['reported_to_details'];
+          return newErrors;
+        });
+      }
+    }
+    
+    // For email and contact fields, trigger live validation
+    if (k === 'reported_by_email' || k === 'reported_by_contact' || 
+        k === 'reported_by_employee_id' || k === 'impacted_employee_id' ||
+        k === 'detailed_description') {
+      handleFieldChange(k, v);
+    } else {
+      setForm(prev => ({ ...prev, [k]: v }));
     }
   };
 
@@ -293,35 +276,11 @@ export default function IncidentForm({ onSubmitted }) {
     const arr = [...(form.accompanying_person || [])];
     arr.splice(i, 1);
     update("accompanying_person", arr);
-    // clear any contact error for this index
-    setErrors(prev => {
-      const next = { ...prev };
-      const keyName = `accompanying_person_contact_${i}`;
-      if (next[keyName]) delete next[keyName];
-      return next;
-    });
   };
   const setAccompany = (i, key, val) => {
     const arr = [...(form.accompanying_person || [])];
     arr[i] = { ...(arr[i] || {}), [key]: val };
     update("accompanying_person", arr);
-
-    // If this is the contact field, sanitize and validate
-    if (key === "contact") {
-      const sanitized = sanitizePhoneInput(val);
-      // update the specific value immediately in form (avoid double-touch race by directly setting)
-      setForm(prev => {
-        const next = { ...prev };
-        const copy = [...(next.accompanying_person || [])];
-        copy[i] = { ...(copy[i] || {}), contact: sanitized };
-        next.accompanying_person = copy;
-        return next;
-      });
-      setTouched(prev => ({ ...prev, [`accompanying_person_contact_${i}`]: true }));
-      validateField("accompanying_person", sanitized, { type: "accompany_contact", index: i });
-    } else {
-      // if non-contact field changed, no special validation (name maybe)
-    }
   };
 
   const addWitness = () => {
@@ -335,14 +294,6 @@ export default function IncidentForm({ onSubmitted }) {
     wc.splice(i, 1);
     update("witnesses", w);
     update("witness_contacts", wc);
-
-    // clear any per-index errors
-    setErrors(prev => {
-      const next = { ...prev };
-      const keyName = `witness_contacts_${i}`;
-      if (next[keyName]) delete next[keyName];
-      return next;
-    });
   };
   const setWitness = (i, val) => {
     const w = [...(form.witnesses || [])];
@@ -350,16 +301,9 @@ export default function IncidentForm({ onSubmitted }) {
     update("witnesses", w);
   };
   const setWitnessContact = (i, val) => {
-    // sanitize input
-    const sanitized = sanitizePhoneInput(val);
-
     const wc = [...(form.witness_contacts || [])];
-    wc[i] = sanitized;
+    wc[i] = val;
     update("witness_contacts", wc);
-
-    // mark touched for this witness contact and validate
-    setTouched(prev => ({ ...prev, [`witness_contacts_${i}`]: true }));
-    validateField("witness_contacts", sanitized, { type: "witness_contact", index: i });
   };
 
   const onFilesSelected = (evt) => {
@@ -373,12 +317,6 @@ export default function IncidentForm({ onSubmitted }) {
     return a;
   });
 
-/**
- * 
- * @returns 
- * 
- */
-
   const validate = () => {
     const e = {};
 
@@ -390,8 +328,10 @@ export default function IncidentForm({ onSubmitted }) {
     if (!form.date_of_report) e.date_of_report = "Date of report required.";
     if (!form.time_of_report) e.time_of_report = "Time of report required.";
     if (!form.impacted_name) e.impacted_name = "Impacted name is required.";
-    if (!form.impacted_employee_id) e.impacted_employee_id = "Impacted employee ID is required.";
-    else if (!empIdRegex.test(form.impacted_employee_id)) e.impacted_employee_id = "Invalid employee ID.";
+    
+    // Use live validation functions
+    const empIdValidation = validateEmployeeId(form.impacted_employee_id);
+    if (!empIdValidation.isValid) e.impacted_employee_id = empIdValidation.message;
 
     if (form.was_reported_verbally === true) {
       if (!form.incident_reported_to?.length)
@@ -402,12 +342,17 @@ export default function IncidentForm({ onSubmitted }) {
 
     if (!form.location?.trim()) e.location = "Location is required.";
     if (!form.reported_by_name) e.reported_by_name = "Reporter name required.";
-    if (!form.reported_by_employee_id) e.reported_by_employee_id = "Reporter employee ID required.";
-    else if (!empIdRegex.test(form.reported_by_employee_id)) e.reported_by_employee_id = "Invalid employee ID.";
-    if (!form.reported_by_email) e.reported_by_email = "Reporter email required.";
-    else if (!emailRegex.test(form.reported_by_email)) e.reported_by_email = "Invalid email address.";
-    if (!form.reported_by_contact) e.reported_by_contact = "Reporter contact required.";
-    else if (!/^[+\d][\d\s\-().]{5,}$/.test(form.reported_by_contact)) e.reported_by_contact = "Invalid phone number.";
+    
+    // Use live validation functions
+    const reporterEmpIdValidation = validateEmployeeId(form.reported_by_employee_id);
+    if (!reporterEmpIdValidation.isValid) e.reported_by_employee_id = reporterEmpIdValidation.message;
+    
+    const emailValidation = validateEmail(form.reported_by_email);
+    if (!emailValidation.isValid) e.reported_by_email = emailValidation.message;
+    
+    const phoneValidation = validatePhoneNumber(form.reported_by_contact);
+    if (!phoneValidation.isValid) e.reported_by_contact = phoneValidation.message;
+    
     if (!form.date_of_incident) e.date_of_incident = "Date of incident required.";
     if (!form.time_of_incident) e.time_of_incident = "Time of incident required.";
     if (!form.detailed_description?.trim() || form.detailed_description.length < 5) e.detailed_description = "Please provide a detailed description (min 5 chars).";
@@ -415,6 +360,22 @@ export default function IncidentForm({ onSubmitted }) {
 
     if ((form.witnesses || []).length !== (form.witness_contacts || []).length)
       e.witness_contacts = "Add contact for each witness.";
+
+    // Mark all fields as touched for final validation
+    const allFields = [
+      'type_of_incident', 'date_of_report', 'time_of_report', 'impacted_name',
+      'impacted_employee_id', 'was_reported_verbally', 'location', 'reported_by_name',
+      'reported_by_employee_id', 'reported_by_email', 'reported_by_contact',
+      'date_of_incident', 'time_of_incident', 'detailed_description', 'immediate_actions_taken'
+    ];
+    
+    const touchedAll = {};
+    allFields.forEach(field => touchedAll[field] = true);
+    if (form.was_reported_verbally === true) {
+      touchedAll['incident_reported_to'] = true;
+      touchedAll['reported_to_details'] = true;
+    }
+    setTouched(touchedAll);
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -512,52 +473,116 @@ export default function IncidentForm({ onSubmitted }) {
 
         <div className="row">
           <label>1. Type of Incident / Accident <span className="required">*</span></label>
-          <select value={form.type_of_incident} onChange={e => update("type_of_incident", e.target.value)}>
+          <select 
+            value={form.type_of_incident} 
+            onChange={e => update("type_of_incident", e.target.value)}
+            onBlur={() => setTouched(prev => ({ ...prev, type_of_incident: true }))}
+            className={touched.type_of_incident && errors.type_of_incident ? 'error-border' : ''}
+          >
             <option value="">-- select type --</option>
             {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           {form.type_of_incident === "Other" && (
             <>
-              <input className="mt8" placeholder="Please enter the incident type" value={form.other_type_text} onChange={e => update("other_type_text", e.target.value)} />
-              {errors.other_type_text && <div className="error">{errors.other_type_text}</div>}
+              <input 
+                className={`mt8 ${touched.other_type_text && errors.other_type_text ? 'error-border' : ''}`}
+                placeholder="Please enter the incident type" 
+                value={form.other_type_text} 
+                onChange={e => handleFieldChange("other_type_text", e.target.value, (val) => 
+                  !val ? { isValid: false, message: "Please enter the incident type" } : { isValid: true, message: "" }
+                )}
+                onBlur={() => setTouched(prev => ({ ...prev, other_type_text: true }))}
+              />
+              {touched.other_type_text && errors.other_type_text && <div className="error live-error">{errors.other_type_text}</div>}
             </>
           )}
-          {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
+          {touched.type_of_incident && errors.type_of_incident && <div className="error live-error">{errors.type_of_incident}</div>}
         </div>
 
         <div className="row row-grid-2">
           <div>
             <label>2. Date of Report <span className="required">*</span></label>
-            <input type="date" value={form.date_of_report} onChange={e => update("date_of_report", e.target.value)} />
-            {errors.date_of_report && <div className="error">{errors.date_of_report}</div>}
+            <input 
+              type="date" 
+              value={form.date_of_report} 
+              onChange={e => update("date_of_report", e.target.value)}
+              onBlur={() => setTouched(prev => ({ ...prev, date_of_report: true }))}
+              className={touched.date_of_report && errors.date_of_report ? 'error-border' : ''}
+            />
+            {touched.date_of_report && errors.date_of_report && <div className="error live-error">{errors.date_of_report}</div>}
           </div>
           <div>
             <label>3. Time of Report (HH:MM) <span className="required">*</span></label>
-            <input type="time" value={form.time_of_report} onChange={e => update("time_of_report", e.target.value)} />
-            {errors.time_of_report && <div className="error">{errors.time_of_report}</div>}
+            <input 
+              type="time" 
+              value={form.time_of_report} 
+              onChange={e => update("time_of_report", e.target.value)}
+              onBlur={() => setTouched(prev => ({ ...prev, time_of_report: true }))}
+              className={touched.time_of_report && errors.time_of_report ? 'error-border' : ''}
+            />
+            {touched.time_of_report && errors.time_of_report && <div className="error live-error">{errors.time_of_report}</div>}
           </div>
         </div>
 
         <div className="row row-grid-2">
           <div>
             <label>4. Name of Impacted Employee / Person <span className="required">*</span></label>
-            <input value={form.impacted_name} onChange={e => update("impacted_name", e.target.value)} />
-            {errors.impacted_name && <div className="error">{errors.impacted_name}</div>}
+            <input 
+              value={form.impacted_name} 
+              onChange={e => handleFieldChange("impacted_name", e.target.value, (val) => 
+                !val ? { isValid: false, message: "Impacted name is required" } : { isValid: true, message: "" }
+              )}
+              onBlur={() => setTouched(prev => ({ ...prev, impacted_name: true }))}
+              className={touched.impacted_name && errors.impacted_name ? 'error-border' : ''}
+            />
+            {touched.impacted_name && errors.impacted_name && <div className="error live-error">{errors.impacted_name}</div>}
           </div>
           <div>
             <label>5. Employee ID of Impacted Employee <span className="required">*</span></label>
-            <input value={form.impacted_employee_id} onChange={e => update("impacted_employee_id", e.target.value)} />
-            {errors.impacted_employee_id && <div className="error">{errors.impacted_employee_id}</div>}
+            <input 
+              value={form.impacted_employee_id} 
+              onChange={e => handleFieldChange("impacted_employee_id", e.target.value)}
+              onBlur={() => setTouched(prev => ({ ...prev, impacted_employee_id: true }))}
+              className={touched.impacted_employee_id && errors.impacted_employee_id ? 'error-border' : ''}
+              placeholder="Enter employee ID"
+            />
+            {touched.impacted_employee_id && errors.impacted_employee_id && <div className="error live-error">{errors.impacted_employee_id}</div>}
           </div>
         </div>
 
         <div className="row">
           <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
           <div className="radio-row">
-            <label><input type="radio" name="reported" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
-            <label><input type="radio" name="reported" checked={form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
+            <label>
+              <input 
+                type="radio" 
+                name="reported" 
+                checked={form.was_reported_verbally === true} 
+                onChange={() => {
+                  update("was_reported_verbally", true);
+                  setTouched(prev => ({ ...prev, was_reported_verbally: true }));
+                  const newErrors = { ...errors };
+                  delete newErrors['was_reported_verbally'];
+                  setErrors(newErrors);
+                }}
+              /> Yes
+            </label>
+            <label>
+              <input 
+                type="radio" 
+                name="reported" 
+                checked={form.was_reported_verbally === false} 
+                onChange={() => {
+                  update("was_reported_verbally", false);
+                  setTouched(prev => ({ ...prev, was_reported_verbally: true }));
+                  const newErrors = { ...errors };
+                  delete newErrors['was_reported_verbally'];
+                  setErrors(newErrors);
+                }}
+              /> No
+            </label>
           </div>
-          {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
+          {touched.was_reported_verbally && errors.was_reported_verbally && <div className="error live-error">{errors.was_reported_verbally}</div>}
           <div className="muted">** In case of medical emergency inform local HR</div>
         </div>
 
@@ -572,20 +597,38 @@ export default function IncidentForm({ onSubmitted }) {
                   <label>7. Incident reported to: <span className="required">*</span></label>
                   <select
                     value={form.incident_reported_to[0] || ""} // only single selection
-                    onChange={e => update("incident_reported_to", [e.target.value])}
+                    onChange={e => {
+                      update("incident_reported_to", [e.target.value]);
+                      setTouched(prev => ({ ...prev, incident_reported_to: true }));
+                      if (e.target.value) {
+                        const newErrors = { ...errors };
+                        delete newErrors['incident_reported_to'];
+                        setErrors(newErrors);
+                      }
+                    }}
+                    onBlur={() => setTouched(prev => ({ ...prev, incident_reported_to: true }))}
+                    className={touched.incident_reported_to && errors.incident_reported_to ? 'error-border' : ''}
                   >
                     <option value="">-- select --</option>
                     {REPORTED_TO_OPTIONS.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
-                  {errors.incident_reported_to && <div className="error">{errors.incident_reported_to}</div>}
+                  {touched.incident_reported_to && errors.incident_reported_to && <div className="error live-error">{errors.incident_reported_to}</div>}
                 </div>
 
                 <div className="row">
                   <label>8. If Yes, to whom (Name and Department): <span className="required">*</span></label>
-                  <input value={form.reported_to_details} onChange={e => update("reported_to_details", e.target.value)} />
-                  {errors.reported_to_details && <div className="error">{errors.reported_to_details}</div>}
+                  <input 
+                    value={form.reported_to_details} 
+                    onChange={e => handleFieldChange("reported_to_details", e.target.value, (val) => 
+                      !val?.trim() ? { isValid: false, message: "Provide name & department" } : { isValid: true, message: "" }
+                    )}
+                    onBlur={() => setTouched(prev => ({ ...prev, reported_to_details: true }))}
+                    className={touched.reported_to_details && errors.reported_to_details ? 'error-border' : ''}
+                    placeholder="Name and Department"
+                  />
+                  {touched.reported_to_details && errors.reported_to_details && <div className="error live-error">{errors.reported_to_details}</div>}
                 </div>
               </>
             )}
@@ -593,62 +636,116 @@ export default function IncidentForm({ onSubmitted }) {
             {/* Q9–Q21 appear normally */}
             <div className="row">
               <label>9. Location of Incident or Accident (Specify Office / Branch) <span className="required">*</span></label>
-              <input value={form.location} onChange={e => update("location", e.target.value)} />
-              {errors.location && <div className="error">{errors.location}</div>}
+              <input 
+                value={form.location} 
+                onChange={e => handleFieldChange("location", e.target.value, (val) => 
+                  !val?.trim() ? { isValid: false, message: "Location is required" } : { isValid: true, message: "" }
+                )}
+                onBlur={() => setTouched(prev => ({ ...prev, location: true }))}
+                className={touched.location && errors.location ? 'error-border' : ''}
+              />
+              {touched.location && errors.location && <div className="error live-error">{errors.location}</div>}
             </div>
-
-            {/* (No changes below this point – your original code continues) */}
-            {/* ------------------------------ */}
-            {/* REST OF YOUR FORM UNCHANGED   */}
-            {/* ------------------------------ */}
 
             <div className="row row-grid-3">
               <div>
                 <label>10. Reported By - Name <span className="required">*</span></label>
-                <input value={form.reported_by_name} onChange={e => update("reported_by_name", e.target.value)} />
-                {errors.reported_by_name && <div className="error">{errors.reported_by_name}</div>}
+                <input 
+                  value={form.reported_by_name} 
+                  onChange={e => handleFieldChange("reported_by_name", e.target.value, (val) => 
+                    !val ? { isValid: false, message: "Reporter name required" } : { isValid: true, message: "" }
+                  )}
+                  onBlur={() => setTouched(prev => ({ ...prev, reported_by_name: true }))}
+                  className={touched.reported_by_name && errors.reported_by_name ? 'error-border' : ''}
+                />
+                {touched.reported_by_name && errors.reported_by_name && <div className="error live-error">{errors.reported_by_name}</div>}
               </div>
               <div>
                 <label>11. Reported By - Employee ID <span className="required">*</span></label>
-                <input value={form.reported_by_employee_id} onChange={e => update("reported_by_employee_id", e.target.value)} />
-                {errors.reported_by_employee_id && <div className="error">{errors.reported_by_employee_id}</div>}
+                <input 
+                  value={form.reported_by_employee_id} 
+                  onChange={e => handleFieldChange("reported_by_employee_id", e.target.value)}
+                  onBlur={() => setTouched(prev => ({ ...prev, reported_by_employee_id: true }))}
+                  className={touched.reported_by_employee_id && errors.reported_by_employee_id ? 'error-border' : ''}
+                  placeholder="Enter employee ID"
+                />
+                {touched.reported_by_employee_id && errors.reported_by_employee_id && <div className="error live-error">{errors.reported_by_employee_id}</div>}
               </div>
               <div>
                 <label>12. Reported By - Email <span className="required">*</span></label>
-                <input value={form.reported_by_email} onChange={e => update("reported_by_email", e.target.value)} />
-                {errors.reported_by_email && <div className="error">{errors.reported_by_email}</div>}
+                <input 
+                  value={form.reported_by_email} 
+                  onChange={e => handleFieldChange("reported_by_email", e.target.value)}
+                  onBlur={() => setTouched(prev => ({ ...prev, reported_by_email: true }))}
+                  className={touched.reported_by_email && errors.reported_by_email ? 'error-border' : ''}
+                  placeholder="example@domain.com"
+                />
+                {touched.reported_by_email && errors.reported_by_email && <div className="error live-error">{errors.reported_by_email}</div>}
               </div>
             </div>
 
             <div className="row">
               <label>12b. Reported By - Contact Number <span className="required">*</span></label>
-              <input value={form.reported_by_contact} onChange={e => update("reported_by_contact", e.target.value)} />
-              {errors.reported_by_contact && <div className="error">{errors.reported_by_contact}</div>}
+              <input 
+                value={form.reported_by_contact} 
+                onChange={e => handleFieldChange("reported_by_contact", e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, reported_by_contact: true }))}
+                className={touched.reported_by_contact && errors.reported_by_contact ? 'error-border' : ''}
+                placeholder="+1234567890 or 1234567890"
+              />
+              {touched.reported_by_contact && errors.reported_by_contact && <div className="error live-error">{errors.reported_by_contact}</div>}
+              <div className="muted small">Format: +[country code][number] or just numbers. Min 6, max 15 digits.</div>
             </div>
 
             <div className="row row-grid-2">
               <div>
                 <label>13. Date of Incident Occurred <span className="required">*</span></label>
-                <input type="date" value={form.date_of_incident} onChange={e => update("date_of_incident", e.target.value)} />
-                {errors.date_of_incident && <div className="error">{errors.date_of_incident}</div>}
+                <input 
+                  type="date" 
+                  value={form.date_of_incident} 
+                  onChange={e => update("date_of_incident", e.target.value)}
+                  onBlur={() => setTouched(prev => ({ ...prev, date_of_incident: true }))}
+                  className={touched.date_of_incident && errors.date_of_incident ? 'error-border' : ''}
+                />
+                {touched.date_of_incident && errors.date_of_incident && <div className="error live-error">{errors.date_of_incident}</div>}
               </div>
               <div>
                 <label>14. Time of Incident <span className="required">*</span></label>
-                <input type="time" value={form.time_of_incident} onChange={e => update("time_of_incident", e.target.value)} />
-                {errors.time_of_incident && <div className="error">{errors.time_of_incident}</div>}
+                <input 
+                  type="time" 
+                  value={form.time_of_incident} 
+                  onChange={e => update("time_of_incident", e.target.value)}
+                  onBlur={() => setTouched(prev => ({ ...prev, time_of_incident: true }))}
+                  className={touched.time_of_incident && errors.time_of_incident ? 'error-border' : ''}
+                />
+                {touched.time_of_incident && errors.time_of_incident && <div className="error live-error">{errors.time_of_incident}</div>}
               </div>
             </div>
 
             <div className="row">
               <label>15. Detailed Description of Incident <span className="required">*</span></label>
-              <textarea value={form.detailed_description} onChange={e => update("detailed_description", e.target.value)} rows={5} />
-              {errors.detailed_description && <div className="error">{errors.detailed_description}</div>}
+              <textarea 
+                value={form.detailed_description} 
+                onChange={e => handleFieldChange("detailed_description", e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, detailed_description: true }))}
+                rows={5} 
+                className={touched.detailed_description && errors.detailed_description ? 'error-border' : ''}
+              />
+              {touched.detailed_description && errors.detailed_description && <div className="error live-error">{errors.detailed_description}</div>}
             </div>
 
             <div className="row">
               <label>16. Immediate Actions Taken <span className="required">*</span></label>
-              <textarea value={form.immediate_actions_taken} onChange={e => update("immediate_actions_taken", e.target.value)} rows={3} />
-              {errors.immediate_actions_taken && <div className="error">{errors.immediate_actions_taken}</div>}
+              <textarea 
+                value={form.immediate_actions_taken} 
+                onChange={e => handleFieldChange("immediate_actions_taken", e.target.value, (val) => 
+                  !val?.trim() ? { isValid: false, message: "Immediate actions are required" } : { isValid: true, message: "" }
+                )}
+                onBlur={() => setTouched(prev => ({ ...prev, immediate_actions_taken: true }))}
+                rows={3} 
+                className={touched.immediate_actions_taken && errors.immediate_actions_taken ? 'error-border' : ''}
+              />
+              {touched.immediate_actions_taken && errors.immediate_actions_taken && <div className="error live-error">{errors.immediate_actions_taken}</div>}
             </div>
 
             <div className="row">
@@ -656,8 +753,17 @@ export default function IncidentForm({ onSubmitted }) {
               {(form.accompanying_person || []).map((p, i) => (
                 <div key={i} className="accompany-row">
                   <input placeholder="Name" value={p.name} onChange={e => setAccompany(i, "name", e.target.value)} />
-                  <input placeholder="Contact" value={p.contact} onChange={e => setAccompany(i, "contact", e.target.value)} />
-                  {errors[`accompanying_person_contact_${i}`] && <div className="error">{errors[`accompanying_person_contact_${i}`]}</div>}
+                  <input 
+                    placeholder="Contact" 
+                    value={p.contact} 
+                    onChange={e => setAccompany(i, "contact", e.target.value)}
+                    onBlur={(e) => {
+                      const validation = validatePhoneNumber(e.target.value);
+                      if (!validation.isValid && e.target.value) {
+                        alert(`Accompanying person ${i + 1}: ${validation.message}`);
+                      }
+                    }}
+                  />
                   <button type="button" className="btn small" onClick={() => removeAccompany(i)}>Remove</button>
                 </div>
               ))}
@@ -669,13 +775,22 @@ export default function IncidentForm({ onSubmitted }) {
               {(form.witnesses || []).map((w, i) => (
                 <div key={i} className="accompany-row">
                   <input placeholder="Witness Name" value={w} onChange={e => setWitness(i, e.target.value)} />
-                  <input placeholder="Contact" value={(form.witness_contacts || [])[i] || ""} onChange={e => setWitnessContact(i, e.target.value)} />
-                  {errors[`witness_contacts_${i}`] && <div className="error">{errors[`witness_contacts_${i}`]}</div>}
+                  <input 
+                    placeholder="Contact" 
+                    value={(form.witness_contacts || [])[i] || ""} 
+                    onChange={e => setWitnessContact(i, e.target.value)}
+                    onBlur={(e) => {
+                      const validation = validatePhoneNumber(e.target.value);
+                      if (!validation.isValid && e.target.value) {
+                        alert(`Witness ${i + 1}: ${validation.message}`);
+                      }
+                    }}
+                  />
                   <button type="button" className="btn small" onClick={() => removeWitness(i)}>Remove</button>
                 </div>
               ))}
               <button type="button" className="btn" onClick={addWitness}>Add Witness</button>
-              {errors.witness_contacts && <div className="error">{errors.witness_contacts}</div>}
+              {errors.witness_contacts && <div className="error live-error">{errors.witness_contacts}</div>}
             </div>
 
             <div className="row">
@@ -714,4 +829,85 @@ export default function IncidentForm({ onSubmitted }) {
       </form>
     </div>
   );
+}
+
+
+
+
+...
+/* Add these to your existing IncidentForm.css file */
+
+/* Error border for invalid fields */
+.error-border {
+  border: 2px solid #dc3545 !important;
+  background-color: #fff8f8 !important;
+}
+
+/* Success border for valid fields (optional) */
+.success-border {
+  border: 2px solid #28a745 !important;
+}
+
+/* Live error messages */
+.live-error {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background-color: #fff8f8;
+  border-radius: 4px;
+  border-left: 3px solid #dc3545;
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* For required fields that are not filled yet */
+.pending-validation {
+  border: 2px solid #ffc107 !important;
+}
+
+/* Helper text */
+.muted.small {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  color: #6c757d;
+}
+
+/* Animation for error messages */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Focus state for validated fields */
+input:focus.error-border,
+textarea:focus.error-border,
+select:focus.error-border {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+input:focus.success-border,
+textarea:focus.success-border,
+select:focus.success-border {
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+/* Real-time validation indicator */
+.validation-indicator {
+  display: inline-block;
+  margin-left: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.validation-indicator.valid {
+  background-color: #28a745;
+}
+
+.validation-indicator.invalid {
+  background-color: #dc3545;
+}
+
+.validation-indicator.pending {
+  background-color: #ffc107;
 }
