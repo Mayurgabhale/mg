@@ -7,6 +7,8 @@ first off all i want probar wy on dashbord ok
 wher we handel all, this from can onye send employe ro any one then fill all detials ok and this is detials handel  we are ok 
 for analisys and more  ok 
 so i want to creat this project like that 
+IncidentForm and IncidentList this is the different different part ok 
+only IncidentForm can disply for all ok and IncidentForm using this data or information we handel all our dashobard ok 
 C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\pages\IncidentDashboard.jsx
  import IncidentForm from "../components/IncidentForm";
  import IncidentList from "../components/IncidentList";
