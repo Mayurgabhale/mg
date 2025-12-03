@@ -1,517 +1,388 @@
-ok, first off all i wnt to tell me you i want to deisn this dashobrd 
-more atractive and advanc future ok 
-this is thei western union project ok,
+Western Union Incident Management System - Project Documentation
 
-  this is dashboaed main purpose is to get incidend data form employee or any one ok, 
-and use for the compnay futur help or any problme time ok 
-first off all i want probar wy on dashbord ok 
-wher we handel all, this from can onye send employe ro any one then fill all detials ok and this is detials handel  we are ok 
-for analisys and more  ok 
-so i want to creat this project like that 
-IncidentForm and IncidentList this is the different different part ok 
-only IncidentForm can disply for all ok and IncidentForm using this data or information we handel all our dashobard ok 
-C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\pages\IncidentDashboard.jsx
- import IncidentForm from "../components/IncidentForm";
- import IncidentList from "../components/IncidentList";
- 
+📋 Project Overview
 
- export default function IncidentPage(){
-    return (
-        <div style={{padding:20}}>
-            <h1>Incident Reporting</h1>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 450px", gap:20}}>
-                <div>
-                    <IncidentForm/>
-                </div>
-                <div>
-                    <IncidentList/>
-                </div>
-            </div>
-        </div>
-    )
- }
+Project Name: WU Incident Management System
+Purpose: A secure platform for employees to report safety, security, and HR incidents for better workplace management and future prevention
+Audience: All Western Union employees globally
 
-C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
-import React, { useState, useEffect, useRef } from "react";
-import "../assets/css/IncidentForm.css";
+🎯 Core Purpose
 
-/**
- * IncidentForm
- * - Autosaves draft to localStorage (key: incident_draft)
- * - Validates required branching rules:
- *     when was_reported_verbally === true -> incident_reported_to must be non-empty array
- * - Submits JSON to POST /incident/create
- */
+1. Immediate Goal: Collect incident data quickly and securely
+2. Future Goal: Analyze patterns to prevent future incidents
+3. Compliance: Meet safety and HR reporting requirements
 
-const INCIDENT_TYPES = [
-    "Medical",
-    "Theft",
-    "Fire",
-    "HR Related Incident",
-    "Outside Work Place Violence",
-    "Threat",
-    "Death",
-    "Fraud",
-    "Any Other Safety / Security Related Incident",
-    "Other"
-];
+✨ Current Features
 
-const REPORTED_TO_OPTIONS = [
-    "Supervisor",
-    "Manager",
-    "HR",
-    "Other Employee",
-    "Not Reported"
-];
+1. Frontend Features (React Dashboard)
 
-const blankDraft = {
-    type_of_incident: "",
-    other_type_text: "",
-    date_of_report: "",
-    time_of_report: "",
-    impacted_name: "",
-    impacted_employee_id: "",
-    was_reported_verbally: null, // true/false
-    incident_reported_to: [], // array of strings
-    reported_to_details: "",
-    location: "",
-    reported_by_name: "",
-    reported_by_employee_id: "",
-    reported_by_contact: "",
-    date_of_incident: "",
-    time_of_incident: "",
-    detailed_description: "",
-    immediate_actions_taken: "",
-    accompanying_person: [], // [{name, contact}]
-    witnesses: [], // array of strings
-    witness_contacts: [], // array of strings (parallel to witnesses)
-    root_cause_analysis: "",
-    preventive_actions: ""
-};
+```
+✅ **Incident Form**
+   - 21-field comprehensive reporting form
+   - Auto-save to prevent data loss
+   - Form validation with error messages
+   - Branching logic (if verbally reported → show more options)
+   - Dynamic fields (add/remove witnesses, accompanying persons)
 
-export default function IncidentForm({ onSubmitted }) {
-    const [form, setForm] = useState(blankDraft);
-    const [saving, setSaving] = useState(false);
-    const [errors, setErrors] = useState({});
-    const autosaveTimer = useRef(null);
+✅ **Incident List**
+   - View all submitted incidents
+   - Search by type, name, location
+   - Click to view full details
+   - Refresh button to get latest data
 
-    // Restore draft on mount
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem("incident_draft");
-            if (raw) setForm(JSON.parse(raw));
-        } catch (e) {
-            console.warn("Failed to restore draft", e);
-        }
-    }, []);
+✅ **Dashboard**
+   - Modern, professional design
+   - Tab navigation (New Report, All Incidents, Analytics)
+   - Stats cards showing totals
+   - Quick access buttons
+```
 
-    // autosave on change (debounced)
-    useEffect(() => {
-        clearTimeout(autosaveTimer.current);
-        autosaveTimer.current = setTimeout(() => {
-            localStorage.setItem("incident_draft", JSON.stringify(form));
-            setSaving(false);
-        }, 700);
-        setSaving(true);
-        return () => clearTimeout(autosaveTimer.current);
-    }, [form]);
+2. Backend Features (FastAPI)
 
-    // helpers
-    const update = (key, value) => {
-        setForm(prev => ({ ...prev, [key]: value }));
-    };
+```
+✅ **API Endpoints**
+   - POST /incident/create → Save new incident
+   - GET /incident/list → Get all incidents
+   - (Planned) GET /incident/stats → Get dashboard statistics
 
-    const toggleReportedTo = (option) => {
-        const arr = form.incident_reported_to || [];
-        if (arr.includes(option)) {
-            update(
-                "incident_reported_to",
-                arr.filter(x => x !== option)
-            );
-        } else {
-            update("incident_reported_to", [...arr, option]);
-        }
-    };
+✅ **Data Storage**
+   - JSON data structure
+   - Future: Database integration ready
 
-    const addWitness = () => {
-        update("witnesses", [...(form.witnesses || []), ""]);
-        update("witness_contacts", [...(form.witness_contacts || []), ""]);
-    };
-    const removeWitness = (idx) => {
-        const w = [...(form.witnesses || [])];
-        const wc = [...(form.witness_contacts || [])];
-        w.splice(idx, 1);
-        wc.splice(idx, 1);
-        update("witnesses", w);
-        update("witness_contacts", wc);
-    };
-    const updateWitness = (idx, val) => {
-        const w = [...(form.witnesses || [])];
-        w[idx] = val;
-        update("witnesses", w);
-    };
-    const updateWitnessContact = (idx, val) => {
-        const wc = [...(form.witness_contacts || [])];
-        wc[idx] = val;
-        update("witness_contacts", wc);
-    };
+✅ **Security**
+   - Basic input validation
+   - Future: Authentication planned
+```
 
-    const addAccompanying = () => {
-        update("accompanying_person", [...(form.accompanying_person || []), { name: "", contact: "" }]);
-    };
-    const removeAccompanying = (idx) => {
-        const a = [...(form.accompanying_person || [])];
-        a.splice(idx, 1);
-        update("accompanying_person", a);
-    };
-    const updateAccompanying = (idx, key, val) => {
-        const a = [...(form.accompanying_person || [])];
-        a[idx] = { ...(a[idx] || {}), [key]: val };
-        update("accompanying_person", a);
-    };
+📊 Data Flow
 
-    const validate = () => {
-        const errs = {};
-        // minimal required checks
-        if (!form.type_of_incident) errs.type_of_incident = "Type is required";
-        if (form.type_of_incident === "Other" && !form.other_type_text) errs.other_type_text = "Please enter other type";
-        if (!form.date_of_report) errs.date_of_report = "Date of report is required";
-        if (form.was_reported_verbally === null) errs.was_reported_verbally = "Please select Yes or No";
+```
+Employee fills form → 
+Data saves locally (auto-save) → 
+Employee submits → 
+Data sends to backend → 
+Saved in database → 
+Appears in incident list → 
+Managers can view/analyze
+```
 
-        if (form.was_reported_verbally) {
-            if (!form.incident_reported_to || form.incident_reported_to.length === 0) {
-                errs.incident_reported_to = "Select at least one option for who it was reported to";
-            }
-        }
+🔮 Future Requirements
 
-        // require reported_by fields for both branches
-        if (!form.reported_by_name) errs.reported_by_name = "Reported by - Name is required";
-        if (!form.reported_by_contact) errs.reported_by_contact = "Reported by - Contact is required";
-        if (!form.date_of_incident) errs.date_of_incident = "Date of incident is required";
-        if (!form.detailed_description) errs.detailed_description = "Description is required";
+Phase 1: Enhanced Features (Next 1-2 months)
 
-        setErrors(errs);
-        return Object.keys(errs).length === 0;
-    };
+```
+🔹 **Priority Features:**
+   - User login system (different roles: Employee, Manager, Admin)
+   - Email notifications when incident submitted
+   - Export reports to PDF/Excel
+   - Attach photos/documents to incidents
 
-    const clearDraft = () => {
-        localStorage.removeItem("incident_draft");
-        setForm(blankDraft);
-        setErrors({});
-    };
+🔹 **Better Dashboard:**
+   - Real-time charts (incidents by type, location, time)
+   - Priority tagging (High/Medium/Low)
+   - Status tracking (Open → In Progress → Resolved)
+   - Assignment to safety officers
+```
 
-    const handleSubmit = async (e) => {
-        e && e.preventDefault();
-        if (!validate()) {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            return;
-        }
+Phase 2: Advanced Features (3-6 months)
 
-        // prepare payload matching your backend pydantic model
-        const payload = {
-            type_of_incident: form.type_of_incident === "Other" ? form.other_type_text : form.type_of_incident,
-            date_of_report: form.date_of_report || null,
-            time_of_report: form.time_of_report || null,
-            impacted_name: form.impacted_name || null,
-            impacted_employee_id: form.impacted_employee_id || null,
-            was_reported_verbally: !!form.was_reported_verbally,
-            incident_reported_to: form.was_reported_verbably ? form.incident_reported_to : form.incident_reported_to,
-            reported_to_details: form.reported_to_details || null,
-            location: form.location || null,
-            reported_by_name: form.reported_by_name || null,
-            reported_by_employee_id: form.reported_by_employee_id || null,
-            reported_by_contact: form.reported_by_contact || null,
-            date_of_incident: form.date_of_incident || null,
-            time_of_incident: form.time_of_incident || null,
-            detailed_description: form.detailed_description || null,
-            immediate_actions_taken: form.immediate_actions_taken || null,
-            accompanying_person: form.accompanying_person && form.accompanying_person.length ? form.accompanying_person : null,
-            witnesses: form.witnesses && form.witnesses.length ? form.witnesses : null,
-            witness_contacts: form.witness_contacts && form.witness_contacts.length ? form.witness_contacts : null,
-            root_cause_analysis: form.root_cause_analysis || null,
-            preventive_actions: form.preventive_actions || null
-        };
+```
+🔸 **Analytics:**
+   - Machine learning to detect patterns
+   - Alert system for similar incidents
+   - Prediction of high-risk areas/times
+   - Monthly automated reports
 
-        try {
-            const res = await fetch("http://localhost:8000/incident/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            const json = await res.json();
-            if (!res.ok) {
-                throw new Error(json.detail || JSON.stringify(json));
-            }
-            alert("Incident submitted successfully");
-            clearDraft();
-            if (typeof onSubmitted === "function") onSubmitted(json);
-        } catch (err) {
-            console.error("Submit failed", err);
-            alert("Submit failed: " + (err.message || err));
-        }
-    };
+🔸 **Mobile App:**
+   - iOS/Android app for reporting
+   - Push notifications
+   - Location auto-detection
+   - Offline reporting capability
 
-    return (
-        <div className="incident-card">
-            <h2>Incident Reporting Form</h2>
-            <p className="muted">When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.</p>
+🔸 **Integration:**
+   - Connect with HR systems
+   - Link to security cameras (if applicable)
+   - Slack/Teams notifications
+   - Emergency contact systems
+```
 
-            <form onSubmit={handleSubmit} className="incident-form" noValidate>
-                <label>1. Type of Incident / Accident *</label>
-                <div className="row">
-                    <select value={form.type_of_incident} onChange={e => update("type_of_incident", e.target.value)}>
-                        <option value="">-- select type --</option>
-                        {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
-                </div>
+Phase 3: Enterprise Features (6-12 months)
 
-                {form.type_of_incident === "Other" && (
-                    <div className="row">
-                        <label>Other - Enter your answer *</label>
-                        <input type="text" value={form.other_type_text} onChange={e => update("other_type_text", e.target.value)} />
-                        {errors.other_type_text && <div className="error">{errors.other_type_text}</div>}
-                    </div>
-                )}
+```
+🔹 **Global Features:**
+   - Multi-language support
+   - Regional compliance rules
+   - Audit trails (who saw/changed what)
+   - Backup and disaster recovery
 
-                <div className="row">
-                    <label>2. Date of Report *</label>
-                    <input type="date" value={form.date_of_report} onChange={e => update("date_of_report", e.target.value)} />
-                    {errors.date_of_report && <div className="error">{errors.date_of_report}</div>}
-                </div>
+🔹 **Advanced Security:**
+   - Two-factor authentication
+   - Data encryption
+   - Access logs
+   - GDPR compliance tools
+```
 
-                <div className="row">
-                    <label>3. Time of Report (HH:MM)</label>
-                    <input type="time" value={form.time_of_report} onChange={e => update("time_of_report", e.target.value)} />
-                </div>
+🏗️ System Architecture
 
-                <div className="row">
-                    <label>4. Name of Impacted Employee / Person</label>
-                    <input value={form.impacted_name} onChange={e => update("impacted_name", e.target.value)} />
-                </div>
+Frontend (What you see)
 
-                <div className="row">
-                    <label>5. Employee ID of Impacted Employee</label>
-                    <input value={form.impacted_employee_id} onChange={e => update("impacted_employee_id", e.target.value)} />
-                </div>
+```
+React.js Application
+├── Pages
+│   └── Dashboard (main page)
+├── Components
+│   ├── IncidentForm (reporting form)
+│   ├── IncidentList (view all incidents)
+│   └── DashboardStats (shows numbers)
+└── CSS
+    └── Styling for good look
+```
 
-                <div className="row">
-                    <label>6. Was this incident reported verbally before submitting this report? *</label>
-                    <div className="radio-row">
-                        <label><input type="radio" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
-                        <label><input type="radio" checked={form.was_reported_verbually === false || form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
-                    </div>
-                    {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
-                    <div className="muted">** In case of medical emergency inform local HR</div>
-                </div>
+Backend (What works behind)
 
-                {/* Branching: If Yes */}
-                {form.was_reported_verbally === true && (
-                    <>
-                        <div className="row">
-                            <label>7. Incident reported to: (select one or more) *</label>
-                            <div className="checkbox-grid">
-                                {REPORTED_TO_OPTIONS.map(opt => (
-                                    <label key={opt}>
-                                        <input type="checkbox"
-                                            checked={(form.incident_reported_to || []).includes(opt)}
-                                            onChange={() => toggleReportedTo(opt)} /> {opt}
-                                    </label>
-                                ))}
-                            </div>
-                            {errors.incident_reported_to && <div className="error">{errors.incident_reported_to}</div>}
-                        </div>
+```
+FastAPI Server (Python)
+├── Database (SQLite → later PostgreSQL)
+├── API Routes
+│   ├── /incident/create (save new)
+│   ├── /incident/list (get all)
+│   └── /incident/stats (get counts)
+└── Data Models
+    └── Defines what data looks like
+```
 
-                        <div className="row">
-                            <label>8. If Yes, to whom (Name and Department):</label>
-                            <input value={form.reported_to_details} onChange={e => update("reported_to_details", e.target.value)} />
-                        </div>
-                    </>
-                )}
+📁 File Structure
 
-                {/* Common fields (both branches include location + reporter + incident details) */}
-                <div className="row">
-                    <label>9. Location of Incident or Accident (Specify Office / Branch)</label>
-                    <input value={form.location} onChange={e => update("location", e.target.value)} />
-                </div>
+```
+IncidentDashboard/
+├── frontend/ (React app)
+│   ├── public/ (images, icons)
+│   └── src/
+│       ├── components/ (IncidentForm, IncidentList)
+│       ├── pages/ (Dashboard)
+│       ├── assets/ (CSS files)
+│       └── services/ (API calls)
+└── backend/ (FastAPI server)
+    ├── main.py (server code)
+    ├── models.py (data structure)
+    └── database.py (database setup)
+```
 
-                <div className="row">
-                    <label>10. Reported By - Name: *</label>
-                    <input value={form.reported_by_name} onChange={e => update("reported_by_name", e.target.value)} />
-                    {errors.reported_by_name && <div className="error">{errors.reported_by_name}</div>}
-                </div>
+🔐 Security Requirements
 
-                <div className="row">
-                    <label>11. Reported By - Employee ID #</label>
-                    <input value={form.reported_by_employee_id} onChange={e => update("reported_by_employee_id", e.target.value)} />
-                </div>
+```
+Level 1 (Now):
+- Form validation
+- Basic API protection
 
-                <div className="row">
-                    <label>12. Reported By - Contact Number *</label>
-                    <input value={form.reported_by_contact} onChange={e => update("reported_by_contact", e.target.value)} />
-                    {errors.reported_by_contact && <div className="error">{errors.reported_by_contact}</div>}
-                </div>
+Level 2 (Soon):
+- User login with passwords
+- Role-based access
+- HTTPS encryption
 
-                <div className="row">
-                    <label>13. Date of Incident Occurred *</label>
-                    <input type="date" value={form.date_of_incident} onChange={e => update("date_of_incident", e.target.value)} />
-                    {errors.date_of_incident && <div className="error">{errors.date_of_incident}</div>}
-                </div>
+Level 3 (Later):
+- Two-factor authentication
+- Audit logging
+- Data encryption at rest
+```
 
-                <div className="row">
-                    <label>14. Time of Incident</label>
-                    <input type="time" value={form.time_of_incident} onChange={e => update("time_of_incident", e.target.value)} />
-                </div>
+📱 User Roles
 
-                <div className="row">
-                    <label>15. Detailed Description of Incident *</label>
-                    <textarea value={form.detailed_description} onChange={e => update("detailed_description", e.target.value)} rows={5} />
-                    {errors.detailed_description && <div className="error">{errors.detailed_description}</div>}
-                </div>
+```
+1. **Employee**
+   - Can submit incident reports
+   - Can view own submissions
+   - Cannot see others' data
 
-                <div className="row">
-                    <label>16. Immediate Actions Taken</label>
-                    <textarea value={form.immediate_actions_taken} onChange={e => update("immediate_actions_taken", e.target.value)} rows={3} />
-                </div>
+2. **Manager**
+   - Can see all incidents in their department
+   - Can update incident status
+   - Can assign to team members
 
-                <div className="row">
-                    <label>17. Accompanying Person Name and Contact Details</label>
-                    <div className="small-note">You can add multiple accompanying persons.</div>
-                    {(form.accompanying_person || []).map((p, idx) => (
-                        <div key={idx} className="accompany-row">
-                            <input placeholder="Name" value={p.name || ""} onChange={e => updateAccompanying(idx, "name", e.target.value)} />
-                            <input placeholder="Contact" value={p.contact || ""} onChange={e => updateAccompanying(idx, "contact", e.target.value)} />
-                            <button type="button" className="btn small" onClick={() => removeAccompanying(idx)}>Remove</button>
-                        </div>
-                    ))}
-                    <button type="button" className="btn" onClick={addAccompanying}>Add Accompanying Person</button>
-                </div>
+3. **Safety Officer**
+   - Full access to all incidents
+   - Can create analytics reports
+   - Can close incidents
 
-                <div className="row">
-                    <label>18/19. Name of Witnesses & Contact Numbers</label>
-                    <div className="small-note">Add one witness per row.</div>
-                    {(form.witnesses || []).map((w, idx) => (
-                        <div key={idx} className="accompany-row">
-                            <input placeholder="Witness Name" value={w || ""} onChange={e => updateWitness(idx, e.target.value)} />
-                            <input placeholder="Contact" value={(form.witness_contacts || [])[idx] || ""} onChange={e => updateWitnessContact(idx, e.target.value)} />
-                            <button type="button" className="btn small" onClick={() => removeWitness(idx)}>Remove</button>
-                        </div>
-                    ))}
-                    <button type="button" className="btn" onClick={addWitness}>Add Witness</button>
-                </div>
+4. **Admin**
+   - Everything + user management
+   - System configuration
+   - Data export rights
+```
 
-                <div className="row">
-                    <label>20. Root cause analysis of the incident/accident</label>
-                    <textarea value={form.root_cause_analysis} onChange={e => update("root_cause_analysis", e.target.value)} rows={3} />
-                </div>
+🚨 Emergency Features Needed
 
-                <div className="row">
-                    <label>21. Preventive actions taken during or after incident/accident (If any)</label>
-                    <textarea value={form.preventive_actions} onChange={e => update("preventive_actions", e.target.value)} rows={3} />
-                </div>
+```
+1. **Red Alert Button**
+   - One-click emergency reporting
+   - Immediate notifications to safety team
+   - Location sharing
 
-                <div className="form-actions">
-                    <button type="submit" className="btn primary">Submit</button>
-                    <button type="button" className="btn outline" onClick={clearDraft}>Clear Draft</button>
-                    <div className="muted">{saving ? "Saving draft..." : "Draft saved locally"}</div>
-                </div>
-            </form>
-        </div>
-    );
-}
+2. **Emergency Contacts**
+   - Quick dial buttons
+   - Building evacuation plans
+   - First aid instructions
 
+3. **Offline Mode**
+   - Work without internet
+   - Sync when connection returns
+   - Local storage of reports
+```
 
-// Regex 
+📈 Metrics to Track
 
-C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentList.jsx
+```
+**For Employees:**
+- Time to submit report (target: <5 minutes)
+- Form completion rate
+- User satisfaction score
 
-import React, { useEffect, useState } from "react";
-import "../assets/css/IncidentForm.css";
+**For Management:**
+- Incidents resolved per week
+- Average resolution time
+- Recurring issue patterns
+- High-risk departments/locations
 
-export default function IncidentList() {
-  const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [search, setSearch] = useState("");
+**For Compliance:**
+- Reports submitted on time
+- Required fields completion
+- Audit trail completeness
+```
 
-  const fetchIncidents = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("http://localhost:8000/incident/list");
-      const json = await res.json();
-      setIncidents(Array.isArray(json) ? json : []);
-    } catch (e) {
-      console.error("Failed to fetch incidents", e);
-      setIncidents([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+🛠️ Technical Requirements
 
-  useEffect(() => {
-    fetchIncidents();
-  }, []);
+Frontend Tech Stack
 
-  const filtered = incidents.filter(it => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return (it.type_of_incident || "").toLowerCase().includes(s) ||
-           (it.impacted_name || "").toLowerCase().includes(s) ||
-           (it.reported_by_name || "").toLowerCase().includes(s) ||
-           (it.location || "").toLowerCase().includes(s);
-  });
+```
+- React.js (current)
+- React Router (for multiple pages)
+- Axios (for API calls)
+- Chart.js (for graphs)
+- Bootstrap/Material UI (for design)
+```
 
-  return (
-    <div className="incident-list">
-      <div className="list-header">
-        <h3>Recent Incidents</h3>
-        <div>
-          <input placeholder="Search by type, name, reporter, location" value={search} onChange={e => setSearch(e.target.value)} />
-          <button className="btn" onClick={fetchIncidents}>Refresh</button>
-        </div>
-      </div>
+Backend Tech Stack
 
-      {loading ? <div>Loading...</div> : (
-        <table className="inc-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Impacted</th>
-              <th>Reported By</th>
-              <th>Date of Incident</th>
-              <th>Location</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(row => (
-              <tr key={row.id}>
-                <td>{row.id}</td>
-                <td>{row.type_of_incident}</td>
-                <td>{row.impacted_name || "-"}</td>
-                <td>{row.reported_by_name || "-"}</td>
-                <td>{row.date_of_incident || row.date_of_report || "-"}</td>
-                <td>{row.location || "-"}</td>
-                <td><button className="btn small" onClick={() => setSelected(row)}>View</button></td>
-              </tr>
-            ))}
-            {filtered.length === 0 && <tr><td colSpan={7}>No incidents</td></tr>}
-          </tbody>
-        </table>
-      )}
+```
+- FastAPI (current Python framework)
+- SQLite → PostgreSQL (database)
+- JWT (for login tokens)
+- Celery (for background tasks like emails)
+- Redis (for caching)
+```
 
-      {selected && (
-        <div className="modal">
-          <div className="modal-inner">
-            <button className="modal-close" onClick={() => setSelected(null)}>Close</button>
-            <h3>Incident #{selected.id} — {selected.type_of_incident}</h3>
-            <pre className="detail-json">{JSON.stringify(selected, null, 2)}</pre>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+Deployment
 
+```
+Development: Local computer
+Testing: Test server
+Production: Cloud server (AWS/Azure)
+Database: Cloud database service
+Backup: Daily automated backups
+```
 
+🔄 Workflow Example
+
+```
+1. Incident happens at 10:00 AM
+2. Employee opens dashboard at 10:05 AM
+3. Clicks "New Report" tab
+4. Fills form (3-5 minutes)
+5. Submits → gets confirmation
+6. Safety team gets notification
+7. Manager reviews and assigns
+8. Team works on resolution
+9. Status updates to "Resolved"
+10. System analyzes for patterns
+```
+
+💡 Simple Instructions for Future Developers
+
+To Add New Field to Form:
+
+1. Add field name in blankDraft object
+2. Add input in JSX
+3. Update validation if required
+4. Add to backend model
+
+To Add New Chart:
+
+1. Create new component in components/
+2. Add API endpoint in backend
+3. Connect with Chart.js
+4. Add to dashboard
+
+To Add User Login:
+
+1. Create login page
+2. Add auth endpoints in backend
+3. Add token storage
+4. Protect routes based on role
+
+📞 Support & Maintenance
+
+```
+Daily:
+- Check if system is running
+- Check for new reports
+- Monitor error logs
+
+Weekly:
+- Generate weekly report
+- Backup database
+- Update if needed
+
+Monthly:
+- System updates
+- Security checks
+- User feedback review
+```
+
+🎯 Success Metrics
+
+```
+The project is successful if:
+1. 90% of incidents are reported within 24 hours
+2. 95% of reports have complete information
+3. Managers spend 50% less time collecting data
+4. Repeat incidents decrease by 30% in 6 months
+5. Employee satisfaction with safety > 4/5 stars
+```
+
+---
+
+📝 Simple Summary
+
+What we have now:
+
+· Basic form to report incidents
+· List to view reports
+· Simple dashboard
+
+What we need soon:
+
+· Login system
+· Better analytics
+· Mobile support
+
+What we want eventually:
+
+· Smart predictions
+· Global multi-language
+· Emergency features
+
+Why this matters:
+
+· Safer workplace
+· Faster reporting
+· Better decisions from data
+· Legal compliance
+
+Who uses it:
+
+· All employees (report)
+· Managers (review)
+· Safety team (action)
+· Leadership (analytics)
+
+This documentation should help anyone understand the project quickly - whether they're a developer, manager, or new team member!
