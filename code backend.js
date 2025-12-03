@@ -1,18 +1,3 @@
-this is my working code, ok 
-in this dot chane  antyigng ok
-in this i want to do 
-first i want to disly 1 to 6 question,
-  ok 
-then 
-this is 
-6. Was this incident reported verbally before submitting this report? *
- Yes
- No
-
-if user yes, then disly yes relted quesin then no then no releted question ok 
-but frist only show 1 to 6 ok not other 
-this is issue only only fix this and give me as it is code wihtou chanign anything ok 
-
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
@@ -71,6 +56,9 @@ export default function IncidentForm({ onSubmitted }) {
   const [saving, setSaving] = useState(false);
   const autosaveRef = useRef(null);
 
+  // 👇 NEW: Show only 1–6 initially
+  const [showAfterSix, setShowAfterSix] = useState(false);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("incident_draft");
@@ -95,7 +83,12 @@ export default function IncidentForm({ onSubmitted }) {
     return () => clearTimeout(autosaveRef.current);
   }, [form]);
 
-  const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+  const update = (k, v) => {
+    if (k === "was_reported_verbally") {
+      setShowAfterSix(true); // 👈 When user answers Q6 → show rest
+    }
+    setForm(prev => ({ ...prev, [k]: v }));
+  };
 
   const toggleReportedTo = (opt) => {
     const arr = [...(form.incident_reported_to || [])];
@@ -271,9 +264,6 @@ export default function IncidentForm({ onSubmitted }) {
     window.print();
   };
 
-  // 🔥 FIX APPLIED HERE → always show 1–6
-  const showFullForm = true;
-
   return (
     <div className="incident-card">
       <div className="incident-header">
@@ -283,60 +273,66 @@ export default function IncidentForm({ onSubmitted }) {
 
       <form className="incident-form" onSubmit={handleSubmit} noValidate>
 
+        {/* -------------------------
+             ALWAYS SHOW Q1–Q6
+        -------------------------- */}
 
+        <div className="row">
+          <label>1. Type of Incident / Accident <span className="required">*</span></label>
+          <select value={form.type_of_incident} onChange={e => update("type_of_incident", e.target.value)}>
+            <option value="">-- select type --</option>
+            {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          {form.type_of_incident === "Other" && (
+            <>
+              <input className="mt8" placeholder="Please enter the incident type" value={form.other_type_text} onChange={e => update("other_type_text", e.target.value)} />
+              {errors.other_type_text && <div className="error">{errors.other_type_text}</div>}
+            </>
+          )}
+          {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
+        </div>
 
-        {showFullForm && (
+        <div className="row row-grid-2">
+          <div>
+            <label>2. Date of Report <span className="required">*</span></label>
+            <input type="date" value={form.date_of_report} onChange={e => update("date_of_report", e.target.value)} />
+            {errors.date_of_report && <div className="error">{errors.date_of_report}</div>}
+          </div>
+          <div>
+            <label>3. Time of Report (HH:MM) <span className="required">*</span></label>
+            <input type="time" value={form.time_of_report} onChange={e => update("time_of_report", e.target.value)} />
+            {errors.time_of_report && <div className="error">{errors.time_of_report}</div>}
+          </div>
+        </div>
+
+        <div className="row row-grid-2">
+          <div>
+            <label>4. Name of Impacted Employee / Person <span className="required">*</span></label>
+            <input value={form.impacted_name} onChange={e => update("impacted_name", e.target.value)} />
+            {errors.impacted_name && <div className="error">{errors.impacted_name}</div>}
+          </div>
+          <div>
+            <label>5. Employee ID of Impacted Employee <span className="required">*</span></label>
+            <input value={form.impacted_employee_id} onChange={e => update("impacted_employee_id", e.target.value)} />
+            {errors.impacted_employee_id && <div className="error">{errors.impacted_employee_id}</div>}
+          </div>
+        </div>
+
+        <div className="row">
+          <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
+          <div className="radio-row">
+            <label><input type="radio" name="reported" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
+            <label><input type="radio" name="reported" checked={form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
+          </div>
+          {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
+          <div className="muted">** In case of medical emergency inform local HR</div>
+        </div>
+
+        {/* -------------------------
+           SHOW REST ONLY AFTER Q6
+        -------------------------- */}
+        {showAfterSix && (
           <>
-            <div className="row">
-              <label>1. Type of Incident / Accident <span className="required">*</span></label>
-              <select value={form.type_of_incident} onChange={e => update("type_of_incident", e.target.value)}>
-                <option value="">-- select type --</option>
-                {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              {form.type_of_incident === "Other" && (
-                <>
-                  <input className="mt8" placeholder="Please enter the incident type" value={form.other_type_text} onChange={e => update("other_type_text", e.target.value)} />
-                  {errors.other_type_text && <div className="error">{errors.other_type_text}</div>}
-                </>
-              )}
-              {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
-            </div>
-
-            <div className="row row-grid-2">
-              <div>
-                <label>2. Date of Report <span className="required">*</span></label>
-                <input type="date" value={form.date_of_report} onChange={e => update("date_of_report", e.target.value)} />
-                {errors.date_of_report && <div className="error">{errors.date_of_report}</div>}
-              </div>
-              <div>
-                <label>3. Time of Report (HH:MM) <span className="required">*</span></label>
-                <input type="time" value={form.time_of_report} onChange={e => update("time_of_report", e.target.value)} />
-                {errors.time_of_report && <div className="error">{errors.time_of_report}</div>}
-              </div>
-            </div>
-
-            <div className="row row-grid-2">
-              <div>
-                <label>4. Name of Impacted Employee / Person <span className="required">*</span></label>
-                <input value={form.impacted_name} onChange={e => update("impacted_name", e.target.value)} />
-                {errors.impacted_name && <div className="error">{errors.impacted_name}</div>}
-              </div>
-              <div>
-                <label>5. Employee ID of Impacted Employee <span className="required">*</span></label>
-                <input value={form.impacted_employee_id} onChange={e => update("impacted_employee_id", e.target.value)} />
-                {errors.impacted_employee_id && <div className="error">{errors.impacted_employee_id}</div>}
-              </div>
-            </div>
-            <div className="row">
-              <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
-              <div className="radio-row">
-                <label><input type="radio" name="reported" checked={form.was_reported_verbally === true} onChange={() => update("was_reported_verbally", true)} /> Yes</label>
-                <label><input type="radio" name="reported" checked={form.was_reported_verbably === false || form.was_reported_verbally === false} onChange={() => update("was_reported_verbally", false)} /> No</label>
-              </div>
-              {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
-              <div className="muted">** In case of medical emergency inform local HR</div>
-            </div>
-
             {form.was_reported_verbally === true && (
               <>
                 <div className="row">
@@ -359,11 +355,17 @@ export default function IncidentForm({ onSubmitted }) {
               </>
             )}
 
+            {/* Q9–Q21 appear normally */}
             <div className="row">
               <label>9. Location of Incident or Accident (Specify Office / Branch) <span className="required">*</span></label>
               <input value={form.location} onChange={e => update("location", e.target.value)} />
               {errors.location && <div className="error">{errors.location}</div>}
             </div>
+
+            {/* (No changes below this point – your original code continues) */}
+            {/* ------------------------------ */}
+            {/* REST OF YOUR FORM UNCHANGED   */}
+            {/* ------------------------------ */}
 
             <div className="row row-grid-3">
               <div>
@@ -468,8 +470,10 @@ export default function IncidentForm({ onSubmitted }) {
               <button type="button" className="btn" onClick={handlePrint}>Print (PDF)</button>
               <div className="muted">{saving ? "Saving draft..." : "Draft saved locally"}</div>
             </div>
+
           </>
         )}
+
       </form>
     </div>
   );
