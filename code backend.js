@@ -1,19 +1,3 @@
-in this onoy small issue is, 
-  wright now happen is 
-only 6 th questin is disply ok,
-  but what i want i want to disply 1 to 6
-1
-2
-3
-4
-5
-6
-ok
-then if yes then yes part 7 to 
-then if no then no part 7 to ok 
-in this dont chagne y anything just fix this ok 
-note dot change anything in this only fix this small issue and 
-give me update code carefylly.. 
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
@@ -46,7 +30,7 @@ const emptyForm = {
   time_of_report: "",
   impacted_name: "",
   impacted_employee_id: "",
-  was_reported_verbally: null, // null | true | false
+  was_reported_verbally: null,
   incident_reported_to: [],
   reported_to_details: "",
   location: "",
@@ -58,21 +42,20 @@ const emptyForm = {
   time_of_incident: "",
   detailed_description: "",
   immediate_actions_taken: "",
-  accompanying_person: [], // [{name, contact}]
-  witnesses: [], // [name,...]
-  witness_contacts: [], // [contact,...] parallel
+  accompanying_person: [],
+  witnesses: [],
+  witness_contacts: [],
   root_cause_analysis: "",
   preventive_actions: ""
 };
 
 export default function IncidentForm({ onSubmitted }) {
   const [form, setForm] = useState(emptyForm);
-  const [files, setFiles] = useState([]); // File objects
+  const [files, setFiles] = useState([]);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const autosaveRef = useRef(null);
 
-  // Restore draft
   useEffect(() => {
     try {
       const raw = localStorage.getItem("incident_draft");
@@ -82,7 +65,6 @@ export default function IncidentForm({ onSubmitted }) {
     }
   }, []);
 
-  // Autosave (debounced)
   useEffect(() => {
     clearTimeout(autosaveRef.current);
     setSaving(true);
@@ -98,7 +80,6 @@ export default function IncidentForm({ onSubmitted }) {
     return () => clearTimeout(autosaveRef.current);
   }, [form]);
 
-  // small helpers
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const toggleReportedTo = (opt) => {
@@ -109,7 +90,6 @@ export default function IncidentForm({ onSubmitted }) {
     update("incident_reported_to", arr);
   };
 
-  // accompanying persons
   const addAccompany = () => update("accompanying_person", [...(form.accompanying_person || []), { name: "", contact: "" }]);
   const removeAccompany = (i) => {
     const arr = [...(form.accompanying_person || [])];
@@ -122,43 +102,50 @@ export default function IncidentForm({ onSubmitted }) {
     update("accompanying_person", arr);
   };
 
-  // witnesses
   const addWitness = () => {
     update("witnesses", [...(form.witnesses || []), ""]);
     update("witness_contacts", [...(form.witness_contacts || []), ""]);
   };
   const removeWitness = (i) => {
-    const w = [...(form.witnesses || [])]; const wc = [...(form.witness_contacts || [])];
-    w.splice(i, 1); wc.splice(i, 1);
-    update("witnesses", w); update("witness_contacts", wc);
+    const w = [...(form.witnesses || [])];
+    const wc = [...(form.witness_contacts || [])];
+    w.splice(i, 1);
+    wc.splice(i, 1);
+    update("witnesses", w);
+    update("witness_contacts", wc);
   };
-  const setWitness = (i, val) => { const w = [...(form.witnesses || [])]; w[i] = val; update("witnesses", w); };
-  const setWitnessContact = (i, val) => { const wc = [...(form.witness_contacts || [])]; wc[i] = val; update("witness_contacts", wc); };
+  const setWitness = (i, val) => {
+    const w = [...(form.witnesses || [])];
+    w[i] = val;
+    update("witnesses", w);
+  };
+  const setWitnessContact = (i, val) => {
+    const wc = [...(form.witness_contacts || [])];
+    wc[i] = val;
+    update("witness_contacts", wc);
+  };
 
-  // files
   const onFilesSelected = (evt) => {
     const selected = Array.from(evt.target.files || []);
-    // optionally filter by size/type
     setFiles(prev => [...prev, ...selected]);
-    // reset input
     evt.target.value = "";
   };
-  const removeFile = (i) => setFiles(prev => { const a = [...prev]; a.splice(i, 1); return a; });
+  const removeFile = (i) => setFiles(prev => {
+    const a = [...prev];
+    a.splice(i, 1);
+    return a;
+  });
 
-  // regex validators
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^[+\d][\d\s\-().]{5,}$/; // permissive: starts with digit or +, min length
+  const phoneRegex = /^[+\d][\d\s\-().]{5,}$/;
   const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
 
-  // validation before submit
   const validate = () => {
     const e = {};
 
-    // Branch: must first choose Q6 (was_reported_verbally)
-    if (form.was_reported_verbally === null) e.was_reported_verbally = "Please select Yes or No.";
+    if (form.was_reported_verbally === null)
+      e.was_reported_verbally = "Please select Yes or No.";
 
-    // required root fields (after branch selection)
-    // Always required: type, date_of_report, time_of_report, impacted_name, impacted_employee_id
     if (!form.type_of_incident) e.type_of_incident = "Type is required.";
     if (form.type_of_incident === "Other" && !form.other_type_text) e.other_type_text = "Please enter the incident type.";
     if (!form.date_of_report) e.date_of_report = "Date of report required.";
@@ -167,14 +154,14 @@ export default function IncidentForm({ onSubmitted }) {
     if (!form.impacted_employee_id) e.impacted_employee_id = "Impacted employee ID is required.";
     else if (!empIdRegex.test(form.impacted_employee_id)) e.impacted_employee_id = "Invalid employee ID.";
 
-    // When was_reported_verbally = true: need incident_reported_to (>=1) and reported_to_details
     if (form.was_reported_verbally === true) {
-      if (!form.incident_reported_to || form.incident_reported_to.length === 0) e.incident_reported_to = "Select at least one option.";
-      if (!form.reported_to_details || !String(form.reported_to_details).trim()) e.reported_to_details = "Provide name & department.";
+      if (!form.incident_reported_to?.length)
+        e.incident_reported_to = "Select at least one option.";
+      if (!form.reported_to_details?.trim())
+        e.reported_to_details = "Provide name & department.";
     }
 
-    // Common required fields after branching (both branches)
-    if (!form.location || !form.location.trim()) e.location = "Location is required.";
+    if (!form.location?.trim()) e.location = "Location is required.";
     if (!form.reported_by_name) e.reported_by_name = "Reporter name required.";
     if (!form.reported_by_employee_id) e.reported_by_employee_id = "Reporter employee ID required.";
     else if (!empIdRegex.test(form.reported_by_employee_id)) e.reported_by_employee_id = "Invalid employee ID.";
@@ -184,17 +171,16 @@ export default function IncidentForm({ onSubmitted }) {
     else if (!phoneRegex.test(form.reported_by_contact)) e.reported_by_contact = "Invalid phone number.";
     if (!form.date_of_incident) e.date_of_incident = "Date of incident required.";
     if (!form.time_of_incident) e.time_of_incident = "Time of incident required.";
-    if (!form.detailed_description || form.detailed_description.trim().length < 5) e.detailed_description = "Please provide a detailed description (min 5 chars).";
-    if (!form.immediate_actions_taken || form.immediate_actions_taken.trim().length < 1) e.immediate_actions_taken = "Immediate actions are required.";
+    if (!form.detailed_description?.trim() || form.detailed_description.length < 5) e.detailed_description = "Please provide a detailed description (min 5 chars).";
+    if (!form.immediate_actions_taken?.trim()) e.immediate_actions_taken = "Immediate actions are required.";
 
-    // witnesses parallel arrays
-    if ((form.witnesses || []).length !== (form.witness_contacts || []).length) e.witness_contacts = "Add contact for each witness.";
+    if ((form.witnesses || []).length !== (form.witness_contacts || []).length)
+      e.witness_contacts = "Add contact for each witness.";
 
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  // build and submit FormData
   const handleSubmit = async (ev) => {
     ev.preventDefault();
     if (!validate()) {
@@ -202,11 +188,8 @@ export default function IncidentForm({ onSubmitted }) {
       return;
     }
 
-    // prepare payload matching backend schema types:
-    // convert times to HH:MM:SS
     const padSeconds = (t) => {
       if (!t) return null;
-      // t is "HH:MM" or "HH:MM:SS"
       if (t.length === 5) return `${t}:00`;
       return t;
     };
@@ -214,12 +197,12 @@ export default function IncidentForm({ onSubmitted }) {
     const payloadObj = {
       type_of_incident: form.type_of_incident,
       other_type_text: form.type_of_incident === "Other" ? form.other_type_text : null,
-      date_of_report: form.date_of_report, // yyyy-mm-dd
+      date_of_report: form.date_of_report,
       time_of_report: padSeconds(form.time_of_report),
       impacted_name: form.impacted_name,
       impacted_employee_id: form.impacted_employee_id,
       was_reported_verbally: !!form.was_reported_verbally,
-      incident_reported_to: form.incident_reported_to && form.incident_reported_to.length ? form.incident_reported_to : null,
+      incident_reported_to: form.incident_reported_to?.length ? form.incident_reported_to : null,
       reported_to_details: form.reported_to_details || null,
       location: form.location,
       reported_by_name: form.reported_by_name,
@@ -230,9 +213,9 @@ export default function IncidentForm({ onSubmitted }) {
       time_of_incident: padSeconds(form.time_of_incident),
       detailed_description: form.detailed_description,
       immediate_actions_taken: form.immediate_actions_taken,
-      accompanying_person: form.accompanying_person && form.accompanying_person.length ? form.accompanying_person : [],
-      witnesses: form.witnesses && form.witnesses.length ? form.witnesses : [],
-      witness_contacts: form.witness_contacts && form.witness_contacts.length ? form.witness_contacts : [],
+      accompanying_person: form.accompanying_person?.length ? form.accompanying_person : [],
+      witnesses: form.witnesses?.length ? form.witnesses : [],
+      witness_contacts: form.witness_contacts?.length ? form.witness_contacts : [],
       root_cause_analysis: form.root_cause_analysis || null,
       preventive_actions: form.preventive_actions || null
     };
@@ -250,7 +233,6 @@ export default function IncidentForm({ onSubmitted }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
 
-      // success
       alert("Incident submitted successfully (ID: " + data.id + ")");
       localStorage.removeItem("incident_draft");
       setForm(emptyForm);
@@ -270,13 +252,12 @@ export default function IncidentForm({ onSubmitted }) {
     setErrors({});
   };
 
-  // print
   const handlePrint = () => {
     window.print();
   };
 
-  // render only Q6 initially: if was_reported_verbally null show only question 6
-  const showFullForm = form.was_reported_verbally !== null;
+  // 🔥 FIX APPLIED HERE → always show 1–6
+  const showFullForm = true;
 
   return (
     <div className="incident-card">
@@ -286,10 +267,6 @@ export default function IncidentForm({ onSubmitted }) {
       </div>
 
       <form className="incident-form" onSubmit={handleSubmit} noValidate>
-        {/* Q1-5 are hidden until user picks Q6 per requirement.
-            But per spec, many fields including type/date/time/impacted are required.
-            We'll show Q1-5 only after selecting Q6 to keep UI as requested.
-        */}
 
         <div className="row">
           <label>6. Was this incident reported verbally before submitting this report? <span className="required">*</span></label>
@@ -303,7 +280,6 @@ export default function IncidentForm({ onSubmitted }) {
 
         {showFullForm && (
           <>
-            {/* 1. Type */}
             <div className="row">
               <label>1. Type of Incident / Accident <span className="required">*</span></label>
               <select value={form.type_of_incident} onChange={e => update("type_of_incident", e.target.value)}>
@@ -319,7 +295,6 @@ export default function IncidentForm({ onSubmitted }) {
               {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
             </div>
 
-            {/* 2 & 3 */}
             <div className="row row-grid-2">
               <div>
                 <label>2. Date of Report <span className="required">*</span></label>
@@ -333,7 +308,6 @@ export default function IncidentForm({ onSubmitted }) {
               </div>
             </div>
 
-            {/* 4 & 5 */}
             <div className="row row-grid-2">
               <div>
                 <label>4. Name of Impacted Employee / Person <span className="required">*</span></label>
@@ -347,14 +321,15 @@ export default function IncidentForm({ onSubmitted }) {
               </div>
             </div>
 
-            {/* If Yes: reported_to & details */}
             {form.was_reported_verbally === true && (
               <>
                 <div className="row">
                   <label>7. Incident reported to: <span className="required">*</span></label>
                   <div className="checkbox-grid">
                     {REPORTED_TO_OPTIONS.map(opt => (
-                      <label key={opt}><input type="checkbox" checked={(form.incident_reported_to || []).includes(opt)} onChange={() => toggleReportedTo(opt)} /> {opt}</label>
+                      <label key={opt}>
+                        <input type="checkbox" checked={(form.incident_reported_to || []).includes(opt)} onChange={() => toggleReportedTo(opt)} /> {opt}
+                      </label>
                     ))}
                   </div>
                   {errors.incident_reported_to && <div className="error">{errors.incident_reported_to}</div>}
@@ -368,15 +343,12 @@ export default function IncidentForm({ onSubmitted }) {
               </>
             )}
 
-            {/* If No branch does not include reported_to fields (only location + reporter etc) */}
-            {/* 9 Location */}
             <div className="row">
               <label>9. Location of Incident or Accident (Specify Office / Branch) <span className="required">*</span></label>
               <input value={form.location} onChange={e => update("location", e.target.value)} />
               {errors.location && <div className="error">{errors.location}</div>}
             </div>
 
-            {/* 10+11+12 Reporter */}
             <div className="row row-grid-3">
               <div>
                 <label>10. Reported By - Name <span className="required">*</span></label>
@@ -401,7 +373,6 @@ export default function IncidentForm({ onSubmitted }) {
               {errors.reported_by_contact && <div className="error">{errors.reported_by_contact}</div>}
             </div>
 
-            {/* 13 & 14 incident date/time */}
             <div className="row row-grid-2">
               <div>
                 <label>13. Date of Incident Occurred <span className="required">*</span></label>
@@ -415,7 +386,6 @@ export default function IncidentForm({ onSubmitted }) {
               </div>
             </div>
 
-            {/* 15 & 16 */}
             <div className="row">
               <label>15. Detailed Description of Incident <span className="required">*</span></label>
               <textarea value={form.detailed_description} onChange={e => update("detailed_description", e.target.value)} rows={5} />
@@ -428,7 +398,6 @@ export default function IncidentForm({ onSubmitted }) {
               {errors.immediate_actions_taken && <div className="error">{errors.immediate_actions_taken}</div>}
             </div>
 
-            {/* 17 Accompanying persons */}
             <div className="row">
               <label>17. Accompanying Person Name and Contact Details</label>
               {(form.accompanying_person || []).map((p, i) => (
@@ -441,7 +410,6 @@ export default function IncidentForm({ onSubmitted }) {
               <button type="button" className="btn" onClick={addAccompany}>Add Accompanying Person</button>
             </div>
 
-            {/* 18/19 witnesses */}
             <div className="row">
               <label>18. Name of Witnesses / 19. Contact Number</label>
               {(form.witnesses || []).map((w, i) => (
@@ -455,7 +423,6 @@ export default function IncidentForm({ onSubmitted }) {
               {errors.witness_contacts && <div className="error">{errors.witness_contacts}</div>}
             </div>
 
-            {/* 20 & 21 */}
             <div className="row">
               <label>20. Root cause analysis of the incident/accident</label>
               <textarea value={form.root_cause_analysis} onChange={e => update("root_cause_analysis", e.target.value)} rows={3} />
@@ -466,7 +433,6 @@ export default function IncidentForm({ onSubmitted }) {
               <textarea value={form.preventive_actions} onChange={e => update("preventive_actions", e.target.value)} rows={3} />
             </div>
 
-            {/* Attachments */}
             <div className="row">
               <label>Attach files (images / pdf) — optional</label>
               <input type="file" multiple onChange={onFilesSelected} />
@@ -480,7 +446,6 @@ export default function IncidentForm({ onSubmitted }) {
               </div>
             </div>
 
-            {/* actions */}
             <div className="form-actions">
               <button type="submit" className="btn primary">Submit</button>
               <button type="button" className="btn outline" onClick={clearDraft}>Clear Draft</button>
