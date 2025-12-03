@@ -1,473 +1,369 @@
-/* C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\assets\css\IncidentForm.css */
+import React, { useState, useEffect } from "react";
+import "./IncidentForm.css";
 
-:root {
-  --primary-color: #2563eb;
-  --primary-dark: #1d4ed8;
-  --secondary-color: #64748b;
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-  --warning-color: #f59e0b;
-  --background-color: #f8fafc;
-  --card-color: #ffffff;
-  --border-color: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --transition: all 0.2s ease;
-}
+const initialForm = {
+  impacted_employee_id: "",
+  impacted_employee_fname: "",
+  impacted_employee_lname: "",
+  reported_by_employee_id: "",
+  reported_by_fname: "",
+  reported_by_lname: "",
+  reported_by_contact: "",
+  reported_by_email: "",
+  reported_by_gender: "",
+  type_of_incident: "",
+  incident_date: "",
+  incident_time: "",
+  incident_location: "",
+  incident_description: "",
+  treatment_recieved: "",
+  treatment_details: "",
+  treatment_date: "",
+  witnesses: [""],
+  accompanying: [""],
+  form: "",
+  form_description: "",
+  showAfterSix: "No",
+  why_not_reported: "",
+  documents: []
+};
 
-* {
-  box-sizing: border-box;
-}
+// Field validation function
+const validateField = (name, value) => {
+  switch (name) {
+    case "impacted_employee_id":
+    case "reported_by_employee_id":
+      if (!value) return "Employee ID is required.";
+      if (!/^[A-Za-z0-9\-_.]{1,20}$/.test(value))
+        return "Employee ID must be alphanumeric.";
+      return "";
 
-body {
-  background-color: var(--background-color);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  color: var(--text-primary);
-  line-height: 1.5;
-  margin: 0;
-  padding: 20px;
-  min-height: 100vh;
-}
+    case "reported_by_contact":
+      if (!value) return "Contact number is required.";
+      if (!/^[+\d][\d\s\-().]{5,}$/.test(value))
+        return "Invalid contact number.";
+      return "";
 
-.incident-card {
-  background: var(--card-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  max-width: 1000px;
-  margin: 0 auto;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  transition: var(--transition);
-}
+    case "reported_by_email":
+      if (!value) return "Email is required.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+        return "Invalid email format.";
+      return "";
 
-.incident-header {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
-  padding: 2rem 2.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
+    case "type_of_incident":
+      if (!value) return "Type of incident is required.";
+      return "";
 
-.incident-header h2 {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.875rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.incident-header .muted {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-  max-width: 800px;
-  line-height: 1.6;
-}
-
-.incident-form {
-  padding: 2.5rem;
-}
-
-.row {
-  margin-bottom: 1.75rem;
-  position: relative;
-}
-
-.row label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.95rem;
-}
-
-.row .muted {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-  font-style: italic;
-}
-
-.required {
-  color: var(--danger-color);
-  font-weight: 700;
-  margin-left: 2px;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="date"],
-input[type="time"],
-input[type="file"],
-select,
-textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  transition: var(--transition);
-  background-color: white;
-  color: var(--text-primary);
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="tel"]:focus,
-input[type="date"]:focus,
-input[type="time"]:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-input[type="text"]::placeholder,
-input[type="email"]::placeholder,
-textarea::placeholder {
-  color: var(--text-muted);
-}
-
-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem center;
-  background-size: 1.25em;
-  padding-right: 3rem;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.row-grid-2,
-.row-grid-3 {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.row-grid-2 {
-  grid-template-columns: 1fr 1fr;
-}
-
-.row-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-@media (max-width: 768px) {
-  .row-grid-2,
-  .row-grid-3 {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    default:
+      return "";
   }
-  
-  .incident-form {
-    padding: 1.5rem;
-  }
-  
-  .incident-header {
-    padding: 1.5rem;
-  }
-}
+};
 
-.radio-row {
-  display: flex;
-  gap: 2rem;
-  margin-top: 0.5rem;
-}
+export default function IncidentForm() {
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
 
-.radio-row label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 0;
-}
+  // Load saved draft
+  useEffect(() => {
+    const saved = localStorage.getItem("incidentFormDraft");
+    if (saved) setForm(JSON.parse(saved));
+  }, []);
 
-.radio-row input[type="radio"] {
-  width: 1.25rem;
-  height: 1.25rem;
-  accent-color: var(--primary-color);
-}
+  // Auto-save draft
+  useEffect(() => {
+    localStorage.setItem("incidentFormDraft", JSON.stringify(form));
+  }, [form]);
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-md);
-  border: none;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  white-space: nowrap;
-}
+  // Update & validate field
+  const update = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
+  };
 
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
+  // Update dynamic lists (witnesses / accompanying)
+  const updateList = (listName, idx, value) => {
+    const newList = [...form[listName]];
+    newList[idx] = value;
+    setForm((prev) => ({ ...prev, [listName]: newList }));
+  };
 
-.btn:active {
-  transform: translateY(0);
-}
+  const addListItem = (listName) => {
+    setForm((prev) => ({ ...prev, [listName]: [...prev[listName], ""] }));
+  };
 
-.btn.primary {
-  background-color: var(--primary-color);
-  color: white;
-}
+  const removeListItem = (listName, idx) => {
+    const newList = [...form[listName]];
+    newList.splice(idx, 1);
+    setForm((prev) => ({ ...prev, [listName]: newList }));
+  };
 
-.btn.primary:hover {
-  background-color: var(--primary-dark);
-}
+  // File uploads
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setForm((prev) => ({ ...prev, documents: [...prev.documents, ...files] }));
+  };
 
-.btn.outline {
-  background-color: transparent;
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-}
+  // Submit
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-.btn.outline:hover {
-  background-color: rgba(37, 99, 235, 0.05);
-}
+    let validationErrors = {};
+    Object.keys(form).forEach((key) => {
+      const err = validateField(key, form[key]);
+      if (err) validationErrors[key] = err;
+    });
 
-.btn.small {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
+    setErrors(validationErrors);
 
-.error {
-  color: var(--danger-color);
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+    if (Object.keys(validationErrors).length > 0) return;
 
-.error::before {
-  content: "⚠";
-}
+    alert("Incident Report Submitted Successfully!");
+  };
 
-.accompany-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
-  background-color: rgba(248, 250, 252, 0.5);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-}
+  return (
+    <div className="incident-container">
+      <h2 className="title">HR Incident Report Form</h2>
 
-@media (max-width: 640px) {
-  .accompany-row {
-    grid-template-columns: 1fr;
-  }
-}
+      <form onSubmit={handleSubmit} className="incident-form">
 
-.file-list {
-  margin-top: 1rem;
-}
+        {/* Impacted Employee */}
+        <div className="section-card">
+          <h3>Impacted Employee</h3>
 
-.file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: var(--background-color);
-  border-radius: var(--radius-md);
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--border-color);
-}
+          <div className="grid-3">
+            <div className="field">
+              <label>Employee ID</label>
+              <input
+                type="text"
+                value={form.impacted_employee_id}
+                onChange={(e) =>
+                  update("impacted_employee_id", e.target.value.replace(/[^A-Za-z0-9\-_.]/g, ""))
+                }
+              />
+              {errors.impacted_employee_id && (
+                <p className="error">{errors.impacted_employee_id}</p>
+              )}
+            </div>
 
-.file-item span {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  flex-grow: 1;
-}
+            <div className="field">
+              <label>First Name</label>
+              <input
+                type="text"
+                value={form.impacted_employee_fname}
+                onChange={(e) => update("impacted_employee_fname", e.target.value)}
+              />
+            </div>
 
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-  padding-top: 2rem;
-  margin-top: 2rem;
-  border-top: 2px solid var(--border-color);
-}
+            <div className="field">
+              <label>Last Name</label>
+              <input
+                type="text"
+                value={form.impacted_employee_lname}
+                onChange={(e) => update("impacted_employee_lname", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
 
-.form-actions .btn {
-  min-width: 120px;
-  justify-content: center;
-}
+        {/* Reported By */}
+        <div className="section-card">
+          <h3>Reported By</h3>
 
-.form-actions .muted {
-  margin-left: auto;
-  font-size: 0.875rem;
-  color: var(--success-color);
-  font-weight: 500;
-}
+          <div className="grid-3">
+            <div className="field">
+              <label>Employee ID</label>
+              <input
+                type="text"
+                value={form.reported_by_employee_id}
+                onChange={(e) =>
+                  update("reported_by_employee_id", e.target.value.replace(/[^A-Za-z0-9\-_.]/g, ""))
+                }
+              />
+              {errors.reported_by_employee_id && (
+                <p className="error">{errors.reported_by_employee_id}</p>
+              )}
+            </div>
 
-/* Loading state for draft save */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
+            <div className="field">
+              <label>First Name</label>
+              <input
+                type="text"
+                value={form.reported_by_fname}
+                onChange={(e) => update("reported_by_fname", e.target.value)}
+              />
+            </div>
 
-.saving::after {
-  content: "Saving draft...";
-  animation: pulse 1.5s infinite;
-}
+            <div className="field">
+              <label>Last Name</label>
+              <input
+                type="text"
+                value={form.reported_by_lname}
+                onChange={(e) => update("reported_by_lname", e.target.value)}
+              />
+            </div>
+          </div>
 
-/* Print styles */
-@media print {
-  body {
-    background-color: white;
-    padding: 0;
-  }
-  
-  .incident-card {
-    box-shadow: none;
-    border: 1px solid #ddd;
-  }
-  
-  .form-actions,
-  .btn {
-    display: none !important;
-  }
-  
-  .incident-header {
-    background: none;
-    color: black;
-    border-bottom: 2px solid #000;
-  }
-  
-  .incident-header .muted {
-    color: #666;
-  }
-}
+          <div className="grid-2">
+            <div className="field">
+              <label>Contact Number</label>
+              <input
+                type="text"
+                value={form.reported_by_contact}
+                onChange={(e) =>
+                  update("reported_by_contact", e.target.value.replace(/[^0-9+]/g, ""))
+                }
+              />
+              {errors.reported_by_contact && (
+                <p className="error">{errors.reported_by_contact}</p>
+              )}
+            </div>
 
-/* Progress indicator */
-.form-progress {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 2rem 0 3rem;
-  position: relative;
-}
+            <div className="field">
+              <label>Email</label>
+              <input
+                type="email"
+                value={form.reported_by_email}
+                onChange={(e) => update("reported_by_email", e.target.value)}
+              />
+              {errors.reported_by_email && (
+                <p className="error">{errors.reported_by_email}</p>
+              )}
+            </div>
+          </div>
+        </div>
 
-.form-progress::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: var(--border-color);
-  z-index: 1;
-}
+        {/* Incident Details */}
+        <div className="section-card">
+          <h3>Incident Details</h3>
 
-.progress-step {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
+          <div className="grid-2">
+            <div className="field">
+              <label>Type of Incident</label>
+              <select
+                value={form.type_of_incident}
+                onChange={(e) => update("type_of_incident", e.target.value)}
+              >
+                <option value="">Select</option>
+                <option>Harassment</option>
+                <option>Discrimination</option>
+                <option>Violence</option>
+                <option>Safety Issue</option>
+                <option>Other</option>
+              </select>
+              {errors.type_of_incident && (
+                <p className="error">{errors.type_of_incident}</p>
+              )}
+            </div>
 
-.progress-step.active .step-circle {
-  background-color: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
+            <div className="field">
+              <label>Location</label>
+              <input
+                type="text"
+                value={form.incident_location}
+                onChange={(e) => update("incident_location", e.target.value)}
+              />
+            </div>
+          </div>
 
-.progress-step.completed .step-circle {
-  background-color: var(--success-color);
-  color: white;
-  border-color: var(--success-color);
-}
+          <div className="grid-2">
+            <div className="field">
+              <label>Date</label>
+              <input
+                type="date"
+                value={form.incident_date}
+                onChange={(e) => update("incident_date", e.target.value)}
+              />
+            </div>
 
-.step-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: white;
-  border: 2px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: var(--transition);
-}
+            <div className="field">
+              <label>Time</label>
+              <input
+                type="time"
+                value={form.incident_time}
+                onChange={(e) => update("incident_time", e.target.value)}
+              />
+            </div>
+          </div>
 
-.step-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  white-space: nowrap;
-}
+          <div className="field">
+            <label>Description</label>
+            <textarea
+              rows={4}
+              value={form.incident_description}
+              onChange={(e) => update("incident_description", e.target.value)}
+            />
+          </div>
+        </div>
 
-.progress-step.active .step-label {
-  color: var(--primary-color);
-  font-weight: 600;
-}
+        {/* File Upload */}
+        <div className="section-card">
+          <h3>Upload Evidence</h3>
 
-/* Section dividers */
-.section-divider {
-  display: flex;
-  align-items: center;
-  margin: 2.5rem 0 1.5rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 1.125rem;
-}
+          <input type="file" multiple onChange={handleFileUpload} />
 
-.section-divider::before,
-.section-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background-color: var(--border-color);
-}
+          <div className="file-preview">
+            {form.documents.map((file, i) => (
+              <p key={i}>{file.name}</p>
+            ))}
+          </div>
+        </div>
 
-.section-divider span {
-  padding: 0 1rem;
-}
+        {/* Reporting Time */}
+        <div className="section-card">
+          <h3>Reporting Time</h3>
 
-/* Enhanced focus states */
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
+          <label>Was the incident reported after 6 hours?</label>
+          <select
+            value={form.showAfterSix}
+            onChange={(e) => update("showAfterSix", e.target.value)}
+          >
+            <option>No</option>
+            <option>Yes</option>
+          </select>
 
-/* Animation for showing rest of form */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+          {form.showAfterSix === "Yes" && (
+            <div className="field">
+              <label>Why was the report delayed?</label>
+              <textarea
+                rows="3"
+                value={form.why_not_reported}
+                onChange={(e) => update("why_not_reported", e.target.value)}
+              />
+            </div>
+          )}
+        </div>
 
-.incident-form > *:nth-child(n+7) {
-  animation: slideDown 0.3s ease-out;
+        {/* Witnesses */}
+        <div className="section-card">
+          <h3>Witnesses</h3>
+
+          {form.witnesses.map((w, i) => (
+            <div key={i} className="dynamic-row">
+              <input
+                type="text"
+                value={w}
+                onChange={(e) => updateList("witnesses", i, e.target.value)}
+              />
+              {i > 0 && (
+                <button
+                  type="button"
+                  onClick={() => removeListItem("witnesses", i)}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button type="button" onClick={() => addListItem("witnesses")}>
+            + Add Witness
+          </button>
+        </div>
+
+        <button className="submit-btn" type="submit">
+          Submit Incident Report
+        </button>
+      </form>
+    </div>
+  );
 }
