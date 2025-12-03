@@ -1,21 +1,11 @@
-Basic Info
-Incident Details
-People Involved
-Analysis & Actions
-Attachments
-i dont want this  why you create this give me my origina form ok i dont want in sectin ok 
-
-
-
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
 
-// Icons for better UI
+// Optional: Add these icons if you want, or remove if not needed
 import {
-  FaUser, FaCalendar, FaClock, FaIdCard, FaExclamationTriangle,
-  FaMapMarkerAlt, FaEnvelope, FaPhone, FaFileUpload, FaPrint,
-  FaSave, FaTrash, FaPlus, FaTimes, FaMoon, FaSun
+  FaSave, FaTrash, FaPrint, FaPlus, FaTimes,
+  FaMoon, FaSun, FaExclamationTriangle
 } from "react-icons/fa";
 
 const INCIDENT_TYPES = [
@@ -72,7 +62,6 @@ export default function IncidentForm({ onSubmitted }) {
   const [saving, setSaving] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showAfterSix, setShowAfterSix] = useState(false);
-  const [activeSection, setActiveSection] = useState("basic");
   const autosaveRef = useRef(null);
 
   // Toggle dark mode
@@ -292,510 +281,355 @@ export default function IncidentForm({ onSubmitted }) {
     window.print();
   };
 
-  // Progress calculation
-  const totalFields = 21;
-  const filledFields = Object.values(form).filter(val => {
-    if (Array.isArray(val)) return val.length > 0;
-    if (typeof val === 'boolean') return true;
-    return val && val.toString().trim() !== '';
-  }).length;
-  const progress = Math.round((filledFields / totalFields) * 100);
-
   return (
     <div className={`incident-form-container ${darkMode ? 'dark' : 'light'}`}>
-      {/* Header with progress and theme toggle */}
+      {/* Form Header */}
       <div className="form-header">
-        <div className="header-left">
-          <div className="form-logo">
+        <div className="header-content">
+          <div className="logo-section">
             <FaExclamationTriangle className="logo-icon" />
             <div>
-              <h1>Western Union Incident Report</h1>
-              <p className="subtitle">Safety & Security Reporting System</p>
+              <h1>Incident Reporting Form</h1>
+              <p className="subtitle">Western Union Safety & Security System</p>
+            </div>
+          </div>
+          
+          <div className="header-actions">
+            <button 
+              type="button" 
+              className="theme-toggle"
+              onClick={() => setDarkMode(!darkMode)}
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? <FaSun /> : <FaMoon />}
+            </button>
+            
+            <div className={`save-status ${saving ? 'saving' : 'saved'}`}>
+              {saving ? (
+                <>
+                  <FaSave className="spin-icon" /> Saving draft...
+                </>
+              ) : (
+                <>
+                  <FaSave /> Draft saved locally
+                </>
+              )}
             </div>
           </div>
         </div>
         
-        <div className="header-right">
-          <button 
-            type="button" 
-            className="theme-toggle"
-            onClick={() => setDarkMode(!darkMode)}
-            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {darkMode ? <FaSun /> : <FaMoon />}
-          </button>
-          
-          <div className="progress-container">
-            <div className="progress-label">Completion: {progress}%</div>
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-          </div>
+        <div className="form-intro">
+          <p>When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.</p>
         </div>
       </div>
 
-      {/* Form Navigation */}
-      <div className="form-navigation">
-        <button 
-          className={`nav-btn ${activeSection === 'basic' ? 'active' : ''}`}
-          onClick={() => setActiveSection('basic')}
-        >
-          <FaUser /> Basic Info
-        </button>
-        <button 
-          className={`nav-btn ${activeSection === 'details' ? 'active' : ''}`}
-          onClick={() => setActiveSection('details')}
-          disabled={!showAfterSix}
-        >
-          <FaExclamationTriangle /> Incident Details
-        </button>
-        <button 
-          className={`nav-btn ${activeSection === 'people' ? 'active' : ''}`}
-          onClick={() => setActiveSection('people')}
-          disabled={!showAfterSix}
-        >
-          <FaUser /> People Involved
-        </button>
-        <button 
-          className={`nav-btn ${activeSection === 'analysis' ? 'active' : ''}`}
-          onClick={() => setActiveSection('analysis')}
-          disabled={!showAfterSix}
-        >
-          <FaClock /> Analysis & Actions
-        </button>
-        <button 
-          className={`nav-btn ${activeSection === 'attachments' ? 'active' : ''}`}
-          onClick={() => setActiveSection('attachments')}
-          disabled={!showAfterSix}
-        >
-          <FaFileUpload /> Attachments
-        </button>
-      </div>
-
-      {/* Form Content */}
+      {/* Main Form - Single Page */}
       <form className="incident-form" onSubmit={handleSubmit} noValidate>
-        {/* Save Status */}
-        <div className={`save-status ${saving ? 'saving' : 'saved'}`}>
-          {saving ? (
-            <>
-              <FaSave className="spin" /> Saving draft...
-            </>
-          ) : (
-            <>
-              <FaSave /> Draft saved locally
-            </>
-          )}
+        
+        {/* Question 1 */}
+        <div className="form-section">
+          <div className={`form-group ${errors.type_of_incident ? 'error' : ''}`}>
+            <label className="form-label">
+              <span className="question-number">1</span>
+              Type of Incident / Accident <span className="required">*</span>
+            </label>
+            <select 
+              className="form-select"
+              value={form.type_of_incident} 
+              onChange={e => update("type_of_incident", e.target.value)}
+            >
+              <option value="">-- select type --</option>
+              {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            {errors.type_of_incident && <div className="error-message">{errors.type_of_incident}</div>}
+            
+            {form.type_of_incident === "Other" && (
+              <div className="form-group">
+                <input 
+                  className="form-input"
+                  type="text" 
+                  placeholder="Please enter the incident type" 
+                  value={form.other_type_text} 
+                  onChange={e => update("other_type_text", e.target.value)} 
+                />
+                {errors.other_type_text && <div className="error-message">{errors.other_type_text}</div>}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Section 1: Basic Information (Always Visible) */}
-        {(activeSection === 'basic' || !showAfterSix) && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2><FaUser /> Basic Incident Information</h2>
-              <p>Complete questions 1-6 to proceed</p>
+        {/* Questions 2 & 3 */}
+        <div className="form-row">
+          <div className={`form-group ${errors.date_of_report ? 'error' : ''}`}>
+            <label className="form-label">
+              <span className="question-number">2</span>
+              Date of Report <span className="required">*</span>
+            </label>
+            <input 
+              type="date" 
+              className="form-input"
+              value={form.date_of_report} 
+              onChange={e => update("date_of_report", e.target.value)} 
+            />
+            {errors.date_of_report && <div className="error-message">{errors.date_of_report}</div>}
+          </div>
+
+          <div className={`form-group ${errors.time_of_report ? 'error' : ''}`}>
+            <label className="form-label">
+              <span className="question-number">3</span>
+              Time of Report (HH:MM) <span className="required">*</span>
+            </label>
+            <input 
+              type="time" 
+              className="form-input"
+              value={form.time_of_report} 
+              onChange={e => update("time_of_report", e.target.value)} 
+            />
+            {errors.time_of_report && <div className="error-message">{errors.time_of_report}</div>}
+          </div>
+        </div>
+
+        {/* Questions 4 & 5 */}
+        <div className="form-row">
+          <div className={`form-group ${errors.impacted_name ? 'error' : ''}`}>
+            <label className="form-label">
+              <span className="question-number">4</span>
+              Name of Impacted Employee / Person <span className="required">*</span>
+            </label>
+            <input 
+              className="form-input"
+              value={form.impacted_name} 
+              onChange={e => update("impacted_name", e.target.value)} 
+              placeholder="Full name"
+            />
+            {errors.impacted_name && <div className="error-message">{errors.impacted_name}</div>}
+          </div>
+
+          <div className={`form-group ${errors.impacted_employee_id ? 'error' : ''}`}>
+            <label className="form-label">
+              <span className="question-number">5</span>
+              Employee ID of Impacted Employee <span className="required">*</span>
+            </label>
+            <input 
+              className="form-input"
+              value={form.impacted_employee_id} 
+              onChange={e => update("impacted_employee_id", e.target.value)} 
+              placeholder="Employee ID"
+            />
+            {errors.impacted_employee_id && <div className="error-message">{errors.impacted_employee_id}</div>}
+          </div>
+        </div>
+
+        {/* Question 6 */}
+        <div className="form-section">
+          <div className={`form-group ${errors.was_reported_verbally ? 'error' : ''}`}>
+            <label className="form-label">
+              <span className="question-number">6</span>
+              Was this incident reported verbally before submitting this report? <span className="required">*</span>
+            </label>
+            <div className="radio-group">
+              <label className="radio-option">
+                <input 
+                  type="radio" 
+                  checked={form.was_reported_verbally === true} 
+                  onChange={() => update("was_reported_verbally", true)} 
+                />
+                <span className="radio-custom"></span>
+                Yes
+              </label>
+              <label className="radio-option">
+                <input 
+                  type="radio" 
+                  checked={form.was_reported_verbally === false} 
+                  onChange={() => update("was_reported_verbally", false)} 
+                />
+                <span className="radio-custom"></span>
+                No
+              </label>
             </div>
-
-            <div className="form-grid">
-              {/* Question 1 */}
-              <div className={`form-group ${errors.type_of_incident ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">1</span>
-                  Type of Incident / Accident <span className="required">*</span>
-                </label>
-                <div className="input-with-icon">
-                  <FaExclamationTriangle />
-                  <select 
-                    className="form-select"
-                    value={form.type_of_incident} 
-                    onChange={e => update("type_of_incident", e.target.value)}
-                  >
-                    <option value="">Select incident type</option>
-                    {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                {errors.type_of_incident && (
-                  <div className="error-message">{errors.type_of_incident}</div>
-                )}
-                {form.type_of_incident === "Other" && (
-                  <div className="input-with-icon mt-2">
-                    <FaExclamationTriangle />
-                    <input 
-                      className="form-input"
-                      placeholder="Please specify the incident type"
-                      value={form.other_type_text}
-                      onChange={e => update("other_type_text", e.target.value)}
-                    />
-                    {errors.other_type_text && (
-                      <div className="error-message">{errors.other_type_text}</div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Question 2 & 3 */}
-              <div className="form-row">
-                <div className={`form-group ${errors.date_of_report ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">2</span>
-                    Date of Report <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaCalendar />
-                    <input 
-                      type="date" 
-                      className="form-input"
-                      value={form.date_of_report} 
-                      onChange={e => update("date_of_report", e.target.value)} 
-                    />
-                  </div>
-                  {errors.date_of_report && (
-                    <div className="error-message">{errors.date_of_report}</div>
-                  )}
-                </div>
-
-                <div className={`form-group ${errors.time_of_report ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">3</span>
-                    Time of Report <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaClock />
-                    <input 
-                      type="time" 
-                      className="form-input"
-                      value={form.time_of_report} 
-                      onChange={e => update("time_of_report", e.target.value)} 
-                    />
-                  </div>
-                  {errors.time_of_report && (
-                    <div className="error-message">{errors.time_of_report}</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Question 4 & 5 */}
-              <div className="form-row">
-                <div className={`form-group ${errors.impacted_name ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">4</span>
-                    Impacted Person Name <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaUser />
-                    <input 
-                      className="form-input"
-                      placeholder="Full name"
-                      value={form.impacted_name} 
-                      onChange={e => update("impacted_name", e.target.value)} 
-                    />
-                  </div>
-                  {errors.impacted_name && (
-                    <div className="error-message">{errors.impacted_name}</div>
-                  )}
-                </div>
-
-                <div className={`form-group ${errors.impacted_employee_id ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">5</span>
-                    Impacted Employee ID <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaIdCard />
-                    <input 
-                      className="form-input"
-                      placeholder="Employee ID"
-                      value={form.impacted_employee_id} 
-                      onChange={e => update("impacted_employee_id", e.target.value)} 
-                    />
-                  </div>
-                  {errors.impacted_employee_id && (
-                    <div className="error-message">{errors.impacted_employee_id}</div>
-                  )}
-                </div>
-              </div>
-
-              {/* Question 6 */}
-              <div className={`form-group ${errors.was_reported_verbally ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">6</span>
-                  Was this incident reported verbally before submitting this report? <span className="required">*</span>
-                </label>
-                <div className="radio-group">
-                  <label className="radio-option">
-                    <input 
-                      type="radio" 
-                      name="reported" 
-                      checked={form.was_reported_verbally === true} 
-                      onChange={() => update("was_reported_verbally", true)} 
-                    />
-                    <span className="radio-custom"></span>
-                    Yes
-                  </label>
-                  <label className="radio-option">
-                    <input 
-                      type="radio" 
-                      name="reported" 
-                      checked={form.was_reported_verbally === false} 
-                      onChange={() => update("was_reported_verbally", false)} 
-                    />
-                    <span className="radio-custom"></span>
-                    No
-                  </label>
-                </div>
-                {errors.was_reported_verbally && (
-                  <div className="error-message">{errors.was_reported_verbally}</div>
-                )}
-                <div className="form-note">
-                  <FaExclamationTriangle /> In case of medical emergency, inform local HR immediately
-                </div>
-              </div>
-
-              {/* Continue Button */}
-              {!showAfterSix && (
-                <div className="continue-section">
-                  <button 
-                    type="button" 
-                    className="btn-primary continue-btn"
-                    onClick={() => {
-                      if (form.was_reported_verbally !== null) {
-                        setShowAfterSix(true);
-                        setActiveSection('details');
-                      } else {
-                        setErrors({ was_reported_verbally: "Please select Yes or No to continue" });
-                      }
-                    }}
-                  >
-                    Continue to Incident Details →
-                  </button>
-                  <p className="continue-note">
-                    Complete questions 1-6 to unlock the rest of the form
-                  </p>
-                </div>
-              )}
+            {errors.was_reported_verbally && <div className="error-message">{errors.was_reported_verbally}</div>}
+            <div className="form-note">
+              <FaExclamationTriangle /> ** In case of medical emergency inform local HR
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Section 2: Incident Details (Only after Q6) */}
-        {showAfterSix && activeSection === 'details' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2><FaExclamationTriangle /> Incident Details</h2>
-              <p>Complete details about the incident</p>
-            </div>
-
-            <div className="form-grid">
-              {/* Questions 7-8 (Only if verbally reported) */}
-              {form.was_reported_verbally === true && (
-                <>
+        {/* Questions 7-21 (Shown after Q6) */}
+        {showAfterSix && (
+          <>
+            {/* Questions 7-8 (Only if Yes to Q6) */}
+            {form.was_reported_verbally === true && (
+              <>
+                <div className="form-section">
                   <div className={`form-group ${errors.incident_reported_to ? 'error' : ''}`}>
                     <label className="form-label">
                       <span className="question-number">7</span>
-                      Incident Reported To <span className="required">*</span>
+                      Incident reported to: (select one or more) <span className="required">*</span>
                     </label>
-                    <div className="input-with-icon">
-                      <FaUser />
-                      <select
-                        className="form-select"
-                        value={form.incident_reported_to[0] || ""}
-                        onChange={e => update("incident_reported_to", [e.target.value])}
-                      >
-                        <option value="">Select person</option>
-                        {REPORTED_TO_OPTIONS.map(opt => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
+                    <div className="checkbox-group">
+                      {REPORTED_TO_OPTIONS.map(opt => (
+                        <label key={opt} className="checkbox-option">
+                          <input 
+                            type="checkbox"
+                            checked={(form.incident_reported_to || []).includes(opt)}
+                            onChange={() => toggleReportedTo(opt)} 
+                          />
+                          <span className="checkbox-custom"></span>
+                          {opt}
+                        </label>
+                      ))}
                     </div>
-                    {errors.incident_reported_to && (
-                      <div className="error-message">{errors.incident_reported_to}</div>
-                    )}
+                    {errors.incident_reported_to && <div className="error-message">{errors.incident_reported_to}</div>}
                   </div>
+                </div>
 
+                <div className="form-section">
                   <div className={`form-group ${errors.reported_to_details ? 'error' : ''}`}>
                     <label className="form-label">
                       <span className="question-number">8</span>
-                      To Whom (Name & Department) <span className="required">*</span>
+                      If Yes, to whom (Name and Department): <span className="required">*</span>
                     </label>
-                    <div className="input-with-icon">
-                      <FaUser />
-                      <input 
-                        className="form-input"
-                        placeholder="Name and department"
-                        value={form.reported_to_details} 
-                        onChange={e => update("reported_to_details", e.target.value)} 
-                      />
-                    </div>
-                    {errors.reported_to_details && (
-                      <div className="error-message">{errors.reported_to_details}</div>
-                    )}
+                    <input 
+                      className="form-input"
+                      value={form.reported_to_details} 
+                      onChange={e => update("reported_to_details", e.target.value)} 
+                      placeholder="Name and department"
+                    />
+                    {errors.reported_to_details && <div className="error-message">{errors.reported_to_details}</div>}
                   </div>
-                </>
-              )}
+                </div>
+              </>
+            )}
 
-              {/* Question 9 */}
+            {/* Question 9 */}
+            <div className="form-section">
               <div className={`form-group ${errors.location ? 'error' : ''}`}>
                 <label className="form-label">
                   <span className="question-number">9</span>
-                  Location of Incident <span className="required">*</span>
+                  Location of Incident or Accident (Specify Office / Branch) <span className="required">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <FaMapMarkerAlt />
-                  <input 
-                    className="form-input"
-                    placeholder="Office / Branch / Specific location"
-                    value={form.location} 
-                    onChange={e => update("location", e.target.value)} 
-                  />
-                </div>
-                {errors.location && (
-                  <div className="error-message">{errors.location}</div>
-                )}
+                <input 
+                  className="form-input"
+                  value={form.location} 
+                  onChange={e => update("location", e.target.value)} 
+                  placeholder="Office / Branch / Specific location"
+                />
+                {errors.location && <div className="error-message">{errors.location}</div>}
+              </div>
+            </div>
+
+            {/* Questions 10-12 */}
+            <div className="form-row">
+              <div className={`form-group ${errors.reported_by_name ? 'error' : ''}`}>
+                <label className="form-label">
+                  <span className="question-number">10</span>
+                  Reported By - Name <span className="required">*</span>
+                </label>
+                <input 
+                  className="form-input"
+                  value={form.reported_by_name} 
+                  onChange={e => update("reported_by_name", e.target.value)} 
+                  placeholder="Your full name"
+                />
+                {errors.reported_by_name && <div className="error-message">{errors.reported_by_name}</div>}
               </div>
 
-              {/* Questions 10-12 */}
-              <div className="form-row">
-                <div className={`form-group ${errors.reported_by_name ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">10</span>
-                    Reporter Name <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaUser />
-                    <input 
-                      className="form-input"
-                      placeholder="Your full name"
-                      value={form.reported_by_name} 
-                      onChange={e => update("reported_by_name", e.target.value)} 
-                    />
-                  </div>
-                  {errors.reported_by_name && (
-                    <div className="error-message">{errors.reported_by_name}</div>
-                  )}
-                </div>
+              <div className={`form-group ${errors.reported_by_employee_id ? 'error' : ''}`}>
+                <label className="form-label">
+                  <span className="question-number">11</span>
+                  Reported By - Employee ID <span className="required">*</span>
+                </label>
+                <input 
+                  className="form-input"
+                  value={form.reported_by_employee_id} 
+                  onChange={e => update("reported_by_employee_id", e.target.value)} 
+                  placeholder="Your employee ID"
+                />
+                {errors.reported_by_employee_id && <div className="error-message">{errors.reported_by_employee_id}</div>}
+              </div>
+            </div>
 
-                <div className={`form-group ${errors.reported_by_employee_id ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">11</span>
-                    Reporter Employee ID <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaIdCard />
-                    <input 
-                      className="form-input"
-                      placeholder="Your employee ID"
-                      value={form.reported_by_employee_id} 
-                      onChange={e => update("reported_by_employee_id", e.target.value)} 
-                    />
-                  </div>
-                  {errors.reported_by_employee_id && (
-                    <div className="error-message">{errors.reported_by_employee_id}</div>
-                  )}
-                </div>
+            <div className="form-row">
+              <div className={`form-group ${errors.reported_by_email ? 'error' : ''}`}>
+                <label className="form-label">
+                  <span className="question-number">12</span>
+                  Reported By - Email <span className="required">*</span>
+                </label>
+                <input 
+                  className="form-input"
+                  value={form.reported_by_email} 
+                  onChange={e => update("reported_by_email", e.target.value)} 
+                  placeholder="your.email@westernunion.com"
+                />
+                {errors.reported_by_email && <div className="error-message">{errors.reported_by_email}</div>}
               </div>
 
-              <div className="form-row">
-                <div className={`form-group ${errors.reported_by_email ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">12</span>
-                    Reporter Email <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaEnvelope />
-                    <input 
-                      className="form-input"
-                      placeholder="your.email@westernunion.com"
-                      value={form.reported_by_email} 
-                      onChange={e => update("reported_by_email", e.target.value)} 
-                    />
-                  </div>
-                  {errors.reported_by_email && (
-                    <div className="error-message">{errors.reported_by_email}</div>
-                  )}
-                </div>
+              <div className={`form-group ${errors.reported_by_contact ? 'error' : ''}`}>
+                <label className="form-label">
+                  <span className="question-number">12b</span>
+                  Reported By - Contact Number <span className="required">*</span>
+                </label>
+                <input 
+                  className="form-input"
+                  value={form.reported_by_contact} 
+                  onChange={e => update("reported_by_contact", e.target.value)} 
+                  placeholder="Phone number"
+                />
+                {errors.reported_by_contact && <div className="error-message">{errors.reported_by_contact}</div>}
+              </div>
+            </div>
 
-                <div className={`form-group ${errors.reported_by_contact ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">12b</span>
-                    Reporter Contact <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaPhone />
-                    <input 
-                      className="form-input"
-                      placeholder="Phone number"
-                      value={form.reported_by_contact} 
-                      onChange={e => update("reported_by_contact", e.target.value)} 
-                    />
-                  </div>
-                  {errors.reported_by_contact && (
-                    <div className="error-message">{errors.reported_by_contact}</div>
-                  )}
-                </div>
+            {/* Questions 13-14 */}
+            <div className="form-row">
+              <div className={`form-group ${errors.date_of_incident ? 'error' : ''}`}>
+                <label className="form-label">
+                  <span className="question-number">13</span>
+                  Date of Incident Occurred <span className="required">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  className="form-input"
+                  value={form.date_of_incident} 
+                  onChange={e => update("date_of_incident", e.target.value)} 
+                />
+                {errors.date_of_incident && <div className="error-message">{errors.date_of_incident}</div>}
               </div>
 
-              {/* Questions 13-14 */}
-              <div className="form-row">
-                <div className={`form-group ${errors.date_of_incident ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">13</span>
-                    Date of Incident <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaCalendar />
-                    <input 
-                      type="date" 
-                      className="form-input"
-                      value={form.date_of_incident} 
-                      onChange={e => update("date_of_incident", e.target.value)} 
-                    />
-                  </div>
-                  {errors.date_of_incident && (
-                    <div className="error-message">{errors.date_of_incident}</div>
-                  )}
-                </div>
-
-                <div className={`form-group ${errors.time_of_incident ? 'error' : ''}`}>
-                  <label className="form-label">
-                    <span className="question-number">14</span>
-                    Time of Incident <span className="required">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <FaClock />
-                    <input 
-                      type="time" 
-                      className="form-input"
-                      value={form.time_of_incident} 
-                      onChange={e => update("time_of_incident", e.target.value)} 
-                    />
-                  </div>
-                  {errors.time_of_incident && (
-                    <div className="error-message">{errors.time_of_incident}</div>
-                  )}
-                </div>
+              <div className={`form-group ${errors.time_of_incident ? 'error' : ''}`}>
+                <label className="form-label">
+                  <span className="question-number">14</span>
+                  Time of Incident <span className="required">*</span>
+                </label>
+                <input 
+                  type="time" 
+                  className="form-input"
+                  value={form.time_of_incident} 
+                  onChange={e => update("time_of_incident", e.target.value)} 
+                />
+                {errors.time_of_incident && <div className="error-message">{errors.time_of_incident}</div>}
               </div>
+            </div>
 
-              {/* Question 15 */}
+            {/* Question 15 */}
+            <div className="form-section">
               <div className={`form-group ${errors.detailed_description ? 'error' : ''}`}>
                 <label className="form-label">
                   <span className="question-number">15</span>
-                  Detailed Description <span className="required">*</span>
+                  Detailed Description of Incident <span className="required">*</span>
                 </label>
                 <textarea 
                   className="form-textarea"
-                  placeholder="Provide a detailed description of what happened..."
-                  rows={4}
                   value={form.detailed_description} 
                   onChange={e => update("detailed_description", e.target.value)} 
+                  rows={5}
+                  placeholder="Provide detailed description of what happened..."
                 />
-                {errors.detailed_description && (
-                  <div className="error-message">{errors.detailed_description}</div>
-                )}
+                {errors.detailed_description && <div className="error-message">{errors.detailed_description}</div>}
               </div>
+            </div>
 
-              {/* Question 16 */}
+            {/* Question 16 */}
+            <div className="form-section">
               <div className={`form-group ${errors.immediate_actions_taken ? 'error' : ''}`}>
                 <label className="form-label">
                   <span className="question-number">16</span>
@@ -803,198 +637,153 @@ export default function IncidentForm({ onSubmitted }) {
                 </label>
                 <textarea 
                   className="form-textarea"
-                  placeholder="Describe immediate actions taken..."
-                  rows={3}
                   value={form.immediate_actions_taken} 
                   onChange={e => update("immediate_actions_taken", e.target.value)} 
+                  rows={3}
+                  placeholder="Describe immediate actions taken..."
                 />
-                {errors.immediate_actions_taken && (
-                  <div className="error-message">{errors.immediate_actions_taken}</div>
-                )}
+                {errors.immediate_actions_taken && <div className="error-message">{errors.immediate_actions_taken}</div>}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Section 3: People Involved */}
-        {showAfterSix && activeSection === 'people' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2><FaUser /> People Involved</h2>
-              <p>Add accompanying persons and witnesses</p>
-            </div>
-
-            <div className="form-grid">
-              {/* Question 17 */}
+            {/* Question 17 */}
+            <div className="form-section">
               <div className="form-group">
                 <label className="form-label">
                   <span className="question-number">17</span>
-                  Accompanying Person Details
+                  Accompanying Person Name and Contact Details
                 </label>
-                <div className="dynamic-list">
-                  {(form.accompanying_person || []).map((p, i) => (
-                    <div key={i} className="dynamic-item">
-                      <div className="dynamic-inputs">
-                        <div className="input-with-icon">
-                          <FaUser />
-                          <input 
-                            className="form-input"
-                            placeholder="Name"
-                            value={p.name} 
-                            onChange={e => setAccompany(i, "name", e.target.value)} 
-                          />
-                        </div>
-                        <div className="input-with-icon">
-                          <FaPhone />
-                          <input 
-                            className="form-input"
-                            placeholder="Contact"
-                            value={p.contact} 
-                            onChange={e => setAccompany(i, "contact", e.target.value)} 
-                          />
-                        </div>
-                      </div>
-                      <button 
-                        type="button" 
-                        className="remove-btn"
-                        onClick={() => removeAccompany(i)}
-                      >
-                        <FaTimes />
-                      </button>
-                    </div>
-                  ))}
-                  <button 
-                    type="button" 
-                    className="add-btn"
-                    onClick={addAccompany}
-                  >
-                    <FaPlus /> Add Accompanying Person
-                  </button>
-                </div>
+                <div className="form-note">You can add multiple accompanying persons.</div>
+                
+                {(form.accompanying_person || []).map((p, i) => (
+                  <div key={i} className="dynamic-row">
+                    <input 
+                      className="form-input"
+                      placeholder="Name" 
+                      value={p.name || ""} 
+                      onChange={e => setAccompany(i, "name", e.target.value)} 
+                    />
+                    <input 
+                      className="form-input"
+                      placeholder="Contact" 
+                      value={p.contact || ""} 
+                      onChange={e => setAccompany(i, "contact", e.target.value)} 
+                    />
+                    <button 
+                      type="button" 
+                      className="btn-remove"
+                      onClick={() => removeAccompany(i)}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))}
+                
+                <button 
+                  type="button" 
+                  className="btn-add"
+                  onClick={addAccompany}
+                >
+                  <FaPlus /> Add Accompanying Person
+                </button>
               </div>
+            </div>
 
-              {/* Questions 18-19 */}
+            {/* Questions 18-19 */}
+            <div className="form-section">
               <div className={`form-group ${errors.witness_contacts ? 'error' : ''}`}>
                 <label className="form-label">
                   <span className="question-number">18-19</span>
-                  Witnesses & Contact Numbers
+                  Name of Witnesses & Contact Numbers
                 </label>
-                <div className="dynamic-list">
-                  {(form.witnesses || []).map((w, i) => (
-                    <div key={i} className="dynamic-item">
-                      <div className="dynamic-inputs">
-                        <div className="input-with-icon">
-                          <FaUser />
-                          <input 
-                            className="form-input"
-                            placeholder="Witness Name"
-                            value={w} 
-                            onChange={e => setWitness(i, e.target.value)} 
-                          />
-                        </div>
-                        <div className="input-with-icon">
-                          <FaPhone />
-                          <input 
-                            className="form-input"
-                            placeholder="Contact"
-                            value={(form.witness_contacts || [])[i] || ""} 
-                            onChange={e => setWitnessContact(i, e.target.value)} 
-                          />
-                        </div>
-                      </div>
-                      <button 
-                        type="button" 
-                        className="remove-btn"
-                        onClick={() => removeWitness(i)}
-                      >
-                        <FaTimes />
-                      </button>
-                    </div>
-                  ))}
-                  <button 
-                    type="button" 
-                    className="add-btn"
-                    onClick={addWitness}
-                  >
-                    <FaPlus /> Add Witness
-                  </button>
-                </div>
-                {errors.witness_contacts && (
-                  <div className="error-message">{errors.witness_contacts}</div>
-                )}
+                <div className="form-note">Add one witness per row.</div>
+                
+                {(form.witnesses || []).map((w, i) => (
+                  <div key={i} className="dynamic-row">
+                    <input 
+                      className="form-input"
+                      placeholder="Witness Name" 
+                      value={w || ""} 
+                      onChange={e => setWitness(i, e.target.value)} 
+                    />
+                    <input 
+                      className="form-input"
+                      placeholder="Contact" 
+                      value={(form.witness_contacts || [])[i] || ""} 
+                      onChange={e => setWitnessContact(i, e.target.value)} 
+                    />
+                    <button 
+                      type="button" 
+                      className="btn-remove"
+                      onClick={() => removeWitness(i)}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))}
+                
+                <button 
+                  type="button" 
+                  className="btn-add"
+                  onClick={addWitness}
+                >
+                  <FaPlus /> Add Witness
+                </button>
+                {errors.witness_contacts && <div className="error-message">{errors.witness_contacts}</div>}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Section 4: Analysis & Actions */}
-        {showAfterSix && activeSection === 'analysis' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2><FaClock /> Analysis & Actions</h2>
-              <p>Root cause analysis and preventive measures</p>
-            </div>
-
-            <div className="form-grid">
-              {/* Question 20 */}
+            {/* Question 20 */}
+            <div className="form-section">
               <div className="form-group">
                 <label className="form-label">
                   <span className="question-number">20</span>
-                  Root Cause Analysis
+                  Root cause analysis of the incident/accident
                 </label>
                 <textarea 
                   className="form-textarea"
-                  placeholder="Analysis of what caused the incident..."
-                  rows={4}
                   value={form.root_cause_analysis} 
                   onChange={e => update("root_cause_analysis", e.target.value)} 
+                  rows={3}
+                  placeholder="Analysis of what caused the incident..."
                 />
               </div>
+            </div>
 
-              {/* Question 21 */}
+            {/* Question 21 */}
+            <div className="form-section">
               <div className="form-group">
                 <label className="form-label">
                   <span className="question-number">21</span>
-                  Preventive Actions
+                  Preventive actions taken during or after incident/accident (If any)
                 </label>
                 <textarea 
                   className="form-textarea"
-                  placeholder="Actions taken to prevent future incidents..."
-                  rows={4}
                   value={form.preventive_actions} 
                   onChange={e => update("preventive_actions", e.target.value)} 
+                  rows={3}
+                  placeholder="Actions to prevent future incidents..."
                 />
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Section 5: Attachments */}
-        {showAfterSix && activeSection === 'attachments' && (
-          <div className="form-section">
-            <div className="section-header">
-              <h2><FaFileUpload /> Attachments</h2>
-              <p>Upload supporting documents and images</p>
-            </div>
-
-            <div className="form-grid">
+            {/* File Upload */}
+            <div className="form-section">
               <div className="form-group">
                 <label className="form-label">
-                  <FaFileUpload /> Upload Supporting Files
+                  Attach files (images / pdf) — optional
                 </label>
                 <div className="file-upload-area">
                   <input 
                     type="file" 
-                    id="file-upload"
                     multiple 
                     onChange={onFilesSelected} 
                     className="file-input"
                   />
-                  <label htmlFor="file-upload" className="file-upload-label">
-                    <FaFileUpload className="upload-icon" />
-                    <div>Click to upload or drag & drop</div>
+                  <div className="file-upload-label">
+                    <span>Click to upload or drag & drop files here</span>
                     <small>Supports images, PDF, DOC (Max 10MB each)</small>
-                  </label>
+                  </div>
                 </div>
                 
                 {files.length > 0 && (
@@ -1008,7 +797,7 @@ export default function IncidentForm({ onSubmitted }) {
                         </div>
                         <button 
                           type="button" 
-                          className="remove-file-btn"
+                          className="btn-remove"
                           onClick={() => removeFile(i)}
                         >
                           <FaTimes />
@@ -1019,36 +808,43 @@ export default function IncidentForm({ onSubmitted }) {
                 )}
               </div>
             </div>
-          </div>
+
+            {/* Form Actions */}
+            <div className="form-actions">
+              <div className="action-buttons">
+                <button type="submit" className="btn-primary">
+                  Submit Incident Report
+                </button>
+                <button type="button" className="btn-secondary" onClick={clearDraft}>
+                  <FaTrash /> Clear Draft
+                </button>
+                <button type="button" className="btn-secondary" onClick={handlePrint}>
+                  <FaPrint /> Print/PDF
+                </button>
+              </div>
+              
+              <div className="form-footer">
+                <p className="confidential-note">
+                  <strong>Confidential:</strong> All information submitted is protected and accessible only to authorized personnel.
+                </p>
+              </div>
+            </div>
+          </>
         )}
 
-        {/* Form Actions */}
-        {showAfterSix && (
-          <div className="form-actions">
-            <div className="action-buttons">
-              <button type="submit" className="btn-primary submit-btn">
-                <FaExclamationTriangle /> Submit Incident Report
-              </button>
-              <button type="button" className="btn-secondary" onClick={clearDraft}>
-                <FaTrash /> Clear All
-              </button>
-              <button type="button" className="btn-secondary" onClick={handlePrint}>
-                <FaPrint /> Print/PDF
-              </button>
-            </div>
-            
-            <div className="form-footer">
-              <p className="confidential-note">
-                <strong>Confidential:</strong> This information will only be accessible to authorized Western Union safety personnel.
-              </p>
-              <p className="support-note">
-                Need help? Contact Safety Department: safety@westernunion.com | Ext: 5555
-              </p>
-            </div>
+        {/* If Q6 not answered yet, show continue button */}
+        {!showAfterSix && form.was_reported_verbally !== null && (
+          <div className="continue-section">
+            <button 
+              type="button" 
+              className="btn-continue"
+              onClick={() => setShowAfterSix(true)}
+            >
+              Continue to Complete Form →
+            </button>
           </div>
         )}
       </form>
     </div>
   );
 }
-
