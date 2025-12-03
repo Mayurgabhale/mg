@@ -1,26 +1,3 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from incident_report import router as incident_router
-
-app = FastAPI(title="Incident Reporting API")
-
-# CORS for frontend
-origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Register routes
-app.include_router(incident_router)
-
-@app.get("/")
-def read_root():
-    return {"message": "Incident Reporting Backend is running"}
+cd C:\Users\W0024618\Desktop\IncidentDashboard\Backend
+venv\Scripts\activate
+uvicorn main:app --reload --port 8000
