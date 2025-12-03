@@ -1,850 +1,645 @@
-// C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
-import React, { useEffect, useRef, useState } from "react";
-import "../assets/css/IncidentForm.css";
+/* CSS Variables for Themes */
+:root {
+  /* Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-card: #ffffff;
+  --text-primary: #2d3748;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e0;
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success-color: #059669;
+  --error-color: #dc2626;
+  --warning-color: #d97706;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
 
-// Optional: Add these icons if you want, or remove if not needed
-import {
-  FaSave, FaTrash, FaPrint, FaPlus, FaTimes,
-  FaMoon, FaSun, FaExclamationTriangle
-} from "react-icons/fa";
+.dark-mode {
+  /* Dark Theme */
+  --bg-primary: #1a202c;
+  --bg-secondary: #2d3748;
+  --bg-card: #2d3748;
+  --text-primary: #f7fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #a0aec0;
+  --border-color: #4a5568;
+  --border-hover: #718096;
+  --primary-color: #3b82f6;
+  --primary-hover: #60a5fa;
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+}
 
-const INCIDENT_TYPES = [
-  "Medical",
-  "Theft",
-  "Fire",
-  "HR Related Incident",
-  "Outside Work Place Violence",
-  "Threat",
-  "Death",
-  "Fraud",
-  "Any Other Safety / Security Related Incident",
-  "Other"
-];
+/* Base Container */
+.incident-form-container {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  padding: 0;
+}
 
-const REPORTED_TO_OPTIONS = [
-  "Supervisor",
-  "Manager",
-  "HR",
-  "Other Employee",
-  "Not Reported"
-];
+/* Form Header */
+.form-header {
+  background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+  color: white;
+  padding: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
 
-const emptyForm = {
-  type_of_incident: "",
-  other_type_text: "",
-  date_of_report: "",
-  time_of_report: "",
-  impacted_name: "",
-  impacted_employee_id: "",
-  was_reported_verbally: null,
-  incident_reported_to: [],
-  reported_to_details: "",
-  location: "",
-  reported_by_name: "",
-  reported_by_employee_id: "",
-  reported_by_email: "",
-  reported_by_contact: "",
-  date_of_incident: "",
-  time_of_incident: "",
-  detailed_description: "",
-  immediate_actions_taken: "",
-  accompanying_person: [],
-  witnesses: [],
-  witness_contacts: [],
-  root_cause_analysis: "",
-  preventive_actions: ""
-};
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
 
-export default function IncidentForm({ onSubmitted }) {
-  const [form, setForm] = useState(emptyForm);
-  const [files, setFiles] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [showAfterSix, setShowAfterSix] = useState(false);
-  const autosaveRef = useRef(null);
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
-  // Toggle dark mode
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark-mode");
-    } else {
-      document.body.classList.remove("dark-mode");
-    }
-  }, [darkMode]);
+.logo-icon {
+  font-size: 2.5rem;
+}
 
-  // Restore draft
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("incident_draft");
-      if (raw) setForm(prev => ({ ...prev, ...JSON.parse(raw) }));
-    } catch (e) {
-      console.warn("Restore draft failed", e);
-    }
-  }, []);
+.form-header h1 {
+  font-size: 1.75rem;
+  margin: 0;
+  font-weight: 700;
+}
 
-  // Auto-save
-  useEffect(() => {
-    clearTimeout(autosaveRef.current);
-    setSaving(true);
-    autosaveRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem("incident_draft", JSON.stringify(form));
-      } catch (e) {
-        console.warn("Autosave failed", e);
-      }
-      setSaving(false);
-    }, 700);
+.subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+}
 
-    return () => clearTimeout(autosaveRef.current);
-  }, [form]);
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
 
-  const update = (k, v) => {
-    if (k === "was_reported_verbally") {
-      setShowAfterSix(true);
-    }
-    setForm(prev => ({ ...prev, [k]: v }));
-  };
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
 
-  const toggleReportedTo = (opt) => {
-    const arr = [...(form.incident_reported_to || [])];
-    const idx = arr.indexOf(opt);
-    if (idx >= 0) arr.splice(idx, 1);
-    else arr.push(opt);
-    update("incident_reported_to", arr);
-  };
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(30deg);
+}
 
-  const addAccompany = () => update("accompanying_person", [...(form.accompanying_person || []), { name: "", contact: "" }]);
-  const removeAccompany = (i) => {
-    const arr = [...(form.accompanying_person || [])];
-    arr.splice(i, 1);
-    update("accompanying_person", arr);
-  };
-  const setAccompany = (i, key, val) => {
-    const arr = [...(form.accompanying_person || [])];
-    arr[i] = { ...(arr[i] || {}), [key]: val };
-    update("accompanying_person", arr);
-  };
+.save-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+}
 
-  const addWitness = () => {
-    update("witnesses", [...(form.witnesses || []), ""]);
-    update("witness_contacts", [...(form.witness_contacts || []), ""]);
-  };
-  const removeWitness = (i) => {
-    const w = [...(form.witnesses || [])];
-    const wc = [...(form.witness_contacts || [])];
-    w.splice(i, 1);
-    wc.splice(i, 1);
-    update("witnesses", w);
-    update("witness_contacts", wc);
-  };
-  const setWitness = (i, val) => {
-    const w = [...(form.witnesses || [])];
-    w[i] = val;
-    update("witnesses", w);
-  };
-  const setWitnessContact = (i, val) => {
-    const wc = [...(form.witness_contacts || [])];
-    wc[i] = val;
-    update("witness_contacts", wc);
-  };
+.save-status.saving {
+  color: #fbbf24;
+}
 
-  const onFilesSelected = (evt) => {
-    const selected = Array.from(evt.target.files || []);
-    setFiles(prev => [...prev, ...selected]);
-    evt.target.value = "";
-  };
-  const removeFile = (i) => setFiles(prev => {
-    const a = [...prev];
-    a.splice(i, 1);
-    return a;
-  });
+.save-status.saved {
+  color: #34d399;
+}
 
-  // Validation functions (unchanged)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^[+\d][\d\s\-().]{5,}$/;
-  const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
 
-  const validate = () => {
-    const e = {};
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
-    if (form.was_reported_verbally === null)
-      e.was_reported_verbally = "Please select Yes or No.";
+.form-intro {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
 
-    if (!form.type_of_incident) e.type_of_incident = "Type is required.";
-    if (form.type_of_incident === "Other" && !form.other_type_text) e.other_type_text = "Please enter the incident type.";
-    if (!form.date_of_report) e.date_of_report = "Date of report required.";
-    if (!form.time_of_report) e.time_of_report = "Time of report required.";
-    if (!form.impacted_name) e.impacted_name = "Impacted name is required.";
-    if (!form.impacted_employee_id) e.impacted_employee_id = "Impacted employee ID is required.";
-    else if (!empIdRegex.test(form.impacted_employee_id)) e.impacted_employee_id = "Invalid employee ID.";
+/* Main Form */
+.incident-form {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
 
-    if (form.was_reported_verbally === true) {
-      if (!form.incident_reported_to?.length)
-        e.incident_reported_to = "Select at least one option.";
-      if (!form.reported_to_details?.trim())
-        e.reported_to_details = "Provide name & department.";
-    }
+/* Form Sections */
+.form-section {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
 
-    if (!form.location?.trim()) e.location = "Location is required.";
-    if (!form.reported_by_name) e.reported_by_name = "Reporter name required.";
-    if (!form.reported_by_employee_id) e.reported_by_employee_id = "Reporter employee ID required.";
-    else if (!empIdRegex.test(form.reported_by_employee_id)) e.reported_by_employee_id = "Invalid employee ID.";
-    if (!form.reported_by_email) e.reported_by_email = "Reporter email required.";
-    else if (!emailRegex.test(form.reported_by_email)) e.reported_by_email = "Invalid email address.";
-    if (!form.reported_by_contact) e.reported_by_contact = "Reporter contact required.";
-    else if (!phoneRegex.test(form.reported_by_contact)) e.reported_by_contact = "Invalid phone number.";
-    if (!form.date_of_incident) e.date_of_incident = "Date of incident required.";
-    if (!form.time_of_incident) e.time_of_incident = "Time of incident required.";
-    if (!form.detailed_description?.trim() || form.detailed_description.length < 5) e.detailed_description = "Please provide a detailed description (min 5 chars).";
-    if (!form.immediate_actions_taken?.trim()) e.immediate_actions_taken = "Immediate actions are required.";
+.form-section:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
+}
 
-    if ((form.witnesses || []).length !== (form.witness_contacts || []).length)
-      e.witness_contacts = "Add contact for each witness.";
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
 
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+.form-group:last-child {
+  margin-bottom: 0;
+}
 
-  const handleSubmit = async (ev) => {
-    ev.preventDefault();
-    if (!validate()) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+.form-group.error {
+  animation: shake 0.5s ease-in-out;
+}
 
-    const padSeconds = (t) => {
-      if (!t) return null;
-      if (t.length === 5) return `${t}:00`;
-      return t;
-    };
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
 
-    const payloadObj = {
-      type_of_incident: form.type_of_incident,
-      other_type_text: form.type_of_incident === "Other" ? form.other_type_text : null,
-      date_of_report: form.date_of_report,
-      time_of_report: padSeconds(form.time_of_report),
-      impacted_name: form.impacted_name,
-      impacted_employee_id: form.impacted_employee_id,
-      was_reported_verbally: !!form.was_reported_verbally,
-      incident_reported_to: form.incident_reported_to?.length ? form.incident_reported_to : null,
-      reported_to_details: form.reported_to_details || null,
-      location: form.location,
-      reported_by_name: form.reported_by_name,
-      reported_by_employee_id: form.reported_by_employee_id,
-      reported_by_email: form.reported_by_email,
-      reported_by_contact: form.reported_by_contact,
-      date_of_incident: form.date_of_incident,
-      time_of_incident: padSeconds(form.time_of_incident),
-      detailed_description: form.detailed_description,
-      immediate_actions_taken: form.immediate_actions_taken,
-      accompanying_person: form.accompanying_person?.length ? form.accompanying_person : [],
-      witnesses: form.witnesses?.length ? form.witnesses : [],
-      witness_contacts: form.witness_contacts?.length ? form.witness_contacts : [],
-      root_cause_analysis: form.root_cause_analysis || null,
-      preventive_actions: form.preventive_actions || null
-    };
+/* Form Labels */
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
 
-    try {
-      const fd = new FormData();
-      fd.append("payload", JSON.stringify(payloadObj));
-      files.forEach(f => fd.append("proofs", f));
+.question-number {
+  display: inline-block;
+  background: var(--primary-color);
+  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 1.75rem;
+  margin-right: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
 
-      const res = await fetch("http://localhost:8000/incident/create", {
-        method: "POST",
-        body: fd
-      });
+.required {
+  color: var(--error-color);
+  margin-left: 0.25rem;
+}
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+/* Form Inputs */
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  transition: all 0.3s ease;
+}
 
-      alert("Incident submitted successfully (ID: " + data.id + ")");
-      localStorage.removeItem("incident_draft");
-      setForm(emptyForm);
-      setFiles([]);
-      setErrors({});
-      if (typeof onSubmitted === "function") onSubmitted(data);
-    } catch (err) {
-      console.error("Submit error", err);
-      alert("Submit failed: " + (err.message || err));
-    }
-  };
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
 
-  const clearDraft = () => {
-    localStorage.removeItem("incident_draft");
-    setForm(emptyForm);
-    setFiles([]);
-    setErrors({});
-  };
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
 
-  const handlePrint = () => {
-    window.print();
-  };
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
 
-  return (
-    <div className={`incident-form-container ${darkMode ? 'dark' : 'light'}`}>
-      {/* Form Header */}
-      <div className="form-header">
-        <div className="header-content">
-          <div className="logo-section">
-            <FaExclamationTriangle className="logo-icon" />
-            <div>
-              <h1>Incident Reporting Form</h1>
-              <p className="subtitle">Western Union Safety & Security System</p>
-            </div>
-          </div>
-          
-          <div className="header-actions">
-            <button 
-              type="button" 
-              className="theme-toggle"
-              onClick={() => setDarkMode(!darkMode)}
-              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {darkMode ? <FaSun /> : <FaMoon />}
-            </button>
-            
-            <div className={`save-status ${saving ? 'saving' : 'saved'}`}>
-              {saving ? (
-                <>
-                  <FaSave className="spin-icon" /> Saving draft...
-                </>
-              ) : (
-                <>
-                  <FaSave /> Draft saved locally
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="form-intro">
-          <p>When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.</p>
-        </div>
-      </div>
+/* Form Rows */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
 
-      {/* Main Form - Single Page */}
-      <form className="incident-form" onSubmit={handleSubmit} noValidate>
-        
-        {/* Question 1 */}
-        <div className="form-section">
-          <div className={`form-group ${errors.type_of_incident ? 'error' : ''}`}>
-            <label className="form-label">
-              <span className="question-number">1</span>
-              Type of Incident / Accident <span className="required">*</span>
-            </label>
-            <select 
-              className="form-select"
-              value={form.type_of_incident} 
-              onChange={e => update("type_of_incident", e.target.value)}
-            >
-              <option value="">-- select type --</option>
-              {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            {errors.type_of_incident && <div className="error-message">{errors.type_of_incident}</div>}
-            
-            {form.type_of_incident === "Other" && (
-              <div className="form-group">
-                <input 
-                  className="form-input"
-                  type="text" 
-                  placeholder="Please enter the incident type" 
-                  value={form.other_type_text} 
-                  onChange={e => update("other_type_text", e.target.value)} 
-                />
-                {errors.other_type_text && <div className="error-message">{errors.other_type_text}</div>}
-              </div>
-            )}
-          </div>
-        </div>
+/* Radio Buttons */
+.radio-group {
+  display: flex;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
 
-        {/* Questions 2 & 3 */}
-        <div className="form-row">
-          <div className={`form-group ${errors.date_of_report ? 'error' : ''}`}>
-            <label className="form-label">
-              <span className="question-number">2</span>
-              Date of Report <span className="required">*</span>
-            </label>
-            <input 
-              type="date" 
-              className="form-input"
-              value={form.date_of_report} 
-              onChange={e => update("date_of_report", e.target.value)} 
-            />
-            {errors.date_of_report && <div className="error-message">{errors.date_of_report}</div>}
-          </div>
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
 
-          <div className={`form-group ${errors.time_of_report ? 'error' : ''}`}>
-            <label className="form-label">
-              <span className="question-number">3</span>
-              Time of Report (HH:MM) <span className="required">*</span>
-            </label>
-            <input 
-              type="time" 
-              className="form-input"
-              value={form.time_of_report} 
-              onChange={e => update("time_of_report", e.target.value)} 
-            />
-            {errors.time_of_report && <div className="error-message">{errors.time_of_report}</div>}
-          </div>
-        </div>
+.radio-option input[type="radio"] {
+  display: none;
+}
 
-        {/* Questions 4 & 5 */}
-        <div className="form-row">
-          <div className={`form-group ${errors.impacted_name ? 'error' : ''}`}>
-            <label className="form-label">
-              <span className="question-number">4</span>
-              Name of Impacted Employee / Person <span className="required">*</span>
-            </label>
-            <input 
-              className="form-input"
-              value={form.impacted_name} 
-              onChange={e => update("impacted_name", e.target.value)} 
-              placeholder="Full name"
-            />
-            {errors.impacted_name && <div className="error-message">{errors.impacted_name}</div>}
-          </div>
+.radio-custom {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
 
-          <div className={`form-group ${errors.impacted_employee_id ? 'error' : ''}`}>
-            <label className="form-label">
-              <span className="question-number">5</span>
-              Employee ID of Impacted Employee <span className="required">*</span>
-            </label>
-            <input 
-              className="form-input"
-              value={form.impacted_employee_id} 
-              onChange={e => update("impacted_employee_id", e.target.value)} 
-              placeholder="Employee ID"
-            />
-            {errors.impacted_employee_id && <div className="error-message">{errors.impacted_employee_id}</div>}
-          </div>
-        </div>
+.radio-option input[type="radio"]:checked + .radio-custom {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  box-shadow: inset 0 0 0 3px var(--bg-primary);
+}
 
-        {/* Question 6 */}
-        <div className="form-section">
-          <div className={`form-group ${errors.was_reported_verbally ? 'error' : ''}`}>
-            <label className="form-label">
-              <span className="question-number">6</span>
-              Was this incident reported verbally before submitting this report? <span className="required">*</span>
-            </label>
-            <div className="radio-group">
-              <label className="radio-option">
-                <input 
-                  type="radio" 
-                  checked={form.was_reported_verbally === true} 
-                  onChange={() => update("was_reported_verbally", true)} 
-                />
-                <span className="radio-custom"></span>
-                Yes
-              </label>
-              <label className="radio-option">
-                <input 
-                  type="radio" 
-                  checked={form.was_reported_verbally === false} 
-                  onChange={() => update("was_reported_verbally", false)} 
-                />
-                <span className="radio-custom"></span>
-                No
-              </label>
-            </div>
-            {errors.was_reported_verbally && <div className="error-message">{errors.was_reported_verbally}</div>}
-            <div className="form-note">
-              <FaExclamationTriangle /> ** In case of medical emergency inform local HR
-            </div>
-          </div>
-        </div>
+/* Checkbox Group */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
 
-        {/* Questions 7-21 (Shown after Q6) */}
-        {showAfterSix && (
-          <>
-            {/* Questions 7-8 (Only if Yes to Q6) */}
-            {form.was_reported_verbally === true && (
-              <>
-                <div className="form-section">
-                  <div className={`form-group ${errors.incident_reported_to ? 'error' : ''}`}>
-                    <label className="form-label">
-                      <span className="question-number">7</span>
-                      Incident reported to: (select one or more) <span className="required">*</span>
-                    </label>
-                    <div className="checkbox-group">
-                      {REPORTED_TO_OPTIONS.map(opt => (
-                        <label key={opt} className="checkbox-option">
-                          <input 
-                            type="checkbox"
-                            checked={(form.incident_reported_to || []).includes(opt)}
-                            onChange={() => toggleReportedTo(opt)} 
-                          />
-                          <span className="checkbox-custom"></span>
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                    {errors.incident_reported_to && <div className="error-message">{errors.incident_reported_to}</div>}
-                  </div>
-                </div>
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text-primary);
+}
 
-                <div className="form-section">
-                  <div className={`form-group ${errors.reported_to_details ? 'error' : ''}`}>
-                    <label className="form-label">
-                      <span className="question-number">8</span>
-                      If Yes, to whom (Name and Department): <span className="required">*</span>
-                    </label>
-                    <input 
-                      className="form-input"
-                      value={form.reported_to_details} 
-                      onChange={e => update("reported_to_details", e.target.value)} 
-                      placeholder="Name and department"
-                    />
-                    {errors.reported_to_details && <div className="error-message">{errors.reported_to_details}</div>}
-                  </div>
-                </div>
-              </>
-            )}
+.checkbox-option input[type="checkbox"] {
+  display: none;
+}
 
-            {/* Question 9 */}
-            <div className="form-section">
-              <div className={`form-group ${errors.location ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">9</span>
-                  Location of Incident or Accident (Specify Office / Branch) <span className="required">*</span>
-                </label>
-                <input 
-                  className="form-input"
-                  value={form.location} 
-                  onChange={e => update("location", e.target.value)} 
-                  placeholder="Office / Branch / Specific location"
-                />
-                {errors.location && <div className="error-message">{errors.location}</div>}
-              </div>
-            </div>
+.checkbox-custom {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
 
-            {/* Questions 10-12 */}
-            <div className="form-row">
-              <div className={`form-group ${errors.reported_by_name ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">10</span>
-                  Reported By - Name <span className="required">*</span>
-                </label>
-                <input 
-                  className="form-input"
-                  value={form.reported_by_name} 
-                  onChange={e => update("reported_by_name", e.target.value)} 
-                  placeholder="Your full name"
-                />
-                {errors.reported_by_name && <div className="error-message">{errors.reported_by_name}</div>}
-              </div>
+.checkbox-option input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
 
-              <div className={`form-group ${errors.reported_by_employee_id ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">11</span>
-                  Reported By - Employee ID <span className="required">*</span>
-                </label>
-                <input 
-                  className="form-input"
-                  value={form.reported_by_employee_id} 
-                  onChange={e => update("reported_by_employee_id", e.target.value)} 
-                  placeholder="Your employee ID"
-                />
-                {errors.reported_by_employee_id && <div className="error-message">{errors.reported_by_employee_id}</div>}
-              </div>
-            </div>
+.checkbox-option input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: "✓";
+  color: white;
+  font-size: 0.75rem;
+}
 
-            <div className="form-row">
-              <div className={`form-group ${errors.reported_by_email ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">12</span>
-                  Reported By - Email <span className="required">*</span>
-                </label>
-                <input 
-                  className="form-input"
-                  value={form.reported_by_email} 
-                  onChange={e => update("reported_by_email", e.target.value)} 
-                  placeholder="your.email@westernunion.com"
-                />
-                {errors.reported_by_email && <div className="error-message">{errors.reported_by_email}</div>}
-              </div>
+/* Form Notes */
+.form-note {
+  background: var(--bg-secondary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-              <div className={`form-group ${errors.reported_by_contact ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">12b</span>
-                  Reported By - Contact Number <span className="required">*</span>
-                </label>
-                <input 
-                  className="form-input"
-                  value={form.reported_by_contact} 
-                  onChange={e => update("reported_by_contact", e.target.value)} 
-                  placeholder="Phone number"
-                />
-                {errors.reported_by_contact && <div className="error-message">{errors.reported_by_contact}</div>}
-              </div>
-            </div>
+/* Dynamic Rows */
+.dynamic-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
 
-            {/* Questions 13-14 */}
-            <div className="form-row">
-              <div className={`form-group ${errors.date_of_incident ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">13</span>
-                  Date of Incident Occurred <span className="required">*</span>
-                </label>
-                <input 
-                  type="date" 
-                  className="form-input"
-                  value={form.date_of_incident} 
-                  onChange={e => update("date_of_incident", e.target.value)} 
-                />
-                {errors.date_of_incident && <div className="error-message">{errors.date_of_incident}</div>}
-              </div>
+.dynamic-row .form-input {
+  flex: 1;
+}
 
-              <div className={`form-group ${errors.time_of_incident ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">14</span>
-                  Time of Incident <span className="required">*</span>
-                </label>
-                <input 
-                  type="time" 
-                  className="form-input"
-                  value={form.time_of_incident} 
-                  onChange={e => update("time_of_incident", e.target.value)} 
-                />
-                {errors.time_of_incident && <div className="error-message">{errors.time_of_incident}</div>}
-              </div>
-            </div>
+.btn-remove {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
 
-            {/* Question 15 */}
-            <div className="form-section">
-              <div className={`form-group ${errors.detailed_description ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">15</span>
-                  Detailed Description of Incident <span className="required">*</span>
-                </label>
-                <textarea 
-                  className="form-textarea"
-                  value={form.detailed_description} 
-                  onChange={e => update("detailed_description", e.target.value)} 
-                  rows={5}
-                  placeholder="Provide detailed description of what happened..."
-                />
-                {errors.detailed_description && <div className="error-message">{errors.detailed_description}</div>}
-              </div>
-            </div>
+.btn-remove:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
 
-            {/* Question 16 */}
-            <div className="form-section">
-              <div className={`form-group ${errors.immediate_actions_taken ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">16</span>
-                  Immediate Actions Taken <span className="required">*</span>
-                </label>
-                <textarea 
-                  className="form-textarea"
-                  value={form.immediate_actions_taken} 
-                  onChange={e => update("immediate_actions_taken", e.target.value)} 
-                  rows={3}
-                  placeholder="Describe immediate actions taken..."
-                />
-                {errors.immediate_actions_taken && <div className="error-message">{errors.immediate_actions_taken}</div>}
-              </div>
-            </div>
+.btn-add {
+  background: transparent;
+  border: 2px dashed var(--border-color);
+  color: var(--text-muted);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
 
-            {/* Question 17 */}
-            <div className="form-section">
-              <div className="form-group">
-                <label className="form-label">
-                  <span className="question-number">17</span>
-                  Accompanying Person Name and Contact Details
-                </label>
-                <div className="form-note">You can add multiple accompanying persons.</div>
-                
-                {(form.accompanying_person || []).map((p, i) => (
-                  <div key={i} className="dynamic-row">
-                    <input 
-                      className="form-input"
-                      placeholder="Name" 
-                      value={p.name || ""} 
-                      onChange={e => setAccompany(i, "name", e.target.value)} 
-                    />
-                    <input 
-                      className="form-input"
-                      placeholder="Contact" 
-                      value={p.contact || ""} 
-                      onChange={e => setAccompany(i, "contact", e.target.value)} 
-                    />
-                    <button 
-                      type="button" 
-                      className="btn-remove"
-                      onClick={() => removeAccompany(i)}
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                ))}
-                
-                <button 
-                  type="button" 
-                  className="btn-add"
-                  onClick={addAccompany}
-                >
-                  <FaPlus /> Add Accompanying Person
-                </button>
-              </div>
-            </div>
+.btn-add:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.05);
+}
 
-            {/* Questions 18-19 */}
-            <div className="form-section">
-              <div className={`form-group ${errors.witness_contacts ? 'error' : ''}`}>
-                <label className="form-label">
-                  <span className="question-number">18-19</span>
-                  Name of Witnesses & Contact Numbers
-                </label>
-                <div className="form-note">Add one witness per row.</div>
-                
-                {(form.witnesses || []).map((w, i) => (
-                  <div key={i} className="dynamic-row">
-                    <input 
-                      className="form-input"
-                      placeholder="Witness Name" 
-                      value={w || ""} 
-                      onChange={e => setWitness(i, e.target.value)} 
-                    />
-                    <input 
-                      className="form-input"
-                      placeholder="Contact" 
-                      value={(form.witness_contacts || [])[i] || ""} 
-                      onChange={e => setWitnessContact(i, e.target.value)} 
-                    />
-                    <button 
-                      type="button" 
-                      className="btn-remove"
-                      onClick={() => removeWitness(i)}
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                ))}
-                
-                <button 
-                  type="button" 
-                  className="btn-add"
-                  onClick={addWitness}
-                >
-                  <FaPlus /> Add Witness
-                </button>
-                {errors.witness_contacts && <div className="error-message">{errors.witness_contacts}</div>}
-              </div>
-            </div>
+/* File Upload */
+.file-upload-area {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
 
-            {/* Question 20 */}
-            <div className="form-section">
-              <div className="form-group">
-                <label className="form-label">
-                  <span className="question-number">20</span>
-                  Root cause analysis of the incident/accident
-                </label>
-                <textarea 
-                  className="form-textarea"
-                  value={form.root_cause_analysis} 
-                  onChange={e => update("root_cause_analysis", e.target.value)} 
-                  rows={3}
-                  placeholder="Analysis of what caused the incident..."
-                />
-              </div>
-            </div>
+.file-upload-area:hover {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.02);
+}
 
-            {/* Question 21 */}
-            <div className="form-section">
-              <div className="form-group">
-                <label className="form-label">
-                  <span className="question-number">21</span>
-                  Preventive actions taken during or after incident/accident (If any)
-                </label>
-                <textarea 
-                  className="form-textarea"
-                  value={form.preventive_actions} 
-                  onChange={e => update("preventive_actions", e.target.value)} 
-                  rows={3}
-                  placeholder="Actions to prevent future incidents..."
-                />
-              </div>
-            </div>
+.file-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+}
 
-            {/* File Upload */}
-            <div className="form-section">
-              <div className="form-group">
-                <label className="form-label">
-                  Attach files (images / pdf) — optional
-                </label>
-                <div className="file-upload-area">
-                  <input 
-                    type="file" 
-                    multiple 
-                    onChange={onFilesSelected} 
-                    className="file-input"
-                  />
-                  <div className="file-upload-label">
-                    <span>Click to upload or drag & drop files here</span>
-                    <small>Supports images, PDF, DOC (Max 10MB each)</small>
-                  </div>
-                </div>
-                
-                {files.length > 0 && (
-                  <div className="file-list">
-                    <h4>Attached Files ({files.length})</h4>
-                    {files.map((f, i) => (
-                      <div key={i} className="file-item">
-                        <div className="file-info">
-                          <span className="file-name">{f.name}</span>
-                          <span className="file-size">({Math.round(f.size / 1024)} KB)</span>
-                        </div>
-                        <button 
-                          type="button" 
-                          className="btn-remove"
-                          onClick={() => removeFile(i)}
-                        >
-                          <FaTimes />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
 
-            {/* Form Actions */}
-            <div className="form-actions">
-              <div className="action-buttons">
-                <button type="submit" className="btn-primary">
-                  Submit Incident Report
-                </button>
-                <button type="button" className="btn-secondary" onClick={clearDraft}>
-                  <FaTrash /> Clear Draft
-                </button>
-                <button type="button" className="btn-secondary" onClick={handlePrint}>
-                  <FaPrint /> Print/PDF
-                </button>
-              </div>
-              
-              <div className="form-footer">
-                <p className="confidential-note">
-                  <strong>Confidential:</strong> All information submitted is protected and accessible only to authorized personnel.
-                </p>
-              </div>
-            </div>
-          </>
-        )}
+.file-upload-label small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
 
-        {/* If Q6 not answered yet, show continue button */}
-        {!showAfterSix && form.was_reported_verbally !== null && (
-          <div className="continue-section">
-            <button 
-              type="button" 
-              className="btn-continue"
-              onClick={() => setShowAfterSix(true)}
-            >
-              Continue to Complete Form →
-            </button>
-          </div>
-        )}
-      </form>
-    </div>
-  );
+.file-list {
+  margin-top: 1rem;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.file-size {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Error Messages */
+.error-message {
+  color: var(--error-color);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Continue Section */
+.continue-section {
+  text-align: center;
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.btn-continue {
+  background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-continue:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Form Actions */
+.form-actions {
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-top: 3rem;
+  border: 1px solid var(--border-color);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), #7c3aed);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: var(--radius-md);
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-hover);
+}
+
+.form-footer {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.confidential-note {
+  color: var(--warning-color);
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .incident-form {
+    padding: 1rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .dynamic-row {
+    flex-direction: column;
+  }
+  
+  .dynamic-row .form-input {
+    width: 100%;
+  }
+  
+  .btn-remove {
+    align-self: flex-end;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .radio-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .checkbox-group {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-header {
+    padding: 1rem;
+  }
+  
+  .form-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .logo-icon {
+    font-size: 1.75rem;
+  }
+  
+  .file-upload-area {
+    padding: 1.5rem;
+  }
 }
