@@ -1,335 +1,473 @@
-// C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
-import React, { useEffect, useRef, useState } from "react";
-import "../assets/css/IncidentForm.css";
+/* C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\assets\css\IncidentForm.css */
 
-const INCIDENT_TYPES = [
-  "Medical",
-  "Theft",
-  "Fire",
-  "HR Related Incident",
-  "Outside Work Place Violence",
-  "Threat",
-  "Death",
-  "Fraud",
-  "Any Other Safety / Security Related Incident",
-  "Other"
-];
+:root {
+  --primary-color: #2563eb;
+  --primary-dark: #1d4ed8;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --background-color: #f8fafc;
+  --card-color: #ffffff;
+  --border-color: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --transition: all 0.2s ease;
+}
 
-const REPORTED_TO_OPTIONS = [
-  "Supervisor",
-  "Manager",
-  "HR",
-  "Other Employee",
-  "Not Reported"
-];
+* {
+  box-sizing: border-box;
+}
 
-const emptyForm = {
-  type_of_incident: "",
-  other_type_text: "",
-  date_of_report: "",
-  time_of_report: "",
-  impacted_name: "",
-  impacted_employee_id: "",
-  was_reported_verbally: null,
-  incident_reported_to: [],
-  reported_to_details: "",
-  location: "",
-  reported_by_name: "",
-  reported_by_employee_id: "",
-  reported_by_email: "",
-  reported_by_contact: "",
-  date_of_incident: "",
-  time_of_incident: "",
-  detailed_description: "",
-  immediate_actions_taken: "",
-  accompanying_person: [],
-  witnesses: [],
-  witness_contacts: [],
-  root_cause_analysis: "",
-  preventive_actions: ""
-};
+body {
+  background-color: var(--background-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+}
 
-export default function IncidentForm({ onSubmitted }) {
-  const [form, setForm] = useState(emptyForm);
-  const [files, setFiles] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-  const autosaveRef = useRef(null);
-  const [showAfterSix, setShowAfterSix] = useState(false);
+.incident-card {
+  background: var(--card-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
 
-  useEffect(() => {
-    try {
-      const draft = localStorage.getItem("incident_draft");
-      if (draft) setForm(prev => ({ ...prev, ...JSON.parse(draft) }));
-    } catch (e) {
-      console.warn("Failed to load draft", e);
-    }
-  }, []);
+.incident-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  padding: 2rem 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
 
-  useEffect(() => {
-    clearTimeout(autosaveRef.current);
-    setSaving(true);
-    autosaveRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem("incident_draft", JSON.stringify(form));
-      } catch (e) {
-        console.warn("Autosave failed", e);
-      }
-      setSaving(false);
-    }, 700);
+.incident-header h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
 
-    return () => clearTimeout(autosaveRef.current);
-  }, [form]);
+.incident-header .muted {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  max-width: 800px;
+  line-height: 1.6;
+}
 
-  const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
-  const phoneRegex = /^[+\d][\d\s\-().]{5,}$/;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+.incident-form {
+  padding: 2.5rem;
+}
 
-  const validateField = (name, value) => {
-    switch (name) {
-      case "type_of_incident":
-        if (!value) return "Type of incident is required.";
-        return "";
-      case "other_type_text":
-        if (form.type_of_incident === "Other" && !value) return "Please specify the incident type.";
-        return "";
-      case "date_of_report":
-        if (!value) return "Date of report is required.";
-        return "";
-      case "time_of_report":
-        if (!value) return "Time of report is required.";
-        return "";
-      case "impacted_name":
-        if (!value) return "Impacted name is required.";
-        return "";
-      case "impacted_employee_id":
-        if (!value) return "Impacted employee ID is required.";
-        if (!empIdRegex.test(value)) return "Invalid employee ID.";
-        return "";
-      case "was_reported_verbally":
-        if (value === null) return "Select Yes or No.";
-        return "";
-      case "incident_reported_to":
-        if (form.was_reported_verbally && (!value || value.length === 0)) return "Select at least one option.";
-        return "";
-      case "reported_to_details":
-        if (form.was_reported_verbally && !value?.trim()) return "Provide name and department.";
-        return "";
-      case "location":
-        if (!value?.trim()) return "Location is required.";
-        return "";
-      case "reported_by_name":
-        if (!value) return "Reporter name is required.";
-        return "";
-      case "reported_by_employee_id":
-        if (!value) return "Reporter employee ID is required.";
-        if (!empIdRegex.test(value)) return "Invalid employee ID.";
-        return "";
-      case "reported_by_email":
-        if (!value) return "Reporter email is required.";
-        if (!emailRegex.test(value)) return "Invalid email.";
-        return "";
-      case "reported_by_contact":
-        if (!value) return "Reporter contact is required.";
-        if (!phoneRegex.test(value)) return "Invalid contact.";
-        return "";
-      case "date_of_incident":
-        if (!value) return "Date of incident is required.";
-        return "";
-      case "time_of_incident":
-        if (!value) return "Time of incident is required.";
-        return "";
-      case "detailed_description":
-        if (!value?.trim() || value.length < 5) return "Provide detailed description (min 5 chars).";
-        return "";
-      case "immediate_actions_taken":
-        if (!value?.trim()) return "Immediate actions required.";
-        return "";
-      default:
-        return "";
-    }
-  };
+.row {
+  margin-bottom: 1.75rem;
+  position: relative;
+}
 
-  const updateField = (field, value) => {
-    if (field === "was_reported_verbally") setShowAfterSix(true);
-    setForm(prev => ({ ...prev, [field]: value }));
-    setErrors(prev => ({ ...prev, [field]: validateField(field, value) }));
-  };
+.row label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const eFields = {};
-    Object.keys(form).forEach(k => {
-      const err = validateField(k, form[k]);
-      if (err) eFields[k] = err;
-    });
-    if (Object.keys(eFields).length > 0) {
-      setErrors(eFields);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+.row .muted {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
 
-    const padTime = (t) => t && t.length === 5 ? `${t}:00` : t;
+.required {
+  color: var(--danger-color);
+  font-weight: 700;
+  margin-left: 2px;
+}
 
-    const payload = { ...form, time_of_report: padTime(form.time_of_report), time_of_incident: padTime(form.time_of_incident) };
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="file"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  background-color: white;
+  color: var(--text-primary);
+}
 
-    try {
-      const fd = new FormData();
-      fd.append("payload", JSON.stringify(payload));
-      files.forEach(f => fd.append("proofs", f));
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
 
-      const res = await fetch("http://localhost:8000/incident/create", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
 
-      alert("Incident submitted successfully (ID: " + data.id + ")");
-      localStorage.removeItem("incident_draft");
-      setForm(emptyForm);
-      setFiles([]);
-      setErrors({});
-      if (onSubmitted) onSubmitted(data);
-    } catch (err) {
-      console.error(err);
-      alert("Submit failed: " + (err.message || err));
-    }
-  };
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25em;
+  padding-right: 3rem;
+}
 
-  const handleInputNumber = (field, val) => {
-    const numericVal = val.replace(/[^0-9]/g, "");
-    updateField(field, numericVal);
-  };
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
 
-  const addAccompany = () => updateField("accompanying_person", [...(form.accompanying_person || []), { name: "", contact: "" }]);
-  const removeAccompany = (i) => updateField("accompanying_person", form.accompanying_person.filter((_, idx) => idx !== i));
-  const setAccompany = (i, key, val) => {
-    const arr = [...form.accompanying_person];
-    arr[i] = { ...arr[i], [key]: val };
-    updateField("accompanying_person", arr);
-  };
+.row-grid-2,
+.row-grid-3 {
+  display: grid;
+  gap: 1.5rem;
+}
 
-  const addWitness = () => {
-    updateField("witnesses", [...(form.witnesses || []), ""]);
-    updateField("witness_contacts", [...(form.witness_contacts || []), ""]);
-  };
-  const removeWitness = (i) => {
-    updateField("witnesses", form.witnesses.filter((_, idx) => idx !== i));
-    updateField("witness_contacts", form.witness_contacts.filter((_, idx) => idx !== i));
-  };
-  const setWitness = (i, val) => updateField("witnesses", form.witnesses.map((w, idx) => idx === i ? val : w));
-  const setWitnessContact = (i, val) => {
-    const cleanVal = val.replace(/[^0-9]/g, "");
-    updateField("witness_contacts", form.witness_contacts.map((w, idx) => idx === i ? cleanVal : w));
-  };
+.row-grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
 
-  const onFilesSelected = e => {
-    const selected = Array.from(e.target.files || []);
-    setFiles(prev => [...prev, ...selected]);
-    e.target.value = "";
-  };
+.row-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
 
-  const removeFile = i => setFiles(prev => prev.filter((_, idx) => idx !== i));
-  const clearDraft = () => {
-    localStorage.removeItem("incident_draft");
-    setForm(emptyForm);
-    setFiles([]);
-    setErrors({});
-  };
+@media (max-width: 768px) {
+  .row-grid-2,
+  .row-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .incident-form {
+    padding: 1.5rem;
+  }
+  
+  .incident-header {
+    padding: 1.5rem;
+  }
+}
 
-  return (
-    <div className="incident-card">
-      <div className="incident-header">
-        <h2>Incident Reporting Form</h2>
-        <div className="muted">Please fill all required fields. Errors will appear immediately.</div>
-      </div>
+.radio-row {
+  display: flex;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
 
-      <form className="incident-form" onSubmit={handleSubmit} noValidate>
-        {/* Type of Incident */}
-        <div className="row">
-          <label>1. Type of Incident / Accident <span className="required">*</span></label>
-          <select value={form.type_of_incident} onChange={e => updateField("type_of_incident", e.target.value)}>
-            <option value="">-- select type --</option>
-            {INCIDENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          {form.type_of_incident === "Other" && (
-            <input className="mt8" placeholder="Specify incident" value={form.other_type_text} onChange={e => updateField("other_type_text", e.target.value)} />
-          )}
-          {errors.type_of_incident && <div className="error">{errors.type_of_incident}</div>}
-          {errors.other_type_text && <div className="error">{errors.other_type_text}</div>}
-        </div>
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 0;
+}
 
-        {/* Date & Time of Report */}
-        <div className="row row-grid-2">
-          <div>
-            <label>2. Date of Report <span className="required">*</span></label>
-            <input type="date" value={form.date_of_report} onChange={e => updateField("date_of_report", e.target.value)} />
-            {errors.date_of_report && <div className="error">{errors.date_of_report}</div>}
-          </div>
-          <div>
-            <label>3. Time of Report <span className="required">*</span></label>
-            <input type="time" value={form.time_of_report} onChange={e => updateField("time_of_report", e.target.value)} />
-            {errors.time_of_report && <div className="error">{errors.time_of_report}</div>}
-          </div>
-        </div>
+.radio-row input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--primary-color);
+}
 
-        {/* Impacted Employee */}
-        <div className="row row-grid-2">
-          <div>
-            <label>4. Impacted Name <span className="required">*</span></label>
-            <input value={form.impacted_name} onChange={e => updateField("impacted_name", e.target.value)} />
-            {errors.impacted_name && <div className="error">{errors.impacted_name}</div>}
-          </div>
-          <div>
-            <label>5. Impacted Employee ID <span className="required">*</span></label>
-            <input value={form.impacted_employee_id} onChange={e => handleInputNumber("impacted_employee_id", e.target.value)} />
-            {errors.impacted_employee_id && <div className="error">{errors.impacted_employee_id}</div>}
-          </div>
-        </div>
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
 
-        {/* Was Reported Verbally */}
-        <div className="row">
-          <label>6. Was incident reported verbally? <span className="required">*</span></label>
-          <div className="radio-row">
-            <label><input type="radio" checked={form.was_reported_verbally === true} onChange={() => updateField("was_reported_verbally", true)} /> Yes</label>
-            <label><input type="radio" checked={form.was_reported_verbally === false} onChange={() => updateField("was_reported_verbally", false)} /> No</label>
-          </div>
-          {errors.was_reported_verbally && <div className="error">{errors.was_reported_verbally}</div>}
-        </div>
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
 
-        {showAfterSix && (
-          <>
-            {/* Conditional Questions */}
-            {form.was_reported_verbally && (
-              <>
-                <div className="row">
-                  <label>7. Reported to <span className="required">*</span></label>
-                  <select value={form.incident_reported_to[0] || ""} onChange={e => updateField("incident_reported_to", [e.target.value])}>
-                    <option value="">-- select --</option>
-                    {REPORTED_TO_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                  {errors.incident_reported_to && <div className="error">{errors.incident_reported_to}</div>}
-                </div>
+.btn:active {
+  transform: translateY(0);
+}
 
-                <div className="row">
-                  <label>8. Name & Department <span className="required">*</span></label>
-                  <input value={form.reported_to_details} onChange={e => updateField("reported_to_details", e.target.value)} />
-                  {errors.reported_to_details && <div className="error">{errors.reported_to_details}</div>}
-                </div>
-              </>
-            )}
+.btn.primary {
+  background-color: var(--primary-color);
+  color: white;
+}
 
-            {/* Remaining Fields: Location, Reporter, Incident Details, Witnesses, Files */}
-            {/* ... similar structure with live validation and number-only inputs ... */}
-            {/* For brevity, the rest of the fields follow the same pattern as above */}
-          </>
-        )}
+.btn.primary:hover {
+  background-color: var(--primary-dark);
+}
 
-        <div className="form-actions">
-          <button type="submit" className="btn primary">Submit</button>
-          <button type="button" className="btn outline" onClick={clearDraft}>Clear Draft</button>
-        </div>
+.btn.outline {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+}
 
-        <div className="muted">{saving ? "Saving draft..." : "Draft saved locally"}</div>
-      </form>
-    </div>
-  );
+.btn.outline:hover {
+  background-color: rgba(37, 99, 235, 0.05);
+}
+
+.btn.small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error::before {
+  content: "⚠";
+}
+
+.accompany-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(248, 250, 252, 0.5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+@media (max-width: 640px) {
+  .accompany-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.file-list {
+  margin-top: 1rem;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--background-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.file-item span {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  flex-grow: 1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.form-actions .btn {
+  min-width: 120px;
+  justify-content: center;
+}
+
+.form-actions .muted {
+  margin-left: auto;
+  font-size: 0.875rem;
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+/* Loading state for draft save */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.saving::after {
+  content: "Saving draft...";
+  animation: pulse 1.5s infinite;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background-color: white;
+    padding: 0;
+  }
+  
+  .incident-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .form-actions,
+  .btn {
+    display: none !important;
+  }
+  
+  .incident-header {
+    background: none;
+    color: black;
+    border-bottom: 2px solid #000;
+  }
+  
+  .incident-header .muted {
+    color: #666;
+  }
+}
+
+/* Progress indicator */
+.form-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2rem 0 3rem;
+  position: relative;
+}
+
+.form-progress::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--border-color);
+  z-index: 1;
+}
+
+.progress-step {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progress-step.active .step-circle {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.progress-step.completed .step-circle {
+  background-color: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.step-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.progress-step.active .step-label {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* Section dividers */
+.section-divider {
+  display: flex;
+  align-items: center;
+  margin: 2.5rem 0 1.5rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.section-divider span {
+  padding: 0 1rem;
+}
+
+/* Enhanced focus states */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Animation for showing rest of form */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.incident-form > *:nth-child(n+7) {
+  animation: slideDown 0.3s ease-out;
 }
