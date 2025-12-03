@@ -1,396 +1,216 @@
-Absolutely — I will give you a clean, simple, company-ready project documentation for both Frontend + Backend that you can share with managers, HR, security, IT, or leadership.
-
-This document will be written in clear, simple, organized English, easy for non-technical people to understand but still professional.
-
-
----
-
-📘 Western Union – Incident Reporting & Management System
-
-Project Documentation (Frontend + Backend)
-
-Version 1.0 — Prepared for Organization Use
-
-
----
-
-1. Project Overview
-
-The Incident Reporting & Management System is a web application designed for Western Union employees, managers, HR, and security teams to report and manage workplace incidents.
-
-The system allows any employee to submit incident reports online, and authorized teams can review, analyze, and take actions based on the information collected.
-
-This platform improves:
-
-✔ Safety
-✔ Compliance
-✔ Transparency
-✔ Response speed
-✔ Data accuracy
-
-
----
-
-2. Project Goals
-
-🎯 Primary Objectives
-
-1. Provide a simple digital form for reporting incidents.
-
-
-2. Store all incident data in a secure backend system.
-
-
-3. Allow HR & Security teams to view, search, and analyze incident patterns.
-
-
-4. Maintain accurate records for audits, compliance, and investigations.
-
-
-5. Improve workplace safety and incident response time.
-
-
-
-
----
-
-3. System Features
-
-✔ Frontend Features (Employee-facing)
-
-1. Incident Form
-
-Employees can submit:
-
-Type of incident (Medical, Theft, Fire, HR issue, Violence, Death, Fraud, etc.)
-
-Date and time of report
-
-Name & employee ID of impacted person
-
-Was it verbally reported earlier?
-
-If yes → whom it was reported to
-
-Location of incident
-
-Reporter details
-
-Witnesses
-
-Accompanying persons
-
-Detailed incident description
-
-Root cause (optional)
-
-Preventive actions (optional)
-
-
-2. Auto-Save Feature
-
-The form automatically saves draft data in browser localStorage.
-
-If browser closes unexpectedly → data is not lost.
-
-
-3. Incident List (Admin/Security/HR)
-
-View all reported incidents
-
-Search incidents by:
-
-Type
-
-Impacted person
-
-Reported by
-
-Location
-
-
-Table format
-
-"View" button shows complete incident details
-
-Modal popup to see incident JSON data
-
-
-4. Simple, responsive UI
-
-Clean, professional layout
-
-Suitable for desktop & laptop usage
-
-Separate dashboard and form area
-
-
-
----
-
-4. Backend Features (API + Database)
-
-✔ Backend (FastAPI / Python)
-
-1. Create Incident API
-
-POST /incident/create
-
-Accepts full incident report
-
-Validates required fields
-
-Saves record to database
-
-Returns success response
-
-
-2. Get All Incidents API
-
-GET /incident/list
-
-Returns list of all incidents
-
-Used by IncidentList component
-
-
-3. Backend Validations
-
-Ensures:
-
-Required fields are provided
-
-Data types are correct
-
-Large text fields are allowed
-
-Arrays (witnesses, accompanying people) are accepted
-
-
-4. Database Storage
-
-Stores incident reports in a structured format
-
-Supports future analytics
-
-
-
----
-
-5. Technology Stack
-
-🟦 Frontend
-
-Component	Technology
-
-Framework	React.js
-Styling	CSS (custom)
-State Handling	useState, useEffect hooks
-API Calls	fetch / axios
-Auto-save	browser localStorage
-UI Components	Custom React components
-
-
-
----
-
-🟧 Backend
-
-Component	Technology
-
-Framework	FastAPI (Python)
-Data Models	Pydantic
-Database	SQLite / PostgreSQL (based on deployment)
-API Routes	/incident/create, /incident/list
-Validation	JSON & Pydantic schema
-Hosting (future)	AWS / Azure / Local server
-
-
-
----
-
-6. User Types
-
-👤 1. Normal Employee
-
-Can fill the incident reporting form
-
-Can submit incident once
-
-Cannot view all incidents
-
-
-🛡 2. HR / Security / Admin
-
-Can view all incidents
-
-Can search incidents
-
-Can download or analyze data
-
-Can use dashboard for future planning
-
-
-
----
-
-7. Workflow
-
-Step 1 → Employee opens Incident Form
-
-Step 2 → Fills details (auto-save works)
-
-Step 3 → Submits the report
-
-Step 4 → Backend validates and stores in DB
-
-Step 5 → HR/Security team sees the report in Incident List
-
-Step 6 → Data used for:
-
-Workplace improvements
-
-Risk management
-
-Compliance
-
-Safety tracking
-
-Investigations
-
-
-
----
-
-8. Future Scope (Phase 2 & Phase 3)
-
-This project can be expanded easily.
-Here are recommended future enhancements:
-
-Phase 2 – Medium Priority
-
-✔ Login system (Employee / HR / Admin roles)
-✔ Email notification to HR/security
-✔ Export to Excel / PDF
-✔ Graphs and analytics dashboard
-✔ Incident severity rating
-✔ File uploads (images/videos)
-
-Phase 3 – Advanced Features
-
-✔ AI-based incident classification
-✔ Predictive analytics (risk scoring)
-✔ Automatic alerts for high-severity cases
-✔ Integration with HRMS
-✔ Mobile app version
-✔ Workflow escalation with approvals
-
-
----
-
-9. Project Folder Structure (Frontend)
-
-frontend/
-│
-├── src/
-│   ├── components/
-│   │     ├── IncidentForm.jsx
-│   │     └── IncidentList.jsx
-│   │
-│   ├── pages/
-│   │     └── IncidentDashboard.jsx
-│   │
-│   ├── assets/css/
-│   │     └── IncidentForm.css
-│   │
-│   ├── App.js
-│   └── index.js
-│
-└── package.json
-
-
----
-
-10. Deployment Plan
-
-✔ Phase 1 Deployment
-
-Host backend on internal server (FastAPI)
-
-Host frontend on Netlify / Vercel / Internal web server
-
-Connect both via API
-
-
-✔ Phase 2 Deployment
-
-Secure endpoints
-
-Add login/authentication
-
-Move to PostgreSQL
-
-Backup/storage policies
-
-
-
----
-
-11. Roles & Responsibilities
-
-🟩 Developer
-
-Build frontend + backend
-
-Maintain API
-
-Fix issues
-
-
-🟨 Tester
-
-Test form validation
-
-API testing
-
-Check data accuracy
-
-
-🟪 HR / Security Team
-
-Review incidents
-
-Take actions
-
-Conduct analysis
-
-
-
----
-
-12. Conclusion
-
-This Incident Reporting & Management System helps Western Union to:
-
-✔ Improve workplace safety
-✔ Maintain accurate incident records
-✔ Track risks with real-time data
-✔ Enable transparency & faster investigations
-✔ Support compliance & legal reporting
-
-The system is scalable, maintainable, and ready for future enhancements.
-
-
----
-
-✅ Done — Full project documentation delivered
-
-If you want:
-
-📁 PDF version
-📁 Word file (docx)
-📁 Company-branded version
-📁 Logo integration
-📁 UI Mockups
-
-Just tell me "Give PDF" or "Give DOCX", and I will generate it.
+now give me backned strcute also venv 
+C:\Users\W0024618\Desktop\IncidentDashboard\Backend
+
+# incident_report.py
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, validator
+from typing import Optional, List, Any
+from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON  # maps to TEXT in SQLite
+from datetime import datetime, date
+import zoneinfo
+import json
+
+# reuse DB Base/engine/SessionLocal exported from monthly_sheet
+from monthly_sheet import Base, engine, SessionLocal
+
+router = APIRouter(prefix="/incident", tags=["incident"])
+
+SERVER_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
+
+# -------------------------
+# SQLAlchemy model
+# -------------------------
+class IncidentReport(Base):
+    __tablename__ = "incident_reports"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    type_of_incident = Column(String, nullable=True)   # Medical / Theft / ...
+    date_of_report = Column(String, nullable=True)     # stored as ISO date string
+    time_of_report = Column(String, nullable=True)     # HH:MM
+    impacted_name = Column(String, nullable=True)
+    impacted_employee_id = Column(String, nullable=True)
+    was_reported_verbally = Column(Integer, default=0)  # 1 = Yes, 0 = No
+    # if yes: who it was reported to (list of choices) and details about to-whom
+    incident_reported_to = Column(String, nullable=True)   # CSV or JSON string
+    reported_to_details = Column(String, nullable=True)    # "If yes, to whom (Name and Department)"
+    # common fields
+    location = Column(String, nullable=True)  # Location of Incident or Accident (Office / Branch)
+    reported_by_name = Column(String, nullable=True)
+    reported_by_employee_id = Column(String, nullable=True)
+    reported_by_contact = Column(String, nullable=True)
+    date_of_incident = Column(String, nullable=True)    # ISO date string
+    time_of_incident = Column(String, nullable=True)
+    detailed_description = Column(Text, nullable=True)
+    immediate_actions_taken = Column(Text, nullable=True)
+    accompanying_person = Column(SQLITE_JSON, nullable=True)   # JSON array or null
+    witnesses = Column(SQLITE_JSON, nullable=True)            # JSON array
+    witness_contacts = Column(SQLITE_JSON, nullable=True)     # JSON array
+    root_cause_analysis = Column(Text, nullable=True)
+    preventive_actions = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+# ensure table exists
+Base.metadata.create_all(bind=engine)
+
+# -------------------------
+# Pydantic Schemas
+# -------------------------
+class IncidentCreate(BaseModel):
+    type_of_incident: Optional[str]
+    date_of_report: Optional[str]      # allow ISO string or plain date string
+    time_of_report: Optional[str]      # "HH:MM"
+    impacted_name: Optional[str]
+    impacted_employee_id: Optional[str]
+    was_reported_verbally: bool
+    # if was_reported_verbally == True:
+    incident_reported_to: Optional[List[str]] = None
+    reported_to_details: Optional[str] = None
+
+    # fields used in both branches
+    location: Optional[str] = None
+    reported_by_name: Optional[str] = None
+    reported_by_employee_id: Optional[str] = None
+    reported_by_contact: Optional[str] = None
+    date_of_incident: Optional[str] = None
+    time_of_incident: Optional[str] = None
+    detailed_description: Optional[str] = None
+    immediate_actions_taken: Optional[str] = None
+    accompanying_person: Optional[List[dict]] = None
+    witnesses: Optional[List[str]] = None
+    witness_contacts: Optional[List[str]] = None
+    root_cause_analysis: Optional[str] = None
+    preventive_actions: Optional[str] = None
+
+    @validator("incident_reported_to", always=True)
+    def validate_reported_to(cls, v, values):
+        # When was_reported_verbally is True, incident_reported_to must be provided (at least one)
+        if values.get("was_reported_verbally"):
+            if not v or not isinstance(v, list) or len(v) == 0:
+                raise ValueError("When was_reported_verbally is True, provide incident_reported_to (list of options).")
+        return v
+
+    @validator("reported_to_details", always=True)
+    def validate_reported_to_details(cls, v, values):
+        # recommended to provide details when was_reported_verbally is True
+        if values.get("was_reported_verbally"):
+            # not strictly required, but warn/require: here we require at least an empty string allowed
+            if v is None:
+                return ""  # keep DB field non-null if caller omits
+        return v
+
+class IncidentOut(BaseModel):
+    id: int
+    type_of_incident: Optional[str]
+    date_of_report: Optional[str]
+    time_of_report: Optional[str]
+    impacted_name: Optional[str]
+    impacted_employee_id: Optional[str]
+    was_reported_verbally: bool
+    incident_reported_to: Optional[List[str]] = None
+    reported_to_details: Optional[str] = None
+    location: Optional[str] = None
+    reported_by_name: Optional[str] = None
+    reported_by_employee_id: Optional[str] = None
+    reported_by_contact: Optional[str] = None
+    date_of_incident: Optional[str] = None
+    time_of_incident: Optional[str] = None
+    detailed_description: Optional[str] = None
+    immediate_actions_taken: Optional[str] = None
+    accompanying_person: Optional[List[dict]] = None
+    witnesses: Optional[List[str]] = None
+    witness_contacts: Optional[List[str]] = None
+    root_cause_analysis: Optional[str] = None
+    preventive_actions: Optional[str] = None
+    created_at: Optional[datetime]
+
+    class Config:
+        orm_mode = True
+
+# -------------------------
+# Endpoints
+# -------------------------     
+@router.post("/create", response_model=IncidentOut)
+def create_incident(payload: IncidentCreate):
+    """
+    Create a new incident record.
+    Validation: enforces incident_reported_to when was_reported_verbally is True.
+    """
+    db = SessionLocal()
+    try:
+        inst = IncidentReport(
+            type_of_incident = payload.type_of_incident,
+            date_of_report = payload.date_of_report,
+            time_of_report = payload.time_of_report,
+            impacted_name = payload.impacted_name,
+            impacted_employee_id = payload.impacted_employee_id,
+            was_reported_verbally = 1 if payload.was_reported_verbally else 0,
+            incident_reported_to = json.dumps(payload.incident_reported_to) if payload.incident_reported_to else None,
+            reported_to_details = payload.reported_to_details,
+            location = payload.location,
+            reported_by_name = payload.reported_by_name,
+            reported_by_employee_id = payload.reported_by_employee_id,
+            reported_by_contact = payload.reported_by_contact,
+            date_of_incident = payload.date_of_incident,
+            time_of_incident = payload.time_of_incident,
+            detailed_description = payload.detailed_description,
+            immediate_actions_taken = payload.immediate_actions_taken,
+            accompanying_person = payload.accompanying_person,
+            witnesses = payload.witnesses,
+            witness_contacts = payload.witness_contacts,
+            root_cause_analysis = payload.root_cause_analysis,
+            preventive_actions = payload.preventive_actions,
+            created_at = datetime.now(tz=SERVER_TZ)
+        )
+        db.add(inst)
+        db.commit()
+        db.refresh(inst)
+
+        # convert JSON-string fields back to Python lists for response_model
+        out = inst
+        try:
+            if out.incident_reported_to:
+                out.incident_reported_to = json.loads(out.incident_reported_to)
+        except Exception:
+            out.incident_reported_to = None
+
+        return out
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+@router.get("/list", response_model=List[IncidentOut])
+def list_incidents(limit: int = 200):
+    db = SessionLocal()
+    try:
+        rows = db.query(IncidentReport).order_by(IncidentReport.created_at.desc()).limit(limit).all()
+        # convert JSON-string incident_reported_to to list
+        for r in rows:
+            try:
+                if isinstance(r.incident_reported_to, str):
+                    r.incident_reported_to = json.loads(r.incident_reported_to)
+            except Exception:
+                r.incident_reported_to = None
+        return rows
+    finally:
+        db.close()
+
+
+@router.get("/{incident_id}", response_model=IncidentOut)
+def get_incident(incident_id: int):
+    db = SessionLocal()
+    try:
+        row = db.query(IncidentReport).filter(IncidentReport.id == incident_id).first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Incident not found")
+        try:
+            if isinstance(row.incident_reported_to, str):
+                row.incident_reported_to = json.loads(row.incident_reported_to)
+        except Exception:
+            row.incident_reported_to = None
+        return row
+    finally:
+        db.close()
