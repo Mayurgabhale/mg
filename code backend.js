@@ -1,7 +1,3 @@
-i want to crete in this form live validation, at the time i get the error message
-and only number file only can number if Contact Number  then perecfet length on number this is global form in this we got all country numbe so use power full algorithm 
-alos email and all fild ok but i want live validation ok 
-dont make any other changes ok or dont chan otehr code or logic
 // C:\Users\W0024618\Desktop\IncidentDashboard\frontend\src\components\IncidentForm.jsx
 import React, { useEffect, useRef, useState } from "react";
 import "../assets/css/IncidentForm.css";
@@ -63,6 +59,9 @@ export default function IncidentForm({ onSubmitted }) {
   // 👇 NEW: Show only 1–6 initially
   const [showAfterSix, setShowAfterSix] = useState(false);
 
+  // NEW: touched fields (to avoid showing required errors before user interacts)
+  const [touched, setTouched] = useState({});
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("incident_draft");
@@ -87,11 +86,198 @@ export default function IncidentForm({ onSubmitted }) {
     return () => clearTimeout(autosaveRef.current);
   }, [form]);
 
+  // regexes used by both live validation and final validate()
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
+
+  /**
+   * PHONE UTILITIES
+   * - only allow a single leading '+' (optional) and digits
+   * - enforce E.164 acceptable range: 7..15 digits total (this is global-friendly)
+   */
+
+  const sanitizePhoneInput = (val) => {
+    if (!val && val !== "") return val;
+    // remove everything except digits and plus
+    let v = String(val).replace(/[^\d+]/g, "");
+    // allow + only at start, and only one
+    v = v.replace(/\++/g, "+");
+    if (v.indexOf("+") > 0) {
+      // move any '+' not at start to start only if existed
+      v = "+" + v.replace(/\+/g, "");
+    }
+    // if multiple plus signs, keep single leading +
+    if (v.startsWith("+")) {
+      v = "+" + v.slice(1).replace(/\+/g, "");
+    } else {
+      v = v.replace(/\+/g, "");
+    }
+    return v;
+  };
+
+  const countPhoneDigits = (val) => {
+    if (!val) return 0;
+    return (String(val).replace(/\D/g, "") || "").length;
+  };
+
+  const isValidPhoneLive = (val) => {
+    if (!val) return false;
+    const digits = countPhoneDigits(val);
+    // E.164: maximum 15 digits; set minimum to 7 (common smallest usable numbers)
+    return digits >= 7 && digits <= 15;
+  };
+
+  // validate single field live and update errors state accordingly
+  const validateField = (key, value, extra = {}) => {
+    // extra can include index for witness/accompany or other context
+    setErrors(prev => {
+      const next = { ...prev };
+
+      const setErr = (k, msg) => (next[k] = msg);
+      const clearErr = (k) => { if (next[k]) delete next[k]; };
+
+      switch (key) {
+        case "type_of_incident":
+          if (!value && touched.type_of_incident) setErr("type_of_incident", "Type is required.");
+          else clearErr("type_of_incident");
+          break;
+        case "other_type_text":
+          if (form.type_of_incident === "Other" && (!value || !value.trim()) && touched.other_type_text)
+            setErr("other_type_text", "Please enter the incident type.");
+          else clearErr("other_type_text");
+          break;
+        case "date_of_report":
+          if (!value && touched.date_of_report) setErr("date_of_report", "Date of report required.");
+          else clearErr("date_of_report");
+          break;
+        case "time_of_report":
+          if (!value && touched.time_of_report) setErr("time_of_report", "Time of report required.");
+          else clearErr("time_of_report");
+          break;
+        case "impacted_name":
+          if (!value && touched.impacted_name) setErr("impacted_name", "Impacted name is required.");
+          else clearErr("impacted_name");
+          break;
+        case "impacted_employee_id":
+          if (!value && touched.impacted_employee_id) setErr("impacted_employee_id", "Impacted employee ID is required.");
+          else if (value && !empIdRegex.test(value)) setErr("impacted_employee_id", "Invalid employee ID.");
+          else clearErr("impacted_employee_id");
+          break;
+        case "was_reported_verbally":
+          if (value === null && touched.was_reported_verbally) setErr("was_reported_verbally", "Please select Yes or No.");
+          else clearErr("was_reported_verbally");
+          break;
+        case "incident_reported_to":
+          if (form.was_reported_verbally === true && (!value || !value.length) && touched.incident_reported_to)
+            setErr("incident_reported_to", "Select at least one option.");
+          else clearErr("incident_reported_to");
+          break;
+        case "reported_to_details":
+          if (form.was_reported_verbally === true && (!value || !value.trim()) && touched.reported_to_details)
+            setErr("reported_to_details", "Provide name & department.");
+          else clearErr("reported_to_details");
+          break;
+        case "location":
+          if ((!value || !String(value).trim()) && touched.location) setErr("location", "Location is required.");
+          else clearErr("location");
+          break;
+        case "reported_by_name":
+          if (!value && touched.reported_by_name) setErr("reported_by_name", "Reporter name required.");
+          else clearErr("reported_by_name");
+          break;
+        case "reported_by_employee_id":
+          if (!value && touched.reported_by_employee_id) setErr("reported_by_employee_id", "Reporter employee ID required.");
+          else if (value && !empIdRegex.test(value)) setErr("reported_by_employee_id", "Invalid employee ID.");
+          else clearErr("reported_by_employee_id");
+          break;
+        case "reported_by_email":
+          if (!value && touched.reported_by_email) setErr("reported_by_email", "Reporter email required.");
+          else if (value && !emailRegex.test(value)) setErr("reported_by_email", "Invalid email address.");
+          else clearErr("reported_by_email");
+          break;
+        case "reported_by_contact":
+          if (!value && touched.reported_by_contact) setErr("reported_by_contact", "Reporter contact required.");
+          else if (value && !isValidPhoneLive(value)) setErr("reported_by_contact", "Invalid phone number — must be 7 to 15 digits (can include leading +).");
+          else clearErr("reported_by_contact");
+          break;
+        case "date_of_incident":
+          if (!value && touched.date_of_incident) setErr("date_of_incident", "Date of incident required.");
+          else clearErr("date_of_incident");
+          break;
+        case "time_of_incident":
+          if (!value && touched.time_of_incident) setErr("time_of_incident", "Time of incident required.");
+          else clearErr("time_of_incident");
+          break;
+        case "detailed_description":
+          if ((!value || !String(value).trim() || String(value).length < 5) && touched.detailed_description)
+            setErr("detailed_description", "Please provide a detailed description (min 5 chars).");
+          else clearErr("detailed_description");
+          break;
+        case "immediate_actions_taken":
+          if ((!value || !String(value).trim()) && touched.immediate_actions_taken)
+            setErr("immediate_actions_taken", "Immediate actions are required.");
+          else clearErr("immediate_actions_taken");
+          break;
+        default:
+          break;
+      }
+
+      // witness / accompanying contact validation by index if provided
+      if (extra.type === "witness_contact") {
+        const idx = extra.index;
+        const keyName = `witness_contacts_${idx}`;
+        if (!value && touched[`witness_contacts_${idx}`]) {
+          next[keyName] = "Contact required for this witness.";
+        } else if (value && !isValidPhoneLive(value)) {
+          next[keyName] = "Invalid phone number — must be 7 to 15 digits (can include leading +).";
+        } else {
+          if (next[keyName]) delete next[keyName];
+        }
+      }
+
+      if (extra.type === "accompany_contact") {
+        const idx = extra.index;
+        const keyName = `accompanying_person_contact_${idx}`;
+        if (!value && touched[keyName]) {
+          next[keyName] = "Contact required for this person.";
+        } else if (value && !isValidPhoneLive(value)) {
+          next[keyName] = "Invalid phone number — must be 7 to 15 digits (can include leading +).";
+        } else {
+          if (next[keyName]) delete next[keyName];
+        }
+      }
+
+      // cleanup: if witness count mismatch error existed but counts fixed, remove it
+      if ((form.witnesses || []).length === (form.witness_contacts || []).length) {
+        if (next.witness_contacts) delete next.witness_contacts;
+      }
+
+      return next;
+    });
+  };
+
   const update = (k, v) => {
+    // mark touched
+    setTouched(prev => ({ ...prev, [k]: true }));
+
+    // Special handling for phone-like fields: sanitize input
+    if (k === "reported_by_contact") {
+      v = sanitizePhoneInput(v);
+    }
+
+    // Update state
+    setForm(prev => ({ ...prev, [k]: v }));
+
+    // Run live validation for this field
+    validateField(k, v);
+
+    // For fields that depend on others, also validate dependent fields:
+    if (k === "type_of_incident") validateField("other_type_text", form.other_type_text);
     if (k === "was_reported_verbally") {
       setShowAfterSix(true); // 👈 When user answers Q6 → show rest
+      validateField("incident_reported_to", form.incident_reported_to);
+      validateField("reported_to_details", form.reported_to_details);
     }
-    setForm(prev => ({ ...prev, [k]: v }));
   };
 
   const toggleReportedTo = (opt) => {
@@ -107,11 +293,35 @@ export default function IncidentForm({ onSubmitted }) {
     const arr = [...(form.accompanying_person || [])];
     arr.splice(i, 1);
     update("accompanying_person", arr);
+    // clear any contact error for this index
+    setErrors(prev => {
+      const next = { ...prev };
+      const keyName = `accompanying_person_contact_${i}`;
+      if (next[keyName]) delete next[keyName];
+      return next;
+    });
   };
   const setAccompany = (i, key, val) => {
     const arr = [...(form.accompanying_person || [])];
     arr[i] = { ...(arr[i] || {}), [key]: val };
     update("accompanying_person", arr);
+
+    // If this is the contact field, sanitize and validate
+    if (key === "contact") {
+      const sanitized = sanitizePhoneInput(val);
+      // update the specific value immediately in form (avoid double-touch race by directly setting)
+      setForm(prev => {
+        const next = { ...prev };
+        const copy = [...(next.accompanying_person || [])];
+        copy[i] = { ...(copy[i] || {}), contact: sanitized };
+        next.accompanying_person = copy;
+        return next;
+      });
+      setTouched(prev => ({ ...prev, [`accompanying_person_contact_${i}`]: true }));
+      validateField("accompanying_person", sanitized, { type: "accompany_contact", index: i });
+    } else {
+      // if non-contact field changed, no special validation (name maybe)
+    }
   };
 
   const addWitness = () => {
@@ -125,6 +335,14 @@ export default function IncidentForm({ onSubmitted }) {
     wc.splice(i, 1);
     update("witnesses", w);
     update("witness_contacts", wc);
+
+    // clear any per-index errors
+    setErrors(prev => {
+      const next = { ...prev };
+      const keyName = `witness_contacts_${i}`;
+      if (next[keyName]) delete next[keyName];
+      return next;
+    });
   };
   const setWitness = (i, val) => {
     const w = [...(form.witnesses || [])];
@@ -132,9 +350,16 @@ export default function IncidentForm({ onSubmitted }) {
     update("witnesses", w);
   };
   const setWitnessContact = (i, val) => {
+    // sanitize input
+    const sanitized = sanitizePhoneInput(val);
+
     const wc = [...(form.witness_contacts || [])];
-    wc[i] = val;
+    wc[i] = sanitized;
     update("witness_contacts", wc);
+
+    // mark touched for this witness contact and validate
+    setTouched(prev => ({ ...prev, [`witness_contacts_${i}`]: true }));
+    validateField("witness_contacts", sanitized, { type: "witness_contact", index: i });
   };
 
   const onFilesSelected = (evt) => {
@@ -147,10 +372,6 @@ export default function IncidentForm({ onSubmitted }) {
     a.splice(i, 1);
     return a;
   });
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^[+\d][\d\s\-().]{5,}$/;
-  const empIdRegex = /^[A-Za-z0-9\-_.]{1,20}$/;
 
 /**
  * 
@@ -186,7 +407,7 @@ export default function IncidentForm({ onSubmitted }) {
     if (!form.reported_by_email) e.reported_by_email = "Reporter email required.";
     else if (!emailRegex.test(form.reported_by_email)) e.reported_by_email = "Invalid email address.";
     if (!form.reported_by_contact) e.reported_by_contact = "Reporter contact required.";
-    else if (!phoneRegex.test(form.reported_by_contact)) e.reported_by_contact = "Invalid phone number.";
+    else if (!/^[+\d][\d\s\-().]{5,}$/.test(form.reported_by_contact)) e.reported_by_contact = "Invalid phone number.";
     if (!form.date_of_incident) e.date_of_incident = "Date of incident required.";
     if (!form.time_of_incident) e.time_of_incident = "Time of incident required.";
     if (!form.detailed_description?.trim() || form.detailed_description.length < 5) e.detailed_description = "Please provide a detailed description (min 5 chars).";
@@ -256,6 +477,7 @@ export default function IncidentForm({ onSubmitted }) {
       setForm(emptyForm);
       setFiles([]);
       setErrors({});
+      setTouched({});
       if (typeof onSubmitted === "function") onSubmitted(data);
     } catch (err) {
       console.error("Submit error", err);
@@ -268,6 +490,7 @@ export default function IncidentForm({ onSubmitted }) {
     setForm(emptyForm);
     setFiles([]);
     setErrors({});
+    setTouched({});
   };
 
   const handlePrint = () => {
@@ -434,6 +657,7 @@ export default function IncidentForm({ onSubmitted }) {
                 <div key={i} className="accompany-row">
                   <input placeholder="Name" value={p.name} onChange={e => setAccompany(i, "name", e.target.value)} />
                   <input placeholder="Contact" value={p.contact} onChange={e => setAccompany(i, "contact", e.target.value)} />
+                  {errors[`accompanying_person_contact_${i}`] && <div className="error">{errors[`accompanying_person_contact_${i}`]}</div>}
                   <button type="button" className="btn small" onClick={() => removeAccompany(i)}>Remove</button>
                 </div>
               ))}
@@ -446,6 +670,7 @@ export default function IncidentForm({ onSubmitted }) {
                 <div key={i} className="accompany-row">
                   <input placeholder="Witness Name" value={w} onChange={e => setWitness(i, e.target.value)} />
                   <input placeholder="Contact" value={(form.witness_contacts || [])[i] || ""} onChange={e => setWitnessContact(i, e.target.value)} />
+                  {errors[`witness_contacts_${i}`] && <div className="error">{errors[`witness_contacts_${i}`]}</div>}
                   <button type="button" className="btn small" onClick={() => removeWitness(i)}>Remove</button>
                 </div>
               ))}
@@ -490,11 +715,3 @@ export default function IncidentForm({ onSubmitted }) {
     </div>
   );
 }
-
-
-
-
-// // //////////////
-
-
-
