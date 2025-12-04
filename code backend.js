@@ -1,24 +1,26 @@
-index.html:1 Uncaught ReferenceError: openEditForDeviceFromIP is not defined
-    at HTMLButtonElement.onclick (index.html:1:1)
+// ================= OPEN EDIT BY IP ==================
+async function openEditForDeviceFromIP(ip) {
+    try {
+        const res = await fetch(`http://localhost/api/devices/${ip}`);
+        const deviceObj = await res.json();
 
-index.html:1 Uncaught ReferenceError: openEditForDeviceFromIP is not defined
-    at HTMLButtonElement.onclick (index.html:1:1)
+        // detect type from returned object
+        let type = "";
+        if (deviceObj.cameraname) type = "camera";
+        else if (deviceObj.controllername) type = "controller";
+        else if (deviceObj.archivername) type = "archiver";
+        else if (deviceObj.servername) type = "server";
+        else if (deviceObj.hostname && deviceObj.is_pc_details) type = "pcdetails";
+        else if (deviceObj.hostname && deviceObj.is_db_details) type = "DBDetails";
+        else type = "camera";
 
-card.insertAdjacentHTML("beforeend", `
-                        <button class="edit-device-btn" onclick="openEditForDeviceFromIP('${deviceIP}')"
-  style="margin-left:8px; padding:6px 8px;">Edit</button>
-  <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
-      ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
-  </h3>
+        document.getElementById("device-type").value = type;
 
-  <div class="card-content">
-      <p class="device-type-label ${deviceType}" 
-         style="font-size:17px;  fon
+        // open modal in edit mode
+        showDeviceModal("edit", deviceObj);
 
-
-
-         
-      <button onclick="showDeviceModal()"
-        style="padding: 8px 14px; background:#00adb5; color:white; border:none; border-radius:6px;">
-        + Add Device
-      </button>
+    } catch (err) {
+        console.error("Error loading device:", err);
+        alert("Error: Cannot load device details");
+    }
+}
