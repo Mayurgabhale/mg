@@ -1,77 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Device Manager</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+.modal {
+  display: none;
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.5);
+  justify-content:center;
+  align-items:center;
+}
 
-<button onclick="showDeviceModal()">+ Add Device</button>
+.modal-content {
+  background:white;
+  padding:20px;
+  max-width:600px;
+  margin:auto;
+  border-radius:8px;
+}
 
-<!-- Device Modal -->
-<div id="device-modal" class="modal">
-  <div class="modal-content">
-    <h3 id="device-modal-title">Add Device</h3>
-    <form id="device-form">
-      <input type="hidden" id="device-old-ip">
+label {
+  display:block;
+  margin:8px 0 2px;
+}
 
-      <label>Type*</label>
-      <select id="device-type" required onchange="updateFormFields()">
-        <option value="camera">Camera</option>
-        <option value="archiver">Archiver</option>
-        <option value="controller">Controller</option>
-        <option value="server">Server</option>
-        <option value="pcdetails">PC Details</option>
-        <option value="DBDetails">DB Details</option>
-      </select>
+input, select {
+  width:100%;
+  padding:6px;
+  margin-bottom:8px;
+}
 
-      <label>Name*</label>
-      <input id="device-name" type="text">
+table {
+  width:100%;
+  border-collapse: collapse;
+  margin-bottom:8px;
+}
 
-      <label>IP Address*</label>
-      <input id="device-ip" type="text">
+table, th, td {
+  border:1px solid #ccc;
+}
 
-      <label>Location*</label>
-      <input id="device-location" type="text">
+th, td {
+  padding:6px;
+  text-align:left;
+}
 
-      <label>City*</label>
-      <input id="device-city" type="text">
-
-      <label>Details</label>
-      <input id="device-details" type="text">
-
-      <label>Hyperlink</label>
-      <input id="device-hyperlink" type="url">
-
-      <label>Remark</label>
-      <input id="device-remark" type="text">
-
-      <label>Person Name*</label>
-      <input id="device-person" type="text">
-
-      <!-- Controller Doors -->
-      <div id="door-reader-container" style="display:none;">
-        <h4>Doors & Readers</h4>
-        <table>
-          <thead>
-            <tr><th>Door</th><th>Reader</th><th>Action</th></tr>
-          </thead>
-          <tbody id="door-reader-body"></tbody>
-        </table>
-        <button type="button" id="add-door-row">Add Door</button>
-      </div>
-
-      <div class="modal-footer">
-        <button type="submit">Save</button>
-        <button type="button" onclick="hideDeviceModal()">Cancel</button>
-        <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
+button {
+  cursor:pointer;
+}
