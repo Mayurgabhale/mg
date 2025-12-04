@@ -1,169 +1,6 @@
-const fs = require("fs");
-const xlsx = require("xlsx");
-const path = require("path");
- const pLimit = require("p-limit");
- const { pingHost } = require("./pingService");
- 
-const { DateTime } = require("luxon");
-const { all } = require("axios");
- 
-// Excel paths
-const archiverPath = path.join(__dirname, "../data/ArchiverData.xlsx");
-const controllerPath = path.join(__dirname, "../data/ControllerData.xlsx");
-const cameraPath = path.join(__dirname, "../data/CameraData.xlsx");
-const serverPath = path.join(__dirname, "../data/ServerData.xlsx");
-const pcDetailsPath = path.join(__dirname, "../data/PCDetails.xlsx");
-
-const DBDetails = path.join(__dirname, "../data/DBDetails.xlsx");
-
- 
-// In‑memory cache
-let allData = {};
- 
-// Helper: prune old entries
-function pruneOldEntries(entries, days = 30) {
-  const cutoff = DateTime.now().minus({ days }).toMillis();
-  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
-}
- 
-// Load Excel sheets once
-function loadExcelData() {
-  if (Object.keys(allData).length) return;
-  const loadSheet = file => {
-    const wb = xlsx.readFile(file);
-    const rows = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    return rows.map(r => {
-      const norm = {};
-      Object.entries(r).forEach(([k, v]) => {
-        norm[k.trim().toLowerCase().replace(/\s+/g, "_")] = v;
-      });
-      norm.history = [];
-      return norm;
-    });
-  };
-  allData = {
-    archivers: loadSheet(archiverPath),
-    controllers: loadSheet(controllerPath),
-    cameras: loadSheet(cameraPath),
-    servers: loadSheet(serverPath),
-    pcDetails:loadSheet(pcDetailsPath),
-    DBDetails:loadSheet(DBDetails),
-  };
-  console.log("Excel Data Loaded:", Object.keys(allData));
-}
-loadExcelData();
- 
-// Build IP→region map
-const ipRegionMap = {};
-Object.values(allData).flat().forEach(dev => {
-  if (dev.ip_address && dev.location) {
-    ipRegionMap[dev.ip_address] = dev.location.toLowerCase();
-  }
-});
- 
-// Fetch all IPs
-function fetchAllIpAddress() {
-  return Object.values(allData)
-    .flat()
-    .map(d => d.ip_address)
-    .filter(Boolean);
-}
- 
-// Ping helpers
- const cache = new Map();
- async function pingDevice(ip) {
-    if (!ip) return "IP Address Missing";
-     return await pingHost(ip);
-   }
- 
- cache.clear();
- 
- async function pingDevices(devices) {
-   //cache.clear();
-    const limit = pLimit(20);
-    await Promise.all(
-      devices.map(dev =>
-        limit(async () => {
-          const status = cache.get(dev.ip_address) || await pingDevice(dev.ip_address);
-          cache.set(dev.ip_address, status);
-          dev.status = status;
-        })
-      )
-    );
-  }
- 
- 
-// Summary calculators
-function calculateSummary(groups) {
-  const summary = {};
-  for (const [k, list] of Object.entries(groups)) {
-    const total = list.length;
-    const online = list.filter(d => d.status === "Online").length;
-    summary[k] = { total, online, offline: total - online };
-  }
-  return {
-    totalDevices: Object.values(summary).reduce((s, g) => s + g.total, 0),
-    totalOnlineDevices: Object.values(summary).reduce((s, g) => s + g.online, 0),
-    totalOfflineDevices: Object.values(summary).reduce((s, g) => s + g.offline, 0),
-    ...summary
-  };
-}
- 
-// Public APIs
-async function fetchGlobalData() {
-  const all = [...allData.cameras, ...allData.archivers, ...allData.controllers, ...allData.servers, ...allData.pcDetails, ...allData.DBDetails];
-  await pingDevices(all);
-  return { summary: calculateSummary(allData), details: allData };
-}
- 
-async function fetchRegionData(regionName) {
-  const filter = list => list.filter(d => d.location?.toLowerCase() === regionName.toLowerCase());
-  const regionDevices = {
-    cameras: filter(allData.cameras),
-    archivers: filter(allData.archivers),
-    controllers: filter(allData.controllers),
-    servers: filter(allData.servers),
-    pcDetails:filter(allData.pcDetails),
-    DBDetails:filter(allData.DBDetails),
-  };
-  await pingDevices([].concat(...Object.values(regionDevices)));
-  return { summary: calculateSummary(regionDevices), details: regionDevices };
-}
-
-
-function getDeviceInfo(ip) {
-  for (const list of Object.values(allData)) {
-    const dev = list.find(d => d.ip_address === ip);
-    if (dev) return dev;
-  }
-  return null;
-}
-
-
-
- 
-module.exports = {
-  fetchGlobalData,
-  fetchRegionData,
-  fetchAllIpAddress,
-  ipRegionMap,
-  getDeviceInfo,       // ← new
-
-};
-
-this above my old excelService.js  file this is work good in this not any issue or not any problme ok.. in this we get the data form excle file only this
-now we crete this new file ok, this new file logic i want my old file as it is ok, use same logic for my new file,
-note (only this new file we get the data from data base only this small different between old and new ok )
-so create my new file as it is like old file ok 
-carefully
-
-new file code is here 
-
-// ⬇️⬇️⬇️⬇️ data getting from database ⬇️⬇️⬇️
-
 // src/services/excelService.js
-// Uses SQLite (src/data/devices.db) as the single source of truth.
-// Exports functions used across the app:
+// DB-backed version that matches the logic/shape of the old Excel-based service.
+// Exports:
 // fetchGlobalData, fetchRegionData, fetchAllIpAddress, ipRegionMap,
 // getDeviceInfo, addDevice, updateDevice, deleteDevice, getControllersList, getControllerDoors
 
@@ -189,15 +26,32 @@ let allData = {
   servers: [],
   pcDetails: [],
   DBDetails: [],
-  controller_doors: [], // doors with location/city/controller metadata
+  controller_doors: [], // doors with controller metadata
 };
 
 // ip -> region map
 let ipRegionMap = {};
 
+// Helper: prune old entries (keeps history entries with timestamp within `days`)
+function pruneOldEntries(entries = [], days = 30) {
+  try {
+    const cutoff = DateTime.now().minus({ days }).toMillis();
+    return entries.filter(e => {
+      if (!e || !e.timestamp) return false;
+      try {
+        return DateTime.fromISO(e.timestamp).toMillis() >= cutoff;
+      } catch {
+        return false;
+      }
+    });
+  } catch (err) {
+    return entries;
+  }
+}
+
 // small helper: normalize keys (same approach used elsewhere)
 function normalizeKey(k) {
-  return k.toString().trim().toLowerCase().replace(/\s+/g, "_");
+  return k == null ? k : k.toString().trim().toLowerCase().replace(/\s+/g, "_");
 }
 
 // Map DB row for a table to the object shape other code expects
@@ -268,9 +122,41 @@ function mapRowToDevice(table, row) {
   }
 
   // common metadata used by other parts of the app
-  dev.history = Array.isArray(row.history) ? row.history : [];
+  // ensure history is an array and prune old entries (preserve shape)
+  if (Array.isArray(row.history)) {
+    dev.history = pruneOldEntries(row.history, 30);
+  } else if (row.history && typeof row.history === "string") {
+    try {
+      const parsed = JSON.parse(row.history);
+      dev.history = Array.isArray(parsed) ? pruneOldEntries(parsed, 30) : [];
+    } catch {
+      dev.history = [];
+    }
+  } else {
+    dev.history = [];
+  }
+
+  // keep status if provided (some operations may set it)
   if (row.status) dev.status = row.status;
   return dev;
+}
+
+// rebuild ipRegionMap (called after any mutation or load)
+function rebuildIpRegionMap() {
+  ipRegionMap = {};
+  [
+    ...allData.cameras,
+    ...allData.archivers,
+    ...allData.controllers,
+    ...allData.servers,
+    ...allData.pcDetails,
+    ...allData.DBDetails,
+  ].forEach(dev => {
+    const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
+    if (ip && dev.location) {
+      ipRegionMap[ip] = (dev.location || "").toString().toLowerCase();
+    }
+  });
 }
 
 // Load all rows from DB into allData (including controller_doors)
@@ -300,8 +186,7 @@ function loadDbData() {
     const pcs = db.prepare("SELECT * FROM pc_details").all();
     allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
 
-    // controller_doors:
-    // join controllers to get location/city/controllername so each door record carries these fields
+    // controller_doors: join controllers to get location/city/controller metadata
     const doors = db.prepare(`
       SELECT d.*,
              c.controllername AS controllername,
@@ -317,7 +202,7 @@ function loadDbData() {
       controllername: r.controllername || null,
       door: r.door,
       reader: r.reader,
-      // prefer door-level location/city if present (inserted earlier), otherwise controller's
+      // prefer door-level location/city if present, otherwise controller's
       location: r.location || r.controller_location || null,
       city: r.city || r.controller_city || null,
       added_by: r.added_by || null,
@@ -327,6 +212,7 @@ function loadDbData() {
     }));
 
     rebuildIpRegionMap();
+
     console.log("Loaded data from DB. counts:", {
       cameras: allData.cameras.length,
       controllers: allData.controllers.length,
@@ -341,26 +227,9 @@ function loadDbData() {
     throw err;
   }
 }
-loadDbData();
 
-// rebuild ipRegionMap (called after any mutation)
-function rebuildIpRegionMap() {
-  ipRegionMap = {};
-  // only examine device lists (not controller_doors)
-  [
-    ...allData.cameras,
-    ...allData.archivers,
-    ...allData.controllers,
-    ...allData.servers,
-    ...allData.pcDetails,
-    ...allData.DBDetails,
-  ].forEach(dev => {
-    const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
-    if (ip && dev.location) {
-      ipRegionMap[ip] = (dev.location || "").toString().toLowerCase();
-    }
-  });
-}
+// Initialize DB load
+loadDbData();
 
 // Fetch all IP addresses (array of ip strings) — used by ping loop
 function fetchAllIpAddress() {
@@ -371,7 +240,9 @@ function fetchAllIpAddress() {
     ...allData.servers,
     ...allData.pcDetails,
     ...allData.DBDetails,
-  ].map(d => (d.ip_address || d.IP_address || "").toString().trim()).filter(Boolean);
+  ]
+    .map(d => (d.ip_address || d.IP_address || "").toString().trim())
+    .filter(Boolean);
 }
 
 // ping helpers (cache + concurrency)
@@ -380,14 +251,16 @@ async function pingDevice(ip) {
   if (!ip) return "IP Address Missing";
   return await pingHost(ip);
 }
+// mirror earlier file behavior: clear cache once at startup (same as old file)
+cache.clear();
 
 async function pingDevices(devices) {
   const limit = pLimit(20);
   await Promise.all(
-    devices.map(dev =>
+    (devices || []).map(dev =>
       limit(async () => {
         const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
-        const status = cache.get(ip) || await pingDevice(ip);
+        const status = cache.get(ip) || (await pingDevice(ip));
         cache.set(ip, status);
         dev.status = status;
       })
@@ -407,15 +280,14 @@ function calculateSummary(groups) {
     totalDevices: Object.values(summary).reduce((s, g) => s + g.total, 0),
     totalOnlineDevices: Object.values(summary).reduce((s, g) => s + g.online, 0),
     totalOfflineDevices: Object.values(summary).reduce((s, g) => s + g.offline, 0),
-    ...summary
+    ...summary,
   };
 }
 
 // Accessors
 function getDeviceInfo(ip) {
   for (const list of Object.values(allData)) {
-    // skip controller_doors (they don't have ip_address)
-    if (!Array.isArray(list)) continue;
+    if (!Array.isArray(list)) continue; // skip controller_doors map entries if any
     const dev = list.find(d => (d.ip_address || d.IP_address) === ip);
     if (dev) return dev;
   }
@@ -431,6 +303,16 @@ function getControllerDoors(controllerIp) {
   return allData.controller_doors.filter(d => d.controller_ip === controllerIp);
 }
 
+// find device by ip in allData and return {listName, idx, device}
+function findInAllData(ip) {
+  for (const [listName, list] of Object.entries(allData)) {
+    if (!Array.isArray(list)) continue;
+    const idx = (list || []).findIndex(d => (d.ip_address || d.IP_address) === ip);
+    if (idx !== -1) return { listName, idx, device: list[idx] };
+  }
+  return null;
+}
+
 // Add device: type must match one of keys in allData
 // Supported types: archivers, controllers, cameras, servers, pcDetails, DBDetails
 function addDevice(type, deviceObj) {
@@ -438,7 +320,7 @@ function addDevice(type, deviceObj) {
 
   // normalize keys to match DB columns
   const norm = {};
-  Object.entries(deviceObj).forEach(([k, v]) => {
+  Object.entries(deviceObj || {}).forEach(([k, v]) => {
     norm[normalizeKey(k)] = v;
   });
   norm.history = norm.history || [];
@@ -669,7 +551,7 @@ function updateDevice(oldIp, updateFields) {
     throw err;
   }
 
-  // If IP changed
+  // If IP changed in updateFields, update DB and in-memory
   if (updateFields.ip_address && updateFields.ip_address !== oldIp) {
     const newIp = updateFields.ip_address.toString().trim();
     db.prepare(`UPDATE ${table} SET ip_address = ? WHERE ip_address = ?`).run(newIp, oldIp);
@@ -679,15 +561,6 @@ function updateDevice(oldIp, updateFields) {
 
   rebuildIpRegionMap();
   return allData[listName][idx];
-}
-
-// find device by ip in allData and return {listName, idx, device}
-function findInAllData(ip) {
-  for (const [listName, list] of Object.entries(allData)) {
-    const idx = (list || []).findIndex(d => (d.ip_address || d.IP_address) === ip);
-    if (idx !== -1) return { listName, idx, device: list[idx] };
-  }
-  return null;
 }
 
 // Delete device
@@ -728,7 +601,9 @@ async function fetchGlobalData() {
 }
 
 async function fetchRegionData(regionName) {
-  const filter = list => (list || []).filter(d => (d.location || "").toString().toLowerCase() === regionName.toLowerCase());
+  const filter = list =>
+    (list || []).filter(d => (d.location || "").toString().toLowerCase() === regionName.toLowerCase());
+
   const regionDevices = {
     cameras: filter(allData.cameras),
     archivers: filter(allData.archivers),
