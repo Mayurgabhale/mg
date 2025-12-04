@@ -15,29 +15,22 @@ function deleteDevice(ip) {
   const table = tableMap[listName];
   if (!table) throw new Error("Unsupported device type for delete: " + listName);
 
-  db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
-  allData[listName].splice(idx, 1);
-  rebuildIpRegionMap();
-  return true;
-}
-above is my 
------
-function deleteDevice(type, ip) {
-  const table = mapTypeToTable(type);
-
-  // If deleting a controller → also delete its doors
+  // ✨ NEW — if deleting a controller, also delete its doors
   if (table === "controllers") {
     db.prepare("DELETE FROM controller_doors WHERE controller_ip = ?").run(ip);
 
-    // Refresh cached controller_doors for frontend
+    // refresh controller_doors in cache
     reloadControllerDoors();
   }
 
-  // Now delete main device
+  // delete main device row
   db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
 
-  // Refresh full DB cache
-  loadDbData();
+  // remove from in-memory cache
+  allData[listName].splice(idx, 1);
 
-  return { success: true };
+  // rebuild region map
+  rebuildIpRegionMap();
+
+  return true;
 }
