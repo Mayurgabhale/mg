@@ -1,69 +1,62 @@
-function addDoorRow(door = "", reader = "") {
-    const tbody = document.getElementById("door-reader-body");
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td><input type="text" class="door-input" value="${door}"></td>
-        <td><input type="text" class="reader-input" value="${reader}"></td>
-        <td><button type="button" class="remove-door-row">X</button></td>
-    `;
-    tbody.appendChild(row);
-    row.querySelector(".remove-door-row").addEventListener("click", () => row.remove());
-}
-document.getElementById("add-door-row").addEventListener("click", () => addDoorRow());
+Edit Device
+Type*
+
+Camera
+when i opne anythin Type is not change 
+opne serve, controoler and araciver any by dafulat Camera show  thsi is wrong 
+
+Edit Device
+Type*
+
+Camera
+Name*
+APAC_PH_MANILA_ISTAR PRO_01
+IP Address*
+10.194.2.13
+Location*
+APAC
 
 
-...
-document.getElementById("device-form").addEventListener("submit", async function (ev) {
-    ev.preventDefault();
 
-    const oldIp = document.getElementById("device-old-ip").value;
-    const uiType = document.getElementById("device-type").value;
-    const backendType = mapUITypeToBackend(uiType);
-
-    let body = {
-        name: document.getElementById("device-name").value,
-        ip_address: document.getElementById("device-ip").value,
-        location: document.getElementById("device-location").value,
-        city: document.getElementById("device-city").value,
-        device_details: document.getElementById("device-details").value,
-        hyperlink: document.getElementById("device-hyperlink").value,
-        remark: document.getElementById("device-remark").value,
-        person_name: document.getElementById("device-person").value
-    };
-
-    body = convertToBackendFields(backendType, body);
-
-    if (backendType === "controllers") {
-        const doors = [];
-        document.querySelectorAll("#door-reader-body tr").forEach(tr => {
-            doors.push({
-                door: tr.querySelector(".door-input").value,
-                reader: tr.querySelector(".reader-input").value
-            });
-        });
-        body.Doors = doors;
+// Open edit modal by IP or hostname using cached device data
+async function openEditForDeviceFromIP(ipOrHost) {
+    if (!latestDetails || !latestDetails.details) {
+        await fetchData(currentRegion); // Ensure devices are loaded
     }
 
-    try {
-        if (!oldIp) {
-            await fetch("http://localhost/api/devices", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: backendType, device: body })
-            });
-        } else {
-            await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
+    let found = null;
+
+    // Search all device lists in latestDetails
+    for (const list of Object.values(latestDetails.details)) {
+        const m = (list || []).find(d => 
+            (d.ip_address || d.IP_address || "").trim() === ipOrHost ||
+            (d.hostname || d.HostName || "").trim() === ipOrHost
+        );
+        if (m) {
+            found = m;
+            break;
         }
-
-        alert("Saved successfully!");
-        hideDeviceModal();
-        await fetchData(currentRegion);
-
-    } catch (err) {
-        alert("Error saving device: " + err.message);
     }
-});
+
+    if (!found) {
+        alert("Device not found");
+        return;
+    }
+
+    // Detect type for modal
+    found._type_for_ui = detectTypeFromDeviceObj(found);
+
+    // Open modal in edit mode
+    showDeviceModal("edit", found);
+}
+
+// Detect device type from object
+function detectTypeFromDeviceObj(obj) {
+    if (obj.cameraname) return "camera";
+    if (obj.controllername) return "controller";
+    if (obj.archivername) return "archiver";
+    if (obj.servername) return "server";
+    if (obj.hostname && obj.is_pc_details) return "pcdetails";
+    if (obj.hostname && obj.is_db_details) return "DBDetails";
+    return "camera"; // fallback
+}
