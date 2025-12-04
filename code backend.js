@@ -1,536 +1,651 @@
-Controller Details
-🔒
-IN-PUN-2NDFLR-ISTAR PRO
-10.199.13.10 • Pune 2nd Floor
-
-Doors
-6
-Readers
-0
-Export (Excel)
-Doors & Readers
-Online
-🚪
-undefined
-Reader: N/A
-Online
-🚪
-undefined
-Reader: N/A
-Online
-🚪
-undefined
-Reader: N/A
-Online
-🚪
-undefined
-Reader: N/A
-Online
-🚪
-undefined
-Reader: N/A
-Online
-🚪
-undefined
-Reader: N/A
-Online
 
 
-in this we getting one issue is the in this readers count not show and 
-Doors & Readers is undefined ok ho to slove this issue ok read the excle servecie  code and slov this isseu ok 
-Online
-🚪
-undefined
-Reader: N/A
+// src/services/excelService.js
+// DB-backed version that matches the logic/shape of the old Excel-based service.
+// Exports:
+// fetchGlobalData, fetchRegionData, fetchAllIpAddress, ipRegionMap,
+// getDeviceInfo, addDevice, updateDevice, deleteDevice, getControllersList, getControllerDoors
 
-function updateSummary(data) {
-    const summary = data.summary || {};
+const fs = require("fs");
+const path = require("path");
+const pLimit = require("p-limit");
+const { DateTime } = require("luxon");
+const { pingHost } = require("./pingService");
+const Database = require("better-sqlite3");
 
-    // ✅ Always keep last known values if new data doesn’t have them
-    window.lastSummary = window.lastSummary || {};
-    const merged = {
-        totalDevices: summary.totalDevices ?? window.lastSummary.totalDevices ?? 0,
-        totalOnlineDevices: summary.totalOnlineDevices ?? window.lastSummary.totalOnlineDevices ?? 0,
-        totalOfflineDevices: summary.totalOfflineDevices ?? window.lastSummary.totalOfflineDevices ?? 0,
-
-        cameras: { ...window.lastSummary.cameras, ...summary.cameras },
-        archivers: { ...window.lastSummary.archivers, ...summary.archivers },
-        controllers: { ...window.lastSummary.controllers, ...summary.controllers },
-        servers: { ...window.lastSummary.servers, ...summary.servers },
-        pcdetails: { ...window.lastSummary.pcdetails, ...summary.pcdetails },
-        dbdetails: { ...window.lastSummary.dbdetails, ...summary.dbdetails },
-
-        // 🆕 door/reader extras merged (summary.controllerExtras is created in fetchData)
-        controllerExtras: { ...window.lastSummary.controllerExtras, ...summary.controllerExtras }
-    };
-
-
-    // 🆕 Recalculate totals to include Door counts (but not Readers)
-    const doors = merged.controllerExtras?.doors || { total: 0, online: 0, offline: 0 };
-
-    // Recompute totals including doors
-    merged.totalDevices =
-        (merged.cameras?.total || 0) +
-        (merged.archivers?.total || 0) +
-        (merged.controllers?.total || 0) +
-        (merged.servers?.total || 0) +
-        (merged.pcdetails?.total || 0) +
-        (merged.dbdetails?.total || 0) +
-        doors.total; // ✅ include doors only
-
-    merged.totalOnlineDevices =
-        (merged.cameras?.online || 0) +
-        (merged.archivers?.online || 0) +
-        (merged.controllers?.online || 0) +
-        (merged.servers?.online || 0) +
-        (merged.pcdetails?.online || 0) +
-        (merged.dbdetails?.online || 0) +
-        doors.online; // ✅ include doors only
-
-    merged.totalOfflineDevices =
-        merged.totalDevices - merged.totalOnlineDevices;
-
-
-
-
-    // ✅ Save merged result for next refresh
-    window.lastSummary = merged;
-
-    // Update UI safely
-    document.getElementById("total-devices").textContent = merged.totalDevices;
-    document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
-    document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
-
-    document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
-    document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
-    document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
-
-    document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
-    document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
-    document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
-
-    document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
-    document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
-    document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
-
-    document.getElementById("server-total").textContent = merged.servers?.total || 0;
-    document.getElementById("server-online").textContent = merged.servers?.online || 0;
-    document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
-
-    // ✅ Fix for Desktop and DB Server
-    document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
-    document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
-    document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
-
-    document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
-    document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
-    document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
-
-
-    // ✅  new for Door and Reader 
-    
-
-    // //////////////////////////////////
-
-
-    // ====== Door / Reader card updates (from controllers API) ======
-    const extras = merged.controllerExtras || {};
-
-    // Prefer the combined doorReader-* IDs (your summary card)
-    const doorTotalEl = document.getElementById("doorReader-total");
-    const doorOnlineEl = document.getElementById("doorReader-online");
-    const doorOfflineEl = document.getElementById("doorReader-offline");
-
-    // Also mirror IDs expected by graph.js / other scripts (safe to set only if they exist)
-    const doorOnlineAlt = document.getElementById("door-online");
-    const doorOfflineAlt = document.getElementById("door-offline");
-
-    const readerTotalEl = document.getElementById("reader-total-inline");
-    const readerOnlineEl = document.getElementById("reader-online-inline");
-    const readerOfflineEl = document.getElementById("reader-offline-inline");
-
-    // Also mirror IDs expected by graph.js
-    const readerOnlineAlt = document.getElementById("reader-online");
-    const readerOfflineAlt = document.getElementById("reader-offline");
-
-    if (extras.doors) {
-        if (doorTotalEl) doorTotalEl.textContent = extras.doors.total || 0;
-        if (doorOnlineEl) doorOnlineEl.textContent = extras.doors.online || 0;
-        if (doorOfflineEl) doorOfflineEl.textContent = extras.doors.offline || 0;
-
-        // mirror
-        if (doorOnlineAlt) doorOnlineAlt.textContent = extras.doors.online || 0;
-        if (doorOfflineAlt) doorOfflineAlt.textContent = extras.doors.offline || 0;
-    } else {
-        if (doorTotalEl) doorTotalEl.textContent = 0;
-        if (doorOnlineEl) doorOnlineEl.textContent = 0;
-        if (doorOfflineEl) doorOfflineEl.textContent = 0;
-
-        if (doorOnlineAlt) doorOnlineAlt.textContent = 0;
-        if (doorOfflineAlt) doorOfflineAlt.textContent = 0;
-    }
-
-    if (extras.readers) {
-        if (readerTotalEl) readerTotalEl.textContent = extras.readers.total || 0;
-        if (readerOnlineEl) readerOnlineEl.textContent = extras.readers.online || 0;
-        if (readerOfflineEl) readerOfflineEl.textContent = extras.readers.offline || 0;
-
-        // mirror
-        if (readerOnlineAlt) readerOnlineAlt.textContent = extras.readers.online || 0;
-        if (readerOfflineAlt) readerOfflineAlt.textContent = extras.readers.offline || 0;
-    } else {
-        if (readerTotalEl) readerTotalEl.textContent = 0;
-        if (readerOnlineEl) readerOnlineEl.textContent = 0;
-        if (readerOfflineEl) readerOfflineEl.textContent = 0;
-
-        if (readerOnlineAlt) readerOnlineAlt.textContent = 0;
-        if (readerOfflineAlt) readerOfflineAlt.textContent = 0;
-    }
-
-    // ⬇️⬇️ this is call from graph.js
-    // --- Immediately refresh gauges/total-chart so UI updates right away after filtering ---
-    if (typeof renderGauges === "function") {
-        try { renderGauges(); } catch (e) { console.warn("renderGauges failed:", e); }
-    }
-    if (typeof updateTotalCountChart === "function") {
-        try { updateTotalCountChart(); } catch (e) { console.warn("updateTotalCountChart failed:", e); }
-    }
-
-
+// DB path
+const dbPath = path.join(__dirname, "../data/devices.db");
+if (!fs.existsSync(dbPath)) {
+  throw new Error(`Database file not found at ${dbPath}. Run setupDatabase.js first.`);
 }
+const db = new Database(dbPath, { readonly: false });
 
-/*
-   Updated updateDetails:
-   Each device card is built with separate elements for the status dot and status text.
-   This ensures that later updates from pingAllDevices can reliably find and update them.
-*/
+// In-memory cache (shape expected by the rest of your app)
+let allData = {
+  archivers: [],
+  controllers: [],
+  cameras: [],
+  servers: [],
+  pcDetails: [],
+  DBDetails: [],
+  controller_doors: [], // doors with controller metadata
+};
 
+// ip -> region map
+let ipRegionMap = {};
 
-
-
-// 📝📝📝📝📝📝📝📝📝
-
-
-
-/* loadControllersInDetails (mostly unchanged) */
-function loadControllersInDetails() {
-    const detailsContainer = document.getElementById("device-details");
-    const extraContainer = document.getElementById("details-container");
-
-    detailsContainer.innerHTML = "<p>Loading controllers...</p>";
-    extraContainer.innerHTML = "";
-
-    // Use cached controllers if available
-    if (Array.isArray(window.controllerDataCached) && window.controllerDataCached.length > 0) {
-        renderControllersInDetails(window.controllerDataCached, detailsContainer);
-        return;
-    }
-
-    fetch("http://localhost/api/controllers/status")
-    // fetch("http://10.138.161.4:3000/api/controllers/status")
-        .then(res => res.json())
-        .then(data => {
-            window.controllerDataCached = Array.isArray(data) ? data : null; // cache
-            renderControllersInDetails(data, detailsContainer);
-        })
-        .catch(err => {
-            console.error("Error loading controllers:", err);
-            detailsContainer.innerHTML = "<p style='color:red;'>Failed to load controllers.</p>";
-        });
-}
-
-
-function renderControllersInDetails(data, detailsContainer) {
-    detailsContainer.innerHTML = "";
-    if (!Array.isArray(data) || data.length === 0) {
-        detailsContainer.innerHTML = "<p>No controllers found.</p>";
-        return;
-    }
-
-    data.forEach(ctrl => {
-        const card = document.createElement("div");
-        card.className = "door-device-card";
-        card.style.cssText = `
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        `;
-
-        card.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: #1f2937;">
-                    ${ctrl.controllername || "Unknown Controller"}
-                </h3>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: ${ctrl.controllerStatus === "Online" ? "#10b981" : "#ef4444"};"></div>
-                    <span style="font-size: 14px; color: ${ctrl.controllerStatus === "Online" ? "#059669" : "#dc2626"}; font-weight: 600;">
-                        ${ctrl.controllerStatus}
-                    </span>
-                </div>
-            </div>
-              
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px; color: #6b7280;">🌐</span>
-                    <div>
-                        <div style="font-size: 12px; color: #6b7280;">IP Address</div>
-                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.IP_address || "N/A"}</div>
-                    </div>
-                </div>
-                  
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 14px; color: #6b7280;">🏢</span>
-                    <div>
-                        <div style="font-size: 12px; color: #6b7280;">Location</div>
-                        <div style="font-size: 14px; color: #374151; font-weight: 500;">${ctrl.City || "Unknown"}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Hover effects
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-2px)';
-            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            this.style.borderColor = '#3b82f6';
-        });
-
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-            this.style.borderColor = '#e5e7eb';
-        });
-
-        // When a controller is clicked, show its doors + readers
-        card.addEventListener("click", () => showDoorsReaders(ctrl));
-        detailsContainer.appendChild(card);
+// Helper: prune old entries (keeps history entries with timestamp within `days`)
+function pruneOldEntries(entries = [], days = 30) {
+  try {
+    const cutoff = DateTime.now().minus({ days }).toMillis();
+    return entries.filter(e => {
+      if (!e || !e.timestamp) return false;
+      try {
+        return DateTime.fromISO(e.timestamp).toMillis() >= cutoff;
+      } catch {
+        return false;
+      }
     });
+  } catch (err) {
+    return entries;
+  }
 }
 
-
-// --- REPLACE showDoorsReaders WITH THIS UPDATED VERSION ---
-// Adds an "Export (Excel)" button which downloads a CSV file of the doors/readers.
-function showDoorsReaders(controller) {
-    if (!controller) return;
-
-    // --- counts for header ---
-    const totalDoors = Array.isArray(controller.Doors) ? controller.Doors.length : 0;
-    const totalReaders = Array.isArray(controller.Doors)
-        ? controller.Doors.reduce((acc, d) => acc + (d.Reader && d.Reader.toString().trim() ? 1 : 0), 0)
-        : 0;
-
-    // Export button (id used to attach handler after modal is opened)
-    const exportButtonHtml = `
-      <button id="export-doors-btn"
-        style="background:#0b74ff; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600;">
-        Export (Excel)
-      </button>
-    `;
-
-    let html = `
-    <div style="margin-bottom:25px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="
-            width:50px;
-            height:50px;
-            border-radius:12px;
-            background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:white;
-            font-size:20px;
-          ">🔒</div>
-          <div>
-            <h3 style="margin:0 0 4px 0; color:#1e293b; font-size:1.3rem;">${controller.controllername}</h3>
-            <p style="margin:0; color:#64748b; font-size:14px;">${controller.IP_address || "N/A"} • ${controller.City || "Unknown"}</p>
-          </div>
-        </div>
-
-        <!-- stats: total doors & readers + export -->
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div style="text-align:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff;">
-            <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Doors</div>
-            <div style="font-weight:700; color:#1f2937; font-size:16px;">${totalDoors}</div>
-          </div>
-          <div style="text-align:center; background:#f8fafc; padding:8px 12px; border-radius:10px; border:1px solid #eef2ff;">
-            <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Readers</div>
-            <div style="font-weight:700; color:#1f2937; font-size:16px;">${totalReaders}</div>
-          </div>
-
-          ${exportButtonHtml}
-        </div>
-      </div>
-    </div>
-
-    <div style="margin:25px 0 15px 0; display:flex; align-items:center; justify-content:space-between;">
-      <h4 style="margin:0; color:#374151; font-size:1.1rem;">Doors & Readers</h4>
-      <span class="status-badge ${controller.controllerStatus === "Online" ? "status-online" : "status-offline"}">
-        ${controller.controllerStatus}
-      </span>
-    </div>
-  `;
-
-    if (!controller.Doors || controller.Doors.length === 0) {
-        html += `
-      <div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:12px;">
-        <div style="font-size:48px; margin-bottom:15px;">🚪</div>
-        <h4 style="color:#475569; margin-bottom:8px;">No Doors Found</h4>
-        <p style="color:#64748b; margin:0;">This controller doesn't have any doors configured.</p>
-      </div>
-    `;
-    } else {
-        html += `<div style="display:flex; flex-direction:column; gap:12px;">`;
-
-        controller.Doors.forEach((door, index) => {
-            const doorStatusClass = door.status === "Online" ? "status-online" : "status-offline";
-
-            html += `
-        <div class="door-item" style="animation-delay: ${index * 0.1}s;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="
-                width:36px;
-                height:36px;
-                border-radius:8px;
-                background:#f1f5f9;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#475569;
-                font-size:16px;
-              ">🚪</div>
-              <div>
-                <div style="font-weight:600; color:#1e293b;">${door.Door}</div>
-                <div style="font-size:13px; color:#64748b;">Reader: ${door.Reader || "N/A"}</div>
-              </div>
-            </div>
-            <span class="status-badge ${doorStatusClass}" style="font-size:0.8rem;">
-              ${door.status}
-            </span>
-          </div>
-        </div>
-      `;
-        });
-
-        html += `</div>`;
-    }
-
-    // Add modal close button interaction
-    const closeBtn = document.getElementById("close-door-modal");
-    if (closeBtn) {
-        closeBtn.addEventListener("mouseenter", function () {
-            this.style.transform = "scale(1.1)";
-        });
-        closeBtn.addEventListener("mouseleave", function () {
-            this.style.transform = "scale(1)";
-        });
-    }
-
-    openDoorModal(html);
-
-    // --- attach export handler after modal content is inserted ---
-    const exportBtn = document.getElementById("export-doors-btn");
-    if (exportBtn) {
-        // remove previous listener if any (prevent duplicates on repeated opens)
-        exportBtn.replaceWith(exportBtn.cloneNode(true));
-        const newExportBtn = document.getElementById("export-doors-btn");
-        newExportBtn.addEventListener("click", () => exportDoorsToCsv(controller));
-    }
+// small helper: normalize keys (same approach used elsewhere)
+function normalizeKey(k) {
+  return k == null ? k : k.toString().trim().toLowerCase().replace(/\s+/g, "_");
 }
 
-// --- helper: safely escape CSV values ---
-function _escapeCsvValue(val) {
-    if (val == null) return "";
-    const s = String(val);
-    // if contains double quotes, escape them by doubling
-    const escaped = s.replace(/"/g, '""');
-    // If contains comma, newline or quote wrap in quotes
-    if (/[",\n]/.test(s)) {
-        return `"${escaped}"`;
+// Map DB row for a table to the object shape other code expects
+function mapRowToDevice(table, row) {
+  if (!row) return null;
+  const dev = {};
+
+  switch (table) {
+    case "cameras":
+      dev.cameraname = row.cameraname || row.camera_name || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      dev.device_details = row.device_details || row.deviec_details || null;
+      dev.hyperlink = row.hyperlink || null;
+      dev.remark = row.remark || null;
+      break;
+
+    case "archivers":
+      dev.archivername = row.archivername || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      break;
+
+    case "controllers":
+      dev.controllername = row.controllername || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      break;
+
+    case "servers":
+      dev.servername = row.servername || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      break;
+
+    case "dbdetails":
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      dev.hostname = row.hostname || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.application = row.application || null;
+      dev.windows_server = row.windows_server || null;
+      break;
+
+    case "pc_details":
+      dev.hostname = row.hostname || null;
+      dev.ip_address = row.ip_address || null;
+      dev.IP_address = row.ip_address || null;
+      dev.location = row.location || null;
+      dev.city = row.city || null;
+      dev.pc_name = row.pc_name || null;
+      break;
+
+    default:
+      // fallback: copy keys normalized
+      Object.keys(row).forEach(k => {
+        dev[normalizeKey(k)] = row[k];
+      });
+  }
+
+  // common metadata used by other parts of the app
+  // ensure history is an array and prune old entries (preserve shape)
+  if (Array.isArray(row.history)) {
+    dev.history = pruneOldEntries(row.history, 30);
+  } else if (row.history && typeof row.history === "string") {
+    try {
+      const parsed = JSON.parse(row.history);
+      dev.history = Array.isArray(parsed) ? pruneOldEntries(parsed, 30) : [];
+    } catch {
+      dev.history = [];
     }
-    return escaped;
+  } else {
+    dev.history = [];
+  }
+
+  // keep status if provided (some operations may set it)
+  if (row.status) dev.status = row.status;
+  return dev;
 }
 
-// --- helper: export controller doors to CSV and trigger download ---
-function exportDoorsToCsv(controller) {
-    if (!controller) return;
+// rebuild ipRegionMap (called after any mutation or load)
+function rebuildIpRegionMap() {
+  ipRegionMap = {};
+  [
+    ...allData.cameras,
+    ...allData.archivers,
+    ...allData.controllers,
+    ...allData.servers,
+    ...allData.pcDetails,
+    ...allData.DBDetails,
+  ].forEach(dev => {
+    const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
+    if (ip && dev.location) {
+      ipRegionMap[ip] = (dev.location || "").toString().toLowerCase();
+    }
+  });
+}
 
-    const filenameBase = (controller.controllername || "controller").replace(/[^\w\-]/g, "_");
-    const filename = `${filenameBase}_doors.csv`;
+// Load all rows from DB into allData (including controller_doors)
+function loadDbData() {
+  try {
+    // cameras
+    const cams = db.prepare("SELECT * FROM cameras").all();
+    allData.cameras = cams.map(r => mapRowToDevice("cameras", r));
 
-    const rows = [];
+    // archivers
+    const archs = db.prepare("SELECT * FROM archivers").all();
+    allData.archivers = archs.map(r => mapRowToDevice("archivers", r));
 
-    // Header info
-    rows.push([`Controller: ${controller.controllername || ""}`]);
-    rows.push([`IP: ${controller.IP_address || ""}`, `City: ${controller.City || ""}`]);
-    const totalDoors = Array.isArray(controller.Doors) ? controller.Doors.length : 0;
-    const totalReaders = Array.isArray(controller.Doors)
-        ? controller.Doors.reduce((acc, d) => acc + (d.Reader && d.Reader.toString().trim() ? 1 : 0), 0)
-        : 0;
-    rows.push([`Total Doors: ${totalDoors}`, `Total Readers: ${totalReaders}`]);
-    rows.push([]); // blank row
+    // controllers
+    const ctrls = db.prepare("SELECT * FROM controllers").all();
+    allData.controllers = ctrls.map(r => mapRowToDevice("controllers", r));
 
-    // Column headers
-    rows.push(["Door", "Reader", "Status"]);
+    // servers
+    const srvs = db.prepare("SELECT * FROM servers").all();
+    allData.servers = srvs.map(r => mapRowToDevice("servers", r));
 
-    // Door rows
-    if (Array.isArray(controller.Doors)) {
-        controller.Doors.forEach((d) => {
-            rows.push([d.Door || "", d.Reader || "", d.status || ""]);
+    // dbdetails
+    const dbs = db.prepare("SELECT * FROM dbdetails").all();
+    allData.DBDetails = dbs.map(r => mapRowToDevice("dbdetails", r));
+
+    // pc_details
+    const pcs = db.prepare("SELECT * FROM pc_details").all();
+    allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
+
+    // controller_doors: join controllers to get location/city/controller metadata
+    const doors = db.prepare(`
+      SELECT d.*,
+             c.controllername AS controllername,
+             c.location      AS controller_location,
+             c.city          AS controller_city
+      FROM controller_doors d
+      LEFT JOIN controllers c ON c.ip_address = d.controller_ip
+    `).all();
+
+    allData.controller_doors = doors.map(r => ({
+      id: r.id,
+      controller_ip: r.controller_ip,
+      controllername: r.controllername || null,
+      door: r.door,
+      reader: r.reader,
+      // prefer door-level location/city if present, otherwise controller's
+      location: r.location || r.controller_location || null,
+      city: r.city || r.controller_city || null,
+      added_by: r.added_by || null,
+      added_at: r.added_at || null,
+      updated_by: r.updated_by || null,
+      updated_at: r.updated_at || null,
+    }));
+
+    rebuildIpRegionMap();
+
+    console.log("Loaded data from DB. counts:", {
+      cameras: allData.cameras.length,
+      controllers: allData.controllers.length,
+      archivers: allData.archivers.length,
+      servers: allData.servers.length,
+      pcDetails: allData.pcDetails.length,
+      DBDetails: allData.DBDetails.length,
+      controller_doors: allData.controller_doors.length,
+    });
+  } catch (err) {
+    console.error("Error loading DB data:", err.message);
+    throw err;
+  }
+}
+
+// Initialize DB load
+loadDbData();
+
+// Fetch all IP addresses (array of ip strings) — used by ping loop
+function fetchAllIpAddress() {
+  return [
+    ...allData.cameras,
+    ...allData.archivers,
+    ...allData.controllers,
+    ...allData.servers,
+    ...allData.pcDetails,
+    ...allData.DBDetails,
+  ]
+    .map(d => (d.ip_address || d.IP_address || "").toString().trim())
+    .filter(Boolean);
+}
+
+// ping helpers (cache + concurrency)
+const cache = new Map();
+async function pingDevice(ip) {
+  if (!ip) return "IP Address Missing";
+  return await pingHost(ip);
+}
+// mirror earlier file behavior: clear cache once at startup (same as old file)
+cache.clear();
+
+async function pingDevices(devices) {
+  const limit = pLimit(20);
+  await Promise.all(
+    (devices || []).map(dev =>
+      limit(async () => {
+        const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
+        const status = cache.get(ip) || (await pingDevice(ip));
+        cache.set(ip, status);
+        dev.status = status;
+      })
+    )
+  );
+}
+
+// Summary calculators
+function calculateSummary(groups) {
+  const summary = {};
+  for (const [k, list] of Object.entries(groups)) {
+    const total = (list || []).length;
+    const online = (list || []).filter(d => d.status === "Online").length;
+    summary[k] = { total, online, offline: total - online };
+  }
+  return {
+    totalDevices: Object.values(summary).reduce((s, g) => s + g.total, 0),
+    totalOnlineDevices: Object.values(summary).reduce((s, g) => s + g.online, 0),
+    totalOfflineDevices: Object.values(summary).reduce((s, g) => s + g.offline, 0),
+    ...summary,
+  };
+}
+
+// Accessors
+function getDeviceInfo(ip) {
+  for (const list of Object.values(allData)) {
+    if (!Array.isArray(list)) continue; // skip controller_doors map entries if any
+    const dev = list.find(d => (d.ip_address || d.IP_address) === ip);
+    if (dev) return dev;
+  }
+  return null;
+}
+
+function getControllersList() {
+  return (allData.controllers || []).map(c => ({ ...c }));
+}
+
+// get doors for a controller IP (returns door objects with location/city)
+function getControllerDoors(controllerIp) {
+  return allData.controller_doors.filter(d => d.controller_ip === controllerIp);
+}
+
+// find device by ip in allData and return {listName, idx, device}
+function findInAllData(ip) {
+  for (const [listName, list] of Object.entries(allData)) {
+    if (!Array.isArray(list)) continue;
+    const idx = (list || []).findIndex(d => (d.ip_address || d.IP_address) === ip);
+    if (idx !== -1) return { listName, idx, device: list[idx] };
+  }
+  return null;
+}
+
+// Add device: type must match one of keys in allData
+// Supported types: archivers, controllers, cameras, servers, pcDetails, DBDetails
+function addDevice(type, deviceObj) {
+  if (!allData[type]) throw new Error("Invalid device type: " + type);
+
+  // normalize keys to match DB columns
+  const norm = {};
+  Object.entries(deviceObj || {}).forEach(([k, v]) => {
+    norm[normalizeKey(k)] = v;
+  });
+  norm.history = norm.history || [];
+
+  // derive ip
+  const ip = (norm.ip_address || norm.ip || norm.IP_address || "").toString().trim();
+  if (!ip) throw new Error("ip_address is required");
+
+  // Determine DB table name mapping
+  const tableMap = {
+    archivers: "archivers",
+    controllers: "controllers",
+    cameras: "cameras",
+    servers: "servers",
+    pcDetails: "pc_details",
+    DBDetails: "dbdetails",
+  };
+  const table = tableMap[type];
+  if (!table) throw new Error("Unsupported device type for DB: " + type);
+
+  try {
+    switch (table) {
+      case "cameras":
+        db.prepare(`
+          INSERT INTO cameras (cameraname, ip_address, location, city, device_details, hyperlink, remark, added_by, added_at)
+          VALUES (@cameraname, @ip_address, @location, @city, @device_details, @hyperlink, @remark, @added_by, datetime('now'))
+        `).run({
+          cameraname: norm.cameraname || norm.camera_name || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          device_details: norm.device_details || norm.deviec_details || null,
+          hyperlink: norm.hyperlink || null,
+          remark: norm.remark || null,
+          added_by: norm.added_by || "api",
         });
-    }
+        break;
 
-    // convert rows to CSV string
-    const csvContent = rows.map(r => r.map(_escapeCsvValue).join(",")).join("\r\n");
+      case "archivers":
+        db.prepare(`
+          INSERT INTO archivers (archivername, ip_address, location, city, added_by, added_at)
+          VALUES (@archivername, @ip_address, @location, @city, @added_by, datetime('now'))
+        `).run({
+          archivername: norm.archivername || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
 
-    // create blob and trigger download
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename);
-    } else {
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      case "controllers":
+        db.prepare(`
+          INSERT INTO controllers (controllername, ip_address, location, city, added_by, added_at)
+          VALUES (@controllername, @ip_address, @location, @city, @added_by, datetime('now'))
+        `).run({
+          controllername: norm.controllername || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "servers":
+        db.prepare(`
+          INSERT INTO servers (servername, ip_address, location, city, added_by, added_at)
+          VALUES (@servername, @ip_address, @location, @city, @added_by, datetime('now'))
+        `).run({
+          servername: norm.servername || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "dbdetails":
+        db.prepare(`
+          INSERT INTO dbdetails (location, city, hostname, ip_address, application, windows_server, added_by, added_at)
+          VALUES (@location, @city, @hostname, @ip_address, @application, @windows_server, @added_by, datetime('now'))
+        `).run({
+          location: norm.location || null,
+          city: norm.city || null,
+          hostname: norm.hostname || null,
+          ip_address: ip,
+          application: norm.application || null,
+          windows_server: norm.windows_server || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
+
+      case "pc_details":
+        db.prepare(`
+          INSERT INTO pc_details (hostname, ip_address, location, city, pc_name, added_by, added_at)
+          VALUES (@hostname, @ip_address, @location, @city, @pc_name, @added_by, datetime('now'))
+        `).run({
+          hostname: norm.hostname || null,
+          ip_address: ip,
+          location: norm.location || null,
+          city: norm.city || null,
+          pc_name: norm.pc_name || null,
+          added_by: norm.added_by || "api",
+        });
+        break;
     }
+  } catch (err) {
+    // bubble up DB constraint errors (e.g., duplicate IP)
+    throw err;
+  }
+
+  // refresh in-memory cache: load the newly inserted row and push to allData
+  const insertedRow = db.prepare(`SELECT * FROM ${table} WHERE ip_address = ?`).get(ip);
+  const mapped = mapRowToDevice(table, insertedRow);
+  allData[type].push(mapped);
+  rebuildIpRegionMap();
+  return mapped;
 }
 
-function updateDetails(data) {
-    const detailsContainer = document.getElementById("device-details");
-    const deviceFilter = document.getElementById("device-filter");
-    const onlineFilterButton = document.getElementById("filter-online");
-    const offlineFilterButton = document.getElementById("filter-offline");
-    const allFilterButton = document.getElementById("filter-all");
-    const cityFilter = document.getElementById("city-filter");
+// Update device (oldIp) with updateFields
+function updateDevice(oldIp, updateFields) {
+  const found = findInAllData(oldIp);
+  if (!found) throw new Error("Device not found");
+  const { listName, idx } = found;
 
+  const tableMap = {
+    archivers: "archivers",
+    controllers: "controllers",
+    cameras: "cameras",
+    servers: "servers",
+    pcDetails: "pc_details",
+    DBDetails: "dbdetails",
+  };
+  const table = tableMap[listName];
+  if (!table) throw new Error("Unsupported device type for update: " + listName);
 
+  // Merge in-memory
+  allData[listName][idx] = { ...allData[listName][idx], ...updateFields };
+  const ip = (allData[listName][idx].ip_address || allData[listName][idx].IP_address || "").toString().trim();
 
-    detailsContainer.innerHTML = "";
-    cityFilter.innerHTML = '<option value="all">All Cities</option>';
+  try {
+    switch (table) {
+      case "cameras":
+        db.prepare(`
+          UPDATE cameras SET cameraname=@cameraname, location=@location, city=@city, device_details=@device_details, hyperlink=@hyperlink, remark=@remark, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          cameraname: allData[listName][idx].cameraname || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          device_details: allData[listName][idx].device_details || null,
+          hyperlink: allData[listName][idx].hyperlink || null,
+          remark: allData[listName][idx].remark || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
 
-    let combinedDevices = [];
-    let citySet = new Set();
-    let vendorSet = new Set(); // collect normalized vendor values
-    let typeCityMap = {}; // <-- NEW: map deviceType -> Set of cities
+      case "archivers":
+        db.prepare(`
+          UPDATE archivers SET archivername=@archivername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          archivername: allData[listName][idx].archivername || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
 
-    // Icon utility based on device type
-    function getDeviceIcon(type = "") {
-        type = type.toLowerCase();
-        if (type.includes("camera")) return "fas fa-video";
-        if (type.includes("controller")) return "fas fa-cogs";
-        if (type.includes("archiver")) return "fas fa-database";
-        if (type.includes("server")) return "fas fa-server";
-        if (type.includes("pc")) return "fas fa-desktop";
-        if (type.includes("dbdetails")) r
+      case "controllers":
+        db.prepare(`
+          UPDATE controllers SET controllername=@controllername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          controllername: allData[listName][idx].controllername || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+
+      case "servers":
+        db.prepare(`
+          UPDATE servers SET servername=@servername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          servername: allData[listName][idx].servername || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+
+      case "dbdetails":
+        db.prepare(`
+          UPDATE dbdetails SET location=@location, city=@city, hostname=@hostname, application=@application, windows_server=@windows_server, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          hostname: allData[listName][idx].hostname || null,
+          application: allData[listName][idx].application || null,
+          windows_server: allData[listName][idx].windows_server || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+
+      case "pc_details":
+        db.prepare(`
+          UPDATE pc_details SET hostname=@hostname, location=@location, city=@city, pc_name=@pc_name, updated_by=@updated_by, updated_at=datetime('now')
+          WHERE ip_address=@where_ip
+        `).run({
+          hostname: allData[listName][idx].hostname || null,
+          location: allData[listName][idx].location || null,
+          city: allData[listName][idx].city || null,
+          pc_name: allData[listName][idx].pc_name || null,
+          updated_by: updateFields.updated_by || "api",
+          where_ip: oldIp,
+        });
+        break;
+    }
+  } catch (err) {
+    throw err;
+  }
+
+  // If IP changed in updateFields, update DB and in-memory
+  if (updateFields.ip_address && updateFields.ip_address !== oldIp) {
+    const newIp = updateFields.ip_address.toString().trim();
+    db.prepare(`UPDATE ${table} SET ip_address = ? WHERE ip_address = ?`).run(newIp, oldIp);
+    allData[listName][idx].ip_address = newIp;
+    allData[listName][idx].IP_address = newIp;
+  }
+
+  rebuildIpRegionMap();
+  return allData[listName][idx];
+}
+
+// Delete device
+function deleteDevice(ip) {
+  const found = findInAllData(ip);
+  if (!found) throw new Error("Device not found");
+  const { listName, idx } = found;
+
+  const tableMap = {
+    archivers: "archivers",
+    controllers: "controllers",
+    cameras: "cameras",
+    servers: "servers",
+    pcDetails: "pc_details",
+    DBDetails: "dbdetails",
+  };
+  const table = tableMap[listName];
+  if (!table) throw new Error("Unsupported device type for delete: " + listName);
+
+  db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
+  allData[listName].splice(idx, 1);
+  rebuildIpRegionMap();
+  return true;
+}
+
+// Public functions: fetchGlobalData, fetchRegionData
+async function fetchGlobalData() {
+  const all = [
+    ...allData.cameras,
+    ...allData.archivers,
+    ...allData.controllers,
+    ...allData.servers,
+    ...allData.pcDetails,
+    ...allData.DBDetails,
+  ];
+  await pingDevices(all);
+  return { summary: calculateSummary(allData), details: allData };
+}
+
+async function fetchRegionData(regionName) {
+  const filter = list =>
+    (list || []).filter(d => (d.location || "").toString().toLowerCase() === regionName.toLowerCase());
+
+  const regionDevices = {
+    cameras: filter(allData.cameras),
+    archivers: filter(allData.archivers),
+    controllers: filter(allData.controllers),
+    servers: filter(allData.servers),
+    pcDetails: filter(allData.pcDetails),
+    DBDetails: filter(allData.DBDetails),
+    controller_doors: allData.controller_doors.filter(d =>
+      // include door if its location matches OR its parent controller has that region
+      ((d.location || "").toString().toLowerCase() === regionName.toLowerCase()) ||
+      allData.controllers.some(ctrl =>
+        ((ctrl.ip_address || ctrl.IP_address) === d.controller_ip) &&
+        ((ctrl.location || "").toString().toLowerCase() === regionName.toLowerCase())
+      )
+    ),
+  };
+
+  // Ping devices for this region (only device lists, not doors)
+  const allToPing = [].concat(
+    regionDevices.cameras,
+    regionDevices.archivers,
+    regionDevices.controllers,
+    regionDevices.servers,
+    regionDevices.pcDetails,
+    regionDevices.DBDetails
+  );
+  await pingDevices(allToPing);
+  return { summary: calculateSummary(regionDevices), details: regionDevices };
+}
+
+// Export public API
+module.exports = {
+  fetchGlobalData,
+  fetchRegionData,
+  fetchAllIpAddress,
+  ipRegionMap,
+  getDeviceInfo,
+  addDevice,
+  updateDevice,
+  deleteDevice,
+  getControllersList,
+  getControllerDoors,
+};
