@@ -1,3 +1,53 @@
+edit button is not work please chekc wht is the issue 
+<button class="edit-device-btn" onclick="openEditForDeviceFromIP('${deviceIP}')"
+  style="margin-left:8px; padding:6px 8px;">Edit</button>
+
+GET http://localhost/api/devices/10.21.8.66 404 (Not Found)
+openEditForDeviceFromIP @ script.js:1947
+onclick @ index.html:1Understand this error
+script.js:1965 Error: Device not found (404)
+    at openEditForDeviceFromIP (script.js:1948:27)
+
+
+statusContainer.appendChild(statusText);
+
+                    // compute a nicer label for the device-type area
+                    let deviceLabel;
+
+                    if (deviceType === "dbdetails") {
+                        // For DB Details: show the application if available, else fallback
+                        deviceLabel = device.application || deviceType.toUpperCase();
+                    } else if (deviceType.includes("pc")) {
+                        deviceLabel = device.pc_name || device.hostname || "PC";
+                    } else {
+                        deviceLabel = deviceType.toUpperCase();
+                    }
+
+                    card.insertAdjacentHTML("beforeend", `
+                        <button class="edit-device-btn" onclick="openEditForDeviceFromIP('${deviceIP}')"
+  style="margin-left:8px; padding:6px 8px;">Edit</button>
+  <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
+      ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
+  </h3>
+
+  <div class="card-content">
+      <p class="device-type-label ${deviceType}" 
+         style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+          
+          <strong>
+            <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
+            ${deviceLabel}
+          </strong>
+          
+          ${deviceType.includes("camera")
+                            ? `<button class="open-camera-btn"
+        onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
+        title="Open Camera"
+        style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+</button>`
+            
+
 // ================= MODAL SHOW/HIDE =================
 function showDeviceModal(mode="add", deviceObj=null) {
     const modal = document.getElementById("device-modal");
