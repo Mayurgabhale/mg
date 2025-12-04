@@ -1,5 +1,3 @@
-door name not show in sheet
-// --- helper: export controller doors to CSV and trigger download ---
 function exportDoorsToCsv(controller) {
     if (!controller) return;
 
@@ -8,15 +6,16 @@ function exportDoorsToCsv(controller) {
 
     const rows = [];
 
-    // Header info
     rows.push([`Controller: ${controller.controllername || ""}`]);
     rows.push([`IP: ${controller.IP_address || ""}`, `City: ${controller.City || ""}`]);
+
     const totalDoors = Array.isArray(controller.Doors) ? controller.Doors.length : 0;
     const totalReaders = Array.isArray(controller.Doors)
         ? controller.Doors.reduce((acc, d) => acc + (d.reader && d.reader.toString().trim() ? 1 : 0), 0)
         : 0;
+
     rows.push([`Total Doors: ${totalDoors}`, `Total Readers: ${totalReaders}`]);
-    rows.push([]); // blank row
+    rows.push([]); 
 
     // Column headers
     rows.push(["Door", "Reader", "Status"]);
@@ -24,26 +23,19 @@ function exportDoorsToCsv(controller) {
     // Door rows
     if (Array.isArray(controller.Doors)) {
         controller.Doors.forEach((d) => {
-            rows.push([d.Door || "", d.reader || "", d.status || ""]);
+            rows.push([d.door || "", d.reader || "", d.status || ""]);
         });
     }
 
-    // convert rows to CSV string
     const csvContent = rows.map(r => r.map(_escapeCsvValue).join(",")).join("\r\n");
 
-    // create blob and trigger download
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, filename);
-    } else {
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
