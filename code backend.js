@@ -1,103 +1,67 @@
-<!-- ================= DEVICE ADD / EDIT MODAL ================= -->
-<div id="device-modal" class="modal">
-  <div class="modal-content">
-    <h3 id="device-modal-title">Add Device</h3>
+/* MODAL */
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  padding:40px;
+  z-index:1000;
+}
+.modal-content {
+  background:#fff;
+  padding:20px;
+  max-width:700px;
+  margin:auto;
+  border-radius:6px;
+}
 
-    <form id="device-form">
-      <input type="hidden" id="device-old-ip" />
+/* FORM GRID */
+.form-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+.form-grid label {
+  display:flex;
+  flex-direction:column;
+  font-size:14px;
+}
+.full {
+  grid-column:1 / -1;
+}
 
-      <div class="form-grid">
+.req {
+  color:red;
+}
 
-        <!-- TYPE -->
-        <label>
-          Type <span class="req">*</span>
-          <select id="device-type" required onchange="updateFormFields()">
-            <option value="camera">camera</option>
-            <option value="archiver">archiver</option>
-            <option value="controller">controller</option>
-            <option value="server">server</option>
-            <option value="pcdetails">pcdetails</option>
-            <option value="DBDetails">DBDetails</option>
-          </select>
-        </label>
+/* DOOR/READER TABLE */
+.dr-table {
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:8px;
+}
+.dr-table th, .dr-table td {
+  border:1px solid #ccc;
+  padding:6px;
+}
+.dr-table input {
+  width:95%;
+}
 
-        <!-- NAME -->
-        <label>
-          Name <span class="req">*</span>
-          <input id="device-name" type="text" required />
-        </label>
+/* BUTTONS */
+.add-btn {
+  padding:6px 12px;
+  background:#007bff;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+.add-btn:hover {
+  opacity:0.8;
+}
 
-        <!-- IP ADDRESS -->
-        <label>
-          IP Address <span class="req">*</span>
-          <input id="device-ip" type="text" required />
-        </label>
-
-        <!-- LOCATION -->
-        <label>
-          Location <span class="req">*</span>
-          <input id="device-location" type="text" required />
-        </label>
-
-        <!-- CITY -->
-        <label>
-          City <span class="req">*</span>
-          <input id="device-city" type="text" required />
-        </label>
-
-        <!-- DETAILS -->
-        <label>
-          Device Details
-          <input id="device-details" type="text" />
-        </label>
-
-        <!-- HYPERLINK -->
-        <label class="full">
-          Hyperlink
-          <input id="device-hyperlink" type="url" />
-        </label>
-
-        <!-- REMARK -->
-        <label class="full">
-          Remark
-          <input id="device-remark" type="text" />
-        </label>
-
-        <!-- PERSON NAME -->
-        <label class="full">
-          Person Name <span class="req">*</span>
-          <input id="device-person" type="text" required />
-        </label>
-      </div>
-
-      <!-- ================= DOOR + READER (ONLY FOR CONTROLLER) ================= -->
-      <div id="door-reader-container" class="full" style="display:none;">
-        <h4>Doors & Readers</h4>
-
-        <table id="door-reader-table" class="dr-table">
-          <thead>
-            <tr>
-              <th>Door</th>
-              <th>Reader</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="door-reader-body"></tbody>
-        </table>
-
-        <button type="button" id="add-door-row" class="add-btn">+ Add Door</button>
-      </div>
-
-      <!-- FOOTER -->
-      <div class="modal-footer">
-        <div>
-          <button type="submit" id="device-save-btn">Save</button>
-          <button type="button" id="device-cancel" onclick="hideDeviceModal()">Cancel</button>
-        </div>
-
-        <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-      </div>
-    </form>
-
-  </div>
-</div>
+.modal-footer {
+  display:flex;
+  justify-content:space-between;
+  margin-top:20px;
+}
