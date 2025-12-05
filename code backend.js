@@ -1,11 +1,8 @@
-<!-- Added By -->
-<div id="added-by-box" style="display:none;">
-  <label>Added By</label>
-  <input id="device-added-by" type="text">
-</div>
+if (mode === "add") {
+    document.getElementById("added-by-box").style.display = "block";
+    document.getElementById("updated-by-box").style.display = "none";
 
-<!-- Updated By -->
-<div id="updated-by-box" style="display:none;">
-  <label>Updated By</label>
-  <input id="device-updated-by" type="text">
-</div>
+    const added = document.getElementById("device-added-by");
+    added.value = currentUserName;      // fill with logged-in user
+    added.readOnly = false;             // editable in ADD mode
+}
