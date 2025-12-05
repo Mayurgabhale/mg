@@ -1,4 +1,62 @@
+http://localhost/api/regions/details/global
+http://localhost/api/regions/summary/global
 
+in details and summary controller_doors
+{
+  "summary": {
+    "totalDevices": 846,
+    "totalOnlineDevices": 138,
+    "totalOfflineDevices": 708,
+    "archivers": {
+      "total": 21,
+      "online": 21,
+      "offline": 0
+    },
+    "controllers": {
+      "total": 71,
+      "online": 70,
+      "offline": 1
+    },
+    "cameras": {
+      "total": 19,
+      "online": 19,
+      "offline": 0
+    },
+    "servers": {
+      "total": 5,
+      "online": 5,
+      "offline": 0
+    },
+    "pcDetails": {
+      "total": 17,
+      "online": 13,
+      "offline": 4
+    },
+    "DBDetails": {
+      "total": 10,
+      "online": 10,
+      "offline": 0
+    },
+    "controller_doors": {  <,, i dont want to sho this ok 
+      "total": 703,
+      "online": 0,
+      "offline": 703
+    }
+  }
+}
+
+i want to show in agains 
+  "controllers": {
+      "total": 71,
+      "online": 70,
+      "offline": 1
+    },
+in thi controllers see 1 controller is offline ok, this controller agian main door that door i want to show offline ok if the controlle is offline 
+controller_doors is not show different 
+controller_doors i want to show in controllers ok, like tat 
+can you do this, and how to do this tell me 
+
+this controller 
 // src/services/excelService.js
 const fs = require("fs");
 const path = require("path");
@@ -637,7 +695,28 @@ function updateDevice(oldIp, updateFields) {
   return allData[listName][idx];
 }
 
+// Delete device
+// function deleteDevice(ip) {
+//   const found = findInAllData(ip);
+//   if (!found) throw new Error("Device not found");
+//   const { listName, idx } = found;
 
+//   const tableMap = {
+//     archivers: "archivers",
+//     controllers: "controllers",
+//     cameras: "cameras",
+//     servers: "servers",
+//     pcDetails: "pc_details",
+//     DBDetails: "dbdetails",
+//   };
+//   const table = tableMap[listName];
+//   if (!table) throw new Error("Unsupported device type for delete: " + listName);
+
+//   db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
+//   allData[listName].splice(idx, 1);
+//   rebuildIpRegionMap();
+//   return true;
+// }
 // ⬇️⬇️
 // Delete device
 function deleteDevice(ip) {
