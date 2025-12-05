@@ -1,4 +1,5 @@
-Host Name* is not store in database 
+Host Name* is not store in database,
+      can you chekc all code carefully.. 
 case "pc_details":
       dev.hostname = row.hostname || null;
       dev.ip_address = row.ip_address || null;
