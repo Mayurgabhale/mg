@@ -1,4 +1,3 @@
-if (uiType === "pcdetails") {
-    body.hostname = document.getElementById("Host-Name").value;
-    body.pc_name = document.getElementById("PC-Name").value;
-}
+// PC Details fields
+document.getElementById("Host-Name").value = deviceObj.hostname || "";
+document.getElementById("PC-Name").value = deviceObj.pc_name || "";
