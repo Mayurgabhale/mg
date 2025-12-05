@@ -1,51 +1,4 @@
-give me this belowo all fucntin and code with correct ok carefully
 // ================= SHOW DEVICE MODAL =================
-// function showDeviceModal(mode = "add", deviceObj = null) {
-//     const modal = document.getElementById("device-modal");
-//     const title = document.getElementById("device-modal-title");
-//     const deleteBtn = document.getElementById("device-delete-btn");
-
-//     document.getElementById("device-form").reset();
-//     document.getElementById("door-reader-body").innerHTML = "";
-//     document.getElementById("device-old-ip").value = "";
-
-//     if (mode === "add") {
-//         title.textContent = "Add Device";
-//         deleteBtn.style.display = "none";
-//         document.getElementById("device-type").disabled = false;
-//         document.getElementById("device-type").value = "camera"; // default
-//     } else {
-//         title.textContent = "Edit Device";
-//         deleteBtn.style.display = "inline-block";
-//         document.getElementById("device-type").disabled = true;
-
-//         // ✅ Set type correctly from _type_for_ui
-//         document.getElementById("device-type").value = deviceObj._type_for_ui;
-
-//         const name = deviceObj.cameraname || deviceObj.controllername || deviceObj.archivername || deviceObj.servername || deviceObj.hostname || "";
-//         document.getElementById("device-name").value = name;
-//         document.getElementById("device-ip").value = deviceObj.IP_address || deviceObj.ip_address || "";
-//         document.getElementById("device-location").value = deviceObj.Location || deviceObj.location || "";
-//         document.getElementById("device-city").value = deviceObj.City || deviceObj.city || "";
-//         document.getElementById("device-details").value = deviceObj.device_details || "";
-//         document.getElementById("device-hyperlink").value = deviceObj.hyperlink || "";
-//         document.getElementById("device-remark").value = deviceObj.remark || "";
-//         document.getElementById("device-person").value = deviceObj.person_name || "";
-//         document.getElementById("device-old-ip").value = deviceObj.IP_address || deviceObj.ip_address || "";
-
-//         // Handle controller doors
-//         if (deviceObj.Doors && Array.isArray(deviceObj.Doors)) {
-//             document.getElementById("device-type").value = "controller";
-//             updateFormFields();
-//             deviceObj.Doors.forEach(d => addDoorRow(d.door || d.Door, d.reader || ""));
-//         }
-//     }
-
-//     updateFormFields();
-//     modal.style.display = "flex";
-// }
-
-
 function showDeviceModal(mode = "add", deviceObj = null) {
     const modal = document.getElementById("device-modal");
     const title = document.getElementById("device-modal-title");
@@ -116,19 +69,15 @@ function updateFormFields() {
     doorSec.style.display = (type === "controller") ? "block" : "none";
 }
 
-
+// Event listener for type change
 document.getElementById("device-type").addEventListener("change", updateFormFields);
 
-function hideDeviceModal() { document.getElementById("device-modal").style.display = "none"; }
-
-// ================= TYPE BASED FIELD =================
-function updateFormFields() {
-    const type = document.getElementById("device-type").value;
-    const doorSec = document.getElementById("door-reader-container");
-    doorSec.style.display = (type === "controller") ? "block" : "none";
+// ================= HIDE MODAL =================
+function hideDeviceModal() {
+    document.getElementById("device-modal").style.display = "none";
 }
 
-// ================= DOOR ROW =================
+// ================= ADD DOOR ROW =================
 function addDoorRow(door = "", reader = "") {
     const tbody = document.getElementById("door-reader-body");
     const row = document.createElement("tr");
@@ -142,8 +91,7 @@ function addDoorRow(door = "", reader = "") {
 }
 document.getElementById("add-door-row").addEventListener("click", () => addDoorRow());
 
-
-// ================= TYPE → BACKEND MAP =================
+// ================= MAP UI TYPE TO BACKEND =================
 function mapUITypeToBackend(type) {
     switch (type) {
         case "camera": return "cameras";
@@ -151,11 +99,12 @@ function mapUITypeToBackend(type) {
         case "archiver": return "archivers";
         case "server": return "servers";
         case "pcdetails": return "pcDetails";
-        case "DBDetails": return "DBDetails";
+        case "DBDetails": return "dbdetails";
         default: return "cameras";
     }
 }
 
+// ================= CONVERT FORM FIELDS FOR BACKEND =================
 function convertToBackendFields(type, body) {
     const mapped = { ...body };
     switch (type) {
@@ -164,70 +113,13 @@ function convertToBackendFields(type, body) {
         case "archivers": mapped.archivername = body.name; break;
         case "servers": mapped.servername = body.name; break;
         case "pcDetails": mapped.hostname = body.name; break;
-        case "DBDetails": mapped.hostname = body.name; break;
+        case "dbdetails": mapped.hostname = body.name; break;
     }
     delete mapped.name;
     return mapped;
 }
 
-// ================= SAVE ADD/EDIT =================
-// document.getElementById("device-form").addEventListener("submit", async function (ev) {
-//     ev.preventDefault();
-
-//     const oldIp = document.getElementById("device-old-ip").value;
-//     const uiType = document.getElementById("device-type").value;
-//     const backendType = mapUITypeToBackend(uiType);
-
-//     let body = {
-//         name: document.getElementById("device-name").value,
-//         ip_address: document.getElementById("device-ip").value,
-//         location: document.getElementById("device-location").value,
-//         city: document.getElementById("device-city").value,
-//         device_details: document.getElementById("device-details").value,
-//         hyperlink: document.getElementById("device-hyperlink").value,
-//         remark: document.getElementById("device-remark").value,
-//         person_name: document.getElementById("device-person").value
-//     };
-
-//     body = convertToBackendFields(backendType, body);
-
-//     if (backendType === "controllers") {
-//         const doors = [];
-//         document.querySelectorAll("#door-reader-body tr").forEach(tr => {
-//             doors.push({
-//                 door: tr.querySelector(".door-input").value,
-//                 reader: tr.querySelector(".reader-input").value
-//             });
-//         });
-//         body.Doors = doors;
-//     }
-
-//     try {
-//         if (!oldIp) {
-//             await fetch("http://localhost/api/devices", {
-//                 method: "POST",
-//                 headers: { "Content-Type": "application/json" },
-//                 body: JSON.stringify({ type: backendType, device: body })
-//             });
-//         } else {
-//             await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
-//                 method: "PUT",
-//                 headers: { "Content-Type": "application/json" },
-//                 body: JSON.stringify(body)
-//             });
-//         }
-
-//         alert("Saved successfully!");
-//         hideDeviceModal();
-//         await fetchData(currentRegion);
-
-//     } catch (err) {
-//         alert("Error saving device: " + err.message);
-//     }
-// });
-
-
-
+// ================= SAVE / ADD / EDIT =================
 document.getElementById("device-form").addEventListener("submit", async function (ev) {
     ev.preventDefault();
 
@@ -235,7 +127,7 @@ document.getElementById("device-form").addEventListener("submit", async function
     const uiType = document.getElementById("device-type").value;
     const backendType = mapUITypeToBackend(uiType);
 
-    // Collect all fields
+    // Collect all fields (no person_name)
     let body = {
         name: document.getElementById("device-name").value,
         ip_address: document.getElementById("device-ip").value,
@@ -287,8 +179,7 @@ document.getElementById("device-form").addEventListener("submit", async function
     }
 });
 
-
-
+// ================= DELETE DEVICE =================
 document.getElementById("device-delete-btn").addEventListener("click", async function () {
     const oldIp = document.getElementById("device-old-ip").value;
     if (!oldIp) return;
@@ -304,7 +195,7 @@ document.getElementById("device-delete-btn").addEventListener("click", async fun
 
         alert("Device deleted successfully!");
         hideDeviceModal();
-        await fetchData(currentRegion); // refresh the device list
+        await fetchData(currentRegion);
 
     } catch (err) {
         alert("Error deleting device: " + err.message);
