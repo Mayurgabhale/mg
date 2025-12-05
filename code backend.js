@@ -1,1041 +1,958 @@
-C:\Users\W0024618\Desktop\Backend\src\routes\regionRoutes.js
-//  my code working 
- const express = require("express");
- const {
-     getGlobalSummary,
-     getGlobalDetails,
-     getRegionSummary,
-     getRegionDetails,
- } = require("../controllers/regionControllers");
- 
- const router = express.Router();
- 
- // Global Routes
- router.get("/summary/global", getGlobalSummary);
- router.get("/details/global", getGlobalDetails);
- 
- 
- // Region Routes
- router.get("/summary/:regionName", getRegionSummary);
- router.get("/details/:regionName", getRegionDetails)
- 
- module.exports = router;
+in frntend we disply all device but,
+ i dont want to show 
+ CONTROLLER_DOORS
+in the 
+
+IN-PUN-2NDFLR-ISTAR PRO
+ CONTROLLER_DOORS
+
+ N/A
+
+ APAC
+
+ Pune 2nd Floor
+
+Offline
+in this card only this CONTROLLER_DOORS ok so who to do this
+ read the below all code and tell me ony CONTROLLER_DOORS ok
+
+US. FL.MIAMI ULTRA CONTROLLER
+ CONTROLLERS
+
+ 10.21.8.66
+
+ NAMER
+
+ Florida, Miami
+
+Offline
 
 
-C:\Users\W0024618\Desktop\Backend\src\app.js
+WKSPUN-392353
+ Screen 04
 
-// ⬇️⬇️⬇️⬇️⬇️ from DB used
+ WKSPUN-392353
 
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const fs = require("fs");
-const { pingHost } = require("./services/pingService");
-const { DateTime } = require("luxon");
+ APAC
 
-const regionRoutes = require("./routes/regionRoutes");
-const deviceRoutes = require("./routes/deviceRoutes");
+ Pune Podium
 
-const {
-  fetchAllIpAddress,
-  ipRegionMap,
-  getDeviceInfo,
-  getControllersList,
-  getControllerDoors
-} = require("./services/excelService");
+Offline
 
-const { sendTeamsAlert } = require("./services/teamsService");
 
-const app = express();
-const PORT = process.env.PORT || 80;
+WKSPUN-492142
+ Screen 07
 
-// ------------------ Helpers ------------------
-function pruneOldEntries(entries, days = 30) {
-  const cutoff = DateTime.now().minus({ days }).toMillis();
-  return entries.filter(e => DateTime.fromISO(e.timestamp).toMillis() >= cutoff);
+ WKSPUN-492142
+
+ APAC
+
+ Pune Podium
+
+Offline
+
+
+WKSWUPUN2709
+ GSOC Laptop
+
+ WKSWUPUN2709
+
+ APAC
+
+ Pune Podium
+
+Offline
+
+
+IN-PUN-2NDFLR-ISTAR PRO
+ CONTROLLER_DOORS
+
+ N/A
+
+ APAC
+
+ Pune 2nd Floor
+
+Offline
+
+
+IN-PUN-2NDFLR-ISTAR PRO
+ CONTROLLER_DOORS
+
+ N/A
+
+ APAC
+
+ Pune 2nd Floor
+
+Offline
+<section id="details-section" class="details-section">
+        <div class="details-header">
+          <h2><i class="fas fa-microchip"></i> Device Details</h2>
+          <input type="text" id="device-search" placeholder="🔍 Search by IP, Location, City..." />
+
+        </div>
+        <div id="device-details" class="device-grid">Loading device data...</div>
+        <div id="details-container" class="device-grid"></div>
+      </section>
+
+// Fetch summary, details and controllers together
+function fetchData(regionName) {
+    Promise.all([
+        fetch(`${baseUrl}/summary/${regionName}`).then(res => res.json()),
+        fetch(`${baseUrl}/details/${regionName}`).then(res => res.json()),
+        fetch(`http://localhost/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
+        // fetch(`http://10.138.161.4:3000/api/controllers/status`).then(res => res.json()) // <-- controllers endpoint
+    ])
+        .then(([summary, details, controllerData]) => {
+          
+            // Cache full controller data for reuse (keep unfiltered copy)
+            if (Array.isArray(controllerData)) {
+                window.controllerDataCached = controllerData; // full cache
+            } else {
+                window.controllerDataCached = null;
+            }
+
+            // Build controllers list filtered by the requested region (so summary reflects region)
+            let controllersForRegion = Array.isArray(controllerData) ? controllerData.slice() : [];
+            try {
+                const regionLower = (regionName || "global").toString().toLowerCase();
+                if (regionLower !== "global") {
+                    controllersForRegion = controllersForRegion.filter(c => {
+                        const loc = (c.Location || c.location || "").toString().toLowerCase();
+                        // also allow matching by City if you ever pass city as region
+                        const city = (c.City || c.city || "").toString().toLowerCase();
+                        return loc === regionLower || city === regionLower;
+                    });
+                }
+            } catch (e) {
+                // fallback: keep full list if something goes wrong
+                controllersForRegion = Array.isArray(controllerData) ? controllerData.slice() : [];
+            }
+
+            // Compute door + reader summary from controllers API but using region-filtered controllers
+            const controllerExtras = processDoorAndReaderData(controllersForRegion);
+
+            // Attach extras into the same structure updateSummary expects:
+            if (!summary.summary) summary.summary = {};
+            summary.summary.controllerExtras = controllerExtras;
+            // Update UI and details
+            updateSummary(summary);
+
+            // ⬇️⬇️
+            // Tell the map about new live counts if map exists
+            if (typeof window.updateMapData === 'function') {
+                window.updateMapData(summary, details);
+            }
+
+            if (JSON.stringify(details) !== JSON.stringify(deviceDetailsCache)) {
+                updateDetails(details);
+                deviceDetailsCache = details; // Update cache
+            }
+            latestDetails = details;
+        })
+        .catch((error) => console.error("Error fetching data:", error));
 }
 
-function getLogFileForDate(dt) {
-  return `./deviceLogs-${dt.toISODate()}.json`;
-}
 
-function safeJsonParse(filePath) {
-  try {
-    const content = fs.readFileSync(filePath, "utf8").trim();
-    if (!content) return {};
-    return JSON.parse(content);
-  } catch (err) {
-    console.error("❌ Corrupted JSON file detected:", filePath);
-    console.error("Error:", err.message);
-    return {};
-  }
-}
+function updateSummary(data) {
+    const summary = data.summary || {};
 
-// ------------------ Middleware ------------------
-app.use(cors({
-  origin: "http://127.0.0.1:5500",
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type,Authorization",
-}));
-app.use(bodyParser.json());
+    // ✅ Always keep last known values if new data doesn’t have them
+    window.lastSummary = window.lastSummary || {};
+    const merged = {
+        totalDevices: summary.totalDevices ?? window.lastSummary.totalDevices ?? 0,
+        totalOnlineDevices: summary.totalOnlineDevices ?? window.lastSummary.totalOnlineDevices ?? 0,
+        totalOfflineDevices: summary.totalOfflineDevices ?? window.lastSummary.totalOfflineDevices ?? 0,
 
-// ------------------ Routes ------------------
-app.use("/api/regions", regionRoutes);
-app.use("/api/devices", deviceRoutes);
-
-// ------------------ Device Status ------------------
-let deviceStatus = {};
-const today = DateTime.now().setZone("Asia/Kolkata");
-const todayLogFile = getLogFileForDate(today);
-let todayLogs = fs.existsSync(todayLogFile) ? safeJsonParse(todayLogFile) : {};
-
-function saveTodayLogs() {
-  fs.writeFileSync(todayLogFile, JSON.stringify(todayLogs, null, 2));
-}
-
-function logDeviceChange(ip, status) {
-  const timestamp = DateTime.now().setZone("Asia/Kolkata").toISO();
-  const arr = (todayLogs[ip] = todayLogs[ip] || []);
-  const last = arr[arr.length - 1];
-  if (!last || last.status !== status) {
-    arr.push({ status, timestamp });
-    todayLogs[ip] = pruneOldEntries(arr, 30);
-    saveTodayLogs();
-  }
-}
-
-async function pingDevices() {
-  const limit = require("p-limit")(20);
-  const devices = fetchAllIpAddress();
-
-  await Promise.all(
-    devices.map(ip =>
-      limit(async () => {
-        const newStatus = await pingHost(ip);
-        if (deviceStatus[ip] !== newStatus) {
-          logDeviceChange(ip, newStatus);
-        }
-        deviceStatus[ip] = newStatus;
-      })
-    )
-  );
-
-  buildControllerStatus();
-  console.log("Updated device status:", deviceStatus);
-}
-
-// ------------------ Controller + Door Status ------------------
-let fullStatus = [];
-
-function buildControllerStatus() {
-  const controllers = getControllersList(); // from DB
-
-  fullStatus = controllers.map(ctrl => {
-    const ip = (ctrl.IP_address || ctrl.ip_address || "").toString().trim();
-    const status = deviceStatus[ip] || "Unknown";
-
-    // Doors linked to this controller
-    const doors = getControllerDoors(ip).map(d => ({
-      door: d.door,
-      reader: d.reader,
-      status: status === "Online" ? "Online" : "Offline",
-    }));
-
-    return {
-      controllername: ctrl.controllername,
-      IP_address: ip,
-      Location: ctrl.location || "Unknown",
-      City: ctrl.city || "Unknown",
-      controllerStatus: status,
-      Doors: doors,
+        cameras: { ...window.lastSummary.cameras, ...summary.cameras },
+        archivers: { ...window.lastSummary.archivers, ...summary.archivers },
+        controllers: { ...window.lastSummary.controllers, ...summary.controllers },
+        servers: { ...window.lastSummary.servers, ...summary.servers },
+        pcdetails: { ...window.lastSummary.pcdetails, ...summary.pcdetails },
+        dbdetails: { ...window.lastSummary.dbdetails, ...summary.dbdetails },
+        // 🆕 door/reader extras merged (summary.controllerExtras is created in fetchData)
+        controllerExtras: { ...window.lastSummary.controllerExtras, ...summary.controllerExtras }
     };
-  });
-}
 
-const notifiedOffline = new Set();
 
-// ------------------ Ping Loop ------------------
-setInterval(async () => {
-  pingDevices();
-}, 60_000);
+    // 🆕 Recalculate totals to include Door counts (but not Readers)
+    const doors = merged.controllerExtras?.doors || { total: 0, online: 0, offline: 0 };
 
-(async () => {
-  pingDevices();
-})();
+    // Recompute totals including doors
+    merged.totalDevices =
+        (merged.cameras?.total || 0) +
+        (merged.archivers?.total || 0) +
+        (merged.controllers?.total || 0) +
+        (merged.servers?.total || 0) +
+        (merged.pcdetails?.total || 0) +
+        (merged.dbdetails?.total || 0) +
+        doors.total; // ✅ include doors only
 
-// ------------------ API Endpoints ------------------
+    merged.totalOnlineDevices =
+        (merged.cameras?.online || 0) +
+        (merged.archivers?.online || 0) +
+        (merged.controllers?.online || 0) +
+        (merged.servers?.online || 0) +
+        (merged.pcdetails?.online || 0) +
+        (merged.dbdetails?.online || 0) +
+        doors.online; // ✅ include doors only
 
-// Real-time device status
-app.get("/api/region/devices/status", (req, res) => {
-  res.json(deviceStatus);
-});
+    merged.totalOfflineDevices =
+        merged.totalDevices - merged.totalOnlineDevices;
 
-// Full history
-app.get("/api/devices/history", (req, res) => {
-  const files = fs.readdirSync(".").filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  const combined = {};
-  for (const f of files) {
-    const dayLogs = safeJsonParse(f);
-    for (const ip of Object.keys(dayLogs)) {
-      combined[ip] = (combined[ip] || []).concat(dayLogs[ip]);
+
+
+
+    // ✅ Save merged result for next refresh
+    window.lastSummary = merged;
+
+    // Update UI safely
+    document.getElementById("total-devices").textContent = merged.totalDevices;
+    document.getElementById("online-devices").textContent = merged.totalOnlineDevices;
+    document.getElementById("offline-devices").textContent = merged.totalOfflineDevices;
+
+    document.getElementById("camera-total").textContent = merged.cameras?.total || 0;
+    document.getElementById("camera-online").textContent = merged.cameras?.online || 0;
+    document.getElementById("camera-offline").textContent = merged.cameras?.offline || 0;
+
+    document.getElementById("archiver-total").textContent = merged.archivers?.total || 0;
+    document.getElementById("archiver-online").textContent = merged.archivers?.online || 0;
+    document.getElementById("archiver-offline").textContent = merged.archivers?.offline || 0;
+
+    document.getElementById("controller-total").textContent = merged.controllers?.total || 0;
+    document.getElementById("controller-online").textContent = merged.controllers?.online || 0;
+    document.getElementById("controller-offline").textContent = merged.controllers?.offline || 0;
+
+    document.getElementById("server-total").textContent = merged.servers?.total || 0;
+    document.getElementById("server-online").textContent = merged.servers?.online || 0;
+    document.getElementById("server-offline").textContent = merged.servers?.offline || 0;
+
+    // ✅ Fix for Desktop and DB Server
+    document.getElementById("pc-total").textContent = merged.pcdetails?.total || 0;
+    document.getElementById("pc-online").textContent = merged.pcdetails?.online || 0;
+    document.getElementById("pc-offline").textContent = merged.pcdetails?.offline || 0;
+
+    document.getElementById("db-total").textContent = merged.dbdetails?.total || 0;
+    document.getElementById("db-online").textContent = merged.dbdetails?.online || 0;
+    document.getElementById("db-offline").textContent = merged.dbdetails?.offline || 0;
+
+
+    // ✅  new for Door and Reader 
+
+
+    // //////////////////////////////////
+
+
+    // ====== Door / Reader card updates (from controllers API) ======
+    const extras = merged.controllerExtras || {};
+
+    // Prefer the combined doorReader-* IDs (your summary card)
+    const doorTotalEl = document.getElementById("doorReader-total");
+    const doorOnlineEl = document.getElementById("doorReader-online");
+    const doorOfflineEl = document.getElementById("doorReader-offline");
+
+    // Also mirror IDs expected by graph.js / other scripts (safe to set only if they exist)
+    const doorOnlineAlt = document.getElementById("door-online");
+    const doorOfflineAlt = document.getElementById("door-offline");
+
+    const readerTotalEl = document.getElementById("reader-total-inline");
+    const readerOnlineEl = document.getElementById("reader-online-inline");
+    const readerOfflineEl = document.getElementById("reader-offline-inline");
+
+    // Also mirror IDs expected by graph.js
+    const readerOnlineAlt = document.getElementById("reader-online");
+    const readerOfflineAlt = document.getElementById("reader-offline");
+
+    if (extras.doors) {
+        if (doorTotalEl) doorTotalEl.textContent = extras.doors.total || 0;
+        if (doorOnlineEl) doorOnlineEl.textContent = extras.doors.online || 0;
+        if (doorOfflineEl) doorOfflineEl.textContent = extras.doors.offline || 0;
+
+        // mirror
+        if (doorOnlineAlt) doorOnlineAlt.textContent = extras.doors.online || 0;
+        if (doorOfflineAlt) doorOfflineAlt.textContent = extras.doors.offline || 0;
+    } else {
+        if (doorTotalEl) doorTotalEl.textContent = 0;
+        if (doorOnlineEl) doorOnlineEl.textContent = 0;
+        if (doorOfflineEl) doorOfflineEl.textContent = 0;
+
+        if (doorOnlineAlt) doorOnlineAlt.textContent = 0;
+        if (doorOfflineAlt) doorOfflineAlt.textContent = 0;
     }
-  }
-  for (const ip of Object.keys(combined)) {
-    combined[ip] = pruneOldEntries(combined[ip], 30);
-  }
-  res.json(combined);
-});
 
-// Region-wise history
-app.get("/api/region/:region/history", (req, res) => {
-  const region = req.params.region.toLowerCase();
-  const files = fs.readdirSync(".").filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  const regionLogs = {};
+    if (extras.readers) {
+        if (readerTotalEl) readerTotalEl.textContent = extras.readers.total || 0;
+        if (readerOnlineEl) readerOnlineEl.textContent = extras.readers.online || 0;
+        if (readerOfflineEl) readerOfflineEl.textContent = extras.readers.offline || 0;
 
-  for (const f of files) {
-    const dayLogs = safeJsonParse(f);
-    for (const ip of Object.keys(dayLogs)) {
-      if (ipRegionMap[ip] === region) {
-        regionLogs[ip] = (regionLogs[ip] || []).concat(dayLogs[ip]);
-      }
+        // mirror
+        if (readerOnlineAlt) readerOnlineAlt.textContent = extras.readers.online || 0;
+        if (readerOfflineAlt) readerOfflineAlt.textContent = extras.readers.offline || 0;
+    } else {
+        if (readerTotalEl) readerTotalEl.textContent = 0;
+        if (readerOnlineEl) readerOnlineEl.textContent = 0;
+        if (readerOfflineEl) readerOfflineEl.textContent = 0;
+
+        if (readerOnlineAlt) readerOnlineAlt.textContent = 0;
+        if (readerOfflineAlt) readerOfflineAlt.textContent = 0;
     }
-  }
 
-  if (!Object.keys(regionLogs).length) {
-    return res.status(404).json({ message: `No device history found for region: ${region}` });
-  }
-
-  for (const ip of Object.keys(regionLogs)) {
-    regionLogs[ip] = pruneOldEntries(regionLogs[ip], 30);
-  }
-
-  res.json(regionLogs);
-});
-
-// Single-device history
-app.get("/api/device/history/:ip", (req, res) => {
-  const ip = req.params.ip;
-  const files = fs.readdirSync(".").filter(f => f.startsWith("deviceLogs-") && f.endsWith(".json"));
-  let history = [];
-  for (const f of files) {
-    const dayLogs = safeJsonParse(f);
-    if (dayLogs[ip]) history = history.concat(dayLogs[ip]);
-  }
-  if (!history.length) {
-    return res.status(404).json({ message: "No history found for this device" });
-  }
-  history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  res.json({ ip, history });
-});
-
-// Get all controllers + doors
-app.get("/api/controllers/status", (req, res) => {
-  res.json(fullStatus);
-});
-
-// ------------------ Start Server ------------------
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
-
-C:\Users\W0024618\Desktop\Backend\src\services\excelService.js
-
-
-// src/services/excelService.js
-const fs = require("fs");
-const path = require("path");
-const pLimit = require("p-limit");
-const { DateTime } = require("luxon");
-const { pingHost } = require("./pingService");
-const Database = require("better-sqlite3");
-
-// DB path
-const dbPath = path.join(__dirname, "../data/devices.db");
-if (!fs.existsSync(dbPath)) {
-  throw new Error(`Database file not found at ${dbPath}. Run setupDatabase.js first.`);
-}
-const db = new Database(dbPath, { readonly: false });
-
-// In-memory cache (shape expected by the rest of your app)
-let allData = {
-  archivers: [],
-  controllers: [],
-  cameras: [],
-  servers: [],
-  pcDetails: [],
-  DBDetails: [],
-  controller_doors: [], // doors with controller metadata
-};
-
-// ip -> region map
-let ipRegionMap = {};
-
-// Helper: prune old entries (keeps history entries with timestamp within `days`)
-function pruneOldEntries(entries = [], days = 30) {
-  try {
-    const cutoff = DateTime.now().minus({ days }).toMillis();
-    return entries.filter(e => {
-      if (!e || !e.timestamp) return false;
-      try {
-        return DateTime.fromISO(e.timestamp).toMillis() >= cutoff;
-      } catch {
-        return false;
-      }
-    });
-  } catch (err) {
-    return entries;
-  }
-}
-
-// small helper: normalize keys (same approach used elsewhere)
-function normalizeKey(k) {
-  return k == null ? k : k.toString().trim().toLowerCase().replace(/\s+/g, "_");
-}
-
-// Map DB row for a table to the object shape other code expects
-function mapRowToDevice(table, row) {
-  if (!row) return null;
-  const dev = {};
-
-  switch (table) {
-    case "cameras":
-      dev.cameraname = row.cameraname || row.camera_name || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      dev.device_details = row.device_details || row.deviec_details || null;
-      dev.hyperlink = row.hyperlink || null;
-      dev.remark = row.remark || null;
-      break;
-
-    case "archivers":
-      dev.archivername = row.archivername || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      break;
-
-    case "controllers":
-      dev.controllername = row.controllername || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      break;
-
-    case "servers":
-      dev.servername = row.servername || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      break;
-
-    case "dbdetails":
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      dev.hostname = row.hostname || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.application = row.application || null;
-      dev.windows_server = row.windows_server || null;
-      break;
-
-    case "pc_details":
-      dev.hostname = row.hostname || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      dev.pc_name = row.pc_name || null;
-      break;
-
-    default:
-      // fallback: copy keys normalized
-      Object.keys(row).forEach(k => {
-        dev[normalizeKey(k)] = row[k];
-      });
-  }
-
-  // common metadata used by other parts of the app
-  // ensure history is an array and prune old entries (preserve shape)
-  if (Array.isArray(row.history)) {
-    dev.history = pruneOldEntries(row.history, 30);
-  } else if (row.history && typeof row.history === "string") {
-    try {
-      const parsed = JSON.parse(row.history);
-      dev.history = Array.isArray(parsed) ? pruneOldEntries(parsed, 30) : [];
-    } catch {
-      dev.history = [];
+    // ⬇️⬇️ this is call from graph.js
+    // --- Immediately refresh gauges/total-chart so UI updates right away after filtering ---
+    if (typeof renderGauges === "function") {
+        try { renderGauges(); } catch (e) { console.warn("renderGauges failed:", e); }
     }
-  } else {
-    dev.history = [];
-  }
-
-  // keep status if provided (some operations may set it)
-  if (row.status) dev.status = row.status;
-  return dev;
-}
-
-// rebuild ipRegionMap (called after any mutation or load)
-function rebuildIpRegionMap() {
-  ipRegionMap = {};
-  [
-    ...allData.cameras,
-    ...allData.archivers,
-    ...allData.controllers,
-    ...allData.servers,
-    ...allData.pcDetails,
-    ...allData.DBDetails,
-  ].forEach(dev => {
-    const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
-    if (ip && dev.location) {
-      ipRegionMap[ip] = (dev.location || "").toString().toLowerCase();
+    if (typeof updateTotalCountChart === "function") {
+        try { updateTotalCountChart(); } catch (e) { console.warn("updateTotalCountChart failed:", e); }
     }
-  });
+
+
 }
 
-// Load all rows from DB into allData (including controller_doors)
-function loadDbData() {
-  try {
-    // cameras
-    const cams = db.prepare("SELECT * FROM cameras").all();
-    allData.cameras = cams.map(r => mapRowToDevice("cameras", r));
 
-    // archivers
-    const archs = db.prepare("SELECT * FROM archivers").all();
-    allData.archivers = archs.map(r => mapRowToDevice("archivers", r));
-
-    // controllers
-    const ctrls = db.prepare("SELECT * FROM controllers").all();
-    allData.controllers = ctrls.map(r => mapRowToDevice("controllers", r));
-
-    // servers
-    const srvs = db.prepare("SELECT * FROM servers").all();
-    allData.servers = srvs.map(r => mapRowToDevice("servers", r));
-
-    // dbdetails
-    const dbs = db.prepare("SELECT * FROM dbdetails").all();
-    allData.DBDetails = dbs.map(r => mapRowToDevice("dbdetails", r));
-
-    // pc_details
-    const pcs = db.prepare("SELECT * FROM pc_details").all();
-    allData.pcDetails = pcs.map(r => mapRowToDevice("pc_details", r));
-
-    // controller_doors: join controllers to get location/city/controller metadata
-    const doors = db.prepare(`
-      SELECT d.*,
-             c.controllername AS controllername,
-             c.location      AS controller_location,
-             c.city          AS controller_city
-      FROM controller_doors d
-      LEFT JOIN controllers c ON c.ip_address = d.controller_ip
-    `).all();
-
-    allData.controller_doors = doors.map(r => ({
-      id: r.id,
-      controller_ip: r.controller_ip,
-      controllername: r.controllername || null,
-      door: r.door,
-      reader: r.reader,
-      // prefer door-level location/city if present, otherwise controller's
-      location: r.location || r.controller_location || null,
-      city: r.city || r.controller_city || null,
-      added_by: r.added_by || null,
-      added_at: r.added_at || null,
-      updated_by: r.updated_by || null,
-      updated_at: r.updated_at || null,
-    }));
-
-    rebuildIpRegionMap();
-
-    console.log("Loaded data from DB. counts:", {
-      cameras: allData.cameras.length,
-      controllers: allData.controllers.length,
-      archivers: allData.archivers.length,
-      servers: allData.servers.length,
-      pcDetails: allData.pcDetails.length,
-      DBDetails: allData.DBDetails.length,
-      controller_doors: allData.controller_doors.length,
-    });
-  } catch (err) {
-    console.error("Error loading DB data:", err.message);
-    throw err;
-  }
-}
-
-// Initialize DB load
-loadDbData();
-
-// ⬇️⬇️⬇️ for door 
-// reload controller_doors from DB into allData.controller_doors
-function reloadControllerDoors() {
-  const doors = db.prepare(`
-    SELECT d.*, 
-           c.controllername AS controllername,
-           c.location      AS controller_location,
-           c.city          AS controller_city
-    FROM controller_doors d
-    LEFT JOIN controllers c ON c.ip_address = d.controller_ip
-  `).all();
-
-  allData.controller_doors = doors.map(r => ({
-    id: r.id,
-    controller_ip: r.controller_ip,
-    controllername: r.controllername || null,
-    door: r.door,
-    reader: r.reader,
-    location: r.location || r.controller_location || null,
-    city: r.city || r.controller_city || null,
-    added_by: r.added_by || null,
-    added_at: r.added_at || null,
-    updated_by: r.updated_by || null,
-    updated_at: r.updated_at || null,
-  }));
-}
-// ⬇️⬇️⬇️ for door 
+function updateDetails(data) {
+    const detailsContainer = document.getElementById("device-details");
+    const deviceFilter = document.getElementById("device-filter");
+    const onlineFilterButton = document.getElementById("filter-online");
+    const offlineFilterButton = document.getElementById("filter-offline");
+    const allFilterButton = document.getElementById("filter-all");
+    const cityFilter = document.getElementById("city-filter");
 
 
-// Fetch all IP addresses (array of ip strings) — used by ping loop
-function fetchAllIpAddress() {
-  return [
-    ...allData.cameras,
-    ...allData.archivers,
-    ...allData.controllers,
-    ...allData.servers,
-    ...allData.pcDetails,
-    ...allData.DBDetails,
-  ]
-    .map(d => (d.ip_address || d.IP_address || "").toString().trim())
-    .filter(Boolean);
-}
 
-// ping helpers (cache + concurrency)
-const cache = new Map();
-async function pingDevice(ip) {
-  if (!ip) return "IP Address Missing";
-  return await pingHost(ip);
-}
-// mirror earlier file behavior: clear cache once at startup (same as old file)
-cache.clear();
+    detailsContainer.innerHTML = "";
+    cityFilter.innerHTML = '<option value="all">All Cities</option>';
 
-async function pingDevices(devices) {
-  const limit = pLimit(20);
-  await Promise.all(
-    (devices || []).map(dev =>
-      limit(async () => {
-        const ip = (dev.ip_address || dev.IP_address || "").toString().trim();
-        const status = cache.get(ip) || (await pingDevice(ip));
-        cache.set(ip, status);
-        dev.status = status;
-      })
-    )
-  );
-}
+    let combinedDevices = [];
+    let citySet = new Set();
+    let vendorSet = new Set(); // collect normalized vendor values
+    let typeCityMap = {}; // <-- NEW: map deviceType -> Set of cities
 
-// Summary calculators
-function calculateSummary(groups) {
-  const summary = {};
-  for (const [k, list] of Object.entries(groups)) {
-    const total = (list || []).length;
-    const online = (list || []).filter(d => d.status === "Online").length;
-    summary[k] = { total, online, offline: total - online };
-  }
-  return {
-    totalDevices: Object.values(summary).reduce((s, g) => s + g.total, 0),
-    totalOnlineDevices: Object.values(summary).reduce((s, g) => s + g.online, 0),
-    totalOfflineDevices: Object.values(summary).reduce((s, g) => s + g.offline, 0),
-    ...summary,
-  };
-}
+    // Icon utility based on device type
+    function getDeviceIcon(type = "") {
+        type = type.toLowerCase();
+        if (type.includes("camera")) return "fas fa-video";
+        if (type.includes("controller")) return "fas fa-cogs";
+        if (type.includes("archiver")) return "fas fa-database";
+        if (type.includes("server")) return "fas fa-server";
+        if (type.includes("pc")) return "fas fa-desktop";
+        if (type.includes("dbdetails")) return "fa-solid fa-life-ring";
+        return "fas fa-microchip"; // fallback
+    }
 
-// Accessors
-function getDeviceInfo(ip) {
-  for (const list of Object.values(allData)) {
-    if (!Array.isArray(list)) continue; // skip controller_doors map entries if any
-    const dev = list.find(d => (d.ip_address || d.IP_address) === ip);
-    if (dev) return dev;
-  }
-  return null;
-}
 
-function getControllersList() {
-  return (allData.controllers || []).map(c => ({ ...c }));
-}
 
-// get doors for a controller IP (returns door objects with location/city)
-function getControllerDoors(controllerIp) {
-  return allData.controller_doors.filter(d => d.controller_ip === controllerIp);
-}
+    // Helper to find matching controller (by IP or name)
+    function findControllerForDevice(device) {
+        const controllers = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : null;
+        const ipToMatch = (device.ip || device.ip_address || "").toString().trim();
+        const nameToMatch = (device.controllername || device.controller_name || device.cameraname || "").toString().trim();
 
-// find device by ip in allData and return {listName, idx, device}
-function findInAllData(ip) {
-  for (const [listName, list] of Object.entries(allData)) {
-    if (!Array.isArray(list)) continue;
-    const idx = (list || []).findIndex(d => (d.ip_address || d.IP_address) === ip);
-    if (idx !== -1) return { listName, idx, device: list[idx] };
-  }
-  return null;
-}
-
-// Add device: type must match one of keys in allData
-// Supported types: archivers, controllers, cameras, servers, pcDetails, DBDetails
-function addDevice(type, deviceObj) {
-  if (!allData[type]) throw new Error("Invalid device type: " + type);
-
-  // normalize keys to match DB columns
-  const norm = {};
-  Object.entries(deviceObj || {}).forEach(([k, v]) => {
-    norm[normalizeKey(k)] = v;
-  });
-  norm.history = norm.history || [];
-
-  // derive ip
-  const ip = (norm.ip_address || norm.ip || norm.IP_address || "").toString().trim();
-  if (!ip) throw new Error("ip_address is required");
-
-  // Determine DB table name mapping
-  const tableMap = {
-    archivers: "archivers",
-    controllers: "controllers",
-    cameras: "cameras",
-    servers: "servers",
-    pcDetails: "pc_details",
-    DBDetails: "dbdetails",
-  };
-  const table = tableMap[type];
-  if (!table) throw new Error("Unsupported device type for DB: " + type);
-
-  try {
-    switch (table) {
-      case "cameras":
-        db.prepare(`
-          INSERT INTO cameras (cameraname, ip_address, location, city, device_details, hyperlink, remark, added_by, added_at)
-          VALUES (@cameraname, @ip_address, @location, @city, @device_details, @hyperlink, @remark, @added_by, datetime('now'))
-        `).run({
-          cameraname: norm.cameraname || norm.camera_name || null,
-          ip_address: ip,
-          location: norm.location || null,
-          city: norm.city || null,
-          device_details: norm.device_details || norm.deviec_details || null,
-          hyperlink: norm.hyperlink || null,
-          remark: norm.remark || null,
-          added_by: norm.added_by || "api",
-        });
-        break;
-
-      case "archivers":
-        db.prepare(`
-          INSERT INTO archivers (archivername, ip_address, location, city, added_by, added_at)
-          VALUES (@archivername, @ip_address, @location, @city, @added_by, datetime('now'))
-        `).run({
-          archivername: norm.archivername || null,
-          ip_address: ip,
-          location: norm.location || null,
-          city: norm.city || null,
-          added_by: norm.added_by || "api",
-        });
-        break;
-
-      case "controllers":
-        db.prepare(`
-          INSERT INTO controllers (controllername, ip_address, location, city, added_by, added_at)
-          VALUES (@controllername, @ip_address, @location, @city, @added_by, datetime('now'))
-        `).run({
-          controllername: norm.controllername || null,
-          ip_address: ip,
-          location: norm.location || null,
-          city: norm.city || null,
-          added_by: norm.added_by || "api",
-        });
-
-        // ⬇️⬇️ for door
-
-        // --- SAVE DOORS FOR THIS CONTROLLER (if provided) ---
-        const doorsToInsert = norm.doors || norm.Doors;
-        if (Array.isArray(doorsToInsert) && doorsToInsert.length) {
-          const stmt = db.prepare(`
-            INSERT INTO controller_doors (controller_ip, door, reader, location, city, added_by, added_at)
-            VALUES (?, ?, ?, ?, ?, 'api', datetime('now'))
-          `);
-          for (const d of doorsToInsert) {
-            const doorVal = (d && (d.door || d.Door || d.name)) || "";
-            const readerVal = (d && (d.reader || d.Reader)) || "";
-            const locVal = norm.location || null;
-            const cityVal = norm.city || null;
-
-            stmt.run(ip, doorVal, readerVal, locVal, cityVal);
-          }
-          // refresh doors cache
-          reloadControllerDoors();
+        if (controllers) {
+            // Try IP match first
+            if (ipToMatch) {
+                const byIp = controllers.find(c => c.IP_address && c.IP_address.toString().trim() === ipToMatch);
+                if (byIp) return byIp;
+            }
+            // Try controller name match (loose contains)
+            if (nameToMatch) {
+                const nameLower = nameToMatch.toLowerCase();
+                const byName = controllers.find(c => (c.controllername || "").toLowerCase().includes(nameLower) || nameLower.includes((c.controllername || "").toLowerCase()));
+                if (byName) return byName;
+            }
+            // Last resort: try city match + online status (heuristic)
+            if (device.city) {
+                const byCity = controllers.find(c => (c.City || "").toLowerCase() === (device.city || "").toLowerCase());
+                if (byCity) return byCity;
+            }
         }
-        // ⬇️⬇️
-
-
-        break;
-
-      case "servers":
-        db.prepare(`
-          INSERT INTO servers (servername, ip_address, location, city, added_by, added_at)
-          VALUES (@servername, @ip_address, @location, @city, @added_by, datetime('now'))
-        `).run({
-          servername: norm.servername || null,
-          ip_address: ip,
-          location: norm.location || null,
-          city: norm.city || null,
-          added_by: norm.added_by || "api",
-        });
-        break;
-
-      case "dbdetails":
-        db.prepare(`
-          INSERT INTO dbdetails (location, city, hostname, ip_address, application, windows_server, added_by, added_at)
-          VALUES (@location, @city, @hostname, @ip_address, @application, @windows_server, @added_by, datetime('now'))
-        `).run({
-          location: norm.location || null,
-          city: norm.city || null,
-          hostname: norm.hostname || null,
-          ip_address: ip,
-          application: norm.application || null,
-          windows_server: norm.windows_server || null,
-          added_by: norm.added_by || "api",
-        });
-        break;
-
-      case "pc_details":
-        db.prepare(`
-          INSERT INTO pc_details (hostname, ip_address, location, city, pc_name, added_by, added_at)
-          VALUES (@hostname, @ip_address, @location, @city, @pc_name, @added_by, datetime('now'))
-        `).run({
-          hostname: norm.hostname || null,
-          ip_address: ip,
-          location: norm.location || null,
-          city: norm.city || null,
-          pc_name: norm.pc_name || null,
-          added_by: norm.added_by || "api",
-        });
-        break;
-    }
-  } catch (err) {
-    // bubble up DB constraint errors (e.g., duplicate IP)
-    throw err;
-  }
-
-  // refresh in-memory cache: load the newly inserted row and push to allData
-  const insertedRow = db.prepare(`SELECT * FROM ${table} WHERE ip_address = ?`).get(ip);
-  const mapped = mapRowToDevice(table, insertedRow);
-  allData[type].push(mapped);
-  rebuildIpRegionMap();
-  return mapped;
-}
-
-// Update device (oldIp) with updateFields
-function updateDevice(oldIp, updateFields) {
-  const found = findInAllData(oldIp);
-  if (!found) throw new Error("Device not found");
-  const { listName, idx } = found;
-
-  const tableMap = {
-    archivers: "archivers",
-    controllers: "controllers",
-    cameras: "cameras",
-    servers: "servers",
-    pcDetails: "pc_details",
-    DBDetails: "dbdetails",
-  };
-  const table = tableMap[listName];
-  if (!table) throw new Error("Unsupported device type for update: " + listName);
-
-  // Merge in-memory
-  allData[listName][idx] = { ...allData[listName][idx], ...updateFields };
-  const ip = (allData[listName][idx].ip_address || allData[listName][idx].IP_address || "").toString().trim();
-
-  try {
-    switch (table) {
-      case "cameras":
-        db.prepare(`
-          UPDATE cameras SET cameraname=@cameraname, location=@location, city=@city, device_details=@device_details, hyperlink=@hyperlink, remark=@remark, updated_by=@updated_by, updated_at=datetime('now')
-          WHERE ip_address=@where_ip
-        `).run({
-          cameraname: allData[listName][idx].cameraname || null,
-          location: allData[listName][idx].location || null,
-          city: allData[listName][idx].city || null,
-          device_details: allData[listName][idx].device_details || null,
-          hyperlink: allData[listName][idx].hyperlink || null,
-          remark: allData[listName][idx].remark || null,
-          updated_by: updateFields.updated_by || "api",
-          where_ip: oldIp,
-        });
-        break;
-
-      case "archivers":
-        db.prepare(`
-          UPDATE archivers SET archivername=@archivername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
-          WHERE ip_address=@where_ip
-        `).run({
-          archivername: allData[listName][idx].archivername || null,
-          location: allData[listName][idx].location || null,
-          city: allData[listName][idx].city || null,
-          updated_by: updateFields.updated_by || "api",
-          where_ip: oldIp,
-        });
-        break;
-
-      case "controllers":
-        db.prepare(`
-          UPDATE controllers SET controllername=@controllername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
-          WHERE ip_address=@where_ip
-        `).run({
-          controllername: allData[listName][idx].controllername || null,
-          location: allData[listName][idx].location || null,
-          city: allData[listName][idx].city || null,
-          updated_by: updateFields.updated_by || "api",
-          where_ip: oldIp,
-        });
-
-        // ⬇️⬇️ for door
-        // --- UPDATE DOORS IF PROVIDED ---
-        const doorsToUpdate = updateFields.Doors || updateFields.doors;
-        if (Array.isArray(doorsToUpdate)) {
-          // remove old door rows for this controller
-          db.prepare("DELETE FROM controller_doors WHERE controller_ip = ?").run(oldIp);
-
-          const stmt = db.prepare(`
-          INSERT INTO controller_doors (controller_ip, door, reader, location, city, added_by, added_at)
-          VALUES (?, ?, ?, ?, ?, 'api', datetime('now'))
-        `);
-
-          const locVal = allData[listName][idx].location || null;
-          const cityVal = allData[listName][idx].city || null;
-
-          for (const d of doorsToUpdate) {
-            const doorVal = (d && (d.door || d.Door || d.name)) || "";
-            const readerVal = (d && (d.reader || d.Reader)) || "";
-            stmt.run(oldIp, doorVal, readerVal, locVal, cityVal);
-          }
-
-          // refresh doors cache
-          reloadControllerDoors();
-        }
-        break;
-
-      case "servers":
-        db.prepare(`
-          UPDATE servers SET servername=@servername, location=@location, city=@city, updated_by=@updated_by, updated_at=datetime('now')
-          WHERE ip_address=@where_ip
-        `).run({
-          servername: allData[listName][idx].servername || null,
-          location: allData[listName][idx].location || null,
-          city: allData[listName][idx].city || null,
-          updated_by: updateFields.updated_by || "api",
-          where_ip: oldIp,
-        });
-        break;
-
-      case "dbdetails":
-        db.prepare(`
-          UPDATE dbdetails SET location=@location, city=@city, hostname=@hostname, application=@application, windows_server=@windows_server, updated_by=@updated_by, updated_at=datetime('now')
-          WHERE ip_address=@where_ip
-        `).run({
-          location: allData[listName][idx].location || null,
-          city: allData[listName][idx].city || null,
-          hostname: allData[listName][idx].hostname || null,
-          application: allData[listName][idx].application || null,
-          windows_server: allData[listName][idx].windows_server || null,
-          updated_by: updateFields.updated_by || "api",
-          where_ip: oldIp,
-        });
-        break;
-
-      case "pc_details":
-        db.prepare(`
-          UPDATE pc_details SET hostname=@hostname, location=@location, city=@city, pc_name=@pc_name, updated_by=@updated_by, updated_at=datetime('now')
-          WHERE ip_address=@where_ip
-        `).run({
-          hostname: allData[listName][idx].hostname || null,
-          location: allData[listName][idx].location || null,
-          city: allData[listName][idx].city || null,
-          pc_name: allData[listName][idx].pc_name || null,
-          updated_by: updateFields.updated_by || "api",
-          where_ip: oldIp,
-        });
-        break;
-    }
-  } catch (err) {
-    throw err;
-  }
-
-  // If IP changed in updateFields, update DB and in-memory
-  if (updateFields.ip_address && updateFields.ip_address !== oldIp) {
-    const newIp = updateFields.ip_address.toString().trim();
-    db.prepare(`UPDATE ${table} SET ip_address = ? WHERE ip_address = ?`).run(newIp, oldIp);
-    allData[listName][idx].ip_address = newIp;
-    allData[listName][idx].IP_address = newIp;
-  }
-
-  rebuildIpRegionMap();
-  return allData[listName][idx];
-}
-
-// Delete device
-// function deleteDevice(ip) {
-//   const found = findInAllData(ip);
-//   if (!found) throw new Error("Device not found");
-//   const { listName, idx } = found;
-
-//   const tableMap = {
-//     archivers: "archivers",
-//     controllers: "controllers",
-//     cameras: "cameras",
-//     servers: "servers",
-//     pcDetails: "pc_details",
-//     DBDetails: "dbdetails",
-//   };
-//   const table = tableMap[listName];
-//   if (!table) throw new Error("Unsupported device type for delete: " + listName);
-
-//   db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
-//   allData[listName].splice(idx, 1);
-//   rebuildIpRegionMap();
-//   return true;
-// }
-// ⬇️⬇️
-// Delete device
-function deleteDevice(ip) {
-  const found = findInAllData(ip);
-  if (!found) throw new Error("Device not found");
-  const { listName, idx } = found;
-
-  const tableMap = {
-    archivers: "archivers",
-    controllers: "controllers",
-    cameras: "cameras",
-    servers: "servers",
-    pcDetails: "pc_details",
-    DBDetails: "dbdetails",
-  };
-  const table = tableMap[listName];
-  if (!table) throw new Error("Unsupported device type for delete: " + listName);
-
-  // ✨ NEW — if deleting a controller, also delete its doors
-  if (table === "controllers") {
-    db.prepare("DELETE FROM controller_doors WHERE controller_ip = ?").run(ip);
-
-    // refresh controller_doors in cache
-    reloadControllerDoors();
-  }
-
-  // delete main device row
-  db.prepare(`DELETE FROM ${table} WHERE ip_address = ?`).run(ip);
-
-  // remove from in-memory cache
-  allData[listName].splice(idx, 1);
-
-  // rebuild region map
-  rebuildIpRegionMap();
-
-  return true;
-}
-// ⬇️⬇️
-
-// ⬇📝📝 this functin for calculate door status base on on controller status
-function calculateDoorSummary(doors, controllers) {
-  let total = doors.length;
-  let online = 0;
-  let offline = 0;
-
-  for (const door of doors) {
-    const parent = controllers.find(c => c.ip_address === door.controller_ip);
-
-    if (!parent) {
-      offline++;   // controller missing = door offline
-      continue;
+        return null;
     }
 
-    if (parent.status === "Online") online++;
-    else offline++;
-  }
+    // If controllers aren't cached, we will fetch them when necessary (lazy)
+    function ensureControllersCached() {
+        if (Array.isArray(window.controllerDataCached)) return Promise.resolve(window.controllerDataCached);
+        return fetch("http://localhost/api/controllers/status")
+            // return fetch("http://10.138.161.4:3000/api/controllers/status")
+            .then(res => res.json())
+            .then(data => {
+                window.controllerDataCached = Array.isArray(data) ? data : null;
+                return window.controllerDataCached;
+            })
+            .catch(err => {
+                console.error("Failed to fetch controllers:", err);
+                return null;
+            });
+    }
 
-  return { total, online, offline };
+
+    // Fetch real-time status if available.
+    fetch("http://localhost:80/api/region/devices/status")
+        // fetch("http://10.138.161.4:3000/api/region/devices/status")
+        .then((response) => response.json())
+        .then((realTimeStatus) => {
+            // console.log("Live Status Data:", realTimeStatus);
+
+            for (const [key, devices] of Object.entries(data.details)) {
+                if (!Array.isArray(devices) || devices.length === 0) continue;
+                const deviceType = key.toLowerCase();
+
+                // ensure map entry exists
+                if (!typeCityMap[deviceType]) typeCityMap[deviceType] = new Set();
+
+                devices.forEach((device) => {
+                    const deviceIP = device.ip_address || "N/A";
+                    let currentStatus = (realTimeStatus[deviceIP] || device.status || "offline").toLowerCase();
+                    const city = device.city || "Unknown";
+
+                    // collect city globally and per device type
+                    citySet.add(city);
+                    typeCityMap[deviceType].add(city);
+
+                    // --- VENDOR: read possible fields, normalize, skip empty/unknown ---
+                    // NOTE: your JSON uses the key "deviec_details" (typo) — we read that first.
+                    let rawVendor = device.deviec_details || device.device_details || (device.device_details && device.device_details.vendor) || device.vendor || device.vendor_name || device.manufacturer || "";
+                    rawVendor = (rawVendor || "").toString().trim();
+
+                    // Normalize: empty -> null, otherwise uppercase for consistent set values
+                    let vendorNormalized = rawVendor ? rawVendor.toUpperCase() : null;
+
+                    // Only add real vendors (skip "UNKNOWN", "", null)
+                    if (vendorNormalized && vendorNormalized !== "UNKNOWN") {
+                        vendorSet.add(vendorNormalized);
+                    }
+
+                    const datasetVendorValue = vendorNormalized || "";
+
+                    // Create card element.
+                    const card = document.createElement("div");
+                    card.className = "device-card";
+                    card.dataset.type = deviceType;
+                    card.dataset.status = currentStatus;
+                    card.dataset.city = city;
+                    if (datasetVendorValue) card.dataset.vendor = datasetVendorValue; // only set if valid
+                    card.setAttribute("data-ip", deviceIP);
+
+                    // Apply background color based on online/offline status (kept your placeholders)
+                    card.style.backgroundColor = currentStatus === "online" ? "" : "";
+                    card.style.borderColor = currentStatus === "online" ? "" : "";
+
+                    // Create a container for status
+                    const statusContainer = document.createElement("p");
+                    statusContainer.className = "device-status";
+
+                    // Status text
+                    const statusText = document.createElement("span");
+                    statusText.className = "status-text";
+                    statusText.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+                    statusText.style.color = currentStatus === "online" ? "green" : "red";
+
+                    // Status dot
+                    const statusDot = document.createElement("span");
+                    statusDot.classList.add(currentStatus === "online" ? "online-dot" : "offline-dot");
+                    statusDot.style.backgroundColor = (currentStatus === "online") ? "green" : "red";
+                    statusDot.style.display = "inline-block";
+                    statusDot.style.width = "10px";
+                    statusDot.style.height = "10px";
+                    statusDot.style.marginLeft = "5px";
+                    statusDot.style.marginRight = "5px";
+                    statusDot.style.borderRadius = "50%";
+
+                    // Combine status parts
+                    statusContainer.appendChild(statusDot);
+                    statusContainer.appendChild(statusText);
+
+                    // compute a nicer label for the device-type area
+                    let deviceLabel;
+
+                    if (deviceType === "dbdetails") {
+                        // For DB Details: show the application if available, else fallback
+                        deviceLabel = device.application || deviceType.toUpperCase();
+                    } else if (deviceType.includes("pc")) {
+                        deviceLabel = device.pc_name || device.hostname || "PC";
+                    } else {
+                        deviceLabel = deviceType.toUpperCase();
+                    }
+
+                    card.insertAdjacentHTML("beforeend", `
+                        <button class="edit-device-btn" 
+                            onclick="openEditForDeviceFromIP('${deviceIP}', '${detectTypeFromDeviceObj(device)}')"
+                            style="margin-left:8px; padding:4px;">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
+                        ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
+                    </h3>
+
+                    <div class="card-content">
+                    <p class="device-type-label ${deviceType}" 
+                    style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    
+                    <strong>
+                        <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
+                        ${deviceLabel}
+                    </strong>
+                    
+                    ${deviceType.includes("camera")
+                                        ? `<button class="open-camera-btn"
+                    onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
+                    title="Open Camera"
+                    style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+                    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+                    </button>`: ""}
+                    </p>
+
+                    <p style="font-size: ;  font-family: Roboto; margin-bottom: 8px;">
+                    <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
+                        <span 
+                        class="device-ip" 
+                        style="font-weight:100; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3);  font-family: Roboto;"
+                        onclick="copyToClipboard('${deviceIP}')"
+                        title="Click to copy IP">
+                        ${deviceIP}
+                    </span>
+                    </p>
+
+                    <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
+                    <strong ><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
+                    <span style="font-size:; font-weight:100; margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
+                    </p>
+
+                    <p style="font-size:;  font-family: Roboto;>
+                    <strong "><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
+                    <span style="font-weight:100;margin-left: 4px;  font-family: Roboto; font-size:;">${city}</span>
+                    </p>
+                    </div>
+                `);
+                    card.appendChild(statusContainer);
+
+                    // --- ADDED: if this is a controller card, attach click to open doors modal ---
+                    if (deviceType.includes("controller")) {
+                        card.style.cursor = "pointer";
+                        card.title = "Click to view Doors for this controller";
+                        card.setAttribute("role", "button");
+                        card.setAttribute("tabindex", "0");
+
+                        // click handler that uses cached controllers when possible
+                        const openControllerDoors = async () => {
+                            // try to find matching controller from cache
+                            let ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
+                            if (!ctrl) {
+                                // ensure controllers are cached then try again
+                                await ensureControllersCached();
+                                ctrl = findControllerForDevice({ ip: deviceIP, controllername: device.controllername, city: city });
+                            }
+                            if (ctrl) {
+                                showDoorsReaders(ctrl);
+                            } else {
+                                // fallback: open controllers list then highlight nearest by city/IP
+                                loadControllersInDetails();
+                                // show a quick toast/message to indicate we couldn't find exact match
+                                console.warn("Controller details not found in cache for IP/name:", deviceIP, device.controllername);
+                            }
+                        };
+
+                        card.addEventListener("click", (ev) => {
+                            openControllerDoors();
+                        });
+
+                        // keyboard accessibility (Enter / Space)
+                        card.addEventListener("keydown", (ev) => {
+                            if (ev.key === "Enter" || ev.key === " ") {
+                                ev.preventDefault();
+                                openControllerDoors();
+                            }
+                        });
+                    }
+                    // --- END ADDED CLICK HANDLER ---
+
+                    // --- show policy tooltip for devices marked "Not accessible" ---
+                    const remarkText = (device.remark || "").toString().trim();
+                    if (remarkText && /not\s+access/i.test(remarkText)) {
+                        if (!card.style.position) card.style.position = "relative";
+
+                        const tooltip = document.createElement("div");
+                        tooltip.className = "device-access-tooltip";
+                        tooltip.textContent = "Due to Network policy, this camera is Not accessible";
+
+                        tooltip.style.position = "absolute";
+                        tooltip.style.bottom = "100%";
+                        tooltip.style.left = "8px";
+                        tooltip.style.padding = "6px 8px";
+                        tooltip.style.background = "rgba(0,0,0,0.85)";
+                        tooltip.style.color = "#fff";
+                        tooltip.style.borderRadius = "4px";
+                        tooltip.style.fontSize = "12px";
+                        tooltip.style.whiteSpace = "nowrap";
+                        tooltip.style.pointerEvents = "none";
+                        tooltip.style.opacity = "0";
+                        tooltip.style.transform = "translateY(-6px)";
+                        tooltip.style.transition = "opacity 0.12s ease, transform 0.12s ease";
+                        tooltip.style.zIndex = "999";
+
+                        card.appendChild(tooltip);
+
+                        card.addEventListener("mouseenter", () => {
+                            tooltip.style.opacity = "1";
+                            tooltip.style.transform = "translateY(-10px)";
+                        });
+                        card.addEventListener("mouseleave", () => {
+                            tooltip.style.opacity = "0";
+                            tooltip.style.transform = "translateY(-6px)";
+                        });
+
+                        card.title = tooltip.textContent;
+                    }
+
+                    // push device with normalized vendor (may be empty string if unknown)
+                    combinedDevices.push({
+                        card: card,
+                        device: {
+                            ip: deviceIP,
+                            type: deviceType,
+                            status: currentStatus,
+                            city: city,
+                            vendor: datasetVendorValue // already normalized (uppercase) or ""
+                        }
+                    });
+                });
+            }
+
+            combinedDevices.sort((a, b) => {
+                const statusA = (a.device.status === "offline") ? 0 : 1;
+                const statusB = (b.device.status === "offline") ? 0 : 1;
+                return statusA - statusB;
+            });
+
+            const allDevices = combinedDevices.map(item => item.card);
+            const deviceObjects = combinedDevices.map(item => item.device);
+
+            // --- NEW: function to populate city select based on selected device type ---
+            function populateCityOptions(selectedType = "all") {
+                // preserve current selected city if possible
+                const prevSelected = cityFilter.value;
+
+                cityFilter.innerHTML = '<option value="all">All Cities</option>';
+
+                let citiesToShow = new Set();
+
+                if (!selectedType || selectedType === "all") {
+                    citiesToShow = citySet;
+                } else {
+                    const setForType = typeCityMap[selectedType];
+                    if (setForType && setForType.size > 0) {
+                        citiesToShow = setForType;
+                    } else {
+                        // no cities for selected type -> keep empty (except "All Cities")
+                        citiesToShow = new Set();
+                    }
+                }
+
+                // Add cities in sorted order for stable UI
+                Array.from(citiesToShow).sort().forEach((city) => {
+                    const option = document.createElement("option");
+                    option.value = city;
+                    option.textContent = city;
+                    cityFilter.appendChild(option);
+                });
+
+                // restore previous if still valid, otherwise set to 'all'
+                if (prevSelected && Array.from(citiesToShow).includes(prevSelected)) {
+                    cityFilter.value = prevSelected;
+                } else {
+                    cityFilter.value = "all";
+                }
+            }
+
+            // populate vendor options
+            let vendorFilter = document.getElementById("vendorFilter");
+            if (!vendorFilter) {
+                vendorFilter = document.createElement("select");
+                vendorFilter.id = "vendorFilter";
+                vendorFilter.style.marginTop = "8px";
+                deviceFilter.parentNode.insertBefore(vendorFilter, cityFilter);
+            }
+
+            vendorFilter.innerHTML = `<option value="all">All camera</option>`;
+            [...vendorSet].sort().forEach(v => {
+                if (!v) return;
+                const opt = document.createElement("option");
+                opt.value = v;
+                opt.textContent = v;
+                vendorFilter.appendChild(opt);
+            });
+
+            // hide vendor filter by default unless cameras selected
+            vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+
+            vendorFilter.onchange = filterDevices; // uses filterDevices defined below
+
+            // Build initial city options for the current deviceFilter selection
+            populateCityOptions(deviceFilter.value || "all");
+
+            // avoid duplicate listeners on repeated updates
+            deviceFilter.value = "all";
+            cityFilter.value = "all";
+            document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+            allFilterButton.classList.add("active");
+
+
+            // new -----
+            // --- Add this helper inside updateDetails (same scope as filterDevices) ---
+
+
+
+            function computeFilteredControllerExtras(selectedCity = "all", selectedStatus = "all") {
+                const controllersAll = Array.isArray(window.controllerDataCached) ? window.controllerDataCached : [];
+                const result = { doors: { total: 0, online: 0, offline: 0 }, readers: { total: 0, online: 0, offline: 0 } };
+
+                if (!controllersAll || controllersAll.length === 0) return result;
+
+                const cityFilterLower = (selectedCity || "all").toString().toLowerCase();
+                const statusFilterLower = (selectedStatus || "all").toString().toLowerCase();
+                const regionFilterLower = (currentRegion || "global").toString().toLowerCase();
+
+                controllersAll.forEach(ctrl => {
+                    // Skip if controller has no Doors
+                    if (!Array.isArray(ctrl.Doors) || ctrl.Doors.length === 0) return;
+
+                    // Region filter (if a specific region other than 'global' is active)
+                    if (regionFilterLower !== "global") {
+                        const ctrlLocation = (ctrl.Location || ctrl.location || "").toString().toLowerCase();
+                        const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
+                        if (ctrlLocation !== regionFilterLower && ctrlCity !== regionFilterLower) {
+                            // controller not in selected region => skip
+                            return;
+                        }
+                    }
+
+                    // Apply city filter if any (match City OR Location)
+                    if (cityFilterLower !== "all") {
+                        const ctrlCity = (ctrl.City || ctrl.city || "").toString().toLowerCase();
+                        const ctrlLocation = (ctrl.Location || ctrl.location || "").toString().toLowerCase();
+
+                        // Match either City OR Location
+                        if (ctrlCity !== cityFilterLower && ctrlLocation !== cityFilterLower) return;
+                    }
+
+                    // Apply status filter if any (match controllerStatus)
+                    if (statusFilterLower !== "all") {
+                        const ctrlStatus = (ctrl.controllerStatus || ctrl.status || "").toString().toLowerCase();
+                        if (ctrlStatus !== statusFilterLower) return;
+                    }
+
+                    // Count doors/readers for this controller
+                    ctrl.Doors.forEach(d => {
+                        result.doors.total++;
+                        if ((d.status || "").toString().toLowerCase() === "online") result.doors.online++;
+
+                        if (d.Reader && d.Reader.toString().trim() !== "") {
+                            result.readers.total++;
+                            if ((d.status || "").toString().toLowerCase() === "online") result.readers.online++;
+                        }
+                    });
+                });
+
+                result.doors.offline = result.doors.total - result.doors.online;
+                result.readers.offline = result.readers.total - result.readers.online;
+                return result;
+            }
+
+            // new -----
+
+
+
+            function filterDevices() {
+                const selectedType = deviceFilter.value;
+                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
+                const selectedCity = cityFilter.value;
+                const vendorFilterLabel = document.getElementById("vendorFilterLabel");
+
+                // toggle vendor UI
+                vendorFilter.style.display = (deviceFilter.value === "cameras") ? "block" : "none";
+                if (vendorFilterLabel) {
+                    vendorFilterLabel.style.display = vendorFilter.style.display;
+                }
+
+                // get vendor selection (if filter exists)
+                const vendorFilterElem = document.getElementById("vendorFilter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
+                // Search bar input
+                const searchTerm = document.getElementById("device-search").value.toLowerCase();
+
+                // Show/hide vendor filter based on type
+                if (vendorFilterElem) {
+                    vendorFilterElem.style.display = (selectedType === "cameras") ? "block" : "none";
+                }
+
+                detailsContainer.innerHTML = "";
+
+                const filteredDevices = allDevices.filter((device) =>
+                    (selectedType === "all" || device.dataset.type === selectedType) &&
+                    (selectedStatus === "all" || device.dataset.status === selectedStatus) &&
+                    (selectedCity === "all" || device.dataset.city === selectedCity) &&
+                    (selectedVendor === "all" || (device.dataset.vendor || "") === selectedVendor) &&
+                    (
+                        !searchTerm ||
+                        device.innerText.toLowerCase().includes(searchTerm)
+                    )
+                );
+
+                filteredDevices.forEach((deviceCard) => {
+                    detailsContainer.appendChild(deviceCard);
+                });
+
+                const region = currentRegion?.toUpperCase() || "GLOBAL";
+                const titleElement = document.getElementById("region-title");
+
+                const logoHTML = `
+                    <span class="region-logo">
+                        <a href="http://10.199.22.57:3014/" class="tooltip">
+                            <i class="fa-solid fa-house"></i>
+                            <span class="tooltiptext">Dashboard Hub</span>
+                        </a>
+                    </span>
+                    `;
+                if (selectedCity !== "all") {
+                    titleElement.innerHTML = `${logoHTML}<span>${region}, ${selectedCity} Summary</span>`;
+                } else {
+                    titleElement.innerHTML = `${logoHTML}<span>${region} Summary</span>`;
+                }
+
+
+                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
+                    const correspondingCard = allDevices[index];
+                    return (
+                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
+                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
+                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
+                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
+                    );
+                });
+                const offlineDevices = filteredSummaryDevices
+                    .filter(d => d.status === "offline")
+                    .map(d => ({
+                        name: d.name || "Unknown",
+                        ip: d.ip,
+                        city: d.city,
+                        type: d.type,
+                        lastSeen: new Date().toISOString()
+                    }));
+
+
+                // ⬇️⬇️ this is call from graph.js (scatter)
+                if (window.updateOfflineChart) {
+                    try {
+                        window.updateOfflineChart(offlineDevices);
+                    } catch (e) {
+                        console.warn("updateOfflineChart failed:", e);
+                    }
+                }
+
+                // ✅ ALSO update the Offline City BAR chart
+                // updateOfflineCityBarChart expects combinedDevices items with a `.device` property,
+                // so map our flat deviceObjects into that shape.
+                if (typeof window.updateOfflineCityBarChart === "function") {
+                    try {
+                        const barInput = (Array.isArray(deviceObjects) ? deviceObjects : []).map(dev => ({ device: dev }));
+                        window.updateOfflineCityBarChart(barInput);
+                    } catch (e) {
+                        console.warn("updateOfflineCityBarChart failed:", e);
+                    }
+                } else {
+                    console.debug("updateOfflineCityBarChart() not found - ensure graph.js was loaded.");
+                }
+
+                const summary = calculateCitySummary(filteredSummaryDevices);
+
+                // --- NEW: compute controller door/reader counts for the current filters ---
+                // We pass selectedCity and selectedStatus so door counts reflect the active filters.
+                const controllerExtrasFiltered = computeFilteredControllerExtras(selectedCity, selectedStatus);
+                if (!summary.summary) summary.summary = {};
+                summary.summary.controllerExtras = controllerExtrasFiltered;
+
+                updateSummary(summary);
+            }
+
+            function calculateCitySummary(devices) {
+                const summary = {
+                    summary: {
+                        totalDevices: devices.length,
+                        totalOnlineDevices: devices.filter(d => d.status === "online").length,
+                        totalOfflineDevices: devices.filter(d => d.status === "offline").length,
+                        cameras: { total: 0, online: 0, offline: 0 },
+                        archivers: { total: 0, online: 0, offline: 0 },
+                        controllers: { total: 0, online: 0, offline: 0 },
+                        servers: { total: 0, online: 0, offline: 0 },
+                        pcdetails: { total: 0, online: 0, offline: 0 },
+                        dbdetails: { total: 0, online: 0, offline: 0 }
+                    }
+                };
+
+                devices.forEach((device) => {
+                    if (!summary.summary[device.type]) return;
+                    summary.summary[device.type].total += 1;
+                    if (device.status === "online") summary.summary[device.type].online += 1;
+                    else summary.summary[device.type].offline += 1;
+                });
+
+                return summary;
+            }
+
+            // initial filter run
+            filterDevices();
+
+            setTimeout(() => {
+                const selectedCity = cityFilter.value;
+                const selectedType = deviceFilter.value;
+                const selectedStatus = document.querySelector(".status-filter.active")?.dataset.status || "all";
+                const vendorFilterElem = document.getElementById("vendorFilter");
+                const selectedVendor = vendorFilterElem ? vendorFilterElem.value : "all";
+
+                const filteredSummaryDevices = deviceObjects.filter((deviceObj, index) => {
+                    const correspondingCard = allDevices[index];
+                    return (
+                        (selectedType === "all" || correspondingCard.dataset.type === selectedType) &&
+                        (selectedStatus === "all" || correspondingCard.dataset.status === selectedStatus) &&
+                        (selectedCity === "all" || correspondingCard.dataset.city === selectedCity) &&
+                        (selectedVendor === "all" || (correspondingCard.dataset.vendor || "") === selectedVendor)
+                    );
+                });
+
+                const summary = calculateCitySummary(filteredSummaryDevices);
+                updateSummary(summary);
+            }, 100);
+
+            // ---- EVENTS ----
+            // When device type changes, rebuild city options first then apply filters.
+            deviceFilter.addEventListener("change", () => {
+                populateCityOptions(deviceFilter.value || "all");
+                filterDevices();
+            });
+
+            // Search bar input
+            document.getElementById("device-search").addEventListener("input", filterDevices);
+            cityFilter.addEventListener("change", filterDevices);
+            allFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                allFilterButton.classList.add("active");
+                filterDevices();
+            });
+            onlineFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                onlineFilterButton.classList.add("active");
+                filterDevices();
+            });
+            offlineFilterButton.addEventListener("click", () => {
+                document.querySelectorAll(".status-filter").forEach(btn => btn.classList.remove("active"));
+                offlineFilterButton.classList.add("active");
+                filterDevices();
+            });
+        })
+        .catch((error) => {
+            console.error("Error fetching real-time device status:", error);
+            detailsContainer.innerHTML = "<p>Failed to load device details.</p>";
+        });
 }
-
-// Public functions: fetchGlobalData, fetchRegionData
-async function fetchGlobalData() {
-  const all = [
-    ...allData.cameras,
-    ...allData.archivers,
-    ...allData.controllers,
-    ...allData.servers,
-    ...allData.pcDetails,
-    ...allData.DBDetails,
-  ];
-  await pingDevices(all);
-  // return { summary: calculateSummary(allData), details: allData };
-
-  const summaryData = { ...allData };
-  delete summaryData.controller_doors;
-
-  const summary = calculateSummary(summaryData);
-  summary.controllers.doors = calculateDoorSummary(allData.controller_doors, allData.controllers);
-
-  return { summary, details: allData };
-}
-
-async function fetchRegionData(regionName) {
-  const filter = list =>
-    (list || []).filter(d => (d.location || "").toString().toLowerCase() === regionName.toLowerCase());
-
-  const regionDevices = {
-    cameras: filter(allData.cameras),
-    archivers: filter(allData.archivers),
-    controllers: filter(allData.controllers),
-    servers: filter(allData.servers),
-    pcDetails: filter(allData.pcDetails),
-    DBDetails: filter(allData.DBDetails),
-    controller_doors: allData.controller_doors.filter(d =>
-      // include door if its location matches OR its parent controller has that region
-      ((d.location || "").toString().toLowerCase() === regionName.toLowerCase()) ||
-      allData.controllers.some(ctrl =>
-        ((ctrl.ip_address || ctrl.IP_address) === d.controller_ip) &&
-        ((ctrl.location || "").toString().toLowerCase() === regionName.toLowerCase())
-      )
-    ),
-  };
-
-  // Ping devices for this region (only device lists, not doors)
-  const allToPing = [].concat(
-    regionDevices.cameras,
-    regionDevices.archivers,
-    regionDevices.controllers,
-    regionDevices.servers,
-    regionDevices.pcDetails,
-    regionDevices.DBDetails
-  );
-  await pingDevices(allToPing);
-  // return { summary: calculateSummary(regionDevices), details: regionDevices };
-  const summaryData = { ...regionDevices };
-  delete summaryData.controller_doors;
-
-  const summary = calculateSummary(summaryData);
-  summary.controllers.doors = calculateDoorSummary(regionDevices.controller_doors, regionDevices.controllers);
-
-  return { summary, details: regionDevices };
-}
-
-// Export public API
-module.exports = {
-  fetchGlobalData,
-  fetchRegionData,
-  fetchAllIpAddress,
-  ipRegionMap,
-  getDeviceInfo,
-  addDevice,
-  updateDevice,
-  deleteDevice,
-  getControllersList,
-  getControllerDoors,
-};
