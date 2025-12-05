@@ -1,3 +1,17 @@
+script.js:1845 Uncaught ReferenceError: currentUserName is not defined
+    at showDeviceModal (script.js:1845:23)
+    at HTMLButtonElement.onclick (index.html:396:99)
+showDeviceModal	@	script.js:1845
+onclick	@	index.html:396
+
+script.js:2060 ReferenceError: currentUserName is not defined
+    at showDeviceModal (script.js:1881:25)
+    at openEditForDeviceFromIP (script.js:2057:9)
+    at HTMLButtonElement.onclick (index.html:1:1)
+openEditForDeviceFromIP	@	script.js:2060
+onclick	@	index.html:1
+﻿
+
 // ================= SHOW DEVICE MODAL =================
 function showDeviceModal(mode = "add", deviceObj = null) {
     const modal = document.getElementById("device-modal");
