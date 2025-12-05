@@ -1,5 +1,11 @@
-Host Name* is not store in database,
-      can you chekc all code carefully.. 
+ <input id="Host-Name" type="text" placeholder="e.g "> this host name is not store in bacnend or database why
+        <div id="pc-fields" style="display:none;">
+          <label>Host Name*</label>
+          <input id="Host-Name" type="text" placeholder="e.g ">
+          <label>PC Name*</label>
+          <input id="PC-Name" type="text" placeholder="e.g ">
+        </div>
+
 case "pc_details":
       dev.hostname = row.hostname || null;
       dev.ip_address = row.ip_address || null;
@@ -10,99 +16,7 @@ case "pc_details":
       dev.added_by = row.added_by || null;      // ✅ ADD THIS
       dev.updated_by = row.updated_by || null;  // ✅ ADD THIS
       break;
-
-
-  <div id="device-modal" class="modal">
-    <div class="modal-content">
-      <h3 id="device-modal-title">Add Device</h3>
-      <form id="device-form">
-        <input type="hidden" id="device-old-ip">
-
-        <label>Type*</label>
-        <select id="device-type" required onchange="updateFormFields()">
-          <option value="camera">Camera</option>
-          <option value="archiver">Archiver</option>
-          <option value="controller">Controller</option>
-          <option value="server">Server</option>
-          <option value="pcdetails">PC Details</option>
-          <option value="dbdetails">DB Details</option>
-        </select>
-
-        <span id="name-field">
-          <label>Name*</label>
-          <input id="device-name" type="text" placeholder="e.g Device Name">
-        </span>
-
-
-        <label>IP Address*</label>
-        <input id="device-ip" type="text" placeholder="e.g 10.100.111.11">
-
-        <div id="pc-fields" style="display:none;">
-          <label>Host Name*</label>
-          <input id="Host-Name" type="text" placeholder="e.g ">
-          <label>PC Name*</label>
-          <input id="PC-Name" type="text" placeholder="e.g ">
-        </div>
-
-        <label>Location*</label>
-        <input id="device-location" type="text" placeholder="e.g APAC, EMEA, LACA, NAMER">
-
-        <label>City*</label>
-        <input id="device-city" type="text" placeholder="e.g Pune, Denver">
-
-
-        <!-- CAMERA FIELDS ONLY -->
-        <div id="camera-fields">
-          <label>Details*</label>
-          <input id="device-details" type="text" placeholder="e.g FLIR, Verkada">
-
-          <label>Hyperlink</label>
-          <input id="device-hyperlink" type="url" placeholder="e.g https://link">
-
-          <label>Remark</label>
-          <input id="device-remark" type="text" placeholder="e.g Not accessible">
-        </div>
-
-
-
-
-
-        <!-- Added By -->
-        <div id="added-by-box" style="display:none;">
-          <label>Added By</label>
-          <input id="device-added-by" type="text" placeholder="Your Name">
-        </div>
-
-        <!-- Updated By -->
-        <div id="updated-by-box" style="display:none;">
-          <label>Updated By</label>
-          <input id="device-updated-by" type="text">
-        </div>
-
-        <!-- Controller Doors -->
-        <div id="door-reader-container" style="display:none;" class="door-reader">
-          <h4>Doors & Readers</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>Door</th>
-                <th>Reader</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="door-reader-body"></tbody>
-          </table>
-          <button type="button" id="add-door-row">Add Door</button>
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit">Save</button>
-          <button type="button" onclick="hideDeviceModal()">Cancel</button>
-          <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-        </div>
-      </form>
-    </div>
-  </div>
+    default:
 // ================= SHOW DEVICE MODAL =================
 function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
     const modal = document.getElementById("device-modal");
@@ -174,9 +88,6 @@ function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
             deviceObj.addedby ??
             "Unknown";
         added.readOnly = true;
-
-        // updated.value = currentUserName || "";
-        // Updated By (show stored value first)
         updated.value =
             deviceObj.updated_by ??
             deviceObj.UpdatedBy ??
@@ -193,20 +104,6 @@ function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
     modal.style.display = "flex";
 }
 
-
-// ================= UPDATE FORM FIELDS BASED ON TYPE =================
-// function updateFormFields() {
-//     const type = document.getElementById("device-type").value;
-//     const doorSec = document.getElementById("door-reader-container");
-//     doorSec.style.display = (type === "controller") ? "block" : "none";
-
-//       // CAMERA ONLY FIELDS
-//     const cameraFields = document.getElementById("camera-fields");
-//     cameraFields.style.display = (type === "camera") ? "block" : "none";
-// }
-
-
-
 function updateFormFields() {
     const type = document.getElementById("device-type").value;
 
@@ -214,7 +111,6 @@ function updateFormFields() {
     const cameraFields = document.getElementById("camera-fields");
     const pcFields = document.getElementById("pc-fields");
     const doorSec = document.getElementById("door-reader-container");
-
     // RESET ALL
     nameField.style.display = "block";
     cameraFields.style.display = "none";
@@ -373,39 +269,3 @@ document.getElementById("device-delete-btn").addEventListener("click", async fun
         alert("Error deleting device: " + err.message);
     }
 });
-
-// ================= OPEN EDIT BY IP OR HOSTNAME =================
-async function openEditForDeviceFromIP(ipOrHost, detectedType = null) {
-    try {
-        if (!latestDetails || !latestDetails.details) {
-            await fetchData(currentRegion); // fetch devices if not loaded
-        }
-
-        let found = null;
-
-        for (const list of Object.values(latestDetails.details)) {
-            const m = (list || []).find(d =>
-                (d.ip_address || d.IP_address || "").trim() === ipOrHost ||
-                (d.hostname || d.HostName || "").trim() === ipOrHost
-            );
-            if (m) {
-                found = m;
-                break;
-            }
-        }
-
-        if (!found) {
-            alert("Device not found");
-            return;
-        }
-
-        // Use detected type from button if passed, otherwise detect from object
-        found._type_for_ui = detectedType || detectTypeFromDeviceObj(found);
-
-        showDeviceModal("edit", found);
-
-    } catch (err) {
-        console.error(err);
-        alert("Cannot load device details: " + err.message);
-    }
-}
