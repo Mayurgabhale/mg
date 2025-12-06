@@ -1,3 +1,17 @@
+
+# incident_report.py
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/incident", tags=["incident"])
+
+@router.get("/test")
+def test_incident():
+    return {"message": "Incident router works!"}
+
+
+
+
+
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
