@@ -21,7 +21,19 @@ origins = [
     # add other origins if frontend hosted elsewhere
 ]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+app.include_router(incident_router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Incident Reporting Backend is running"}
 
 
 # incident_report.py
