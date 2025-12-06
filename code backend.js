@@ -1,7 +1,7 @@
 (venv) PS C:\Users\W0024618\Desktop\IncidentDashboard\Backend> uvicorn main:app --reload --port 8000
 INFO:     Will watch for changes in these directories: ['C:\\Users\\W0024618\\Desktop\\IncidentDashboard\\Backend']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [10632] using StatReload
+INFO:     Started reloader process [19904] using StatReload
 Process SpawnProcess-1:
 Traceback (most recent call last):
   File "C:\Program Files\Python313\Lib\multiprocessing\process.py", line 313, in _bootstrap
@@ -116,7 +116,7 @@ import os
 import json
 from typing import Optional, List
 from datetime import datetime, date, time
-from fastapi import APIRouter
+
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel, Field, EmailStr, validator
@@ -417,6 +417,9 @@ def get_incident(incident_id: int):
         return row
     finally:
         db.close()
+
+
+
 # database.py
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -432,7 +435,3 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
-
-
-
-
