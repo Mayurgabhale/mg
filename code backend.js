@@ -11,6 +11,8 @@
       break;
 
 now i am selct <option value="dbdetails">DB Details</option>
+in form i want to dispoy this  like other pc and camer 
+ok for db details ok 
 IP Address
 Host Name
 Application
