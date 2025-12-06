@@ -1,5 +1,7 @@
-case "dbdetails":
-    mapped.hostname = body.db_hostname;
-    mapped.application = body.application;
-    mapped.windows_server = body.windows_server;
-    break;
+if (deviceObj.application)
+    document.getElementById("db-application").value = deviceObj.application;
+
+if (deviceObj.windows_server)
+    document.getElementById("db-windows-server").value = deviceObj.windows_server;
+
+document.getElementById("db-hostname").value = deviceObj.hostname || "";
