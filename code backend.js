@@ -1,3 +1,5 @@
+keep as it is ony remove headr in analysis_table.html and get header in analysis_table.html fomr header.html file ok
+without cahing any logic and code, just seprete it ok, and give me boht update file carefullly
 ok, now give me boht file correct header.html and frontend\analysis_table.html
 ok and more carefully. ok 
 C:\Users\W0024618\Trend-Analysis\frontend\header.html
