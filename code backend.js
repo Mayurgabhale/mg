@@ -1,12 +1,5 @@
-this is my fully woring  code ok,
-so what is you wokr, 
-  in this remove headre, and give me as it is file, 
-  and and give me header.html file, wiht this same header,
-  and add this headr file in this ok,
-  so what, headr is spereted and table file is spereted ok,
-  analysi file getting headr form headr file, ok, 
-  wihtout chaing anyhing do this two things ok carefullu.. 
-  and give me boht file, full updte boht file carefully,... 
+see this ones again and give me boht file wiht correct 
+  ok, in Analysis file only table code and headre code, ok 
 <!doctype html>
 <html>
 <head>
