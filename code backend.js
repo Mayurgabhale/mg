@@ -1,3 +1,11 @@
+not disply anthing i this page onye blnk white background 
+(.venv) PS C:\Users\W0024618\Trend-Analysis\frontend> python -m http.server 8080
+Serving HTTP on :: port 8080 (http://[::]:8080/) ...
+::1 - - [08/Dec/2025 12:16:08] "GET / HTTP/1.1" 304 -
+::1 - - [08/Dec/2025 12:16:09] code 404, message File not found
+::1 - - [08/Dec/2025 12:16:09] "GET /chat-bot.png HTTP/1.1" 404 -
+::1 - - [08/Dec/2025 12:16:47] "GET /analysis_table.html HTTP/1.1" 304 -
+  
 http://localhost:8080/analysis_table.html 
   C:\Users\W0024618\Trend-Analysis\frontend\analysis_table.html
 this page disply emplty not disply anything in this page, 
