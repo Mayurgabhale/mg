@@ -1,432 +1,227 @@
-i try everyt thing but issue is not sloved, blea red the bellow code each line and slove this issue,
-// ================= SHOW DEVICE MODAL =================
-function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
-    const modal = document.getElementById("device-modal");
-    const title = document.getElementById("device-modal-title");
-    const deleteBtn = document.getElementById("device-delete-btn");
-
-    // Reset form
-    document.getElementById("device-form").reset();
-    document.getElementById("door-reader-body").innerHTML = "";
-    document.getElementById("device-old-ip").value = "";
-
-    const currentUserName = userName; // passed username
-
-    if (mode === "add") {
-        title.textContent = "Add Device";
-        deleteBtn.style.display = "none";
-        document.getElementById("device-type").disabled = false;
-        document.getElementById("device-type").value = "camera";
-
-
-        // Added By / Updated By boxes
-        document.getElementById("added-by-box").style.display = "block";
-        document.getElementById("updated-by-box").style.display = "none";
-
-        const added = document.getElementById("device-added-by");
-        added.value = currentUserName || "";
-        added.readOnly = false;
-
-    } else if (mode === "edit" && deviceObj) {
-        title.textContent = "Edit Device";
-        deleteBtn.style.display = "inline-block";
-        document.getElementById("device-type").disabled = true;
-
-        // Device type
-        document.getElementById("device-type").value = deviceObj._type_for_ui || "camera";
-        if (deviceObj._type_for_ui.toLowerCase() === "dbdetails") {
-            document.getElementById("device-type").value = "dbdetails";
-        }
-
-        // Device fields
-        document.getElementById("device-name").value =
-            deviceObj.cameraname || deviceObj.controllername || deviceObj.archivername || deviceObj.servername || deviceObj.hostname || "";
-        document.getElementById("device-ip").value = deviceObj.IP_address || deviceObj.ip_address || "";
-        document.getElementById("device-location").value = deviceObj.Location || deviceObj.location || "";
-        document.getElementById("device-city").value = deviceObj.City || deviceObj.city || "";
-        document.getElementById("device-details").value = deviceObj.device_details || "";
-        document.getElementById("device-hyperlink").value = deviceObj.hyperlink || "";
-        document.getElementById("device-remark").value = deviceObj.remark || "";
-        document.getElementById("device-old-ip").value = deviceObj.IP_address || deviceObj.ip_address || "";
-        // PC Details fields
-        document.getElementById("Host-Name").value = deviceObj.hostname || "";
-        document.getElementById("PC-Name").value = deviceObj.pc_name || "";
-
-
-
-
-        document.getElementById("db-hostname").value =
-            deviceObj.hostname || "";
-
-        document.getElementById("db-application").value =
-            deviceObj.application || "";
-
-        document.getElementById("db-windows-server").value =
-            deviceObj.windows_server || "";
-
-
-
-
-        // Controller doors
-        if (deviceObj.Doors && Array.isArray(deviceObj.Doors)) {
-            document.getElementById("device-type").value = "controller";
-            updateFormFields();
-            deviceObj.Doors.forEach(d => addDoorRow(d.door || d.Door, d.reader || ""));
-        }
-
-        // Added By / Updated By
-        document.getElementById("added-by-box").style.display = "block";
-        document.getElementById("updated-by-box").style.display = "block";
-
-        const added = document.getElementById("device-added-by");
-        const updated = document.getElementById("device-updated-by");
-
-        // Robust assignment: handle different key casings
-        added.value =
-            deviceObj.added_by ??
-            deviceObj.AddedBy ??
-            deviceObj.addedBy ??
-            deviceObj.addedby ??
-            "Unknown";
-        added.readOnly = true;
-
-        // updated.value = currentUserName || "";
-        // Updated By (show stored value first)
-        updated.value =
-            deviceObj.updated_by ??
-            deviceObj.UpdatedBy ??
-            deviceObj.updatedBy ??
-            deviceObj.updatedby ??
-            "";
-        updated.readOnly = false;
+// ---------- Helper: case-insensitive getter for many possible keys ----------
+function pick(...objs) {
+  // usage: pick(deviceObj, ['hostname','HostName','db_hostname'], '')
+  const obj = objs[0] || {};
+  const keys = Array.isArray(objs[1]) ? objs[1] : [];
+  const fallback = objs[2] === undefined ? "" : objs[2];
+  for (const k of keys) {
+    if (k == null) continue;
+    // try exact key
+    if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+    // try lowercase normalized key
+    const lower = k.toString().toLowerCase();
+    for (const ok of Object.keys(obj)) {
+      if (ok.toString().toLowerCase() === lower) {
+        return obj[ok];
+      }
     }
-
-    // Show/hide controller door section
-    updateFormFields();
-
-    // Display modal
-    modal.style.display = "flex";
+  }
+  return fallback;
 }
 
-// ================= UPDATE FORM FIELDS BASED ON TYPE =================
+// ---------- Detect UI type from device object (best-effort) ----------
+function detectTypeFromDeviceObj(device) {
+  if (!device || typeof device !== "object") return "camera";
+  // If explicit hint was stored
+  if (device._type_for_ui) return device._type_for_ui.toString().toLowerCase();
+
+  // Heuristics: prefer controller if Doors exist
+  if (Array.isArray(device.Doors) && device.Doors.length) return "controller";
+
+  // Fields that identify DB
+  const hasDb = !!(pick(device, ["hostname", "db_hostname", "host_name"]) &&
+                   (pick(device, ["application", "Application"]) || pick(device, ["windows_server", "WindowsServer"])));
+  if (hasDb) return "dbdetails";
+
+  if (device.cameraname || device.camera_name || device.devicetype === "camera") return "camera";
+  if (device.controllername || device.controller_name) return "controller";
+  if (device.archivername || device.archiver_name) return "archiver";
+  if (device.servername || device.server_name) return "server";
+  if (device.pc_name || device.pcnname || device.hostname) return "pcdetails";
+
+  return "camera";
+}
+
+// ---------- UPDATE FORM FIELDS BASED ON TYPE ----------
 function updateFormFields() {
-    const type = document.getElementById("device-type").value;
+  const type = (document.getElementById("device-type").value || "").toString().toLowerCase();
 
-    const nameField = document.getElementById("name-field");
-    const cameraFields = document.getElementById("camera-fields");
-    const pcFields = document.getElementById("pc-fields");
-    const doorSec = document.getElementById("door-reader-container");
-    document.getElementById("db-fields").style.display = "none";
+  const nameField = document.getElementById("name-field");
+  const cameraFields = document.getElementById("camera-fields");
+  const pcFields = document.getElementById("pc-fields");
+  const doorSec = document.getElementById("door-reader-container");
+  const dbFields = document.getElementById("db-fields");
 
-    // RESET ALL
-    nameField.style.display = "block";
-    cameraFields.style.display = "none";
+  // RESET ALL
+  nameField.style.display = "block";
+  cameraFields.style.display = "none";
+  pcFields.style.display = "none";
+  doorSec.style.display = "none";
+  if (dbFields) dbFields.style.display = "none";
+
+  if (type === "camera") {
+    cameraFields.style.display = "block";
+  } else if (type === "controller") {
+    doorSec.style.display = "block";
+  } else if (type === "pcdetails") {
+    nameField.style.display = "none";
+    pcFields.style.display = "block";
+  } else if (type === "dbdetails") {
+    // show only DB fields
+    nameField.style.display = "none";
     pcFields.style.display = "none";
+    cameraFields.style.display = "none";
     doorSec.style.display = "none";
-
-    if (type === "camera") {
-        cameraFields.style.display = "block";
-    }
-
-    if (type === "controller") {
-        doorSec.style.display = "block";
-    }
-
-    if (type === "pcdetails") {
-        nameField.style.display = "none";
-        pcFields.style.display = "block";
-    }
-
-    if (type === "dbdetails") {
-        nameField.style.display = "none";
-        pcFields.style.display = "none";
-        cameraFields.style.display = "none";
-        doorSec.style.display = "none";
-        document.getElementById("db-fields").style.display = "block";
-    }
+    if (dbFields) dbFields.style.display = "block";
+  }
 }
 
-// Event listener for type change
+// keep your listener
 document.getElementById("device-type").addEventListener("change", updateFormFields);
 
-// ================= HIDE MODAL =================
-function hideDeviceModal() {
-    document.getElementById("device-modal").style.display = "none";
+// ---------- Populate fields for a given type (safe, uses pick() for keys) ----------
+function populateFieldsForType(mode, deviceObj = null, userName = "") {
+  // common fields
+  document.getElementById("device-name").value =
+    pick(deviceObj || {}, ["cameraname", "controllername", "archivername", "servername", "name", "hostname"], "");
+
+  document.getElementById("device-ip").value = pick(deviceObj || {}, ["IP_address", "ip_address", "ip"], "");
+  document.getElementById("device-location").value = pick(deviceObj || {}, ["Location", "location"], "");
+  document.getElementById("device-city").value = pick(deviceObj || {}, ["City", "city"], "");
+  document.getElementById("device-details").value = pick(deviceObj || {}, ["device_details", "deviec_details", "details"], "");
+  document.getElementById("device-hyperlink").value = pick(deviceObj || {}, ["hyperlink", "link"], "");
+  document.getElementById("device-remark").value = pick(deviceObj || {}, ["remark", "notes"], "");
+  document.getElementById("device-old-ip").value = pick(deviceObj || {}, ["IP_address", "ip_address", "ip"], "");
+
+  // PC fields
+  document.getElementById("Host-Name").value = pick(deviceObj || {}, ["hostname", "HostName", "db_hostname", "host_name"], "");
+  document.getElementById("PC-Name").value = pick(deviceObj || {}, ["pc_name", "PCName", "pcname"], "");
+
+  // DB fields: NOTE: fill these AFTER updateFormFields() has been called so inputs are visible
+  document.getElementById("db-hostname").value = pick(deviceObj || {}, ["hostname", "db_hostname", "HostName", "host_name"], "");
+  document.getElementById("db-application").value = pick(deviceObj || {}, ["application", "Application", "app", "App"], "");
+  document.getElementById("db-windows-server").value = pick(deviceObj || {}, ["windows_server", "WindowsServer", "Windows_Server"], "");
+
+  // Doors (controller)
+  if (deviceObj && Array.isArray(deviceObj.Doors)) {
+    // clear existing rows then add
+    document.getElementById("door-reader-body").innerHTML = "";
+    deviceObj.Doors.forEach(d => addDoorRow(pick(d, ["door", "Door", "name"], ""), pick(d, ["reader", "Reader"], "")));
+  }
 }
 
-// ================= ADD DOOR ROW =================
-function addDoorRow(door = "", reader = "") {
-    const tbody = document.getElementById("door-reader-body");
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td><input type="text" class="door-input" value="${door}" placeholder="Door Name"></td>
-        <td><input type="text" class="reader-input" value="${reader}" placeholder="e.g in:1, out:1"></td>
-        <td><button type="button" class="remove-door-row">X</button></td>
-    `;
-    tbody.appendChild(row);
-    row.querySelector(".remove-door-row").addEventListener("click", () => row.remove());
-}
-document.getElementById("add-door-row").addEventListener("click", () => addDoorRow());
+// ---------- SHOW DEVICE MODAL (clean, robust) ----------
+function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
+  const modal = document.getElementById("device-modal");
+  const title = document.getElementById("device-modal-title");
+  const deleteBtn = document.getElementById("device-delete-btn");
 
-// ================= MAP UI TYPE TO BACKEND =================
-function mapUITypeToBackend(type) {
-    switch (type) {
-        case "camera": return "cameras";
-        case "controller": return "controllers";
-        case "archiver": return "archivers";
-        case "server": return "servers";
-        case "pcdetails": return "pcDetails";
-        case "dbdetails": return "dbdetails";
-        default: return "cameras";
-    }
+  // Reset form (clear inputs)
+  document.getElementById("device-form").reset();
+  document.getElementById("door-reader-body").innerHTML = "";
+  document.getElementById("device-old-ip").value = "";
+
+  // default UI state
+  const addedBox = document.getElementById("added-by-box");
+  const updatedBox = document.getElementById("updated-by-box");
+  const addedInput = document.getElementById("device-added-by");
+  const updatedInput = document.getElementById("device-updated-by");
+
+  // default added/updated boxes
+  addedBox.style.display = "none";
+  updatedBox.style.display = "none";
+  addedInput.value = "";
+  updatedInput.value = "";
+
+  if (mode === "add") {
+    title.textContent = "Add Device";
+    deleteBtn.style.display = "none";
+    document.getElementById("device-type").disabled = false;
+    document.getElementById("device-type").value = "camera";
+
+    // show added-by for adds
+    addedBox.style.display = "block";
+    addedInput.value = userName || "";
+    addedInput.readOnly = false;
+  } else if (mode === "edit" && deviceObj) {
+    title.textContent = "Edit Device";
+    deleteBtn.style.display = "inline-block";
+    document.getElementById("device-type").disabled = true;
+
+    // determine UI type (use stored hint or detect)
+    const uiType = (deviceObj._type_for_ui || detectTypeFromDeviceObj(deviceObj) || "camera").toString().toLowerCase();
+    // set select value to known option names in your dropdown (camera, archiver, controller, server, pcdetails, dbdetails)
+    // normalize 'pcdetails' vs 'pcDetails' etc.
+    const normalizedUiType = uiType === "pcdetails" || uiType === "pc" ? "pcdetails" : uiType;
+    document.getElementById("device-type").value = normalizedUiType;
+
+    // Now show/hide the correct set of fields BEFORE we populate values
+    updateFormFields();
+
+    // populate values for visible inputs
+    populateFieldsForType(mode, deviceObj, userName);
+
+    // Added / Updated metadata boxes
+    addedBox.style.display = "block";
+    updatedBox.style.display = "block";
+
+    addedInput.value = pick(deviceObj, ["added_by","AddedBy","addedBy","addedby"], "Unknown");
+    addedInput.readOnly = true;
+
+    updatedInput.value = pick(deviceObj, ["updated_by","UpdatedBy","updatedBy","updatedby"], "");
+    updatedInput.readOnly = false;
+  }
+
+  // If add mode: ensure fields reflect 'camera' default
+  if (mode === "add") {
+    updateFormFields();
+    // ensure added_by prefilled already done above
+  }
+
+  // Finally display modal
+  modal.style.display = "flex";
 }
 
-// ================= CONVERT FORM FIELDS FOR BACKEND =================
+// ---------- Convert UI fields to backend-friendly device object ----------
 function convertToBackendFields(type, body) {
-    const mapped = { ...body };
-    switch (type) {
-        case "cameras": mapped.cameraname = body.name; break;
-        case "controllers": mapped.controllername = body.name; break;
-        case "archivers": mapped.archivername = body.name; break;
-        case "servers": mapped.servername = body.name; break;
-        case "pc_details":  // backend type
-            mapped.hostname = body.hostname;
-            mapped.pc_name = body.pc_name;
-            break;
-        case "dbdetails":
-            mapped.db_hostname = body.db_hostname;
-            mapped.application = body.application;
-            mapped.windows_server = body.windows_server;
-            break;
-    }
-    delete mapped.name;
-    return mapped;
+  // `type` is backend type as returned by mapUITypeToBackend (e.g., 'cameras','controllers','archivers','servers','pcDetails','dbdetails')
+  const mapped = { ...body };
+
+  // Ensure we accept both UI keys and direct DB field keys
+  const t = (type || "").toString();
+
+  switch (t) {
+    case "cameras":
+      mapped.cameraname = body.name || body.cameraname || null;
+      break;
+    case "controllers":
+      mapped.controllername = body.name || body.controllername || null;
+      break;
+    case "archivers":
+      mapped.archivername = body.name || body.archivername || null;
+      break;
+    case "servers":
+      mapped.servername = body.name || body.servername || null;
+      break;
+    case "pcDetails":
+    case "pc_details":
+      // backend expects hostname + pc_name
+      mapped.hostname = body.hostname || body.HostName || body.db_hostname || null;
+      mapped.pc_name = body.pc_name || body.PCName || null;
+      break;
+    case "dbdetails":
+      // backend expects hostname, application, windows_server
+      // UI uses db-hostname input; prefer that, fallback to hostname
+      mapped.hostname = body.db_hostname || body.hostname || body.HostName || null;
+      mapped.application = body.application || body.app || null;
+      mapped.windows_server = body.windows_server || body.windowsServer || null;
+      break;
+    default:
+      // no special mapping; keep as-is
+      break;
+  }
+
+  // Remove 'name' to avoid confusion
+  delete mapped.name;
+  return mapped;
 }
-
-// ================= SAVE / ADD / EDIT =================
-document.getElementById("device-form").addEventListener("submit", async function (ev) {
-    ev.preventDefault();
-
-    const oldIp = document.getElementById("device-old-ip").value;
-    const uiType = document.getElementById("device-type").value;
-    const backendType = mapUITypeToBackend(uiType);
-
-    // Collect all fields (no person_name)
-    let body = {
-        name: document.getElementById("device-name").value,
-        ip_address: document.getElementById("device-ip").value,
-        location: document.getElementById("device-location").value,
-        city: document.getElementById("device-city").value,
-        device_details: document.getElementById("device-details").value,
-        hyperlink: document.getElementById("device-hyperlink").value,
-        remark: document.getElementById("device-remark").value,
-        hostname: document.getElementById("Host-Name").value,
-        pc_name: document.getElementById("PC-Name").value,
-        added_by: document.getElementById("device-added-by").value,
-        updated_by: document.getElementById("device-updated-by").value,
-        db_hostname: document.getElementById("db-hostname").value,
-        application: document.getElementById("db-application").value,
-        windows_server: document.getElementById("db-windows-server").value
-
-    };
-
-    body = convertToBackendFields(backendType, body);
-
-    if (backendType === "controllers") {
-        const doors = [];
-        document.querySelectorAll("#door-reader-body tr").forEach(tr => {
-            doors.push({
-                door: tr.querySelector(".door-input").value,
-                reader: tr.querySelector(".reader-input").value
-            });
-        });
-        body.Doors = doors;
-    }
-
-    try {
-        if (!oldIp) {
-            // ADD new device
-            await fetch("http://localhost/api/devices", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: backendType, device: body })
-            });
-        } else {
-            // UPDATE existing device
-            await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
-        }
-
-        alert("Saved successfully!");
-        hideDeviceModal();
-        await fetchData(currentRegion);
-
-    } catch (err) {
-        alert("Error saving device: " + err.message);
-    }
-});
-
-// ================= DELETE DEVICE =================
-document.getElementById("device-delete-btn").addEventListener("click", async function () {
-    const oldIp = document.getElementById("device-old-ip").value;
-    if (!oldIp) return;
-
-    if (!confirm("Delete this device permanently?")) return;
-
-    try {
-        const resp = await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
-            method: "DELETE"
-        });
-
-        if (!resp.ok) throw new Error("Delete failed");
-
-        alert("Device deleted successfully!");
-        hideDeviceModal();
-        await fetchData(currentRegion);
-
-    } catch (err) {
-        alert("Error deleting device: " + err.message);
-    }
-});
-
-// ================= OPEN EDIT BY IP OR HOSTNAME =================
-async function openEditForDeviceFromIP(ipOrHost, detectedType = null) {
-    try {
-        if (!latestDetails || !latestDetails.details) {
-            await fetchData(currentRegion); // fetch devices if not loaded
-        }
-
-        let found = null;
-
-        for (const list of Object.values(latestDetails.details)) {
-            const m = (list || []).find(d =>
-                (d.ip_address || d.IP_address || "").trim() === ipOrHost ||
-                (d.hostname || d.HostName || "").trim() === ipOrHost
-            );
-            if (m) {
-                found = m;
-                break;
-            }
-        }
-
-        if (!found) {
-            alert("Device not found");
-            return;
-        }
-
-        // Use detected type from button if passed, otherwise detect from object
-        found._type_for_ui = detectedType || detectTypeFromDeviceObj(found);
-
-        showDeviceModal("edit", found);
-
-    } catch (err) {
-        console.error(err);
-        alert("Cannot load device details: " + err.message);
-    }
-}
-
-  <div id="device-modal" class="modal">
-    <div class="modal-content">
-      <h3 id="device-modal-title">Add Device</h3>
-      <form id="device-form">
-        <input type="hidden" id="device-old-ip">
-
-        <label>Type*</label>
-        <select id="device-type" required onchange="updateFormFields()">
-          <option value="camera">Camera</option>
-          <option value="archiver">Archiver</option>
-          <option value="controller">Controller</option>
-          <option value="server">Server</option>
-          <option value="pcdetails">PC Details</option>
-          <option value="dbdetails">DB Details</option>
-        </select>
-
-        <span id="name-field">
-          <label>Name*</label>
-          <input id="device-name" type="text" placeholder="e.g Device Name">
-        </span>
-
-
-        <label>IP Address*</label>
-        <input id="device-ip" type="text" placeholder="e.g 10.100.111.11">
-
-        <div id="pc-fields" style="display:none;">
-          <label>Host Name*</label>
-          <input id="Host-Name" type="text" placeholder="e.g ">
-          <label>PC Name*</label>
-          <input id="PC-Name" type="text" placeholder="e.g ">
-        </div>
-
-        <div id="db-fields" style="display:none;">
-          <label>Host Name*</label>
-          <input id="db-hostname" type="text" placeholder="e.g SRVWUDEN0890v">
-
-          <label>Application</label>
-          <input id="db-application" type="text" placeholder="e.g CCURE SAS App">
-
-          <label>Windows Server</label>
-          <input id="db-windows-server" type="text" placeholder="e.g Windows Server 2019 Standard">
-        </div>
-
-        <label>Location*</label>
-        <input id="device-location" type="text" placeholder="e.g APAC, EMEA, LACA, NAMER">
-
-        <label>City*</label>
-        <input id="device-city" type="text" placeholder="e.g Pune, Denver">
-
-
-        <!-- CAMERA FIELDS ONLY -->
-        <div id="camera-fields">
-          <label>Details*</label>
-          <input id="device-details" type="text" placeholder="e.g FLIR, Verkada">
-
-          <label>Hyperlink</label>
-          <input id="device-hyperlink" type="url" placeholder="e.g https://link">
-
-          <label>Remark</label>
-          <input id="device-remark" type="text" placeholder="e.g Not accessible">
-        </div>
-
-
-
-
-
-        <!-- Added By -->
-        <div id="added-by-box" style="display:none;">
-          <label>Added By</label>
-          <input id="device-added-by" type="text" placeholder="Your Name">
-        </div>
-
-        <!-- Updated By -->
-        <div id="updated-by-box" style="display:none;">
-          <label>Updated By</label>
-          <input id="device-updated-by" type="text">
-        </div>
-
-        <!-- Controller Doors -->
-        <div id="door-reader-container" style="display:none;" class="door-reader">
-          <h4>Doors & Readers</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>Door</th>
-                <th>Reader</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="door-reader-body"></tbody>
-          </table>
-          <button type="button" id="add-door-row">Add Door</button>
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit">Save</button>
-          <button type="button" onclick="hideDeviceModal()">Cancel</button>
-          <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-        </div>
-      </form>
-    </div>
-  </div>
