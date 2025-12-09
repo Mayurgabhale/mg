@@ -1,3 +1,6 @@
+mapped.db_hostname = body.db_hostname;
+
+
 document.getElementById("db-hostname").value =
     deviceObj.db_hostname ??
     deviceObj.DB_HostName ??
