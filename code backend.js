@@ -1,588 +1,569 @@
-can you rechagne all code each line carefully..
-  <head>
-    <meta charset="utf-8" />
-    <title>Western Union — Trend Analysis</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+SRVWUDEN0890v
+ CCURE MAS SQL DB
 
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script crossorigin src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
+ 10.58.118.22
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+ NAMER
 
-    <link rel="stylesheet" href="style.css">
-</head>
+ Denver
 
-<body>
+Online
 
-    <!-- header.html -->
-    <div id="header-ui"></div>
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
 
-        function pad(n) { return String(n).padStart(2, '0'); }
-        function formatDateISO(d) {
-            if (!d) return '';
-            const dt = (d instanceof Date) ? d : new Date(d);
-            return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
-        }
+SRVWUDEN0190V
+ CCURE MAS APP
 
-        function HeaderStandalone() {
-            const [dateFrom, setDateFrom] = useState(() => {
-                const d = new Date(); d.setDate(d.getDate() - 1); return formatDateISO(d);
-            });
-            const [dateTo, setDateTo] = useState(() => formatDateISO(new Date()));
-            const [loading, setLoading] = useState(false);
+ 10.58.118.20
 
-            const fromRef = useRef(null);
-            const toRef = useRef(null);
-            const fromFp = useRef(null);
-            const toFp = useRef(null);
+ NAMER
 
-            useEffect(() => {
-                if (window.flatpickr && fromRef.current && toRef.current) {
-                    fromFp.current = flatpickr(fromRef.current, {
-                        dateFormat: "Y-m-d",
-                        defaultDate: dateFrom,
-                        allowInput: true,
-                        onChange: sd => {
-                            if (sd.length) {
-                                setDateFrom(formatDateISO(sd[0]));
-                                if (toFp.current) toFp.current.set('minDate', formatDateISO(sd[0]));
-                            }
-                        }
-                    });
-                    toFp.current = flatpickr(toRef.current, {
-                        dateFormat: "Y-m-d",
-                        defaultDate: dateTo,
-                        allowInput: true,
-                        onChange: sd => {
-                            if (sd.length) {
-                                setDateTo(formatDateISO(sd[0]));
-                                if (fromFp.current) fromFp.current.set('maxDate', formatDateISO(sd[0]));
-                            }
-                        }
-                    });
-                }
-                return () => { if (fromFp.current) fromFp.current.destroy(); if (toFp.current) toFp.current.destroy(); }
-            }, []);
+ Denver
 
-            useEffect(() => {
-                if (fromFp.current) fromFp.current.setDate(dateFrom, false);
-                if (toFp.current) toFp.current.setDate(dateTo, false);
-            }, [dateFrom, dateTo]);
+Online
+Edit Device
+Type* 
+DB Details
+ IP Address* 
+10.58.118.20
+Host Name* 
+e.g SRVWUDEN0890v
+ Application 
+e.g CCURE SAS App
+ Windows Server 
+e.g Windows Server 2019 Standard
+Location* 
+NAMER
+ City* 
+Denver Colorado
+Added By 
+system-import
+Updated By 
+Save
+Cancel
+now in this gettng small issue is the Host Name*,Applicatio, Windows Server 
+is getting blank,
+  but not all 
+for examle  one card diplsy thie but secnd card not dipsly, third card is diplsy but fourht card is not dilsy, 
+  read teh belllo all code and why what is the issue ok and how to slove it , just only one isseu tohre wokr fine ok 
+statusContainer.appendChild(statusText);
 
-            function runForRange() {
-                setLoading(true);
-                const detail = { start: dateFrom, end: dateTo };
-                window.dispatchEvent(new CustomEvent('header-run', { detail }));
-                setLoading(false);
-            }
+                    // compute a nicer label for the device-type area
+                    let deviceLabel;
 
-            function loadLatest() {
-                setLoading(true);
-                const d = new Date(); d.setDate(d.getDate() - 1);
-                const iso = formatDateISO(d);
-                setDateFrom(iso); setDateTo(iso);
-                window.dispatchEvent(new CustomEvent('header-load-latest', { detail: { start: iso, end: iso } }));
-                setLoading(false);
-            }
+                    if (deviceType === "dbdetails") {
+                        // For DB Details: show the application if available, else fallback
+                        deviceLabel = device.application || deviceType.toUpperCase();
+                    } else if (deviceType.includes("pc")) {
+                        deviceLabel = device.pc_name || device.hostname || "PC";
+                    } else {
+                        deviceLabel = deviceType.toUpperCase();
+                    }
 
-            return (
-                <div className="topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#fff', borderRadius: 8 }}>
-                    <div className="wu-brand">
-                        <h1>Western Union — Trend Analysis</h1>
+                    card.insertAdjacentHTML("beforeend", `
+                        <button class="edit-device-btn" 
+                            onclick="openEditForDeviceFromIP('${deviceIP}', '${detectTypeFromDeviceObj(device)}')"
+                            style="margin-left:8px; padding:4px;">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    <h3 class="device-name" style="font-size:20px; font-weight:500; font-family: PP Right Grotesk; margin-bottom: 10px;">
+                        ${device.cameraname || device.controllername || device.archivername || device.servername || device.hostname || "Unknown Device"}
+                    </h3>
+
+                    <div class="card-content">
+                    <p class="device-type-label ${deviceType}" 
+                    style="font-size:17px;  font-family: Roboto; font-weight:100; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                    
+                    <strong>
+                        <i class="${getDeviceIcon(deviceType)}" style="margin-right: 5px;"></i> 
+                        ${deviceLabel}
+                    </strong>
+                    
+                    ${deviceType.includes("camera")
+                            ? `<button class="open-camera-btn"
+                    onclick="openCamera('${deviceIP}', '${(device.cameraname || device.controllername || "").replace(/'/g, "\\'")}', '${device.hyperlink || ""}')"
+                    title="Open Camera"
+                    style="border:none; cursor:pointer; font-weight:100; border-radius:50%; width:34px; height:34px; display:flex; justify-content:center; align-items:center;">
+                    <img src="images/cctv.png" alt="Logo" style="width:33px; height:33px;"/>
+                    </button>`: ""}
+                    </p>
+
+                    <p style="font-size: ;  font-family: Roboto; margin-bottom: 8px;">
+                    <strong style="color:rgb(8, 8, 8);"><i class="fas fa-network-wired" style="margin-right: 6px;"></i></strong>
+                        <span 
+                        class="device-ip" 
+                        style="font-weight:100; color: #00adb5; cursor: pointer; text-shadow: 0 0 1px rgba(0, 173, 181, 0.3);  font-family: Roboto;"
+                        onclick="copyToClipboard('${deviceIP}')"
+                        title="Click to copy IP">
+                        ${deviceIP}
+                    </span>
+                    </p>
+
+                    <p style="font-size: ;  font-family: Roboto; margin-bottom: 6px;">
+                    <strong ><i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i></strong>
+                    <span style="font-size:; font-weight:100; margin-left: 12px;  font-family: Roboto; font-size: ;">${device.location || "N/A"}</span>
+                    </p>
+
+                    <p style="font-size:;  font-family: Roboto;>
+                    <strong "><i class="fas fa-city" style="margin-right: 5px;"></i></strong>
+                    <span style="font-weight:100;margin-left: 4px;  font-family: Roboto; font-size:;">${city}</span>
+                    </p>
                     </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <input ref={fromRef} type="text" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-                        <input ref={toRef} type="text" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-                        <button onClick={runForRange} disabled={loading}>Run</button>
-                        <button onClick={loadLatest} disabled={loading}>Load latest</button>
-                    </div>
-                </div>
-            );
-        }
+                `);
+                    card.appendChild(statusContainer);
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const rootEl = document.getElementById('header-ui');
-            if (rootEl) ReactDOM.createRoot(rootEl).render(<HeaderStandalone />);
-        });
-    </script>
+                    // --- ADDED: if this is a controller card, attach click to open doors modal ---
+                    if (deviceType.includes("controller")) {
+                        card.style.cursor = "pointer";
+                        card.title = "Click to view Door
+                          
+<div id="db-fields" style="display:none;">
+          <label>Host Name*</label>
+          <input id="db-hostname" type="text" placeholder="e.g SRVWUDEN0890v">
 
-</body>
-C:\Users\W0024618\Trend-Analysis\frontend\analysis_table.html
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Behaviour Analysis — Table Only (static)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+          <label>Application</label>
+          <input id="db-application" type="text" placeholder="e.g CCURE SAS App">
 
-  <!-- Include React/Babel/Flatpickr too because header.html uses them -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script crossorigin src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+          <label>Windows Server</label>
+          <input id="db-windows-server" type="text" placeholder="e.g Windows Server 2019 Standard">
+        </div>
+  in this has  small issue ok  
+<div id="device-modal" class="modal">
+    <div class="modal-content">
+      <h3 id="device-modal-title">Add Device</h3>
+      <form id="device-form">
+        <input type="hidden" id="device-old-ip">
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="style.css">
+        <label>Type*</label>
+        <select id="device-type" required onchange="updateFormFields()">
+          <option value="camera">Camera</option>
+          <option value="archiver">Archiver</option>
+          <option value="controller">Controller</option>
+          <option value="server">Server</option>
+          <option value="pcdetails">PC Details</option>
+          <option value="dbdetails">DB Details</option>
+        </select>
 
-  <style>
-    body { background:#f7fafc; font-family: Inter, system-ui, Arial, sans-serif; color:#0f172a; margin:0; padding:0; }
-    .container { max-width:1200px; margin:18px auto; padding:16px; }
-    .small { font-size:12px; color:#475569; }
-    .muted { color:#64748b; }
-    .table-scroll { background:#fff; border-radius:8px; padding:12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); margin-top:12px; }
-    table { width:100%; border-collapse:collapse; }
-    thead th { text-align:left; padding:10px 8px; border-bottom:1px solid #eef2f7; }
-    tbody td { padding:8px; border-bottom:1px solid #f1f5f9; vertical-align:top; }
-    input, select, button { font:inherit; }
-    .pill { display:inline-block; background:#eef2f7; padding:4px 8px; border-radius:999px; margin-right:6px; font-size:12px; color:#0f172a; }
-    .btn-primary { background:#2563eb; color:#fff; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; }
-    .btn-ghost { background:#fff; border:1px solid #e6edf3; padding:8px 10px; border-radius:6px; cursor:pointer; }
-    .small-button { background:#f1f5f9; border:none; padding:6px 8px; border-radius:6px; cursor:pointer; }
-    .muted-block { color:#64748b; margin-left:6px; }
-    .status { padding:8px; font-size:13px; color:#334155; }
-  </style>
-</head>
-<body>
-  <div class="container" id="app">
+        <span id="name-field">
+          <label>Name*</label>
+          <input id="device-name" type="text" placeholder="e.g Device Name">
+        </span>
 
-    <!-- header is loaded from header.html at runtime -->
-    <div id="header-ui"></div>
 
-    <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
-      <input id="filterText" placeholder="Search name, employee id, card or reason..." style="flex:1; padding:8px; border-radius:6px; border:1px solid #e6edf3;" />
-      <label style="display:flex; align-items:center; gap:8px;">
-        <input id="collapseToggle" type="checkbox" checked /> <span class="small muted">Collapse duplicates</span>
-      </label>
-      <button class="small-button" id="exportBtn">Export filtered</button>
-      <div id="status" class="status muted-block">Ready</div>
-    </div>
+        <label>IP Address*</label>
+        <input id="device-ip" type="text" placeholder="e.g 10.100.111.11">
 
-    <div class="table-scroll" role="region" aria-label="results table" id="tableWrap">
-      <table id="resultsTable" aria-live="polite">
-        <thead>
-          <tr>
-            <th>Employee</th>
-            <th class="small">ID</th>
-            <th class="small">Card</th>
-            <th class="small">Date</th>
-            <th class="small">Duration</th>
-            <th class="small">Violation Days</th>
-            <th class="small">Reasons</th>
-            <th class="small">Evidence</th>
-          </tr>
-        </thead>
-        <tbody id="resultsBody">
-          <!-- rows injected here -->
-        </tbody>
-      </table>
+        <div id="pc-fields" style="display:none;">
+          <label>Host Name*</label>
+          <input id="Host-Name" type="text" placeholder="e.g ">
+          <label>PC Name*</label>
+          <input id="PC-Name" type="text" placeholder="e.g ">
+        </div>
 
-      <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
-        <button id="prevBtn" class="small-button">Prev</button>
-        <div class="muted" id="pageInfo">Page 1 / 1</div>
-        <button id="nextBtn" class="small-button">Next</button>
-      </div>
+        <div id="db-fields" style="display:none;">
+          <label>Host Name*</label>
+          <input id="db-hostname" type="text" placeholder="e.g SRVWUDEN0890v">
+
+          <label>Application</label>
+          <input id="db-application" type="text" placeholder="e.g CCURE SAS App">
+
+          <label>Windows Server</label>
+          <input id="db-windows-server" type="text" placeholder="e.g Windows Server 2019 Standard">
+        </div>
+
+        <label>Location*</label>
+        <input id="device-location" type="text" placeholder="e.g APAC, EMEA, LACA, NAMER">
+
+        <label>City*</label>
+        <input id="device-city" type="text" placeholder="e.g Pune, Denver">
+
+
+        <!-- CAMERA FIELDS ONLY -->
+        <div id="camera-fields">
+          <label>Details*</label>
+          <input id="device-details" type="text" placeholder="e.g FLIR, Verkada">
+
+          <label>Hyperlink</label>
+          <input id="device-hyperlink" type="url" placeholder="e.g https://link">
+
+          <label>Remark</label>
+          <input id="device-remark" type="text" placeholder="e.g Not accessible">
+        </div>
+
+
+        <!-- Added By -->
+        <div id="added-by-box" style="display:none;">
+          <label>Added By</label>
+          <input id="device-added-by" type="text" placeholder="Your Name">
+        </div>
+
+        <!-- Updated By -->
+        <div id="updated-by-box" style="display:none;">
+          <label>Updated By</label>
+          <input id="device-updated-by" type="text">
+        </div>
+
+        <!-- Controller Doors -->
+        <div id="door-reader-container" style="display:none;" class="door-reader">
+          <h4>Doors & Readers</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Door</th>
+                <th>Reader</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="door-reader-body"></tbody>
+          </table>
+          <button type="button" id="add-door-row">Add Door</button>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit">Save</button>
+          <button type="button" onclick="hideDeviceModal()">Cancel</button>
+          <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
+        </div>
+      </form>
     </div>
   </div>
 
-<script>
-/*
-  analysis_table.html
-  - loads header.html into #header-ui and executes its scripts
-  - wires up table logic and listens to header events (header-run, header-load-latest)
-*/
 
-(function () {
-  // load header.html and execute its scripts
-  function insertHeaderAndRunScripts(htmlText) {
-    const container = document.getElementById('header-ui');
-    if (!container) return;
 
-    // create a temporary DOM to parse header.html content
-    const tmp = document.createElement('div');
-    tmp.innerHTML = htmlText;
 
-    // move any <head> children (like <link> or scripts referencing src) into document.head
-    // and <body> children into the container.
-    // If header.html contains inline scripts (type="text/babel"), we'll extract and run them after insertion.
-    const scriptsToRun = [];
+// ================= SHOW DEVICE MODAL =================
+function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
+    const modal = document.getElementById("device-modal");
+    const title = document.getElementById("device-modal-title");
+    const deleteBtn = document.getElementById("device-delete-btn");
 
-    // move links/styles from head (if present in fetched fragment)
-    const headChildren = tmp.querySelectorAll('head > link, head > style, head > script');
-    headChildren.forEach(n => {
-      if (n.tagName.toLowerCase() === 'script') {
-        // external script src -> append to head (so browser loads it)
-        if (n.src) {
-          const s = document.createElement('script');
-          s.src = n.src;
-          s.crossOrigin = n.crossOrigin || null;
-          document.head.appendChild(s);
-        } else {
-          // inline script -> collect text
-          scriptsToRun.push({ code: n.innerHTML, isBabel: n.type && n.type.indexOf('babel') !== -1 });
+    // Reset form
+    document.getElementById("device-form").reset();
+    document.getElementById("door-reader-body").innerHTML = "";
+    document.getElementById("device-old-ip").value = "";
+
+    const currentUserName = userName; // passed username
+
+    if (mode === "add") {
+        title.textContent = "Add Device";
+        deleteBtn.style.display = "none";
+        document.getElementById("device-type").disabled = false;
+        document.getElementById("device-type").value = "camera";
+
+
+        // Added By / Updated By boxes
+        document.getElementById("added-by-box").style.display = "block";
+        document.getElementById("updated-by-box").style.display = "none";
+
+        const added = document.getElementById("device-added-by");
+        added.value = currentUserName || "";
+        added.readOnly = false;
+
+    } else if (mode === "edit" && deviceObj) {
+        title.textContent = "Edit Device";
+        deleteBtn.style.display = "inline-block";
+        document.getElementById("device-type").disabled = true;
+
+        // Device type
+        document.getElementById("device-type").value = deviceObj._type_for_ui || "camera";
+        if (deviceObj._type_for_ui.toLowerCase() === "dbdetails") {
+            document.getElementById("device-type").value = "dbdetails";
         }
-      } else {
-        document.head.appendChild(n.cloneNode(true));
-      }
-    });
 
-    // append body content
-    // const bodyChildren = tmp.querySelectorAll('body > *');
-    const bodyChildren = tmp.querySelectorAll('div.topbar, script');
-    bodyChildren.forEach(n => container.appendChild(n.cloneNode(true)));
+        // Device fields
+        document.getElementById("device-name").value =
+            deviceObj.cameraname || deviceObj.controllername || deviceObj.archivername || deviceObj.servername || deviceObj.hostname || "";
+        document.getElementById("device-ip").value = deviceObj.IP_address || deviceObj.ip_address || "";
+        document.getElementById("device-location").value = deviceObj.Location || deviceObj.location || "";
+        document.getElementById("device-city").value = deviceObj.City || deviceObj.city || "";
+        document.getElementById("device-details").value = deviceObj.device_details || "";
+        document.getElementById("device-hyperlink").value = deviceObj.hyperlink || "";
+        document.getElementById("device-remark").value = deviceObj.remark || "";
+        document.getElementById("device-old-ip").value = deviceObj.IP_address || deviceObj.ip_address || "";
+        // PC Details fields
+        document.getElementById("Host-Name").value = deviceObj.hostname || "";
+        document.getElementById("PC-Name").value = deviceObj.pc_name || "";
 
-    // also handle scripts that may be inside body (inline)
-    const bodyScripts = tmp.querySelectorAll('script');
-    bodyScripts.forEach(n => {
-      if (n.src) {
-        const s = document.createElement('script');
-        s.src = n.src;
-        document.head.appendChild(s);
-      } else {
-        scriptsToRun.push({ code: n.innerHTML, isBabel: n.type && n.type.indexOf('babel') !== -1 });
-      }
-    });
 
-    // Execute non-babel scripts as normal JS
-    scriptsToRun.forEach(s => {
-      try {
-        if (s.isBabel && window.Babel) {
-          // transpile and run
-          const transpiled = Babel.transform(s.code, { presets: ['react'] }).code;
-          const f = new Function(transpiled);
-          f();
-        } else {
-          const f = new Function(s.code);
-          f();
+        // ✅ DB Details fields (handles all casing variations)
+        document.getElementById("db-hostname").value =
+            deviceObj.db_hostname ??
+            deviceObj.hostname ??
+            deviceObj.HostName ??
+            deviceObj.host_name ??
+            "";
+
+        document.getElementById("db-application").value =
+            deviceObj.application ??
+            deviceObj.Application ??
+            deviceObj.app ??
+            deviceObj.App ??
+            "";
+
+        document.getElementById("db-windows-server").value =
+            deviceObj.windows_server ??
+            deviceObj.Windows_Server ??
+            deviceObj.windowsServer ??
+            deviceObj.WindowsServer ??
+            "";
+
+
+        // Controller doors
+        if (deviceObj.Doors && Array.isArray(deviceObj.Doors)) {
+            document.getElementById("device-type").value = "controller";
+            updateFormFields();
+            deviceObj.Doors.forEach(d => addDoorRow(d.door || d.Door, d.reader || ""));
         }
-      } catch (e) {
-        console.error('Error executing header script', e);
-      }
-    });
-  }
 
-  fetch('header.html').then(r => r.text()).then(htmlText => {
-    insertHeaderAndRunScripts(htmlText);
-    // after header loaded, init table wiring
-    initTableApp();
-  }).catch(err => {
-    console.error('Failed to load header.html', err);
-    // still init table so page works in degraded mode
-    initTableApp();
-  });
+        // Added By / Updated By
+        document.getElementById("added-by-box").style.display = "block";
+        document.getElementById("updated-by-box").style.display = "block";
 
-  function initTableApp() {
-    // CONFIG: change to your API host if needed
-    const API_BASE = "http://10.138.161.4:8002";
+        const added = document.getElementById("device-added-by");
+        const updated = document.getElementById("device-updated-by");
 
-    const REGION_OPTIONS = {
-      "apac": { label: "APAC", partitions: ["Pune","Quezon City","Taguig City","MY.Kuala Lumpur","IN.HYD","SG.Singapore"] },
-      "emea": { label: "EMEA", partitions: ["LT.Vilnius","IT.Rome","UK.London","IE.DUblin","DU.Abu Dhab","ES.Madrid"] },
-      "laca": { label: "LACA", partitions: ["AR.Cordoba","BR.Sao Paulo","CR.Costa Rica Partition","PA.Panama City","PE.Lima","MX.Mexico City"] },
-      "namer": { label: "NAMER", partitions: ["Denver","Austin Texas","Miami","New York"] }
+        // Robust assignment: handle different key casings
+        added.value =
+            deviceObj.added_by ??
+            deviceObj.AddedBy ??
+            deviceObj.addedBy ??
+            deviceObj.addedby ??
+            "Unknown";
+        added.readOnly = true;
+
+        // updated.value = currentUserName || "";
+        // Updated By (show stored value first)
+        updated.value =
+            deviceObj.updated_by ??
+            deviceObj.UpdatedBy ??
+            deviceObj.updatedBy ??
+            deviceObj.updatedby ??
+            "";
+        updated.readOnly = false;
+    }
+
+    // Show/hide controller door section
+    updateFormFields();
+
+    // Display modal
+    modal.style.display = "flex";
+}
+
+// ================= UPDATE FORM FIELDS BASED ON TYPE =================
+function updateFormFields() {
+    const type = document.getElementById("device-type").value;
+
+    const nameField = document.getElementById("name-field");
+    const cameraFields = document.getElementById("camera-fields");
+    const pcFields = document.getElementById("pc-fields");
+    const doorSec = document.getElementById("door-reader-container");
+    document.getElementById("db-fields").style.display = "none";
+
+    // RESET ALL
+    nameField.style.display = "block";
+    cameraFields.style.display = "none";
+    pcFields.style.display = "none";
+    doorSec.style.display = "none";
+
+    if (type === "camera") {
+        cameraFields.style.display = "block";
+    }
+
+    if (type === "controller") {
+        doorSec.style.display = "block";
+    }
+
+    if (type === "pcdetails") {
+        nameField.style.display = "none";
+        pcFields.style.display = "block";
+    }
+
+    if (type === "dbdetails") {
+        nameField.style.display = "none";
+        pcFields.style.display = "none";
+        cameraFields.style.display = "none";
+        doorSec.style.display = "none";
+        document.getElementById("db-fields").style.display = "block";
+    }
+}
+
+// Event listener for type change
+document.getElementById("device-type").addEventListener("change", updateFormFields);
+
+// ================= HIDE MODAL =================
+function hideDeviceModal() {
+    document.getElementById("device-modal").style.display = "none";
+}
+
+// ================= ADD DOOR ROW =================
+function addDoorRow(door = "", reader = "") {
+    const tbody = document.getElementById("door-reader-body");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+        <td><input type="text" class="door-input" value="${door}" placeholder="Door Name"></td>
+        <td><input type="text" class="reader-input" value="${reader}" placeholder="e.g in:1, out:1"></td>
+        <td><button type="button" class="remove-door-row">X</button></td>
+    `;
+    tbody.appendChild(row);
+    row.querySelector(".remove-door-row").addEventListener("click", () => row.remove());
+}
+document.getElementById("add-door-row").addEventListener("click", () => addDoorRow());
+
+// ================= MAP UI TYPE TO BACKEND =================
+function mapUITypeToBackend(type) {
+    switch (type) {
+        case "camera": return "cameras";
+        case "controller": return "controllers";
+        case "archiver": return "archivers";
+        case "server": return "servers";
+        case "pcdetails": return "pcDetails";
+        case "dbdetails": return "dbdetails";
+        default: return "cameras";
+    }
+}
+
+// ================= CONVERT FORM FIELDS FOR BACKEND =================
+function convertToBackendFields(type, body) {
+    const mapped = { ...body };
+    switch (type) {
+        case "cameras": mapped.cameraname = body.name; break;
+        case "controllers": mapped.controllername = body.name; break;
+        case "archivers": mapped.archivername = body.name; break;
+        case "servers": mapped.servername = body.name; break;
+        case "pc_details":  // backend type
+            mapped.hostname = body.hostname;
+            mapped.pc_name = body.pc_name;
+            break;
+        case "dbdetails":
+            mapped.hostname = body.db_hostname;
+            mapped.application = body.application;
+            mapped.windows_server = body.windows_server;
+            break;
+    }
+    delete mapped.name;
+    return mapped;
+}
+
+// ================= SAVE / ADD / EDIT =================
+document.getElementById("device-form").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+
+    const oldIp = document.getElementById("device-old-ip").value;
+    const uiType = document.getElementById("device-type").value;
+    const backendType = mapUITypeToBackend(uiType);
+
+    // Collect all fields (no person_name)
+    let body = {
+        name: document.getElementById("device-name").value,
+        ip_address: document.getElementById("device-ip").value,
+        location: document.getElementById("device-location").value,
+        city: document.getElementById("device-city").value,
+        device_details: document.getElementById("device-details").value,
+        hyperlink: document.getElementById("device-hyperlink").value,
+        remark: document.getElementById("device-remark").value,
+        hostname: document.getElementById("Host-Name").value,
+        pc_name: document.getElementById("PC-Name").value,
+        added_by: document.getElementById("device-added-by").value,
+        updated_by: document.getElementById("device-updated-by").value,
+        db_hostname: document.getElementById("db-hostname").value,
+        application: document.getElementById("db-application").value,
+        windows_server: document.getElementById("db-windows-server").value
+
     };
 
-    // DOM refs (these IDs are created by the header)
-    const fromDate = () => document.getElementById('fromDate');
-    const toDate = () => document.getElementById('toDate');
-    const regionSelect = () => document.getElementById('regionSelect');
-    const locationSelect = () => document.getElementById('locationSelect');
-    const employeeId = () => document.getElementById('employeeId');
-    const runBtn = () => document.getElementById('runBtn');
-    const loadLatestBtn = () => document.getElementById('loadLatestBtn');
-    const filterText = document.getElementById('filterText');
-    const collapseToggle = document.getElementById('collapseToggle');
-    const resultsBody = document.getElementById('resultsBody');
-    const exportBtn = document.getElementById('exportBtn');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const pageInfo = document.getElementById('pageInfo');
-    const statusEl = document.getElementById('status');
-    const openFull = document.getElementById('open-full');
-    const regionLabel = document.getElementById('region-label');
+    body = convertToBackendFields(backendType, body);
 
-    function pad(n){ return String(n).padStart(2,'0'); }
-    function formatDateISO(d) { if(!d) return ''; const dt = new Date(d); return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()); }
-    function sanitizeName(r){ if(!r) return ''; return r.EmployeeName_feat || r.EmployeeName_dur || r.EmployeeName || r.ObjectName1 || r.objectname1 || r.employee_name || r.person_uid || ''; }
-
-    function downloadCSV(rows, filename){
-      if(!rows || rows.length === 0){ alert('No rows to export'); return; }
-      const cols = Object.keys(rows[0]);
-      const lines = [cols.join(',')];
-      rows.forEach(r => {
-        const row = cols.map(c => JSON.stringify((r[c] === undefined || r[c] === null) ? '' : String(r[c]).replace(/\n/g,' '))).join(',');
-        lines.push(row);
-      });
-      const blob = new Blob([lines.join('\\n')], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = filename || 'export.csv'; a.click(); URL.revokeObjectURL(url);
-    }
-
-    function buildAggregated(rowsArr){
-      const map = new Map();
-      rowsArr.forEach(r=>{
-        const id = r.EmployeeID || r.person_uid || (sanitizeName(r) + '|' + (r.CardNumber || r.Card || ''));
-        const key = String(id);
-        if(!map.has(key)) map.set(key, { EmployeeName:sanitizeName(r), EmployeeID: r.EmployeeID || r.person_uid || '', CardNumber: r.CardNumber || r.Card || '', ViolationCount:0, ReasonsSet:new Set(), ViolationDays:0, ViolationWindowDays:null, RiskLevel:null, RiskScore:null, FirstRow:r, _rows:[] });
-        const agg = map.get(key);
-        agg.ViolationCount += 1;
-        agg._rows.push(r);
-        const reasonsField = r.Reasons || r.DetectedScenarios || r.Detected || '';
-        String(reasonsField).split(';').map(s=>s && s.trim()).filter(Boolean).forEach(p => agg.ReasonsSet.add(p));
-        let candidateCount = null;
-        if (r.ViolationDays !== undefined && r.ViolationDays !== null && r.ViolationDays !== "") candidateCount = Number(r.ViolationDays);
-        else if (r.ViolationDaysLast !== undefined && r.ViolationDaysLast !== null && r.ViolationDaysLast !== "") candidateCount = Number(r.ViolationDaysLast);
-        else if (r.ViolationDaysLast90 !== undefined && r.ViolationDaysLast90 !== null && r.ViolationDaysLast90 !== "") candidateCount = Number(r.ViolationDaysLast90);
-        else if (r.ViolationDaysLast_90 !== undefined && r.ViolationDaysLast_90 !== null && r.ViolationDaysLast_90 !== "") candidateCount = Number(r.ViolationDaysLast_90);
-        if(candidateCount !== null && !isNaN(candidateCount)) agg.ViolationDays = Math.max(agg.ViolationDays || 0, candidateCount);
-        if (r.ViolationWindowDays !== undefined && r.ViolationWindowDays !== null && r.ViolationWindowDays !== "") agg.ViolationWindowDays = r.ViolationWindowDays;
-        try {
-          const rowRisk = r.RiskLevel || r.Risk || null;
-          const rowScore = (r.RiskScore !== undefined && r.RiskScore !== null) ? Number(r.RiskScore) : null;
-          const sevMap = { "Low":1, "Low Medium":2, "Medium":3, "Medium High":4, "High":5 };
-          const severityFor = l => (l ? (sevMap[String(l)]||1) : 1);
-          if(rowRisk){
-            const cur = severityFor(agg.RiskLevel);
-            const thisS = severityFor(rowRisk);
-            if(!agg.RiskLevel || thisS > cur) agg.RiskLevel = rowRisk;
-          }
-          if(rowScore !== null && (!agg.RiskScore || Number(rowScore) > Number(agg.RiskScore))) agg.RiskScore = Number(rowScore);
-        } catch(e){}
-      });
-      const out = [];
-      map.forEach(v=>{
-        out.push({
-          EmployeeName: v.EmployeeName,
-          EmployeeID: v.EmployeeID,
-          CardNumber: v.CardNumber,
-          ViolationCount: v.ViolationCount,
-          Reasons: Array.from(v.ReasonsSet).join(';'),
-          ViolationDays: v.ViolationDays || 0,
-          ViolationWindowDays: v.ViolationWindowDays || null,
-          RiskLevel: v.RiskLevel || null,
-          RiskScore: v.RiskScore || null,
-          FirstRow: v.FirstRow,
-          _rows: v._rows
-        });
-      });
-      out.sort((a,b)=>{
-        const aVal = (a.ViolationDays !== undefined && a.ViolationDays !== null) ? Number(a.ViolationDays) : (a.ViolationCount || 0);
-        const bVal = (b.ViolationDays !== undefined && b.ViolationDays !== null) ? Number(b.ViolationDays) : (b.ViolationCount || 0);
-        if(bVal !== aVal) return bVal - aVal;
-        return (a.EmployeeName||'').localeCompare(b.EmployeeName||'');
-      });
-      return out;
-    }
-
-    // UI / state
-    let rows = []; // raw rows
-    let page = 1;
-    const pageSize = 25;
-
-    function setStatus(text, isError){
-      if (!statusEl) return;
-      statusEl.textContent = text;
-      statusEl.className = isError ? 'status error' : 'status';
-    }
-
-    function populateLocationOptions(regionKey){
-      const sel = document.getElementById('locationSelect');
-      if (!sel) return;
-      sel.innerHTML = '';
-      const optAll = document.createElement('option'); optAll.textContent = 'All locations'; optAll.value = 'All locations'; sel.appendChild(optAll);
-      const parts = (REGION_OPTIONS[regionKey] && REGION_OPTIONS[regionKey].partitions) || [];
-      parts.forEach(p => {
-        const o = document.createElement('option'); o.textContent = p; o.value = p; sel.appendChild(o);
-      });
-      const lbl = document.getElementById('region-label');
-      if (lbl) lbl.textContent = (REGION_OPTIONS[regionKey] && REGION_OPTIONS[regionKey].label) || regionKey.toUpperCase();
-    }
-
-    function renderTable(){
-      const filter = (filterText.value || '').toLowerCase().trim();
-      const collapse = collapseToggle.checked;
-      const filtered = (rows || []).filter(r => {
-        const hay = (sanitizeName(r) + ' ' + (r.EmployeeID||'') + ' ' + (r.CardNumber||'') + ' ' + (r.Reasons||r.DetectedScenarios||'')).toLowerCase();
-        return !filter || hay.indexOf(filter) !== -1;
-      });
-      const source = collapse ? buildAggregated(filtered) : filtered;
-      const totalPages = Math.max(1, Math.ceil((source.length || 0) / pageSize));
-      if(page > totalPages) page = totalPages;
-      const pageRows = (source || []).slice((page-1)*pageSize, page*pageSize);
-      resultsBody.innerHTML = '';
-      if(pageRows.length === 0){
-        const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 8; td.className = 'muted'; td.textContent = 'No rows';
-        tr.appendChild(td); resultsBody.appendChild(tr);
-      } else {
-        pageRows.forEach((r, idx) => {
-          const isAgg = collapse && r && r.ViolationCount !== undefined;
-          const displayRow = isAgg ? r.FirstRow : r;
-          const tr = document.createElement('tr');
-          if(displayRow && displayRow.Reasons && String(displayRow.Reasons).trim()) tr.className = 'flagged-row';
-          const tdName = document.createElement('td'); tdName.innerHTML = sanitizeName(displayRow) || '<span class="muted">—</span>';
-          const tdId = document.createElement('td'); tdId.className = 'small'; tdId.textContent = isAgg ? (r.EmployeeID||displayRow.EmployeeID||'') : (displayRow.EmployeeID||'');
-          const tdCard = document.createElement('td'); tdCard.className = 'small'; tdCard.textContent = isAgg ? (r.CardNumber||displayRow.CardNumber||'') : (displayRow.CardNumber||'');
-          const tdDate = document.createElement('td'); tdDate.className = 'small'; tdDate.textContent = displayRow && (displayRow.DisplayDate || displayRow.Date || displayRow.DateOnly || displayRow.FirstSwipe || displayRow.LastSwipe) || '-';
-          const tdDur = document.createElement('td'); tdDur.className = 'small'; tdDur.textContent = isAgg ? (displayRow && (displayRow.Duration || (displayRow.DurationSeconds ? formatSecondsToHmJS(Number(displayRow.DurationSeconds)) : '-'))) : (displayRow && (displayRow.Duration || (displayRow.DurationSeconds ? formatSecondsToHmJS(Number(displayRow.DurationSeconds)) : '-') ) || '');
-          let violationCount = '';
-          if(isAgg){
-            if(r.ViolationDays !== undefined && r.ViolationDays !== null && r.ViolationDays !== '') violationCount = String(r.ViolationDays);
-            else if(r.ViolationDaysLast !== undefined && r.ViolationDaysLast !== null && r.ViolationDaysLast !== '') violationCount = String(r.ViolationDaysLast);
-            else if(r.ViolationDaysLast90 !== undefined && r.ViolationDaysLast90 !== null && r.ViolationDaysLast90 !== '') violationCount = String(r.ViolationDaysLast90);
-            else if(r.ViolationDaysLast_90 !== undefined && r.ViolationDaysLast_90 !== null && r.ViolationDaysLast_90 !== '') violationCount = String(r.ViolationDaysLast_90);
-          } else {
-            if(displayRow && displayRow.ViolationDays !== undefined && displayRow.ViolationDays !== null && displayRow.ViolationDays !== '') violationCount = String(displayRow.ViolationDays);
-            else if(displayRow && displayRow.ViolationDaysLast !== undefined && displayRow.ViolationDaysLast !== null && displayRow.ViolationDaysLast !== '') violationCount = String(displayRow.ViolationDaysLast);
-            else if(displayRow && displayRow.ViolationDaysLast90 !== undefined && displayRow.ViolationDaysLast90 !== null && displayRow.ViolationDaysLast90 !== '') violationCount = String(displayRow.ViolationDaysLast90);
-            else if(displayRow && displayRow.ViolationDaysLast_90 !== undefined && displayRow.ViolationDaysLast_90 !== null && displayRow.ViolationDaysLast_90 !== '') violationCount = String(displayRow.ViolationDaysLast_90);
-          }
-          const tdViol = document.createElement('td'); tdViol.className = 'small'; tdViol.innerHTML = violationCount !== '' ? violationCount : '<span class="muted">—</span>';
-          const tdReasons = document.createElement('td'); tdReasons.className = 'small';
-          const reasonsText = isAgg ? (r.Reasons || displayRow.Reasons || displayRow.DetectedScenarios) : (displayRow.Reasons || displayRow.DetectedScenarios || '');
-          if(!reasonsText) tdReasons.innerHTML = '<span class="muted">—</span>';
-          else {
-            String(reasonsText).split(';').map(s=>s && s.trim()).filter(Boolean).forEach(p => {
-              const s = document.createElement('span'); s.className='pill'; s.textContent = p; tdReasons.appendChild(s);
+    if (backendType === "controllers") {
+        const doors = [];
+        document.querySelectorAll("#door-reader-body tr").forEach(tr => {
+            doors.push({
+                door: tr.querySelector(".door-input").value,
+                reader: tr.querySelector(".reader-input").value
             });
-          }
-          const tdEvidence = document.createElement('td'); tdEvidence.className='small';
-          const btnE = document.createElement('button'); btnE.className='small-button'; btnE.textContent = 'Evidence';
-          btnE.onclick = function(){ alert('Evidence modal not implemented on this static page.'); };
-          tdEvidence.appendChild(btnE);
-          if(isAgg){ const span = document.createElement('span'); span.className='muted'; span.style.marginLeft='8px'; span.textContent = `(${r.ViolationCount} rows)`; tdEvidence.appendChild(span); }
-          tr.appendChild(tdName); tr.appendChild(tdId); tr.appendChild(tdCard); tr.appendChild(tdDate); tr.appendChild(tdDur); tr.appendChild(tdViol); tr.appendChild(tdReasons); tr.appendChild(tdEvidence);
-          resultsBody.appendChild(tr);
         });
-      }
-      pageInfo.textContent = 'Page ' + page + ' / ' + totalPages;
+        body.Doors = doors;
     }
 
-    async function fetchRun(start, end){
-      setStatus('Loading…');
-      try {
-        let url = API_BASE + '/run?start=' + encodeURIComponent(start) + '&end=' + encodeURIComponent(end) + '&full=true';
-        const regEl = document.getElementById('regionSelect');
-        const locEl = document.getElementById('locationSelect');
-        const eidEl = document.getElementById('employeeId');
-        const reg = regEl ? regEl.value : null;
-        if(reg) url += '&region=' + encodeURIComponent(reg);
-        const loc = locEl ? locEl.value : null;
-        if(loc && loc !== 'All locations'){
-          url += '&city=' + encodeURIComponent(loc);
+    try {
+        if (!oldIp) {
+            // ADD new device
+            await fetch("http://localhost/api/devices", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: backendType, device: body })
+            });
+        } else {
+            // UPDATE existing device
+            await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
         }
-        const eid = eidEl ? String(eidEl.value).trim() : null;
-        if(eid) url += '&employee_id=' + encodeURIComponent(eid);
-        const r = await fetch(url, { method:'GET' });
-        if(!r.ok){
-          const txt = await r.text().catch(()=>'<no body>');
-          throw new Error('API ' + r.status + ': ' + txt);
+
+        alert("Saved successfully!");
+        hideDeviceModal();
+        await fetchData(currentRegion);
+
+    } catch (err) {
+        alert("Error saving device: " + err.message);
+    }
+});
+
+// ================= DELETE DEVICE =================
+document.getElementById("device-delete-btn").addEventListener("click", async function () {
+    const oldIp = document.getElementById("device-old-ip").value;
+    if (!oldIp) return;
+
+    if (!confirm("Delete this device permanently?")) return;
+
+    try {
+        const resp = await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
+            method: "DELETE"
+        });
+
+        if (!resp.ok) throw new Error("Delete failed");
+
+        alert("Device deleted successfully!");
+        hideDeviceModal();
+        await fetchData(currentRegion);
+
+    } catch (err) {
+        alert("Error deleting device: " + err.message);
+    }
+});
+
+// ================= OPEN EDIT BY IP OR HOSTNAME =================
+async function openEditForDeviceFromIP(ipOrHost, detectedType = null) {
+    try {
+        if (!latestDetails || !latestDetails.details) {
+            await fetchData(currentRegion); // fetch devices if not loaded
         }
-        const js = await r.json();
-        rows = Array.isArray(js.sample) ? js.sample : (Array.isArray(js.flagged_persons) ? js.flagged_persons : (Array.isArray(js.rows) ? js.rows : []));
-        setStatus('Loaded ' + (rows.length||0) + ' rows');
-        page = 1;
-        renderTable();
-      } catch (err){
+
+        let found = null;
+
+        for (const list of Object.values(latestDetails.details)) {
+            const m = (list || []).find(d =>
+                (d.ip_address || d.IP_address || "").trim() === ipOrHost ||
+                (d.hostname || d.HostName || "").trim() === ipOrHost
+            );
+            if (m) {
+                found = m;
+                break;
+            }
+        }
+
+        if (!found) {
+            alert("Device not found");
+            return;
+        }
+
+        // Use detected type from button if passed, otherwise detect from object
+        found._type_for_ui = detectedType || detectTypeFromDeviceObj(found);
+
+        showDeviceModal("edit", found);
+
+    } catch (err) {
         console.error(err);
-        setStatus('Error: ' + err.message, true);
-        rows = [];
-        renderTable();
-      }
+        alert("Cannot load device details: " + err.message);
     }
-
-    function loadLatest(){
-      const d = new Date(); d.setDate(d.getDate()-1);
-      const iso = formatDateISO(d);
-      const fd = document.getElementById('fromDate'); const td = document.getElementById('toDate');
-      if(fd) fd.value = iso; if(td) td.value = iso;
-      fetchRun(iso, iso);
-    }
-
-    // wire controls (some may be created by header)
-    document.addEventListener('header-run', function (e) {
-      try {
-        const d = e.detail || {};
-        const f = d.start; const t = d.end;
-        // copy header inputs to DOM inputs (they already are same elements) but ensure fetch uses same
-        fetchRun(f, t);
-      } catch (err) { console.error(err); }
-    });
-    document.addEventListener('header-load-latest', function (e) {
-      try {
-        const d = e.detail || {};
-        fetchRun(d.start, d.end);
-      } catch (err) { console.error(err); }
-    });
-
-    // fallback bindings if header didn't load
-    const localRunBtn = document.getElementById('runBtn');
-    if (localRunBtn) localRunBtn.addEventListener('click', () => {
-      const f = document.getElementById('fromDate') ? document.getElementById('fromDate').value : '';
-      const t = document.getElementById('toDate') ? document.getElementById('toDate').value : '';
-      if(!f || !t){ alert('Please set both From and To dates'); return; }
-      fetchRun(f, t);
-    });
-    const localLoadBtn = document.getElementById('loadLatestBtn');
-    if (localLoadBtn) localLoadBtn.addEventListener('click', loadLatest);
-
-    if (filterText) filterText.addEventListener('input', () => { page = 1; renderTable(); });
-    if (collapseToggle) collapseToggle.addEventListener('change', () => { page = 1; renderTable(); });
-    if (prevBtn) prevBtn.addEventListener('click', () => { if(page>1){ page--; renderTable(); } });
-    if (nextBtn) nextBtn.addEventListener('click', () => {
-      const filtered = (rows || []).filter(r => {
-        const hay = (sanitizeName(r) + ' ' + (r.EmployeeID||'') + ' ' + (r.CardNumber||'') + ' ' + (r.Reasons||r.DetectedScenarios||'')).toLowerCase();
-        return !filterText.value || hay.indexOf(filterText.value.toLowerCase()) !== -1;
-      });
-      const source = collapseToggle.checked ? buildAggregated(filtered) : filtered;
-      const totalPages = Math.max(1, Math.ceil((source.length || 0) / pageSize));
-      if(page < totalPages){ page++; renderTable(); }
-    });
-    if (exportBtn) exportBtn.addEventListener('click', () => {
-      const filter = (filterText.value || '').toLowerCase().trim();
-      const filtered = (rows || []).filter(r => {
-        const hay = (sanitizeName(r) + ' ' + (r.EmployeeID||'') + ' ' + (r.CardNumber||'') + ' ' + (r.Reasons||r.DetectedScenarios||'')).toLowerCase();
-        return !filter || hay.indexOf(filter) !== -1;
-      });
-      const source = collapseToggle.checked ? buildAggregated(filtered) : filtered;
-      downloadCSV(source, 'analysis_table_export.csv');
-    });
-
-    // region select change -> update locations (if header present)
-    document.addEventListener('change', function (e) {
-      if (e.target && e.target.id === 'regionSelect') {
-        populateLocationOptions(e.target.value);
-      }
-    });
-
-    // init defaults (safe if elements exist or not)
-    (function init(){
-      const today = new Date();
-      const yesterday = new Date(); yesterday.setDate(today.getDate()-1);
-      const fd = document.getElementById('fromDate'); const td = document.getElementById('toDate'); const rs = document.getElementById('regionSelect');
-      if(fd) fd.value = formatDateISO(yesterday);
-      if(td) td.value = formatDateISO(today);
-      if(rs) populateLocationOptions(rs.value);
-      // attempt initial loadLatest
-      try { loadLatest(); } catch(e){}
-    })();
-
-    function formatSecondsToHmJS(seconds) {
-      if (seconds === null || seconds === undefined || seconds === '') return "-";
-      const n = Number(seconds);
-      if (isNaN(n) || !isFinite(n)) return "-";
-      const s = Math.max(0, Math.floor(n));
-      const hh = Math.floor(s / 3600);
-      const mm = Math.floor((s % 3600) / 60);
-      return String(hh) + ":" + String(mm).padStart(2, '0');
-    }
-
-  } // end initTableApp
-
-})();
-</script>
-</body>
-</html>
+}
