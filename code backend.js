@@ -1,227 +1,413 @@
-// ---------- Helper: case-insensitive getter for many possible keys ----------
-function pick(...objs) {
-  // usage: pick(deviceObj, ['hostname','HostName','db_hostname'], '')
-  const obj = objs[0] || {};
-  const keys = Array.isArray(objs[1]) ? objs[1] : [];
-  const fallback = objs[2] === undefined ? "" : objs[2];
-  for (const k of keys) {
-    if (k == null) continue;
-    // try exact key
-    if (obj[k] !== undefined && obj[k] !== null) return obj[k];
-    // try lowercase normalized key
-    const lower = k.toString().toLowerCase();
-    for (const ok of Object.keys(obj)) {
-      if (ok.toString().toLowerCase() === lower) {
-        return obj[ok];
+in this loc chart tooltip;;;
+i want to diplsy ony if offlne count is has present that time ony show 
+for examle Offline Controllers: 1 only this show 
+  Offline Servers:0 this is not show ok and remove risk leve laos in tootlp, 
+    how ot do this tell me 
+maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: colors.text }, display: false },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            // Title is the city name
+            title: function (items) {
+              if (!items || !items.length) return '';
+              return items[0].label;
+            },
+            // First line: total devices (use dataset value)
+            label: function (context) {
+              const value = context.parsed.y ?? context.parsed ?? 0;
+              return `Total Devices: ${value}`;
+            },
+            // After body: show offline breakdown lines (one per line)
+            afterBody: function (context) {
+              if (!context || !context.length) return [];
+
+              const dataIndex = context[0].dataIndex;
+              const chart = context[0].chart || offlineCityBarChart;
+              const details = chart.cityDetails[dataIndex];
+              if (!details) return [];
+
+              const off = details.offline;
+
+              return [
+                `Risk Level: ${details.risk}`,
+                `Offline Cameras: ${off.camera || 0}`,
+                `Offline Controllers: ${off.controller || 0}`,
+                `Offline Archivers: ${off.archiver || 0}`,
+                `Offline Servers: ${off.server || 0}`
+                
+<div class="gcard wide" id="total-city-count">
+            <h4 class="gcard-title">LOC Count</h4>
+            <canvas id="OfflineCityBarChart"></canvas>
+          </div>
+
+
+// new
+// ========== INITIALIZE EVERYTHING ==========
+function initializeChartSystem() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initOfflineChart();
+      initOfflineCityBarChart();   // ✅ ADD THIS
+      setupThemeObserver();
+    });
+  } else {
+    initOfflineChart();
+    initOfflineCityBarChart();     // ✅ ADD THIS
+    setupThemeObserver();
+  }
+}
+
+// Initialize the chart system
+initializeChartSystem();
+
+// ========== YOUR EXISTING FUNCTION ==========
+
+
+function renderOfflineChartFromCombined(combinedDevices) {
+  const offlineDevices = combinedDevices
+    .filter(d => d.device.status === "offline")
+    .map(d => ({
+      device: d.device,
+      type: d.device.type
+    }));
+
+  updateOfflineChart(offlineDevices);
+
+  // ✅ ADD BAR CHART UPDATE HERE
+  updateOfflineCityBarChart(combinedDevices);
+}
+
+// ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
+
+
+// ---------------- START: City BAR chart (Total devices + offline breakdown tooltip) ----------------
+let offlineCityBarChart = null;
+
+const TYPE_MAP = {
+  cameras: 'camera',
+  archivers: 'archiver',
+  controllers: 'controller',
+  servers: 'server',
+  // other types exist (pcdetails, dbdetails) — we ignore them for the offline breakdown fields
+};
+
+function normalizeCityName(city) {
+  city = city.toLowerCase().trim();
+
+  // Pune group
+  if (city.startsWith("pune")) return "Pune";
+
+  // Vilnius group
+  if (city.includes("vilnius") || 
+      city.includes("gama") || 
+      city.includes("delta")) {
+    return "Vilnius";
+  }
+
+  // Default – return as-is (capitalized first letter)
+  return city.charAt(0).toUpperCase() + city.slice(1);
+}
+
+function getBarColors() {
+  if (typeof getChartColors === 'function') {
+    const c = getChartColors();
+    return {
+      bar: c.camera || c.bar || '#d32f2f',
+      text: c.text || '#e6eef7',
+      grid: c.grid || 'rgba(0,0,0,0.08)'
+    };
+  }
+  const isDark = document.body.classList.contains("dark-mode");
+  return {
+    bar: isDark ? "#ff5252" : "#d32f2f",
+    text: isDark ? "#ffffff" : "#333333",
+    grid: isDark ? "#444" : "#ddd"
+  };
+}
+
+/**
+ * Build the per-city totals + offline breakdown.
+ * Input: combinedDevices = [{ device: { type, status, city, ... } }, ...]
+ * Output: { labels: [], values: [], details: [{ city, total, offline: { camera, controller, archiver, server } }, ...] }
+ */
+
+function buildCityBarDataWithBreakdown(combinedDevices = []) {
+  const map = {}; // city -> info
+
+  if (!Array.isArray(combinedDevices)) return { labels: [], values: [], details: [] };
+
+  combinedDevices.forEach(entry => {
+    if (!entry || !entry.device) return;
+    const dev = entry.device;
+
+    // const city = (dev.city || "Unknown").toString(); 
+    const rawCity = (dev.city || "Unknown").toString();
+const city = normalizeCityName(rawCity);
+
+    if (!map[city]) {
+      map[city] = {
+        city,
+        total: 0,
+        offline: {
+          camera: 0,
+          controller: 0,
+          archiver: 0,
+          server: 0
+        },
+        risk: "Low" // default
+      };
+    }
+
+    map[city].total++;
+
+    const status = (dev.status || "").toLowerCase();
+    const devTypeKey = (dev.type || "").toLowerCase();
+
+    if (status === "offline") {
+      const short = TYPE_MAP[devTypeKey];
+      if (short && map[city].offline.hasOwnProperty(short)) {
+        map[city].offline[short]++;
       }
     }
-  }
-  return fallback;
-}
+  });
 
-// ---------- Detect UI type from device object (best-effort) ----------
-function detectTypeFromDeviceObj(device) {
-  if (!device || typeof device !== "object") return "camera";
-  // If explicit hint was stored
-  if (device._type_for_ui) return device._type_for_ui.toString().toLowerCase();
+  // ✅ APPLY RISK LOGIC
+  Object.values(map).forEach(cityObj => {
+    const off = cityObj.offline;
 
-  // Heuristics: prefer controller if Doors exist
-  if (Array.isArray(device.Doors) && device.Doors.length) return "controller";
+    const cam = off.camera;
+    const ctrl = off.controller;
+    const arch = off.archiver;
+    const serv = off.server;
 
-  // Fields that identify DB
-  const hasDb = !!(pick(device, ["hostname", "db_hostname", "host_name"]) &&
-                   (pick(device, ["application", "Application"]) || pick(device, ["windows_server", "WindowsServer"])));
-  if (hasDb) return "dbdetails";
+    // High conditions
+    if (
+      serv > 0 ||
+      ctrl > 0 ||
+      arch > 0 ||
+      (cam > 0 && (ctrl > 0 || arch > 0 || serv > 0))
+    ) {
+      cityObj.risk = "High";
+    }
+    // Medium condition
+    else if (cam > 0) {
+      cityObj.risk = "Medium";
+    }
+    // Otherwise Low
+    else {
+      cityObj.risk = "Low";
+    }
+  });
 
-  if (device.cameraname || device.camera_name || device.devicetype === "camera") return "camera";
-  if (device.controllername || device.controller_name) return "controller";
-  if (device.archivername || device.archiver_name) return "archiver";
-  if (device.servername || device.server_name) return "server";
-  if (device.pc_name || device.pcnname || device.hostname) return "pcdetails";
+  // ❌ NO SORTING – Keep original insertion order
+  
+  let entries = Object.values(map);
 
-  return "camera";
-}
-
-// ---------- UPDATE FORM FIELDS BASED ON TYPE ----------
-function updateFormFields() {
-  const type = (document.getElementById("device-type").value || "").toString().toLowerCase();
-
-  const nameField = document.getElementById("name-field");
-  const cameraFields = document.getElementById("camera-fields");
-  const pcFields = document.getElementById("pc-fields");
-  const doorSec = document.getElementById("door-reader-container");
-  const dbFields = document.getElementById("db-fields");
-
-  // RESET ALL
-  nameField.style.display = "block";
-  cameraFields.style.display = "none";
-  pcFields.style.display = "none";
-  doorSec.style.display = "none";
-  if (dbFields) dbFields.style.display = "none";
-
-  if (type === "camera") {
-    cameraFields.style.display = "block";
-  } else if (type === "controller") {
-    doorSec.style.display = "block";
-  } else if (type === "pcdetails") {
-    nameField.style.display = "none";
-    pcFields.style.display = "block";
-  } else if (type === "dbdetails") {
-    // show only DB fields
-    nameField.style.display = "none";
-    pcFields.style.display = "none";
-    cameraFields.style.display = "none";
-    doorSec.style.display = "none";
-    if (dbFields) dbFields.style.display = "block";
-  }
-}
-
-// keep your listener
-document.getElementById("device-type").addEventListener("change", updateFormFields);
-
-// ---------- Populate fields for a given type (safe, uses pick() for keys) ----------
-function populateFieldsForType(mode, deviceObj = null, userName = "") {
-  // common fields
-  document.getElementById("device-name").value =
-    pick(deviceObj || {}, ["cameraname", "controllername", "archivername", "servername", "name", "hostname"], "");
-
-  document.getElementById("device-ip").value = pick(deviceObj || {}, ["IP_address", "ip_address", "ip"], "");
-  document.getElementById("device-location").value = pick(deviceObj || {}, ["Location", "location"], "");
-  document.getElementById("device-city").value = pick(deviceObj || {}, ["City", "city"], "");
-  document.getElementById("device-details").value = pick(deviceObj || {}, ["device_details", "deviec_details", "details"], "");
-  document.getElementById("device-hyperlink").value = pick(deviceObj || {}, ["hyperlink", "link"], "");
-  document.getElementById("device-remark").value = pick(deviceObj || {}, ["remark", "notes"], "");
-  document.getElementById("device-old-ip").value = pick(deviceObj || {}, ["IP_address", "ip_address", "ip"], "");
-
-  // PC fields
-  document.getElementById("Host-Name").value = pick(deviceObj || {}, ["hostname", "HostName", "db_hostname", "host_name"], "");
-  document.getElementById("PC-Name").value = pick(deviceObj || {}, ["pc_name", "PCName", "pcname"], "");
-
-  // DB fields: NOTE: fill these AFTER updateFormFields() has been called so inputs are visible
-  document.getElementById("db-hostname").value = pick(deviceObj || {}, ["hostname", "db_hostname", "HostName", "host_name"], "");
-  document.getElementById("db-application").value = pick(deviceObj || {}, ["application", "Application", "app", "App"], "");
-  document.getElementById("db-windows-server").value = pick(deviceObj || {}, ["windows_server", "WindowsServer", "Windows_Server"], "");
-
-  // Doors (controller)
-  if (deviceObj && Array.isArray(deviceObj.Doors)) {
-    // clear existing rows then add
-    document.getElementById("door-reader-body").innerHTML = "";
-    deviceObj.Doors.forEach(d => addDoorRow(pick(d, ["door", "Door", "name"], ""), pick(d, ["reader", "Reader"], "")));
-  }
-}
-
-// ---------- SHOW DEVICE MODAL (clean, robust) ----------
-function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
-  const modal = document.getElementById("device-modal");
-  const title = document.getElementById("device-modal-title");
-  const deleteBtn = document.getElementById("device-delete-btn");
-
-  // Reset form (clear inputs)
-  document.getElementById("device-form").reset();
-  document.getElementById("door-reader-body").innerHTML = "";
-  document.getElementById("device-old-ip").value = "";
-
-  // default UI state
-  const addedBox = document.getElementById("added-by-box");
-  const updatedBox = document.getElementById("updated-by-box");
-  const addedInput = document.getElementById("device-added-by");
-  const updatedInput = document.getElementById("device-updated-by");
-
-  // default added/updated boxes
-  addedBox.style.display = "none";
-  updatedBox.style.display = "none";
-  addedInput.value = "";
-  updatedInput.value = "";
-
-  if (mode === "add") {
-    title.textContent = "Add Device";
-    deleteBtn.style.display = "none";
-    document.getElementById("device-type").disabled = false;
-    document.getElementById("device-type").value = "camera";
-
-    // show added-by for adds
-    addedBox.style.display = "block";
-    addedInput.value = userName || "";
-    addedInput.readOnly = false;
-  } else if (mode === "edit" && deviceObj) {
-    title.textContent = "Edit Device";
-    deleteBtn.style.display = "inline-block";
-    document.getElementById("device-type").disabled = true;
-
-    // determine UI type (use stored hint or detect)
-    const uiType = (deviceObj._type_for_ui || detectTypeFromDeviceObj(deviceObj) || "camera").toString().toLowerCase();
-    // set select value to known option names in your dropdown (camera, archiver, controller, server, pcdetails, dbdetails)
-    // normalize 'pcdetails' vs 'pcDetails' etc.
-    const normalizedUiType = uiType === "pcdetails" || uiType === "pc" ? "pcdetails" : uiType;
-    document.getElementById("device-type").value = normalizedUiType;
-
-    // Now show/hide the correct set of fields BEFORE we populate values
-    updateFormFields();
-
-    // populate values for visible inputs
-    populateFieldsForType(mode, deviceObj, userName);
-
-    // Added / Updated metadata boxes
-    addedBox.style.display = "block";
-    updatedBox.style.display = "block";
-
-    addedInput.value = pick(deviceObj, ["added_by","AddedBy","addedBy","addedby"], "Unknown");
-    addedInput.readOnly = true;
-
-    updatedInput.value = pick(deviceObj, ["updated_by","UpdatedBy","updatedBy","updatedby"], "");
-    updatedInput.readOnly = false;
+  // ✅ Shuffle entries into random order
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [entries[i], entries[j]] = [entries[j], entries[i]];
   }
 
-  // If add mode: ensure fields reflect 'camera' default
-  if (mode === "add") {
-    updateFormFields();
-    // ensure added_by prefilled already done above
-  }
+  const labels = entries.map(e => e.city);
+  const values = entries.map(e => e.total);
+  const details = entries.map(e => ({
+    city: e.city,
+    total: e.total,
+    offline: { ...e.offline },
+    risk: e.risk
+  }));
 
-  // Finally display modal
-  modal.style.display = "flex";
+  return { labels, values, details };
 }
 
-// ---------- Convert UI fields to backend-friendly device object ----------
-function convertToBackendFields(type, body) {
-  // `type` is backend type as returned by mapUITypeToBackend (e.g., 'cameras','controllers','archivers','servers','pcDetails','dbdetails')
-  const mapped = { ...body };
-
-  // Ensure we accept both UI keys and direct DB field keys
-  const t = (type || "").toString();
-
-  switch (t) {
-    case "cameras":
-      mapped.cameraname = body.name || body.cameraname || null;
-      break;
-    case "controllers":
-      mapped.controllername = body.name || body.controllername || null;
-      break;
-    case "archivers":
-      mapped.archivername = body.name || body.archivername || null;
-      break;
-    case "servers":
-      mapped.servername = body.name || body.servername || null;
-      break;
-    case "pcDetails":
-    case "pc_details":
-      // backend expects hostname + pc_name
-      mapped.hostname = body.hostname || body.HostName || body.db_hostname || null;
-      mapped.pc_name = body.pc_name || body.PCName || null;
-      break;
-    case "dbdetails":
-      // backend expects hostname, application, windows_server
-      // UI uses db-hostname input; prefer that, fallback to hostname
-      mapped.hostname = body.db_hostname || body.hostname || body.HostName || null;
-      mapped.application = body.application || body.app || null;
-      mapped.windows_server = body.windows_server || body.windowsServer || null;
-      break;
-    default:
-      // no special mapping; keep as-is
-      break;
+/**
+ * Initialize the bar chart (placeholder). Safe to call multiple times.
+ */
+function initOfflineCityBarChart() {
+  if (typeof Chart === 'undefined') {
+    // console.warn('initOfflineCityBarChart: Chart.js not loaded.');
+    return;
+  }
+  const canvas = document.getElementById("OfflineCityBarChart");
+  if (!canvas) {
+    // console.warn('initOfflineCityBarChart: #OfflineCityBarChart canvas not found.');
+    return;
   }
 
-  // Remove 'name' to avoid confusion
-  delete mapped.name;
-  return mapped;
+  if (offlineCityBarChart) return; // already init
+
+  const ctx = canvas.getContext("2d");
+  const colors = getBarColors();
+
+  offlineCityBarChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ['No Data'],
+      datasets: [{
+        label: "Total Devices",
+        data: [0],
+        backgroundColor: [colors.bar],
+        borderRadius: 8,
+        barThickness: 35
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: colors.text }, display: false },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            // Title is the city name
+            title: function (items) {
+              if (!items || !items.length) return '';
+              return items[0].label;
+            },
+            // First line: total devices (use dataset value)
+            label: function (context) {
+              const value = context.parsed.y ?? context.parsed ?? 0;
+              return `Total Devices: ${value}`;
+            },
+            // After body: show offline breakdown lines (one per line)
+            afterBody: function (context) {
+              if (!context || !context.length) return [];
+
+              const dataIndex = context[0].dataIndex;
+              const chart = context[0].chart || offlineCityBarChart;
+              const details = chart.cityDetails[dataIndex];
+              if (!details) return [];
+
+              const off = details.offline;
+
+              return [
+                `Risk Level: ${details.risk}`,
+                `Offline Cameras: ${off.camera || 0}`,
+                `Offline Controllers: ${off.controller || 0}`,
+                `Offline Archivers: ${off.archiver || 0}`,
+                `Offline Servers: ${off.server || 0}`
+              ];
+            }
+
+          }
+        }
+      },
+      scales: {
+
+        x: {
+          ticks: {
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0,
+
+            callback: function (value, index) {
+              const chart = this.chart;
+              const details = chart.cityDetails?.[index];
+
+              // Show label ONLY for High and Medium
+              if (!details || details.risk === "Low") {
+                return "";
+              }
+
+              return details.city;
+            },
+
+            color: function (context) {
+              const index = context.index;
+              const chart = context.chart;
+              const details = chart.cityDetails?.[index];
+
+              if (!details) return colors.text;
+
+              if (details.risk === "High") return "#d32f2f";    // red
+              if (details.risk === "Medium") return "#fbc02d";  // yellow
+
+              return "transparent"; // hide Low city label
+            },
+
+            font: function (context) {
+              const index = context.index;
+              const chart = context.chart;
+              const details = chart.cityDetails?.[index];
+
+              if (!details || details.risk === "Low") {
+                return { size: 0 };  // Fully hide low labels
+              }
+
+              return { size: 12, weight: "bold" };
+            }
+          },
+          grid: {
+            color: colors.grid
+          }
+        },
+        
+     
+        y: {
+          beginAtZero: true,
+          ticks: { color: colors.text, precision: 0 },
+          grid: { color: colors.grid }
+        }
+      }
+    }
+  });
+
+  // attach an empty cityDetails array to chart (populated on updates)
+  offlineCityBarChart.cityDetails = [];
+  // console.debug('initOfflineCityBarChart: initialized');
 }
+
+/**
+ * Update the bar chart with combinedDevices (array of {device: {...}})
+ */
+function updateOfflineCityBarChart(combinedDevices) {
+  if (!offlineCityBarChart) {
+    initOfflineCityBarChart();
+    if (!offlineCityBarChart) {
+      // console.warn('updateOfflineCityBarChart: chart not initialized (canvas missing or Chart.js not loaded).');
+      return;
+    }
+  }
+
+  const colors = getBarColors();
+  const { labels, values, details } = buildCityBarDataWithBreakdown(combinedDevices);
+
+  if (!labels || labels.length === 0) {
+    offlineCityBarChart.data.labels = ['No Data'];
+    offlineCityBarChart.data.datasets[0].data = [0];
+    offlineCityBarChart.data.datasets[0].backgroundColor = ['#8a8a8a'];
+    offlineCityBarChart.cityDetails = [];
+    offlineCityBarChart.update();
+    // console.debug('updateOfflineCityBarChart: no data.');
+    return;
+  }
+
+  offlineCityBarChart.data.labels = labels;
+  offlineCityBarChart.data.datasets[0].data = values;
+  // offlineCityBarChart.data.datasets[0].backgroundColor = labels.map(() => colors.bar); 
+  offlineCityBarChart.data.datasets[0].backgroundColor = details.map(d => {
+    if (d.risk === "High") return "#d32f2f";    // red
+    if (d.risk === "Medium") return "#fbc02d";  // yellow
+    return "#388e3c";                           // green
+  });
+  offlineCityBarChart.cityDetails = details; // store details used by tooltip callbacks
+
+  offlineCityBarChart.update();
+  // console.debug('updateOfflineCityBarChart: updated with', labels.length, 'cities.');
+}
+
+/**
+ * Ensure initialization on DOM ready (harmless if already done elsewhere)
+ */
+function ensureBarInitOnDomReady() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOfflineCityBarChart);
+  } else {
+    initOfflineCityBarChart();
+  }
+}
+ensureBarInitOnDomReady();
+// ---------------- END: City BAR chart (Total devices + offline breakdown tooltip) ----------------
