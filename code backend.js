@@ -1,21 +1,7 @@
-and for this 
-        <!-- Added By -->
-        <div id="added-by-box" style="display:none;">
-          <label>Added By<span class="required">*</span></label>
-          <input id="device-added-by" type="text" placeholder="Your Name">
-        </div>
-
-        <!-- Updated By -->
-        <div id="updated-by-box" style="display:none;">
-          <label>Updated B<span class="required">*</span></label>
-          <input id="device-updated-by" type="text">
-        </div>
-
-
 function validateRequiredFields() {
     let type = document.getElementById("device-type").value;
 
-    // Required fields for all modes
+    // Base required fields
     let required = [
         { id: "device-name", label: "Device Name" },
         { id: "device-ip", label: "IP Address" },
@@ -23,37 +9,64 @@ function validateRequiredFields() {
         { id: "device-city", label: "City" }
     ];
 
-    // For CAMERA
+    // Add "added by" when ADD mode is active (box visible)
+    if (document.getElementById("added-by-box").style.display !== "none") {
+        required.push({ id: "device-added-by", label: "Added By" });
+    }
+
+    // Add "updated by" when UPDATE mode is active (box visible)
+    if (document.getElementById("updated-by-box").style.display !== "none") {
+        required.push({ id: "device-updated-by", label: "Updated By" });
+    }
+
+    // CAMERA fields
     if (type === "camera") {
         required.push({ id: "form-device-details", label: "Camera Details" });
     }
 
-    // For PC DETAILS
+    // PC DETAILS replaces all except name/ip/location/city
     if (type === "pcdetails") {
         required = [
             { id: "Host-Name", label: "Host Name" },
             { id: "PC-Name", label: "PC Name" }
         ];
+
+        // Add / Update boxes still required
+        if (document.getElementById("added-by-box").style.display !== "none") {
+            required.push({ id: "device-added-by", label: "Added By" });
+        }
+        if (document.getElementById("updated-by-box").style.display !== "none") {
+            required.push({ id: "device-updated-by", label: "Updated By" });
+        }
     }
 
-    // For DB DETAILS
+    // DB DETAILS replaces all fields
     if (type === "dbdetails") {
         required = [
             { id: "db-hostname", label: "DB Host Name" },
             { id: "db-application", label: "DB Application" },
             { id: "db-windows-server", label: "Windows Server Version" }
         ];
+
+        // Add / Update boxes still required
+        if (document.getElementById("added-by-box").style.display !== "none") {
+            required.push({ id: "device-added-by", label: "Added By" });
+        }
+        if (document.getElementById("updated-by-box").style.display !== "none") {
+            required.push({ id: "device-updated-by", label: "Updated By" });
+        }
     }
 
-    // Loop through required fields
+    // Validate each field
     for (let field of required) {
         let el = document.getElementById(field.id);
 
-        if (el && el.offsetParent !== null) { // check visible only
+        // Check only if field is visible
+        if (el && el.offsetParent !== null) {
             if (el.value.trim() === "") {
                 el.style.border = "2px solid red";
-                el.focus();
                 alert(`Please enter ${field.label}`);
+                el.focus();
                 return false;
             } else {
                 el.style.border = "";
@@ -61,5 +74,5 @@ function validateRequiredFields() {
         }
     }
 
-    return true;  // all good
+    return true;
 }
