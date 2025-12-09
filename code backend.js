@@ -1,3 +1,17 @@
+and for this 
+        <!-- Added By -->
+        <div id="added-by-box" style="display:none;">
+          <label>Added By<span class="required">*</span></label>
+          <input id="device-added-by" type="text" placeholder="Your Name">
+        </div>
+
+        <!-- Updated By -->
+        <div id="updated-by-box" style="display:none;">
+          <label>Updated B<span class="required">*</span></label>
+          <input id="device-updated-by" type="text">
+        </div>
+
+
 function validateRequiredFields() {
     let type = document.getElementById("device-type").value;
 
