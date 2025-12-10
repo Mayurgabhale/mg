@@ -1,118 +1,120 @@
-this is correct only for saving 
-<div id="device-modal" class="modal">
-    <div class="modal-content">
-      <h3 id="device-modal-title">Add Device</h3>
-      <form id="device-form">
-        <input type="hidden" id="device-old-ip">
-
-        <label>Type<span class="required">*</span></label>
-        <select id="device-type" required onchange="updateFormFields()">
-          <option value="camera">Camera</option>
-          <option value="archiver">Archiver</option>
-          <option value="controller">Controller</option>
-          <option value="server">Server</option>
-          <option value="pcdetails">PC Details</option>
-          <option value="dbdetails">DB Details</option>
-        </select>
-
-        <span id="name-field">
-          <label>Name<span class="required">*</span></label>
-          <input id="device-name" type="text" placeholder="e.g Device Name">
-        </span>
 
 
-        <label>IP Address<span class="required">*</span></label>
-        <input id="device-ip" type="text" placeholder="e.g 10.100.111.11">
+Box.js:9 Uncaught TypeError: createTheme_default is not a function
+    at Box.js:9:22
+(anonymous)	@	Box.js:9
 
-        <div id="pc-fields" style="display:none;">
-          <label>Host Name<span class="required">*</span></label>
-          <input id="Host-Name" type="text" placeholder="e.g ">
-          <label>PC Name<span class="required">*</span></label>
-          <input id="PC-Name" type="text" placeholder="e.g ">
-        </div>
+// frontend/vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
-        <div id="db-fields" style="display:none;">
-          <label>Host Name<span class="required">*</span></label>
-          <input id="db-hostname" type="text" placeholder="e.g SRVWUDEN0890v">
+const BACKEND_PY_PORT = process.env.BACKEND_PORT || 8000;
+const BACKEND_PY_HOST = `http://localhost:${BACKEND_PY_PORT}`; // Python (ccure)
+const NODE_BACKEND = 'http://localhost:3008';                 // Node (headcount + other legacy endpoints)
 
-          <label>Application<span class="required">*</span></label>
-          <input id="db-application" type="text" placeholder="e.g CCURE SAS App">
-
-          <label>Windows Server<span class="required">*</span></label>
-          <input id="db-windows-server" type="text" placeholder="e.g Windows Server 2019 Standard">
-        </div>
-
-        <label>Location<span class="required">*</span></label>
-        <input id="device-location" type="text" placeholder="e.g APAC, EMEA, LACA, NAMER">
-
-        <label>City<span class="required">*</span></label>
-        <input id="device-city" type="text" placeholder="e.g Pune, Denver">
-
-
-        <!-- CAMERA FIELDS ONLY -->
-        <div id="camera-fields">
-          <label>Details<span class="required">*</span></label>
-          <input id="form-device-details" type="text" placeholder="e.g FLIR, Verkada">
-
-          <label>Hyperlink</label>
-          <input id="device-hyperlink" type="url" placeholder="e.g https://link">
-
-          <label>Remark</label>
-          <input id="device-remark" type="text" placeholder="e.g Not accessible">
-        </div>
+export default defineConfig({
+  plugins: [react()],
+  publicDir: path.resolve(__dirname, '../public'),
+  resolve: {
+    alias: {
+      // Do NOT alias @mui/material (let package resolution work normally)
+      // Keep emotion aliases to avoid duplicate emotion runtime instances:
+      '@emotion/react': path.resolve(__dirname, 'node_modules/@emotion/react'),
+      '@emotion/styled': path.resolve(__dirname, 'node_modules/@emotion/styled'),
+    },
+    // Prevent duplicate copies of MUI / emotion being bundled
+    dedupe: ['@mui/material', '@mui/system', '@mui/styled-engine', '@emotion/react']
+  },
+  optimizeDeps: {
+    // help vite pre-bundle these so ESM exports resolve correctly
+    include: [
+      '@mui/material',
+      '@mui/material/styles',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled'
+    ]
+  },
+  server: {
+    port: 5173,
+    hmr: { overlay: false },
+    proxy: {
+      '/api/ccure': {
+        target: BACKEND_PY_HOST,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        timeout: 120000
+      },
 
 
 
 
-
-        <!-- Added By -->
-        <div id="added-by-box" style="display:none;">
-          <label>Added By<span class="required">*</span></label>
-          <input id="device-added-by" type="text" placeholder="Your Name">
-        </div>
-
-        <!-- Updated By -->
-        <div id="updated-by-box" style="display:none;">
-          <label>Updated B<span class="required">*</span></label>
-          <input id="device-updated-by" type="text">
-        </div>
-
-        <!-- Controller Doors -->
-        <div id="door-reader-container" style="display:none;" class="door-reader">
-          <h4>Doors & Readers</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>Door</th>
-                <th>Reader</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="door-reader-body"></tbody>
-          </table>
-          <button type="button" id="add-door-row">Add Door</button>
-        </div>
-
-        <!-- <div class="modal-footer">
-          <button type="submit">Save</button>
-          <button type="button" onclick="hideDeviceModal()">Cancel</button>
-          <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-        </div> -->
-        <div class="modal-footer">
-          <button type="submit" id="device-save-btn">Save</button>
-          <button type="button" onclick="hideDeviceModal()">Cancel</button>
-          <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-        </div>
-        <!-- 🔥 NEW visible on-screen loader -->
-        <div class="save-section">
+// route only the denver attendance endpoint to Python (FastAPI)
+'/api/reports/denver-attendance': {
+  target: BACKEND_PY_HOST,
+  changeOrigin: true,
+  secure: false,
+  timeout: 12000000,
+  rewrite: (path) => path.replace(/^\/api\/reports/, '/reports')
+},
 
 
-          <div id="save-loader" class="device-saving-box">
-            <div class="saving-icon"></div>
-            <span>Saving...</span>
-          </div>
 
-        </div>
-      </form>
-    </div>
-  </div>
+      // Python (FastAPI) under a dedicated prefix
+      '/api-py': {
+        target: BACKEND_PY_HOST,
+        changeOrigin: true,
+        secure: false,
+        timeout: 120000,
+        rewrite: (path) => path.replace(/^\/api-py/, '/api') // adjust target path if FastAPI lives at /api or /
+      },
+
+      // Node backend (legacy)
+      '/api': {
+        target: NODE_BACKEND,
+        changeOrigin: true,
+        secure: false,
+        timeout: 120000
+      }
+    }
+  }
+
+});
+
+
+
+
+
+
+
+
+
+// src/theme.js
+
+// ✅ Make sure you import *only* from @mui/material/styles:
+import { createTheme } from '@mui/material/styles';
+
+
+export const brandColors = [
+  '#FFCC00','#FFD230', '#FFCC00', '#FFCC00','#FFCC00', '#FFCC00'
+];
+
+//'#05DF72','#FEF2F2','#AF52DE', '#5AC8FA','#FF2D55','#FFC9C9','#FF9F0A',  '#32D74B'
+
+const theme = createTheme({
+  palette: {
+    primary:   { main: brandColors[2], contrastText: '#000' },
+    secondary: { main: '#000', contrastText: '#fff' },
+    background:{ default: '#000000', paper: '#000000' },
+    text:      { primary: '#fff', secondary: brandColors[2] },
+    // Any custom slots must map to one of MUI’s recognized keys:
+    info:      { main: brandColors[5] },
+  },
+  typography: {
+    fontFamily: '"Helvetica Neue", Arial, sans-serif',
+  }
+});
+
+export default theme;
