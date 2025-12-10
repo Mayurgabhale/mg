@@ -1,6 +1,5 @@
 Error saving device: Server returned 500: {"error":"Invalid device type: dbdetails"}
-
-script.js:1944 Submitting device {type: 'dbdetails', device: {…}}device: {ip_address: '10.0.0.0', location: 'APAC', city: 'Pune', device_details: '', hyperlink: '', …}type: "dbdetails"[[Prototype]]: Object
+script.js:1944 Submitting device {type: 'dbdetails', device: {…}}
 script.js:1949  POST http://localhost/api/devices 500 (Internal Server Error)
 (anonymous) @ script.js:1949
 script.js:1965 Server response: 500 {"error":"Invalid device type: dbdetails"}
@@ -8,8 +7,7 @@ script.js:1975 Error saving device: Error: Server returned 500: {"error":"Invali
     at HTMLFormElement.<anonymous> (script.js:1968:15)
 (anonymous) @ script.js:1975
 
-read the all code each line carefully and slov ethis error 
-read all code 
+backend
 
     case "dbdetails":
       dev.location = row.location || null;
@@ -22,6 +20,10 @@ read all code
       dev.added_by = row.added_by || null;      // ✅ ADD THIS
       dev.updated_by = row.updated_by || null;  // ✅ ADD THIS
       break;
+
+
+frontend :::
+
 // ================= SHOW DEVICE MODAL =================
 function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
     const modal = document.getElementById("device-modal");
@@ -463,6 +465,8 @@ function validateRequiredFields() {
 
     return true;
 }
+
+
   <!-- Device Modal -->
   <div id="device-modal" class="modal">
     <div class="modal-content">
