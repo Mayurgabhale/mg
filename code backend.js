@@ -1,29 +1,64 @@
-Error saving device: Server returned 500: {"error":"Invalid device type: dbdetails"}
-script.js:1944 Submitting device {type: 'dbdetails', device: {…}}
-script.js:1949  POST http://localhost/api/devices 500 (Internal Server Error)
-(anonymous) @ script.js:1949
-script.js:1965 Server response: 500 {"error":"Invalid device type: dbdetails"}
-script.js:1975 Error saving device: Error: Server returned 500: {"error":"Invalid device type: dbdetails"}
-    at HTMLFormElement.<anonymous> (script.js:1968:15)
-(anonymous) @ script.js:1975
+script.js:1918 
+ POST http://localhost/api/devices 500 (Internal Server Error)
+(anonymous)	@	script.js:1918
 
-backend
+﻿id 
+10
+ReadOnly
+INTEGER
+ 
+location 
+LACA
+ReadOnly
+TEXT
+ 
+city 
+Costa Rica
+ReadOnly
+TEXT
+ 
+hostname 
+SRVWUSJO0971V
+ReadOnly
+TEXT
+ 
+ip_address 
+10.64.10.50
+ReadOnly
+TEXT
+ 
+application 
+CCURE SAS App LACA
+ReadOnly
+TEXT
+ 
+windows_server 
+Windows Server 2019 Standard
+ReadOnly
+TEXT
+ 
+added_by 
+system-import
+ReadOnly
+TEXT
+ 
+updated_by 
+ReadOnly
+TEXT
+ 
+added_at 
+2025-12-04 05:08:44
+ReadOnly
+TEXT
+ 
+updated_at 
+ReadOnly
+TEXT
+ 
+what is the isssue 
 
-    case "dbdetails":
-      dev.location = row.location || null;
-      dev.city = row.city || null;
-      dev.hostname = row.hostname || null;
-      dev.ip_address = row.ip_address || null;
-      dev.IP_address = row.ip_address || null;
-      dev.application = row.application || null;
-      dev.windows_server = row.windows_server || null;
-      dev.added_by = row.added_by || null;      // ✅ ADD THIS
-      dev.updated_by = row.updated_by || null;  // ✅ ADD THIS
-      break;
-
-
-frontend :::
-
+in this only <option value="dbdetails">DB Details</option>
+data is not save in databse 
 // ================= SHOW DEVICE MODAL =================
 function showDeviceModal(mode = "add", deviceObj = null, userName = "") {
     const modal = document.getElementById("device-modal");
@@ -209,8 +244,7 @@ function convertToBackendFields(type, body) {
             mapped.pc_name = body.pc_name;
             break;
         case "dbdetails":
-            // map `db-hostname` form → backend `hostname`
-            mapped.hostname = body.db_hostname || body.hostname || "";
+            mapped.db_hostname = body.db_hostname;
             mapped.application = body.application;
             mapped.windows_server = body.windows_server;
             break;
@@ -259,70 +293,30 @@ document.getElementById("device-form").addEventListener("submit", async function
         body.Doors = doors;
     }
 
-    // try {
-    //     if (!oldIp) {
-    //         // ADD new device
-    //         await fetch("http://localhost/api/devices", {
-    //             method: "POST",
-    //             headers: { "Content-Type": "application/json" },
-    //             body: JSON.stringify({ type: backendType, device: body })
-    //         });
-    //     } else {
-    //         // UPDATE existing device
-    //         await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
-    //             method: "PUT",
-    //             headers: { "Content-Type": "application/json" },
-    //             body: JSON.stringify(body)
-    //         });
-    //     }
-
-    //     alert("Saved successfully!");
-    //     hideDeviceModal();
-    //     await fetchData(currentRegion);
-
-    // } catch (err) {
-    //     alert("Error saving device: " + err.message);
-    // }
-
-
     try {
-    // DEBUG - show exactly what we send
-    console.log("Submitting device", { type: backendType, device: body });
+        if (!oldIp) {
+            // ADD new device
+            await fetch("http://localhost/api/devices", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: backendType, device: body })
+            });
+        } else {
+            // UPDATE existing device
+            await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+        }
 
-    let resp;
-    if (!oldIp) {
-        // ADD new device
-        resp = await fetch("http://localhost/api/devices", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type: backendType, device: body })
-        });
-    } else {
-        // UPDATE existing device
-        resp = await fetch(`http://localhost/api/devices/${encodeURIComponent(oldIp)}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
+        alert("Saved successfully!");
+        hideDeviceModal();
+        await fetchData(currentRegion);
+
+    } catch (err) {
+        alert("Error saving device: " + err.message);
     }
-
-    // Check response
-    const respText = await resp.text();
-    console.log("Server response:", resp.status, respText);
-
-    if (!resp.ok) {
-        throw new Error(`Server returned ${resp.status}: ${respText}`);
-    }
-
-    alert("Saved successfully!");
-    hideDeviceModal();
-    await fetchData(currentRegion);
-} catch (err) {
-    console.error("Error saving device:", err);
-    alert("Error saving device: " + err.message);
-}
-
-
 });
 
 // ================= DELETE DEVICE =================
@@ -465,108 +459,3 @@ function validateRequiredFields() {
 
     return true;
 }
-
-
-  <!-- Device Modal -->
-  <div id="device-modal" class="modal">
-    <div class="modal-content">
-      <h3 id="device-modal-title">Add Device</h3>
-      <form id="device-form">
-        <input type="hidden" id="device-old-ip">
-
-        <label>Type<span class="required">*</span></label>
-        <select id="device-type" required onchange="updateFormFields()">
-          <option value="camera">Camera</option>
-          <option value="archiver">Archiver</option>
-          <option value="controller">Controller</option>
-          <option value="server">Server</option>
-          <option value="pcdetails">PC Details</option>
-          <option value="dbdetails">DB Details</option>
-        </select>
-
-        <span id="name-field">
-          <label>Name<span class="required">*</span></label>
-          <input id="device-name" type="text" placeholder="e.g Device Name">
-        </span>
-
-
-        <label>IP Address<span class="required">*</span></label>
-        <input id="device-ip" type="text" placeholder="e.g 10.100.111.11">
-
-        <div id="pc-fields" style="display:none;">
-          <label>Host Name<span class="required">*</span></label>
-          <input id="Host-Name" type="text" placeholder="e.g ">
-          <label>PC Name<span class="required">*</span></label>
-          <input id="PC-Name" type="text" placeholder="e.g ">
-        </div>
-
-        <div id="db-fields" style="display:none;">
-          <label>Host Name<span class="required">*</span></label>
-          <input id="db-hostname" type="text" placeholder="e.g SRVWUDEN0890v">
-
-          <label>Application<span class="required">*</span></label>
-          <input id="db-application" type="text" placeholder="e.g CCURE SAS App">
-
-          <label>Windows Server<span class="required">*</span></label>
-          <input id="db-windows-server" type="text" placeholder="e.g Windows Server 2019 Standard">
-        </div>
-
-        <label>Location<span class="required">*</span></label>
-        <input id="device-location" type="text" placeholder="e.g APAC, EMEA, LACA, NAMER">
-
-        <label>City<span class="required">*</span></label>
-        <input id="device-city" type="text" placeholder="e.g Pune, Denver">
-
-
-        <!-- CAMERA FIELDS ONLY -->
-        <div id="camera-fields">
-          <label>Details<span class="required">*</span></label>
-          <input id="form-device-details" type="text" placeholder="e.g FLIR, Verkada">
-
-          <label>Hyperlink</label>
-          <input id="device-hyperlink" type="url" placeholder="e.g https://link">
-
-          <label>Remark</label>
-          <input id="device-remark" type="text" placeholder="e.g Not accessible">
-        </div>
-
-
-
-
-
-        <!-- Added By -->
-        <div id="added-by-box" style="display:none;">
-          <label>Added By<span class="required">*</span></label>
-          <input id="device-added-by" type="text" placeholder="Your Name">
-        </div>
-
-        <!-- Updated By -->
-        <div id="updated-by-box" style="display:none;">
-          <label>Updated B<span class="required">*</span></label>
-          <input id="device-updated-by" type="text">
-        </div>
-
-        <!-- Controller Doors -->
-        <div id="door-reader-container" style="display:none;" class="door-reader">
-          <h4>Doors & Readers</h4>
-          <table>
-            <thead>
-              <tr>
-                <th>Door</th>
-                <th>Reader</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="door-reader-body"></tbody>
-          </table>
-          <button type="button" id="add-door-row">Add Door</button>
-        </div>
-
-        <div class="modal-footer">
-          <button type="submit">Save</button>
-          <button type="button" onclick="hideDeviceModal()">Cancel</button>
-          <button type="button" id="device-delete-btn" style="display:none;">Delete</button>
-        </div>
-      </form>
-    </div>
-  </div>
