@@ -19,6 +19,7 @@ import { useBadgeRejections } from '../hooks/useBadgeRejections';
 import { partitionList } from '../services/occupancy.service';
 import {
   fetchVisitorCountsByFloor,
+    
   fetchForecastFromHistory
 } from '../api/occupancy.service';
 
