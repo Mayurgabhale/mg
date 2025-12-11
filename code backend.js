@@ -1,5 +1,7 @@
 hi, i want to make this page responsive for each and evey device wiht perfect size ok,
     can yo do this, wiht 100% screen size for each deive main is laptop and pc 
+wihtou change any logic, this page i want only respnive code, dont chanet anything in this only respnive ok.
+    and give me updae code, carefully. 
 // src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import {
