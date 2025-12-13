@@ -1,11 +1,11 @@
-// suppress green background for Quezon & Vilnius
-const suppressGreen = isNoGreenLocation(r);
+<option value="LT.Vilnius">LT.Vilnius</option>
+<option value="Quezon City">Quezon City</option>
+like this name 
 
-const cls = [];
-if (isDayStart && !suppressGreen) cls.push('row-day-start');
-if (flags[idx].outReturn) cls.push('row-out-return');
-
-const rowStyle =
-  (isDayStart && !suppressGreen)
-    ? { background: '#e6ffed' }
-    : {};
+function isNoGreenLocation(row) {
+          const z = String(row.Zone || '').toLowerCase();
+          return (
+            z.includes('quezon') ||
+            z.includes('vilnius')
+          );
+}
