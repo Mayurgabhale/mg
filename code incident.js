@@ -2,7 +2,8 @@ now i want to create this page, wiht perfect and
 corperate use cause ok, where we see all list, 
   so can you create this page wiht permiunn level, and
 more usafalbel ok 
-and wiht desing wiht responve for each and every device ok 
+and wiht desing wiht responve for each and every device ok
+read above backend python code alos and create this ok
 http://localhost:3000/incidentList
 Incident #3 — Medical
 {
