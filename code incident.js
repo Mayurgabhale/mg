@@ -1,309 +1,143 @@
-hi, can you crate this page wiht permium level, for exapme corparete level use case this page, IncidentList
-read the backend code and create this IncidentList page more wiht respnive 
-C:\Users\W0028758\Desktop\incidenceDashboard\frontend\src\components\IncidentList.jsx
 
-C:\Users\W0028758\Desktop\incidenceDashboard\Backend\incident_report.py
-# incident_report.py
-import os
-import json
-from typing import Optional, List
-from datetime import datetime, date, time
+import { useEffect, useMemo, useState } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Badge } from "@/components/ui/badge"; import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"; import { Search, Eye, RefreshCcw } from "lucide-react"; import { motion } from "framer-motion";
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel, Field, EmailStr, validator
-from sqlalchemy import Column, Integer, String, DateTime, Text
-from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON
+const API_BASE = "http://localhost:8000/incident";
 
-from database import Base, engine, SessionLocal
+export default function IncidentList() { const [incidents, setIncidents] = useState([]); const [loading, setLoading] = useState(false); const [search, setSearch] = useState(""); const [selected, setSelected] = useState(null);
 
-router = APIRouter(prefix="/incident", tags=["incident"])
+const fetchIncidents = async () => { setLoading(true); try { const res = await fetch(${API_BASE}/list); const data = await res.json(); setIncidents(data || []); } catch (e) { console.error("Failed to load incidents", e); } finally { setLoading(false); } };
 
-# Ensure uploads directory exists
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+useEffect(() => { fetchIncidents(); }, []);
 
-# -------------------------
-# SQLAlchemy model
-# -------------------------
-class IncidentReport(Base):
-    __tablename__ = "incident_reports"
+const filtered = useMemo(() => { if (!search) return incidents; return incidents.filter((i) => [ i.type_of_incident, i.impacted_name, i.impacted_employee_id, i.location, ] .join(" ") .toLowerCase() .includes(search.toLowerCase()) ); }, [search, incidents]);
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+return ( <div className="p-6 space-y-6"> {/* Header */} <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"> <div> <h1 className="text-2xl font-semibold">Incident Reports</h1> <p className="text-sm text-muted-foreground"> Corporate incident management & audit trail </p> </div>
 
-    # basic fields (strings)
-    type_of_incident = Column(String, nullable=False)   # e.g. Medical / Theft / Other
-    other_type_text = Column(String, nullable=True)     # filled when type_of_incident == "Other"
+<div className="flex items-center gap-2">
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          className="pl-8 w-64"
+          placeholder="Search incidents…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+      <Button variant="outline" onClick={fetchIncidents}>
+        <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
+      </Button>
+    </div>
+  </div>
 
-    date_of_report = Column(String, nullable=False)     # ISO date string e.g. "2025-12-03"
-    time_of_report = Column(String, nullable=False)     # HH:MM
+  {/* Table */}
+  <Card className="rounded-2xl shadow-sm">
+    <CardContent className="p-0 overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-muted">
+          <tr className="text-left">
+            <th className="p-4">ID</th>
+            <th className="p-4">Type</th>
+            <th className="p-4">Impacted</th>
+            <th className="p-4">Location</th>
+            <th className="p-4">Incident Date</th>
+            <th className="p-4">Status</th>
+            <th className="p-4 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading && (
+            <tr>
+              <td colSpan={7} className="p-6 text-center text-muted-foreground">
+                Loading incidents…
+              </td>
+            </tr>
+          )}
 
-    impacted_name = Column(String, nullable=False)
-    impacted_employee_id = Column(String, nullable=False)
+          {!loading && filtered.length === 0 && (
+            <tr>
+              <td colSpan={7} className="p-6 text-center text-muted-foreground">
+                No incidents found
+              </td>
+            </tr>
+          )}
 
-    was_reported_verbally = Column(Integer, default=0)    # 1 = True, 0 = False
-    incident_reported_to = Column(String, nullable=True) # JSON-string list when present
-    reported_to_details = Column(String, nullable=True)
+          {filtered.map((row) => (
+            <motion.tr
+              key={row.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="border-b last:border-none hover:bg-muted/40"
+            >
+              <td className="p-4 font-medium">#{row.id}</td>
+              <td className="p-4">
+                <Badge variant="secondary">{row.type_of_incident}</Badge>
+              </td>
+              <td className="p-4">
+                <div className="font-medium">{row.impacted_name}</div>
+                <div className="text-xs text-muted-foreground">
+                  {row.impacted_employee_id}
+                </div>
+              </td>
+              <td className="p-4">{row.location}</td>
+              <td className="p-4">{row.date_of_incident}</td>
+              <td className="p-4">
+                {row.was_reported_verbally ? (
+                  <Badge className="bg-green-100 text-green-700">Reported</Badge>
+                ) : (
+                  <Badge className="bg-yellow-100 text-yellow-700">Logged</Badge>
+                )}
+              </td>
+              <td className="p-4 text-right">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelected(row)}
+                >
+                  <Eye className="h-4 w-4 mr-1" /> View
+                </Button>
+              </td>
+            </motion.tr>
+          ))}
+        </tbody>
+      </table>
+    </CardContent>
+  </Card>
 
-    location = Column(String, nullable=False)
+  {/* Detail Dialog */}
+  <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+    <DialogContent className="max-w-3xl">
+      {selected && (
+        <>
+          <DialogHeader>
+            <DialogTitle>Incident #{selected.id}</DialogTitle>
+          </DialogHeader>
 
-    reported_by_name = Column(String, nullable=False)
-    reported_by_employee_id = Column(String, nullable=False)
-    reported_by_email = Column(String, nullable=False)
-    reported_by_contact = Column(String, nullable=False)
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <Info label="Type" value={selected.type_of_incident} />
+            <Info label="Location" value={selected.location} />
+            <Info label="Incident Date" value={selected.date_of_incident} />
+            <Info label="Reported By" value={selected.reported_by_name} />
+            <Info label="Impacted Person" value={selected.impacted_name} />
+            <Info label="Employee ID" value={selected.impacted_employee_id} />
+          </div>
 
-    date_of_incident = Column(String, nullable=False)
-    time_of_incident = Column(String, nullable=False)
+          <Section title="Description" text={selected.detailed_description} />
+          <Section title="Immediate Actions" text={selected.immediate_actions_taken} />
 
-    detailed_description = Column(Text, nullable=False)
-    immediate_actions_taken = Column(Text, nullable=False)
+          {selected.root_cause_analysis && (
+            <Section title="Root Cause Analysis" text={selected.root_cause_analysis} />
+          )}
+          {selected.preventive_actions && (
+            <Section title="Preventive Actions" text={selected.preventive_actions} />
+          )}
+        </>
+      )}
+    </DialogContent>
+  </Dialog>
+</div>
 
-    accompanying_person = Column(SQLITE_JSON, nullable=True)   # list of {name, contact}
-    witnesses = Column(SQLITE_JSON, nullable=True)            # list of strings
-    witness_contacts = Column(SQLITE_JSON, nullable=True)     # list of strings
+); }
 
-    root_cause_analysis = Column(Text, nullable=True)         # optional
-    preventive_actions = Column(Text, nullable=True)          # optional
+function Info({ label, value }) { return ( <div className="bg-muted rounded-xl p-3"> <div className="text-xs text-muted-foreground">{label}</div> <div className="font-medium">{value || "—"}</div> </div> ); }
 
-    proofs = Column(SQLITE_JSON, nullable=True)               # list of uploaded filenames
-
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-# create table(s)
-Base.metadata.create_all(bind=engine)
-
-# -------------------------
-# Pydantic Schemas (strict types)
-# -------------------------
-class AccompanyPerson(BaseModel):
-    name: str = Field(..., min_length=1)
-    contact: str = Field(..., min_length=3)
-
-class IncidentCreate(BaseModel):
-    # required
-    type_of_incident: str = Field(..., min_length=1)
-    other_type_text: Optional[str] = None
-
-    date_of_report: date
-    time_of_report: time
-
-    impacted_name: str = Field(..., min_length=1)
-    impacted_employee_id: str = Field(..., min_length=1)
-
-    was_reported_verbally: bool
-
-    # If was_reported_verbally true
-    incident_reported_to: Optional[List[str]] = None
-    reported_to_details: Optional[str] = None
-
-    location: str = Field(..., min_length=1)
-
-    reported_by_name: str = Field(..., min_length=1)
-    reported_by_employee_id: str = Field(..., min_length=1)
-    reported_by_email: EmailStr
-    reported_by_contact: str = Field(..., min_length=3)
-
-    date_of_incident: date
-    time_of_incident: time
-
-    detailed_description: str = Field(..., min_length=5)
-    immediate_actions_taken: str = Field(..., min_length=1)
-
-    accompanying_person: List[AccompanyPerson] = Field(..., min_items=0)
-    witnesses: List[str] = Field(..., min_items=0)
-    witness_contacts: List[str] = Field(..., min_items=0)
-
-    root_cause_analysis: Optional[str] = None
-    preventive_actions: Optional[str] = None
-
-    # proofs are handled via multipart upload; not present here
-
-    @validator("other_type_text", always=True)
-    def require_other_text_if_other(cls, v, values):
-        if values.get("type_of_incident") and values.get("type_of_incident").strip().lower() == "other":
-            if not v or not v.strip():
-                raise ValueError("When type_of_incident is 'Other', provide other_type_text.")
-            return v
-        return v
-
-    @validator("incident_reported_to", always=True)
-    def validate_reported_to_if_needed(cls, v, values):
-        if values.get("was_reported_verbally"):
-            if not v or len(v) == 0:
-                raise ValueError("When was_reported_verbally is True, provide incident_reported_to (list).")
-        return v
-
-    @validator("reported_to_details", always=True)
-    def validate_reported_to_details_if_needed(cls, v, values):
-        if values.get("was_reported_verbally"):
-            if v is None or not str(v).strip():
-                # require details when verbally reported (per your spec)
-                raise ValueError("When was_reported_verbally is True, provide reported_to_details (Name and Department).")
-        return v
-
-    @validator("witness_contacts", always=True)
-    def validate_witness_lengths(cls, v, values):
-        w = values.get("witnesses") or []
-        if len(w) != len(v):
-            raise ValueError("witnesses and witness_contacts must have the same length (parallel arrays).")
-        return v
-
-class IncidentOut(BaseModel):
-    id: int
-    type_of_incident: str
-    other_type_text: Optional[str] = None
-    date_of_report: str
-    time_of_report: str
-    impacted_name: str
-    impacted_employee_id: str
-    was_reported_verbally: bool
-    incident_reported_to: Optional[List[str]] = None
-    reported_to_details: Optional[str] = None
-    location: str
-    reported_by_name: str
-    reported_by_employee_id: str
-    reported_by_email: str
-    reported_by_contact: str
-    date_of_incident: str
-    time_of_incident: str
-    detailed_description: str
-    immediate_actions_taken: str
-    accompanying_person: Optional[List[dict]] = None
-    witnesses: Optional[List[str]] = None
-    witness_contacts: Optional[List[str]] = None
-    root_cause_analysis: Optional[str] = None
-    preventive_actions: Optional[str] = None
-    proofs: Optional[List[str]] = None
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
-
-# -------------------------
-# Helpers
-# -------------------------
-def save_uploads(upload_files: Optional[List[UploadFile]]) -> List[str]:
-    """Save uploaded files to UPLOAD_DIR and return list of filenames (relative)."""
-    if not upload_files:
-        return []
-    saved = []
-    for f in upload_files:
-        # sanitize and create unique filename
-        ts = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
-        name = f.filename or "upload"
-        # simple sanitization
-        name = "".join(c for c in name if c.isalnum() or c in (" ", ".", "_", "-")).strip()
-        filename = f"{ts}_{name}"
-        path = os.path.join(UPLOAD_DIR, filename)
-        # write file
-        with open(path, "wb") as fh:
-            fh.write(f.file.read())
-        saved.append(filename)
-    return saved
-
-# -------------------------
-# Endpoints
-# -------------------------
-@router.post("/create", response_model=IncidentOut)
-async def create_incident(
-    payload: str = Form(...),            # JSON string of all fields (see IncidentCreate)
-    proofs: Optional[List[UploadFile]] = File(None)
-):
-    """
-    Accepts multipart/form-data:
-      - payload: JSON string matching IncidentCreate schema
-      - proofs: optional list of files (images, pdf)
-    """
-    # parse JSON payload
-    try:
-        data = json.loads(payload)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {e}")
-
-    # validate payload with Pydantic
-    try:
-        incident = IncidentCreate.parse_obj(data)
-    except Exception as e:
-        raise HTTPException(status_code=422, detail=str(e))
-
-    db = SessionLocal()
-    try:
-        saved_files = save_uploads(proofs)
-
-        inst = IncidentReport(
-            type_of_incident = incident.type_of_incident.strip(),
-            other_type_text = incident.other_type_text.strip() if incident.other_type_text else None,
-            date_of_report = incident.date_of_report.isoformat(),
-            time_of_report = incident.time_of_report.strftime("%H:%M:%S"),
-            impacted_name = incident.impacted_name.strip(),
-            impacted_employee_id = incident.impacted_employee_id.strip(),
-            was_reported_verbally = 1 if incident.was_reported_verbally else 0,
-            incident_reported_to = json.dumps(incident.incident_reported_to) if incident.incident_reported_to else None,
-            reported_to_details = incident.reported_to_details.strip() if incident.reported_to_details else None,
-            location = incident.location.strip(),
-            reported_by_name = incident.reported_by_name.strip(),
-            reported_by_employee_id = incident.reported_by_employee_id.strip(),
-            reported_by_email = str(incident.reported_by_email),
-            reported_by_contact = incident.reported_by_contact.strip(),
-            date_of_incident = incident.date_of_incident.isoformat(),
-            time_of_incident = incident.time_of_incident.strftime("%H:%M:%S"),
-            detailed_description = incident.detailed_description.strip(),
-            immediate_actions_taken = incident.immediate_actions_taken.strip(),
-            accompanying_person = [p.dict() for p in incident.accompanying_person] if incident.accompanying_person else None,
-            witnesses = incident.witnesses if incident.witnesses else None,
-            witness_contacts = incident.witness_contacts if incident.witness_contacts else None,
-            root_cause_analysis = incident.root_cause_analysis.strip() if incident.root_cause_analysis else None,
-            preventive_actions = incident.preventive_actions.strip() if incident.preventive_actions else None,
-            proofs = saved_files if saved_files else None,
-            created_at = datetime.utcnow()
-        )
-
-        db.add(inst)
-        db.commit()
-        db.refresh(inst)
-
-        # convert incident_reported_to JSON-string back to list for response
-        if inst.incident_reported_to:
-            try:
-                inst.incident_reported_to = json.loads(inst.incident_reported_to)
-            except:
-                inst.incident_reported_to = None
-
-        return inst
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        db.close()
-
-@router.get("/list", response_model=List[IncidentOut])
-def list_incidents(limit: int = 200):
-    db = SessionLocal()
-    try:
-        rows = db.query(IncidentReport).order_by(IncidentReport.created_at.desc()).limit(limit).all()
-        # parse JSON strings
-        for r in rows:
-            if isinstance(r.incident_reported_to, str):
-                try:
-                    r.incident_reported_to = json.loads(r.incident_reported_to)
-                except:
-                    r.incident_reported_to = None
-        return rows
-    finally:
-        db.close()
-
-@router.get("/{incident_id}", response_model=IncidentOut)
-def get_incident(incident_id: int):
-    db = SessionLocal()
-    try:
-        row = db.query(IncidentReport).filter(IncidentReport.id == incident_id).first()
-        if not row:
-            raise HTTPException(status_code=404, detail="Incident not found")
-        if isinstance(row.incident_reported_to, str):
-            try:
-                row.incident_reported_to = json.loads(row.incident_reported_to)
-            except:
-                row.incident_reported_to = None
-        return row
-    finally:
-        db.close()
+function Section({ title, text }) { return ( <div className="mt-4"> <h3 className="font-semibold mb-1">{title}</h3> <p className="text-muted-foreground leading-relaxed">{text}</p> </div> ); }
