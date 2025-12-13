@@ -1,5 +1,5 @@
 <td>
-  {r.Reasons || r.DetectedScenarios
-    ? renderReasonChips(r.Reasons || r.DetectedScenarios)
+  {flags[idx].dayStart
+    ? renderReasonChips(modalRow?.Reasons || modalRow?.DetectedScenarios)
     : <span className="muted">—</span>}
 </td>
